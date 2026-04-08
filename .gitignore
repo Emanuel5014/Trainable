@@ -25,4 +25,3 @@ gradle-app.setting
 *.keystore
 debug.keystore
 docs/
-*.md
