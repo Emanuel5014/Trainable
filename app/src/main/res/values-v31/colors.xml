@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dynamic Colors for Android 12+ (API 31) -->
+    <!-- system_accent1_200 is the Primary color in dark mode palette -->
+    <color name="monolithic_primary">@android:color/system_accent1_200</color>
+    
+    <!-- system_neutral1_900 is a very dark neutral color suitable for surface -->
+    <color name="monolithic_surface">@android:color/system_neutral1_900</color>
+</resources>

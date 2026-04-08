@@ -521,16 +521,6 @@ fun SettingsScreen(
                         }
                     }
 
-                    GymButton(
-                        onClick = { exportLauncher.launch("Trainable_Backup.zip") },
-                        modifier = Modifier.fillMaxWidth(),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurface
-                    ) {
-                        Icon(Icons.Rounded.CloudUpload, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
-                    }
 
                     GymButton(
                         onClick = { 
@@ -545,6 +535,17 @@ fun SettingsScreen(
                         Icon(Icons.Rounded.TableChart, contentDescription = null)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text("EXPORT CSV", fontWeight = FontWeight.Bold)
+                    }
+
+                    GymButton(
+                        onClick = { exportLauncher.launch("Trainable_Backup.zip") },
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurface
+                    ) {
+                        Icon(Icons.Rounded.CloudUpload, contentDescription = null)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
                     }
 
                     GymButton(
@@ -574,7 +575,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(48.dp))
             
             Text(
-                text = "Trainable v1.4",
+                text = "Trainable v0.9.0 beta\nMade with ❤️ by Emanuel5014",
                 style = MaterialTheme.typography.labelSmall,
                 color = OnSurfaceVariant.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,

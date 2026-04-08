@@ -18,8 +18,10 @@ vico = "2.1.4"
 datastore = "1.1.1"
 workmanager = "2.9.1"
 coil = "2.7.0"
+core-splashscreen = "1.0.1"
 
 [libraries]
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymtracking.R
 import com.example.gymtracking.ui.components.GymButton
 import com.example.gymtracking.ui.components.GymInputField
 import com.example.gymtracking.ui.theme.*
@@ -169,9 +171,9 @@ private fun WelcomeSlide() {
                     .background(Primary.copy(alpha = 0.1f))
             )
             Icon(
-                Icons.Rounded.FitnessCenter,
+                painter = painterResource(id = R.drawable.ic_app_logo),
                 contentDescription = null,
-                modifier = Modifier.size(80.dp),
+                modifier = Modifier.size(130.dp),
                 tint = Primary
             )
         }
