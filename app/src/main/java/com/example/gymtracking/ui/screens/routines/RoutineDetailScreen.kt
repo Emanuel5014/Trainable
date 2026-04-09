@@ -67,6 +67,9 @@ fun RoutineDetailScreen(
     var editingExercise by remember { mutableStateOf<PlanExerciseWithDetails?>(null) }
     var showExerciseSheet by remember { mutableStateOf(false) }
     var showExercisePicker by remember { mutableStateOf(false) }
+    var showRoutineEditSheet by remember { mutableStateOf(false) }
+    var routineName by remember { mutableStateOf("") }
+    var routineNote by remember { mutableStateOf("") }
 
     var selectedExerciseId by remember { mutableStateOf<Int?>(null) }
     var setsText by remember { mutableStateOf("3") }
@@ -104,6 +107,14 @@ fun RoutineDetailScreen(
         showExerciseSheet = true
     }
 
+    fun openRoutineEditSheet() {
+        uiState.planDetails?.plan?.let { plan ->
+            routineName = plan.nome
+            routineNote = plan.note.orEmpty()
+            showRoutineEditSheet = true
+        }
+    }
+
     Scaffold(
         containerColor = Surface,
         topBar = {
@@ -123,11 +134,11 @@ fun RoutineDetailScreen(
                 actions = {
                     Box(modifier = Modifier.padding(end = 8.dp)) {
                         GymIconButton(
-                            icon = Icons.Rounded.Delete,
-                            onClick = { viewModel.deletePlan(onNavigateBack) },
+                            icon = Icons.Rounded.Edit,
+                            onClick = { openRoutineEditSheet() },
                             containerColor = SurfaceContainerHigh,
-                            contentColor = Error,
-                            description = "Delete Routine"
+                            contentColor = OnSurface,
+                            description = "Edit Routine"
                         )
                     }
                 },
@@ -286,7 +297,7 @@ fun RoutineDetailScreen(
 
                         ExerciseEntryCard(
                             item = item,
-                            onMenuClick = { openEditSheet(item) },
+                            onClick = { openEditSheet(item) },
                             modifier = Modifier.weight(1f),
                             languageCode = languageCode
                         )
@@ -491,6 +502,93 @@ fun RoutineDetailScreen(
             onDismiss = { showExercisePicker = false },
             languageCode = languageCode
         )
+    }
+
+    if (showRoutineEditSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showRoutineEditSheet = false },
+            containerColor = Surface,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(CircleShape)
+                        .background(OnSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 48.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.edit_routine),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.update_plan),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = OnSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    GymInputField(
+                        value = routineName,
+                        onValueChange = { routineName = it },
+                        label = stringResource(R.string.routine_name),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    GymInputField(
+                        value = routineNote,
+                        onValueChange = { routineNote = it },
+                        label = stringResource(R.string.routine_notes),
+                        singleLine = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    GymButton(
+                        onClick = { showRoutineEditSheet = false },
+                        modifier = Modifier.weight(1f),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                    
+                    GymButton(
+                        onClick = {
+                            val trimmedName = routineName.trim()
+                            if (trimmedName.isNotEmpty()) {
+                                val note = routineNote.trim().takeIf { it.isNotBlank() }
+                                viewModel.updatePlan(trimmedName, note)
+                                showRoutineEditSheet = false
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.save).uppercase(),
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

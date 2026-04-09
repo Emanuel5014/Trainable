@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.gymtracking.data.local.GymDatabase
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.repository.UserRepository
@@ -72,6 +74,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = 5
     )
 
+    val autoBackupIncludeImages = userPrefsRepository.autoBackupIncludeImages.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val userLanguage = localeManager.currentLanguage.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -138,10 +146,27 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun exportDatabase(uri: Uri) {
+
+    fun setAutoBackupIncludeImages(include: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAutoBackupIncludeImages(include)
+        }
+    }
+
+    fun runBackupNow() {
+        viewModelScope.launch {
+            _backupStatus.value = "Starting auto-backup test..."
+            val request = OneTimeWorkRequestBuilder<AutoBackupWorker>()
+                .build()
+            WorkManager.getInstance(context).enqueue(request)
+            _backupStatus.value = "Auto-backup worker enqueued"
+        }
+    }
+
+    fun exportDatabase(uri: Uri, includeImages: Boolean = false) {
         viewModelScope.launch {
             _backupStatus.value = "Exporting..."
-            val success = backupManager.exportDatabaseZip(uri)
+            val success = backupManager.exportDatabaseZip(uri, includeImages)
             _backupStatus.value = if (success) "Export successful" else "Export failed"
         }
     }

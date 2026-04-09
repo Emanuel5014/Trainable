@@ -67,7 +67,6 @@ fun RoutineListScreen(
     val listState = rememberLazyListState()
 
     var showSheet by remember { mutableStateOf(false) }
-    var editingPlan by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
@@ -117,16 +116,8 @@ fun RoutineListScreen(
     }
 
     fun openCreateSheet() {
-        editingPlan = null
         routineName = ""
         routineNote = ""
-        showSheet = true
-    }
-
-    fun openEditSheet(plan: WorkoutPlanEntity) {
-        editingPlan = plan
-        routineName = plan.nome
-        routineNote = plan.note.orEmpty()
         showSheet = true
     }
 
@@ -320,8 +311,7 @@ fun RoutineListScreen(
                             ) {
                                 RoutineCard(
                                     plan = plan,
-                                    onClick = { onNavigateToDetail(plan.id) },
-                                    onEdit = { openEditSheet(plan) }
+                                    onClick = { onNavigateToDetail(plan.id) }
                                 )
                             }
                         }
@@ -392,13 +382,13 @@ fun RoutineListScreen(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = if (editingPlan == null) stringResource(R.string.create_routine) else stringResource(R.string.edit_routine),
+                        text = stringResource(R.string.create_routine),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (editingPlan == null) stringResource(R.string.new_routine) else stringResource(R.string.update_plan),
+                        text = stringResource(R.string.new_routine),
                         style = MaterialTheme.typography.headlineMedium,
                         color = OnSurface,
                         fontWeight = FontWeight.ExtraBold
@@ -440,19 +430,14 @@ fun RoutineListScreen(
                             val trimmedName = routineName.trim()
                             if (trimmedName.isNotEmpty()) {
                                 val note = routineNote.trim().takeIf { it.isNotBlank() }
-                                val current = editingPlan
-                                if (current == null) {
-                                    viewModel.createEmptyPlan(trimmedName, note)
-                                } else {
-                                    viewModel.updatePlan(current, trimmedName, note)
-                                }
+                                viewModel.createEmptyPlan(trimmedName, note)
                                 showSheet = false
                             }
                         },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = if (editingPlan == null) stringResource(R.string.create).uppercase() else stringResource(R.string.save).uppercase(),
+                            text = stringResource(R.string.create).uppercase(),
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
@@ -465,8 +450,7 @@ fun RoutineListScreen(
 @Composable
 private fun RoutineCard(
     plan: WorkoutPlanEntity,
-    onClick: () -> Unit,
-    onEdit: () -> Unit
+    onClick: () -> Unit
 ) {
     GymCard(
         modifier = Modifier
@@ -506,14 +490,6 @@ private fun RoutineCard(
                         color = OnSurfaceVariant
                     )
                 }
-            }
-            
-            IconButton(onClick = onEdit) {
-                Icon(
-                    Icons.Rounded.Edit,
-                    contentDescription = "Edit Plan",
-                    tint = OnSurfaceVariant.copy(alpha = 0.6f)
-                )
             }
         }
     }

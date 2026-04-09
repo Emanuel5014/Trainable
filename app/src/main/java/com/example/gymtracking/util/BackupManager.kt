@@ -17,7 +17,7 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
 
     private val dbName = "gym_tracking_database"
 
-    suspend fun exportDatabaseZip(outputUri: Uri): Boolean = withContext(Dispatchers.IO) {
+    suspend fun exportDatabaseZip(outputUri: Uri, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         try {
             val dbFile = context.getDatabasePath(dbName)
             val walFile = context.getDatabasePath("$dbName-wal")
@@ -25,18 +25,32 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
 
             context.contentResolver.openOutputStream(outputUri)?.use { fos ->
                 ZipOutputStream(fos).use { zos ->
-                    val filesToZip = listOfNotNull(
+                    // 1. Export Database Files
+                    val dbFiles = listOfNotNull(
                         dbFile.takeIf { it.exists() },
                         walFile.takeIf { it.exists() },
                         shmFile.takeIf { it.exists() }
                     )
 
-                    for (file in filesToZip) {
+                    for (file in dbFiles) {
                         FileInputStream(file).use { fis ->
-                            val zipEntry = ZipEntry(file.name)
-                            zos.putNextEntry(zipEntry)
+                            zos.putNextEntry(ZipEntry(file.name))
                             fis.copyTo(zos)
                             zos.closeEntry()
+                        }
+                    }
+
+                    // 2. Export Images if requested
+                    if (includeImages) {
+                        val filesDir = context.filesDir
+                        filesDir.listFiles()?.forEach { file ->
+                            if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
+                                FileInputStream(file).use { fis ->
+                                    zos.putNextEntry(ZipEntry("images/${file.name}"))
+                                    fis.copyTo(zos)
+                                    zos.closeEntry()
+                                }
+                            }
                         }
                     }
                 }
@@ -52,15 +66,27 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         try {
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
             if (!dbDir.exists()) dbDir.mkdirs()
+            val filesDir = context.filesDir
 
             context.contentResolver.openInputStream(inputUri)?.use { fis ->
                 ZipInputStream(fis).use { zis ->
                     var entry = zis.nextEntry
                     while (entry != null) {
-                        if (entry.name.startsWith(dbName)) { // Ensure we only extract relevant files
-                            val outFile = File(dbDir, entry.name)
-                            FileOutputStream(outFile).use { fos ->
-                                zis.copyTo(fos)
+                        when {
+                            entry.name.startsWith("images/") -> {
+                                val imageName = entry.name.removePrefix("images/")
+                                if (imageName.isNotEmpty()) {
+                                    val outFile = File(filesDir, imageName)
+                                    FileOutputStream(outFile).use { fos ->
+                                        zis.copyTo(fos)
+                                    }
+                                }
+                            }
+                            entry.name.startsWith(dbName) -> {
+                                val outFile = File(dbDir, entry.name)
+                                FileOutputStream(outFile).use { fos ->
+                                    zis.copyTo(fos)
+                                }
                             }
                         }
                         zis.closeEntry()
@@ -75,7 +101,7 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         }
     }
 
-    suspend fun exportDatabaseToFile(outputFile: File): Boolean = withContext(Dispatchers.IO) {
+    suspend fun exportDatabaseToFile(outputFile: File, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         try {
             val dbFile = context.getDatabasePath(dbName)
             val walFile = context.getDatabasePath("$dbName-wal")
@@ -83,18 +109,32 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
 
             FileOutputStream(outputFile).use { fos ->
                 ZipOutputStream(fos).use { zos ->
-                    val filesToZip = listOfNotNull(
+                    // 1. Export Database Files
+                    val dbFiles = listOfNotNull(
                         dbFile.takeIf { it.exists() },
                         walFile.takeIf { it.exists() },
                         shmFile.takeIf { it.exists() }
                     )
 
-                    for (file in filesToZip) {
+                    for (file in dbFiles) {
                         FileInputStream(file).use { fis ->
-                            val zipEntry = ZipEntry(file.name)
-                            zos.putNextEntry(zipEntry)
+                            zos.putNextEntry(ZipEntry(file.name))
                             fis.copyTo(zos)
                             zos.closeEntry()
+                        }
+                    }
+
+                    // 2. Export Images if requested
+                    if (includeImages) {
+                        val filesDir = context.filesDir
+                        filesDir.listFiles()?.forEach { file ->
+                            if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
+                                FileInputStream(file).use { fis ->
+                                    zos.putNextEntry(ZipEntry("images/${file.name}"))
+                                    fis.copyTo(zos)
+                                    zos.closeEntry()
+                                }
+                            }
                         }
                     }
                 }
@@ -117,26 +157,40 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         }
     }
 
-    suspend fun exportDatabaseZipToUri(folderUri: Uri): Boolean = withContext(Dispatchers.IO) {
+    suspend fun exportDatabaseZipToUri(folderUri: Uri, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openOutputStream(folderUri)?.use { fos ->
-                val dbFile = context.getDatabasePath(dbName)
-                val walFile = context.getDatabasePath("$dbName-wal")
-                val shmFile = context.getDatabasePath("$dbName-shm")
-
                 ZipOutputStream(fos).use { zos ->
-                    val filesToZip = listOfNotNull(
+                    // 1. Export Database Files
+                    val dbFile = context.getDatabasePath(dbName)
+                    val walFile = context.getDatabasePath("$dbName-wal")
+                    val shmFile = context.getDatabasePath("$dbName-shm")
+
+                    val dbFiles = listOfNotNull(
                         dbFile.takeIf { it.exists() },
                         walFile.takeIf { it.exists() },
                         shmFile.takeIf { it.exists() }
                     )
 
-                    for (file in filesToZip) {
+                    for (file in dbFiles) {
                         FileInputStream(file).use { fis ->
-                            val zipEntry = ZipEntry(file.name)
-                            zos.putNextEntry(zipEntry)
+                            zos.putNextEntry(ZipEntry(file.name))
                             fis.copyTo(zos)
                             zos.closeEntry()
+                        }
+                    }
+
+                    // 2. Export Images if requested
+                    if (includeImages) {
+                        val filesDir = context.filesDir
+                        filesDir.listFiles()?.forEach { file ->
+                            if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
+                                FileInputStream(file).use { fis ->
+                                    zos.putNextEntry(ZipEntry("images/${file.name}"))
+                                    fis.copyTo(zos)
+                                    zos.closeEntry()
+                                }
+                            }
                         }
                     }
                 }

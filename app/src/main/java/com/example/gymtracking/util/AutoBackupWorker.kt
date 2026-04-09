@@ -29,15 +29,16 @@ class AutoBackupWorker @AssistedInject constructor(
         return try {
             val folderUri = userPrefsRepository.autoBackupFolderUri.first()
             val maxBackups = userPrefsRepository.autoBackupMaxCount.first()
+            val includeImages = userPrefsRepository.autoBackupIncludeImages.first()
 
             if (folderUri == null) {
                 val internalBackupDir = File(context.filesDir, "auto_backups")
                 if (!internalBackupDir.exists()) internalBackupDir.mkdirs()
                 cleanupOldBackups(internalBackupDir, maxBackups)
-                createBackupToFile(internalBackupDir)
+                createBackupToFile(internalBackupDir, includeImages)
             } else {
                 val uri = Uri.parse(folderUri)
-                val success = exportToCustomFolder(uri, maxBackups)
+                val success = exportToCustomFolder(uri, maxBackups, includeImages)
                 if (!success) return Result.retry()
             }
             Result.success()
@@ -47,18 +48,19 @@ class AutoBackupWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun createBackupToFile(backupDir: File): Boolean {
+    private suspend fun createBackupToFile(backupDir: File, includeImages: Boolean): Boolean {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
         val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
         val backupFile = File(backupDir, fileName)
-        return backupManager.exportDatabaseToFile(backupFile)
+        return backupManager.exportDatabaseToFile(backupFile, includeImages)
     }
 
-    private suspend fun exportToCustomFolder(folderUri: Uri, maxBackups: Int): Boolean {
+    private suspend fun exportToCustomFolder(folderUri: Uri, maxBackups: Int, includeImages: Boolean): Boolean {
         return try {
             val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
             val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
             
+            // ... (cleanup logic same as before) ...
             val children = context.contentResolver.query(folderUri, null, null, null, null)
             val existingBackups = mutableListOf<Pair<String, Long>>()
             
@@ -80,32 +82,8 @@ class AutoBackupWorker @AssistedInject constructor(
                 }
             }
 
-            val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(folderUri, flags)
-            
-            val dbFile = context.getDatabasePath("gym_tracking_database")
-            val walFile = context.getDatabasePath("gym_tracking_database-wal")
-            val shmFile = context.getDatabasePath("gym_tracking_database-shm")
-            
-            context.contentResolver.openOutputStream(folderUri)?.use { fos ->
-                ZipOutputStream(fos).use { zos ->
-                    val filesToZip = listOfNotNull(
-                        dbFile.takeIf { it.exists() },
-                        walFile.takeIf { it.exists() },
-                        shmFile.takeIf { it.exists() }
-                    )
-
-                    for (file in filesToZip) {
-                        FileInputStream(file).use { fis ->
-                            val zipEntry = ZipEntry(file.name)
-                            zos.putNextEntry(zipEntry)
-                            fis.copyTo(zos)
-                            zos.closeEntry()
-                        }
-                    }
-                }
-            }
-            true
+            // Using BackupManager instead of duplicate logic
+            backupManager.exportDatabaseZipToUri(folderUri, includeImages)
         } catch (e: Exception) {
             e.printStackTrace()
             false

@@ -45,12 +45,15 @@ fun SettingsScreen(
     val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
     val autoBackupFolderUri by viewModel.autoBackupFolderUri.collectAsState()
     val autoBackupMaxCount by viewModel.autoBackupMaxCount.collectAsState()
+    val autoBackupIncludeImages by viewModel.autoBackupIncludeImages.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var showResetDialog by remember { mutableStateOf(false) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
+    var showIncludeImagesDialog by remember { mutableStateOf(false) }
+    var includeImagesChoice by remember { mutableStateOf(false) }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
@@ -62,7 +65,7 @@ fun SettingsScreen(
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
-        uri?.let { viewModel.exportDatabase(it) }
+        uri?.let { viewModel.exportDatabase(it, includeImagesChoice) }
     }
 
     val csvExportLauncher = rememberLauncherForActivityResult(
@@ -105,6 +108,7 @@ fun SettingsScreen(
     if (showBackupSetupDialog) {
         var tempFrequency by remember { mutableIntStateOf(autoBackupFrequency) }
         var tempMaxCount by remember { mutableIntStateOf(autoBackupMaxCount) }
+        var tempIncludeImages by remember { mutableStateOf(autoBackupIncludeImages) }
         var useCustomFolder by remember { mutableStateOf(autoBackupFolderUri != null) }
 
         AlertDialog(
@@ -148,6 +152,24 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text("Include Images", color = OnSurface)
+                        Switch(
+                            checked = tempIncludeImages,
+                            onCheckedChange = { tempIncludeImages = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = OnPrimary,
+                                checkedTrackColor = Primary,
+                                uncheckedThumbColor = OnSurfaceVariant,
+                                uncheckedTrackColor = SurfaceContainerHigh
+                            )
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text("Save to custom folder", color = OnSurface)
                         Switch(
                             checked = useCustomFolder,
@@ -175,6 +197,7 @@ fun SettingsScreen(
                     onClick = {
                         viewModel.setAutoBackupFrequency(tempFrequency)
                         viewModel.setAutoBackupMaxCount(tempMaxCount)
+                        viewModel.setAutoBackupIncludeImages(tempIncludeImages)
                         if (!useCustomFolder) {
                             viewModel.setAutoBackupFolder(android.net.Uri.EMPTY)
                         }
@@ -188,6 +211,48 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showBackupSetupDialog = false }) {
                     Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (showIncludeImagesDialog) {
+        AlertDialog(
+            onDismissRequest = { showIncludeImagesDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.include_images),
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.include_images_description),
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        includeImagesChoice = true
+                        showIncludeImagesDialog = false
+                        exportLauncher.launch("Trainable_Backup_Full.zip")
+                    }
+                ) {
+                    Text(stringResource(R.string.yes), color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        includeImagesChoice = false
+                        showIncludeImagesDialog = false
+                        exportLauncher.launch("Trainable_Backup.zip")
+                    }
+                ) {
+                    Text(stringResource(R.string.no), color = OnSurfaceVariant)
                 }
             }
         )
@@ -538,7 +603,7 @@ fun SettingsScreen(
                     }
 
                     GymButton(
-                        onClick = { exportLauncher.launch("Trainable_Backup.zip") },
+                        onClick = { showIncludeImagesDialog = true },
                         modifier = Modifier.fillMaxWidth(),
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurface
@@ -575,7 +640,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(48.dp))
             
             Text(
-                text = "Trainable v0.9.0 beta\nMade with ❤️ by Emanuel5014",
+                text = "Trainable v0.9.1 beta\nMade with ❤️ by Emanuel5014",
                 style = MaterialTheme.typography.labelSmall,
                 color = OnSurfaceVariant.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,

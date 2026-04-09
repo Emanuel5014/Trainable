@@ -120,6 +120,17 @@ interface WorkoutDao {
     """)
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>>
 
+    @Query("""
+        SELECT sl.* FROM set_logs sl
+        INNER JOIN workout_sessions ws ON sl.session_id = ws.id
+        WHERE ws.plan_id = :planId
+        AND sl.exercise_id = :exerciseId
+        AND ws.is_finished = 1
+        ORDER BY sl.session_id DESC
+        LIMIT :limitSets
+    """)
+    fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>>
+
     @Query("DELETE FROM workout_sessions WHERE id = :sessionId")
     suspend fun deleteSession(sessionId: Int)
 

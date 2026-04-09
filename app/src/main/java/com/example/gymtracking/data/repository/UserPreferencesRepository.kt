@@ -30,6 +30,7 @@ class UserPreferencesRepository @Inject constructor(
         val AUTO_BACKUP_FREQUENCY = intPreferencesKey("auto_backup_frequency")
         val AUTO_BACKUP_FOLDER_URI = stringPreferencesKey("auto_backup_folder_uri")
         val AUTO_BACKUP_MAX_COUNT = intPreferencesKey("auto_backup_max_count")
+        val AUTO_BACKUP_INCLUDE_IMAGES = booleanPreferencesKey("auto_backup_include_images")
         val USER_LANGUAGE = stringPreferencesKey("user_language")
     }
 
@@ -66,6 +67,11 @@ class UserPreferencesRepository @Inject constructor(
     val autoBackupMaxCount: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[AUTO_BACKUP_MAX_COUNT] ?: 5
+        }
+
+    val autoBackupIncludeImages: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AUTO_BACKUP_INCLUDE_IMAGES] ?: false
         }
 
     val userLanguage: Flow<String?> = dataStore.data
@@ -122,6 +128,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAutoBackupMaxCount(count: Int) {
         dataStore.edit { preferences ->
             preferences[AUTO_BACKUP_MAX_COUNT] = count
+        }
+    }
+
+    suspend fun setAutoBackupIncludeImages(include: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_INCLUDE_IMAGES] = include
         }
     }
 

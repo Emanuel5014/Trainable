@@ -237,4 +237,12 @@ class RoutineDetailViewModel @Inject constructor(
             }
         }
     }
+
+    fun updatePlan(nome: String, note: String?) {
+        viewModelScope.launch {
+            uiState.value.planDetails?.plan?.let { plan ->
+                workoutRepository.updatePlan(plan.copy(nome = nome, note = note))
+            }
+        }
+    }
 }

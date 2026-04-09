@@ -73,16 +73,33 @@ fun WorkoutExecutionScreen(
             TopAppBar(
                 title = { 
                     Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = state.planName, 
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (state.totalExercises > 0) {
+                                Surface(
+                                    color = Primary.copy(alpha = 0.1f),
+                                    shape = CircleShape
+                                ) {
+                                    Text(
+                                        text = "${state.completedExercises}/${state.totalExercises}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Primary,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = stringResource(R.string.session_in_progress_title), 
                             style = MaterialTheme.typography.labelSmall, 
-                            color = Primary,
+                            color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(R.string.workout_execution_title), 
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 },

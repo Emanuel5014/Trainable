@@ -258,4 +258,8 @@
     <string name="next_exercise_btn">Successivo</string>
     <string name="collapse">Riduci</string>
     <string name="finish_workout">Termina</string>
+    <string name="include_images">Includere le immagini?</string>
+    <string name="include_images_description">Vuoi includere le foto delle routine nel backup? Questo aumenterà la dimensione del file.</string>
+    <string name="yes">SÌ</string>
+    <string name="no">NO</string>
 </resources>

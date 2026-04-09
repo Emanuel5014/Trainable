@@ -80,6 +80,9 @@ class WorkoutRepository @Inject constructor(
     
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 
+    fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>> = 
+        workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
+
     suspend fun deleteSession(sessionId: Int) = workoutDao.deleteSession(sessionId)
 
     suspend fun saveExerciseSwap(swap: SessionExerciseSwapEntity) = workoutDao.insertExerciseSwap(swap)

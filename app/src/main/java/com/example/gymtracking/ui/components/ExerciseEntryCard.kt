@@ -1,6 +1,7 @@
 package com.example.gymtracking.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DragHandle
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,20 +35,21 @@ import com.example.gymtracking.ui.theme.SurfaceContainerHigh
 @Composable
 fun ExerciseEntryCard(
     item: PlanExerciseWithDetails,
-    onMenuClick: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     languageCode: String = "en"
 ) {
     val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
     GymCard(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         containerColor = SurfaceContainer
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Drag Handle
             Icon(
                 imageVector = Icons.Rounded.DragHandle,
                 contentDescription = "Reorder",
@@ -57,7 +57,6 @@ fun ExerciseEntryCard(
             )
             Spacer(modifier = Modifier.width(Spacing.medium))
             
-            // Info Column
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = exerciseName,
@@ -66,7 +65,6 @@ fun ExerciseEntryCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Quick stats pill
                     Box(
                         modifier = Modifier
                             .background(SurfaceContainerHigh, CircleShape)
@@ -85,15 +83,6 @@ fun ExerciseEntryCard(
                         color = OnSurfaceVariant
                     )
                 }
-            }
-            
-            // Menu
-            IconButton(onClick = onMenuClick) {
-                Icon(
-                    imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Options",
-                    tint = OnSurfaceVariant
-                )
             }
         }
     }

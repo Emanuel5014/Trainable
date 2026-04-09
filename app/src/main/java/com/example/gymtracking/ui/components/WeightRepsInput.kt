@@ -7,30 +7,27 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gymtracking.ui.theme.*
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 @Composable
 fun WeightRepsInput(
     weight: Float,
@@ -43,7 +40,6 @@ fun WeightRepsInput(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Weight Picker
         WheelPickerBox(
             label = "WEIGHT (KG)",
             value = weight,
@@ -53,7 +49,6 @@ fun WeightRepsInput(
             format = { String.format("%.1f", it) }
         )
         
-        // Reps Picker
         WheelPickerBox(
             label = "REPS",
             value = reps.toFloat(),
@@ -65,6 +60,7 @@ fun WeightRepsInput(
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 private fun <T> WheelPickerBox(
     label: String,
@@ -84,7 +80,6 @@ private fun <T> WheelPickerBox(
     )
     val coroutineScope = rememberCoroutineScope()
 
-    // Sync state with external value changes (e.g. keyboard or other sets)
     LaunchedEffect(value) {
         val targetIndex = range.indexOf(value)
         if (targetIndex != -1 && targetIndex != listState.firstVisibleItemIndex) {
@@ -92,27 +87,19 @@ private fun <T> WheelPickerBox(
         }
     }
 
-    // React to scroll completion
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            val snappedIndex = listState.firstVisibleItemIndex
-            if (snappedIndex in range.indices) {
-                val newValue = range[snappedIndex]
-                if (newValue != value) {
-                    onValueChange(newValue)
-                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex }
+            .debounce(50L)
+            .distinctUntilChanged()
+            .collect { index ->
+                if (index in range.indices) {
+                    val newValue = range[index]
+                    if (newValue != value) {
+                        onValueChange(newValue)
+                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
                 }
             }
-        }
-    }
-
-    // Vibration on index change during scroll
-    var lastVibratedIndex by remember { mutableStateOf(listState.firstVisibleItemIndex) }
-    LaunchedEffect(listState.firstVisibleItemIndex) {
-        if (listState.firstVisibleItemIndex != lastVibratedIndex) {
-            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            lastVibratedIndex = listState.firstVisibleItemIndex
-        }
     }
 
     Column(
@@ -135,7 +122,6 @@ private fun <T> WheelPickerBox(
                 .background(SurfaceContainerHigh),
             contentAlignment = Alignment.Center
         ) {
-            // Center Highlight
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,7 +134,7 @@ private fun <T> WheelPickerBox(
                 state = listState,
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = listState),
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 36.dp) // Adjusted to center items
+                contentPadding = PaddingValues(vertical = 36.dp)
             ) {
                 items(range.size) { index ->
                     val item = range[index]

@@ -258,4 +258,8 @@
     <string name="next_exercise_btn">Next</string>
     <string name="collapse">Collapse</string>
     <string name="finish_workout">Finish</string>
+    <string name="include_images">Include Images?</string>
+    <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
+    <string name="yes">YES</string>
+    <string name="no">NO</string>
 </resources>
