@@ -115,19 +115,19 @@ fun SettingsScreen(
             onDismissRequest = { showBackupSetupDialog = false },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text("Auto Backup Setup", fontWeight = FontWeight.Bold, color = OnSurface)
+                Text(stringResource(R.string.auto_backup_setup), fontWeight = FontWeight.Bold, color = OnSurface)
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    Text("Configure your automatic backup settings", color = OnSurfaceVariant)
+                    Text(stringResource(R.string.configure_backup), color = OnSurfaceVariant)
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Frequency", fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.frequency), fontWeight = FontWeight.Bold, color = OnSurface)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                             IconButton(onClick = { if (tempFrequency > 1) tempFrequency-- }) {
                                 Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
                             }
-                            Text("$tempFrequency day(s)", style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
+                            Text(stringResource(R.string.day_s, tempFrequency), style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
                             IconButton(onClick = { if (tempFrequency < 7) tempFrequency++ }) {
                                 Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
                             }
@@ -135,12 +135,12 @@ fun SettingsScreen(
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Keep last", fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.keep_last), fontWeight = FontWeight.Bold, color = OnSurface)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                             IconButton(onClick = { if (tempMaxCount > 1) tempMaxCount-- }) {
                                 Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
                             }
-                            Text("$tempMaxCount backup(s)", style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
+                            Text(stringResource(R.string.backup_s, tempMaxCount), style = MaterialTheme.typography.titleMedium, color = Primary, fontWeight = FontWeight.Black)
                             IconButton(onClick = { if (tempMaxCount < 10) tempMaxCount++ }) {
                                 Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
                             }
@@ -152,16 +152,10 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Include Images", color = OnSurface)
-                        Switch(
+                        Text(stringResource(R.string.include_images), color = OnSurface)
+                        SettingsSwitch(
                             checked = tempIncludeImages,
-                            onCheckedChange = { tempIncludeImages = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = OnPrimary,
-                                checkedTrackColor = Primary,
-                                uncheckedThumbColor = OnSurfaceVariant,
-                                uncheckedTrackColor = SurfaceContainerHigh
-                            )
+                            onCheckedChange = { tempIncludeImages = it }
                         )
                     }
 
@@ -170,16 +164,10 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Save to custom folder", color = OnSurface)
-                        Switch(
+                        Text(stringResource(R.string.save_to_custom_folder), color = OnSurface)
+                        SettingsSwitch(
                             checked = useCustomFolder,
-                            onCheckedChange = { useCustomFolder = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = OnPrimary,
-                                checkedTrackColor = Primary,
-                                uncheckedThumbColor = OnSurfaceVariant,
-                                uncheckedTrackColor = SurfaceContainerHigh
-                            )
+                            onCheckedChange = { useCustomFolder = it }
                         )
                     }
 
@@ -263,24 +251,25 @@ fun SettingsScreen(
             onDismissRequest = { showResetDialog = false },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text(
-                    "Reset App?",
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurface
-                )
+                    Text(
+                        stringResource(R.string.reset_app_dialog),
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface
+                    )
             },
             text = {
                 Text(
-                    "This will delete all your data including workouts, routines, and settings. This action cannot be undone.",
+                    stringResource(R.string.reset_app_message),
                     color = OnSurfaceVariant
                 )
             },
             confirmButton = {
+                val restartingText = stringResource(R.string.restarting_app)
                 TextButton(
                     onClick = {
                         showResetDialog = false
                         viewModel.resetApp {
-                            Toast.makeText(context, "Restarting app...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, restartingText, Toast.LENGTH_SHORT).show()
                             val intent = Intent(context, MainActivity::class.java)
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                             context.startActivity(intent)
@@ -288,12 +277,12 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text("RESET", color = Tertiary)
+                    Text(stringResource(R.string.reset_app_button).uppercase(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
-                    Text("CANCEL", color = Primary)
+                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
             }
         )
@@ -306,7 +295,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "SETTINGS", 
+                        stringResource(R.string.settings_title), 
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp,
                         style = MaterialTheme.typography.titleLarge
@@ -339,9 +328,55 @@ fun SettingsScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            SettingsSection(title = "PROFILE") {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            SettingsSection(title = stringResource(R.string.profile)) {
+                var showEditUsernameDialog by remember { mutableStateOf(false) }
+
+                if (showEditUsernameDialog) {
+                    var newUsername by remember { mutableStateOf(currentUser?.username ?: "") }
+                    AlertDialog(
+                        onDismissRequest = { showEditUsernameDialog = false },
+                        containerColor = SurfaceContainerHigh,
+                        title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.Bold, color = OnSurface) },
+                        text = {
+                            OutlinedTextField(
+                                value = newUsername,
+                                onValueChange = { newUsername = it },
+                                label = { Text(stringResource(R.string.username)) },
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Primary,
+                                    unfocusedBorderColor = OnSurfaceVariant
+                                )
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    if (newUsername.isNotBlank()) {
+                                        viewModel.updateUsername(newUsername)
+                                        showEditUsernameDialog = false
+                                    }
+                                }
+                            ) {
+                                Text(stringResource(R.string.save).uppercase(), color = Primary)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showEditUsernameDialog = false }) {
+                                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                            }
+                        }
+                    )
+                }
+
+                GymCard(
+                    containerColor = SurfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
@@ -352,7 +387,7 @@ fun SettingsScreen(
                             Icon(Icons.Rounded.Person, contentDescription = null, tint = Primary, modifier = Modifier.size(32.dp))
                         }
                         Spacer(modifier = Modifier.width(20.dp))
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentUser?.username ?: "Athlete",
                                 style = MaterialTheme.typography.headlineSmall,
@@ -364,6 +399,9 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = OnSurfaceVariant
                             )
+                        }
+                        IconButton(onClick = { showEditUsernameDialog = true }) {
+                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = OnSurfaceVariant)
                         }
                     }
                 }
@@ -413,20 +451,13 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Vibration, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text("Tactile Feedback", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
-                                    Text("Vibration on interactions", style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(R.string.tactile_feedback), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.tactile_feedback_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
-                            Switch(
+                            SettingsSwitch(
                                 checked = hapticEnabled,
-                                onCheckedChange = { viewModel.setHapticEnabled(it) },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = OnPrimary,
-                                    checkedTrackColor = Primary,
-                                    uncheckedThumbColor = OnSurfaceVariant,
-                                    uncheckedTrackColor = SurfaceContainerHigh,
-                                    uncheckedBorderColor = OnSurfaceVariant
-                                )
+                                onCheckedChange = { viewModel.setHapticEnabled(it) }
                             )
                         }
 
@@ -440,11 +471,11 @@ fun SettingsScreen(
                             AlertDialog(
                                 onDismissRequest = { showLanguageDialog = false },
                                 containerColor = SurfaceContainerHigh,
-                                title = { Text("Language", fontWeight = FontWeight.Bold, color = OnSurface) },
+                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.Bold, color = OnSurface) },
                                 text = {
                                     Column {
                                         LanguageOption(
-                                            title = "System Default",
+                                            title = stringResource(R.string.language_system_default),
                                             isSelected = currentLanguage == "system",
                                             onClick = {
                                                 viewModel.setLanguage("system") {
@@ -457,7 +488,7 @@ fun SettingsScreen(
                                             }
                                         )
                                         LanguageOption(
-                                            title = "English",
+                                            title = stringResource(R.string.language_english),
                                             isSelected = currentLanguage == "en",
                                             onClick = {
                                                 viewModel.setLanguage("en") {
@@ -470,7 +501,7 @@ fun SettingsScreen(
                                             }
                                         )
                                         LanguageOption(
-                                            title = "Italiano",
+                                            title = stringResource(R.string.language_italian),
                                             isSelected = currentLanguage == "it",
                                             onClick = {
                                                 viewModel.setLanguage("it") {
@@ -486,7 +517,7 @@ fun SettingsScreen(
                                 },
                                 confirmButton = {
                                     TextButton(onClick = { showLanguageDialog = false }) {
-                                        Text("CANCEL", color = OnSurfaceVariant)
+                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
                                     }
                                 }
                             )
@@ -540,7 +571,7 @@ fun SettingsScreen(
                                         )
                                     }
                                 }
-                                Switch(
+                                SettingsSwitch(
                                     checked = autoBackupEnabled,
                                     onCheckedChange = { 
                                         if (it) {
@@ -548,14 +579,7 @@ fun SettingsScreen(
                                         } else {
                                             viewModel.setAutoBackupEnabled(false)
                                         }
-                                    },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = OnPrimary,
-                                        checkedTrackColor = Primary,
-                                        uncheckedThumbColor = OnSurfaceVariant,
-                                        uncheckedTrackColor = SurfaceContainerHigh,
-                                        uncheckedBorderColor = OnSurfaceVariant
-                                    )
+                                    }
                                 )
                             }
 
@@ -573,7 +597,7 @@ fun SettingsScreen(
                                         Column {
                                             Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
                                             Text(
-                                                if (autoBackupFolderUri != null) stringResource(R.string.custom_folder) else stringResource(R.string.app_internal),
+                                                if (autoBackupFolderUri != null) viewModel.getFolderDisplayPath(autoBackupFolderUri) else stringResource(R.string.app_internal),
                                                 style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
                                             )
                                         }
@@ -587,6 +611,33 @@ fun SettingsScreen(
                     }
 
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GymButton(
+                            onClick = { showIncludeImagesDialog = true },
+                            modifier = Modifier.weight(1f),
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = OnSurface
+                        ) {
+                            Icon(Icons.Rounded.CloudUpload, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
+                        }
+
+                        GymButton(
+                            onClick = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+                            modifier = Modifier.weight(1f),
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = OnSurface
+                        ) {
+                            Icon(Icons.Rounded.CloudDownload, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.import_database), fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     GymButton(
                         onClick = { 
                             val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
@@ -599,48 +650,26 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Rounded.TableChart, contentDescription = null)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("EXPORT CSV", fontWeight = FontWeight.Bold)
-                    }
-
-                    GymButton(
-                        onClick = { showIncludeImagesDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurface
-                    ) {
-                        Icon(Icons.Rounded.CloudUpload, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
-                    }
-
-                    GymButton(
-                        onClick = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
-                        modifier = Modifier.fillMaxWidth(),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurface
-                    ) {
-                        Icon(Icons.Rounded.CloudDownload, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("IMPORT DATABASE", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.export_csv), fontWeight = FontWeight.Bold)
                     }
 
                     GymButton(
                         onClick = { showResetDialog = true },
                         modifier = Modifier.fillMaxWidth(),
-                        containerColor = SurfaceContainerHigh.copy(alpha = 0.5f),
-                        contentColor = Tertiary
+                        containerColor = Error.copy(alpha = 0.15f),
+                        contentColor = Error
                     ) {
-                        Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Tertiary)
+                        Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Error)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("RESET APP", fontWeight = FontWeight.Bold, color = Tertiary)
+                        Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.Bold, color = Error)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Trainable v0.9.1 beta\nMade with ❤️ by Emanuel5014",
+                text = "Trainable v0.10.0 beta\nMade with ❤️ by Emanuel5014",
                 style = MaterialTheme.typography.labelSmall,
                 color = OnSurfaceVariant.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
@@ -687,4 +716,26 @@ private fun LanguageOption(
             Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
         }
     }
+}
+
+@Composable
+private fun SettingsSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        thumbContent = if (checked) {
+            {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                )
+            }
+        } else {
+            null
+        }
+    )
 }

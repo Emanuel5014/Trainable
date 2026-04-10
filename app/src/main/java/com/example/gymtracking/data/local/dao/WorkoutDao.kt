@@ -30,6 +30,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_plans WHERE is_active = 0 ORDER BY ordine ASC")
     fun getExpiredPlans(): Flow<List<WorkoutPlanEntity>>
 
+    @Query("SELECT * FROM workout_plans ORDER BY is_active DESC, ordine ASC")
+    fun getAllPlansSorted(): Flow<List<WorkoutPlanEntity>>
+
     @Transaction
     @Query("SELECT * FROM workout_plans WHERE id = :planId")
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?>

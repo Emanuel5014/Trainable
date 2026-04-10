@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,7 +29,7 @@ fun StatCard(
     title: String,
     value: String,
     unit: String,
-    icon: ImageVector = Icons.Default.TrendingUp,
+    icon: ImageVector = Icons.AutoMirrored.Filled.TrendingUp,
     iconTint: Color = Primary,
     modifier: Modifier = Modifier
 ) {

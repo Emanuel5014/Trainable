@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun localizedNavItems(): List<LocalizedNavItem> = listOf(
     LocalizedNavItem(stringResource(R.string.nav_dashboard), Icons.Rounded.Home),
-    LocalizedNavItem(stringResource(R.string.nav_routines), Icons.AutoMirrored.Rounded.ViewList),
+    LocalizedNavItem(stringResource(R.string.nav_routines), Icons.Rounded.FitnessCenter),
     LocalizedNavItem(stringResource(R.string.nav_history), Icons.Rounded.History),
     LocalizedNavItem(stringResource(R.string.nav_analytics), Icons.Rounded.Insights)
 )

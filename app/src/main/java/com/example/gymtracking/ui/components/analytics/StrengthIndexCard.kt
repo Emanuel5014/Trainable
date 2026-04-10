@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.TrendingDown
-import androidx.compose.material.icons.rounded.TrendingUp
+import androidx.compose.material.icons.automirrored.rounded.TrendingDown
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +34,7 @@ fun StrengthIndexCard(strengthIndex: StrengthIndexUiModel) {
                     color = OnPrimary.copy(alpha = 0.85f)
                 )
                 Icon(
-                    imageVector = if ((strengthIndex.percent ?: 0f) >= 0f) Icons.Rounded.TrendingUp else Icons.Rounded.TrendingDown,
+                    imageVector = if ((strengthIndex.percent ?: 0f) >= 0f) Icons.AutoMirrored.Rounded.TrendingUp else Icons.AutoMirrored.Rounded.TrendingDown,
                     contentDescription = null,
                     tint = OnPrimary
                 )

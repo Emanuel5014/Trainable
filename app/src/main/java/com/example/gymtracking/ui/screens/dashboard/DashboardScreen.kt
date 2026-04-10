@@ -29,6 +29,7 @@ import com.example.gymtracking.data.local.relation.SessionWithPlanName
 import com.example.gymtracking.ui.components.EmptyState
 import com.example.gymtracking.ui.components.GymCard
 import com.example.gymtracking.ui.components.GymIconButton
+import com.example.gymtracking.ui.components.GymLoadingIndicator
 import com.example.gymtracking.ui.components.StatCard
 import com.example.gymtracking.ui.theme.*
 import com.example.gymtracking.ui.util.DateFormatter
@@ -65,7 +66,7 @@ fun DashboardScreen(
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Primary)
+                GymLoadingIndicator()
             }
         } else {
             LazyColumn(
@@ -91,18 +92,20 @@ fun DashboardScreen(
 
                 if (uiState.unfinishedSessions.isNotEmpty()) {
                     item {
-                        Text(
-                            text = stringResource(R.string.resume_workout),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    items(uiState.unfinishedSessions) { session ->
-                        UnfinishedSessionCard(
-                            session = session,
-                            onClick = { onNavigateToWorkout(session.session.planId, session.session.id) }
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+                            Text(
+                                text = stringResource(R.string.resume_workout),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = OnSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                            uiState.unfinishedSessions.forEach { session ->
+                                UnfinishedSessionCard(
+                                    session = session,
+                                    onClick = { onNavigateToWorkout(session.session.planId, session.session.id) }
+                                )
+                            }
+                        }
                     }
                 }
 

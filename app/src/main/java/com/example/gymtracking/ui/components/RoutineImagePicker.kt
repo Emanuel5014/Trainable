@@ -168,7 +168,6 @@ private fun FullscreenImageViewerContent(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .clickable { onDismiss() }
     ) {
         AsyncImage(
             model = imageUri,
@@ -182,11 +181,18 @@ private fun FullscreenImageViewerContent(
                     translationY = offsetY
                 )
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
+                    detectTransformGestures { centroid, pan, zoom, _ ->
                         scale = (scale * zoom).coerceIn(1f, 5f)
+                        
                         if (scale > 1f) {
-                            offsetX += pan.x
-                            offsetY += pan.y
+                            val maxX = size.width * (scale - 1f) / 2f
+                            val maxY = size.height * (scale - 1f) / 2f
+                            
+                            val newOffsetX = offsetX + pan.x * scale
+                            val newOffsetY = offsetY + pan.y * scale
+                            
+                            offsetX = newOffsetX.coerceIn(-maxX, maxX)
+                            offsetY = newOffsetY.coerceIn(-maxY, maxY)
                         } else {
                             offsetX = 0f
                             offsetY = 0f

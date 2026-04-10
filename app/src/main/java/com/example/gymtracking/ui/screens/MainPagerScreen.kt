@@ -26,6 +26,7 @@ fun MainPagerScreen(
     pagerState: PagerState
 ) {
     val navItemsList = localizedNavItems()
+    
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),

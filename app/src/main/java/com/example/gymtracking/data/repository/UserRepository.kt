@@ -28,4 +28,8 @@ class UserRepository @Inject constructor(
             WeightLogEntity(userId = userId, pesoCorporeo = peso, timestamp = data)
         )
     }
+
+    suspend fun updateUser(user: UserEntity) {
+        userDao.updateUser(user)
+    }
 }

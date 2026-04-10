@@ -1,6 +1,12 @@
 package com.example.gymtracking.ui.screens.history
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,6 +15,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -36,8 +44,14 @@ import com.example.gymtracking.ui.components.EmptyState
 import com.example.gymtracking.ui.components.GymButton
 import com.example.gymtracking.ui.components.GymCard
 import com.example.gymtracking.ui.components.GymIconButton
+import com.example.gymtracking.ui.components.GymLoadingIndicator
+import com.example.gymtracking.ui.components.SwipeableCard
+import com.example.gymtracking.ui.components.SwipeAction
+import com.example.gymtracking.ui.components.SwipeDirection
 import com.example.gymtracking.ui.theme.*
 import com.example.gymtracking.ui.util.DateFormatter
+
+import com.example.gymtracking.ui.components.ScreenHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,27 +71,11 @@ fun HistoryScreen(
     }.collectAsState(initial = true)
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        text = stringResource(R.string.history_title), 
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface
-                )
-            )
-        },
         containerColor = Surface
     ) { paddingValues ->
         if (uiState.isLoading && uiState.sessions.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Primary)
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                GymLoadingIndicator()
             }
         } else if (uiState.sessions.isEmpty()) {
             EmptyState(
@@ -87,51 +85,71 @@ fun HistoryScreen(
                 modifier = Modifier.padding(paddingValues)
             )
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(paddingValues)
             ) {
+                ScreenHeader(
+                    title = stringResource(R.string.history_title),
+                    subtitle = "WORKOUT LOGS",
+                    icon = Icons.Rounded.History
+                )
+                
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
                 itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
                     val session = sessionDetails.session
                     val planName = sessionDetails.plan.nome
-                    
+
                     val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { value ->
                             if (value == SwipeToDismissBoxValue.EndToStart) {
                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 sessionToDelete = session
-                                false
-                            } else false
+                            }
+                            false
                         }
                     )
+
+                    // Reset swipe state when dialog is dismissed
+                    LaunchedEffect(sessionToDelete) {
+                        if (sessionToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                            dismissState.reset()
+                        }
+                    }
 
                     SwipeToDismissBox(
                         state = dismissState,
                         enableDismissFromStartToEnd = false,
                         backgroundContent = {
+                            val progress = dismissState.progress
+                            
                             val color by animateColorAsState(
-                                when (dismissState.targetValue) {
-                                    SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.8f)
-                                    else -> Color.Transparent
-                                }, label = "dismiss_bg"
+                                if (progress > 0f) Error.copy(alpha = 0.6f) else Color.Transparent,
+                                label = "bg_color"
                             )
+
                             Box(
-                                Modifier
+                                modifier = Modifier
                                     .fillMaxSize()
-                                    .clip(RoundedCornerShape(28.dp))
+                                    .clip(Shapes.extraLarge)
                                     .background(color)
-                                    .padding(horizontal = 20.dp),
+                                    .padding(horizontal = 28.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
-                                Icon(
-                                    Icons.Rounded.DeleteSweep,
-                                    contentDescription = "Delete",
-                                    tint = OnError,
-                                    modifier = Modifier.size(32.dp)
-                                )
+                                if (progress > 0f) {
+                                    Icon(
+                                        Icons.Rounded.DeleteSweep,
+                                        contentDescription = "Delete",
+                                        tint = Error,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
                             }
                         }
                     ) {
@@ -154,11 +172,14 @@ fun HistoryScreen(
                 item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
+        }
     }
 
     if (sessionToDelete != null) {
         AlertDialog(
-            onDismissRequest = { sessionToDelete = null },
+            onDismissRequest = { 
+                sessionToDelete = null
+            },
             title = { Text(stringResource(R.string.delete_session)) },
             text = { Text(stringResource(R.string.delete_session_message)) },
             confirmButton = {
@@ -265,7 +286,7 @@ fun SessionHistoryCard(
                     
                     if (details == null) {
                         Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Primary, modifier = Modifier.size(24.dp))
+                            GymLoadingIndicator(size = 24.dp)
                         }
                     } else if (details.sets.isEmpty()) {
                         Text(stringResource(R.string.no_exercises_in_session_detail), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
@@ -309,7 +330,7 @@ fun SessionHistoryCard(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Icon(
-                                                    Icons.Rounded.Notes,
+                                                    Icons.AutoMirrored.Rounded.Notes,
                                                     contentDescription = null,
                                                     tint = OnSurfaceVariant.copy(alpha = 0.5f),
                                                     modifier = Modifier.size(12.dp)

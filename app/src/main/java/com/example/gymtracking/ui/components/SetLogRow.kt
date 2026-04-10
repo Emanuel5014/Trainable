@@ -8,9 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.EditNote
-import androidx.compose.material.icons.rounded.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -131,7 +131,7 @@ fun SetLogRow(
         // Note Icon Button
         IconButton(onClick = { isNoteEditing = !isNoteEditing }) {
             Icon(
-                imageVector = if (!note.isNullOrBlank()) Icons.Rounded.Notes else Icons.Rounded.EditNote,
+                imageVector = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote,
                 contentDescription = "Edit Note",
                 tint = if (!note.isNullOrBlank()) Primary else OnSurfaceVariant.copy(alpha = 0.6f)
             )

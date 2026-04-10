@@ -7,7 +7,8 @@ espressoCore = "3.5.1"
 lifecycle-runtime-ktx = "2.6.1"
 activityCompose = "1.8.0"
 kotlin = "2.1.10"
-composeBom = "2024.11.00"
+composeBom = "2025.12.00"
+material3 = "1.5.0-alpha17"
 ksp = "2.1.10-1.0.29"
 hilt = "2.54"
 hiltNavigationCompose = "1.2.0"
@@ -19,6 +20,7 @@ datastore = "1.1.1"
 workmanager = "2.9.1"
 coil = "2.7.0"
 core-splashscreen = "1.0.1"
+material3Version = "1.4.0"
 
 [libraries]
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
@@ -35,7 +37,7 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
@@ -51,6 +53,8 @@ work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version
 hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltNavigationCompose" }
 hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltNavigationCompose" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version = "1.8.0" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3Version" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -30,6 +30,7 @@ data class WorkoutState(
     val exercises: List<WorkoutExerciseState> = emptyList(),
     val currentExerciseIndex: Int = 0,
     val remainingRestSeconds: Int = 0,
+    val restTimerEndTime: Long? = null,
     val isFinished: Boolean = false,
     val exerciseSwaps: Map<Int, Int> = emptyMap()
 ) {
@@ -385,19 +386,28 @@ class WorkoutViewModel @Inject constructor(
 
     private fun startRestTimer(seconds: Int) {
         stopRestTimer()
-        _state.update { it.copy(remainingRestSeconds = seconds) }
+        val endTime = System.currentTimeMillis() + (seconds * 1000L)
+        _state.update { it.copy(remainingRestSeconds = seconds, restTimerEndTime = endTime) }
         timerJob = viewModelScope.launch {
-            while (_state.value.remainingRestSeconds > 0) {
-                delay(1000L)
-                _state.update { it.copy(remainingRestSeconds = it.remainingRestSeconds - 1) }
+            while (true) {
+                delay(100L)
+                val end = _state.value.restTimerEndTime ?: break
+                val remaining = ((end - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+                if (remaining == 0) {
+                    _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+                    break
+                }
+                _state.update { it.copy(remainingRestSeconds = remaining) }
             }
         }
     }
 
     fun addRestTime(seconds: Int) {
-        _state.update { it.copy(remainingRestSeconds = it.remainingRestSeconds + seconds) }
-        if (timerJob?.isActive != true && _state.value.remainingRestSeconds > 0) {
-            startRestTimer(_state.value.remainingRestSeconds)
+        val currentEnd = _state.value.restTimerEndTime
+        if (currentEnd != null) {
+            val newEnd = currentEnd + (seconds * 1000L)
+            val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+            _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining) }
         }
     }
 
@@ -456,6 +466,6 @@ class WorkoutViewModel @Inject constructor(
     private fun stopRestTimer() {
         timerJob?.cancel()
         timerJob = null
-        _state.update { it.copy(remainingRestSeconds = 0) }
+        _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
     }
 }

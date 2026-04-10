@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,12 +37,7 @@ import com.example.gymtracking.R
 import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.local.relation.PlanExerciseWithDetails
-import com.example.gymtracking.ui.components.ExerciseEntryCard
-import com.example.gymtracking.ui.components.ExercisePickerBottomSheet
-import com.example.gymtracking.ui.components.GymButton
-import com.example.gymtracking.ui.components.GymIconButton
-import com.example.gymtracking.ui.components.GymInputField
-import com.example.gymtracking.ui.components.RoutineImagePicker
+import com.example.gymtracking.ui.components.*
 import com.example.gymtracking.ui.theme.*
 import com.example.gymtracking.util.AppLocaleManager
 import kotlinx.coroutines.flow.map
@@ -117,38 +113,6 @@ fun RoutineDetailScreen(
 
     Scaffold(
         containerColor = Surface,
-        topBar = {
-            TopAppBar(
-                title = { Text(uiState.planDetails?.plan?.nome ?: "", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 8.dp)) {
-                        GymIconButton(
-                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                            onClick = onNavigateBack,
-                            containerColor = SurfaceContainerHigh,
-                            contentColor = OnSurface,
-                            description = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    Box(modifier = Modifier.padding(end = 8.dp)) {
-                        GymIconButton(
-                            icon = Icons.Rounded.Edit,
-                            onClick = { openRoutineEditSheet() },
-                            containerColor = SurfaceContainerHigh,
-                            contentColor = OnSurface,
-                            description = "Edit Routine"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                    navigationIconContentColor = OnSurface
-                )
-            )
-        },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(
@@ -182,8 +146,8 @@ fun RoutineDetailScreen(
         }
     ) { paddingValues ->
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Primary)
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                GymLoadingIndicator()
             }
         } else if (uiState.planDetails != null) {
             val details = uiState.planDetails!!
@@ -193,9 +157,36 @@ fun RoutineDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(20.dp),
+                contentPadding = PaddingValues(bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    ScreenHeader(
+                        title = details.plan.nome,
+                        subtitle = stringResource(R.string.routine_details).uppercase(),
+                        navigationIcon = {
+                            GymIconButton(
+                                icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                onClick = onNavigateBack,
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = OnSurface,
+                                description = "Back"
+                            )
+                        },
+                        actions = {
+                            GymIconButton(
+                                icon = Icons.Rounded.Edit,
+                                onClick = { openRoutineEditSheet() },
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = OnSurface,
+                                description = "Edit Routine"
+                            )
+                        },
+                        titleInRow = true,
+                        titleStyle = MaterialTheme.typography.headlineLarge
+                    )
+                }
+
                 item {
                     RoutineImagePicker(
                         currentImageUri = details.plan.imageUri,
@@ -204,7 +195,7 @@ fun RoutineDetailScreen(
                 }
 
                 item {
-                    Column(modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp, bottom = 8.dp)) {
                         Text(
                             text = stringResource(R.string.start_date) + " " + com.example.gymtracking.ui.util.DateFormatter.format(details.plan.dataInizio),
                             style = MaterialTheme.typography.labelMedium,
@@ -231,6 +222,7 @@ fun RoutineDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
                             .zIndex(if (isDragging) 1f else 0f)
                             .graphicsLayer {
                                 translationY = if (isDragging) dragOffsetY else 0f
@@ -307,7 +299,7 @@ fun RoutineDetailScreen(
                 item { Spacer(modifier = Modifier.height(140.dp)) }
             }
         } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
                 Text(uiState.error ?: "Routine not found", color = OnSurfaceVariant)
             }
         }
@@ -320,6 +312,8 @@ fun RoutineDetailScreen(
         ModalBottomSheet(
             onDismissRequest = { showExerciseSheet = false },
             containerColor = Surface,
+            contentColor = OnSurface,
+            tonalElevation = 0.dp,
             dragHandle = {
                 Box(
                     modifier = Modifier
@@ -364,7 +358,7 @@ fun RoutineDetailScreen(
                             label = stringResource(R.string.exercise),
                             readOnly = true,
                             modifier = Modifier
-                                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth()
                         )
                         ExposedDropdownMenu(
@@ -508,6 +502,8 @@ fun RoutineDetailScreen(
         ModalBottomSheet(
             onDismissRequest = { showRoutineEditSheet = false },
             containerColor = Surface,
+            contentColor = OnSurface,
+            tonalElevation = 0.dp,
             dragHandle = {
                 Box(
                     modifier = Modifier

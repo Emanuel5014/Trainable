@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.gymtracking.data.local.entity.WorkoutPlanEntity
 import com.example.gymtracking.data.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,16 +26,15 @@ class RoutinesViewModel @Inject constructor(
 
     private fun loadPlans() {
         viewModelScope.launch {
-            workoutRepository.getActivePlans()
-                .onEach { active ->
-                    _uiState.update { it.copy(plans = active, isLoading = false) }
-                }.collect()
-        }
-        viewModelScope.launch {
-            workoutRepository.getExpiredPlans()
-                .onEach { archived ->
-                    _uiState.update { it.copy(archivedPlans = archived, isLoading = false) }
-                }.collect()
+            workoutRepository.getAllPlansSorted()
+                .collect { allPlans ->
+                    val (active, archived) = allPlans.partition { it.isActive }
+                    _uiState.update { it.copy(
+                        plans = active,
+                        archivedPlans = archived,
+                        isLoading = false
+                    )}
+                }
         }
     }
 
@@ -51,6 +53,12 @@ class RoutinesViewModel @Inject constructor(
     fun unarchivePlan(plan: WorkoutPlanEntity) {
         viewModelScope.launch {
             workoutRepository.setPlanActive(plan.id, true)
+        }
+    }
+
+    fun toggleArchive(plan: WorkoutPlanEntity) {
+        viewModelScope.launch {
+            workoutRepository.setPlanActive(plan.id, !plan.isActive)
         }
     }
     

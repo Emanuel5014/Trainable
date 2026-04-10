@@ -1,8 +1,8 @@
 package com.example.gymtracking.ui.screens.routines
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -21,39 +23,37 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import com.example.gymtracking.R
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
-import com.example.gymtracking.data.repository.dataStore
-import com.example.gymtracking.data.repository.UserPreferencesRepository
-import kotlinx.coroutines.flow.map
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymtracking.R
 import com.example.gymtracking.data.local.entity.WorkoutPlanEntity
+import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.ui.components.EmptyState
 import com.example.gymtracking.ui.components.GymButton
 import com.example.gymtracking.ui.components.GymCard
 import com.example.gymtracking.ui.components.GymInputField
+import com.example.gymtracking.ui.components.GymLoadingIndicator
+import com.example.gymtracking.ui.components.ScreenHeader
 import com.example.gymtracking.ui.theme.*
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RoutineListScreen(
     onNavigateToDetail: (Int) -> Unit,
+    onSwipingItemChange: ((Boolean) -> Unit)? = null,
     viewModel: RoutinesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -63,57 +63,16 @@ fun RoutineListScreen(
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
-    val density = LocalDensity.current
-    val listState = rememberLazyListState()
+    
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val isCurrentlyArchived by remember { derivedStateOf { pagerState.currentPage == 1 } }
+    val coroutineScope = rememberCoroutineScope()
 
     var showSheet by remember { mutableStateOf(false) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
+    var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
-    var showingArchived by remember { mutableStateOf(false) }
-
-    // Gesture state
-    var swipeOffsetY by remember { mutableStateOf(0f) }
-    val swipeThresholdPx = with(density) { 100.dp.toPx() }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y > 0 && listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0) {
-                    swipeOffsetY = (swipeOffsetY + available.y).coerceAtMost(swipeThresholdPx * 1.5f)
-                    return Offset(0f, available.y)
-                }
-                if (available.y < 0 && swipeOffsetY > 0) {
-                    val consumed = if (swipeOffsetY + available.y > 0) available.y else -swipeOffsetY
-                    swipeOffsetY += consumed
-                    return Offset(0f, consumed)
-                }
-                return Offset.Zero
-            }
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                if (swipeOffsetY > swipeThresholdPx) {
-                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    showingArchived = !showingArchived
-                }
-                swipeOffsetY = 0f
-                return super.onPostFling(consumed, available)
-            }
-        }
-    }
-
-    // Reordering State
-    val localPlans = remember { mutableStateListOf<WorkoutPlanEntity>() }
-    var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
-    var dragOffsetY by remember { mutableStateOf(0f) }
-
-    // Sync local list
-    LaunchedEffect(uiState.plans, uiState.archivedPlans, showingArchived) {
-        if (draggedItemIndex == null) {
-            localPlans.clear()
-            localPlans.addAll(if (showingArchived) uiState.archivedPlans else uiState.plans)
-        }
-    }
 
     fun openCreateSheet() {
         routineName = ""
@@ -137,188 +96,105 @@ fun RoutineListScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .nestedScroll(nestedScrollConnection)
         ) {
-            // Drag Visual Indicator
-            if (swipeOffsetY > 10f) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = (swipeOffsetY / 4).dp)
-                        .graphicsLayer { 
-                            alpha = (swipeOffsetY / swipeThresholdPx).coerceIn(0f, 1f)
-                            scaleX = (swipeOffsetY / swipeThresholdPx).coerceIn(0.5f, 1.2f)
-                            scaleY = scaleX
-                        }
-                ) {
-                    Icon(
-                        if (showingArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
-                        contentDescription = null,
-                        tint = Primary,
-                        modifier = Modifier.size(32.dp)
+            // Header Section
+            ScreenHeader(
+                titleContent = {
+                    AnimatedContent(
+                        targetState = pagerState.currentPage,
+                        transitionSpec = {
+                            (fadeIn() + scaleIn(initialScale = 0.92f))
+                                .togetherWith(fadeOut() + scaleOut(targetScale = 0.92f))
+                        },
+                        label = "title_anim"
+                    ) { page ->
+                        Text(
+                            text = if (page == 0) stringResource(R.string.your_routines) else stringResource(R.string.archived_routines),
+                            style = MaterialTheme.typography.displaySmall,
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1).sp,
+                            lineHeight = 40.sp
+                        )
+                    }
+                },
+                subtitle = stringResource(R.string.training_plans),
+                icon = Icons.Rounded.FitnessCenter
+            )
+
+            // Modern Tab Row (click only, no swipe)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .clip(Shapes.large)
+                    .background(SurfaceContainerHigh)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                listOf(
+                    stringResource(R.string.active_routines_tab),
+                    stringResource(R.string.archived_routines_tab)
+                ).forEachIndexed { index, title ->
+                    val isSelected = pagerState.currentPage == index
+                    val bgColor by animateColorAsState(
+                        if (isSelected) Surface else Color.Transparent,
+                        label = "tab_bg"
                     )
+                    val contentColor by animateColorAsState(
+                        if (isSelected) Primary else OnSurfaceVariant,
+                        label = "tab_content"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .clip(Shapes.medium)
+                            .background(bgColor)
+                            .clickable {
+                                coroutineScope.launch {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = title.uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                            color = contentColor,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
             }
 
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Primary)
-                }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { 
-                            translationY = swipeOffsetY 
-                            scaleX = 1f - (swipeOffsetY / (swipeThresholdPx * 10f))
-                            scaleY = scaleX
-                        },
-                    contentPadding = PaddingValues(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item {
-                        val headerAlpha by animateFloatAsState(
-                            targetValue = if (swipeOffsetY > 20f) 0.3f else 1f,
-                            label = "header_alpha"
-                        )
-                        Column(
-                            modifier = Modifier
-                                .padding(bottom = 16.dp)
-                                .graphicsLayer { alpha = headerAlpha }
-                        ) {
-                            AnimatedContent(
-                                targetState = showingArchived,
-                                transitionSpec = {
-                                    (fadeIn() + scaleIn(initialScale = 0.8f))
-                                        .togetherWith(fadeOut() + scaleOut(targetScale = 0.8f))
-                                },
-                                label = "title_anim"
-                            ) { isArchived ->
-                                Text(
-                                    text = if (isArchived) stringResource(R.string.archived_routines) else stringResource(R.string.your_routines),
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    color = OnSurface,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Text(
-                                text = if (showingArchived) stringResource(R.string.swipe_for_active) else stringResource(R.string.swipe_for_archived),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (showingArchived) Primary.copy(alpha = 0.7f) else OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        }
-                    }
-
-                    if (localPlans.isEmpty()) {
-                        item {
-                            EmptyState(
-                                icon = Icons.AutoMirrored.Rounded.ViewList,
-                                title = if (showingArchived) stringResource(R.string.no_archived) else stringResource(R.string.no_routines),
-                                description = if (showingArchived) stringResource(R.string.archived_appear_here) else stringResource(R.string.tap_to_create)
-                            )
-                        }
-                    } else {
-                        itemsIndexed(localPlans, key = { _, plan -> plan.id }) { index, plan ->
-                            val isDragging = draggedItemIndex == index
-                            val elevation by animateDpAsState(if (isDragging) 12.dp else 0.dp, label = "elevation")
-
-                            val dismissState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    if (value == SwipeToDismissBoxValue.EndToStart) {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        planToDelete = plan
-                                        false
-                                    } else if (value == SwipeToDismissBoxValue.StartToEnd) {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        if (showingArchived) viewModel.unarchivePlan(plan) else viewModel.archivePlan(plan)
-                                        false
-                                    } else false
-                                }
-                            )
-
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                enableDismissFromStartToEnd = true,
-                                backgroundContent = {
-                                    val direction = dismissState.dismissDirection
-                                    val color by animateColorAsState(
-                                        when (dismissState.targetValue) {
-                                            SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.8f)
-                                            SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.8f)
-                                            else -> Color.Transparent
-                                        }, label = "dismiss_bg"
-                                    )
-                                    val icon = when (dismissState.targetValue) {
-                                        SwipeToDismissBoxValue.EndToStart -> Icons.Rounded.DeleteSweep
-                                        SwipeToDismissBoxValue.StartToEnd -> if (showingArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive
-                                        else -> Icons.Rounded.DeleteSweep
-                                    }
-                                    Box(
-                                        Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)).background(color).padding(horizontal = 20.dp),
-                                        contentAlignment = if (direction == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
-                                    ) {
-                                        Icon(icon, null, tint = if (direction == SwipeToDismissBoxValue.EndToStart) OnError else OnPrimary, modifier = Modifier.size(32.dp))
-                                    }
-                                },
-                                modifier = Modifier
-                                    .zIndex(if (isDragging) 1f else 0f)
-                                    .graphicsLayer {
-                                        translationY = if (isDragging) dragOffsetY else 0f
-                                        scaleX = if (isDragging) 1.02f else 1f
-                                        scaleY = if (isDragging) 1.02f else 1f
-                                        shadowElevation = elevation.toPx()
-                                        shape = RoundedCornerShape(28.dp)
-                                        clip = isDragging
-                                    }
-                                    .pointerInput(Unit) {
-                                        detectDragGesturesAfterLongPress(
-                                            onDragStart = {
-                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                draggedItemIndex = index
-                                                dragOffsetY = 0f
-                                            },
-                                            onDrag = { change, dragAmount ->
-                                                change.consume()
-                                                dragOffsetY += dragAmount.y
-                                                val itemHeight = 100.dp.toPx()
-                                                if (dragOffsetY > itemHeight / 2 && draggedItemIndex!! < localPlans.size - 1) {
-                                                    val targetIndex = draggedItemIndex!! + 1
-                                                    localPlans.add(targetIndex, localPlans.removeAt(draggedItemIndex!!))
-                                                    draggedItemIndex = targetIndex
-                                                    dragOffsetY -= itemHeight
-                                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                } else if (dragOffsetY < -itemHeight / 2 && draggedItemIndex!! > 0) {
-                                                    val targetIndex = draggedItemIndex!! - 1
-                                                    localPlans.add(targetIndex, localPlans.removeAt(draggedItemIndex!!))
-                                                    draggedItemIndex = targetIndex
-                                                    dragOffsetY += itemHeight
-                                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                viewModel.movePlan(index, draggedItemIndex!!, showingArchived)
-                                                draggedItemIndex = null
-                                                dragOffsetY = 0f
-                                            },
-                                            onDragCancel = { draggedItemIndex = null; dragOffsetY = 0f }
-                                        )
-                                    }
-                            ) {
-                                RoutineCard(
-                                    plan = plan,
-                                    onClick = { onNavigateToDetail(plan.id) }
-                                )
-                            }
-                        }
-                    }
-
-                    item { Spacer(modifier = Modifier.height(120.dp)) }
-                }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1,
+                verticalAlignment = Alignment.Top,
+                userScrollEnabled = false
+            ) { page ->
+                val isArchivedPage = page == 1
+                val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
+                
+                RoutineListPage(
+                    plans = plans,
+                    isArchived = isArchivedPage,
+                    onNavigateToDetail = onNavigateToDetail,
+                    onDelete = { planToDelete = it },
+                    onArchiveToggle = { planToArchive = it },
+                    onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
+                    hapticEnabled = hapticEnabled,
+                    isLoading = uiState.isLoading
+                )
             }
         }
     }
@@ -344,6 +220,41 @@ fun RoutineListScreen(
             dismissButton = {
                 GymButton(
                     onClick = { planToDelete = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (planToArchive != null) {
+        val isArchiving = !isCurrentlyArchived
+        AlertDialog(
+            onDismissRequest = { planToArchive = null },
+            title = { Text(stringResource(if (isArchiving) R.string.archive_routine else R.string.unarchive_routine)) },
+            text = { Text(stringResource(if (isArchiving) R.string.archive_routine_message else R.string.unarchive_routine_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        planToArchive?.let { viewModel.toggleArchive(it) }
+                        planToArchive = null
+                    },
+                    containerColor = Primary.copy(alpha = 0.1f),
+                    contentColor = Primary,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { planToArchive = null },
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
@@ -448,6 +359,157 @@ fun RoutineListScreen(
 }
 
 @Composable
+private fun RoutineListPage(
+    plans: List<WorkoutPlanEntity>,
+    isArchived: Boolean,
+    onNavigateToDetail: (Int) -> Unit,
+    onDelete: (WorkoutPlanEntity) -> Unit,
+    onArchiveToggle: (WorkoutPlanEntity) -> Unit,
+    onReorder: (Int, Int) -> Unit,
+    hapticEnabled: Boolean,
+    isLoading: Boolean
+) {
+    val haptic = LocalHapticFeedback.current
+    val listState = rememberLazyListState()
+    
+    // Reordering State local to page
+    val localPlans = remember(plans) { mutableStateListOf<WorkoutPlanEntity>().apply { addAll(plans) } }
+    var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffsetY by remember { mutableStateOf(0f) }
+
+    if (isLoading && plans.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            GymLoadingIndicator()
+        }
+    } else if (plans.isEmpty()) {
+        EmptyState(
+            icon = Icons.Rounded.FitnessCenter,
+            title = if (isArchived) stringResource(R.string.no_archived) else stringResource(R.string.no_routines),
+            description = if (isArchived) stringResource(R.string.archived_appear_here) else stringResource(R.string.tap_to_create)
+        )
+    } else {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            itemsIndexed(localPlans, key = { _, plan -> plan.id }) { index, plan ->
+                val isDragging = draggedItemIndex == index
+                val zIndex = if (isDragging) 1f else 0f
+
+                val dismissState = rememberSwipeToDismissBoxState(
+                    confirmValueChange = { value ->
+                        when (value) {
+                            SwipeToDismissBoxValue.EndToStart -> {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onDelete(plan)
+                            }
+                            SwipeToDismissBoxValue.StartToEnd -> {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onArchiveToggle(plan)
+                            }
+                            else -> {}
+                        }
+                        false
+                    }
+                )
+
+                SwipeToDismissBox(
+                    state = dismissState,
+                    enableDismissFromStartToEnd = true,
+                    backgroundContent = {
+                        val progress = dismissState.progress
+                        
+                        val color by animateColorAsState(
+                            when {
+                                progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                                else -> Color.Transparent
+                            }, label = "bg_color"
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(Shapes.extraLarge)
+                                .background(color)
+                                .padding(horizontal = 28.dp)
+                        ) {
+                            if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                                Icon(
+                                    if (isArchived) Icons.Rounded.Unarchive else Icons.Rounded.Archive,
+                                    contentDescription = "Archive",
+                                    tint = Primary,
+                                    modifier = Modifier.align(Alignment.CenterStart).size(28.dp)
+                                )
+                            }
+                            if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                Icon(
+                                    Icons.Rounded.DeleteSweep,
+                                    contentDescription = "Delete",
+                                    tint = Error,
+                                    modifier = Modifier.align(Alignment.CenterEnd).size(28.dp)
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .zIndex(zIndex)
+                        .graphicsLayer {
+                            translationY = if (isDragging) dragOffsetY else 0f
+                            scaleX = if (isDragging) 1.02f else 1f
+                            scaleY = if (isDragging) 1.02f else 1f
+                            shadowElevation = if (isDragging) 12.dp.toPx() else 0f
+                            shape = Shapes.extraLarge
+                            clip = isDragging
+                        }
+                        .pointerInput(Unit) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    draggedItemIndex = index
+                                    dragOffsetY = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragOffsetY += dragAmount.y
+                                    val itemHeight = 100.dp.toPx()
+                                    if (dragOffsetY > itemHeight / 2 && draggedItemIndex!! < localPlans.size - 1) {
+                                        val targetIndex = draggedItemIndex!! + 1
+                                        localPlans.add(targetIndex, localPlans.removeAt(draggedItemIndex!!))
+                                        draggedItemIndex = targetIndex
+                                        dragOffsetY -= itemHeight
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    } else if (dragOffsetY < -itemHeight / 2 && draggedItemIndex!! > 0) {
+                                        val targetIndex = draggedItemIndex!! - 1
+                                        localPlans.add(targetIndex, localPlans.removeAt(draggedItemIndex!!))
+                                        draggedItemIndex = targetIndex
+                                        dragOffsetY += itemHeight
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
+                                },
+                                onDragEnd = {
+                                    onReorder(index, draggedItemIndex!!)
+                                    draggedItemIndex = null
+                                    dragOffsetY = 0f
+                                },
+                                onDragCancel = { draggedItemIndex = null; dragOffsetY = 0f }
+                            )
+                        }
+                ) {
+                    RoutineCard(
+                        plan = plan,
+                        onClick = { onNavigateToDetail(plan.id) }
+                    )
+                }
+            }
+            item { Spacer(modifier = Modifier.height(100.dp)) }
+        }
+    }
+}
+
+@Composable
 private fun RoutineCard(
     plan: WorkoutPlanEntity,
     onClick: () -> Unit
@@ -471,7 +533,7 @@ private fun RoutineCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.AutoMirrored.Rounded.ViewList,
+                        Icons.Rounded.FitnessCenter,
                         contentDescription = null,
                         tint = Primary
                     )

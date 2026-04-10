@@ -37,12 +37,14 @@
     <string name="welcome_back">Bentornato</string>
     <string name="today_workout">Allenamento di Oggi</string>
     <string name="no_workout_today">Nessun allenamento previsto per oggi</string>
-    <string name="resume_workout">Riprendi Allenamento</string>
+    <string name="resume_workout">RIPRENDI ALLENAMENTO</string>
     <string name="days_this_week">giorni questa settimana</string>
     
     <!-- Routines -->
     <string name="your_routines">LE TUE SCHEDE</string>
     <string name="archived_routines">ARCHIVIATE</string>
+    <string name="active_routines_tab">Attive</string>
+    <string name="archived_routines_tab">Archiviate</string>
     <string name="create_routine">CREA SCHEDA</string>
     <string name="edit_routine">MODIFICA SCHEDA</string>
     <string name="add_photo">AGGIUNGI FOTO</string>
@@ -57,9 +59,16 @@
     <string name="swipe_for_archived">Scorri in basso per archiviate</string>
     <string name="swipe_for_active">Scorri in basso per attive</string>
     <string name="routine_name">Nome Scheda</string>
+    <string name="routine_details">Dettagli</string>
     <string name="routine_notes">Note (opzionale)</string>
     <string name="delete_routine">Elimina Scheda?</string>
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
+    <string name="archive_routine">Archivia Scheda?</string>
+    <string name="archive_routine_message">Questa scheda verrà spostata nella sezione archiviata.</string>
+    <string name="unarchive_routine">Ripristina Scheda?</string>
+    <string name="unarchive_routine_message">Questa scheda verrà ripristinata nelle schede attive.</string>
+    <string name="archive">Archivia</string>
+    <string name="unarchive">Ripristina</string>
     <string name="start_date">DATA INIZIO:</string>
     <string name="swap_exercise">CAMBIA ESERCIZIO</string>
     <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>
@@ -145,13 +154,18 @@
     <string name="export_database">ESPORTA DATABASE</string>
     <string name="export_csv">ESPORTA CSV</string>
     <string name="import_database">IMPORTA DATABASE</string>
-    <string name="reset_app">RESET APP</string>
+    <string name="reset_app_button">RESET APP</string>
+    <string name="reset_app_dialog">Ripristina App?</string>
     <string name="reset_app_message">Questo eliminerà tutti i tuoi dati inclusi allenamenti, schede e impostazioni. Questa azione non può essere annullata.</string>
-    <string name="reset_app_confirm">Reset App?</string>
-    <string name="restarting">Riavvio app in corso...</string>
+    <string name="restarting_app">Riavvio app in corso...</string>
+    <string name="tactile_feedback_desc">Vibrazione sulle interazioni</string>
     <string name="folder_selected">Cartella selezionata</string>
     <string name="choose_folder">Scegli cartella</string>
     <string name="edit_backup">MODIFICA</string>
+    <string name="edit_username">Modifica Nome Utente</string>
+    <string name="username">Nome utente</string>
+    <string name="training_plans">PIANI ALLENAMENTO</string>
+    <string name="workout_logs">REGISTRO ALLENAMENTI</string>
     
     <!-- Language Settings -->
     <string name="language">Lingua</string>
@@ -218,11 +232,9 @@
     <string name="save_to_custom_folder">Salva in cartella personalizzata</string>
     <string name="auto_backup_setup">Configurazione Backup</string>
     <string name="configure_backup">Configura le impostazioni di backup automatico</string>
-    <string name="restarting_app">Riavvio app in corso...</string>
     <string name="database_imported">Database importato. Riavvio app...</string>
     
     <!-- History Additional -->
-    <string name="workout_duration">Durata</string>
     <string name="exercises_completed">esercizi completati</string>
     <string name="no_exercises_in_session">Nessun esercizio registrato in questa sessione.</string>
     <string name="total">Totale</string>
@@ -237,7 +249,7 @@
     <string name="workout_in_progress">Allenamento in corso</string>
     <string name="started">Iniziato: %s</string>
     <string name="goal_met">Obiettivo raggiunto</string>
-    <string name="workouts_this_week">%d / %d allenamenti</string>
+    <string name="workouts_this_week" formatted="false">%d / %d allenamenti</string>
     
     <!-- Routine Detail -->
     <string name="start_workout_detail">INIZIA</string>

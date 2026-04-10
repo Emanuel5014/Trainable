@@ -37,12 +37,14 @@
     <string name="welcome_back">Welcome back</string>
     <string name="today_workout">Today\'s Workout</string>
     <string name="no_workout_today">No workout scheduled for today</string>
-    <string name="resume_workout">Resume Workout</string>
+    <string name="resume_workout">RESUME WORKOUT</string>
     <string name="days_this_week">days this week</string>
     
     <!-- Routines -->
     <string name="your_routines">YOUR ROUTINES</string>
     <string name="archived_routines">ARCHIVED</string>
+    <string name="active_routines_tab">Active</string>
+    <string name="archived_routines_tab">Archived</string>
     <string name="create_routine">CREATE ROUTINE</string>
     <string name="edit_routine">EDIT ROUTINE</string>
     <string name="add_photo">ADD PHOTO</string>
@@ -57,9 +59,16 @@
     <string name="swipe_for_archived">Swipe down for archived</string>
     <string name="swipe_for_active">Swipe down for active</string>
     <string name="routine_name">Routine Name</string>
+    <string name="routine_details">Details</string>
     <string name="routine_notes">Notes (optional)</string>
     <string name="delete_routine">Delete Routine?</string>
     <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
+    <string name="archive_routine">Archive Routine?</string>
+    <string name="archive_routine_message">This routine will be moved to the archived section.</string>
+    <string name="unarchive_routine">Restore Routine?</string>
+    <string name="unarchive_routine_message">This routine will be restored to your active routines.</string>
+    <string name="archive">Archive</string>
+    <string name="unarchive">Restore</string>
     <string name="start_date">START DATE:</string>
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
@@ -146,13 +155,18 @@
     <string name="export_database">EXPORT DATABASE</string>
     <string name="export_csv">EXPORT CSV</string>
     <string name="import_database">IMPORT DATABASE</string>
-    <string name="reset_app">RESET APP</string>
+    <string name="reset_app_button">RESET APP</string>
+    <string name="reset_app_dialog">Reset App?</string>
     <string name="reset_app_message">This will delete all your data including workouts, routines, and settings. This action cannot be undone.</string>
-    <string name="reset_app_confirm">Reset App?</string>
-    <string name="restarting">Restarting app...</string>
+    <string name="restarting_app">Restarting app...</string>
+    <string name="tactile_feedback_desc">Vibration on interactions</string>
     <string name="folder_selected">Folder selected</string>
     <string name="choose_folder">Choose folder</string>
     <string name="edit_backup">EDIT</string>
+    <string name="edit_username">Edit Username</string>
+    <string name="username">Username</string>
+    <string name="training_plans">TRAINING PLANS</string>
+    <string name="workout_logs">WORKOUT LOGS</string>
     
     <!-- Language Settings -->
     <string name="language">Language</string>
@@ -219,7 +233,6 @@
     <string name="save_to_custom_folder">Save to custom folder</string>
     <string name="auto_backup_setup">Auto Backup Setup</string>
     <string name="configure_backup">Configure your automatic backup settings</string>
-    <string name="restarting_app">Restarting app...</string>
     <string name="database_imported">Database imported. Restarting app...</string>
     
     <!-- History Additional -->
@@ -237,7 +250,7 @@
     <string name="workout_in_progress">Workout in progress</string>
     <string name="started">Started: %s</string>
     <string name="goal_met">Goal met</string>
-    <string name="workouts_this_week">%d / %d workouts</string>
+    <string name="workouts_this_week" formatted="false">%d / %d workouts</string>
     
     <!-- Routine Detail -->
     <string name="start_workout_detail">START</string>

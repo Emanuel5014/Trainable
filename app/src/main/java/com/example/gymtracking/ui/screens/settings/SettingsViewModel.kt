@@ -225,4 +225,22 @@ class SettingsViewModel @Inject constructor(
             onLanguageChanged()
         }
     }
+
+    fun getFolderDisplayPath(uriString: String?): String {
+        if (uriString == null) return ""
+        return try {
+            val uri = Uri.parse(uriString)
+            uri.lastPathSegment?.substringAfter("document/")?.replace(":", "/") ?: uriString
+        } catch (e: Exception) {
+            uriString
+        }
+    }
+
+    fun updateUsername(newUsername: String) {
+        viewModelScope.launch {
+            currentUser.value?.let { user ->
+                userRepository.updateUser(user.copy(username = newUsername))
+            }
+        }
+    }
 }

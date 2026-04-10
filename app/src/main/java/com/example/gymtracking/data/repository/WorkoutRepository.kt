@@ -28,6 +28,8 @@ class WorkoutRepository @Inject constructor(
 
     fun getExpiredPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getExpiredPlans()
     
+    fun getAllPlansSorted(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlansSorted()
+    
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?> = workoutDao.getPlanWithDetails(planId)
     
     suspend fun savePlan(plan: WorkoutPlanEntity): Long {

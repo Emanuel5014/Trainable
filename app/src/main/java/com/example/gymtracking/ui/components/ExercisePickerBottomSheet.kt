@@ -1,5 +1,6 @@
 package com.example.gymtracking.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -183,9 +184,7 @@ fun ExercisePickerBottomSheet(
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Primary
                 ),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(Primary)
-                )
+                border = BorderStroke(1.dp, Primary)
             ) {
                 Icon(
                     Icons.Rounded.Add,
@@ -377,7 +376,7 @@ private fun AddCustomExerciseDialog(
                         label = { Text("Category") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = false)
                             .fillMaxWidth(),
                         shape = Shapes.large,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -469,7 +468,7 @@ private fun EditCustomExerciseDialog(
                         label = { Text("Category") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = false)
                             .fillMaxWidth(),
                         shape = Shapes.large,
                         colors = OutlinedTextFieldDefaults.colors(

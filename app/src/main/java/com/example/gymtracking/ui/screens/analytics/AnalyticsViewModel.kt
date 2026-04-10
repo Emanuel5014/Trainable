@@ -8,6 +8,7 @@ import com.example.gymtracking.data.local.dao.PersonalBestRow
 import com.example.gymtracking.data.repository.AnalyticsRepository
 import com.example.gymtracking.data.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     private val analyticsRepository: AnalyticsRepository,
@@ -56,7 +58,9 @@ class AnalyticsViewModel @Inject constructor(
             analyticsRepository.getTotalVolumeSince(context.startDate),
             analyticsRepository.getVolumeHistory(context.startDate)
         ) { values: Array<Any?> ->
+            @Suppress("UNCHECKED_CAST")
             val totalVolume = values[0] as Float?
+            @Suppress("UNCHECKED_CAST")
             val volumeHistory = values[1] as List<com.example.gymtracking.data.local.dao.DailyVolume>
             VolumeAnalyticsSnapshot(
                 totalVolume = totalVolume ?: 0f,
@@ -68,7 +72,9 @@ class AnalyticsViewModel @Inject constructor(
             analyticsRepository.getAllPersonalBests(),
             consistencyFlow
         ) { values: Array<Any?> ->
+            @Suppress("UNCHECKED_CAST")
             val personalBests = values[0] as List<PersonalBestRow>
+            @Suppress("UNCHECKED_CAST")
             val consistency = values[1] as ConsistencyRow?
             BestsConsistencySnapshot(
                 personalBests = personalBests,
@@ -77,7 +83,9 @@ class AnalyticsViewModel @Inject constructor(
         }
 
         val coreFlow = combine(volumeFlow, bestsFlow) { values: Array<Any?> ->
+            @Suppress("UNCHECKED_CAST")
             val volume = values[0] as VolumeAnalyticsSnapshot
+            @Suppress("UNCHECKED_CAST")
             val bests = values[1] as BestsConsistencySnapshot
             CoreAnalyticsSnapshot(
                 totalVolume = volume.totalVolume,
@@ -91,7 +99,9 @@ class AnalyticsViewModel @Inject constructor(
             analyticsRepository.getStrengthIndex(context.startDate),
             analyticsRepository.getVolumeByCategory(context.startDate)
         ) { values: Array<Any?> ->
+            @Suppress("UNCHECKED_CAST")
             val strengthIndex = values[0] as Float?
+            @Suppress("UNCHECKED_CAST")
             val categoryVolumes = values[1] as List<CategoryVolumeRow>
             StrengthCategorySnapshot(
                 strengthIndex = strengthIndex,
@@ -103,7 +113,9 @@ class AnalyticsViewModel @Inject constructor(
             strengthFlow,
             analyticsRepository.getWeightHistory(context.startDate)
         ) { values: Array<Any?> ->
+            @Suppress("UNCHECKED_CAST")
             val strengthCategory = values[0] as StrengthCategorySnapshot
+            @Suppress("UNCHECKED_CAST")
             val weightHistory = values[1] as List<com.example.gymtracking.data.local.entity.WeightLogEntity>
             SupplementalAnalyticsSnapshot(
                 strengthIndex = strengthCategory.strengthIndex,
