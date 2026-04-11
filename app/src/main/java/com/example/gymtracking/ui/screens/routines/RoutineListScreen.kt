@@ -192,7 +192,6 @@ fun RoutineListScreen(
                     onDelete = { planToDelete = it },
                     onArchiveToggle = { planToArchive = it },
                     onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
-                    hapticEnabled = hapticEnabled,
                     isLoading = uiState.isLoading
                 )
             }
@@ -366,10 +365,13 @@ private fun RoutineListPage(
     onDelete: (WorkoutPlanEntity) -> Unit,
     onArchiveToggle: (WorkoutPlanEntity) -> Unit,
     onReorder: (Int, Int) -> Unit,
-    hapticEnabled: Boolean,
     isLoading: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+    }.collectAsState(initial = true)
     val listState = rememberLazyListState()
     
     // Reordering State local to page

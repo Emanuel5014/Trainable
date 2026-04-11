@@ -669,7 +669,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Trainable v0.10.0 beta\nMade with ❤️ by Emanuel5014",
+                text = "Trainable v0.10.1 beta\nMade with ❤️ by Emanuel5014",
                 style = MaterialTheme.typography.labelSmall,
                 color = OnSurfaceVariant.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,

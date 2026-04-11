@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -369,21 +370,31 @@ private fun AddCustomExerciseDialog(
                     expanded = categoryExpanded,
                     onExpandedChange = { categoryExpanded = !categoryExpanded }
                 ) {
-                    OutlinedTextField(
-                        value = selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                        modifier = Modifier
-                            .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = false)
-                            .fillMaxWidth(),
-                        shape = Shapes.large,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
+                    Box(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            if (!categoryExpanded) categoryExpanded = true
+                        }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedCategory,
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = true,
+                            label = { Text("Category") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                            modifier = Modifier
+                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth(),
+                            shape = Shapes.large,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Primary,
+                                unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
+                            )
                         )
-                    )
+                    }
                     ExposedDropdownMenu(
                         expanded = categoryExpanded,
                         onDismissRequest = { categoryExpanded = false }
@@ -461,21 +472,31 @@ private fun EditCustomExerciseDialog(
                     expanded = categoryExpanded,
                     onExpandedChange = { categoryExpanded = !categoryExpanded }
                 ) {
-                    OutlinedTextField(
-                        value = selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                        modifier = Modifier
-                            .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = false)
-                            .fillMaxWidth(),
-                        shape = Shapes.large,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary,
-                            unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
+                    Box(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            if (!categoryExpanded) categoryExpanded = true
+                        }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedCategory,
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = true,
+                            label = { Text("Category") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                            modifier = Modifier
+                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth(),
+                            shape = Shapes.large,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Primary,
+                                unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
+                            )
                         )
-                    )
+                    }
                     ExposedDropdownMenu(
                         expanded = categoryExpanded,
                         onDismissRequest = { categoryExpanded = false }

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,11 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.gymtracking.R
+import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.ui.navigation.MainTabs
 import com.example.gymtracking.ui.theme.OnPrimary
 import com.example.gymtracking.ui.theme.OnSurfaceVariant
 import com.example.gymtracking.ui.theme.Primary
 import com.example.gymtracking.ui.theme.SurfaceContainerHigh
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @Composable
@@ -62,6 +67,10 @@ fun BottomNavBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+    }.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
     val navItemsList = localizedNavItems()
 
@@ -106,7 +115,9 @@ fun BottomNavBar(
                             indication = null
                         ) {
                             if (!isSelected) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                if (hapticEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
                                 if (!isOnMainTabs) {
                                     navController.navigate(MainTabs) {
                                         launchSingleTop = true
