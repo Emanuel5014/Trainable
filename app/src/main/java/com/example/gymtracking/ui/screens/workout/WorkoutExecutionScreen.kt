@@ -28,6 +28,8 @@ import com.example.gymtracking.R
 import com.example.gymtracking.data.ExerciseTranslations
 import com.example.gymtracking.ui.components.*
 import com.example.gymtracking.ui.theme.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +43,7 @@ fun WorkoutExecutionScreen(
     val listState = rememberLazyListState()
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     if (state.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -55,6 +58,19 @@ fun WorkoutExecutionScreen(
         currentExState.sets.indexOfFirst { !it.isCompleted }.takeIf { it != -1 } ?: (currentExState.sets.size - 1)
     }
 
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Prevent NavHost deadlocks by ensuring the screen has fully transitioned in before popping
+    val safeNavigateBack: () -> Unit = {
+        coroutineScope. launch {
+            while (!lifecycleOwner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                kotlinx.coroutines.delay(50)
+            }
+            onNavigateBack()
+        }
+    }
+
     LaunchedEffect(activeSetIndex) {
         if (activeSetIndex != -1) {
             listState.animateScrollToItem(activeSetIndex)
@@ -65,6 +81,14 @@ fun WorkoutExecutionScreen(
     LaunchedEffect(activeSetIndex, state.remainingRestSeconds > 0) {
         if (state.remainingRestSeconds > 0) {
             isEditingValues = false
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { event ->
+            when (event) {
+                is WorkoutViewModel.WorkoutNavEvent.NavigateBack -> safeNavigateBack()
+            }
         }
     }
 
@@ -106,10 +130,25 @@ fun WorkoutExecutionScreen(
                 navigationIcon = {
                     GymIconButton(
                         icon = Icons.Rounded.Close,
-                        onClick = onNavigateBack,
+                        onClick = safeNavigateBack,
                         containerColor = Color.Transparent,
                         description = stringResource(R.string.close_workout)
                     )
+                },
+                actions = {
+                    Surface(
+                        onClick = { showCancelDialog = true },
+                        shape = CircleShape,
+                        color = Error.copy(alpha = 0.1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = stringResource(R.string.cancel_workout),
+                            tint = Error,
+                            modifier = Modifier.padding(10.dp).size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Surface,
@@ -159,21 +198,6 @@ fun WorkoutExecutionScreen(
                         color = OnSurface,
                         fontWeight = FontWeight.Black
                     )
-                    if (currentExState.previousPerformance != null) {
-                        Surface(
-                            color = SurfaceContainerHigh,
-                            shape = CircleShape,
-                            modifier = Modifier.padding(top = 8.dp)
-                        ) {
-                            Text(
-                                text = "⚡ ${currentExState.previousPerformance}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Primary,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
                 }
                 
                 // Sets List
@@ -249,6 +273,7 @@ fun WorkoutExecutionScreen(
                             HubMode.Resting -> {
                                 RestTimerSection(
                                     remainingSeconds = state.remainingRestSeconds,
+                                    totalRestSeconds = state.totalRestSeconds,
                                     onAddTime = { viewModel.addRestTime(30) },
                                     onSkip = { viewModel.skipRestTimer() }
                                 )
@@ -342,7 +367,6 @@ fun WorkoutExecutionScreen(
                         onNext = { 
                             if (state.currentExerciseIndex == state.exercises.size - 1) {
                                 viewModel.finishWorkout()
-                                onNavigateBack()
                             } else {
                                 viewModel.nextExercise() 
                             }
@@ -353,6 +377,15 @@ fun WorkoutExecutionScreen(
                         nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
                         languageCode = languageCode
                     )
+                }
+            }
+
+            if (state.isFinishing) {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    GymLoadingIndicator()
                 }
             }
         }
@@ -368,6 +401,40 @@ fun WorkoutExecutionScreen(
                     showSwapExerciseSheet = false
                 },
                 onDismiss = { showSwapExerciseSheet = false }
+            )
+        }
+
+        if (showCancelDialog) {
+            AlertDialog(
+                onDismissRequest = { showCancelDialog = false },
+                title = { Text(stringResource(R.string.cancel_workout_title)) },
+                text = { Text(stringResource(R.string.cancel_workout_message)) },
+                confirmButton = {
+                    GymButton(
+                        onClick = {
+                            viewModel.cancelWorkout { safeNavigateBack() }
+                            showCancelDialog = false
+                        },
+                        containerColor = Error.copy(alpha = 0.1f),
+                        contentColor = Error,
+                        modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    GymButton(
+                        onClick = { showCancelDialog = false },
+                        containerColor = Color.Transparent,
+                        contentColor = OnSurfaceVariant,
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase())
+                    }
+                },
+                containerColor = SurfaceContainerHigh,
+                titleContentColor = OnSurface,
+                textContentColor = OnSurfaceVariant
             )
         }
     }

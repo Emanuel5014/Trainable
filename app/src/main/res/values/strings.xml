@@ -1,15 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <!-- App -->
+    
     <string name="app_name">Trainable</string>
     
-    <!-- Navigation -->
+    
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_routines">Routines</string>
     <string name="nav_history">History</string>
     <string name="nav_analytics">Analytics</string>
     <string name="nav_settings">Settings</string>
     
-    <!-- Common Actions -->
+    
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
@@ -25,7 +26,7 @@
     <string name="reset">Reset</string>
     <string name="retry">Retry</string>
     
-    <!-- Dashboard -->
+    
     <string name="dashboard_title">DASHBOARD</string>
     <string name="active_plan">Active Plan</string>
     <string name="weekly_load">Weekly Load</string>
@@ -40,7 +41,7 @@
     <string name="resume_workout">RESUME WORKOUT</string>
     <string name="days_this_week">days this week</string>
     
-    <!-- Routines -->
+    
     <string name="your_routines">YOUR ROUTINES</string>
     <string name="archived_routines">ARCHIVED</string>
     <string name="active_routines_tab">Active</string>
@@ -73,7 +74,7 @@
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
     
-    <!-- Exercise -->
+    
     <string name="add_exercise">ADD EXERCISE</string>
     <string name="edit_exercise">EDIT EXERCISE</string>
     <string name="exercise_details">Exercise Details</string>
@@ -84,6 +85,7 @@
     <string name="weight_kg">Weight (kg)</string>
     <string name="rest_seconds">Rest (Seconds)</string>
     <string name="select_exercise">Select Exercise</string>
+    <string name="tap_to_change_exercise">Tap to change exercise</string>
     <string name="search_exercises">Search exercises</string>
     <string name="all_categories">All</string>
     <string name="no_exercises_found">No exercises found</string>
@@ -91,7 +93,7 @@
     <string name="exercise_name">Exercise Name</string>
     <string name="category">Category</string>
     
-    <!-- Categories -->
+    
     <string name="category_chest">Chest</string>
     <string name="category_back">Back</string>
     <string name="category_legs">Legs</string>
@@ -99,7 +101,7 @@
     <string name="category_arms">Arms</string>
     <string name="category_core">Core</string>
     
-    <!-- Workout -->
+    
     <string name="workout_execution">Workout Execution</string>
     <string name="session_in_progress">SESSION IN PROGRESS</string>
     <string name="log_set">LOG SET</string>
@@ -111,7 +113,7 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Rest Timer</string>
     
-    <!-- History -->
+    
     <string name="history_title">HISTORY</string>
     <string name="no_history">No workout history</string>
     <string name="no_history_description">Your completed workouts will appear here.</string>
@@ -121,7 +123,7 @@
     <string name="total_volume">Total Volume</string>
     <string name="duration">Duration</string>
     
-    <!-- Analytics -->
+    
     <string name="analytics_title">ANALYTICS</string>
     <string name="total_volume_label">Total Volume</string>
     <string name="consistency">Consistency</string>
@@ -135,7 +137,7 @@
     <string name="workouts_per_week">Workouts/Week</string>
     <string name="avg_volume">Avg Volume</string>
     
-    <!-- Settings -->
+    
     <string name="settings_title">SETTINGS</string>
     <string name="profile">PROFILE</string>
     <string name="preferences">PREFERENCES</string>
@@ -160,6 +162,8 @@
     <string name="reset_app_message">This will delete all your data including workouts, routines, and settings. This action cannot be undone.</string>
     <string name="restarting_app">Restarting app...</string>
     <string name="tactile_feedback_desc">Vibration on interactions</string>
+    <string name="floating_nav_bar">Floating Navigation</string>
+    <string name="floating_nav_bar_desc">Rounded floating navigation bar</string>
     <string name="folder_selected">Folder selected</string>
     <string name="choose_folder">Choose folder</string>
     <string name="edit_backup">EDIT</string>
@@ -168,14 +172,14 @@
     <string name="training_plans">TRAINING PLANS</string>
     <string name="workout_logs">WORKOUT LOGS</string>
     
-    <!-- Language Settings -->
+    
     <string name="language">Language</string>
     <string name="language_system_default">System Default</string>
     <string name="current_language">Current: %s</string>
     <string name="language_english">English</string>
     <string name="language_italian">Italiano</string>
     
-    <!-- Onboarding -->
+    
     <string name="welcome_title">Welcome to Trainable</string>
     <string name="welcome_subtitle">Your personal workout companion</string>
     <string name="lets_get_started">Let\'s get started</string>
@@ -187,7 +191,7 @@
     <string name="workouts_per_week_goal">Workouts per week</string>
     <string name="finish_setup">FINISH SETUP</string>
     
-    <!-- Backup Messages -->
+    
     <string name="export_successful">Export successful</string>
     <string name="export_failed">Export failed</string>
     <string name="import_successful">Import successful</string>
@@ -200,15 +204,15 @@
     <string name="reset_complete">Reset complete. Restarting...</string>
     <string name="reset_failed">Reset failed: %s</string>
     
-    <!-- Errors -->
+    
     <string name="error_unknown">Unknown error</string>
     <string name="routine_not_found">Routine not found</string>
     
-    <!-- Empty States -->
+    
     <string name="no_active_routines">No active routines</string>
     <string name="create_first_routine">Create your first routine</string>
     
-    <!-- Additional Dashboard -->
+    
     <string name="total_workouts">Total Workouts</string>
     <string name="this_week">This Week</string>
     <string name="current_week">Current Week</string>
@@ -218,7 +222,7 @@
     <string name="best_performance">Best Performance</string>
     <string name="kg_short">kg</string>
     
-    <!-- Settings Additional -->
+    
     <string name="account">Account</string>
     <string name="about">About</string>
     <string name="version">Version</string>
@@ -235,15 +239,15 @@
     <string name="configure_backup">Configure your automatic backup settings</string>
     <string name="database_imported">Database imported. Restarting app...</string>
     
-    <!-- History Additional -->
+    
     <string name="exercises_completed">exercises completed</string>
     <string name="no_exercises_in_session">No exercises tracked in this session.</string>
     <string name="total">Total</string>
     
-    <!-- Exercise Edit -->
+    
     <string name="edit_exercise_title">Edit Exercise</string>
     
-    <!-- Dashboard Additional -->
+    
     <string name="start">START</string>
     <string name="suggested_plan">SUGGESTED PLAN</string>
     <string name="no_active_routines_message">No active routines. Go to Routines to create one.</string>
@@ -252,19 +256,24 @@
     <string name="goal_met">Goal met</string>
     <string name="workouts_this_week" formatted="false">%d / %d workouts</string>
     
-    <!-- Routine Detail -->
+    
     <string name="start_workout_detail">START</string>
     
-    <!-- History Additional -->
+    
     <string name="no_history_yet">No history yet</string>
     <string name="no_history_description_screen">Complete your first workout to see it here.</string>
     <string name="set_number">Set %d</string>
     <string name="no_exercises_in_session_detail">No exercises tracked in this session.</string>
     
-    <!-- Workout Execution -->
+    
     <string name="workout_execution_title">Workout Execution</string>
     <string name="session_in_progress_title">SESSION IN PROGRESS</string>
     <string name="close_workout">Close Workout</string>
+    <string name="cancel_workout">Cancel Workout</string>
+    <string name="cancel_workout_title">Cancel Workout?</string>
+    <string name="cancel_workout_message">This will permanently delete this workout session. This action cannot be undone.</string>
+    <string name="cancel_workout_confirm">Delete</string>
+    <string name="dismiss">Dismiss</string>
     <string name="adjust_set_number">ADJUST SET %d</string>
     <string name="exercise_completed_title">EXERCISE COMPLETED</string>
     <string name="previous_exercise_btn">Previous</string>
@@ -275,4 +284,15 @@
     <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
+<string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string><string name="expired">Expired</string><string name="expires_in_days">Expires in %d days</string><string name="set_expiry_date">Set Expiry Date</string><string name="tap_to_set">Tap to set</string>    <string name="analytics_subtitle">ACTIVE PLAN INSIGHTS</string>
+    <string name="analytics_max_progress">MAX PROGRESS</string>
+    <string name="analytics_select_exercises_desc">Select exercises to track your personal bests</string>
+    <string name="analytics_choose_exercises">Choose Exercises</string>
+    <string name="analytics_estimated_1rm">ESTIMATED 1RM</string>
+    <string name="analytics_estimated_1rm_short">Est. 1RM</string>
+    <string name="analytics_selected_count">Selected: %d</string>
+    <string name="analytics_record_reps">Record: %d reps</string>
+    <string name="analytics_body_weight">BODY WEIGHT</string>
+    <string name="analytics_no_weight_data">No weight data available</string>
+    <string name="analytics_todays_weight">Today\'s weight</string>
 </resources>

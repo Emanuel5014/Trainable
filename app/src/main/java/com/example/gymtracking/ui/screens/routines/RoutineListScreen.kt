@@ -2,6 +2,9 @@ package com.example.gymtracking.ui.screens.routines
 
 import androidx.compose.animation.*
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.EaseOutExpo
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.gymtracking.R
 import com.example.gymtracking.data.local.entity.WorkoutPlanEntity
 import com.example.gymtracking.data.repository.UserPreferencesRepository
@@ -107,8 +111,10 @@ fun RoutineListScreen(
                     AnimatedContent(
                         targetState = pagerState.currentPage,
                         transitionSpec = {
-                            (fadeIn() + scaleIn(initialScale = 0.92f))
-                                .togetherWith(fadeOut() + scaleOut(targetScale = 0.92f))
+                            val direction = if (targetState > initialState) 1 else -1
+                            (slideInHorizontally { width -> direction * width / 2 } + fadeIn(animationSpec = tween(400, easing = EaseOutExpo)))
+                                .togetherWith(slideOutHorizontally { width -> -direction * width / 2 } + fadeOut(animationSpec = tween(400, easing = EaseOutExpo)))
+                                .using(SizeTransform(clip = false))
                         },
                         label = "title_anim"
                     ) { page ->
@@ -127,50 +133,68 @@ fun RoutineListScreen(
             )
 
             // Modern Tab Row (click only, no swipe)
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
                     .clip(Shapes.large)
                     .background(SurfaceContainerHigh)
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(4.dp)
             ) {
-                listOf(
-                    stringResource(R.string.active_routines_tab),
-                    stringResource(R.string.archived_routines_tab)
-                ).forEachIndexed { index, title ->
-                    val isSelected = pagerState.currentPage == index
-                    val bgColor by animateColorAsState(
-                        if (isSelected) Surface else Color.Transparent,
-                        label = "tab_bg"
-                    )
-                    val contentColor by animateColorAsState(
-                        if (isSelected) Primary else OnSurfaceVariant,
-                        label = "tab_content"
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val indicatorWidth = maxWidth / 2
+                    val indicatorOffset by animateDpAsState(
+                        targetValue = if (pagerState.currentPage == 0) 0.dp else indicatorWidth,
+                        animationSpec = tween(500, easing = EaseOutExpo),
+                        label = "indicator_offset"
                     )
 
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .width(indicatorWidth)
                             .height(44.dp)
+                            .offset(x = indicatorOffset)
                             .clip(Shapes.medium)
-                            .background(bgColor)
-                            .clickable {
-                                coroutineScope.launch {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = title.uppercase(),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
-                            color = contentColor,
-                            letterSpacing = 1.sp
+                            .background(Surface)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf(
+                        stringResource(R.string.active_routines_tab),
+                        stringResource(R.string.archived_routines_tab)
+                    ).forEachIndexed { index, title ->
+                        val isSelected = pagerState.currentPage == index
+                        val contentColor by animateColorAsState(
+                            targetValue = if (isSelected) Primary else OnSurfaceVariant,
+                            animationSpec = tween(500, easing = EaseOutExpo),
+                            label = "tab_content"
                         )
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(Shapes.medium)
+                                .clickable {
+                                    coroutineScope.launch {
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = title.uppercase(),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                                color = contentColor,
+                                letterSpacing = 1.sp
+                            )
+                        }
                     }
                 }
             }
@@ -185,15 +209,30 @@ fun RoutineListScreen(
                 val isArchivedPage = page == 1
                 val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
                 
-                RoutineListPage(
-                    plans = plans,
-                    isArchived = isArchivedPage,
-                    onNavigateToDetail = onNavigateToDetail,
-                    onDelete = { planToDelete = it },
-                    onArchiveToggle = { planToArchive = it },
-                    onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
-                    isLoading = uiState.isLoading
-                )
+                // M3 Expressive: Page transformation based on scroll progress
+                val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            // Slight scale and alpha during transition
+                            val scale = 1f - (kotlin.math.abs(pageOffset) * 0.05f)
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = 1f - kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
+                        }
+                ) {
+                    RoutineListPage(
+                        plans = plans,
+                        isArchived = isArchivedPage,
+                        onNavigateToDetail = onNavigateToDetail,
+                        onDelete = { planToDelete = it },
+                        onArchiveToggle = { planToArchive = it },
+                        onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
+                        isLoading = uiState.isLoading
+                    )
+                }
             }
         }
     }
@@ -534,11 +573,19 @@ private fun RoutineCard(
                         .background(SurfaceContainerHigh),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Rounded.FitnessCenter,
-                        contentDescription = null,
-                        tint = Primary
-                    )
+                    if (plan.imageUri != null) {
+                        AsyncImage(
+                            model = plan.imageUri,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp))
+                        )
+                    } else {
+                        Icon(
+                            Icons.Rounded.FitnessCenter,
+                            contentDescription = null,
+                            tint = Primary
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {

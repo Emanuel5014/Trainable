@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,16 +18,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.ui.theme.*
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.gymtracking.ui.theme.*
 import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
@@ -36,18 +40,42 @@ fun WeightRepsInput(
     onRepsChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showCustomWeightDialog by remember { mutableStateOf(false) }
+    var customWeightText by remember { mutableStateOf("") }
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        WheelPickerBox(
-            label = "WEIGHT (KG)",
-            value = weight,
-            range = (0..1000).map { it * 0.5f },
-            onValueChange = { onWeightChange(it) },
-            modifier = Modifier.weight(1f),
-            format = { String.format("%.1f", it) }
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            WheelPickerBox(
+                label = "WEIGHT (KG)",
+                value = weight,
+                range = (0..1000).map { it * 0.5f },
+                onValueChange = { onWeightChange(it) },
+                format = { String.format("%.1f", it) }
+            )
+            TextButton(
+                onClick = { 
+                    customWeightText = if (weight > 0) weight.toString() else ""
+                    showCustomWeightDialog = true 
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = OnSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "Custom",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+            }
+        }
         
         WheelPickerBox(
             label = "REPS",
@@ -56,6 +84,44 @@ fun WeightRepsInput(
             onValueChange = { onRepsChange(it.toInt()) },
             modifier = Modifier.weight(1f),
             format = { it.toInt().toString() }
+        )
+    }
+
+    if (showCustomWeightDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomWeightDialog = false },
+            title = { Text("Custom Weight", color = OnSurface) },
+            text = {
+                OutlinedTextField(
+                    value = customWeightText,
+                    onValueChange = { customWeightText = it },
+                    label = { Text("Weight (kg)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = Shapes.large,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        cursorColor = Primary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        customWeightText.toFloatOrNull()?.let { onWeightChange(it) }
+                        showCustomWeightDialog = false
+                    }
+                ) {
+                    Text("OK", color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomWeightDialog = false }) {
+                    Text("Cancel", color = OnSurfaceVariant)
+                }
+            },
+            containerColor = SurfaceContainerHigh
         )
     }
 }

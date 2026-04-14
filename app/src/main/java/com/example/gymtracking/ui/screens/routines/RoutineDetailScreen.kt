@@ -2,6 +2,7 @@ package com.example.gymtracking.ui.screens.routines
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
@@ -13,15 +14,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,15 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gymtracking.R
+import com.example.gymtracking.data.ExerciseTranslations
 import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.local.relation.PlanExerciseWithDetails
 import com.example.gymtracking.ui.components.*
 import com.example.gymtracking.ui.theme.*
-import com.example.gymtracking.util.AppLocaleManager
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -306,7 +303,6 @@ fun RoutineDetailScreen(
     }
 
     if (showExerciseSheet) {
-        var expanded by remember { mutableStateOf(false) }
         val selectedExercise = uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
 
         ModalBottomSheet(
@@ -328,7 +324,8 @@ fun RoutineDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.CardPadding)
-                    .padding(bottom = Spacing.extreme),
+                    .padding(top = Spacing.medium, bottom = Spacing.extreme)
+                    .navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.large)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
@@ -347,35 +344,44 @@ fun RoutineDetailScreen(
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded },
-                        modifier = Modifier.fillMaxWidth()
+                    OutlinedButton(
+                        onClick = {
+                            showExerciseSheet = false
+                            showExercisePicker = true
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = Shapes.large,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = OnSurface
+                        ),
+                        border = BorderStroke(1.dp, OnSurfaceVariant.copy(alpha = 0.5f))
                     ) {
-                        GymInputField(
-                            value = selectedExercise?.nome ?: "",
-                            onValueChange = {},
-                            label = stringResource(R.string.exercise),
-                            readOnly = true,
-                            modifier = Modifier
-                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier.background(SurfaceContainerHigh)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            uiState.availableExercises.forEach { exercise ->
-                                DropMenuItem(
-                                    text = exercise.nome,
-                                    category = exercise.categoria,
-                                    onClick = {
-                                        selectedExerciseId = exercise.id
-                                        expanded = false
-                                    }
+                            Column(horizontalAlignment = Alignment.Start) {
+                                Text(
+                                    text = selectedExercise?.let {
+                                        ExerciseTranslations.translate(it.nome, languageCode)
+                                    } ?: stringResource(R.string.select_exercise),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = OnSurface
                                 )
+                                selectedExercise?.let {
+                                    Text(
+                                        text = it.categoria,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
                             }
+                            Icon(
+                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = OnSurfaceVariant
+                            )
                         }
                     }
 
@@ -398,11 +404,12 @@ fun RoutineDetailScreen(
                         )
                     }
 
-                    GymInputField(
-                        value = restText,
-                        onValueChange = { restText = it },
-                        label = stringResource(R.string.rest_seconds),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    RestSlider(
+                        value = restText.toIntOrNull() ?: 120,
+                        onValueChange = { 
+                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            restText = it.toString() 
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -585,6 +592,66 @@ fun RoutineDetailScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RestSlider(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val steps = listOf(30, 60, 90, 120, 180, 240, 300)
+    val currentIndex = remember(value) { steps.indexOf(value).coerceAtLeast(0) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.rest_seconds),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${value}s",
+                style = MaterialTheme.typography.titleMedium,
+                color = Primary,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = formatRestTime(value),
+                style = MaterialTheme.typography.labelSmall,
+                color = OnSurfaceVariant
+            )
+        }
+        
+        Slider(
+            value = currentIndex.toFloat(),
+            onValueChange = { onValueChange(steps[it.toInt()]) },
+            valueRange = 0f..(steps.size - 1).toFloat(),
+            steps = steps.size - 2,
+            colors = SliderDefaults.colors(
+                thumbColor = Primary,
+                activeTrackColor = Primary,
+                inactiveTrackColor = SurfaceContainerHighest
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun formatRestTime(seconds: Int): String {
+    val minutes = seconds / 60
+    val secs = seconds % 60
+    return when {
+        minutes == 0 -> "${secs}s"
+        secs == 0 -> "${minutes}m"
+        else -> "${minutes}m ${secs}s"
     }
 }
 

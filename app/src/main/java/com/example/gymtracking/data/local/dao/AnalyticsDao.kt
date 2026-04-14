@@ -42,10 +42,15 @@ interface AnalyticsDao {
             e.id AS exerciseId,
             e.nome AS exerciseName,
             e.categoria AS category,
-            COALESCE(MAX(s.peso_sollevato), 0) AS maxWeight
+            COALESCE(s.peso_sollevato, 0) AS maxWeight,
+            COALESCE(s.reps_effettive, 0) AS reps
         FROM exercises e
-        LEFT JOIN set_logs s ON s.exercise_id = e.id
-        GROUP BY e.id, e.nome, e.categoria
+        LEFT JOIN set_logs s ON s.id = (
+            SELECT id FROM set_logs 
+            WHERE exercise_id = e.id 
+            ORDER BY peso_sollevato DESC, reps_effettive DESC 
+            LIMIT 1
+        )
         ORDER BY maxWeight DESC, e.nome ASC
         """
     )
@@ -106,7 +111,29 @@ interface AnalyticsDao {
         """
     )
     fun getVolumeByCategory(startDate: Long): Flow<List<CategoryVolumeRow>>
+
+    @Query("""
+        SELECT 
+            CASE 
+                WHEN MAX(s.reps_effettive) = 1 THEN MAX(s.peso_sollevato)
+                ELSE MAX(s.peso_sollevato) * (1.0 + MAX(s.reps_effettive) / 30.0)
+            END AS maxValue,
+            MIN(w.timestamp) AS timestamp
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON s.session_id = w.id
+        WHERE s.exercise_id = :exerciseId 
+            AND w.timestamp >= :startDate
+            AND s.reps_effettive > 0
+        GROUP BY date(w.timestamp / 1000, 'unixepoch')
+        ORDER BY MIN(w.timestamp) ASC
+    """)
+    fun getExerciseProgressHistory(exerciseId: Int, startDate: Long): Flow<List<DailyExerciseMax>>
 }
+
+data class DailyExerciseMax(
+    val maxValue: Float,
+    val timestamp: Long
+)
 
 data class DailyVolume(
     val volume: Float,
@@ -117,7 +144,8 @@ data class PersonalBestRow(
     val exerciseId: Int,
     val exerciseName: String,
     val category: String,
-    val maxWeight: Float
+    val maxWeight: Float,
+    val reps: Int
 )
 
 data class ConsistencyRow(

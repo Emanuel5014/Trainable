@@ -32,11 +32,18 @@ class UserPreferencesRepository @Inject constructor(
         val AUTO_BACKUP_MAX_COUNT = intPreferencesKey("auto_backup_max_count")
         val AUTO_BACKUP_INCLUDE_IMAGES = booleanPreferencesKey("auto_backup_include_images")
         val USER_LANGUAGE = stringPreferencesKey("user_language")
+        val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
+        val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[HAS_COMPLETED_ONBOARDING] ?: false
+        }
+
+    val gymMembershipExpiryDate: Flow<Long?> = dataStore.data
+        .map { preferences ->
+            preferences[GYM_MEMBERSHIP_EXPIRY_DATE]
         }
 
     val weeklyGoal: Flow<Int> = dataStore.data
@@ -77,6 +84,11 @@ class UserPreferencesRepository @Inject constructor(
     val userLanguage: Flow<String?> = dataStore.data
         .map { preferences ->
             preferences[USER_LANGUAGE]
+        }
+
+    val floatingNavBar: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[FLOATING_NAV_BAR] ?: false
         }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -143,6 +155,22 @@ class UserPreferencesRepository @Inject constructor(
                 preferences[USER_LANGUAGE] = language
             } else {
                 preferences.remove(USER_LANGUAGE)
+            }
+        }
+    }
+
+    suspend fun setFloatingNavBar(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[FLOATING_NAV_BAR] = enabled
+        }
+    }
+
+    suspend fun setGymMembershipExpiryDate(timestampMillis: Long?) {
+        dataStore.edit { preferences ->
+            if (timestampMillis != null) {
+                preferences[GYM_MEMBERSHIP_EXPIRY_DATE] = timestampMillis
+            } else {
+                preferences.remove(GYM_MEMBERSHIP_EXPIRY_DATE)
             }
         }
     }

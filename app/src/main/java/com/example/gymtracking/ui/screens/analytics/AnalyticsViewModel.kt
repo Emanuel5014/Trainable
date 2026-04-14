@@ -1,5 +1,6 @@
 package com.example.gymtracking.ui.screens.analytics
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymtracking.data.local.dao.CategoryVolumeRow
@@ -8,6 +9,7 @@ import com.example.gymtracking.data.local.dao.PersonalBestRow
 import com.example.gymtracking.data.repository.AnalyticsRepository
 import com.example.gymtracking.data.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,23 +33,50 @@ import javax.inject.Inject
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     private val analyticsRepository: AnalyticsRepository,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    private val prefs = context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE)
+    
     private val selectedTimeRange = MutableStateFlow(AnalyticsTimeRange.OneMonth)
     private val bodyWeightInput = MutableStateFlow("")
+    private val selectedExerciseIds = MutableStateFlow<Set<Int>>(loadSavedExerciseIds())
+    private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
+
+    private fun loadSavedExerciseIds(): Set<Int> {
+        val saved = prefs.getStringSet("selected_exercise_ids", emptySet()) ?: emptySet()
+        return saved.mapNotNull { it.toIntOrNull() }.toSet()
+    }
+
+    private fun saveExerciseIds(ids: Set<Int>) {
+        prefs.edit().putStringSet("selected_exercise_ids", ids.map { it.toString() }.toSet()).apply()
+    }
+
+    private fun loadWidgetOrder(): List<String> {
+        val saved = prefs.getString("widget_order", null)
+        return saved?.split(",")?.filter { it.isNotEmpty() } ?: emptyList()
+    }
+
+    private fun saveWidgetOrder(order: List<String>) {
+        prefs.edit().putString("widget_order", order.joinToString(",")).apply()
+    }
 
     private val activePlanFlow = workoutRepository.getActivePlans()
         .map { plans -> plans.firstOrNull() }
 
     private val analyticsSnapshotFlow = combine(
         activePlanFlow,
-        selectedTimeRange
-    ) { activePlan, timeRange ->
+        selectedTimeRange,
+        selectedExerciseIds,
+        widgetOrder
+    ) { activePlan, timeRange, selectedIds, order ->
         AnalyticsQueryContext(
             activePlan = activePlan,
             timeRange = timeRange,
-            startDate = timeRange.startDate()
+            startDate = timeRange.startDate(),
+            selectedExerciseIds = selectedIds,
+            widgetOrder = order
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -109,23 +138,30 @@ class AnalyticsViewModel @Inject constructor(
             )
         }
 
-        val supplementalFlow = combine(
-            strengthFlow,
-            analyticsRepository.getWeightHistory(context.startDate)
-        ) { values: Array<Any?> ->
-            @Suppress("UNCHECKED_CAST")
-            val strengthCategory = values[0] as StrengthCategorySnapshot
-            @Suppress("UNCHECKED_CAST")
-            val weightHistory = values[1] as List<com.example.gymtracking.data.local.entity.WeightLogEntity>
-            SupplementalAnalyticsSnapshot(
-                strengthIndex = strengthCategory.strengthIndex,
-                categoryVolumes = strengthCategory.categoryVolumes,
-                weightHistory = weightHistory
-            )
+        val weightFlow = analyticsRepository.getWeightHistory(context.startDate)
+        
+        val exerciseChartFlows = context.widgetOrder
+            .filter { it.startsWith("exercise_") }
+            .map { idStr ->
+                val exerciseId = idStr.removePrefix("exercise_").toInt()
+                analyticsRepository.getExerciseProgressHistory(exerciseId, context.startDate)
+                    .map { history -> exerciseId to history }
+            }
+
+        val exerciseHistoriesFlow = if (exerciseChartFlows.isEmpty()) {
+            flowOf(emptyMap<Int, List<com.example.gymtracking.data.local.dao.DailyExerciseMax>>())
+        } else {
+            combine(exerciseChartFlows) { pairs ->
+                pairs.associate { it.first to it.second }
+            }
         }
 
         coreFlow.flatMapLatest { core ->
-            supplementalFlow.map { supplemental ->
+            combine(
+                strengthFlow,
+                weightFlow,
+                exerciseHistoriesFlow
+            ) { strengthCategory, weightHistory, exerciseHistories ->
                 buildAnalyticsState(
                     activePlanName = context.activePlan?.nome ?: "No Active Plan",
                     timeRange = context.timeRange,
@@ -133,10 +169,13 @@ class AnalyticsViewModel @Inject constructor(
                     totalVolume = core.totalVolume,
                     volumeHistory = core.volumeHistory,
                     personalBests = core.personalBests,
+                    selectedExerciseIds = context.selectedExerciseIds,
+                    widgetOrder = context.widgetOrder,
                     consistency = core.consistency,
-                    strengthIndex = supplemental.strengthIndex,
-                    categoryVolumes = supplemental.categoryVolumes,
-                    weightHistory = supplemental.weightHistory
+                    strengthIndex = strengthCategory.strengthIndex,
+                    categoryVolumes = strengthCategory.categoryVolumes,
+                    weightHistory = weightHistory,
+                    exerciseHistories = exerciseHistories
                 )
             }
         }
@@ -168,6 +207,65 @@ class AnalyticsViewModel @Inject constructor(
         bodyWeightInput.value = value
     }
 
+    fun toggleExerciseSelection(exerciseId: Int) {
+        selectedExerciseIds.update { current ->
+            val newSet = if (current.contains(exerciseId)) {
+                current - exerciseId
+            } else {
+                current + exerciseId
+            }
+            saveExerciseIds(newSet)
+            newSet
+        }
+    }
+
+    fun addExerciseChart(exerciseId: Int) {
+        widgetOrder.update { current ->
+            val id = "exercise_$exerciseId"
+            if (current.contains(id)) return@update current
+            val newList = current + id
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun addBodyWeightChart() {
+        widgetOrder.update { current ->
+            if (current.contains("weight")) return@update current
+            val newList = current + "weight"
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun removeWidget(id: String) {
+        widgetOrder.update { current ->
+            val newList = current.filter { it != id }
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun moveWidget(id: String, up: Boolean) {
+        widgetOrder.update { current ->
+            val index = current.indexOf(id)
+            if (index == -1) return@update current
+            val newIndex = if (up) index - 1 else index + 1
+            if (newIndex !in current.indices) return@update current
+            
+            val newList = current.toMutableList()
+            val item = newList.removeAt(index)
+            newList.add(newIndex, item)
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun clearExerciseSelection() {
+        selectedExerciseIds.value = emptySet()
+        saveExerciseIds(emptySet())
+    }
+
     fun submitWeight() {
         val parsedWeight = bodyWeightInput.value.replace(',', '.').toFloatOrNull() ?: return
 
@@ -188,10 +286,13 @@ class AnalyticsViewModel @Inject constructor(
         totalVolume: Float,
         volumeHistory: List<com.example.gymtracking.data.local.dao.DailyVolume>,
         personalBests: List<PersonalBestRow>,
+        selectedExerciseIds: Set<Int>,
+        widgetOrder: List<String>,
         consistency: com.example.gymtracking.data.local.dao.ConsistencyRow?,
         strengthIndex: Float?,
         categoryVolumes: List<CategoryVolumeRow>,
-        weightHistory: List<com.example.gymtracking.data.local.entity.WeightLogEntity>
+        weightHistory: List<com.example.gymtracking.data.local.entity.WeightLogEntity>,
+        exerciseHistories: Map<Int, List<com.example.gymtracking.data.local.dao.DailyExerciseMax>>
     ): AnalyticsUiState {
         val completedSessions = consistency?.completedSessions ?: 0
         val targetSessionsPerWeek = consistency?.targetSessionsPerWeek ?: 0
@@ -205,6 +306,45 @@ class AnalyticsViewModel @Inject constructor(
         } else {
             0f
         }
+
+        // Map all personal bests
+        val allBests = personalBests.map { row ->
+            PersonalBestUiModel(
+                exerciseId = row.exerciseId,
+                exerciseName = row.exerciseName,
+                category = row.category,
+                maxWeightKg = row.maxWeight,
+                reps = row.reps
+            )
+        }
+
+        val widgets = widgetOrder.mapNotNull { id ->
+            when {
+                id == "weight" -> {
+                    AnalyticsWidget.BodyWeight(
+                        history = weightHistory.map { entry ->
+                            AnalyticsChartPoint(timestamp = entry.timestamp, value = entry.pesoCorporeo)
+                        }
+                    )
+                }
+                id.startsWith("exercise_") -> {
+                    val exerciseId = id.removePrefix("exercise_").toInt()
+                    val exerciseName = allBests.find { it.exerciseId == exerciseId }?.exerciseName ?: "Unknown"
+                    val history = exerciseHistories[exerciseId]?.map { point ->
+                        AnalyticsChartPoint(timestamp = point.timestamp, value = point.maxValue)
+                    } ?: emptyList()
+                    AnalyticsWidget.Exercise(
+                        exerciseId = exerciseId,
+                        exerciseName = exerciseName,
+                        history = history
+                    )
+                }
+                else -> null
+            }
+        }
+
+        // No automatic selection - let user choose freely from the picker
+        val finalSelectedIds = selectedExerciseIds
 
         return AnalyticsUiState(
             activePlanName = activePlanName,
@@ -223,14 +363,9 @@ class AnalyticsViewModel @Inject constructor(
                 percent = strengthIndex,
                 summary = buildStrengthSummary(strengthIndex)
             ),
-            personalBests = personalBests.map { row ->
-                PersonalBestUiModel(
-                    exerciseId = row.exerciseId,
-                    exerciseName = row.exerciseName,
-                    category = row.category,
-                    maxWeightKg = row.maxWeight
-                )
-            },
+            personalBests = allBests,
+            selectedExerciseIds = finalSelectedIds,
+            widgets = widgets,
             bodyWeightHistory = weightHistory.map { entry ->
                 AnalyticsChartPoint(timestamp = entry.timestamp, value = entry.pesoCorporeo)
             },
@@ -254,14 +389,12 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
-    private fun formatPercent(value: Float): String {
-        return String.format(Locale.getDefault(), "%.0f", value)
-    }
-
     private data class AnalyticsQueryContext(
         val activePlan: com.example.gymtracking.data.local.entity.WorkoutPlanEntity?,
         val timeRange: AnalyticsTimeRange,
-        val startDate: Long
+        val startDate: Long,
+        val selectedExerciseIds: Set<Int>,
+        val widgetOrder: List<String>
     )
 
     private data class CoreAnalyticsSnapshot(
@@ -284,12 +417,6 @@ class AnalyticsViewModel @Inject constructor(
     private data class StrengthCategorySnapshot(
         val strengthIndex: Float?,
         val categoryVolumes: List<CategoryVolumeRow>
-    )
-
-    private data class SupplementalAnalyticsSnapshot(
-        val strengthIndex: Float?,
-        val categoryVolumes: List<CategoryVolumeRow>,
-        val weightHistory: List<com.example.gymtracking.data.local.entity.WeightLogEntity>
     )
 
     private companion object {

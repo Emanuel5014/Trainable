@@ -1,39 +1,49 @@
 package com.example.gymtracking.ui.screens.dashboard
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gymtracking.R
 import com.example.gymtracking.data.local.relation.SessionWithPlanName
-import com.example.gymtracking.ui.components.EmptyState
 import com.example.gymtracking.ui.components.GymCard
 import com.example.gymtracking.ui.components.GymIconButton
 import com.example.gymtracking.ui.components.GymLoadingIndicator
-import com.example.gymtracking.ui.components.StatCard
 import com.example.gymtracking.ui.theme.*
 import com.example.gymtracking.ui.util.DateFormatter
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
@@ -41,6 +51,33 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = uiState.gymMembershipExpiryDate ?: System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        viewModel.setGymMembershipExpiryDate(it)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Scaffold(
         containerColor = Surface,
@@ -78,8 +115,15 @@ fun DashboardScreen(
             ) {
                 item {
                     DashboardSimpleHeader(
-                        username = uiState.username,
                         onSettingsClick = onNavigateToSettings
+                    )
+                }
+
+                item {
+                    GymMembershipCard(
+                        expiryDateMillis = uiState.gymMembershipExpiryDate,
+                        username = uiState.username,
+                        onClick = { showDatePicker = true }
                     )
                 }
 
@@ -172,23 +216,190 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardSimpleHeader(username: String, onSettingsClick: () -> Unit) {
+fun GymMembershipCard(
+    expiryDateMillis: Long?,
+    username: String,
+    onClick: () -> Unit
+) {
+    val todayMillis = System.currentTimeMillis()
+    
+    val daysLeft = if (expiryDateMillis != null) {
+        val diff = expiryDateMillis - todayMillis
+        TimeUnit.MILLISECONDS.toDays(diff).toInt()
+    } else {
+        null
+    }
+
+    val isExpired = daysLeft != null && daysLeft < 0
+    val isExpiringSoon = daysLeft != null && daysLeft in 0..7
+    
+    // Dynamic styling based on status
+    val cardGradient = when {
+        isExpired -> listOf(Error.copy(alpha = 0.8f), Error.copy(alpha = 0.5f))
+        isExpiringSoon -> listOf(Tertiary.copy(alpha = 0.9f), Tertiary.copy(alpha = 0.6f))
+        else -> listOf(Primary.copy(alpha = 0.9f), Primary.copy(alpha = 0.6f))
+    }
+    
+    val textColor = OnPrimary
+    
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(durationMillis = 200),
+        label = "scale"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clickable(
+                onClick = onClick,
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = ripple(color = OnPrimary)
+            ),
+        shape = Shapes.large,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isPressed) 2.dp else 8.dp
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.linearGradient(cardGradient))
+        ) {
+            // Background expressive pattern
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.1f),
+                    radius = size.width / 2,
+                    center = Offset(size.width, 0f)
+                )
+                drawCircle(
+                    color = Color.Black.copy(alpha = 0.05f),
+                    radius = size.width / 3,
+                    center = Offset(0f, size.height)
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Rounded.CreditCard,
+                            contentDescription = "Gym Membership",
+                            tint = textColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.gym_membership).uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = textColor.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
+                        )
+                    }
+                    
+                    if (isExpired) {
+                        Icon(
+                            imageVector = Icons.Rounded.Warning,
+                            contentDescription = "Expired",
+                            tint = textColor
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        Text(
+                            text = username.uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = textColor,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = androidx.compose.ui.unit.TextUnit(1f, androidx.compose.ui.unit.TextUnitType.Sp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        if (expiryDateMillis != null) {
+                            Text(
+                                text = "${stringResource(R.string.valid_thru)} ${DateFormatter.format(expiryDateMillis)}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = textColor.copy(alpha = 0.8f)
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.tap_to_set),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = textColor.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                    
+                    if (daysLeft != null) {
+                        Surface(
+                            color = Color.White.copy(alpha = 0.2f),
+                            shape = CircleShape
+                        ) {
+                            Text(
+                                text = when {
+                                    isExpired -> stringResource(R.string.expired)
+                                    isExpiringSoon -> stringResource(R.string.expires_in_days, daysLeft)
+                                    else -> stringResource(R.string.expires_in_days, daysLeft)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = textColor,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardSimpleHeader(onSettingsClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = stringResource(R.string.welcome_back),
-                style = MaterialTheme.typography.labelLarge,
-                color = OnSurfaceVariant
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_splash_logo),
+                contentDescription = "Trainable Logo",
+                tint = Primary,
+                modifier = Modifier.size(48.dp)
             )
+            Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = username,
+                text = "Trainable",
                 style = MaterialTheme.typography.headlineLarge,
                 color = OnSurface,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.5).sp
             )
         }
         GymIconButton(

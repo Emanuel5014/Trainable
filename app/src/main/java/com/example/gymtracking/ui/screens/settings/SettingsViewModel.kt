@@ -92,6 +92,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = null
     )
 
+    val floatingNavBar = userPrefsRepository.floatingNavBar.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus: StateFlow<String?> = _backupStatus
 
@@ -223,6 +229,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             localeManager.setUserLanguage(languageCode)
             onLanguageChanged()
+        }
+    }
+
+    fun setFloatingNavBar(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setFloatingNavBar(enabled)
         }
     }
 

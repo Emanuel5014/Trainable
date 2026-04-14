@@ -11,15 +11,20 @@ import com.example.gymtracking.data.repository.ExerciseRepository
 import com.example.gymtracking.data.repository.WorkoutRepository
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class WorkoutState(
@@ -30,8 +35,11 @@ data class WorkoutState(
     val exercises: List<WorkoutExerciseState> = emptyList(),
     val currentExerciseIndex: Int = 0,
     val remainingRestSeconds: Int = 0,
+    val totalRestSeconds: Int = 90,
     val restTimerEndTime: Long? = null,
     val isFinished: Boolean = false,
+    val isFinishing: Boolean = false,
+    val isNavigating: Boolean = false,
     val exerciseSwaps: Map<Int, Int> = emptyMap()
 ) {
     val currentExercise: WorkoutExerciseState?
@@ -72,6 +80,16 @@ class WorkoutViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(WorkoutState())
     val state: StateFlow<WorkoutState> = _state.asStateFlow()
+
+    private val _navigationEvent = MutableSharedFlow<WorkoutNavEvent>()
+    val navigationEvent: SharedFlow<WorkoutNavEvent> = _navigationEvent.asSharedFlow()
+
+    private var lastActionTime = 0L
+    private val actionDebounce = 400L // 400ms hard debounce for physical clicks
+
+    sealed class WorkoutNavEvent {
+        object NavigateBack : WorkoutNavEvent()
+    }
 
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
@@ -116,6 +134,13 @@ class WorkoutViewModel @Inject constructor(
         
         val swaps = workoutRepository.getSwapsForSession(sessionId).firstOrNull()
         val swapMap = swaps?.associate { it.originalExerciseId to it.replacementExerciseId } ?: emptyMap()
+
+        // Load saved rest timer from session
+        val savedEndTime = sessionWithSets.session.restTimerEndTime
+        val savedTotalSeconds = sessionWithSets.session.totalRestSeconds
+        val savedRemainingSeconds = savedEndTime?.let { 
+            ((it - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+        } ?: 0
 
         val exerciseStates = planWithDetails.exercises.sortedBy { it.planExercise.ordine }.map { detail ->
             val previousSets = workoutRepository.getLastSessionSetsForExercise(planId, detail.exercise.id, detail.planExercise.serieTarget).firstOrNull()
@@ -177,8 +202,16 @@ class WorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exercises = exerciseStates,
                 currentExerciseIndex = activeIndex,
-                exerciseSwaps = swapMap
+                exerciseSwaps = swapMap,
+                remainingRestSeconds = savedRemainingSeconds,
+                totalRestSeconds = savedTotalSeconds ?: 90,
+                restTimerEndTime = if (savedRemainingSeconds > 0) savedEndTime else null
             )
+        }
+
+        // Resume timer if still valid
+        if (savedRemainingSeconds > 0 && savedEndTime != null) {
+            resumeRestTimer(savedEndTime)
         }
     }
 
@@ -360,26 +393,57 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun previousExercise() {
+        val now = System.currentTimeMillis()
+        if (now - lastActionTime < actionDebounce) return
+        lastActionTime = now
+
+        if (_state.value.isNavigating || _state.value.isFinishing) return
+        
         val currentIndex = _state.value.currentExerciseIndex
         if (currentIndex > 0) {
-            _state.update { it.copy(currentExerciseIndex = currentIndex - 1) }
+            _state.update { it.copy(isNavigating = true) }
+            _state.update { it.copy(currentExerciseIndex = currentIndex - 1, isNavigating = false) }
         }
     }
 
     fun nextExercise() {
+        val now = System.currentTimeMillis()
+        if (now - lastActionTime < actionDebounce) return
+        lastActionTime = now
+
+        if (_state.value.isNavigating || _state.value.isFinishing) return
+        
         val currentIndex = _state.value.currentExerciseIndex
         val maxIndex = _state.value.exercises.size - 1
         if (currentIndex < maxIndex) {
-            _state.update { it.copy(currentExerciseIndex = currentIndex + 1) }
+            _state.update { it.copy(isNavigating = true) }
+            _state.update { it.copy(currentExerciseIndex = currentIndex + 1, isNavigating = false) }
         }
     }
 
     fun finishWorkout() {
+        val now = System.currentTimeMillis()
+        if (now - lastActionTime < actionDebounce) return
+        lastActionTime = now
+
+        if (_state.value.isFinishing) return
+        _state.update { it.copy(isFinishing = true) }
+        
         viewModelScope.launch {
-            _state.value.sessionId?.let { id ->
-                workoutRepository.setSessionFinished(id)
-                stopRestTimer()
-                _state.update { it.copy(isFinished = true) }
+            try {
+                _state.value.sessionId?.let { id ->
+                    withContext(Dispatchers.IO) {
+                        workoutRepository.setSessionFinished(id)
+                    }
+                    stopRestTimer()
+                    _state.update { it.copy(isFinished = true, isFinishing = false) }
+                    _navigationEvent.emit(WorkoutNavEvent.NavigateBack)
+                } ?: run {
+                    _state.update { it.copy(isFinishing = false) }
+                    _navigationEvent.emit(WorkoutNavEvent.NavigateBack)
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isFinishing = false) }
             }
         }
     }
@@ -387,7 +451,24 @@ class WorkoutViewModel @Inject constructor(
     private fun startRestTimer(seconds: Int) {
         stopRestTimer()
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
-        _state.update { it.copy(remainingRestSeconds = seconds, restTimerEndTime = endTime) }
+        _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
+        saveTimerToSession(endTime, seconds)
+        startTimerJob()
+    }
+
+    private fun resumeRestTimer(endTime: Long) {
+        stopRestTimer()
+        val remaining = ((endTime - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+        val totalSeconds = _state.value.totalRestSeconds
+        _state.update { it.copy(remainingRestSeconds = remaining, restTimerEndTime = endTime) }
+        if (remaining > 0) {
+            startTimerJob()
+        } else {
+            clearTimerInSession()
+        }
+    }
+
+    private fun startTimerJob() {
         timerJob = viewModelScope.launch {
             while (true) {
                 delay(100L)
@@ -395,6 +476,7 @@ class WorkoutViewModel @Inject constructor(
                 val remaining = ((end - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
                 if (remaining == 0) {
                     _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+                    clearTimerInSession()
                     break
                 }
                 _state.update { it.copy(remainingRestSeconds = remaining) }
@@ -402,17 +484,32 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    private fun saveTimerToSession(endTime: Long?, totalSeconds: Int?) {
+        viewModelScope.launch {
+            _state.value.sessionId?.let { sessionId ->
+                workoutRepository.updateRestTimer(sessionId, endTime, totalSeconds)
+            }
+        }
+    }
+
+    private fun clearTimerInSession() {
+        saveTimerToSession(null, null)
+    }
+
     fun addRestTime(seconds: Int) {
         val currentEnd = _state.value.restTimerEndTime
         if (currentEnd != null) {
             val newEnd = currentEnd + (seconds * 1000L)
             val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
-            _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining) }
+            val newTotal = _state.value.totalRestSeconds + seconds
+            _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
+            saveTimerToSession(newEnd, newTotal)
         }
     }
 
     fun skipRestTimer() {
         stopRestTimer()
+        clearTimerInSession()
     }
 
     fun swapExercise(exerciseIndex: Int, newExerciseId: Int, targetSets: Int, repsTarget: String) {
@@ -467,5 +564,15 @@ class WorkoutViewModel @Inject constructor(
         timerJob?.cancel()
         timerJob = null
         _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+    }
+
+    fun cancelWorkout(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            _state.value.sessionId?.let { sessionId ->
+                workoutRepository.deleteSession(sessionId)
+            }
+            stopRestTimer()
+            onComplete()
+        }
     }
 }

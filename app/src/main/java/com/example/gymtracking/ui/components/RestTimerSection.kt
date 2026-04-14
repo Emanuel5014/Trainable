@@ -17,14 +17,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gymtracking.ui.theme.*
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RestTimerSection(
     remainingSeconds: Int,
+    totalRestSeconds: Int = 90,
     onAddTime: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isVisible = remainingSeconds > 0
+    val progress = if (totalRestSeconds > 0) 1f - (remainingSeconds.toFloat() / totalRestSeconds.toFloat()) else 0f
 
     AnimatedVisibility(
         visible = isVisible,
@@ -37,29 +40,34 @@ fun RestTimerSection(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(Tertiary)
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Timer Info
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Timer,
-                        contentDescription = "Rest Timer",
-                        tint = OnTertiary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    val minutes = remainingSeconds / 60
-                    val seconds = remainingSeconds % 60
-                    val timeString = String.format("%d:%02d", minutes, seconds)
-                    
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularWavyProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.size(56.dp),
+                            color = OnTertiary,
+                            trackColor = OnTertiary.copy(alpha = 0.2f),
+                            stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
+                            trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
+                        )
+                        Icon(
+                            imageVector = Icons.Rounded.Timer,
+                            contentDescription = "Rest Timer",
+                            tint = OnTertiary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
                             text = "REST",
@@ -67,8 +75,10 @@ fun RestTimerSection(
                             color = OnTertiary.copy(alpha = 0.7f),
                             fontWeight = FontWeight.Bold
                         )
+                        val minutes = remainingSeconds / 60
+                        val seconds = remainingSeconds % 60
                         Text(
-                            text = timeString,
+                            text = String.format("%d:%02d", minutes, seconds),
                             style = MaterialTheme.typography.titleLarge,
                             color = OnTertiary,
                             fontWeight = FontWeight.Bold
@@ -76,11 +86,9 @@ fun RestTimerSection(
                     }
                 }
                 
-                // Actions
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Add Time
                     FilledIconButton(
                         onClick = onAddTime,
                         colors = IconButtonDefaults.filledIconButtonColors(
@@ -91,7 +99,6 @@ fun RestTimerSection(
                         Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     }
                     
-                    // Skip
                     FilledIconButton(
                         onClick = onSkip,
                         colors = IconButtonDefaults.filledIconButtonColors(

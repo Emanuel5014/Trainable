@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
         SetLogEntity::class,
         SessionExerciseSwapEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -87,6 +87,13 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN rest_timer_end_time INTEGER")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN total_rest_seconds INTEGER")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -99,7 +106,7 @@ abstract class GymDatabase : RoomDatabase() {
                     GymDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

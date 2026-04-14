@@ -22,7 +22,8 @@ data class PersonalBestUiModel(
     val exerciseId: Int,
     val exerciseName: String,
     val category: String,
-    val maxWeightKg: Float
+    val maxWeightKg: Float,
+    val reps: Int
 )
 
 data class ConsistencyUiModel(
@@ -37,6 +38,14 @@ data class StrengthIndexUiModel(
     val summary: String
 )
 
+sealed class AnalyticsWidget(val id: String) {
+    data class BodyWeight(val history: List<AnalyticsChartPoint>) : AnalyticsWidget("weight")
+    data class Exercise(
+        val exerciseId: Int,
+        val exerciseName: String,
+        val history: List<AnalyticsChartPoint>
+    ) : AnalyticsWidget("exercise_$exerciseId")
+}
 
 data class AnalyticsUiState(
     val activePlanName: String = "No Active Plan",
@@ -46,6 +55,8 @@ data class AnalyticsUiState(
     val consistency: ConsistencyUiModel = ConsistencyUiModel(0, 0, 0f, "No scheduled sessions yet."),
     val strengthIndex: StrengthIndexUiModel = StrengthIndexUiModel(null, "Not enough PR history yet."),
     val personalBests: List<PersonalBestUiModel> = emptyList(),
+    val selectedExerciseIds: Set<Int> = emptySet(),
+    val widgets: List<AnalyticsWidget> = emptyList(),
     val bodyWeightHistory: List<AnalyticsChartPoint> = emptyList(),
     val bodyWeightInput: String = "",
     val isLoading: Boolean = true,

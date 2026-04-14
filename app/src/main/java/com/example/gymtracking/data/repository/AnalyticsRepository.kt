@@ -40,6 +40,9 @@ class AnalyticsRepository @Inject constructor(
     fun getPersonalBestForExercise(exerciseId: Int): Flow<Float?> = 
         analyticsDao.getPersonalBest(exerciseId)
 
+    fun getExerciseProgressHistory(exerciseId: Int, startDate: Long) =
+        analyticsDao.getExerciseProgressHistory(exerciseId, startDate)
+
     fun getWeightHistory(startDate: Long): Flow<List<WeightLogEntity>> =
         weightLogDao.getWeightHistory(startDate)
 

@@ -2,7 +2,12 @@ package com.example.gymtracking.util
 
 import android.content.Context
 import android.net.Uri
+import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.data.repository.dataStore
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
@@ -40,7 +45,16 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                         }
                     }
 
-                    // 2. Export Images if requested
+                    // 2. Export Membership Expiry Date
+                    val membershipExpiry = getMembershipExpiryDate()
+                    if (membershipExpiry != null) {
+                        val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
+                        zos.putNextEntry(ZipEntry("settings.json"))
+                        zos.write(settingsJson.toByteArray())
+                        zos.closeEntry()
+                    }
+
+                    // 3. Export Images if requested
                     if (includeImages) {
                         val filesDir = context.filesDir
                         filesDir.listFiles()?.forEach { file ->
@@ -62,6 +76,16 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         }
     }
 
+    private fun getMembershipExpiryDate(): Long? {
+        return try {
+            runBlocking {
+                context.dataStore.data.first()[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_DATE]
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun importDatabaseZip(inputUri: Uri): Boolean = withContext(Dispatchers.IO) {
         try {
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
@@ -73,6 +97,17 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                     var entry = zis.nextEntry
                     while (entry != null) {
                         when {
+                            entry.name == "settings.json" -> {
+                                val jsonContent = zis.bufferedReader().readText()
+                                val expiryDate = parseMembershipExpiryFromJson(jsonContent)
+                                if (expiryDate != null) {
+                                    runBlocking {
+                                        context.dataStore.edit { prefs ->
+                                            prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_DATE] = expiryDate
+                                        }
+                                    }
+                                }
+                            }
                             entry.name.startsWith("images/") -> {
                                 val imageName = entry.name.removePrefix("images/")
                                 if (imageName.isNotEmpty()) {
@@ -101,6 +136,15 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         }
     }
 
+    private fun parseMembershipExpiryFromJson(json: String): Long? {
+        return try {
+            val regex = """"gym_membership_expiry_date"\s*:\s*(\d+)""".toRegex()
+            regex.find(json)?.groupValues?.get(1)?.toLongOrNull()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun exportDatabaseToFile(outputFile: File, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         try {
             val dbFile = context.getDatabasePath(dbName)
@@ -124,7 +168,16 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                         }
                     }
 
-                    // 2. Export Images if requested
+                    // 2. Export Membership Expiry Date
+                    val membershipExpiry = getMembershipExpiryDate()
+                    if (membershipExpiry != null) {
+                        val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
+                        zos.putNextEntry(ZipEntry("settings.json"))
+                        zos.write(settingsJson.toByteArray())
+                        zos.closeEntry()
+                    }
+
+                    // 3. Export Images if requested
                     if (includeImages) {
                         val filesDir = context.filesDir
                         filesDir.listFiles()?.forEach { file ->
@@ -180,7 +233,16 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                         }
                     }
 
-                    // 2. Export Images if requested
+                    // 2. Export Membership Expiry Date
+                    val membershipExpiry = getMembershipExpiryDate()
+                    if (membershipExpiry != null) {
+                        val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
+                        zos.putNextEntry(ZipEntry("settings.json"))
+                        zos.write(settingsJson.toByteArray())
+                        zos.closeEntry()
+                    }
+
+                    // 3. Export Images if requested
                     if (includeImages) {
                         val filesDir = context.filesDir
                         filesDir.listFiles()?.forEach { file ->

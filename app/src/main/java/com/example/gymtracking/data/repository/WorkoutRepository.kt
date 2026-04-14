@@ -73,6 +73,8 @@ class WorkoutRepository @Inject constructor(
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>> = workoutDao.getUnfinishedSessionsWithPlanName()
 
     suspend fun setSessionFinished(sessionId: Int) = workoutDao.setSessionFinished(sessionId)
+
+    suspend fun updateRestTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateRestTimer(sessionId, endTime, totalSeconds)
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     

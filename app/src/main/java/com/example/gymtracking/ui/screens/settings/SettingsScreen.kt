@@ -47,6 +47,7 @@ fun SettingsScreen(
     val autoBackupMaxCount by viewModel.autoBackupMaxCount.collectAsState()
     val autoBackupIncludeImages by viewModel.autoBackupIncludeImages.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
+    val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -547,6 +548,26 @@ fun SettingsScreen(
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
+                        Divider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Dashboard, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.floating_nav_bar), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.floating_nav_bar_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = floatingNavBar,
+                                onCheckedChange = { viewModel.setFloatingNavBar(it) }
+                            )
+                        }
                     }
                 }
             }
@@ -669,7 +690,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Trainable v0.10.1 beta\nMade with ❤️ by Emanuel5014",
+                text = "Trainable v0.11.0 beta\nMade with ❤️ by Emanuel5014",
                 style = MaterialTheme.typography.labelSmall,
                 color = OnSurfaceVariant.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,

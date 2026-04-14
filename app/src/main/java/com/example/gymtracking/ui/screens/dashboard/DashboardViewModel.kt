@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -26,6 +27,7 @@ data class DashboardUiState(
     val workoutsThisWeek: Int = 0,
     val unfinishedSessions: List<SessionWithPlanName> = emptyList(),
     val prSnapshots: List<PrSnapshot> = emptyList(),
+    val gymMembershipExpiryDate: Long? = null,
     val isLoading: Boolean = true
 )
 
@@ -62,12 +64,16 @@ class DashboardViewModel @Inject constructor(
         workoutRepository.getActivePlans(),
         analyticsRepository.getTotalVolume(),
         userRepository.currentUser,
-        userPrefsRepository.weeklyGoal,
+        combine(
+            userPrefsRepository.weeklyGoal,
+            userPrefsRepository.gymMembershipExpiryDate
+        ) { goal, expiry -> goal to expiry },
         combine(
             workoutRepository.getAllSessions(),
             workoutRepository.getUnfinishedSessionsWithPlanName()
         ) { all, unf -> all to unf }
-    ) { plans, volume, user, goal, sessionData ->
+    ) { plans, volume, user, prefs, sessionData ->
+        val (goal, membershipExpiry) = prefs
         val (allSessions, unfinished) = sessionData
         val workoutsThisWeek = allSessions.count { it.timestamp >= weekStartMillis }
         
@@ -96,6 +102,7 @@ class DashboardViewModel @Inject constructor(
             workoutsThisWeek = workoutsThisWeek,
             unfinishedSessions = unfinished,
             isLoading = false,
+            gymMembershipExpiryDate = membershipExpiry,
             prSnapshots = listOf(
                 PrSnapshot("BENCH PRESS", 120.0f, true),
                 PrSnapshot("SQUAT", 160.5f, false)
@@ -106,4 +113,10 @@ class DashboardViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = DashboardUiState(isLoading = true)
     )
+
+    fun setGymMembershipExpiryDate(timestampMillis: Long?) {
+        viewModelScope.launch {
+            userPrefsRepository.setGymMembershipExpiryDate(timestampMillis)
+        }
+    }
 }

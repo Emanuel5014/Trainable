@@ -28,5 +28,9 @@ data class WorkoutSessionEntity(
     @ColumnInfo(name = "note_sessione")
     val noteSessione: String? = null,
     @ColumnInfo(name = "is_finished")
-    val isFinished: Boolean = false
+    val isFinished: Boolean = false,
+    @ColumnInfo(name = "rest_timer_end_time")
+    val restTimerEndTime: Long? = null,
+    @ColumnInfo(name = "total_rest_seconds")
+    val totalRestSeconds: Int? = null
 )

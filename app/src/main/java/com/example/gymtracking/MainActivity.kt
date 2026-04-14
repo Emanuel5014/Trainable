@@ -23,6 +23,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.ui.components.BottomNavBar
+import com.example.gymtracking.ui.components.BottomNavBarFlo
+import kotlinx.coroutines.flow.map
 import com.example.gymtracking.ui.navigation.MainTabs
 import com.example.gymtracking.ui.navigation.MainNavGraph
 import com.example.gymtracking.ui.navigation.WorkoutExecution
@@ -75,16 +77,25 @@ class MainActivity : ComponentActivity() {
                             currentDestination?.route?.startsWith("MainTabs") == true) && 
                             currentDestination?.hasRoute(WorkoutExecution::class) == false
 
+                        val floatingNavBar by userPreferencesRepository.floatingNavBar.collectAsState(initial = false)
+
                         AnimatedVisibility(
                             visible = showBottomBar,
                             modifier = Modifier.align(Alignment.BottomCenter),
                             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                         ) {
-                            BottomNavBar(
-                                navController = navController,
-                                pagerState = pagerState
-                            )
+                            if (floatingNavBar) {
+                                BottomNavBarFlo(
+                                    navController = navController,
+                                    pagerState = pagerState
+                                )
+                            } else {
+                                BottomNavBar(
+                                    navController = navController,
+                                    pagerState = pagerState
+                                )
+                            }
                         }
                     } else {
                         OnboardingScreen(
