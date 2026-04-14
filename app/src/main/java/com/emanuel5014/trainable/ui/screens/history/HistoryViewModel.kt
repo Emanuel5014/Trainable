@@ -1,0 +1,91 @@
+package com.emanuel5014.trainable.ui.screens.history
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+data class HistoryUiState(
+    val sessions: List<SessionWithDetails> = emptyList(),
+    val selectedSession: SessionWithDetails? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val weightUnit: String = "kg"
+)
+
+@HiltViewModel
+class HistoryViewModel @Inject constructor(
+    private val repository: WorkoutRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(HistoryUiState())
+    val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
+
+    init {
+        loadHistory()
+        viewModelScope.launch {
+            userPreferencesRepository.weightUnit.collect { unit ->
+                _uiState.update { it.copy(weightUnit = unit) }
+            }
+        }
+    }
+
+    fun loadHistory() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            repository.getAllSessionsWithDetails()
+                .onEach { sessions ->
+                    _uiState.update { it.copy(sessions = sessions, isLoading = false) }
+                }
+                .catch { e ->
+                    _uiState.update { it.copy(error = e.message, isLoading = false) }
+                }
+                .collect()
+        }
+    }
+
+    fun loadSessionDetails(sessionId: Int) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            repository.getSessionWithDetails(sessionId)
+                .onEach { session ->
+                    _uiState.update { it.copy(selectedSession = session, isLoading = false) }
+                }
+                .catch { e ->
+                    _uiState.update { it.copy(error = e.message, isLoading = false) }
+                }
+                .collect()
+        }
+    }
+
+    fun deleteSession(sessionId: Int) {
+        viewModelScope.launch {
+            repository.deleteSession(sessionId)
+        }
+    }
+
+    fun updateSet(set: SetLogEntity) {
+        viewModelScope.launch {
+            repository.updateSet(set)
+        }
+    }
+
+    fun deleteSet(set: SetLogEntity) {
+        viewModelScope.launch {
+            repository.deleteSet(set)
+        }
+    }
+}

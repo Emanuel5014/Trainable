@@ -1,0 +1,51 @@
+package com.emanuel5014.trainable.data.local
+
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+
+object ExerciseData {
+    val initialExercises = listOf(
+        ExerciseEntity(id = 1, nome = "Flat Bench Press", categoria = "Chest"),
+        ExerciseEntity(id = 2, nome = "45-Degree Incline Dumbbell Press", categoria = "Chest"),
+        ExerciseEntity(id = 3, nome = "Floor Flyes", categoria = "Chest"),
+        ExerciseEntity(id = 4, nome = "Incline Multipower/Smith Machine Press", categoria = "Chest"),
+        ExerciseEntity(id = 5, nome = "Flat Bench Flyes", categoria = "Chest"),
+        ExerciseEntity(id = 6, nome = "Low Cable Flyes", categoria = "Chest"),
+        ExerciseEntity(id = 7, nome = "Pec Deck Fly", categoria = "Chest"),
+        ExerciseEntity(id = 8, nome = "Pull-ups", categoria = "Back"),
+        ExerciseEntity(id = 9, nome = "Reverse Grip Seated Cable Row", categoria = "Back"),
+        ExerciseEntity(id = 10, nome = "Machine Row", categoria = "Back"),
+        ExerciseEntity(id = 11, nome = "Dumbbell Pullover", categoria = "Back"),
+        ExerciseEntity(id = 12, nome = "Cable Pullover", categoria = "Back"),
+        ExerciseEntity(id = 13, nome = "Max Stretch Pullover", categoria = "Back"),
+        ExerciseEntity(id = 14, nome = "Back Extensions", categoria = "Back"),
+        ExerciseEntity(id = 15, nome = "Reverse Hyperextensions", categoria = "Back"),
+        ExerciseEntity(id = 16, nome = "Seal Row", categoria = "Back"),
+        ExerciseEntity(id = 17, nome = "Reverse Grip Lat Pulldown", categoria = "Back"),
+        ExerciseEntity(id = 18, nome = "Barbell Squat", categoria = "Legs"),
+        ExerciseEntity(id = 19, nome = "Traditional Deadlift", categoria = "Legs"),
+        ExerciseEntity(id = 20, nome = "Vertical Leg Press", categoria = "Legs"),
+        ExerciseEntity(id = 21, nome = "Leg Press", categoria = "Legs"),
+        ExerciseEntity(id = 22, nome = "Leg Extension", categoria = "Legs"),
+        ExerciseEntity(id = 23, nome = "Walking Lunges", categoria = "Legs"),
+        ExerciseEntity(id = 24, nome = "Leg Curl", categoria = "Legs"),
+        ExerciseEntity(id = 25, nome = "Single-Leg Curl", categoria = "Legs"),
+        ExerciseEntity(id = 26, nome = "Belt Squat", categoria = "Legs"),
+        ExerciseEntity(id = 27, nome = "Romanian Deadlift (RDL)", categoria = "Legs"),
+        ExerciseEntity(id = 28, nome = "Sissy Squat", categoria = "Legs"),
+        ExerciseEntity(id = 29, nome = "Calf Raises", categoria = "Legs"),
+        ExerciseEntity(id = 30, nome = "Pendulum Squat", categoria = "Legs"),
+        ExerciseEntity(id = 31, nome = "Military Press", categoria = "Shoulders"),
+        ExerciseEntity(id = 32, nome = "Seated/Standing Lateral Raises", categoria = "Shoulders"),
+        ExerciseEntity(id = 33, nome = "Upright Rows", categoria = "Shoulders"),
+        ExerciseEntity(id = 34, nome = "Face Pulls", categoria = "Shoulders"),
+        ExerciseEntity(id = 35, nome = "Barbell Bicep Curl", categoria = "Arms"),
+        ExerciseEntity(id = 36, nome = "45-Degree Incline Dumbbell Curl", categoria = "Arms"),
+        ExerciseEntity(id = 37, nome = "Incline Bench Dumbbell Curl", categoria = "Arms"),
+        ExerciseEntity(id = 38, nome = "Single-Arm Cable Curl", categoria = "Arms"),
+        ExerciseEntity(id = 39, nome = "Dips", categoria = "Arms"),
+        ExerciseEntity(id = 40, nome = "Close-Grip Bench Press", categoria = "Arms"),
+        ExerciseEntity(id = 41, nome = "Cable Triceps Extensions", categoria = "Arms"),
+        ExerciseEntity(id = 42, nome = "Triceps Rope Pushdown", categoria = "Arms"),
+        ExerciseEntity(id = 43, nome = "Crunch", categoria = "Core")
+    )
+}
