@@ -1,15 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <!-- App -->
+    
     <string name="app_name">Trainable</string>
     
-    <!-- Navigation -->
+    
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_routines">Schede</string>
     <string name="nav_history">Storico</string>
     <string name="nav_analytics">Statistiche</string>
     <string name="nav_settings">Impostazioni</string>
     
-    <!-- Common Actions -->
+    
     <string name="save">Salva</string>
     <string name="cancel">Annulla</string>
     <string name="delete">Elimina</string>
@@ -25,7 +26,7 @@
     <string name="reset">Ripristina</string>
     <string name="retry">Riprova</string>
     
-    <!-- Dashboard -->
+    
     <string name="dashboard_title">DASHBOARD</string>
     <string name="active_plan">Scheda Attiva</string>
     <string name="weekly_load">Carico Settimanale</string>
@@ -40,7 +41,7 @@
     <string name="resume_workout">RIPRENDI ALLENAMENTO</string>
     <string name="days_this_week">giorni questa settimana</string>
     
-    <!-- Routines -->
+    
     <string name="your_routines">LE TUE SCHEDE</string>
     <string name="archived_routines">ARCHIVIATE</string>
     <string name="active_routines_tab">Attive</string>
@@ -73,7 +74,7 @@
     <string name="swap_exercise">CAMBIA ESERCIZIO</string>
     <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>
     
-    <!-- Exercise -->
+    
     <string name="add_exercise">AGGIUNGI ESERCIZIO</string>
     <string name="edit_exercise">MODIFICA ESERCIZIO</string>
     <string name="exercise_details">Dettagli Esercizio</string>
@@ -81,9 +82,10 @@
     <string name="exercise">Esercizio</string>
     <string name="sets">Serie</string>
     <string name="reps">Ripetizioni</string>
-    <string name="weight_kg">Peso (kg)</string>
+    <string name="weight_kg">Peso</string>
     <string name="rest_seconds">Recupero (Secondi)</string>
     <string name="select_exercise">Seleziona Esercizio</string>
+    <string name="tap_to_change_exercise">Tocca per cambiare esercizio</string>
     <string name="search_exercises">Cerca esercizi</string>
     <string name="all_categories">Tutti</string>
     <string name="no_exercises_found">Nessun esercizio trovato</string>
@@ -91,7 +93,7 @@
     <string name="exercise_name">Nome Esercizio</string>
     <string name="category">Categoria</string>
     
-    <!-- Categories -->
+    
     <string name="category_chest">Petto</string>
     <string name="category_back">Schiena</string>
     <string name="category_legs">Gambe</string>
@@ -99,7 +101,7 @@
     <string name="category_arms">Braccia</string>
     <string name="category_core">Addome</string>
     
-    <!-- Workout -->
+    
     <string name="workout_execution">Esecuzione Allenamento</string>
     <string name="session_in_progress">SESSIONE IN CORSO</string>
     <string name="log_set">REGISTRA SERIE</string>
@@ -111,17 +113,19 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Timer Recupero</string>
     
-    <!-- History -->
+    
     <string name="history_title">STORICO</string>
     <string name="no_history">Nessuno storico allenamenti</string>
     <string name="no_history_description">I tuoi allenamenti completati appariranno qui.</string>
     <string name="delete_session">Elimina Sessione?</string>
     <string name="delete_session_message">Questo eliminerà permanentemente questa sessione di allenamento.</string>
+    <string name="edit_session">Modifica Sessione?</string>
+    <string name="edit_session_message">Modifica questa sessione di allenamento per cambiare esercizi, serie e pesi.</string>
     <string name="session_details">Dettagli Sessione</string>
     <string name="total_volume">Volume Totale</string>
     <string name="duration">Durata</string>
     
-    <!-- Analytics -->
+    
     <string name="analytics_title">STATISTICHE</string>
     <string name="total_volume_label">Volume Totale</string>
     <string name="consistency">Costanza</string>
@@ -135,7 +139,7 @@
     <string name="workouts_per_week">Allenamenti/Settimana</string>
     <string name="avg_volume">Volume Medio</string>
     
-    <!-- Settings -->
+    
     <string name="settings_title">IMPOSTAZIONI</string>
     <string name="profile">PROFILO</string>
     <string name="preferences">PREFERENZE</string>
@@ -159,6 +163,10 @@
     <string name="reset_app_message">Questo eliminerà tutti i tuoi dati inclusi allenamenti, schede e impostazioni. Questa azione non può essere annullata.</string>
     <string name="restarting_app">Riavvio app in corso...</string>
     <string name="tactile_feedback_desc">Vibrazione sulle interazioni</string>
+    <string name="floating_nav_bar">Navigazione Fluttuante</string>
+    <string name="floating_nav_bar_desc">Barra di navigazione arrotondata fluttuante</string>
+    <string name="dynamic_color">Colore Dinamico</string>
+    <string name="dynamic_color_desc">Usa colori Material You dallo sfondo</string>
     <string name="folder_selected">Cartella selezionata</string>
     <string name="choose_folder">Scegli cartella</string>
     <string name="edit_backup">MODIFICA</string>
@@ -167,14 +175,14 @@
     <string name="training_plans">PIANI ALLENAMENTO</string>
     <string name="workout_logs">REGISTRO ALLENAMENTI</string>
     
-    <!-- Language Settings -->
+    
     <string name="language">Lingua</string>
     <string name="language_system_default">Predefinita Sistema</string>
     <string name="current_language">Attuale: %s</string>
     <string name="language_english">English</string>
     <string name="language_italian">Italiano</string>
     
-    <!-- Onboarding -->
+    
     <string name="welcome_title">Benvenuto su Trainable</string>
     <string name="welcome_subtitle">Il tuo compagno di allenamento personale</string>
     <string name="lets_get_started">Iniziamo</string>
@@ -186,7 +194,7 @@
     <string name="workouts_per_week_goal">Allenamenti per settimana</string>
     <string name="finish_setup">FINISCI CONFIGURAZIONE</string>
     
-    <!-- Backup Messages -->
+    
     <string name="export_successful">Esportazione riuscita</string>
     <string name="export_failed">Esportazione fallita</string>
     <string name="import_successful">Importazione riuscita</string>
@@ -199,15 +207,15 @@
     <string name="reset_complete">Reset completo. Riavvio...</string>
     <string name="reset_failed">Reset fallito: %s</string>
     
-    <!-- Errors -->
+    
     <string name="error_unknown">Errore sconosciuto</string>
     <string name="routine_not_found">Scheda non trovata</string>
     
-    <!-- Empty States -->
+    
     <string name="no_active_routines">Nessuna scheda attiva</string>
     <string name="create_first_routine">Crea la tua prima scheda</string>
     
-    <!-- Additional Dashboard -->
+    
     <string name="total_workouts">Totale Allenamenti</string>
     <string name="this_week">Questa Settimana</string>
     <string name="current_week">Settimana Corrente</string>
@@ -217,7 +225,7 @@
     <string name="best_performance">Miglior Prestazione</string>
     <string name="kg_short">kg</string>
     
-    <!-- Settings Additional -->
+    
     <string name="account">Account</string>
     <string name="about">Info</string>
     <string name="version">Versione</string>
@@ -234,15 +242,15 @@
     <string name="configure_backup">Configura le impostazioni di backup automatico</string>
     <string name="database_imported">Database importato. Riavvio app...</string>
     
-    <!-- History Additional -->
+    
     <string name="exercises_completed">esercizi completati</string>
     <string name="no_exercises_in_session">Nessun esercizio registrato in questa sessione.</string>
     <string name="total">Totale</string>
     
-    <!-- Exercise Edit -->
+    
     <string name="edit_exercise_title">Modifica Esercizio</string>
     
-    <!-- Dashboard Additional -->
+    
     <string name="start">INIZIA</string>
     <string name="suggested_plan">SCHEDA CONSIGLIATA</string>
     <string name="no_active_routines_message">Nessuna scheda attiva. Vai su Schede per crearne una.</string>
@@ -251,16 +259,16 @@
     <string name="goal_met">Obiettivo raggiunto</string>
     <string name="workouts_this_week" formatted="false">%d / %d allenamenti</string>
     
-    <!-- Routine Detail -->
+    
     <string name="start_workout_detail">INIZIA</string>
     
-    <!-- History Additional 2 -->
+    
     <string name="no_history_yet">Nessuno storico ancora</string>
     <string name="no_history_description_screen">Completa il tuo primo allenamento per vederlo qui.</string>
     <string name="set_number">Serie %d</string>
     <string name="no_exercises_in_session_detail">Nessun esercizio registrato in questa sessione.</string>
     
-    <!-- Workout Execution -->
+    
     <string name="workout_execution_title">Esecuzione Allenamento</string>
     <string name="session_in_progress_title">SESSIONE IN CORSO</string>
     <string name="close_workout">Chiudi Allenamento</string>
@@ -274,4 +282,18 @@
     <string name="include_images_description">Vuoi includere le foto delle routine nel backup? Questo aumenterà la dimensione del file.</string>
     <string name="yes">SÌ</string>
     <string name="no">NO</string>
-</resources>
+<string name="gym_membership">Abbonamento Palestra</string><string name="valid_thru">Scade il</string><string name="expired">Scaduto</string><string name="expires_in_days">Scade in %d giorni</string><string name="set_expiry_date">Imposta Scadenza</string><string name="tap_to_set">Tocca per impostare</string>    <string name="analytics_subtitle">DETTAGLI PIANO ATTIVO</string>
+    <string name="analytics_max_progress">PROGRESSI MASSIMALI</string>
+    <string name="analytics_select_exercises_desc">Seleziona gli esercizi per tracciare i tuoi massimali</string>
+    <string name="analytics_choose_exercises">Scegli Esercizi</string>
+    <string name="analytics_estimated_1rm">1RM STIMATO</string>
+    <string name="analytics_estimated_1rm_short">1RM stimato</string>
+    <string name="analytics_selected_count">Selezionati: %d</string>
+    <string name="analytics_record_reps">Record: %d reps</string>
+    <string name="analytics_body_weight">PESO CORPOREO</string>
+    <string name="analytics_no_weight_data">Nessun dato sul peso disponibile</string>
+    <string name="analytics_todays_weight">Peso di oggi</string>
+    <string name="weight_unit">Unità di Misura</string>
+    <string name="weight_unit_desc">Scegli tra Kilogrammi e Libbre</string>
+    <string name="check_for_updates">Controlla aggiornamenti</string>
+    </resources>
