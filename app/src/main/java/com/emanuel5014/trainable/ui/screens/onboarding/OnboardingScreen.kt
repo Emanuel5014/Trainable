@@ -53,6 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -378,7 +379,7 @@ private fun ProfileSetupSlide(
                             ) {
                                 Text(
                                     text = unit,
-                                    color = if (isSelected) Color.White else OnSurfaceVariant,
+                                    color = if (isSelected) OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Black
                                 )

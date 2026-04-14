@@ -82,6 +82,7 @@ import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.UpdateDialog
 import com.emanuel5014.trainable.ui.theme.Error
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -513,7 +514,7 @@ fun SettingsScreen(
                                         .background(if (weightUnit == "kg") Primary else Color.Transparent)
                                         .clickable { viewModel.setWeightUnit("kg") }
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = if (weightUnit == "kg") Color.White else OnSurfaceVariant,
+                                    color = if (weightUnit == "kg") OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -524,7 +525,7 @@ fun SettingsScreen(
                                         .background(if (weightUnit == "lb") Primary else Color.Transparent)
                                         .clickable { viewModel.setWeightUnit("lb") }
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = if (weightUnit == "lb") Color.White else OnSurfaceVariant,
+                                    color = if (weightUnit == "lb") OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold
                                 )
