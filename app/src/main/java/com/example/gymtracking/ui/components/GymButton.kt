@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,10 +23,10 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
-import com.example.gymtracking.ui.theme.Primary
+import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.ui.theme.OnPrimary
+import com.example.gymtracking.ui.theme.Primary
 import com.example.gymtracking.ui.theme.Shapes
 import kotlinx.coroutines.flow.map
 

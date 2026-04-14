@@ -2,8 +2,8 @@ package com.example.gymtracking.data.repository
 
 import com.example.gymtracking.data.local.dao.AnalyticsDao
 import com.example.gymtracking.data.local.dao.CategoryVolumeRow
-import com.example.gymtracking.data.local.dao.DailyVolume
 import com.example.gymtracking.data.local.dao.ConsistencyRow
+import com.example.gymtracking.data.local.dao.DailyVolume
 import com.example.gymtracking.data.local.dao.PersonalBestRow
 import com.example.gymtracking.data.local.dao.WeightLogDao
 import com.example.gymtracking.data.local.entity.WeightLogEntity

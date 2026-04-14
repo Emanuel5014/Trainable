@@ -6,14 +6,65 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.CloudUpload
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.RemoveCircleOutline
+import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material.icons.rounded.Scale
+import androidx.compose.material.icons.rounded.TableChart
+import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,9 +79,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gymtracking.MainActivity
 import com.example.gymtracking.R
 import com.example.gymtracking.ui.components.GymButton
-import com.example.gymtracking.ui.components.GymIconButton
 import com.example.gymtracking.ui.components.GymCard
-import com.example.gymtracking.ui.theme.*
+import com.example.gymtracking.ui.components.GymIconButton
+import com.example.gymtracking.ui.components.UpdateDialog
+import com.example.gymtracking.ui.theme.Error
+import com.example.gymtracking.ui.theme.OnSurface
+import com.example.gymtracking.ui.theme.OnSurfaceVariant
+import com.example.gymtracking.ui.theme.Primary
+import com.example.gymtracking.ui.theme.Surface
+import com.example.gymtracking.ui.theme.SurfaceContainerHigh
+import com.example.gymtracking.ui.theme.SurfaceContainerHighest
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,6 +109,11 @@ fun SettingsScreen(
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val dynamicColor by viewModel.dynamicColor.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
+    
+    val latestRelease by viewModel.latestRelease.collectAsState()
+    val isDownloading by viewModel.isDownloading.collectAsState()
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
+
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -64,6 +127,16 @@ fun SettingsScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.clearStatus()
         }
+    }
+
+    if (latestRelease != null) {
+        UpdateDialog(
+            release = latestRelease!!,
+            onDismiss = { viewModel.clearUpdate() },
+            onConfirm = { viewModel.downloadAndInstall(latestRelease!!) },
+            isDownloading = isDownloading,
+            downloadProgress = downloadProgress
+        )
     }
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -758,15 +831,40 @@ fun SettingsScreen(
                 }
             }
 
+            SettingsSection(title = stringResource(R.string.about)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Trainable v1.0.0",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Made with ❤️ by Emanuel5014",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                            GymButton(
+                                onClick = { viewModel.checkForUpdates() },
+                                containerColor = Primary.copy(alpha = 0.1f),
+                                contentColor = Primary
+                            ) {
+                                Text(stringResource(R.string.check_for_updates), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Trainable v0.11.0 beta\nMade with ❤️ by Emanuel5014",
-                style = MaterialTheme.typography.labelSmall,
-                color = OnSurfaceVariant.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }

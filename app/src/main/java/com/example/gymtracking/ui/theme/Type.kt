@@ -7,7 +7,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 
 private val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts.provider",

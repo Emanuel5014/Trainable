@@ -13,8 +13,8 @@ import com.example.gymtracking.data.local.dao.WeightLogDao
 import com.example.gymtracking.data.local.dao.WorkoutDao
 import com.example.gymtracking.data.local.entity.ExerciseEntity
 import com.example.gymtracking.data.local.entity.PlanExerciseEntity
-import com.example.gymtracking.data.local.entity.SetLogEntity
 import com.example.gymtracking.data.local.entity.SessionExerciseSwapEntity
+import com.example.gymtracking.data.local.entity.SetLogEntity
 import com.example.gymtracking.data.local.entity.UserEntity
 import com.example.gymtracking.data.local.entity.WeightLogEntity
 import com.example.gymtracking.data.local.entity.WorkoutPlanEntity

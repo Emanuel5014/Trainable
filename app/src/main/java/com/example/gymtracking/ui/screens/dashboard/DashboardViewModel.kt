@@ -2,7 +2,6 @@ package com.example.gymtracking.ui.screens.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gymtracking.data.local.entity.UserEntity
 import com.example.gymtracking.data.local.entity.WorkoutPlanEntity
 import com.example.gymtracking.data.local.relation.SessionWithPlanName
 import com.example.gymtracking.data.repository.AnalyticsRepository

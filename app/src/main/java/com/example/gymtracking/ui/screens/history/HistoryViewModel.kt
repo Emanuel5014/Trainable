@@ -3,12 +3,17 @@ package com.example.gymtracking.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymtracking.data.local.entity.SetLogEntity
-import com.example.gymtracking.data.local.entity.WorkoutSessionEntity
 import com.example.gymtracking.data.local.relation.SessionWithDetails
-import com.example.gymtracking.data.repository.WorkoutRepository
 import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.data.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 

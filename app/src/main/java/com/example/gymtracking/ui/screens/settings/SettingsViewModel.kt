@@ -10,14 +10,17 @@ import com.example.gymtracking.data.local.GymDatabase
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.repository.UserRepository
 import com.example.gymtracking.data.repository.WorkoutRepository
-import com.example.gymtracking.util.AutoBackupWorker
 import com.example.gymtracking.util.AppLocaleManager
+import com.example.gymtracking.util.AutoBackupWorker
 import com.example.gymtracking.util.BackupManager
+import com.example.gymtracking.data.remote.GitHubRelease
+import com.example.gymtracking.util.UpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,6 +32,7 @@ class SettingsViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
+    private val updateManager: UpdateManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -115,6 +119,47 @@ class SettingsViewModel @Inject constructor(
 
     private val _resetComplete = MutableStateFlow(false)
     val resetComplete: StateFlow<Boolean> = _resetComplete
+
+    private val _latestRelease = MutableStateFlow<GitHubRelease?>(null)
+    val latestRelease = _latestRelease.asStateFlow()
+
+    private val _isDownloading = MutableStateFlow(false)
+    val isDownloading = _isDownloading.asStateFlow()
+
+    private val _downloadProgress = MutableStateFlow(0f)
+    val downloadProgress = _downloadProgress.asStateFlow()
+
+    fun checkForUpdates() {
+        viewModelScope.launch {
+            _backupStatus.value = "Checking for updates..."
+            val release = updateManager.checkForUpdates()
+            if (release != null) {
+                _latestRelease.value = release
+                _backupStatus.value = "New update available: ${release.tagName}"
+            } else {
+                _backupStatus.value = "No updates found"
+            }
+        }
+    }
+
+    fun downloadAndInstall(release: GitHubRelease) {
+        viewModelScope.launch {
+            _isDownloading.value = true
+            updateManager.downloadAndInstall(release) { progress ->
+                _downloadProgress.value = progress
+            }.onSuccess {
+                _isDownloading.value = false
+                _latestRelease.value = null
+            }.onFailure {
+                _isDownloading.value = false
+                _backupStatus.value = "Download failed: ${it.message}"
+            }
+        }
+    }
+
+    fun clearUpdate() {
+        _latestRelease.value = null
+    }
 
     fun setWeeklyGoal(goal: Int) {
         viewModelScope.launch {

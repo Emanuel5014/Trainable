@@ -1,13 +1,11 @@
 package com.example.gymtracking.ui.screens.onboarding
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.gymtracking.data.local.entity.UserEntity
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel

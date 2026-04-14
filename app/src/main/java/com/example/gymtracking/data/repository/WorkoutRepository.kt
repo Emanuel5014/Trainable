@@ -5,13 +5,12 @@ import com.example.gymtracking.data.local.dao.WorkoutDao
 import com.example.gymtracking.data.local.entity.PlanExerciseEntity
 import com.example.gymtracking.data.local.entity.SessionExerciseSwapEntity
 import com.example.gymtracking.data.local.entity.SetLogEntity
-import com.example.gymtracking.data.local.entity.UserEntity
 import com.example.gymtracking.data.local.entity.WorkoutPlanEntity
 import com.example.gymtracking.data.local.entity.WorkoutSessionEntity
 import com.example.gymtracking.data.local.relation.PlanWithDetails
+import com.example.gymtracking.data.local.relation.SessionWithDetails
 import com.example.gymtracking.data.local.relation.SessionWithPlanName
 import com.example.gymtracking.data.local.relation.SessionWithSets
-import com.example.gymtracking.data.local.relation.SessionWithDetails
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject

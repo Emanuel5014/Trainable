@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,10 +23,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.ui.theme.OnSurface
-import com.example.gymtracking.ui.theme.Primary
 import com.example.gymtracking.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.flow.map
 

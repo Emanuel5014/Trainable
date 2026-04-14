@@ -294,5 +294,6 @@
     <string name="analytics_no_weight_data">Nessun dato sul peso disponibile</string>
     <string name="analytics_todays_weight">Peso di oggi</string>
     <string name="weight_unit">Unità di Misura</string>
-    <string name="weight_unit_desc">Scegli tra Chilogrammi e Libbre</string>
-</resources>
+    <string name="weight_unit_desc">Scegli tra Kilogrammi e Libbre</string>
+    <string name="check_for_updates">Controlla aggiornamenti</string>
+    </resources>

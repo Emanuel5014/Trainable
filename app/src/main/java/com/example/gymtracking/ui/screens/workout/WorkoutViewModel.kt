@@ -8,9 +8,8 @@ import com.example.gymtracking.data.local.entity.PlanExerciseEntity
 import com.example.gymtracking.data.local.entity.SessionExerciseSwapEntity
 import com.example.gymtracking.data.local.entity.SetLogEntity
 import com.example.gymtracking.data.repository.ExerciseRepository
-import com.example.gymtracking.data.repository.WorkoutRepository
 import com.example.gymtracking.data.repository.UserPreferencesRepository
-import com.example.gymtracking.util.WeightUnitConverter
+import com.example.gymtracking.data.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

@@ -2,9 +2,10 @@ package com.example.gymtracking.util
 
 import android.content.Context
 import android.net.Uri
+import androidx.datastore.preferences.core.edit
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.repository.dataStore
-import androidx.datastore.preferences.core.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -16,7 +17,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 class BackupManager @Inject constructor(@ApplicationContext private val context: Context) {
 

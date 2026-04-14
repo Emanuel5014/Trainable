@@ -3,16 +3,11 @@ package com.example.gymtracking.ui.screens
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import com.example.gymtracking.ui.components.localizedNavItems
-import com.example.gymtracking.ui.navigation.Analytics
-import com.example.gymtracking.ui.navigation.Dashboard
-import com.example.gymtracking.ui.navigation.History
 import com.example.gymtracking.ui.navigation.RoutineDetail
-import com.example.gymtracking.ui.navigation.Routines
 import com.example.gymtracking.ui.navigation.Settings
 import com.example.gymtracking.ui.navigation.WorkoutExecution
 import com.example.gymtracking.ui.screens.analytics.AnalyticsScreen

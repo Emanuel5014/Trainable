@@ -1,10 +1,22 @@
 package com.example.gymtracking.ui.screens.onboarding
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -12,19 +24,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DragHandle
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -34,7 +53,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gymtracking.R
 import com.example.gymtracking.ui.components.GymButton
 import com.example.gymtracking.ui.components.GymInputField
-import com.example.gymtracking.ui.theme.*
+import com.example.gymtracking.ui.theme.OnSurface
+import com.example.gymtracking.ui.theme.OnSurfaceVariant
+import com.example.gymtracking.ui.theme.Primary
+import com.example.gymtracking.ui.theme.Surface
+import com.example.gymtracking.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.launch
 
 @Composable
@@ -300,7 +323,7 @@ private fun ProfileSetupSlide(
         
         Spacer(modifier = Modifier.height(40.dp))
         
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             GymInputField(
                 value = username,
                 onValueChange = onUsernameChange,
@@ -308,47 +331,62 @@ private fun ProfileSetupSlide(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            GymInputField(
-                value = weightInput,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() || it == '.' || it == ',' }) {
-                        onWeightChange(newValue)
-                    }
-                },
-                label = "Current weight (optional)",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Current weight (optional)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    GymInputField(
+                        value = weightInput,
+                        onValueChange = { newValue ->
+                            if (newValue.all { it.isDigit() || it == '.' || it == ',' }) {
+                                onWeightChange(newValue)
+                            }
+                        },
+                        label = "0.0",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    
                     Row(
-                        modifier = Modifier.padding(end = 8.dp),
+                        modifier = Modifier
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SurfaceContainerHigh)
+                            .padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "kg",
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (weightUnit == "kg") Primary else SurfaceContainerHigh)
-                                .clickable { onWeightUnitChange("kg") }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = if (weightUnit == "kg") Color.White else OnSurfaceVariant,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "lb",
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (weightUnit == "lb") Primary else SurfaceContainerHigh)
-                                .clickable { onWeightUnitChange("lb") }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = if (weightUnit == "lb") Color.White else OnSurfaceVariant,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        listOf("kg", "lb").forEach { unit ->
+                            val isSelected = weightUnit == unit
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .width(54.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) Primary else Color.Transparent)
+                                    .clickable { onWeightUnitChange(unit) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = unit,
+                                    color = if (isSelected) Color.White else OnSurfaceVariant,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
                     }
                 }
-            )
+            }
 
             GymInputField(
                 value = weeklyGoalInput,
@@ -359,11 +397,19 @@ private fun ProfileSetupSlide(
                 },
                 label = "Weekly workout goal",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    Text(
+                        "days", 
+                        modifier = Modifier.padding(end = 16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant
+                    )
+                }
             )
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
         Text(
             text = "You can always change these later in settings.",
