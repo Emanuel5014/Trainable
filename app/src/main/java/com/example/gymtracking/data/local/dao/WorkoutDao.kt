@@ -137,8 +137,19 @@ interface WorkoutDao {
     """)
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>>
 
+    @Update
+    suspend fun updateSession(session: WorkoutSessionEntity)
+
     @Query("DELETE FROM workout_sessions WHERE id = :sessionId")
     suspend fun deleteSession(sessionId: Int)
+
+    @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND exercise_id = :exerciseId")
+    suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int)
+
+    @Transaction
+    suspend fun updateSetOrders(sets: List<SetLogEntity>) {
+        sets.forEach { updateSet(it) }
+    }
 
     // --- Exercise Swaps ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

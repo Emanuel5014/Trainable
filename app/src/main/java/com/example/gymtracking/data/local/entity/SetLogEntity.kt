@@ -42,5 +42,7 @@ data class SetLogEntity(
     @ColumnInfo(name = "is_warmup")
     val isWarmup: Boolean = false,
     @ColumnInfo(name = "note")
-    val note: String? = null
+    val note: String? = null,
+    @ColumnInfo(name = "ordine_esercizio")
+    val ordineEsercizio: Int = 0
 )

@@ -31,3 +31,6 @@ data class RoutineDetail(val planId: Int)
 
 @Serializable
 data class WorkoutDetail(val sessionId: Int)
+
+@Serializable
+data class EditWorkoutSession(val sessionId: Int)

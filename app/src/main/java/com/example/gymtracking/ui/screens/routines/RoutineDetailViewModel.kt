@@ -128,7 +128,7 @@ class RoutineDetailViewModel @Inject constructor(
 
     fun updateCustomExercise(exercise: ExerciseEntity) {
         viewModelScope.launch {
-            exerciseRepository.updateExercise(exercise)
+            exerciseRepository.saveExercise(exercise)
         }
     }
 

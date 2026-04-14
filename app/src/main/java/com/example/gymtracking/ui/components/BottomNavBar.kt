@@ -44,7 +44,7 @@ fun BottomNavBar(
     val selectedIndex = if (isOnMainTabs) pagerState.currentPage else 0
 
     NavigationBar(
-        modifier = modifier.navigationBarsPadding(),
+        modifier = modifier,
         containerColor = SurfaceContainerHigh,
         contentColor = Primary,
         tonalElevation = 0.dp

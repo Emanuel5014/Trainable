@@ -59,6 +59,7 @@ data class AnalyticsUiState(
     val widgets: List<AnalyticsWidget> = emptyList(),
     val bodyWeightHistory: List<AnalyticsChartPoint> = emptyList(),
     val bodyWeightInput: String = "",
+    val weightUnit: String = "kg",
     val isLoading: Boolean = true,
     val error: String? = null
 )

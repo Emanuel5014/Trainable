@@ -92,6 +92,7 @@ import com.example.gymtracking.ui.theme.Spacing
 import com.example.gymtracking.ui.theme.Surface
 import com.example.gymtracking.ui.theme.SurfaceContainerHigh
 import com.example.gymtracking.ui.theme.Tertiary
+import com.example.gymtracking.util.WeightUnitConverter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
@@ -114,6 +115,7 @@ fun AnalyticsScreen(
     val moveThresholdPx = with(LocalDensity.current) { 72.dp.toPx() }
     val swapNudgePx = with(LocalDensity.current) { 28.dp.toPx() }
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
+    val weightUnit = uiState.weightUnit
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
     Scaffold(containerColor = Surface) { paddingValues ->
@@ -166,6 +168,7 @@ fun AnalyticsScreen(
                     item {
                         ExerciseCarouselSection(
                             selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
+                            weightUnit = weightUnit,
                             onEditClick = { showExercisePicker = true }
                         )
                     }
@@ -269,6 +272,7 @@ fun AnalyticsScreen(
                                     isRecentlyMoved = isRecentlyMoved,
                                     bodyWeightHistory = widget.history,
                                     bodyWeightInput = uiState.bodyWeightInput,
+                                    weightUnit = weightUnit,
                                     onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
                                     onSubmitWeight = viewModel::submitWeight,
                                     onRemove = { viewModel.removeWidget(widget.id) }
@@ -281,6 +285,7 @@ fun AnalyticsScreen(
                                     isRecentlyMoved = isRecentlyMoved,
                                     exerciseName = widget.exerciseName,
                                     history = widget.history,
+                                    weightUnit = weightUnit,
                                     onRemove = { viewModel.removeWidget(widget.id) }
                                 )
                             }
@@ -318,6 +323,7 @@ fun AnalyticsScreen(
 @Composable
 fun ExerciseCarouselSection(
     selectedExercises: List<PersonalBestUiModel>,
+    weightUnit: String,
     onEditClick: () -> Unit
 ) {
     Column(
@@ -410,7 +416,7 @@ fun ExerciseCarouselSection(
                                 )
                             }
                     ) {
-                        ExerciseCarouselItem(exercise = exercise)
+                        ExerciseCarouselItem(exercise = exercise, weightUnit = weightUnit)
                     }
                 }
                 
@@ -503,6 +509,7 @@ fun BodyWeightChartSection(
     isRecentlyMoved: Boolean = false,
     bodyWeightHistory: List<AnalyticsChartPoint>,
     bodyWeightInput: String,
+    weightUnit: String,
     onBodyWeightInputChanged: (String) -> Unit,
     onSubmitWeight: () -> Unit,
     onRemove: (() -> Unit)? = null
@@ -549,8 +556,8 @@ fun BodyWeightChartSection(
             if (bodyWeightHistory.isNotEmpty()) {
                 val latestWeight = bodyWeightHistory.lastOrNull()?.value
                 val firstWeight = bodyWeightHistory.firstOrNull()?.value
-                val weightChange = if (latestWeight != null && firstWeight != null) {
-                    latestWeight - firstWeight
+                val weightChangePercent = if (latestWeight != null && firstWeight != null && firstWeight != 0f) {
+                    ((latestWeight - firstWeight) / firstWeight) * 100f
                 } else null
                 
                 Row(
@@ -562,16 +569,16 @@ fun BodyWeightChartSection(
                 ) {
                     Column {
                         Text(
-                            text = latestWeight?.let { String.format("%.1f kg", it) } ?: "-",
+                            text = latestWeight?.let { WeightUnitConverter.formatWithUnit(it, weightUnit) } ?: "-",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = Primary
                         )
-                        if (weightChange != null && weightChange != 0f) {
+                        if (weightChangePercent != null && weightChangePercent != 0f) {
                             Text(
-                                text = String.format("%+.1f kg", weightChange),
+                                text = String.format("%+.1f%%", weightChangePercent),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (weightChange < 0) Tertiary else Error
+                                color = if (weightChangePercent < 0) Tertiary else Primary
                             )
                         }
                     }
@@ -596,7 +603,7 @@ fun BodyWeightChartSection(
                     value = bodyWeightInput,
                     onValueChange = onBodyWeightInputChanged,
                     label = { Text(stringResource(R.string.analytics_todays_weight)) },
-                    suffix = { Text("kg") },
+                    suffix = { Text(weightUnit) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
@@ -623,6 +630,7 @@ fun ExerciseChartSection(
     isRecentlyMoved: Boolean = false,
     exerciseName: String,
     history: List<AnalyticsChartPoint>,
+    weightUnit: String,
     onRemove: (() -> Unit)? = null
 ) {
     val elevation by animateDpAsState(
@@ -667,7 +675,7 @@ fun ExerciseChartSection(
             if (history.isNotEmpty()) {
                 val latest = history.last().value
                 val first = history.first().value
-                val change = latest - first
+                val changePercent = if (first != 0f) ((latest - first) / first) * 100f else 0f
 
                 Row(
                     modifier = Modifier
@@ -678,7 +686,7 @@ fun ExerciseChartSection(
                 ) {
                     Column {
                         Text(
-                            text = String.format("%.1f kg", latest),
+                            text = WeightUnitConverter.formatWithUnit(latest, weightUnit),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = Primary
@@ -688,11 +696,11 @@ fun ExerciseChartSection(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
-                        if (change != 0f) {
+                        if (changePercent != 0f) {
                             Text(
-                                text = String.format("%+.1f kg", change),
+                                text = String.format("%+.1f%%", changePercent),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (change > 0) Primary else Tertiary
+                                color = if (changePercent > 0) Primary else Tertiary
                             )
                         }
                     }
@@ -741,8 +749,9 @@ fun WidgetControls(
 }
 
 @Composable
-fun ExerciseCarouselItem(exercise: PersonalBestUiModel) {
-    val estimated1RM = calculateEpley1RM(exercise.maxWeightKg, exercise.reps)
+fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
+    val displayWeight = WeightUnitConverter.convertDisplay(exercise.maxWeightKg, weightUnit)
+    val estimated1RM = calculateEpley1RM(displayWeight, exercise.reps)
     
     Card(
         modifier = Modifier
@@ -790,12 +799,12 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel) {
                         verticalAlignment = Alignment.Bottom
                     ) {
                         Text(
-                            text = String.format("%.1f", exercise.maxWeightKg),
+                            text = WeightUnitConverter.format(displayWeight),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "kg",
+                            text = weightUnit,
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(bottom = 8.dp, start = 4.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -827,7 +836,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel) {
                                 color = OnPrimary.copy(alpha = 0.8f)
                             )
                             Text(
-                                text = String.format("%.1f kg", estimated1RM),
+                                text = WeightUnitConverter.formatWithUnit(estimated1RM, weightUnit),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = OnPrimary,
                                 fontWeight = FontWeight.Bold

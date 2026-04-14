@@ -44,7 +44,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            GymTrackingTheme {
+            val dynamicColor by userPreferencesRepository.dynamicColor.collectAsState(initial = true)
+            GymTrackingTheme(dynamicColor = dynamicColor) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()

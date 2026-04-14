@@ -16,7 +16,7 @@ class OnboardingViewModel @Inject constructor(
     private val userPrefsRepository: UserPreferencesRepository
 ) : ViewModel() {
 
-    suspend fun completeOnboarding(username: String, initialWeight: Float, weeklyGoal: Int) {
+    suspend fun completeOnboarding(username: String, initialWeight: Float, weeklyGoal: Int, weightUnit: String) {
         // Update the default user that is created by Room callback (ID = 1)
         val existingUser = userRepository.currentUser.firstOrNull()
 
@@ -38,6 +38,7 @@ class OnboardingViewModel @Inject constructor(
             )
         }
 
+        userPrefsRepository.setWeightUnit(weightUnit)
         userPrefsRepository.setWeeklyGoal(if (weeklyGoal > 0) weeklyGoal else 3)
         userPrefsRepository.setOnboardingCompleted(true)
     }

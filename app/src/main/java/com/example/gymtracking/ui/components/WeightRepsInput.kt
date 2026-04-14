@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.ui.theme.*
+import com.example.gymtracking.util.WeightUnitConverter
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -38,10 +39,15 @@ fun WeightRepsInput(
     reps: Int,
     onWeightChange: (Float) -> Unit,
     onRepsChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    weightUnit: String = "kg"
 ) {
     var showCustomWeightDialog by remember { mutableStateOf(false) }
     var customWeightText by remember { mutableStateOf("") }
+
+    val displayWeight = remember(weight, weightUnit) {
+        WeightUnitConverter.convertDisplay(weight, weightUnit)
+    }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -49,15 +55,18 @@ fun WeightRepsInput(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             WheelPickerBox(
-                label = "WEIGHT (KG)",
-                value = weight,
-                range = (0..1000).map { it * 0.5f },
-                onValueChange = { onWeightChange(it) },
+                label = "WEIGHT (${weightUnit.uppercase()})",
+                value = displayWeight,
+                range = if (weightUnit == "lb") (0..2000).map { it * 1f } else (0..1000).map { it * 0.5f },
+                onValueChange = { 
+                    val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
+                    onWeightChange(kgWeight) 
+                },
                 format = { String.format("%.1f", it) }
             )
             TextButton(
                 onClick = { 
-                    customWeightText = if (weight > 0) weight.toString() else ""
+                    customWeightText = if (displayWeight > 0) String.format("%.1f", displayWeight) else ""
                     showCustomWeightDialog = true 
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
@@ -95,7 +104,7 @@ fun WeightRepsInput(
                 OutlinedTextField(
                     value = customWeightText,
                     onValueChange = { customWeightText = it },
-                    label = { Text("Weight (kg)") },
+                    label = { Text("Weight (${weightUnit})") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = Shapes.large,
@@ -109,7 +118,10 @@ fun WeightRepsInput(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        customWeightText.toFloatOrNull()?.let { onWeightChange(it) }
+                        customWeightText.replace(',', '.').toFloatOrNull()?.let { 
+                            val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
+                            onWeightChange(kgWeight) 
+                        }
                         showCustomWeightDialog = false
                     }
                 ) {

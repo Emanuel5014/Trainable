@@ -89,6 +89,13 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun deleteSession(sessionId: Int) = workoutDao.deleteSession(sessionId)
 
+    suspend fun updateSession(session: WorkoutSessionEntity) = workoutDao.updateSession(session)
+
+    suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int) = 
+        workoutDao.deleteExerciseFromSession(sessionId, exerciseId)
+
+    suspend fun updateSetOrders(sets: List<SetLogEntity>) = workoutDao.updateSetOrders(sets)
+
     suspend fun saveExerciseSwap(swap: SessionExerciseSwapEntity) = workoutDao.insertExerciseSwap(swap)
 
     fun getSwapsForSession(sessionId: Int): Flow<List<SessionExerciseSwapEntity>> = workoutDao.getSwapsForSession(sessionId)

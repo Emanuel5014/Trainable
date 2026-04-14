@@ -33,17 +33,23 @@ import com.example.gymtracking.data.ExerciseTranslations
 import com.example.gymtracking.data.repository.dataStore
 import com.example.gymtracking.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.map
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.example.gymtracking.ui.navigation.EditWorkoutSession
+import com.example.gymtracking.data.local.entity.SetLogEntity
 import com.example.gymtracking.data.local.entity.WorkoutSessionEntity
 import com.example.gymtracking.data.local.relation.SessionWithDetails
 import com.example.gymtracking.ui.components.EmptyState
 import com.example.gymtracking.ui.components.GymButton
 import com.example.gymtracking.ui.components.GymCard
 import com.example.gymtracking.ui.components.GymIconButton
+import com.example.gymtracking.ui.components.GymInputField
 import com.example.gymtracking.ui.components.GymLoadingIndicator
 import com.example.gymtracking.ui.components.SwipeableCard
 import com.example.gymtracking.ui.components.SwipeAction
@@ -52,10 +58,12 @@ import com.example.gymtracking.ui.theme.*
 import com.example.gymtracking.ui.util.DateFormatter
 
 import com.example.gymtracking.ui.components.ScreenHeader
+import com.example.gymtracking.util.WeightUnitConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
+    navController: NavController? = null,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,10 +73,18 @@ fun HistoryScreen(
     }.collectAsState(initial = "en")
     var selectedSessionId by remember { mutableStateOf<Int?>(null) }
     var sessionToDelete by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
+    var sessionToEdit by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
     val haptic = LocalHapticFeedback.current
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
+
+    var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
+    var isNavigating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isNavigating = false
+    }
 
     Scaffold(
         containerColor = Surface
@@ -111,8 +127,14 @@ fun HistoryScreen(
                             if (value == SwipeToDismissBoxValue.EndToStart) {
                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 sessionToDelete = session
+                                false
+                            } else if (value == SwipeToDismissBoxValue.StartToEnd) {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                sessionToEdit = session
+                                false
+                            } else {
+                                false
                             }
-                            false
                         }
                     )
 
@@ -125,12 +147,16 @@ fun HistoryScreen(
 
                     SwipeToDismissBox(
                         state = dismissState,
-                        enableDismissFromStartToEnd = false,
+                        enableDismissFromStartToEnd = true,
                         backgroundContent = {
-                            val progress = dismissState.progress
-                            
+                            val direction = dismissState.dismissDirection
+
                             val color by animateColorAsState(
-                                if (progress > 0f) Error.copy(alpha = 0.6f) else Color.Transparent,
+                                when (direction) {
+                                    SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                    SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                                    else -> Color.Transparent
+                                },
                                 label = "bg_color"
                             )
 
@@ -140,13 +166,20 @@ fun HistoryScreen(
                                     .clip(Shapes.extraLarge)
                                     .background(color)
                                     .padding(horizontal = 28.dp),
-                                contentAlignment = Alignment.CenterEnd
+                                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
                             ) {
-                                if (progress > 0f) {
+                                if (direction == SwipeToDismissBoxValue.EndToStart) {
                                     Icon(
                                         Icons.Rounded.DeleteSweep,
                                         contentDescription = "Delete",
                                         tint = Error,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                    Icon(
+                                        Icons.Rounded.Edit,
+                                        contentDescription = "Edit",
+                                        tint = Color.White,
                                         modifier = Modifier.size(28.dp)
                                     )
                                 }
@@ -164,7 +197,9 @@ fun HistoryScreen(
                                 }
                             },
                             details = if (selectedSessionId == session.id) uiState.selectedSession else null,
-                            languageCode = languageCode
+                            languageCode = languageCode,
+                            weightUnit = uiState.weightUnit,
+                            onEditSet = { editingSet = it }
                         )
                     }
                 }
@@ -173,6 +208,22 @@ fun HistoryScreen(
             }
         }
         }
+    }
+
+    if (editingSet != null) {
+        EditSetDialog(
+            set = editingSet!!,
+            weightUnit = uiState.weightUnit,
+            onDismiss = { editingSet = null },
+            onConfirm = { updatedSet ->
+                viewModel.updateSet(updatedSet)
+                editingSet = null
+            },
+            onDelete = { setToDelete ->
+                viewModel.deleteSet(setToDelete)
+                editingSet = null
+            }
+        )
     }
 
     if (sessionToDelete != null) {
@@ -210,6 +261,47 @@ fun HistoryScreen(
             textContentColor = OnSurfaceVariant
         )
     }
+
+    if (sessionToEdit != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                sessionToEdit = null
+            },
+            title = { Text(stringResource(R.string.edit_session)) },
+            text = { Text(stringResource(R.string.edit_session_message)) },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    modifier = Modifier.padding(bottom = Spacing.small)
+                ) {
+                    GymButton(
+                        onClick = { sessionToEdit = null },
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                    GymButton(
+                        onClick = {
+                            sessionToEdit?.let { session ->
+                                isNavigating = true
+                                navController?.navigate(EditWorkoutSession(sessionId = session.id))
+                            }
+                            sessionToEdit = null
+                        },
+                        containerColor = Primary.copy(alpha = 0.15f),
+                        contentColor = Primary
+                    ) {
+                        Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {},
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 }
 
 @Composable
@@ -219,7 +311,9 @@ fun SessionHistoryCard(
     isExpanded: Boolean,
     onClick: () -> Unit,
     details: SessionWithDetails?,
-    languageCode: String = "en"
+    languageCode: String = "en",
+    weightUnit: String = "kg",
+    onEditSet: (SetLogEntity) -> Unit = {}
 ) {
     GymCard(
         modifier = Modifier
@@ -307,7 +401,13 @@ fun SessionHistoryCard(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 sets.forEach { setWithEx ->
                                     val set = setWithEx.setLog
-                                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { onEditSet(set) }
+                                            .padding(vertical = 4.dp, horizontal = 4.dp)
+                                    ) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween
@@ -318,7 +418,10 @@ fun SessionHistoryCard(
                                                 color = OnSurfaceVariant
                                             )
                                             Text(
-                                                text = "${set.pesoSollevato}kg × ${set.repsEffettive}",
+                                                text = WeightUnitConverter.formatWithUnit(
+                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                                                    weightUnit
+                                                ) + " × ${set.repsEffettive}",
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = OnSurface
@@ -354,3 +457,88 @@ fun SessionHistoryCard(
         }
     }
 }
+
+@Composable
+fun EditSetDialog(
+    set: SetLogEntity,
+    weightUnit: String = "kg",
+    onDismiss: () -> Unit,
+    onConfirm: (SetLogEntity) -> Unit,
+    onDelete: (SetLogEntity) -> Unit
+) {
+    var weight by remember { 
+        mutableStateOf(WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit).toString()) 
+    }
+    var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
+    var note by remember { mutableStateOf(set.note ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_exercise_title)) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                GymInputField(
+                    value = weight,
+                    onValueChange = { weight = it },
+                    label = "Weight ($weightUnit)",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+                GymInputField(
+                    value = reps,
+                    onValueChange = { reps = it },
+                    label = stringResource(R.string.reps),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                GymInputField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = stringResource(R.string.routine_notes),
+                    singleLine = false
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                modifier = Modifier.padding(bottom = Spacing.small)
+            ) {
+                GymButton(
+                    onClick = { onDelete(set) },
+                    containerColor = Error.copy(alpha = 0.15f),
+                    contentColor = Error
+                ) {
+                    Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+                GymButton(
+                    onClick = onDismiss,
+                    containerColor = SurfaceContainerHigh,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                }
+                GymButton(
+                    onClick = {
+                        val displayWeight = weight.toFloatOrNull() ?: WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit)
+                        val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
+                        val updatedSet = set.copy(
+                            pesoSollevato = storageWeight,
+                            repsEffettive = reps.toIntOrNull() ?: set.repsEffettive,
+                            note = if (note.isBlank()) null else note
+                        )
+                        onConfirm(updatedSet)
+                    }
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        },
+        dismissButton = {},
+        containerColor = SurfaceContainerHigh,
+        titleContentColor = OnSurface,
+        textContentColor = OnSurfaceVariant
+    )
+}
+

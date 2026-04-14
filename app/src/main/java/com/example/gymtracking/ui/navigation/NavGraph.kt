@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.gymtracking.ui.screens.MainPagerScreen
+import com.example.gymtracking.ui.screens.history.EditWorkoutScreen
 import com.example.gymtracking.ui.screens.routines.RoutineDetailScreen
 import com.example.gymtracking.ui.screens.settings.SettingsScreen
 import com.example.gymtracking.ui.screens.workout.WorkoutExecutionScreen
@@ -46,6 +47,11 @@ fun MainNavGraph(
         }
         composable<WorkoutExecution> {
             WorkoutExecutionScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<EditWorkoutSession> {
+            EditWorkoutScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

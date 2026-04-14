@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import com.example.gymtracking.ui.screens.analytics.AnalyticsChartPoint
 import com.example.gymtracking.ui.theme.OnSurfaceVariant
@@ -49,7 +50,7 @@ fun AnalyticsLineChart(
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(140.dp)
         ) {
             val values = points.map { it.value }
             val minValue = values.minOrNull() ?: 0f
@@ -104,13 +105,26 @@ fun AnalyticsLineChart(
             drawPath(
                 path = linePath,
                 color = lineColor,
-                style = Stroke(width = 6f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                style = Stroke(width = 4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
 
             points.forEachIndexed { index, point ->
                 val x = xFor(index)
                 val y = yFor(point.value)
-                drawCircle(color = lineColor, radius = 8f, center = Offset(x, y))
+                drawCircle(color = lineColor, radius = 6f, center = Offset(x, y))
+                drawContext.canvas.nativeCanvas.apply {
+                    val text = String.format("%.1f kg", point.value)
+                    drawText(
+                        text,
+                        x,
+                        y - 30f,
+                        android.graphics.Paint().apply {
+                            color = android.graphics.Color.parseColor("#666666")
+                            textSize = 28f
+                            textAlign = android.graphics.Paint.Align.CENTER
+                        }
+                    )
+                }
             }
         }
 

@@ -44,7 +44,7 @@ fun MainPagerScreen(
                     navController.navigate(RoutineDetail(planId))
                 }
             )
-            2 -> HistoryScreen()
+            2 -> HistoryScreen(navController = navController)
             3 -> AnalyticsScreen()
         }
     }

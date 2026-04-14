@@ -17,15 +17,16 @@ class ExerciseRepository @Inject constructor(
         
     fun getCategories(): Flow<List<String>> = exerciseDao.getCategories()
     
-    suspend fun addCustomExercise(nome: String, categoria: String, description: String? = null) {
+    suspend fun addCustomExercise(nome: String, categoria: String, description: String? = null): Int {
         val maxId = exerciseDao.getMaxId()
         val newId = if (maxId < 1000) 1000 else maxId + 1
         exerciseDao.insertExercise(
             ExerciseEntity(id = newId, nome = nome, categoria = categoria, descrizione = description)
         )
+        return newId
     }
 
-    suspend fun updateExercise(exercise: ExerciseEntity) {
+    suspend fun saveExercise(exercise: ExerciseEntity) {
         exerciseDao.insertExercise(exercise)
     }
 

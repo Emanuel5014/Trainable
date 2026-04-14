@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -165,7 +166,7 @@ fun RoutineDetailScreen(
                             GymIconButton(
                                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                                 onClick = onNavigateBack,
-                                containerColor = SurfaceContainerHigh,
+                                containerColor = Color.Transparent,
                                 contentColor = OnSurface,
                                 description = "Back"
                             )

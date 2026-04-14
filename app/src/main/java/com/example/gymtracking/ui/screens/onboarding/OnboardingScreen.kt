@@ -3,6 +3,7 @@ package com.example.gymtracking.ui.screens.onboarding
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -46,6 +47,7 @@ fun OnboardingScreen(
 
     var username by remember { mutableStateOf("") }
     var weightInput by remember { mutableStateOf("") }
+    var weightUnit by remember { mutableStateOf("kg") }
     var weeklyGoalInput by remember { mutableStateOf("3") }
 
     Box(
@@ -82,6 +84,8 @@ fun OnboardingScreen(
                         onUsernameChange = { username = it },
                         weightInput = weightInput,
                         onWeightChange = { weightInput = it },
+                        weightUnit = weightUnit,
+                        onWeightUnitChange = { weightUnit = it },
                         weeklyGoalInput = weeklyGoalInput,
                         onWeeklyGoalChange = { weeklyGoalInput = it }
                     )
@@ -127,7 +131,7 @@ fun OnboardingScreen(
                         if (isLastPage) {
                             val weight = weightInput.replace(',', '.').toFloatOrNull() ?: 0f
                             val goal = weeklyGoalInput.toIntOrNull() ?: 3
-                            viewModel.completeOnboarding(username, weight, goal)
+                            viewModel.completeOnboarding(username, weight, goal, weightUnit)
                             onFinished()
                         } else {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
@@ -275,6 +279,8 @@ private fun ProfileSetupSlide(
     onUsernameChange: (String) -> Unit,
     weightInput: String,
     onWeightChange: (String) -> Unit,
+    weightUnit: String,
+    onWeightUnitChange: (String) -> Unit,
     weeklyGoalInput: String,
     onWeeklyGoalChange: (String) -> Unit
 ) {
@@ -311,7 +317,37 @@ private fun ProfileSetupSlide(
                 },
                 label = "Current weight (optional)",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    Row(
+                        modifier = Modifier.padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "kg",
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (weightUnit == "kg") Primary else SurfaceContainerHigh)
+                                .clickable { onWeightUnitChange("kg") }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = if (weightUnit == "kg") Color.White else OnSurfaceVariant,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "lb",
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (weightUnit == "lb") Primary else SurfaceContainerHigh)
+                                .clickable { onWeightUnitChange("lb") }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = if (weightUnit == "lb") Color.White else OnSurfaceVariant,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             )
 
             GymInputField(

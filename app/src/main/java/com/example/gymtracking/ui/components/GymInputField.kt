@@ -22,7 +22,8 @@ fun GymInputField(
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -32,6 +33,7 @@ fun GymInputField(
         keyboardOptions = keyboardOptions,
         singleLine = singleLine,
         readOnly = readOnly,
+        trailingIcon = trailingIcon,
         shape = Shapes.large,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = OnSurface,

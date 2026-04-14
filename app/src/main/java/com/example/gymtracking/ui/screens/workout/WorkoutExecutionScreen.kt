@@ -28,6 +28,7 @@ import com.example.gymtracking.R
 import com.example.gymtracking.data.ExerciseTranslations
 import com.example.gymtracking.ui.components.*
 import com.example.gymtracking.ui.theme.*
+import com.example.gymtracking.util.WeightUnitConverter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -172,12 +173,13 @@ fun WorkoutExecutionScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val setsCount = currentExState.sets.size
+                        val repsCount = currentExState.sets.firstOrNull()?.reps ?: 0
                         Text(
-                            text = currentExState.exercise.categoria.uppercase(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = OnSurfaceVariant,
+                            text = "$setsCount × $repsCount",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Primary,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp,
                             modifier = Modifier.weight(1f)
                         )
                         if (state.currentExerciseIndex > 0 || state.currentExerciseIndex < state.exercises.size - 1) {
@@ -226,6 +228,7 @@ fun WorkoutExecutionScreen(
                                 viewModel.updateSetNote(state.currentExerciseIndex, index, newNote)
                             },
                             isActive = isActive,
+                            weightUnit = state.weightUnit,
                             modifier = Modifier.clickable {
                                 if (isActive) isEditingValues = !isEditingValues
                             }
@@ -300,7 +303,8 @@ fun WorkoutExecutionScreen(
                                             weight = set.weight,
                                             reps = set.reps,
                                             onWeightChange = { newW -> viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newW) },
-                                            onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) }
+                                            onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
+                                            weightUnit = state.weightUnit
                                         )
                                         LogSetButton(onClick = { viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex) })
                                     }
@@ -329,7 +333,14 @@ fun WorkoutExecutionScreen(
                                         Spacer(modifier = Modifier.width(16.dp))
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-                                            Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = WeightUnitConverter.formatWithUnit(
+                                                    WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
+                                                    state.weightUnit
+                                                ) + " × ${set.reps}", 
+                                                style = MaterialTheme.typography.titleLarge, 
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         }
                                         Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
                                         Spacer(modifier = Modifier.width(12.dp))

@@ -82,7 +82,7 @@
     <string name="exercise">Exercise</string>
     <string name="sets">Sets</string>
     <string name="reps">Reps</string>
-    <string name="weight_kg">Weight (kg)</string>
+    <string name="weight_kg">Weight</string>
     <string name="rest_seconds">Rest (Seconds)</string>
     <string name="select_exercise">Select Exercise</string>
     <string name="tap_to_change_exercise">Tap to change exercise</string>
@@ -119,6 +119,8 @@
     <string name="no_history_description">Your completed workouts will appear here.</string>
     <string name="delete_session">Delete Session?</string>
     <string name="delete_session_message">This will permanently delete this workout session.</string>
+    <string name="edit_session">Edit Session?</string>
+    <string name="edit_session_message">Edit this workout session to modify exercises, sets, and weights.</string>
     <string name="session_details">Session Details</string>
     <string name="total_volume">Total Volume</string>
     <string name="duration">Duration</string>
@@ -164,6 +166,8 @@
     <string name="tactile_feedback_desc">Vibration on interactions</string>
     <string name="floating_nav_bar">Floating Navigation</string>
     <string name="floating_nav_bar_desc">Rounded floating navigation bar</string>
+    <string name="dynamic_color">Dynamic Color</string>
+    <string name="dynamic_color_desc">Use Material You colors from wallpaper</string>
     <string name="folder_selected">Folder selected</string>
     <string name="choose_folder">Choose folder</string>
     <string name="edit_backup">EDIT</string>
@@ -295,4 +299,6 @@
     <string name="analytics_body_weight">BODY WEIGHT</string>
     <string name="analytics_no_weight_data">No weight data available</string>
     <string name="analytics_todays_weight">Today\'s weight</string>
+    <string name="weight_unit">Weight Unit</string>
+    <string name="weight_unit_desc">Choose between Kilograms and Pounds</string>
 </resources>

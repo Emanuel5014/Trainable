@@ -10,6 +10,7 @@ import com.example.gymtracking.data.local.entity.SetLogEntity
 import com.example.gymtracking.data.repository.ExerciseRepository
 import com.example.gymtracking.data.repository.WorkoutRepository
 import com.example.gymtracking.data.repository.UserPreferencesRepository
+import com.example.gymtracking.util.WeightUnitConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,7 +41,8 @@ data class WorkoutState(
     val isFinished: Boolean = false,
     val isFinishing: Boolean = false,
     val isNavigating: Boolean = false,
-    val exerciseSwaps: Map<Int, Int> = emptyMap()
+    val exerciseSwaps: Map<Int, Int> = emptyMap(),
+    val weightUnit: String = "kg"
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -103,6 +105,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.userLanguage.collect { lang ->
                 _languageCode.value = lang ?: "en"
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.weightUnit.collect { unit ->
+                _state.update { it.copy(weightUnit = unit) }
             }
         }
         

@@ -98,6 +98,18 @@ class SettingsViewModel @Inject constructor(
         initialValue = false
     )
 
+    val dynamicColor = userPrefsRepository.dynamicColor.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    val weightUnit = userPrefsRepository.weightUnit.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "kg"
+    )
+
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus: StateFlow<String?> = _backupStatus
 
@@ -235,6 +247,18 @@ class SettingsViewModel @Inject constructor(
     fun setFloatingNavBar(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setFloatingNavBar(enabled)
+        }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setDynamicColor(enabled)
+        }
+    }
+
+    fun setWeightUnit(unit: String) {
+        viewModelScope.launch {
+            userPrefsRepository.setWeightUnit(unit)
         }
     }
 

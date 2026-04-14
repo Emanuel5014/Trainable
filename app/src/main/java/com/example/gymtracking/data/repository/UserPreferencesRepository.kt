@@ -32,7 +32,9 @@ class UserPreferencesRepository @Inject constructor(
         val AUTO_BACKUP_MAX_COUNT = intPreferencesKey("auto_backup_max_count")
         val AUTO_BACKUP_INCLUDE_IMAGES = booleanPreferencesKey("auto_backup_include_images")
         val USER_LANGUAGE = stringPreferencesKey("user_language")
+        val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
+        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
     }
 
@@ -86,9 +88,19 @@ class UserPreferencesRepository @Inject constructor(
             preferences[USER_LANGUAGE]
         }
 
+    val weightUnit: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[WEIGHT_UNIT] ?: "kg"
+        }
+
     val floatingNavBar: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[FLOATING_NAV_BAR] ?: false
+        }
+
+    val dynamicColor: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[DYNAMIC_COLOR] ?: true
         }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -159,9 +171,21 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    suspend fun setWeightUnit(unit: String) {
+        dataStore.edit { preferences ->
+            preferences[WEIGHT_UNIT] = unit
+        }
+    }
+
     suspend fun setFloatingNavBar(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[FLOATING_NAV_BAR] = enabled
+        }
+    }
+
+    suspend fun setDynamicColor(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[DYNAMIC_COLOR] = enabled
         }
     }
 

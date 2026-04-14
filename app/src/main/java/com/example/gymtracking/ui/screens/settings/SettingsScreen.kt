@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +49,8 @@ fun SettingsScreen(
     val autoBackupIncludeImages by viewModel.autoBackupIncludeImages.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
+    val dynamicColor by viewModel.dynamicColor.collectAsState()
+    val weightUnit by viewModel.weightUnit.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -307,7 +310,7 @@ fun SettingsScreen(
                         GymIconButton(
                             icon = Icons.Rounded.ArrowBack,
                             onClick = onNavigateBack,
-                            containerColor = SurfaceContainerHigh,
+                            containerColor = Color.Transparent,
                             contentColor = OnSurface,
                             description = "Back"
                         )
@@ -411,6 +414,53 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.preferences)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Scale, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.weight_unit_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SurfaceContainerHighest)
+                                    .padding(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "kg",
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (weightUnit == "kg") Primary else Color.Transparent)
+                                        .clickable { viewModel.setWeightUnit("kg") }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    color = if (weightUnit == "kg") Color.White else OnSurfaceVariant,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "lb",
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (weightUnit == "lb") Primary else Color.Transparent)
+                                        .clickable { viewModel.setWeightUnit("lb") }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    color = if (weightUnit == "lb") Color.White else OnSurfaceVariant,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Divider(color = Surface.copy(alpha = 0.5f))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -566,6 +616,27 @@ fun SettingsScreen(
                             SettingsSwitch(
                                 checked = floatingNavBar,
                                 onCheckedChange = { viewModel.setFloatingNavBar(it) }
+                            )
+                        }
+
+                        Divider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.dynamic_color_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = dynamicColor,
+                                onCheckedChange = { viewModel.setDynamicColor(it) }
                             )
                         }
                     }

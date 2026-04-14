@@ -7,7 +7,9 @@ import com.example.gymtracking.data.local.dao.CategoryVolumeRow
 import com.example.gymtracking.data.local.dao.ConsistencyRow
 import com.example.gymtracking.data.local.dao.PersonalBestRow
 import com.example.gymtracking.data.repository.AnalyticsRepository
+import com.example.gymtracking.data.repository.UserPreferencesRepository
 import com.example.gymtracking.data.repository.WorkoutRepository
+import com.example.gymtracking.util.WeightUnitConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +36,7 @@ import javax.inject.Inject
 class AnalyticsViewModel @Inject constructor(
     private val analyticsRepository: AnalyticsRepository,
     private val workoutRepository: WorkoutRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -69,14 +72,16 @@ class AnalyticsViewModel @Inject constructor(
         activePlanFlow,
         selectedTimeRange,
         selectedExerciseIds,
-        widgetOrder
-    ) { activePlan, timeRange, selectedIds, order ->
+        widgetOrder,
+        userPreferencesRepository.weightUnit
+    ) { activePlan, timeRange, selectedIds, order, weightUnit ->
         AnalyticsQueryContext(
             activePlan = activePlan,
             timeRange = timeRange,
             startDate = timeRange.startDate(),
             selectedExerciseIds = selectedIds,
-            widgetOrder = order
+            widgetOrder = order,
+            weightUnit = weightUnit
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -175,7 +180,8 @@ class AnalyticsViewModel @Inject constructor(
                     strengthIndex = strengthCategory.strengthIndex,
                     categoryVolumes = strengthCategory.categoryVolumes,
                     weightHistory = weightHistory,
-                    exerciseHistories = exerciseHistories
+                    exerciseHistories = exerciseHistories,
+                    weightUnit = context.weightUnit
                 )
             }
         }
@@ -268,11 +274,12 @@ class AnalyticsViewModel @Inject constructor(
 
     fun submitWeight() {
         val parsedWeight = bodyWeightInput.value.replace(',', '.').toFloatOrNull() ?: return
+        val weightUnit = uiState.value.weightUnit
 
         viewModelScope.launch {
             analyticsRepository.addWeightLog(
                 userId = 1,
-                peso = parsedWeight,
+                peso = WeightUnitConverter.convertStorage(parsedWeight, weightUnit),
                 timestamp = System.currentTimeMillis()
             )
             bodyWeightInput.value = ""
@@ -288,11 +295,12 @@ class AnalyticsViewModel @Inject constructor(
         personalBests: List<PersonalBestRow>,
         selectedExerciseIds: Set<Int>,
         widgetOrder: List<String>,
-        consistency: com.example.gymtracking.data.local.dao.ConsistencyRow?,
+        consistency: ConsistencyRow?,
         strengthIndex: Float?,
         categoryVolumes: List<CategoryVolumeRow>,
         weightHistory: List<com.example.gymtracking.data.local.entity.WeightLogEntity>,
-        exerciseHistories: Map<Int, List<com.example.gymtracking.data.local.dao.DailyExerciseMax>>
+        exerciseHistories: Map<Int, List<com.example.gymtracking.data.local.dao.DailyExerciseMax>>,
+        weightUnit: String
     ): AnalyticsUiState {
         val completedSessions = consistency?.completedSessions ?: 0
         val targetSessionsPerWeek = consistency?.targetSessionsPerWeek ?: 0
@@ -323,7 +331,10 @@ class AnalyticsViewModel @Inject constructor(
                 id == "weight" -> {
                     AnalyticsWidget.BodyWeight(
                         history = weightHistory.map { entry ->
-                            AnalyticsChartPoint(timestamp = entry.timestamp, value = entry.pesoCorporeo)
+                            AnalyticsChartPoint(
+                                timestamp = entry.timestamp,
+                                value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit)
+                            )
                         }
                     )
                 }
@@ -331,7 +342,10 @@ class AnalyticsViewModel @Inject constructor(
                     val exerciseId = id.removePrefix("exercise_").toInt()
                     val exerciseName = allBests.find { it.exerciseId == exerciseId }?.exerciseName ?: "Unknown"
                     val history = exerciseHistories[exerciseId]?.map { point ->
-                        AnalyticsChartPoint(timestamp = point.timestamp, value = point.maxValue)
+                        AnalyticsChartPoint(
+                            timestamp = point.timestamp,
+                            value = WeightUnitConverter.convertDisplay(point.maxValue, weightUnit)
+                        )
                     } ?: emptyList()
                     AnalyticsWidget.Exercise(
                         exerciseId = exerciseId,
@@ -351,7 +365,10 @@ class AnalyticsViewModel @Inject constructor(
             selectedTimeRange = timeRange,
             totalVolumeKg = totalVolume,
             volumeHistory = volumeHistory.map { point ->
-                AnalyticsChartPoint(timestamp = point.timestamp, value = point.volume)
+                AnalyticsChartPoint(
+                    timestamp = point.timestamp,
+                    value = WeightUnitConverter.convertDisplay(point.volume, weightUnit)
+                )
             },
             consistency = ConsistencyUiModel(
                 completedSessions = completedSessions,
@@ -367,8 +384,12 @@ class AnalyticsViewModel @Inject constructor(
             selectedExerciseIds = finalSelectedIds,
             widgets = widgets,
             bodyWeightHistory = weightHistory.map { entry ->
-                AnalyticsChartPoint(timestamp = entry.timestamp, value = entry.pesoCorporeo)
+                AnalyticsChartPoint(
+                    timestamp = entry.timestamp,
+                    value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit)
+                )
             },
+            weightUnit = weightUnit,
             isLoading = false,
             error = null
         )
@@ -394,7 +415,8 @@ class AnalyticsViewModel @Inject constructor(
         val timeRange: AnalyticsTimeRange,
         val startDate: Long,
         val selectedExerciseIds: Set<Int>,
-        val widgetOrder: List<String>
+        val widgetOrder: List<String>,
+        val weightUnit: String
     )
 
     private data class CoreAnalyticsSnapshot(

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.gymtracking.ui.theme.*
+import com.example.gymtracking.util.WeightUnitConverter
 
 @Composable
 fun SetLogRow(
@@ -33,7 +34,8 @@ fun SetLogRow(
     onToggleComplete: () -> Unit,
     onNoteChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isActive: Boolean = false
+    isActive: Boolean = false,
+    weightUnit: String = "kg"
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -106,7 +108,10 @@ fun SetLogRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "${weight}kg × $reps",
+                    text = WeightUnitConverter.formatWithUnit(
+                        WeightUnitConverter.convertDisplay(weight, weightUnit),
+                        weightUnit
+                    ) + " × $reps",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = textColor
