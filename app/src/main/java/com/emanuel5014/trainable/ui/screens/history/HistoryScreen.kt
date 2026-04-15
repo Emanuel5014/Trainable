@@ -1,0 +1,577 @@
+package com.emanuel5014.trainable.ui.screens.history
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Notes
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.ui.components.EmptyState
+import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.ScreenHeader
+import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
+import com.emanuel5014.trainable.ui.theme.Error
+import com.emanuel5014.trainable.ui.theme.OnSurface
+import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.ui.theme.Spacing
+import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.util.WeightUnitConverter
+import kotlinx.coroutines.flow.map
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HistoryScreen(
+    navController: NavController? = null,
+    viewModel: HistoryViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val languageCode by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.USER_LANGUAGE] ?: "en" }
+    }.collectAsState(initial = "en")
+    var selectedSessionId by remember { mutableStateOf<Int?>(null) }
+    var sessionToDelete by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
+    var sessionToEdit by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
+    val haptic = LocalHapticFeedback.current
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+    }.collectAsState(initial = true)
+
+    var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
+    var isNavigating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isNavigating = false
+    }
+
+    Scaffold(
+        containerColor = Surface
+    ) { paddingValues ->
+        if (uiState.isLoading && uiState.sessions.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                GymLoadingIndicator()
+            }
+        } else if (uiState.sessions.isEmpty()) {
+            EmptyState(
+                icon = Icons.Rounded.History,
+                title = stringResource(R.string.no_history_yet),
+                description = stringResource(R.string.no_history_description_screen),
+                modifier = Modifier.padding(paddingValues)
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                ScreenHeader(
+                    title = stringResource(R.string.history_title),
+                    subtitle = "WORKOUT LOGS",
+                    icon = Icons.Rounded.History
+                )
+                
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
+                    val session = sessionDetails.session
+                    val planName = sessionDetails.plan.nome
+
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { value ->
+                            if (value == SwipeToDismissBoxValue.EndToStart) {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                sessionToDelete = session
+                                false
+                            } else if (value == SwipeToDismissBoxValue.StartToEnd) {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                sessionToEdit = session
+                                false
+                            } else {
+                                false
+                            }
+                        }
+                    )
+
+                    // Reset swipe state when dialog is dismissed
+                    LaunchedEffect(sessionToDelete) {
+                        if (sessionToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                            dismissState.reset()
+                        }
+                    }
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        enableDismissFromStartToEnd = true,
+                        backgroundContent = {
+                            val direction = dismissState.dismissDirection
+
+                            val color by animateColorAsState(
+                                when (direction) {
+                                    SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                    SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                                    else -> Color.Transparent
+                                },
+                                label = "bg_color"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(Shapes.extraLarge)
+                                    .background(color)
+                                    .padding(horizontal = 28.dp),
+                                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                            ) {
+                                if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                    Icon(
+                                        Icons.Rounded.DeleteSweep,
+                                        contentDescription = "Delete",
+                                        tint = Error,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                    Icon(
+                                        Icons.Rounded.Edit,
+                                        contentDescription = "Edit",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        SessionHistoryCard(
+                            session = session,
+                            planName = planName,
+                            isExpanded = selectedSessionId == session.id,
+                            onClick = {
+                                selectedSessionId = if (selectedSessionId == session.id) null else session.id
+                                if (selectedSessionId == session.id) {
+                                    viewModel.loadSessionDetails(session.id)
+                                }
+                            },
+                            details = if (selectedSessionId == session.id) uiState.selectedSession else null,
+                            languageCode = languageCode,
+                            weightUnit = uiState.weightUnit,
+                            onEditSet = { editingSet = it }
+                        )
+                    }
+                }
+                
+                item { Spacer(modifier = Modifier.height(100.dp)) }
+            }
+        }
+        }
+    }
+
+    if (editingSet != null) {
+        EditSetDialog(
+            set = editingSet!!,
+            weightUnit = uiState.weightUnit,
+            onDismiss = { editingSet = null },
+            onConfirm = { updatedSet ->
+                viewModel.updateSet(updatedSet)
+                editingSet = null
+            },
+            onDelete = { setToDelete ->
+                viewModel.deleteSet(setToDelete)
+                editingSet = null
+            }
+        )
+    }
+
+    if (sessionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                sessionToDelete = null
+            },
+            title = { Text(stringResource(R.string.delete_session)) },
+            text = { Text(stringResource(R.string.delete_session_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        sessionToDelete?.let { viewModel.deleteSession(it.id) }
+                        sessionToDelete = null
+                    },
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { sessionToDelete = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (sessionToEdit != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                sessionToEdit = null
+            },
+            title = { Text(stringResource(R.string.edit_session)) },
+            text = { Text(stringResource(R.string.edit_session_message)) },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    modifier = Modifier.padding(bottom = Spacing.small)
+                ) {
+                    GymButton(
+                        onClick = { sessionToEdit = null },
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                    GymButton(
+                        onClick = {
+                            sessionToEdit?.let { session ->
+                                isNavigating = true
+                                navController?.navigate(EditWorkoutSession(sessionId = session.id))
+                            }
+                            sessionToEdit = null
+                        },
+                        containerColor = Primary.copy(alpha = 0.15f),
+                        contentColor = Primary
+                    ) {
+                        Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {},
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun SessionHistoryCard(
+    session: WorkoutSessionEntity,
+    planName: String,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    details: SessionWithDetails?,
+    languageCode: String = "en",
+    weightUnit: String = "kg",
+    onEditSet: (SetLogEntity) -> Unit = {}
+) {
+    GymCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(Primary.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.FitnessCenter,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = DateFormatter.format(session.timestamp),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                        Text(
+                            text = planName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                
+                Icon(
+                    imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                    contentDescription = null,
+                    tint = OnSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp)
+                ) {
+                    HorizontalDivider(color = SurfaceContainerHighest, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (details == null) {
+                        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                            GymLoadingIndicator(size = 24.dp)
+                        }
+                    } else if (details.sets.isEmpty()) {
+                        Text(stringResource(R.string.no_exercises_in_session_detail), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+                    } else {
+                        val groupedSets = details.sets.groupBy { it.exercise.id }
+                        
+                        groupedSets.forEach { (_, sets) ->
+                            val exerciseName = ExerciseTranslations.translate(sets.first().exercise.nome, languageCode)
+                            
+                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                                Text(
+                                    text = exerciseName.uppercase(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Primary,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                sets.forEach { setWithEx ->
+                                    val set = setWithEx.setLog
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { onEditSet(set) }
+                                            .padding(vertical = 4.dp, horizontal = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.set_number, set.numeroSerie),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = OnSurfaceVariant
+                                            )
+                                            Text(
+                                                text = WeightUnitConverter.formatWithUnit(
+                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                                                    weightUnit
+                                                ) + " × ${set.repsEffettive}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = OnSurface
+                                            )
+                                        }
+                                        if (!set.note.isNullOrBlank()) {
+                                            Row(
+                                                modifier = Modifier.padding(top = 2.dp, start = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    Icons.AutoMirrored.Rounded.Notes,
+                                                    contentDescription = null,
+                                                    tint = OnSurfaceVariant.copy(alpha = 0.5f),
+                                                    modifier = Modifier.size(12.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = set.note,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = OnSurfaceVariant,
+                                                    fontStyle = FontStyle.Italic
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditSetDialog(
+    set: SetLogEntity,
+    weightUnit: String = "kg",
+    onDismiss: () -> Unit,
+    onConfirm: (SetLogEntity) -> Unit,
+    onDelete: (SetLogEntity) -> Unit
+) {
+    var weight by remember { 
+        mutableStateOf(WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit).toString()) 
+    }
+    var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
+    var note by remember { mutableStateOf(set.note ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_exercise_title)) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                GymInputField(
+                    value = weight,
+                    onValueChange = { weight = it },
+                    label = "Weight ($weightUnit)",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+                GymInputField(
+                    value = reps,
+                    onValueChange = { reps = it },
+                    label = stringResource(R.string.reps),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                GymInputField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = stringResource(R.string.routine_notes),
+                    singleLine = false
+                )
+            }
+        },
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                modifier = Modifier.padding(bottom = Spacing.small)
+            ) {
+                GymButton(
+                    onClick = { onDelete(set) },
+                    containerColor = Error.copy(alpha = 0.15f),
+                    contentColor = Error
+                ) {
+                    Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+                GymButton(
+                    onClick = onDismiss,
+                    containerColor = SurfaceContainerHigh,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                }
+                GymButton(
+                    onClick = {
+                        val displayWeight = weight.toFloatOrNull() ?: WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit)
+                        val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
+                        val updatedSet = set.copy(
+                            pesoSollevato = storageWeight,
+                            repsEffettive = reps.toIntOrNull() ?: set.repsEffettive,
+                            note = if (note.isBlank()) null else note
+                        )
+                        onConfirm(updatedSet)
+                    }
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        },
+        dismissButton = {},
+        containerColor = SurfaceContainerHigh,
+        titleContentColor = OnSurface,
+        textContentColor = OnSurfaceVariant
+    )
+}
+
