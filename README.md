@@ -11,7 +11,17 @@
 
 
 **Trainable** is a premium, native Android workout tracker designed for lifters. It focuses on a "Monolithic" dark-only aesthetic, perfectly aligned with Google's **Material 3 Expressive** guidelines, offering a seamless experience specifically optimized for Pixel devices.
+---
+## 📱 Screenshots
 
+<div align="center">
+  <img src="SCREENS/1.png" width="130" alt="Dashboard" />
+  <img src="SCREENS/2.png" width="130" alt="Routines" />
+  <img src="SCREENS/3.png" width="130" alt="Routine Detail" />
+  <img src="SCREENS/6.png" width="130" alt="Workout Execution" />
+  <img src="SCREENS/4.png" width="130" alt="Session History" />
+  <img src="SCREENS/5.png" width="130" alt="Analytics" />
+</div>
 ---
 
 ## ✨ Features
