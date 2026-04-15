@@ -241,7 +241,8 @@ fun RoutineDetailScreen(
                 item {
                     RoutineImagePicker(
                         currentImageUri = fixedImageUri,
-                        onImageSelected = { uri -> viewModel.updatePlanImage(uri) }
+                        onImageSelected = { uri -> viewModel.updatePlanImage(uri) },
+                        modifier = Modifier.padding(horizontal = Spacing.CardPadding)
                     )
                 }
 
