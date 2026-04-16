@@ -11,8 +11,12 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
+import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
+import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -51,6 +55,60 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun deletePlanExercise(exercise: PlanExerciseEntity) = workoutDao.deletePlanExercise(exercise)
     
+    suspend fun exportPlans(planIds: List<Int>): String {
+        val plans = workoutDao.getPlansWithDetails(planIds)
+        val exportDtos = plans.map { planWithDetails ->
+            WorkoutPlanExportDto(
+                nome = planWithDetails.plan.nome,
+                note = planWithDetails.plan.note,
+                sessioniTargetSettimana = planWithDetails.plan.sessioniTargetSettimana,
+                exercises = planWithDetails.exercises.map { exerciseWithDetails ->
+                    PlanExerciseExportDto(
+                        exerciseId = exerciseWithDetails.exercise.id,
+                        serieTarget = exerciseWithDetails.planExercise.serieTarget,
+                        repsTarget = exerciseWithDetails.planExercise.repsTarget,
+                        recuperoTarget = exerciseWithDetails.planExercise.recuperoTarget,
+                        ordine = exerciseWithDetails.planExercise.ordine
+                    )
+                }
+            )
+        }
+        return Json.encodeToString(exportDtos)
+    }
+
+    suspend fun importPlans(jsonData: String) {
+        val user = userDao.getUser().first() ?: return
+        val importDtos = Json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
+        
+        val currentPlans = workoutDao.getAllPlans().first()
+        var nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
+
+        importDtos.forEach { dto ->
+            val newPlan = WorkoutPlanEntity(
+                userId = user.id,
+                nome = dto.nome,
+                dataInizio = System.currentTimeMillis(),
+                note = dto.note,
+                isActive = true,
+                sessioniTargetSettimana = dto.sessioniTargetSettimana,
+                ordine = nextOrder++
+            )
+            val planId = workoutDao.insertPlan(newPlan).toInt()
+            
+            val exercises = dto.exercises.map { exerciseDto ->
+                PlanExerciseEntity(
+                    planId = planId,
+                    exerciseId = exerciseDto.exerciseId,
+                    serieTarget = exerciseDto.serieTarget,
+                    repsTarget = exerciseDto.repsTarget,
+                    recuperoTarget = exerciseDto.recuperoTarget,
+                    ordine = exerciseDto.ordine
+                )
+            }
+            workoutDao.insertPlanExercises(exercises)
+        }
+    }
+
     suspend fun deletePlan(plan: WorkoutPlanEntity) = workoutDao.deletePlan(plan)
     
     suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false): Long {

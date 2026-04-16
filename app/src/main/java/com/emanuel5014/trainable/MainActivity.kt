@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,11 +15,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -28,9 +30,12 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.ui.components.BottomNavBar
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
+import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
 import com.emanuel5014.trainable.ui.components.UpdateDialog
 import com.emanuel5014.trainable.ui.navigation.MainNavGraph
 import com.emanuel5014.trainable.ui.navigation.MainTabs
@@ -40,6 +45,7 @@ import com.emanuel5014.trainable.ui.theme.GymTrackingTheme
 import com.emanuel5014.trainable.util.UpdateManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -50,6 +56,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var updateManager: UpdateManager
+
+    @Inject
+    lateinit var workoutRepository: WorkoutRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -64,10 +73,32 @@ class MainActivity : ComponentActivity() {
             var downloadProgress by remember { mutableFloatStateOf(0f) }
             val scope = rememberCoroutineScope()
 
-            androidx.compose.runtime.LaunchedEffect(Unit) {
+            var plansToImport by remember { mutableStateOf<List<WorkoutPlanExportDto>?>(null) }
+            var jsonDataToImport by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(Unit) {
                 latestRelease = updateManager.checkForUpdates()
                 if (latestRelease != null) {
                     showUpdateDialog = true
+                }
+            }
+
+            // Handle Import Intent
+            LaunchedEffect(intent?.data) {
+                intent?.data?.let { uri ->
+                    scope.launch {
+                        try {
+                            contentResolver.openInputStream(uri)?.use { inputStream ->
+                                val jsonData = inputStream.bufferedReader().use { it.readText() }
+                                val plans = Json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
+                                plansToImport = plans
+                                jsonDataToImport = jsonData
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                            e.printStackTrace()
+                        }
+                    }
                 }
             }
 
@@ -152,6 +183,33 @@ class MainActivity : ComponentActivity() {
                             },
                             isDownloading = isDownloading,
                             downloadProgress = downloadProgress
+                        )
+                    }
+
+                    if (plansToImport != null) {
+                        ImportConfirmationDialog(
+                            plans = plansToImport!!,
+                            onConfirm = {
+                                scope.launch {
+                                    try {
+                                        jsonDataToImport?.let { 
+                                            workoutRepository.importPlans(it)
+                                            Toast.makeText(this@MainActivity, getString(R.string.import_successful), Toast.LENGTH_LONG).show()
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                                    } finally {
+                                        plansToImport = null
+                                        jsonDataToImport = null
+                                        intent?.data = null
+                                    }
+                                }
+                            },
+                            onDismiss = {
+                                plansToImport = null
+                                jsonDataToImport = null
+                                intent?.data = null
+                            }
                         )
                     }
                 }

@@ -297,4 +297,11 @@
     <string name="weight_unit_desc">Scegli tra Kilogrammi e Libbre</string>
     <string name="check_for_updates">Controlla aggiornamenti</string>
         <string name="preparing_share">Preparazione scheda allenamento...</string>
+    <string name="selected">selezionate</string>
+    <string name="sharing_options">OPZIONI CONDIVISIONE</string>
+    <string name="share">Condividi</string>
+    <string name="import_plans_title">Importare le Schede?</string>
+    <string name="import_plans_message">Stai per importare le seguenti schede:</string>
+    <string name="import_plan_summary">%1$s (%2$d esercizi)</string>
+    <string name="import_confirm">IMPORTA</string>
 </resources>

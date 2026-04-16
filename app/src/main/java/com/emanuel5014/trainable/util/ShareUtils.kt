@@ -37,4 +37,32 @@ object ShareUtils {
             e.printStackTrace()
         }
     }
+
+    fun shareWorkoutPlans(context: Context, jsonData: String, fileName: String = "routines.trainableplan") {
+        try {
+            val cachePath = File(context.cacheDir, "exports")
+            cachePath.mkdirs()
+            val file = File(cachePath, fileName)
+            file.writeText(jsonData)
+
+            val contentUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            if (contentUri != null) {
+                val shareIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    type = "application/octet-stream"
+                    putExtra(Intent.EXTRA_TITLE, "GymTracking Routines")
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share Routine"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

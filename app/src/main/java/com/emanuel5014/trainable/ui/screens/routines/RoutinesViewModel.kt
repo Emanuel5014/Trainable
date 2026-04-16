@@ -1,9 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.ShareUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,6 +64,46 @@ class RoutinesViewModel @Inject constructor(
         }
     }
     
+    fun togglePlanSelection(planId: Int) {
+        _uiState.update { state ->
+            val newSelection = if (state.selectedPlanIds.contains(planId)) {
+                state.selectedPlanIds - planId
+            } else {
+                state.selectedPlanIds + planId
+            }
+            state.copy(
+                selectedPlanIds = newSelection,
+                isSelectionMode = newSelection.isNotEmpty()
+            )
+        }
+    }
+
+    fun clearSelection() {
+        _uiState.update { it.copy(selectedPlanIds = emptySet(), isSelectionMode = false) }
+    }
+
+    fun exportSelectedPlans(context: Context) {
+        viewModelScope.launch {
+            val ids = _uiState.value.selectedPlanIds.toList()
+            if (ids.isNotEmpty()) {
+                val json = workoutRepository.exportPlans(ids)
+                ShareUtils.shareWorkoutPlans(context, json)
+                clearSelection()
+            }
+        }
+    }
+
+    fun importPlans(jsonData: String) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.importPlans(jsonData)
+                _uiState.update { it.copy(error = null) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Import failed: ${e.localizedMessage}") }
+            }
+        }
+    }
+    
     fun createEmptyPlan(name: String, note: String? = null) {
         viewModelScope.launch {
             val currentPlans = _uiState.value.plans + _uiState.value.archivedPlans
@@ -97,10 +139,6 @@ class RoutinesViewModel @Inject constructor(
                 val item = list.removeAt(fromIndex)
                 list.add(toIndex, item)
                 
-                // Re-calculate order for the entire combined set to be safe
-                // but for simplicity we update the current list's order relative to itself
-                // To keep order consistent between active/archived, we might need a more global order
-                // For now, let's just update the list being dragged.
                 val updates = list.mapIndexed { index, it ->
                     it.copy(ordine = index)
                 }
@@ -114,5 +152,7 @@ data class RoutinesUiState(
     val isLoading: Boolean = true,
     val plans: List<WorkoutPlanEntity> = emptyList(),
     val archivedPlans: List<WorkoutPlanEntity> = emptyList(),
+    val selectedPlanIds: Set<Int> = emptySet(),
+    val isSelectionMode: Boolean = false,
     val error: String? = null
 )

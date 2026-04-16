@@ -303,4 +303,11 @@
     <string name="weight_unit_desc">Choose between Kilograms and Pounds</string>
     <string name="check_for_updates">Check for Updates</string>
     <string name="preparing_share">Preparing your workout card...</string>
+    <string name="selected">Selected</string>
+    <string name="sharing_options">SHARING OPTIONS</string>
+    <string name="share">Share</string>
+    <string name="import_plans_title">Import Routines?</string>
+    <string name="import_plans_message">You are about to import the following routines:</string>
+    <string name="import_plan_summary">%1$s (%2$d exercises)</string>
+    <string name="import_confirm">IMPORT</string>
 </resources>
