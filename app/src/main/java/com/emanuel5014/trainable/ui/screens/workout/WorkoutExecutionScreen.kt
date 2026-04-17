@@ -222,7 +222,7 @@ fun WorkoutExecutionScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val setsCount = currentExState.sets.size
-                        val repsCount = currentExState.sets.firstOrNull()?.reps ?: 0
+                        val repsCount = currentExState.planDetails?.repsTarget ?: currentExState.sets.firstOrNull()?.reps?.toString() ?: "0"
                         Text(
                             text = "$setsCount × $repsCount",
                             style = MaterialTheme.typography.titleMedium,

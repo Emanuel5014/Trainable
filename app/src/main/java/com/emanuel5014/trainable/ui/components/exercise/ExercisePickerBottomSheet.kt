@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -335,16 +336,17 @@ private fun ExercisePickerItem(
                         fontWeight = FontWeight.Medium
                     )
                     if (exercise.id >= 1000) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Surface(
                             color = SurfaceContainerHighest,
-                            shape = RoundedCornerShape(4.dp)
+                            shape = CircleShape,
+                            modifier = Modifier.size(20.dp)
                         ) {
-                            Text(
-                                text = "Custom",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = OnSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            Icon(
+                                Icons.Rounded.Person,
+                                contentDescription = "Custom",
+                                tint = OnSurfaceVariant,
+                                modifier = Modifier.padding(4.dp).size(12.dp)
                             )
                         }
                     }
