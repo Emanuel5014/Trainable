@@ -28,15 +28,12 @@
 
 ### 📊 Intelligent Dashboard
 *   **Active Plan Hub**: Quick access to your current routine and next scheduled session.
-*   **Weekly Load Hero**: Visual representation of your training volume for the current week.
-*   **PR Snapshots**: Interactive carousel of your latest Personal Records across key lifts.
 *   **Resume Workout**: Smart hub to quickly resume interrupted sessions without data loss.
 
 ### 📋 Advanced Routine Builder
-*   **Exercise Library**: 42+ pre-populated exercises with categorized filters.
+*   **Exercise Library**: 130+ pre-populated exercises with categorized filters.
 *   **Drag & Drop Reordering**: Fluid, haptic-powered reordering of exercises within routines.
 *   **Custom Exercises**: Add and manage your own exercises with persistent categorization.
-*   **Estimated Metrics**: Real-time calculation of estimated session duration and volume trends.
 
 ### 💪 High-Performance Workout Execution
 *   **Expressive UI**: Massive, touch-friendly inputs designed for use during heavy sets.

@@ -19,22 +19,51 @@ class TimerNotificationHelper @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    private val channelId = "rest_timer_channel"
+    private val runningChannelId = "rest_timer_running_channel_v1"
+    private val finishedChannelId = "rest_timer_finished_channel_v1"
     private val notificationId = 1001
 
     init {
-        createNotificationChannel()
+        createNotificationChannels()
     }
 
-    private fun createNotificationChannel() {
+    fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = context.getString(R.string.rest_timer)
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val channel = NotificationChannel(channelId, name, importance).apply {
+            
+            // Channel for the ongoing timer (Silent but visible on lock screen)
+            val runningChannel = NotificationChannel(
+                runningChannelId,
+                name,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
                 description = context.getString(R.string.timer_notifications_desc)
                 setShowBadge(false)
+                setSound(null, null) // Silent updates
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
-            notificationManager.createNotificationChannel(channel)
+
+            // Channel for the finished timer (Alerting)
+            val finishedChannel = NotificationChannel(
+                finishedChannelId,
+                name,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(R.string.timer_notifications_desc)
+                setShowBadge(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+
+            notificationManager.createNotificationChannel(runningChannel)
+            notificationManager.createNotificationChannel(finishedChannel)
         }
     }
 
@@ -58,16 +87,14 @@ class TimerNotificationHelper @Inject constructor(
         val addIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_ADD_30S }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        // Calculate the base time for the chronometer. 
-        // For a countdown, we set the base to the future time when it should hit zero.
-        val bootTimeRemaining = SystemClock.elapsedRealtime() + (remainingSeconds * 1000L)
-
-        val notification = NotificationCompat.Builder(context, channelId)
+        val notification = NotificationCompat.Builder(context, runningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
-            // We don't set ContentText because the Chronometer will show the time
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setOngoing(true)
+            .setSilent(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
             .setUsesChronometer(true)
@@ -92,11 +119,12 @@ class TimerNotificationHelper @Inject constructor(
         val dismissIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_DISMISS }
         val dismissPendingIntent = PendingIntent.getBroadcast(context, 3, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val notification = NotificationCompat.Builder(context, channelId)
+        val notification = NotificationCompat.Builder(context, finishedChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
             .setContentText(context.getString(R.string.rest_end))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setOngoing(false)

@@ -141,6 +141,15 @@ fun SettingsScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val granted = context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (!granted && timerNotificationsEnabled) {
+                viewModel.setTimerNotificationsEnabled(false)
+            }
+        }
+    }
+
     if (latestRelease != null) {
         UpdateDialog(
             release = latestRelease!!,

@@ -485,7 +485,7 @@ class WorkoutViewModel @Inject constructor(
         stopRestTimer()
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
-        if (_state.value.timerNotificationsEnabled) {
+        if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
             timerNotificationHelper.startOrUpdateTimerNotification(seconds)
         }
         saveTimerToSession(endTime, seconds)
@@ -498,7 +498,7 @@ class WorkoutViewModel @Inject constructor(
         val totalSeconds = _state.value.totalRestSeconds
         _state.update { it.copy(remainingRestSeconds = remaining, restTimerEndTime = endTime) }
         if (remaining > 0) {
-            if (_state.value.timerNotificationsEnabled) {
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
                 timerNotificationHelper.startOrUpdateTimerNotification(remaining)
             }
             startTimerJob()
@@ -516,7 +516,7 @@ class WorkoutViewModel @Inject constructor(
                 
                 if (remaining == 0) {
                     _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
-                    if (_state.value.timerNotificationsEnabled) {
+                    if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
                         timerNotificationHelper.showRestFinished()
                     }
                     clearTimerInSession()
@@ -551,7 +551,7 @@ class WorkoutViewModel @Inject constructor(
             val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
             val newTotal = _state.value.totalRestSeconds + seconds
             _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
-            if (_state.value.timerNotificationsEnabled) {
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
                 timerNotificationHelper.startOrUpdateTimerNotification(newRemaining)
             }
             saveTimerToSession(newEnd, newTotal)
