@@ -277,7 +277,7 @@ fun GymMembershipCard(
         else -> listOf(Primary.copy(alpha = 0.9f), Primary.copy(alpha = 0.6f))
     }
     
-    val textColor = OnPrimary
+    val textColor = Color(0xFF1A1A1A)
     
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
