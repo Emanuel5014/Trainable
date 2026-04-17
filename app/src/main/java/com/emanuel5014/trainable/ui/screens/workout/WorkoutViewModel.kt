@@ -10,6 +10,8 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.TimerNotificationHelper
+import com.emanuel5014.trainable.util.TimerNotificationReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,7 +43,8 @@ data class WorkoutState(
     val isFinishing: Boolean = false,
     val isNavigating: Boolean = false,
     val exerciseSwaps: Map<Int, Int> = emptyMap(),
-    val weightUnit: String = "kg"
+    val weightUnit: String = "kg",
+    val timerNotificationsEnabled: Boolean = true
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -75,6 +79,7 @@ class WorkoutViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val timerNotificationHelper: TimerNotificationHelper,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -103,6 +108,25 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.userLanguage.collect { lang ->
                 _languageCode.value = lang ?: "en"
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerNotificationsEnabled.collect { enabled ->
+                _state.update { it.copy(timerNotificationsEnabled = enabled) }
+                if (!enabled) {
+                    timerNotificationHelper.cancelTimer()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            TimerNotificationReceiver.timerEvents.collect { action ->
+                when (action) {
+                    TimerNotificationReceiver.TimerAction.SKIP -> skipRestTimer()
+                    TimerNotificationReceiver.TimerAction.ADD_30S -> addRestTime(30)
+                    TimerNotificationReceiver.TimerAction.DISMISS -> timerNotificationHelper.cancelTimer()
+                }
             }
         }
 
@@ -298,9 +322,12 @@ class WorkoutViewModel @Inject constructor(
             mutableSets[setIndex] = mutableSets[setIndex].copy(weight = weight)
             
             // Propagate to ALL subsequent uncompleted sets in THIS exercise
-            for (i in (setIndex + 1) until mutableSets.size) {
-                if (!mutableSets[i].isCompleted) {
-                    mutableSets[i] = mutableSets[i].copy(weight = weight)
+            // ONLY if there is no history for this exercise (new exercise or first time)
+            if (exState.previousPerformance == null) {
+                for (i in (setIndex + 1) until mutableSets.size) {
+                    if (!mutableSets[i].isCompleted) {
+                        mutableSets[i] = mutableSets[i].copy(weight = weight)
+                    }
                 }
             }
             
@@ -458,6 +485,9 @@ class WorkoutViewModel @Inject constructor(
         stopRestTimer()
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
+        if (_state.value.timerNotificationsEnabled) {
+            timerNotificationHelper.startOrUpdateTimerNotification(seconds)
+        }
         saveTimerToSession(endTime, seconds)
         startTimerJob()
     }
@@ -468,6 +498,9 @@ class WorkoutViewModel @Inject constructor(
         val totalSeconds = _state.value.totalRestSeconds
         _state.update { it.copy(remainingRestSeconds = remaining, restTimerEndTime = endTime) }
         if (remaining > 0) {
+            if (_state.value.timerNotificationsEnabled) {
+                timerNotificationHelper.startOrUpdateTimerNotification(remaining)
+            }
             startTimerJob()
         } else {
             clearTimerInSession()
@@ -480,12 +513,21 @@ class WorkoutViewModel @Inject constructor(
                 delay(100L)
                 val end = _state.value.restTimerEndTime ?: break
                 val remaining = ((end - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+                
                 if (remaining == 0) {
                     _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+                    if (_state.value.timerNotificationsEnabled) {
+                        timerNotificationHelper.showRestFinished()
+                    }
                     clearTimerInSession()
                     break
                 }
-                _state.update { it.copy(remainingRestSeconds = remaining) }
+                
+                if (remaining != _state.value.remainingRestSeconds) {
+                    // We no longer call showOrUpdateTimer(remaining) here 
+                    // because the System UI Chronometer handles the countdown.
+                    _state.update { it.copy(remainingRestSeconds = remaining) }
+                }
             }
         }
     }
@@ -509,6 +551,9 @@ class WorkoutViewModel @Inject constructor(
             val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
             val newTotal = _state.value.totalRestSeconds + seconds
             _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
+            if (_state.value.timerNotificationsEnabled) {
+                timerNotificationHelper.startOrUpdateTimerNotification(newRemaining)
+            }
             saveTimerToSession(newEnd, newTotal)
         }
     }
@@ -569,6 +614,7 @@ class WorkoutViewModel @Inject constructor(
     private fun stopRestTimer() {
         timerJob?.cancel()
         timerJob = null
+        timerNotificationHelper.cancelTimer()
         _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
     }
 

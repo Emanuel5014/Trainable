@@ -141,7 +141,8 @@ fun RoutineDetailScreen(
         selectedExerciseId = null
         setsText = "3"
         repsText = "8"
-        restText = "120"
+        // Inherit rest from the last exercise in the list, default to 120 if empty
+        restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
         showExercisePicker = true
     }
 
@@ -461,10 +462,9 @@ fun RoutineDetailScreen(
 
                     RestSlider(
                         value = restText.toIntOrNull() ?: 120,
-                        onValueChange = { 
-                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            restText = it.toString() 
-                        },
+                        onValueChange = { restText = it.toString() },
+                        hapticEnabled = hapticEnabled,
+                        haptic = haptic,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -482,12 +482,14 @@ fun RoutineDetailScreen(
                             }
                             showExerciseSheet = false
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.size(60.dp),
+                        height = 56,
                         containerColor = Error.copy(alpha = 0.15f),
-                        contentColor = Error
+                        contentColor = Error,
+                        shape = CircleShape,
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(28.dp))
                     }
 
                     GymButton(
@@ -654,9 +656,11 @@ fun RoutineDetailScreen(
 private fun RestSlider(
     value: Int,
     onValueChange: (Int) -> Unit,
+    hapticEnabled: Boolean,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
-    val steps = listOf(30, 60, 90, 120, 180, 240, 300)
+    val steps = listOf(0, 30, 60, 90, 120, 180, 240, 300)
     val currentIndex = remember(value) { steps.indexOf(value).coerceAtLeast(0) }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -686,7 +690,14 @@ private fun RestSlider(
         
         Slider(
             value = currentIndex.toFloat(),
-            onValueChange = { onValueChange(steps[it.toInt()]) },
+            onValueChange = { rawValue ->
+                val index = kotlin.math.round(rawValue).toInt()
+                val clampedIndex = index.coerceIn(0, steps.size - 1)
+                if (clampedIndex != currentIndex) {
+                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onValueChange(steps[clampedIndex])
+                }
+            },
             valueRange = 0f..(steps.size - 1).toFloat(),
             steps = steps.size - 2,
             colors = SliderDefaults.colors(

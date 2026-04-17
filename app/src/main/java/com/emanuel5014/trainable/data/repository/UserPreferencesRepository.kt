@@ -35,6 +35,7 @@ class UserPreferencesRepository @Inject constructor(
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
     }
 
@@ -101,6 +102,11 @@ class UserPreferencesRepository @Inject constructor(
     val dynamicColor: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[DYNAMIC_COLOR] ?: true
+        }
+
+    val timerNotificationsEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[TIMER_NOTIFICATIONS_ENABLED] ?: true
         }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -186,6 +192,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setDynamicColor(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[DYNAMIC_COLOR] = enabled
+        }
+    }
+
+    suspend fun setTimerNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_NOTIFICATIONS_ENABLED] = enabled
         }
     }
 

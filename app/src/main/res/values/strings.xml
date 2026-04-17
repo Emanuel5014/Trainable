@@ -107,6 +107,7 @@
     <string name="log_set">LOG SET</string>
     <string name="active_set">ACTIVE SET</string>
     <string name="exercise_completed">EXERCISE COMPLETED</string>
+    <string name="rest_end">REST TERMINATED</string>
     <string name="previous_exercise">Previous</string>
     <string name="next_exercise">Next</string>
     <string name="skip_rest">Skip</string>
@@ -168,6 +169,9 @@
     <string name="floating_nav_bar_desc">Rounded floating navigation bar</string>
     <string name="dynamic_color">Dynamic Color</string>
     <string name="dynamic_color_desc">Use Material You colors from wallpaper</string>
+    <string name="timer_notifications">Timer Notifications</string>
+    <string name="timer_notifications_desc">Show rest timer in system notifications</string>
+    <string name="rest_timer_remaining">%s remaining</string>
     <string name="folder_selected">Folder selected</string>
     <string name="choose_folder">Choose folder</string>
     <string name="edit_backup">EDIT</string>

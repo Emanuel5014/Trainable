@@ -29,66 +29,30 @@ class AutoBackupWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
-            val folderUri = userPrefsRepository.autoBackupFolderUri.first()
+            val folderUriString = userPrefsRepository.autoBackupFolderUri.first()
             val maxBackups = userPrefsRepository.autoBackupMaxCount.first()
             val includeImages = userPrefsRepository.autoBackupIncludeImages.first()
 
-            if (folderUri == null) {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
+            val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
+
+            if (folderUriString.isNullOrEmpty()) {
                 val internalBackupDir = File(context.filesDir, "auto_backups")
                 if (!internalBackupDir.exists()) internalBackupDir.mkdirs()
                 cleanupOldBackups(internalBackupDir, maxBackups)
-                createBackupToFile(internalBackupDir, includeImages)
+                
+                val backupFile = File(internalBackupDir, fileName)
+                backupManager.exportDatabaseToFile(backupFile, includeImages)
             } else {
-                val uri = Uri.parse(folderUri)
-                val success = exportToCustomFolder(uri, maxBackups, includeImages)
+                val uri = Uri.parse(folderUriString)
+                val success = backupManager.exportDatabaseToFolder(uri, fileName, includeImages)
+                // Note: Folder cleanup for SAF is complex, we focus on saving for now
                 if (!success) return Result.retry()
             }
             Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
             Result.retry()
-        }
-    }
-
-    private suspend fun createBackupToFile(backupDir: File, includeImages: Boolean): Boolean {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
-        val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
-        val backupFile = File(backupDir, fileName)
-        return backupManager.exportDatabaseToFile(backupFile, includeImages)
-    }
-
-    private suspend fun exportToCustomFolder(folderUri: Uri, maxBackups: Int, includeImages: Boolean): Boolean {
-        return try {
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
-            val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
-            
-            // ... (cleanup logic same as before) ...
-            val children = context.contentResolver.query(folderUri, null, null, null, null)
-            val existingBackups = mutableListOf<Pair<String, Long>>()
-            
-            children?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                while (cursor.moveToNext()) {
-                    val name = cursor.getString(nameIndex)
-                    if (name.startsWith("Trainable_AutoBackup_") && name.endsWith(".zip")) {
-                        existingBackups.add(name to cursor.getLong(cursor.getColumnIndex("_id")))
-                    }
-                }
-            }
-
-            existingBackups.sortedBy { it.first }.take(kotlin.math.max(0, existingBackups.size - maxBackups)).forEach { (_, id) ->
-                try {
-                    context.contentResolver.delete(Uri.withAppendedPath(folderUri, id.toString()), null, null)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-
-            // Using BackupManager instead of duplicate logic
-            backupManager.exportDatabaseZipToUri(folderUri, includeImages)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
         }
     }
 
@@ -108,11 +72,11 @@ class AutoBackupWorker @AssistedInject constructor(
                 .setRequiresBatteryNotLow(true)
                 .build()
 
+            // Removed initial delay to allow immediate feedback when enabled
             val backupRequest = PeriodicWorkRequestBuilder<AutoBackupWorker>(
                 frequencyDays.toLong(), TimeUnit.DAYS
             )
                 .setConstraints(constraints)
-                .setInitialDelay(1, TimeUnit.HOURS)
                 .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(

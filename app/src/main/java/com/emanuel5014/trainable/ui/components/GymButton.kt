@@ -38,6 +38,8 @@ fun GymButton(
     contentColor: Color = OnPrimary,
     shape: Shape = Shapes.large,
     enabled: Boolean = true,
+    height: Int = 56,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp),
     content: @Composable RowScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -45,7 +47,6 @@ fun GymButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
-    // Check haptic preference directly (since it's a small read)
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
@@ -59,9 +60,7 @@ fun GymButton(
             }
             onClick()
         },
-        modifier = modifier
-            .height(64.dp)
-            .scale(scale),
+        modifier = modifier.height(height.dp).scale(scale),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
@@ -72,7 +71,7 @@ fun GymButton(
         enabled = enabled,
         interactionSource = interactionSource,
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
-        contentPadding = PaddingValues(horizontal = 24.dp)
+        contentPadding = contentPadding
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

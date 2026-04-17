@@ -114,6 +114,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = "kg"
     )
 
+    val timerNotificationsEnabled = userPrefsRepository.timerNotificationsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus: StateFlow<String?> = _backupStatus
 
@@ -195,11 +201,20 @@ class SettingsViewModel @Inject constructor(
 
     fun setAutoBackupFolder(uri: Uri) {
         viewModelScope.launch {
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            )
-            userPrefsRepository.setAutoBackupFolderUri(uri.toString())
+            if (uri != Uri.EMPTY) {
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
+                    userPrefsRepository.setAutoBackupFolderUri(uri.toString())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    _backupStatus.value = "Failed to take folder permission"
+                }
+            } else {
+                userPrefsRepository.setAutoBackupFolderUri(null)
+            }
         }
     }
 
@@ -298,6 +313,12 @@ class SettingsViewModel @Inject constructor(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setDynamicColor(enabled)
+        }
+    }
+
+    fun setTimerNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerNotificationsEnabled(enabled)
         }
     }
 
