@@ -37,6 +37,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -49,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +92,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +113,10 @@ fun RoutineDetailScreen(
     val fixedImageUri = remember(uiState.planDetails?.plan?.imageUri) {
         UriMigrationHelper.fixPath(uiState.planDetails?.plan?.imageUri, context)
     }
+
+    val scope = rememberCoroutineScope()
+    val exerciseSheetState = rememberModalBottomSheetState()
+    val routineSheetState = rememberModalBottomSheetState()
 
     var editingExercise by remember { mutableStateOf<PlanExerciseWithDetails?>(null) }
     var showExerciseSheet by remember { mutableStateOf(false) }
@@ -141,7 +148,8 @@ fun RoutineDetailScreen(
         selectedExerciseId = null
         setsText = "3"
         repsText = "8"
-        restText = "120"
+        // Inherit rest from the last exercise in the list, default to 120 if empty
+        restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
         showExercisePicker = true
     }
 
@@ -241,7 +249,8 @@ fun RoutineDetailScreen(
                 item {
                     RoutineImagePicker(
                         currentImageUri = fixedImageUri,
-                        onImageSelected = { uri -> viewModel.updatePlanImage(uri) }
+                        onImageSelected = { uri -> viewModel.updatePlanImage(uri) },
+                        modifier = Modifier.padding(horizontal = Spacing.CardPadding)
                     )
                 }
 
@@ -361,6 +370,7 @@ fun RoutineDetailScreen(
 
         ModalBottomSheet(
             onDismissRequest = { showExerciseSheet = false },
+            sheetState = exerciseSheetState,
             containerColor = Surface,
             contentColor = OnSurface,
             tonalElevation = 0.dp,
@@ -400,8 +410,12 @@ fun RoutineDetailScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                     OutlinedButton(
                         onClick = {
-                            showExerciseSheet = false
-                            showExercisePicker = true
+                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                if (!exerciseSheetState.isVisible) {
+                                    showExerciseSheet = false
+                                    showExercisePicker = true
+                                }
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = Shapes.large,
@@ -460,10 +474,9 @@ fun RoutineDetailScreen(
 
                     RestSlider(
                         value = restText.toIntOrNull() ?: 120,
-                        onValueChange = { 
-                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            restText = it.toString() 
-                        },
+                        onValueChange = { restText = it.toString() },
+                        hapticEnabled = hapticEnabled,
+                        haptic = haptic,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -473,24 +486,36 @@ fun RoutineDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    GymButton(
+                     GymButton(
                         onClick = {
+                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                if (!exerciseSheetState.isVisible) {
+                                    showExerciseSheet = false
+                                }
+                            }
                             editingExercise?.let {
                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.removeExercise(it.planExercise)
                             }
-                            showExerciseSheet = false
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.size(60.dp),
+                        height = 56,
                         containerColor = Error.copy(alpha = 0.15f),
-                        contentColor = Error
+                        contentColor = Error,
+                        shape = CircleShape,
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(28.dp))
                     }
 
                     GymButton(
-                        onClick = { showExerciseSheet = false },
+                        onClick = {
+                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                if (!exerciseSheetState.isVisible) {
+                                    showExerciseSheet = false
+                                }
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
@@ -522,7 +547,11 @@ fun RoutineDetailScreen(
                                     recuperoTarget = rest
                                 )
                             }
-                            showExerciseSheet = false
+                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                if (!exerciseSheetState.isVisible) {
+                                    showExerciseSheet = false
+                                }
+                            }
                         },
                         modifier = Modifier.weight(1f)
                     ) {
@@ -562,6 +591,7 @@ fun RoutineDetailScreen(
     if (showRoutineEditSheet) {
         ModalBottomSheet(
             onDismissRequest = { showRoutineEditSheet = false },
+            sheetState = routineSheetState,
             containerColor = Surface,
             contentColor = OnSurface,
             tonalElevation = 0.dp,
@@ -619,7 +649,13 @@ fun RoutineDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     GymButton(
-                        onClick = { showRoutineEditSheet = false },
+                        onClick = {
+                            scope.launch { routineSheetState.hide() }.invokeOnCompletion {
+                                if (!routineSheetState.isVisible) {
+                                    showRoutineEditSheet = false
+                                }
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
@@ -633,7 +669,11 @@ fun RoutineDetailScreen(
                             if (trimmedName.isNotEmpty()) {
                                 val note = routineNote.trim().takeIf { it.isNotBlank() }
                                 viewModel.updatePlan(trimmedName, note)
-                                showRoutineEditSheet = false
+                                scope.launch { routineSheetState.hide() }.invokeOnCompletion {
+                                    if (!routineSheetState.isVisible) {
+                                        showRoutineEditSheet = false
+                                    }
+                                }
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -653,9 +693,11 @@ fun RoutineDetailScreen(
 private fun RestSlider(
     value: Int,
     onValueChange: (Int) -> Unit,
+    hapticEnabled: Boolean,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
-    val steps = listOf(30, 60, 90, 120, 180, 240, 300)
+    val steps = listOf(0, 30, 60, 90, 120, 180, 240, 300)
     val currentIndex = remember(value) { steps.indexOf(value).coerceAtLeast(0) }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -685,7 +727,14 @@ private fun RestSlider(
         
         Slider(
             value = currentIndex.toFloat(),
-            onValueChange = { onValueChange(steps[it.toInt()]) },
+            onValueChange = { rawValue ->
+                val index = kotlin.math.round(rawValue).toInt()
+                val clampedIndex = index.coerceIn(0, steps.size - 1)
+                if (clampedIndex != currentIndex) {
+                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onValueChange(steps[clampedIndex])
+                }
+            },
             valueRange = 0f..(steps.size - 1).toFloat(),
             steps = steps.size - 2,
             colors = SliderDefaults.colors(

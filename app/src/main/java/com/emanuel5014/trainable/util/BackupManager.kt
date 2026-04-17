@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.util
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.edit
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -13,6 +14,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -22,54 +24,103 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
 
     private val dbName = "gym_tracking_database"
 
-    suspend fun exportDatabaseZip(outputUri: Uri, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
+    /**
+     * Common logic to write the backup ZIP to any OutputStream
+     */
+    private suspend fun writeBackupToStream(os: OutputStream, includeImages: Boolean): Boolean = withContext(Dispatchers.IO) {
         try {
-            val dbFile = context.getDatabasePath(dbName)
-            val walFile = context.getDatabasePath("$dbName-wal")
-            val shmFile = context.getDatabasePath("$dbName-shm")
+            ZipOutputStream(os).use { zos ->
+                // 1. Export Database Files
+                val dbFile = context.getDatabasePath(dbName)
+                val walFile = context.getDatabasePath("$dbName-wal")
+                val shmFile = context.getDatabasePath("$dbName-shm")
 
-            context.contentResolver.openOutputStream(outputUri)?.use { fos ->
-                ZipOutputStream(fos).use { zos ->
-                    // 1. Export Database Files
-                    val dbFiles = listOfNotNull(
-                        dbFile.takeIf { it.exists() },
-                        walFile.takeIf { it.exists() },
-                        shmFile.takeIf { it.exists() }
-                    )
+                val dbFiles = listOfNotNull(
+                    dbFile.takeIf { it.exists() },
+                    walFile.takeIf { it.exists() },
+                    shmFile.takeIf { it.exists() }
+                )
 
-                    for (file in dbFiles) {
-                        FileInputStream(file).use { fis ->
-                            zos.putNextEntry(ZipEntry(file.name))
-                            fis.copyTo(zos)
-                            zos.closeEntry()
-                        }
-                    }
-
-                    // 2. Export Membership Expiry Date
-                    val membershipExpiry = getMembershipExpiryDate()
-                    if (membershipExpiry != null) {
-                        val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
-                        zos.putNextEntry(ZipEntry("settings.json"))
-                        zos.write(settingsJson.toByteArray())
+                for (file in dbFiles) {
+                    FileInputStream(file).use { fis ->
+                        zos.putNextEntry(ZipEntry(file.name))
+                        fis.copyTo(zos)
                         zos.closeEntry()
                     }
+                }
 
-                    // 3. Export Images if requested
-                    if (includeImages) {
-                        val filesDir = context.filesDir
-                        filesDir.listFiles()?.forEach { file ->
-                            if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
-                                FileInputStream(file).use { fis ->
-                                    zos.putNextEntry(ZipEntry("images/${file.name}"))
-                                    fis.copyTo(zos)
-                                    zos.closeEntry()
-                                }
+                // 2. Export Membership Expiry Date
+                val membershipExpiry = getMembershipExpiryDate()
+                if (membershipExpiry != null) {
+                    val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
+                    zos.putNextEntry(ZipEntry("settings.json"))
+                    zos.write(settingsJson.toByteArray())
+                    zos.closeEntry()
+                }
+
+                // 3. Export Images if requested
+                if (includeImages) {
+                    val filesDir = context.filesDir
+                    filesDir.listFiles()?.forEach { file ->
+                        if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
+                            FileInputStream(file).use { fis ->
+                                zos.putNextEntry(ZipEntry("images/${file.name}"))
+                                fis.copyTo(zos)
+                                zos.closeEntry()
                             }
                         }
                     }
                 }
             }
             true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun exportDatabaseZip(outputUri: Uri, includeImages: Boolean = false): Boolean {
+        return try {
+            context.contentResolver.openOutputStream(outputUri)?.use { os ->
+                writeBackupToStream(os, includeImages)
+            } ?: false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun exportDatabaseToFile(outputFile: File, includeImages: Boolean = false): Boolean {
+        return try {
+            FileOutputStream(outputFile).use { os ->
+                writeBackupToStream(os, includeImages)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
+     * Creates a new backup file inside a SAF folder (tree URI)
+     */
+    suspend fun exportDatabaseToFolder(folderUri: Uri, fileName: String, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val directoryUri = DocumentsContract.buildDocumentUriUsingTree(
+                folderUri,
+                DocumentsContract.getTreeDocumentId(folderUri)
+            )
+            
+            val docUri = DocumentsContract.createDocument(
+                context.contentResolver,
+                directoryUri,
+                "application/zip",
+                fileName
+            ) ?: return@withContext false
+
+            context.contentResolver.openOutputStream(docUri)?.use { os ->
+                writeBackupToStream(os, includeImages)
+            } ?: false
         } catch (e: Exception) {
             e.printStackTrace()
             false
@@ -145,60 +196,6 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         }
     }
 
-    suspend fun exportDatabaseToFile(outputFile: File, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val dbFile = context.getDatabasePath(dbName)
-            val walFile = context.getDatabasePath("$dbName-wal")
-            val shmFile = context.getDatabasePath("$dbName-shm")
-
-            FileOutputStream(outputFile).use { fos ->
-                ZipOutputStream(fos).use { zos ->
-                    // 1. Export Database Files
-                    val dbFiles = listOfNotNull(
-                        dbFile.takeIf { it.exists() },
-                        walFile.takeIf { it.exists() },
-                        shmFile.takeIf { it.exists() }
-                    )
-
-                    for (file in dbFiles) {
-                        FileInputStream(file).use { fis ->
-                            zos.putNextEntry(ZipEntry(file.name))
-                            fis.copyTo(zos)
-                            zos.closeEntry()
-                        }
-                    }
-
-                    // 2. Export Membership Expiry Date
-                    val membershipExpiry = getMembershipExpiryDate()
-                    if (membershipExpiry != null) {
-                        val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
-                        zos.putNextEntry(ZipEntry("settings.json"))
-                        zos.write(settingsJson.toByteArray())
-                        zos.closeEntry()
-                    }
-
-                    // 3. Export Images if requested
-                    if (includeImages) {
-                        val filesDir = context.filesDir
-                        filesDir.listFiles()?.forEach { file ->
-                            if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
-                                FileInputStream(file).use { fis ->
-                                    zos.putNextEntry(ZipEntry("images/${file.name}"))
-                                    fis.copyTo(zos)
-                                    zos.closeEntry()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-    }
-
     fun getAutoBackupFiles(): List<File> {
         val backupDir = File(context.filesDir, "auto_backups")
         return if (backupDir.exists()) {
@@ -210,57 +207,8 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
         }
     }
 
-    suspend fun exportDatabaseZipToUri(folderUri: Uri, includeImages: Boolean = false): Boolean = withContext(Dispatchers.IO) {
-        try {
-            context.contentResolver.openOutputStream(folderUri)?.use { fos ->
-                ZipOutputStream(fos).use { zos ->
-                    // 1. Export Database Files
-                    val dbFile = context.getDatabasePath(dbName)
-                    val walFile = context.getDatabasePath("$dbName-wal")
-                    val shmFile = context.getDatabasePath("$dbName-shm")
-
-                    val dbFiles = listOfNotNull(
-                        dbFile.takeIf { it.exists() },
-                        walFile.takeIf { it.exists() },
-                        shmFile.takeIf { it.exists() }
-                    )
-
-                    for (file in dbFiles) {
-                        FileInputStream(file).use { fis ->
-                            zos.putNextEntry(ZipEntry(file.name))
-                            fis.copyTo(zos)
-                            zos.closeEntry()
-                        }
-                    }
-
-                    // 2. Export Membership Expiry Date
-                    val membershipExpiry = getMembershipExpiryDate()
-                    if (membershipExpiry != null) {
-                        val settingsJson = """{"gym_membership_expiry_date":$membershipExpiry}"""
-                        zos.putNextEntry(ZipEntry("settings.json"))
-                        zos.write(settingsJson.toByteArray())
-                        zos.closeEntry()
-                    }
-
-                    // 3. Export Images if requested
-                    if (includeImages) {
-                        val filesDir = context.filesDir
-                        filesDir.listFiles()?.forEach { file ->
-                            if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
-                                FileInputStream(file).use { fis ->
-                                    zos.putNextEntry(ZipEntry("images/${file.name}"))
-                                    fis.copyTo(zos)
-                                    zos.closeEntry()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+    @Deprecated("Use exportDatabaseToFolder or exportDatabaseZip", ReplaceWith("exportDatabaseZip(folderUri, includeImages)"))
+    suspend fun exportDatabaseZipToUri(folderUri: Uri, includeImages: Boolean = false): Boolean {
+        return exportDatabaseZip(folderUri, includeImages)
     }
 }

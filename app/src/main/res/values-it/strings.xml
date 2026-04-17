@@ -107,6 +107,7 @@
     <string name="log_set">REGISTRA SERIE</string>
     <string name="active_set">SERIE ATTIVA</string>
     <string name="exercise_completed">ESERCIZIO COMPLETATO</string>
+    <string name="rest_end">RIPOSO TERMINATO</string>
     <string name="previous_exercise">Precedente</string>
     <string name="next_exercise">Successivo</string>
     <string name="skip_rest">Salta</string>
@@ -167,6 +168,9 @@
     <string name="floating_nav_bar_desc">Barra di navigazione arrotondata fluttuante</string>
     <string name="dynamic_color">Colore Dinamico</string>
     <string name="dynamic_color_desc">Usa colori Material You dallo sfondo</string>
+    <string name="timer_notifications">Notifiche Timer</string>
+    <string name="timer_notifications_desc">Mostra il timer di recupero nelle notifiche</string>
+    <string name="rest_timer_remaining">%s rimanenti</string>
     <string name="folder_selected">Cartella selezionata</string>
     <string name="choose_folder">Scegli cartella</string>
     <string name="edit_backup">MODIFICA</string>
@@ -296,4 +300,12 @@
     <string name="weight_unit">Unità di Misura</string>
     <string name="weight_unit_desc">Scegli tra Kilogrammi e Libbre</string>
     <string name="check_for_updates">Controlla aggiornamenti</string>
-    </resources>
+        <string name="preparing_share">Preparazione scheda allenamento...</string>
+    <string name="selected">selezionate</string>
+    <string name="sharing_options">OPZIONI CONDIVISIONE</string>
+    <string name="share">Condividi</string>
+    <string name="import_plans_title">Importare le Schede?</string>
+    <string name="import_plans_message">Stai per importare le seguenti schede:</string>
+    <string name="import_plan_summary">%1$s (%2$d esercizi)</string>
+    <string name="import_confirm">IMPORTA</string>
+</resources>

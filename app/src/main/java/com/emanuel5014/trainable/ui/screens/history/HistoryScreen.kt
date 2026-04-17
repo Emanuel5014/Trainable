@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -93,6 +94,18 @@ import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
 
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.zIndex
+import com.emanuel5014.trainable.ui.components.captureViewToBitmap
+import com.emanuel5014.trainable.util.ShareUtils
+import com.emanuel5014.trainable.ui.components.WorkoutShareCard
+import com.emanuel5014.trainable.ui.components.GymIconButton
+import kotlinx.coroutines.delay
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
@@ -115,131 +128,191 @@ fun HistoryScreen(
     var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
     var isNavigating by remember { mutableStateOf(false) }
 
+    val scope = rememberCoroutineScope()
+    var sessionToShare by remember { mutableStateOf<Pair<SessionWithDetails, String>?>(null) }
+
     LaunchedEffect(Unit) {
         isNavigating = false
     }
 
-    Scaffold(
-        containerColor = Surface
-    ) { paddingValues ->
-        if (uiState.isLoading && uiState.sessions.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                GymLoadingIndicator()
-            }
-        } else if (uiState.sessions.isEmpty()) {
-            EmptyState(
-                icon = Icons.Rounded.History,
-                title = stringResource(R.string.no_history_yet),
-                description = stringResource(R.string.no_history_description_screen),
-                modifier = Modifier.padding(paddingValues)
-            )
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                ScreenHeader(
-                    title = stringResource(R.string.history_title),
-                    subtitle = "WORKOUT LOGS",
-                    icon = Icons.Rounded.History
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = Surface
+        ) { paddingValues ->
+            if (uiState.isLoading && uiState.sessions.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                    GymLoadingIndicator()
+                }
+            } else if (uiState.sessions.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Rounded.History,
+                    title = stringResource(R.string.no_history_yet),
+                    description = stringResource(R.string.no_history_description_screen),
+                    modifier = Modifier.padding(paddingValues)
                 )
-                
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
                 ) {
+                    ScreenHeader(
+                        title = stringResource(R.string.history_title),
+                        subtitle = "WORKOUT LOGS",
+                        icon = Icons.Rounded.History
+                    )
+                    
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
 
-                itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
-                    val session = sessionDetails.session
-                    val planName = sessionDetails.plan.nome
+                    itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
+                        val session = sessionDetails.session
+                        val planName = sessionDetails.plan.nome
 
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = { value ->
-                            if (value == SwipeToDismissBoxValue.EndToStart) {
-                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                sessionToDelete = session
-                                false
-                            } else if (value == SwipeToDismissBoxValue.StartToEnd) {
-                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                sessionToEdit = session
-                                false
-                            } else {
-                                false
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { value ->
+                                if (value == SwipeToDismissBoxValue.EndToStart) {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    sessionToDelete = session
+                                    false
+                                } else if (value == SwipeToDismissBoxValue.StartToEnd) {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    sessionToEdit = session
+                                    false
+                                } else {
+                                    false
+                                }
+                            }
+                        )
+
+                        // Reset swipe state when dialog is dismissed
+                        LaunchedEffect(sessionToDelete) {
+                            if (sessionToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                                dismissState.reset()
                             }
                         }
-                    )
 
-                    // Reset swipe state when dialog is dismissed
-                    LaunchedEffect(sessionToDelete) {
-                        if (sessionToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                            dismissState.reset()
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = true,
+                            backgroundContent = {
+                                val direction = dismissState.dismissDirection
+
+                                val color by animateColorAsState(
+                                    when (direction) {
+                                        SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                        SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                                        else -> Color.Transparent
+                                    },
+                                    label = "bg_color"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(Shapes.extraLarge)
+                                        .background(color)
+                                        .padding(horizontal = 28.dp),
+                                    contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                ) {
+                                    if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                        Icon(
+                                            Icons.Rounded.DeleteSweep,
+                                            contentDescription = "Delete",
+                                            tint = Error,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                        Icon(
+                                            Icons.Rounded.Edit,
+                                            contentDescription = "Edit",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            SessionHistoryCard(
+                                session = session,
+                                planName = planName,
+                                isExpanded = selectedSessionId == session.id,
+                                onClick = {
+                                    selectedSessionId = if (selectedSessionId == session.id) null else session.id
+                                    if (selectedSessionId == session.id) {
+                                        viewModel.loadSessionDetails(session.id)
+                                    }
+                                },
+                                details = if (selectedSessionId == session.id) uiState.selectedSession else null,
+                                languageCode = languageCode,
+                                weightUnit = uiState.weightUnit,
+                                onEditSet = { editingSet = it },
+                                onShareClick = { details ->
+                                    sessionToShare = details to planName
+                                }
+                            )
                         }
                     }
+                    
+                    item { Spacer(modifier = Modifier.height(100.dp)) }
+                }
+            }
+            }
+        }
 
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        enableDismissFromStartToEnd = true,
-                        backgroundContent = {
-                            val direction = dismissState.dismissDirection
-
-                            val color by animateColorAsState(
-                                when (direction) {
-                                    SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                                    SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
-                                    else -> Color.Transparent
-                                },
-                                label = "bg_color"
-                            )
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(Shapes.extraLarge)
-                                    .background(color)
-                                    .padding(horizontal = 28.dp),
-                                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                            ) {
-                                if (direction == SwipeToDismissBoxValue.EndToStart) {
-                                    Icon(
-                                        Icons.Rounded.DeleteSweep,
-                                        contentDescription = "Delete",
-                                        tint = Error,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                                    Icon(
-                                        Icons.Rounded.Edit,
-                                        contentDescription = "Edit",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
-                            }
-                        }
+        if (sessionToShare != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .clickable(enabled = false) {}
+                    .zIndex(100f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    GymLoadingIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.preparing_share),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    
+                    // Use AndroidView for capturing - allow unbounded height
+                    Box(
+                        modifier = Modifier
+                            .alpha(0f)
+                            .zIndex(-100f)
+                            .fillMaxWidth()
+                            .wrapContentHeight(align = Alignment.Top, unbounded = true)
                     ) {
-                        SessionHistoryCard(
-                            session = session,
-                            planName = planName,
-                            isExpanded = selectedSessionId == session.id,
-                            onClick = {
-                                selectedSessionId = if (selectedSessionId == session.id) null else session.id
-                                if (selectedSessionId == session.id) {
-                                    viewModel.loadSessionDetails(session.id)
+                        AndroidView(
+                            factory = { ctx ->
+                                ComposeView(ctx).apply {
+                                    setContent {
+                                        WorkoutShareCard(
+                                            sessionDetails = sessionToShare!!.first,
+                                            planName = sessionToShare!!.second,
+                                            languageCode = languageCode,
+                                            weightUnit = uiState.weightUnit
+                                        )
+                                    }
                                 }
                             },
-                            details = if (selectedSessionId == session.id) uiState.selectedSession else null,
-                            languageCode = languageCode,
-                            weightUnit = uiState.weightUnit,
-                            onEditSet = { editingSet = it }
+                            update = { view ->
+                                view.post {
+                                    val bitmap = captureViewToBitmap(view)
+                                    ShareUtils.shareBitmap(context, bitmap)
+                                    sessionToShare = null
+                                }
+                            }
                         )
                     }
                 }
-                
-                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
-        }
         }
     }
 
@@ -346,7 +419,8 @@ fun SessionHistoryCard(
     details: SessionWithDetails?,
     languageCode: String = "en",
     weightUnit: String = "kg",
-    onEditSet: (SetLogEntity) -> Unit = {}
+    onEditSet: (SetLogEntity) -> Unit = {},
+    onShareClick: (SessionWithDetails) -> Unit = {}
 ) {
     GymCard(
         modifier = Modifier
@@ -408,7 +482,26 @@ fun SessionHistoryCard(
                         .fillMaxWidth()
                         .padding(top = 20.dp)
                 ) {
-                    HorizontalDivider(color = SurfaceContainerHighest, thickness = 1.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HorizontalDivider(
+                            color = SurfaceContainerHighest, 
+                            thickness = 1.dp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (details != null && details.sets.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(16.dp))
+                            GymIconButton(
+                                icon = Icons.Rounded.Share,
+                                onClick = { onShareClick(details) },
+                                containerColor = Primary.copy(alpha = 0.1f),
+                                contentColor = Primary
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     if (details == null) {

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -83,19 +84,21 @@ fun ExercisePickerBottomSheet(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var showOnlyCustom by remember { mutableStateOf(false) }
     var showAddCustomDialog by remember { mutableStateOf(false) }
     var exerciseToEdit by remember { mutableStateOf<ExerciseEntity?>(null) }
     var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
 
-    val filteredExercises = remember(exercises, searchQuery, selectedCategory, languageCode) {
+    val filteredExercises = remember(exercises, searchQuery, selectedCategory, showOnlyCustom, languageCode) {
         exercises.filter { exercise ->
             val exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode)
-            val matchesSearch = searchQuery.isBlank() || 
+            val matchesSearch = searchQuery.isBlank() ||
                 exercise.nome.contains(searchQuery, ignoreCase = true) ||
                 exerciseName.contains(searchQuery, ignoreCase = true)
-            val matchesCategory = selectedCategory == null || 
+            val matchesCategory = selectedCategory == null ||
                 exercise.categoria == selectedCategory
-            matchesSearch && matchesCategory
+            val matchesCustom = !showOnlyCustom || exercise.id >= 1000
+            matchesSearch && matchesCategory && matchesCustom
         }
     }
 
@@ -169,9 +172,21 @@ fun ExercisePickerBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
                 FilterChip(
-                    selected = selectedCategory == null,
-                    onClick = { selectedCategory = null },
+                    selected = selectedCategory == null && !showOnlyCustom,
+                    onClick = {
+                        selectedCategory = null
+                        showOnlyCustom = false
+                    },
                     label = { Text("All") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Primary,
+                        selectedLabelColor = OnPrimary
+                    )
+                )
+                FilterChip(
+                    selected = showOnlyCustom,
+                    onClick = { showOnlyCustom = !showOnlyCustom },
+                    label = { Text("Custom") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Primary,
                         selectedLabelColor = OnPrimary
@@ -321,16 +336,17 @@ private fun ExercisePickerItem(
                         fontWeight = FontWeight.Medium
                     )
                     if (exercise.id >= 1000) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Surface(
                             color = SurfaceContainerHighest,
-                            shape = RoundedCornerShape(4.dp)
+                            shape = CircleShape,
+                            modifier = Modifier.size(20.dp)
                         ) {
-                            Text(
-                                text = "Custom",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = OnSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            Icon(
+                                Icons.Rounded.Person,
+                                contentDescription = "Custom",
+                                tint = OnSurfaceVariant,
+                                modifier = Modifier.padding(4.dp).size(12.dp)
                             )
                         }
                     }

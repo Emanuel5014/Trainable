@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -123,7 +124,11 @@ fun SetLogRow(
                 text = "$setNumber",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isCompleted) OnTertiary else OnSurfaceVariant
+                color = when {
+                    isCompleted -> OnTertiary
+                    isActive -> OnPrimary
+                    else -> OnSurfaceVariant
+                }
             )
         }
 

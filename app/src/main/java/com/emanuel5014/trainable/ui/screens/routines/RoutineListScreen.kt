@@ -14,6 +14,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,10 +40,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -74,6 +79,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -86,6 +92,7 @@ import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.ScreenHeader
@@ -135,16 +142,30 @@ fun RoutineListScreen(
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { openCreateSheet() },
-                containerColor = Primary,
-                contentColor = OnPrimary,
-                shape = Shapes.large,
-                modifier = Modifier.padding(bottom = 80.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.Bold)
+            if (uiState.isSelectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.exportSelectedPlans(context) },
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    shape = Shapes.large,
+                    modifier = Modifier.padding(bottom = 80.dp)
+                ) {
+                    Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            } else {
+                ExtendedFloatingActionButton(
+                    onClick = { openCreateSheet() },
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    shape = Shapes.large,
+                    modifier = Modifier.padding(bottom = 80.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.Bold)
+                }
             }
         }
     ) { paddingValues ->
@@ -157,7 +178,7 @@ fun RoutineListScreen(
             ScreenHeader(
                 titleContent = {
                     AnimatedContent(
-                        targetState = pagerState.currentPage,
+                        targetState = if (uiState.isSelectionMode) -1 else pagerState.currentPage,
                         transitionSpec = {
                             val direction = if (targetState > initialState) 1 else -1
                             (slideInHorizontally { width -> direction * width / 2 } + fadeIn(animationSpec = tween(400, easing = EaseOutExpo)))
@@ -165,19 +186,37 @@ fun RoutineListScreen(
                                 .using(SizeTransform(clip = false))
                         },
                         label = "title_anim"
-                    ) { page ->
+                    ) { state ->
                         Text(
-                            text = if (page == 0) stringResource(R.string.your_routines) else stringResource(R.string.archived_routines),
-                            style = MaterialTheme.typography.displaySmall,
+                            text = when (state) {
+                                -1 -> "${uiState.selectedPlanIds.size} ${stringResource(R.string.selected)}"
+                                0 -> stringResource(R.string.your_routines)
+                                else -> stringResource(R.string.archived_routines)
+                            },
+                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
                             color = OnSurface,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-1).sp,
-                            lineHeight = 40.sp
+                            lineHeight = if (uiState.isSelectionMode) 32.sp else 40.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 },
-                subtitle = stringResource(R.string.training_plans),
-                icon = Icons.Rounded.FitnessCenter
+                subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.training_plans),
+                icon = if (uiState.isSelectionMode) null else Icons.Rounded.FitnessCenter,
+                navigationIcon = null,
+                actions = if (uiState.isSelectionMode) {
+                    {
+                        GymIconButton(
+                            icon = Icons.Rounded.Close,
+                            onClick = { viewModel.clearSelection() },
+                            containerColor = SurfaceContainerHigh
+                        )
+                    }
+                } else null,
+                titleInRow = uiState.isSelectionMode,
+                modifier = if (uiState.isSelectionMode) Modifier.padding(top = 8.dp) else Modifier
             )
 
             // Modern Tab Row (click only, no swipe)
@@ -278,7 +317,10 @@ fun RoutineListScreen(
                         onDelete = { planToDelete = it },
                         onArchiveToggle = { planToArchive = it },
                         onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
-                        isLoading = uiState.isLoading
+                        isLoading = uiState.isLoading,
+                        isSelectionMode = uiState.isSelectionMode,
+                        selectedPlanIds = uiState.selectedPlanIds,
+                        onToggleSelection = { viewModel.togglePlanSelection(it) }
                     )
                 }
             }
@@ -452,7 +494,10 @@ private fun RoutineListPage(
     onDelete: (WorkoutPlanEntity) -> Unit,
     onArchiveToggle: (WorkoutPlanEntity) -> Unit,
     onReorder: (Int, Int) -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    isSelectionMode: Boolean = false,
+    selectedPlanIds: Set<Int> = emptySet(),
+    onToggleSelection: (Int) -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -486,9 +531,11 @@ private fun RoutineListPage(
             itemsIndexed(localPlans, key = { _, plan -> plan.id }) { index, plan ->
                 val isDragging = draggedItemIndex == index
                 val zIndex = if (isDragging) 1f else 0f
+                val isSelected = selectedPlanIds.contains(plan.id)
 
                 val dismissState = rememberSwipeToDismissBoxState(
                     confirmValueChange = { value ->
+                        if (isSelectionMode) return@rememberSwipeToDismissBoxState false
                         when (value) {
                             SwipeToDismissBoxValue.EndToStart -> {
                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -506,7 +553,8 @@ private fun RoutineListPage(
 
                 SwipeToDismissBox(
                     state = dismissState,
-                    enableDismissFromStartToEnd = true,
+                    enableDismissFromStartToEnd = !isSelectionMode,
+                    enableDismissFromEndToStart = !isSelectionMode,
                     backgroundContent = {
                         val progress = dismissState.progress
                         
@@ -553,7 +601,8 @@ private fun RoutineListPage(
                             shape = Shapes.extraLarge
                             clip = isDragging
                         }
-                        .pointerInput(Unit) {
+                        .pointerInput(isSelectionMode) {
+                            if (isSelectionMode) return@pointerInput
                             detectDragGesturesAfterLongPress(
                                 onDragStart = {
                                     if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -589,7 +638,20 @@ private fun RoutineListPage(
                 ) {
                     RoutineCard(
                         plan = plan,
-                        onClick = { onNavigateToDetail(plan.id) }
+                        onClick = { 
+                            if (isSelectionMode) {
+                                onToggleSelection(plan.id)
+                            } else {
+                                onNavigateToDetail(plan.id) 
+                            }
+                        },
+                        onLongClick = {
+                            if (!isSelectionMode) {
+                                onToggleSelection(plan.id)
+                            }
+                        },
+                        isSelectionMode = isSelectionMode,
+                        isSelected = isSelected
                     )
                 }
             }
@@ -598,10 +660,14 @@ private fun RoutineListPage(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RoutineCard(
     plan: WorkoutPlanEntity,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    isSelectionMode: Boolean,
+    isSelected: Boolean
 ) {
     val context = LocalContext.current
     val fixedImageUri = remember(plan.imageUri) {
@@ -611,10 +677,16 @@ private fun RoutineCard(
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        containerColor = if (isSelected) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -623,7 +695,7 @@ private fun RoutineCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(SurfaceContainerHigh),
+                        .background(if (isSelected) Primary.copy(alpha = 0.2f) else Surface),
                     contentAlignment = Alignment.Center
                 ) {
                     if (fixedImageUri != null) {
@@ -636,7 +708,7 @@ private fun RoutineCard(
                         Icon(
                             Icons.Rounded.FitnessCenter,
                             contentDescription = null,
-                            tint = Primary
+                            tint = if (isSelected) Primary else OnSurfaceVariant
                         )
                     }
                 }
@@ -645,13 +717,30 @@ private fun RoutineCard(
                     Text(
                         text = plan.nome,
                         style = MaterialTheme.typography.titleLarge,
-                        color = OnSurface,
-                        fontWeight = FontWeight.Bold
+                        color = if (isSelected) Primary else OnSurface,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "Added: ${com.emanuel5014.trainable.ui.util.DateFormatter.format(plan.dataInizio)}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OnSurfaceVariant
+                        color = OnSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            
+            if (isSelectionMode) {
+                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onClick() },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Primary,
+                            uncheckedColor = OnSurfaceVariant
+                        )
                     )
                 }
             }

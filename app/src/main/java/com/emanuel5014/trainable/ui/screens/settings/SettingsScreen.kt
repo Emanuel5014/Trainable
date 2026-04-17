@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
@@ -108,6 +109,7 @@ fun SettingsScreen(
     val backupStatus by viewModel.backupStatus.collectAsState()
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val dynamicColor by viewModel.dynamicColor.collectAsState()
+    val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     
     val latestRelease by viewModel.latestRelease.collectAsState()
@@ -121,6 +123,16 @@ fun SettingsScreen(
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.setTimerNotificationsEnabled(true)
+        } else {
+            Toast.makeText(context, "Permission denied for notifications", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
@@ -712,6 +724,38 @@ fun SettingsScreen(
                                 onCheckedChange = { viewModel.setDynamicColor(it) }
                             )
                         }
+
+                        Divider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Notifications, 
+                                    contentDescription = null, 
+                                    tint = Primary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.timer_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.timer_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = timerNotificationsEnabled,
+                                onCheckedChange = { enabled ->
+                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        viewModel.setTimerNotificationsEnabled(enabled)
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -841,7 +885,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Trainable v1.0.0",
+                                    text = "Trainable v1.1.0",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.Bold

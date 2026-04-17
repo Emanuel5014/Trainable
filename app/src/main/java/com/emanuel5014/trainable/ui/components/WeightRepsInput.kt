@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,7 +76,8 @@ fun WeightRepsInput(
     var customWeightText by remember { mutableStateOf("") }
 
     val displayWeight = remember(weight, weightUnit) {
-        WeightUnitConverter.convertDisplay(weight, weightUnit)
+        val converted = WeightUnitConverter.convertDisplay(weight, weightUnit)
+        (kotlin.math.round(converted * 100) / 100f)
     }
 
     Row(
@@ -83,19 +85,31 @@ fun WeightRepsInput(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Column(modifier = Modifier.weight(1f)) {
+            val baseWeightRange = remember(weightUnit) {
+                if (weightUnit == "lb") (0..2000).map { it * 1f } else (0..1000).map { it * 0.5f }
+            }
+            val weightRange = remember(displayWeight, baseWeightRange) {
+                val isInRange = baseWeightRange.any { kotlin.math.abs(it - displayWeight) < 0.001f }
+                if (!isInRange && displayWeight > 0) {
+                    (baseWeightRange + displayWeight).sorted()
+                } else {
+                    baseWeightRange
+                }
+            }
+
             WheelPickerBox(
                 label = "WEIGHT (${weightUnit.uppercase()})",
                 value = displayWeight,
-                range = if (weightUnit == "lb") (0..2000).map { it * 1f } else (0..1000).map { it * 0.5f },
+                range = weightRange,
                 onValueChange = { 
                     val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
                     onWeightChange(kgWeight) 
                 },
-                format = { String.format("%.1f", it) }
+                format = { WeightUnitConverter.format(it) }
             )
             TextButton(
                 onClick = { 
-                    customWeightText = if (displayWeight > 0) String.format("%.1f", displayWeight) else ""
+                    customWeightText = if (displayWeight > 0) WeightUnitConverter.format(displayWeight) else ""
                     showCustomWeightDialog = true 
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
@@ -132,7 +146,7 @@ fun WeightRepsInput(
             text = {
                 OutlinedTextField(
                     value = customWeightText,
-                    onValueChange = { customWeightText = it },
+                    onValueChange = { customWeightText = it.replace(',', '.') },
                     label = { Text("Weight (${weightUnit})") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -147,7 +161,7 @@ fun WeightRepsInput(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        customWeightText.replace(',', '.').toFloatOrNull()?.let { 
+                        customWeightText.toFloatOrNull()?.let { 
                             val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
                             onWeightChange(kgWeight) 
                         }
@@ -182,13 +196,30 @@ private fun <T> WheelPickerBox(
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = range.indexOf(value).coerceAtLeast(0)
-    )
+
+    val currentIndex = remember(range, value) {
+        range.indexOfFirst { item ->
+            if (item is Float && value is Float) {
+                kotlin.math.abs(item - value) < 0.001f
+            } else {
+                item == value
+            }
+        }.coerceAtLeast(0)
+    }
+
+    val listState = key(range) {
+        rememberLazyListState(initialFirstVisibleItemIndex = currentIndex)
+    }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(value) {
-        val targetIndex = range.indexOf(value)
+        val targetIndex = range.indexOfFirst { item ->
+            if (item is Float && value is Float) {
+                kotlin.math.abs(item - value) < 0.001f
+            } else {
+                item == value
+            }
+        }
         if (targetIndex != -1 && targetIndex != listState.firstVisibleItemIndex) {
             listState.scrollToItem(targetIndex)
         }
@@ -201,7 +232,12 @@ private fun <T> WheelPickerBox(
             .collect { index ->
                 if (index in range.indices) {
                     val newValue = range[index]
-                    if (newValue != value) {
+                    val isSame = if (newValue is Float && value is Float) {
+                        kotlin.math.abs(newValue - value) < 0.001f
+                    } else {
+                        newValue == value
+                    }
+                    if (!isSame) {
                         onValueChange(newValue)
                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
@@ -243,9 +279,12 @@ private fun <T> WheelPickerBox(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 36.dp)
             ) {
-                items(range.size) { index ->
+                items(
+                    count = range.size,
+                    key = { index -> range[index].toString() }
+                ) { index ->
                     val item = range[index]
-                    val isSelected = range.indexOf(value) == index
+                    val isSelected = currentIndex == index
                     
                     Box(
                         modifier = Modifier

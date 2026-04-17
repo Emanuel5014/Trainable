@@ -18,7 +18,12 @@ object WeightUnitConverter {
     }
 
     fun format(weight: Float): String {
-        return String.format(Locale.getDefault(), "%.1f", weight)
+        val rounded100 = kotlin.math.round(weight * 100).toInt()
+        return when {
+            rounded100 % 100 == 0 -> String.format(Locale.getDefault(), "%.0f", weight)
+            rounded100 % 10 == 0 -> String.format(Locale.getDefault(), "%.1f", weight)
+            else -> String.format(Locale.getDefault(), "%.2f", weight)
+        }
     }
     
     fun formatWithUnit(weight: Float, unit: String): String {

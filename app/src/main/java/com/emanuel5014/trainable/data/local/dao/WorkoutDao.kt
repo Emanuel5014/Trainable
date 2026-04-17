@@ -37,6 +37,10 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_plans WHERE id = :planId")
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?>
 
+    @Transaction
+    @Query("SELECT * FROM workout_plans WHERE id IN (:planIds)")
+    suspend fun getPlansWithDetails(planIds: List<Int>): List<PlanWithDetails>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlan(plan: WorkoutPlanEntity): Long
 
