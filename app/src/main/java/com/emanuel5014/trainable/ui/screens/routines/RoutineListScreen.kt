@@ -291,7 +291,7 @@ fun RoutineListScreen(
                 modifier = Modifier.fillMaxSize(),
                 beyondViewportPageCount = 1,
                 verticalAlignment = Alignment.Top,
-                userScrollEnabled = !uiState.isSelectionMode
+                userScrollEnabled = false
             ) { page ->
                 val isArchivedPage = page == 1
                 val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
