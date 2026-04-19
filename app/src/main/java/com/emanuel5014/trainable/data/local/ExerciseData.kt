@@ -136,6 +136,7 @@ object ExerciseData {
         ExerciseEntity(id = 138, nome = "Good Mornings", categoria = "Back"),
         ExerciseEntity(id = 140, nome = "Guillotine Press", categoria = "Chest"),
         ExerciseEntity(id = 141, nome = "Single-Arm Dumbbell Lateral Raise", categoria = "Shoulders"),
-        ExerciseEntity(id = 142, nome = "Russian Twist with Weight", categoria = "Core")
+        ExerciseEntity(id = 142, nome = "Russian Twist with Weight", categoria = "Core"),
+        ExerciseEntity(id = 142, nome = "Multipurpose", categoria = "Chest")
     )
 }

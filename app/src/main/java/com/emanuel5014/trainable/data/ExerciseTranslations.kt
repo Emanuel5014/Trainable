@@ -155,7 +155,8 @@ object ExerciseTranslations {
         "Svend Press" to "Svend Press",
         "Landmine Chest Press" to "Chest Press alla Landmine",
         "Wide Grip Push-ups" to "Piegamenti Presa Larga",
-        "Guillotine Press" to "Guillotine Press"
+        "Guillotine Press" to "Guillotine Press",
+        "Multipurpose" to "Multipurpose"
     )
 
     fun translate(name: String, targetLang: String): String {

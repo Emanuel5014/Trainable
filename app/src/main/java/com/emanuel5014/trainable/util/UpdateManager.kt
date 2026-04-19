@@ -21,7 +21,6 @@ class UpdateManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val client: OkHttpClient
 ) {
-    // Replace with actual repository info
     private val GITHUB_OWNER = "Emanuel5014"
     private val GITHUB_REPO = "Trainable"
     private val GITHUB_API_URL = "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases/latest"
@@ -39,9 +38,7 @@ class UpdateManager @Inject constructor(
                 
                 val body = response.body?.string() ?: return@withContext null
                 val release = json.decodeFromString<GitHubRelease>(body)
-                
-                // Compare versions
-                // GitHub tags usually have "v1.0.0" or "1.0.0"
+
                 val latestVersion = release.tagName.removePrefix("v")
                 val currentVersion = BuildConfig.VERSION_NAME
                 

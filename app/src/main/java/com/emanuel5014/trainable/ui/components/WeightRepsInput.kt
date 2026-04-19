@@ -36,6 +36,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -197,6 +198,8 @@ private fun <T> WheelPickerBox(
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
 
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
+
     val currentIndex = remember(range, value) {
         range.indexOfFirst { item ->
             if (item is Float && value is Float) {
@@ -238,7 +241,7 @@ private fun <T> WheelPickerBox(
                         newValue == value
                     }
                     if (!isSame) {
-                        onValueChange(newValue)
+                        currentOnValueChange(newValue)
                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
                 }

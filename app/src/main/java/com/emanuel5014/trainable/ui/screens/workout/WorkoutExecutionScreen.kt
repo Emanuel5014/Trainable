@@ -93,6 +93,7 @@ fun WorkoutExecutionScreen(
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
+    var showFinishDialog by remember { mutableStateOf(false) }
 
     if (state.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -423,13 +424,13 @@ fun WorkoutExecutionScreen(
 
                     ExerciseNavigation(
                         onPrevious = { viewModel.previousExercise() },
-                        onNext = { 
-                            if (state.currentExerciseIndex == state.exercises.size - 1) {
-                                viewModel.finishWorkout()
-                            } else {
-                                viewModel.nextExercise() 
-                            }
-                        },
+onNext = {
+                             if (state.currentExerciseIndex == state.exercises.size - 1) {
+                                 showFinishDialog = true
+                             } else {
+                                 viewModel.nextExercise()
+                             }
+                         },
                         hasPrevious = state.currentExerciseIndex > 0,
                         hasNext = state.currentExerciseIndex < state.exercises.size - 1,
                         previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
@@ -484,6 +485,38 @@ fun WorkoutExecutionScreen(
                 dismissButton = {
                     GymButton(
                         onClick = { showCancelDialog = false },
+                        containerColor = Color.Transparent,
+                        contentColor = OnSurfaceVariant,
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase())
+                    }
+                },
+                containerColor = SurfaceContainerHigh,
+                titleContentColor = OnSurface,
+                textContentColor = OnSurfaceVariant
+            )
+        }
+
+        if (showFinishDialog) {
+            AlertDialog(
+                onDismissRequest = { showFinishDialog = false },
+                title = { Text(stringResource(R.string.finish_workout_title)) },
+                text = { Text(stringResource(R.string.finish_workout_message)) },
+                confirmButton = {
+                    GymButton(
+                        onClick = {
+                            viewModel.finishWorkout()
+                            showFinishDialog = false
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    GymButton(
+                        onClick = { showFinishDialog = false },
                         containerColor = Color.Transparent,
                         contentColor = OnSurfaceVariant,
                         modifier = Modifier.height(48.dp)

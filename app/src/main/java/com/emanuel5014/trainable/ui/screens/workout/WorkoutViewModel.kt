@@ -315,11 +315,14 @@ class WorkoutViewModel @Inject constructor(
     fun updateSetWeight(exerciseIndex: Int, setIndex: Int, weight: Float) {
         _state.update { curr ->
             val mutableExercises = curr.exercises.toMutableList()
-            val exState = mutableExercises[exerciseIndex]
+            val exState = mutableExercises.getOrNull(exerciseIndex) ?: return@update curr
             val mutableSets = exState.sets.toMutableList()
+            val set = mutableSets.getOrNull(setIndex) ?: return@update curr
             
+            if (set.isCompleted) return@update curr
+
             // Update current set
-            mutableSets[setIndex] = mutableSets[setIndex].copy(weight = weight)
+            mutableSets[setIndex] = set.copy(weight = weight)
             
             // Propagate to ALL subsequent uncompleted sets in THIS exercise
             // ONLY if there is no history for this exercise (new exercise or first time)
@@ -337,7 +340,18 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun updateSetReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
-        updateSetState(exerciseIndex, setIndex) { it.copy(reps = reps) }
+        _state.update { curr ->
+            val mutableExercises = curr.exercises.toMutableList()
+            val exState = mutableExercises.getOrNull(exerciseIndex) ?: return@update curr
+            val mutableSets = exState.sets.toMutableList()
+            val set = mutableSets.getOrNull(setIndex) ?: return@update curr
+
+            if (set.isCompleted) return@update curr
+
+            mutableSets[setIndex] = set.copy(reps = reps)
+            mutableExercises[exerciseIndex] = exState.copy(sets = mutableSets)
+            curr.copy(exercises = mutableExercises)
+        }
     }
 
     fun toggleSetComplete(exerciseIndex: Int, setIndex: Int) {
