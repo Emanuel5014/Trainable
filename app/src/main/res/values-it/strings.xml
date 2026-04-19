@@ -146,6 +146,11 @@
     <string name="preferences">PREFERENZE</string>
     <string name="data_backup">DATI E BACKUP</string>
     <string name="member_since">Membro dal %s</string>
+    <string name="today">oggi</string>
+    <string name="cancel_workout">Annulla Allenamento</string>
+    <string name="cancel_workout_title">Annullare Allenamento?</string>
+    <string name="cancel_workout_message">Questo eliminerà permanentemente questa sessione di allenamento. Questa azione non può essere annullata.</string>
+    <string name="dismiss">Rifiuta</string>
     <string name="weekly_goal">Obiettivo Settimanale</string>
     <string name="target_workouts">Allenamenti obiettivo per settimana</string>
     <string name="tactile_feedback">Feedback Aptico</string>
@@ -232,7 +237,6 @@
     
     <string name="account">Account</string>
     <string name="about">Info</string>
-    <string name="version">Versione</string>
     <string name="app_version">Trainable v1.6</string>
     <string name="daily">Giornaliero</string>
     <string name="weekly">Settimanale</string>
@@ -282,6 +286,9 @@
     <string name="next_exercise_btn">Successivo</string>
     <string name="collapse">Riduci</string>
     <string name="finish_workout">Termina</string>
+    <string name="finish_workout_title">Terminare Allenamento?</string>
+    <string name="finish_workout_message">Sei sicuro di voler terminare questo allenamento? Tutti gli esercizi sono stati completati.</string>
+    <string name="finish_confirm">Termina</string>
     <string name="include_images">Includere le immagini?</string>
     <string name="include_images_description">Vuoi includere le foto delle routine nel backup? Questo aumenterà la dimensione del file.</string>
     <string name="yes">SÌ</string>
@@ -308,4 +315,10 @@
     <string name="import_plans_message">Stai per importare le seguenti schede:</string>
     <string name="import_plan_summary">%1$s (%2$d esercizi)</string>
     <string name="import_confirm">IMPORTA</string>
+    <string name="update_available">Nuovo aggiornamento disponibile!</string>
+    <string name="version">Versione: %s</string>
+    <string name="changelog">Changelog:</string>
+    <string name="downloading">Download in corso...</string>
+    <string name="update_now">Aggiorna ora</string>
+    <string name="later">Più tardi</string>
 </resources>

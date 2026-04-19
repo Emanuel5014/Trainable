@@ -147,6 +147,10 @@
     <string name="data_backup">DATA &amp; BACKUP</string>
     <string name="member_since">Member since %s</string>
     <string name="today">today</string>
+    <string name="cancel_workout">Cancel Workout</string>
+    <string name="cancel_workout_title">Cancel Workout?</string>
+    <string name="cancel_workout_message">This will permanently delete this workout session. This action cannot be undone.</string>
+    <string name="dismiss">Dismiss</string>
     <string name="weekly_goal">Weekly Goal</string>
     <string name="target_workouts">Target workouts per week</string>
     <string name="tactile_feedback">Tactile Feedback</string>
@@ -233,7 +237,6 @@
     
     <string name="account">Account</string>
     <string name="about">About</string>
-    <string name="version">Version</string>
     <string name="app_version">Trainable v1.6</string>
     <string name="daily">Daily</string>
     <string name="weekly">Weekly</string>
@@ -277,17 +280,15 @@
     <string name="workout_execution_title">Workout Execution</string>
     <string name="session_in_progress_title">SESSION IN PROGRESS</string>
     <string name="close_workout">Close Workout</string>
-    <string name="cancel_workout">Cancel Workout</string>
-    <string name="cancel_workout_title">Cancel Workout?</string>
-    <string name="cancel_workout_message">This will permanently delete this workout session. This action cannot be undone.</string>
-    <string name="cancel_workout_confirm">Delete</string>
-    <string name="dismiss">Dismiss</string>
     <string name="adjust_set_number">ADJUST SET %d</string>
     <string name="exercise_completed_title">EXERCISE COMPLETED</string>
     <string name="previous_exercise_btn">Previous</string>
     <string name="next_exercise_btn">Next</string>
     <string name="collapse">Collapse</string>
     <string name="finish_workout">Finish</string>
+    <string name="finish_workout_title">Finish Workout?</string>
+    <string name="finish_workout_message">Are you sure you want to finish this workout? All exercises have been completed.</string>
+    <string name="finish_confirm">Finish</string>
     <string name="include_images">Include Images?</string>
     <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
     <string name="yes">YES</string>
@@ -314,4 +315,10 @@
     <string name="import_plans_message">You are about to import the following routines:</string>
     <string name="import_plan_summary">%1$s (%2$d exercises)</string>
     <string name="import_confirm">IMPORT</string>
+    <string name="update_available">New update available!</string>
+    <string name="version">Version: %s</string>
+    <string name="changelog">Changelog:</string>
+    <string name="downloading">Download in progress...</string>
+    <string name="update_now">Update now</string>
+    <string name="later">Later</string>
 </resources>
