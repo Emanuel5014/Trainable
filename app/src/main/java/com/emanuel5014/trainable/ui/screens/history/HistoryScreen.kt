@@ -39,6 +39,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
@@ -63,6 +64,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -125,7 +127,6 @@ fun HistoryScreen(
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
 
-    var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
     var isNavigating by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
@@ -249,7 +250,6 @@ fun HistoryScreen(
                                 details = if (selectedSessionId == session.id) uiState.selectedSession else null,
                                 languageCode = languageCode,
                                 weightUnit = uiState.weightUnit,
-                                onEditSet = { editingSet = it },
                                 onShareClick = { details ->
                                     sessionToShare = details to planName
                                 }
@@ -280,7 +280,7 @@ fun HistoryScreen(
                         color = Color.White,
                         style = MaterialTheme.typography.labelLarge
                     )
-                    
+
                     // Use AndroidView for capturing - allow unbounded height
                     Box(
                         modifier = Modifier
@@ -314,22 +314,6 @@ fun HistoryScreen(
                 }
             }
         }
-    }
-
-    if (editingSet != null) {
-        EditSetDialog(
-            set = editingSet!!,
-            weightUnit = uiState.weightUnit,
-            onDismiss = { editingSet = null },
-            onConfirm = { updatedSet ->
-                viewModel.updateSet(updatedSet)
-                editingSet = null
-            },
-            onDelete = { setToDelete ->
-                viewModel.deleteSet(setToDelete)
-                editingSet = null
-            }
-        )
     }
 
     if (sessionToDelete != null) {
@@ -419,7 +403,6 @@ fun SessionHistoryCard(
     details: SessionWithDetails?,
     languageCode: String = "en",
     weightUnit: String = "kg",
-    onEditSet: (SetLogEntity) -> Unit = {},
     onShareClick: (SessionWithDetails) -> Unit = {}
 ) {
     GymCard(
@@ -511,7 +494,13 @@ fun SessionHistoryCard(
                     } else if (details.sets.isEmpty()) {
                         Text(stringResource(R.string.no_exercises_in_session_detail), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
                     } else {
-                        val groupedSets = details.sets.groupBy { it.exercise.id }
+                        val sortedSets = details.sets.sortedWith(
+                            compareBy(
+                                { it.setLog.ordineEsercizio },
+                                { it.setLog.numeroSerie }
+                            )
+                        )
+                        val groupedSets = sortedSets.groupBy { it.exercise.id }
                         
                         groupedSets.forEach { (_, sets) ->
                             val exerciseName = ExerciseTranslations.translate(sets.first().exercise.nome, languageCode)
@@ -531,7 +520,6 @@ fun SessionHistoryCard(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(8.dp))
-                                            .clickable { onEditSet(set) }
                                             .padding(vertical = 4.dp, horizontal = 4.dp)
                                     ) {
                                         Row(
@@ -588,15 +576,21 @@ fun SessionHistoryCard(
 fun EditSetDialog(
     set: SetLogEntity,
     weightUnit: String = "kg",
+    isNewSet: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: (SetLogEntity) -> Unit,
     onDelete: (SetLogEntity) -> Unit
 ) {
-    var weight by remember { 
-        mutableStateOf(WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit).toString()) 
+    var weight by remember {
+        mutableStateOf(
+            if (isNewSet) ""
+            else WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit).toString()
+        )
     }
     var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
     var note by remember { mutableStateOf(set.note ?: "") }
+
+    val isValid = weight.isNotBlank() && reps.isNotBlank()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -608,9 +602,23 @@ fun EditSetDialog(
             ) {
                 GymInputField(
                     value = weight,
-                    onValueChange = { weight = it },
+                    onValueChange = { newValue ->
+                        weight = newValue.replace(",", ".")
+                    },
                     label = "Weight ($weightUnit)",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    trailingIcon = if (!isNewSet && weight.isNotEmpty()) {
+                        {
+                            IconButton(onClick = { weight = "" }) {
+                                Icon(
+                                    Icons.Rounded.Delete,
+                                    contentDescription = "Clear",
+                                    tint = OnSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    } else null
                 )
                 GymInputField(
                     value = reps,
@@ -628,36 +636,60 @@ fun EditSetDialog(
         },
         confirmButton = {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                modifier = Modifier.padding(bottom = Spacing.small)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
-                GymButton(
-                    onClick = { onDelete(set) },
-                    containerColor = Error.copy(alpha = 0.15f),
-                    contentColor = Error
-                ) {
-                    Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                if (!isNewSet) {
+                    GymButton(
+                        onClick = { onDelete(set) },
+                        containerColor = Error.copy(alpha = 0.15f),
+                        contentColor = Error,
+                        height = 48,
+                        contentPadding = PaddingValues(horizontal = 12.dp)
+                    ) {
+                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                    }
                 }
                 GymButton(
                     onClick = onDismiss,
                     containerColor = SurfaceContainerHigh,
-                    contentColor = OnSurfaceVariant
+                    contentColor = OnSurfaceVariant,
+                    height = 48,
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.cancel).uppercase(),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
                 GymButton(
                     onClick = {
-                        val displayWeight = weight.toFloatOrNull() ?: WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit)
+                        if (!isValid) return@GymButton
+                        val displayWeight = weight.toFloatOrNull() ?: 0f
                         val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
-                            repsEffettive = reps.toIntOrNull() ?: set.repsEffettive,
+                            repsEffettive = reps.toIntOrNull() ?: 0,
                             note = if (note.isBlank()) null else note
                         )
                         onConfirm(updatedSet)
-                    }
+                    },
+                    enabled = isValid,
+                    height = 48,
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        stringResource(R.string.save).uppercase(),
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         },

@@ -166,8 +166,9 @@ fun EditWorkoutScreen(
         EditSetDialog(
             set = editingSet!!,
             weightUnit = state.weightUnit,
+            isNewSet = false,
             onDismiss = { editingSet = null },
-            onConfirm = { 
+            onConfirm = {
                 viewModel.updateSet(it)
                 editingSet = null
             },
