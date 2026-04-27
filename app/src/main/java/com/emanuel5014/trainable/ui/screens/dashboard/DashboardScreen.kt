@@ -417,7 +417,9 @@ fun GymMembershipCard(
 @Composable
 private fun DashboardSimpleHeader(onSettingsClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = Spacing.small),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -425,19 +427,19 @@ private fun DashboardSimpleHeader(onSettingsClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_splash_logo),
+                painter = painterResource(id = R.drawable.ic_app_logo),
                 contentDescription = "Trainable Logo",
                 tint = Primary,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier
+                    .size(56.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
+            /*Text(
                 text = "Trainable",
                 style = MaterialTheme.typography.headlineLarge,
                 color = OnSurface,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-0.5).sp
-            )
+            )*/
         }
         GymIconButton(
             icon = Icons.Default.Settings,
