@@ -894,7 +894,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Trainable v1.1.1",
+                                    text = "Trainable v1.2.0",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.Bold

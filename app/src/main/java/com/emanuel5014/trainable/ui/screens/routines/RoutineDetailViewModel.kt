@@ -44,8 +44,8 @@ class RoutineDetailViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            localeManager.userSelectedLanguage.collect { lang ->
-                _languageCode.value = lang ?: "en"
+            localeManager.userSelectedLanguage.collect { _ ->
+                _languageCode.value = localeManager.getResolvedLanguage()
             }
         }
         loadPlanDetails()

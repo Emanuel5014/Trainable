@@ -10,6 +10,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.TimerNotificationHelper
 import com.emanuel5014.trainable.util.TimerNotificationReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -80,6 +81,7 @@ class WorkoutViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val exerciseRepository: ExerciseRepository,
     private val timerNotificationHelper: TimerNotificationHelper,
+    private val localeManager: AppLocaleManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -106,8 +108,8 @@ class WorkoutViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            userPreferencesRepository.userLanguage.collect { lang ->
-                _languageCode.value = lang ?: "en"
+            userPreferencesRepository.userLanguage.collect { _ ->
+                _languageCode.value = localeManager.getResolvedLanguage()
             }
         }
 

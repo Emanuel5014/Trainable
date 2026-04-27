@@ -115,10 +115,8 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
-    val languageCode by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.USER_LANGUAGE] ?: "en" }
-    }.collectAsState(initial = "en")
     var selectedSessionId by remember { mutableStateOf<Int?>(null) }
     var sessionToDelete by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
     var sessionToEdit by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
