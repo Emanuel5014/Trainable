@@ -87,6 +87,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.EmptyState
@@ -488,7 +489,7 @@ fun RoutineListScreen(
 
 @Composable
 private fun RoutineListPage(
-    plans: List<WorkoutPlanEntity>,
+    plans: List<PlanWithDetails>,
     isArchived: Boolean,
     onNavigateToDetail: (Int) -> Unit,
     onDelete: (WorkoutPlanEntity) -> Unit,
@@ -507,7 +508,7 @@ private fun RoutineListPage(
     val listState = rememberLazyListState()
     
     // Reordering State local to page
-    val localPlans = remember(plans) { mutableStateListOf<WorkoutPlanEntity>().apply { addAll(plans) } }
+    val localPlans = remember(plans) { mutableStateListOf<PlanWithDetails>().apply { addAll(plans) } }
     var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
 
@@ -528,7 +529,8 @@ private fun RoutineListPage(
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            itemsIndexed(localPlans, key = { _, plan -> plan.id }) { index, plan ->
+            itemsIndexed(localPlans, key = { _, planWithDetails -> planWithDetails.plan.id }) { index, planWithDetails ->
+                val plan = planWithDetails.plan
                 val isDragging = draggedItemIndex == index
                 val zIndex = if (isDragging) 1f else 0f
                 val isSelected = selectedPlanIds.contains(plan.id)
@@ -637,7 +639,7 @@ private fun RoutineListPage(
                         }
                 ) {
                     RoutineCard(
-                        plan = plan,
+                        planWithDetails = planWithDetails,
                         onClick = { 
                             if (isSelectionMode) {
                                 onToggleSelection(plan.id)
@@ -663,15 +665,17 @@ private fun RoutineListPage(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RoutineCard(
-    plan: WorkoutPlanEntity,
+    planWithDetails: PlanWithDetails,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     isSelectionMode: Boolean,
     isSelected: Boolean
 ) {
     val context = LocalContext.current
-    val fixedImageUri = remember(plan.imageUri) {
-        UriMigrationHelper.fixPath(plan.imageUri, context)
+    val plan = planWithDetails.plan
+    val firstImageUri = planWithDetails.images.firstOrNull()?.imageUri ?: plan.imageUri
+    val fixedImageUri = remember(firstImageUri) {
+        UriMigrationHelper.fixPath(firstImageUri, context)
     }
 
     GymCard(

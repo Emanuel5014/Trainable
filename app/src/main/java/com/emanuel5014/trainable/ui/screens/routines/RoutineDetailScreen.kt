@@ -110,10 +110,6 @@ fun RoutineDetailScreen(
     }.collectAsState(initial = true)
     val listState = rememberLazyListState()
 
-    val fixedImageUri = remember(uiState.planDetails?.plan?.imageUri) {
-        UriMigrationHelper.fixPath(uiState.planDetails?.plan?.imageUri, context)
-    }
-
     val scope = rememberCoroutineScope()
     val exerciseSheetState = rememberModalBottomSheetState()
     val routineSheetState = rememberModalBottomSheetState()
@@ -248,8 +244,9 @@ fun RoutineDetailScreen(
 
                 item {
                     RoutineImagePicker(
-                        currentImageUri = fixedImageUri,
-                        onImageSelected = { uri -> viewModel.updatePlanImage(uri) },
+                        images = details.images,
+                        onImageAdd = { uri -> viewModel.addPlanImage(uri) },
+                        onImageRemove = { image -> viewModel.removePlanImage(image) },
                         modifier = Modifier.padding(horizontal = Spacing.CardPadding)
                     )
                 }

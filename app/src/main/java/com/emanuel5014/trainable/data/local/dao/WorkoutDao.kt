@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
@@ -41,6 +42,10 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_plans WHERE id IN (:planIds)")
     suspend fun getPlansWithDetails(planIds: List<Int>): List<PlanWithDetails>
 
+    @Transaction
+    @Query("SELECT * FROM workout_plans ORDER BY is_active DESC, ordine ASC")
+    fun getAllPlansWithDetails(): Flow<List<PlanWithDetails>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlan(plan: WorkoutPlanEntity): Long
 
@@ -55,6 +60,30 @@ interface WorkoutDao {
 
     @Delete
     suspend fun deletePlan(plan: WorkoutPlanEntity)
+
+    // --- Workout Plan Images ---
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPlanImage(image: WorkoutPlanImageEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPlanImages(images: List<WorkoutPlanImageEntity>)
+
+    @Update
+    suspend fun updatePlanImage(image: WorkoutPlanImageEntity)
+
+    @Delete
+    suspend fun deletePlanImage(image: WorkoutPlanImageEntity)
+
+    @Query("DELETE FROM workout_plan_images WHERE plan_id = :planId")
+    suspend fun deleteImagesForPlan(planId: Int)
+
+    @Query("SELECT * FROM workout_plan_images WHERE plan_id = :planId ORDER BY ordine ASC")
+    fun getImagesForPlan(planId: Int): Flow<List<WorkoutPlanImageEntity>>
+
+    @Transaction
+    suspend fun updatePlanImageOrders(images: List<WorkoutPlanImageEntity>) {
+        images.forEach { updatePlanImage(it) }
+    }
 
     // --- Plan Exercises ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

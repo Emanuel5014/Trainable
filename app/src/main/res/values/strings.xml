@@ -321,4 +321,8 @@
     <string name="downloading">Download in progress...</string>
     <string name="update_now">Update now</string>
     <string name="later">Later</string>
+    <string name="select_photo_source">Select Photo Source</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="camera_permission_denied">Camera permission is required to take photos</string>
 </resources>

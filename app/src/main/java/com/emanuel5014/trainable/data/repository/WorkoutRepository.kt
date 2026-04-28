@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
@@ -35,6 +36,8 @@ class WorkoutRepository @Inject constructor(
     fun getExpiredPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getExpiredPlans()
     
     fun getAllPlansSorted(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlansSorted()
+
+    fun getAllPlansWithDetails(): Flow<List<PlanWithDetails>> = workoutDao.getAllPlansWithDetails()
     
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?> = workoutDao.getPlanWithDetails(planId)
     
@@ -57,6 +60,10 @@ class WorkoutRepository @Inject constructor(
     suspend fun updatePlanExercise(exercise: PlanExerciseEntity) = workoutDao.updatePlanExercise(exercise)
 
     suspend fun deletePlanExercise(exercise: PlanExerciseEntity) = workoutDao.deletePlanExercise(exercise)
+
+    suspend fun savePlanImage(image: WorkoutPlanImageEntity) = workoutDao.insertPlanImage(image)
+
+    suspend fun deletePlanImage(image: WorkoutPlanImageEntity) = workoutDao.deletePlanImage(image)
     
     suspend fun exportPlans(planIds: List<Int>): String {
         val plans = workoutDao.getPlansWithDetails(planIds)
@@ -66,6 +73,7 @@ class WorkoutRepository @Inject constructor(
                 note = planWithDetails.plan.note,
                 sessioniTargetSettimana = planWithDetails.plan.sessioniTargetSettimana,
                 imageUri = planWithDetails.plan.imageUri,
+                images = planWithDetails.images.map { it.imageUri },
                 exercises = planWithDetails.exercises.map { exerciseWithDetails ->
                     PlanExerciseExportDto(
                         exerciseId = exerciseWithDetails.exercise.id,
@@ -103,6 +111,23 @@ class WorkoutRepository @Inject constructor(
                 ordine = nextOrder++
             )
             val planId = workoutDao.insertPlan(newPlan).toInt()
+            
+            // Import multiple images
+            val imagesToInsert = mutableListOf<WorkoutPlanImageEntity>()
+            
+            // 1. From the new 'images' list
+            dto.images.forEachIndexed { index, uri ->
+                imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = uri, ordine = index))
+            }
+            
+            // 2. Fallback for old single 'imageUri' if 'images' is empty
+            if (imagesToInsert.isEmpty() && dto.imageUri != null) {
+                imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = dto.imageUri, ordine = 0))
+            }
+            
+            if (imagesToInsert.isNotEmpty()) {
+                workoutDao.insertPlanImages(imagesToInsert)
+            }
             
             val exercisesToInsert = mutableListOf<PlanExerciseEntity>()
             

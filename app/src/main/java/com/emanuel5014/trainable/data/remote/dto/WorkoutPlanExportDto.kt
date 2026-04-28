@@ -7,7 +7,8 @@ data class WorkoutPlanExportDto(
     val nome: String,
     val note: String?,
     val sessioniTargetSettimana: Int,
-    val imageUri: String?,
+    val imageUri: String?, // Keep for backward compatibility
+    val images: List<String> = emptyList(),
     val exercises: List<PlanExerciseExportDto>
 )
 

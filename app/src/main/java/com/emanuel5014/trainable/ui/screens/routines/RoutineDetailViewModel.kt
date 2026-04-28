@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -57,6 +58,14 @@ class RoutineDetailViewModel @Inject constructor(
             try {
                 workoutRepository.getPlanWithDetails(planId).collect { details ->
                     if (details != null) {
+                        // Auto-migrate old single image if multiple images list is empty
+                        if (details.images.isEmpty() && details.plan.imageUri != null) {
+                            val oldUri = details.plan.imageUri
+                            addPlanImage(oldUri)
+                            // Clear the old URI to avoid re-migration
+                            workoutRepository.updatePlan(details.plan.copy(imageUri = null))
+                        }
+
                         // Sort exercises by 'ordine'
                         val sortedExercises = details.exercises.sortedBy { it.planExercise.ordine }
                         val sortedDetails = details.copy(exercises = sortedExercises)
@@ -230,11 +239,23 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun updatePlanImage(imageUri: String?) {
+    fun addPlanImage(imageUri: String) {
         viewModelScope.launch {
-            uiState.value.planDetails?.plan?.let { plan ->
-                workoutRepository.updatePlan(plan.copy(imageUri = imageUri))
-            }
+            val current = uiState.value.planDetails ?: return@launch
+            val nextOrder = (current.images.maxOfOrNull { it.ordine } ?: -1) + 1
+            workoutRepository.savePlanImage(
+                WorkoutPlanImageEntity(
+                    planId = current.plan.id,
+                    imageUri = imageUri,
+                    ordine = nextOrder
+                )
+            )
+        }
+    }
+
+    fun removePlanImage(image: WorkoutPlanImageEntity) {
+        viewModelScope.launch {
+            workoutRepository.deletePlanImage(image)
         }
     }
 

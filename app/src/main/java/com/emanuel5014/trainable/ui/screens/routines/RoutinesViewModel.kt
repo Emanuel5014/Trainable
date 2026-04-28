@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.ShareUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,9 +29,9 @@ class RoutinesViewModel @Inject constructor(
 
     private fun loadPlans() {
         viewModelScope.launch {
-            workoutRepository.getAllPlansSorted()
+            workoutRepository.getAllPlansWithDetails()
                 .collect { allPlans ->
-                    val (active, archived) = allPlans.partition { it.isActive }
+                    val (active, archived) = allPlans.partition { it.plan.isActive }
                     _uiState.update { it.copy(
                         plans = active,
                         archivedPlans = archived,
@@ -106,7 +107,7 @@ class RoutinesViewModel @Inject constructor(
     
     fun createEmptyPlan(name: String, note: String? = null) {
         viewModelScope.launch {
-            val currentPlans = _uiState.value.plans + _uiState.value.archivedPlans
+            val currentPlans = _uiState.value.plans.map { it.plan } + _uiState.value.archivedPlans.map { it.plan }
             val nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
             val newPlan = WorkoutPlanEntity(
                 id = 0,
@@ -140,7 +141,7 @@ class RoutinesViewModel @Inject constructor(
                 list.add(toIndex, item)
                 
                 val updates = list.mapIndexed { index, it ->
-                    it.copy(ordine = index)
+                    it.plan.copy(ordine = index)
                 }
                 workoutRepository.savePlans(updates)
             }
@@ -150,8 +151,8 @@ class RoutinesViewModel @Inject constructor(
 
 data class RoutinesUiState(
     val isLoading: Boolean = true,
-    val plans: List<WorkoutPlanEntity> = emptyList(),
-    val archivedPlans: List<WorkoutPlanEntity> = emptyList(),
+    val plans: List<PlanWithDetails> = emptyList(),
+    val archivedPlans: List<PlanWithDetails> = emptyList(),
     val selectedPlanIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
     val error: String? = null
