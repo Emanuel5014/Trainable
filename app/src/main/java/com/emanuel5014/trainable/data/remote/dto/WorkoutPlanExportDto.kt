@@ -7,12 +7,15 @@ data class WorkoutPlanExportDto(
     val nome: String,
     val note: String?,
     val sessioniTargetSettimana: Int,
+    val imageUri: String?,
     val exercises: List<PlanExerciseExportDto>
 )
 
 @Serializable
 data class PlanExerciseExportDto(
     val exerciseId: Int,
+    val exerciseName: String? = null,
+    val exerciseCategory: String? = null,
     val serieTarget: Int,
     val repsTarget: String,
     val recuperoTarget: Int,

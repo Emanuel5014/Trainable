@@ -266,6 +266,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 GymDatabase.resetDatabase(context)
                 userPrefsRepository.clearAllPreferences()
+                // Clear analytics widgets preferences
+                context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+                
                 _backupStatus.value = "Reset complete. Restarting..."
                 _resetComplete.value = true
                 onResetComplete()

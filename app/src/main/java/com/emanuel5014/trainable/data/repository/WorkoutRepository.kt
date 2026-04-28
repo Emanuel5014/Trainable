@@ -1,7 +1,9 @@
 package com.emanuel5014.trainable.data.repository
 
+import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -23,7 +25,8 @@ import javax.inject.Singleton
 @Singleton
 class WorkoutRepository @Inject constructor(
     private val workoutDao: WorkoutDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val exerciseDao: ExerciseDao
 ) {
     fun getAllPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlans()
 
@@ -62,9 +65,12 @@ class WorkoutRepository @Inject constructor(
                 nome = planWithDetails.plan.nome,
                 note = planWithDetails.plan.note,
                 sessioniTargetSettimana = planWithDetails.plan.sessioniTargetSettimana,
+                imageUri = planWithDetails.plan.imageUri,
                 exercises = planWithDetails.exercises.map { exerciseWithDetails ->
                     PlanExerciseExportDto(
                         exerciseId = exerciseWithDetails.exercise.id,
+                        exerciseName = exerciseWithDetails.exercise.nome,
+                        exerciseCategory = exerciseWithDetails.exercise.categoria,
                         serieTarget = exerciseWithDetails.planExercise.serieTarget,
                         repsTarget = exerciseWithDetails.planExercise.repsTarget,
                         recuperoTarget = exerciseWithDetails.planExercise.recuperoTarget,
@@ -78,9 +84,11 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun importPlans(jsonData: String) {
         val user = userDao.getUser().first() ?: return
-        val importDtos = Json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
+        val json = Json { ignoreUnknownKeys = true }
+        val importDtos = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
         
         val currentPlans = workoutDao.getAllPlans().first()
+        val allExercises = exerciseDao.getAllExercises().first()
         var nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
 
         importDtos.forEach { dto ->
@@ -91,21 +99,64 @@ class WorkoutRepository @Inject constructor(
                 note = dto.note,
                 isActive = true,
                 sessioniTargetSettimana = dto.sessioniTargetSettimana,
+                imageUri = dto.imageUri,
                 ordine = nextOrder++
             )
             val planId = workoutDao.insertPlan(newPlan).toInt()
             
-            val exercises = dto.exercises.map { exerciseDto ->
-                PlanExerciseEntity(
-                    planId = planId,
-                    exerciseId = exerciseDto.exerciseId,
-                    serieTarget = exerciseDto.serieTarget,
-                    repsTarget = exerciseDto.repsTarget,
-                    recuperoTarget = exerciseDto.recuperoTarget,
-                    ordine = exerciseDto.ordine
-                )
+            val exercisesToInsert = mutableListOf<PlanExerciseEntity>()
+            
+            dto.exercises.forEach { exerciseDto ->
+                var finalExerciseId: Int? = null
+                
+                // 1. Try to find by ID
+                val exerciseById = allExercises.find { it.id == exerciseDto.exerciseId }
+                if (exerciseById != null) {
+                    finalExerciseId = exerciseById.id
+                } else if (exerciseDto.exerciseName != null) {
+                    // 2. Try to find by Name
+                    val exerciseByName = allExercises.find { 
+                        it.nome.equals(exerciseDto.exerciseName, ignoreCase = true) 
+                    }
+                    if (exerciseByName != null) {
+                        finalExerciseId = exerciseByName.id
+                    } else {
+                        // 3. Create new custom exercise if we have name info
+                        try {
+                            val maxId = exerciseDao.getMaxId()
+                            val newId = if (maxId < 1000) 1000 else maxId + 1
+                            val newExercise = ExerciseEntity(
+                                id = newId,
+                                nome = exerciseDto.exerciseName,
+                                categoria = exerciseDto.exerciseCategory ?: "Custom"
+                            )
+                            exerciseDao.insertExercise(newExercise)
+                            finalExerciseId = newId
+                            // Update allExercises to include the new one for subsequent lookups
+                            // (though unlikely to be needed in the same import loop unless duplicate exercises exist)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
+                
+                if (finalExerciseId != null) {
+                    exercisesToInsert.add(
+                        PlanExerciseEntity(
+                            planId = planId,
+                            exerciseId = finalExerciseId,
+                            serieTarget = exerciseDto.serieTarget,
+                            repsTarget = exerciseDto.repsTarget,
+                            recuperoTarget = exerciseDto.recuperoTarget,
+                            ordine = exerciseDto.ordine
+                        )
+                    )
+                }
             }
-            workoutDao.insertPlanExercises(exercises)
+            
+            if (exercisesToInsert.isNotEmpty()) {
+                workoutDao.insertPlanExercises(exercisesToInsert)
+            }
         }
     }
 

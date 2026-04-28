@@ -90,7 +90,8 @@ class MainActivity : ComponentActivity() {
                         try {
                             contentResolver.openInputStream(uri)?.use { inputStream ->
                                 val jsonData = inputStream.bufferedReader().use { it.readText() }
-                                val plans = Json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
+                                val json = Json { ignoreUnknownKeys = true }
+                                val plans = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
                                 plansToImport = plans
                                 jsonDataToImport = jsonData
                             }

@@ -81,7 +81,7 @@ fun WorkoutShareCard(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                painter = painterResource(id = com.emanuel5014.trainable.R.drawable.ic_splash_logo),
+                painter = painterResource(id = com.emanuel5014.trainable.R.drawable.ic_app_logo),
                 contentDescription = null,
                 tint = primaryColor,
                 modifier = Modifier.size(32.dp)
