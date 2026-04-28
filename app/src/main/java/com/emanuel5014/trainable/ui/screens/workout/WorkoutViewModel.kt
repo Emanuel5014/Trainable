@@ -128,6 +128,7 @@ class WorkoutViewModel @Inject constructor(
                     TimerNotificationReceiver.TimerAction.SKIP -> skipRestTimer()
                     TimerNotificationReceiver.TimerAction.ADD_30S -> addRestTime(30)
                     TimerNotificationReceiver.TimerAction.DISMISS -> timerNotificationHelper.cancelTimer()
+                    TimerNotificationReceiver.TimerAction.FINISHED -> handleTimerFinished()
                 }
             }
         }
@@ -523,6 +524,18 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    private fun handleTimerFinished() {
+        if (_state.value.restTimerEndTime != null) {
+            _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                timerNotificationHelper.showRestFinished()
+            }
+            clearTimerInSession()
+            timerJob?.cancel()
+            timerJob = null
+        }
+    }
+
     private fun startTimerJob() {
         timerJob = viewModelScope.launch {
             while (true) {
@@ -531,11 +544,7 @@ class WorkoutViewModel @Inject constructor(
                 val remaining = ((end - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
                 
                 if (remaining == 0) {
-                    _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
-                    if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                        timerNotificationHelper.showRestFinished()
-                    }
-                    clearTimerInSession()
+                    handleTimerFinished()
                     break
                 }
                 
