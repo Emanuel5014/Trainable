@@ -321,6 +321,10 @@
     <string name="selected">Selected</string>
     <string name="sharing_options">SHARING OPTIONS</string>
     <string name="share">Share</string>
+    <string name="share_include_images_title">Include Photos?</string>
+    <string name="share_include_images_message">This routine has photos attached. Do you want to include them in the .trainableplan file?</string>
+    <string name="share_with_images">SHARE WITH PHOTOS</string>
+    <string name="share_without_images">SHARE ONLY DATA</string>
     <string name="import_plans_title">Import Routines?</string>
     <string name="import_plans_message">You are about to import the following routines:</string>
     <string name="import_plan_summary">%1$s (%2$d exercises)</string>

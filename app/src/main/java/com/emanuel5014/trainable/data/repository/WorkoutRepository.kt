@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.data.repository
 
+import android.content.Context
+
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
@@ -16,6 +18,9 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
+import com.emanuel5014.trainable.util.ImageStorageUtils
+import com.emanuel5014.trainable.util.UriMigrationHelper
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
@@ -27,7 +32,8 @@ import javax.inject.Singleton
 class WorkoutRepository @Inject constructor(
     private val workoutDao: WorkoutDao,
     private val userDao: UserDao,
-    private val exerciseDao: ExerciseDao
+    private val exerciseDao: ExerciseDao,
+    @ApplicationContext private val context: Context
 ) {
     fun getAllPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlans()
 
@@ -65,7 +71,7 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun deletePlanImage(image: WorkoutPlanImageEntity) = workoutDao.deletePlanImage(image)
     
-    suspend fun exportPlans(planIds: List<Int>): String {
+    suspend fun exportPlans(planIds: List<Int>, includeImages: Boolean = true): String {
         val plans = workoutDao.getPlansWithDetails(planIds)
         val exportDtos = plans.map { planWithDetails ->
             WorkoutPlanExportDto(
@@ -74,6 +80,16 @@ class WorkoutRepository @Inject constructor(
                 sessioniTargetSettimana = planWithDetails.plan.sessioniTargetSettimana,
                 imageUri = planWithDetails.plan.imageUri,
                 images = planWithDetails.images.map { it.imageUri },
+                imageBlobs = if (includeImages) {
+                    buildList {
+                        // Collect all unique URIs to encode
+                        val uris = (listOfNotNull(planWithDetails.plan.imageUri) + planWithDetails.images.map { it.imageUri }).distinct()
+                        uris.forEach { uri ->
+                            val fixedUri = UriMigrationHelper.fixPath(uri, context) ?: uri
+                            ImageStorageUtils.encodeImageToBase64(context, fixedUri)?.let { add(it) }
+                        }
+                    }
+                } else emptyList(),
                 exercises = planWithDetails.exercises.map { exerciseWithDetails ->
                     PlanExerciseExportDto(
                         exerciseId = exerciseWithDetails.exercise.id,
@@ -112,21 +128,33 @@ class WorkoutRepository @Inject constructor(
             )
             val planId = workoutDao.insertPlan(newPlan).toInt()
             
-            // Import multiple images
             val imagesToInsert = mutableListOf<WorkoutPlanImageEntity>()
-            
-            // 1. From the new 'images' list
-            dto.images.forEachIndexed { index, uri ->
-                imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = uri, ordine = index))
-            }
-            
-            // 2. Fallback for old single 'imageUri' if 'images' is empty
-            if (imagesToInsert.isEmpty() && dto.imageUri != null) {
-                imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = dto.imageUri, ordine = 0))
+
+            // 1. From encoded blobs (new way)
+            if (dto.imageBlobs.isNotEmpty()) {
+                dto.imageBlobs.forEachIndexed { index, blob ->
+                    ImageStorageUtils.saveBase64Image(context, blob)?.let { newUri ->
+                        imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = newUri, ordine = index))
+                    }
+                }
+            } else {
+                // 2. From the new 'images' list (old way, might contain invalid URIs)
+                dto.images.forEachIndexed { index, uri ->
+                    imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = uri, ordine = index))
+                }
+                
+                // 3. Fallback for old single 'imageUri' if 'images' is empty
+                if (imagesToInsert.isEmpty() && dto.imageUri != null) {
+                    imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = dto.imageUri, ordine = 0))
+                }
             }
             
             if (imagesToInsert.isNotEmpty()) {
                 workoutDao.insertPlanImages(imagesToInsert)
+                // Update the main plan image with the first imported image if it was null or broken
+                imagesToInsert.firstOrNull()?.let { firstImage ->
+                    workoutDao.updatePlan(newPlan.copy(id = planId, imageUri = firstImage.imageUri))
+                }
             }
             
             val exercisesToInsert = mutableListOf<PlanExerciseEntity>()

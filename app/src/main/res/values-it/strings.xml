@@ -321,6 +321,10 @@
     <string name="selected">selezionate</string>
     <string name="sharing_options">OPZIONI CONDIVISIONE</string>
     <string name="share">Condividi</string>
+    <string name="share_include_images_title">Includere le Foto?</string>
+    <string name="share_include_images_message">Questa scheda ha delle foto allegate. Vuoi includerle nel file .trainableplan?</string>
+    <string name="share_with_images">CONDIVIDI CON FOTO</string>
+    <string name="share_without_images">SOLO DATI SCHEDA</string>
     <string name="import_plans_title">Importare le Schede?</string>
     <string name="import_plans_message">Stai per importare le seguenti schede:</string>
     <string name="import_plan_summary">%1$s (%2$d esercizi)</string>

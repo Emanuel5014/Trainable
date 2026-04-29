@@ -83,11 +83,19 @@ class RoutinesViewModel @Inject constructor(
         _uiState.update { it.copy(selectedPlanIds = emptySet(), isSelectionMode = false) }
     }
 
-    fun exportSelectedPlans(context: Context) {
+    fun hasImagesInSelection(): Boolean {
+        val selectedIds = _uiState.value.selectedPlanIds
+        val allPlans = _uiState.value.plans + _uiState.value.archivedPlans
+        return allPlans.filter { it.plan.id in selectedIds }.any { 
+            it.plan.imageUri != null || it.images.isNotEmpty() 
+        }
+    }
+
+    fun exportSelectedPlans(context: Context, includeImages: Boolean = true) {
         viewModelScope.launch {
             val ids = _uiState.value.selectedPlanIds.toList()
             if (ids.isNotEmpty()) {
-                val json = workoutRepository.exportPlans(ids)
+                val json = workoutRepository.exportPlans(ids, includeImages)
                 ShareUtils.shareWorkoutPlans(context, json)
                 clearSelection()
             }

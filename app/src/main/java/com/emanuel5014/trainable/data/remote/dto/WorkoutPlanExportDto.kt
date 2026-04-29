@@ -9,6 +9,7 @@ data class WorkoutPlanExportDto(
     val sessioniTargetSettimana: Int,
     val imageUri: String?, // Keep for backward compatibility
     val images: List<String> = emptyList(),
+    val imageBlobs: List<String> = emptyList(),
     val exercises: List<PlanExerciseExportDto>
 )
 

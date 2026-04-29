@@ -129,6 +129,7 @@ fun RoutineListScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var showSheet by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
@@ -145,7 +146,13 @@ fun RoutineListScreen(
         floatingActionButton = {
             if (uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
-                    onClick = { viewModel.exportSelectedPlans(context) },
+                    onClick = { 
+                        if (viewModel.hasImagesInSelection()) {
+                            showExportDialog = true
+                        } else {
+                            viewModel.exportSelectedPlans(context, includeImages = false)
+                        }
+                    },
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
@@ -484,6 +491,51 @@ fun RoutineListScreen(
                 }
             }
         }
+    }
+
+    if (showExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text(stringResource(R.string.share_include_images_title)) },
+            text = { Text(stringResource(R.string.share_include_images_message)) },
+            confirmButton = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GymButton(
+                        onClick = {
+                            viewModel.exportSelectedPlans(context, includeImages = true)
+                            showExportDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.share_with_images).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                    GymButton(
+                        onClick = {
+                            viewModel.exportSelectedPlans(context, includeImages = false)
+                            showExportDialog = false
+                        },
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurface,
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.share_without_images).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showExportDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
     }
 }
 
