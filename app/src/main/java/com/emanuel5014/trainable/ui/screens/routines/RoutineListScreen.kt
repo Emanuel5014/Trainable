@@ -40,20 +40,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -63,6 +64,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -78,6 +80,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -138,6 +141,7 @@ fun RoutineListScreen(
     var showSheet by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
+    var showBulkArchiveDialog by remember { mutableStateOf(false) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
@@ -227,10 +231,7 @@ fun RoutineListScreen(
                         if (!swipeActionsEnabled) {
                             GymIconButton(
                                 icon = if (pagerState.currentPage == 0) Icons.Rounded.Archive else Icons.Rounded.Unarchive,
-                                onClick = { 
-                                    if (pagerState.currentPage == 0) viewModel.archiveSelectedPlans() 
-                                    else viewModel.unarchiveSelectedPlans() 
-                                },
+                                onClick = { showBulkArchiveDialog = true },
                                 containerColor = SurfaceContainerHigh,
                                 contentColor = Primary
                             )
@@ -372,7 +373,9 @@ fun RoutineListScreen(
                         viewModel.deleteSelectedPlans()
                         showBulkDeleteDialog = false
                     },
-                    containerColor = Error
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
                     Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
                 }
@@ -381,12 +384,49 @@ fun RoutineListScreen(
                 GymButton(
                     onClick = { showBulkDeleteDialog = false },
                     containerColor = Color.Transparent,
-                    contentColor = OnSurfaceVariant
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
                 ) {
                     Text(stringResource(R.string.cancel).uppercase())
                 }
             },
-            containerColor = Surface,
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (showBulkArchiveDialog) {
+        val isArchiving = pagerState.currentPage == 0
+        AlertDialog(
+            onDismissRequest = { showBulkArchiveDialog = false },
+            title = { Text(stringResource(if (isArchiving) R.string.archive_routine else R.string.unarchive_routine)) },
+            text = { Text(stringResource(if (isArchiving) R.string.archive_routine_message else R.string.unarchive_routine_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        if (isArchiving) viewModel.archiveSelectedPlans()
+                        else viewModel.unarchiveSelectedPlans()
+                        showBulkArchiveDialog = false
+                    },
+                    containerColor = Primary.copy(alpha = 0.1f),
+                    contentColor = Primary,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showBulkArchiveDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
             titleContentColor = OnSurface,
             textContentColor = OnSurfaceVariant
         )
@@ -608,7 +648,9 @@ private fun RoutineListPage(
     isSelectionMode: Boolean = false,
     swipeActionsEnabled: Boolean = true,
     selectedPlanIds: Set<Int> = emptySet(),
-    onToggleSelection: (Int) -> Unit = {}
+    onToggleSelection: (Int) -> Unit = {},
+    isFirst: Boolean = false,
+    isLast: Boolean = false
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -645,23 +687,26 @@ private fun RoutineListPage(
                 val zIndex = if (isDragging) 1f else 0f
                 val isSelected = selectedPlanIds.contains(plan.id)
 
-                val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = { value ->
-                        if (isSelectionMode) return@rememberSwipeToDismissBoxState false
-                        when (value) {
-                            SwipeToDismissBoxValue.EndToStart -> {
-                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onDelete(plan)
+                val dismissState = rememberSwipeToDismissBoxState()
+
+                LaunchedEffect(dismissState.targetValue) {
+                    if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                        if (!isSelectionMode && swipeActionsEnabled) {
+                            when (dismissState.targetValue) {
+                                SwipeToDismissBoxValue.EndToStart -> {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onDelete(plan)
+                                }
+                                SwipeToDismissBoxValue.StartToEnd -> {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onArchiveToggle(plan)
+                                }
+                                else -> {}
                             }
-                            SwipeToDismissBoxValue.StartToEnd -> {
-                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onArchiveToggle(plan)
-                            }
-                            else -> {}
                         }
-                        false
+                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                     }
-                )
+                }
 
                 SwipeToDismissBox(
                     state = dismissState,
@@ -713,40 +758,7 @@ private fun RoutineListPage(
                             shape = Shapes.extraLarge
                             clip = isDragging
                         }
-                        .pointerInput(isSelectionMode) {
-                            if (isSelectionMode) return@pointerInput
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    draggedItemIndex = index
-                                    dragOffsetY = 0f
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    dragOffsetY += dragAmount.y
-                                    val itemHeight = 100.dp.toPx()
-                                    if (dragOffsetY > itemHeight / 2 && draggedItemIndex!! < localPlans.size - 1) {
-                                        val targetIndex = draggedItemIndex!! + 1
-                                        localPlans.add(targetIndex, localPlans.removeAt(draggedItemIndex!!))
-                                        draggedItemIndex = targetIndex
-                                        dragOffsetY -= itemHeight
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    } else if (dragOffsetY < -itemHeight / 2 && draggedItemIndex!! > 0) {
-                                        val targetIndex = draggedItemIndex!! - 1
-                                        localPlans.add(targetIndex, localPlans.removeAt(draggedItemIndex!!))
-                                        draggedItemIndex = targetIndex
-                                        dragOffsetY += itemHeight
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    }
-                                },
-                                onDragEnd = {
-                                    onReorder(index, draggedItemIndex!!)
-                                    draggedItemIndex = null
-                                    dragOffsetY = 0f
-                                },
-                                onDragCancel = { draggedItemIndex = null; dragOffsetY = 0f }
-                            )
-                        }
+                        // Reordering handled via buttons now to avoid gesture conflicts
                 ) {
                     RoutineCard(
                         planWithDetails = planWithDetails,
@@ -759,13 +771,16 @@ private fun RoutineListPage(
                         },
                         onLongClick = {
                             if (!isSelectionMode) {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onToggleSelection(plan.id)
                             }
                         },
                         isSelectionMode = isSelectionMode,
                         isSelected = isSelected,
                         swipeActionsEnabled = swipeActionsEnabled,
-                        isArchived = isArchived
+                        isArchived = isArchived,
+                        onMoveUp = if (index > 0) { { onReorder(index, index - 1) } } else null,
+                        onMoveDown = if (index < localPlans.size - 1) { { onReorder(index, index + 1) } } else null
                     )
                 }
             }
@@ -783,7 +798,9 @@ private fun RoutineCard(
     isSelectionMode: Boolean,
     isSelected: Boolean,
     swipeActionsEnabled: Boolean = true,
-    isArchived: Boolean = false
+    isArchived: Boolean = false,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val plan = planWithDetails.plan
@@ -813,20 +830,28 @@ private fun RoutineCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) Primary.copy(alpha = 0.2f) else Surface),
+                        .background(if (isSelected) Primary else if (isSelectionMode) Primary.copy(alpha = 0.2f) else Surface),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (fixedImageUri != null) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Selected",
+                            tint = OnPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else if (fixedImageUri != null) {
                         AsyncImage(
                             model = fixedImageUri,
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp))
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)),
+                            contentScale = ContentScale.Crop
                         )
                     } else {
                         Icon(
                             Icons.Rounded.FitnessCenter,
                             contentDescription = null,
-                            tint = if (isSelected) Primary else OnSurfaceVariant
+                            tint = if (isSelectionMode) Primary else OnSurfaceVariant
                         )
                     }
                 }
@@ -851,15 +876,25 @@ private fun RoutineCard(
             }
             
             if (isSelectionMode) {
-                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    Checkbox(
-                        checked = isSelected,
-                        onCheckedChange = { onClick() },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = Primary,
-                            uncheckedColor = OnSurfaceVariant
-                        )
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onMoveUp != null) {
+                        IconButton(onClick = onMoveUp) {
+                            Icon(
+                                Icons.Rounded.KeyboardArrowUp,
+                                contentDescription = "Move Up",
+                                tint = OnSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    if (onMoveDown != null) {
+                        IconButton(onClick = onMoveDown) {
+                            Icon(
+                                Icons.Rounded.KeyboardArrowDown,
+                                contentDescription = "Move Down",
+                                tint = OnSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
                 }
             }
         }
