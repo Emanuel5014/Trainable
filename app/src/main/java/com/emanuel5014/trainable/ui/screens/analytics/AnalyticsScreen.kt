@@ -347,7 +347,7 @@ fun ExerciseCarouselSection(
                 onClick = onEditClick,
                 colors = IconButtonDefaults.iconButtonColors(contentColor = Primary)
             ) {
-                Icon(Icons.Rounded.Edit, contentDescription = "Edit Selection")
+                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.analytics_edit_selection))
             }
         }
 
@@ -719,7 +719,7 @@ fun ExerciseChartSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "No data for selected range",
+                        stringResource(R.string.analytics_no_data_range),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant.copy(alpha = 0.6f)
                     )
@@ -739,7 +739,7 @@ fun WidgetControls(
             IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                 Icon(
                     Icons.Rounded.Clear,
-                    contentDescription = "Remove",
+                    contentDescription = stringResource(R.string.analytics_remove),
                     tint = Error.copy(alpha = 0.8f)
                 )
             }
@@ -902,7 +902,7 @@ fun ExercisePickerBottomSheet(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Text(text = "Clear")
+                        Text(text = stringResource(R.string.analytics_clear))
                     }
                 }
             }
@@ -922,14 +922,14 @@ fun ExercisePickerBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp)),
-                placeholder = { Text("Search exercises...") },
+                placeholder = { Text(stringResource(R.string.search_exercises)) },
                 leadingIcon = {
                     Icon(Icons.Rounded.Search, contentDescription = null)
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Rounded.Clear, contentDescription = "Clear search")
+                            Icon(Icons.Rounded.Clear, contentDescription = stringResource(R.string.analytics_clear_search))
                         }
                     }
                 },

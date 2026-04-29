@@ -3,12 +3,15 @@ package com.emanuel5014.trainable.ui.screens.analytics
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import com.emanuel5014.trainable.data.local.dao.ConsistencyRow
 import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +40,7 @@ class AnalyticsViewModel @Inject constructor(
     private val analyticsRepository: AnalyticsRepository,
     private val workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val localeManager: AppLocaleManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -73,15 +77,27 @@ class AnalyticsViewModel @Inject constructor(
         selectedTimeRange,
         selectedExerciseIds,
         widgetOrder,
-        userPreferencesRepository.weightUnit
-    ) { activePlan, timeRange, selectedIds, order, weightUnit ->
+        userPreferencesRepository.weightUnit,
+        localeManager.currentLanguage
+    ) { args ->
+        val activePlan = args[0] as com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity?
+        val timeRange = args[1] as AnalyticsTimeRange
+        @Suppress("UNCHECKED_CAST")
+        val selectedIds = args[2] as Set<Int>
+        @Suppress("UNCHECKED_CAST")
+        val order = args[3] as List<String>
+        val weightUnit = args[4] as String
+        val userLang = args[5] as String
+        
+        val languageCode = localeManager.resolveLanguageForCompose(userLang)
         AnalyticsQueryContext(
             activePlan = activePlan,
             timeRange = timeRange,
             startDate = timeRange.startDate(),
             selectedExerciseIds = selectedIds,
             widgetOrder = order,
-            weightUnit = weightUnit
+            weightUnit = weightUnit,
+            languageCode = languageCode
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -181,7 +197,8 @@ class AnalyticsViewModel @Inject constructor(
                     categoryVolumes = strengthCategory.categoryVolumes,
                     weightHistory = weightHistory,
                     exerciseHistories = exerciseHistories,
-                    weightUnit = context.weightUnit
+                    weightUnit = context.weightUnit,
+                    languageCode = context.languageCode
                 )
             }
         }
@@ -300,7 +317,8 @@ class AnalyticsViewModel @Inject constructor(
         categoryVolumes: List<CategoryVolumeRow>,
         weightHistory: List<com.emanuel5014.trainable.data.local.entity.WeightLogEntity>,
         exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
-        weightUnit: String
+        weightUnit: String,
+        languageCode: String
     ): AnalyticsUiState {
         val completedSessions = consistency?.completedSessions ?: 0
         val targetSessionsPerWeek = consistency?.targetSessionsPerWeek ?: 0
@@ -319,8 +337,8 @@ class AnalyticsViewModel @Inject constructor(
         val allBests = personalBests.map { row ->
             PersonalBestUiModel(
                 exerciseId = row.exerciseId,
-                exerciseName = row.exerciseName,
-                category = row.category,
+                exerciseName = ExerciseTranslations.translate(row.exerciseName, languageCode),
+                category = ExerciseTranslations.translateCategory(row.category, languageCode),
                 maxWeightKg = row.maxWeight,
                 reps = row.reps
             )
@@ -374,11 +392,11 @@ class AnalyticsViewModel @Inject constructor(
                 completedSessions = completedSessions,
                 targetSessions = expectedSessions,
                 progress = consistencyProgress,
-                summary = buildConsistencySummary(completedSessions, expectedSessions)
+                summary = buildConsistencySummary(context, completedSessions, expectedSessions)
             ),
             strengthIndex = StrengthIndexUiModel(
                 percent = strengthIndex,
-                summary = buildStrengthSummary(strengthIndex)
+                summary = buildStrengthSummary(context, strengthIndex)
             ),
             personalBests = allBests,
             selectedExerciseIds = finalSelectedIds,
@@ -395,18 +413,18 @@ class AnalyticsViewModel @Inject constructor(
         )
     }
 
-    private fun buildConsistencySummary(completed: Int, expected: Int): String {
-        if (expected <= 0) return "No scheduled sessions yet."
-        return "$completed/$expected scheduled sessions completed."
+    private fun buildConsistencySummary(context: Context, completed: Int, expected: Int): String {
+        if (expected <= 0) return context.getString(R.string.analytics_consistency_no_sessions)
+        return context.getString(R.string.analytics_consistency_summary, completed, expected)
     }
 
-    private fun buildStrengthSummary(strengthIndex: Float?): String {
-        if (strengthIndex == null) return "Not enough PR history yet."
+    private fun buildStrengthSummary(context: Context, strengthIndex: Float?): String {
+        if (strengthIndex == null) return context.getString(R.string.analytics_strength_no_data)
         val formatted = String.format(Locale.getDefault(), "%.1f", abs(strengthIndex))
         return if (strengthIndex >= 0f) {
-            "+$formatted% vs previous 30 days"
+            context.getString(R.string.analytics_strength_summary_positive, formatted)
         } else {
-            "-$formatted% vs previous 30 days"
+            context.getString(R.string.analytics_strength_summary_negative, formatted)
         }
     }
 
@@ -416,7 +434,8 @@ class AnalyticsViewModel @Inject constructor(
         val startDate: Long,
         val selectedExerciseIds: Set<Int>,
         val widgetOrder: List<String>,
-        val weightUnit: String
+        val weightUnit: String,
+        val languageCode: String
     )
 
     private data class CoreAnalyticsSnapshot(

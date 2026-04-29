@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -120,6 +121,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var showResetDialog by remember { mutableStateOf(false) }
+    var easterEggClicks by remember { mutableIntStateOf(0) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
@@ -902,7 +904,17 @@ fun SettingsScreen(
                                 Text(
                                     text = "Made with ❤️ by Emanuel5014",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
+                                    color = OnSurfaceVariant,
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        easterEggClicks++
+                                        if (easterEggClicks >= 5) {
+                                            Toast.makeText(context, "TEST", Toast.LENGTH_SHORT).show()
+                                            easterEggClicks = 0
+                                        }
+                                    }
                                 )
                             }
                             GymButton(

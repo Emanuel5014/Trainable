@@ -301,6 +301,16 @@
     <string name="analytics_estimated_1rm_short">Est. 1RM</string>
     <string name="analytics_selected_count">Selected: %d</string>
     <string name="analytics_record_reps">Record: %d reps</string>
+    <string name="analytics_no_data_range">No data for selected range</string>
+    <string name="analytics_clear">Clear</string>
+    <string name="analytics_remove">Remove</string>
+    <string name="analytics_edit_selection">Edit Selection</string>
+    <string name="analytics_clear_search">Clear search</string>
+    <string name="analytics_consistency_summary">%1$d/%2$d scheduled sessions completed.</string>
+    <string name="analytics_consistency_no_sessions">No scheduled sessions yet.</string>
+    <string name="analytics_strength_summary_positive">+%s%% vs previous 30 days</string>
+    <string name="analytics_strength_summary_negative">-%s%% vs previous 30 days</string>
+    <string name="analytics_strength_no_data">Not enough PR history yet.</string>
     <string name="analytics_body_weight">BODY WEIGHT</string>
     <string name="analytics_no_weight_data">No weight data available</string>
     <string name="analytics_todays_weight">Today\'s weight</string>

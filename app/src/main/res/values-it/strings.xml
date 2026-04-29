@@ -301,6 +301,16 @@
     <string name="analytics_estimated_1rm_short">1RM stimato</string>
     <string name="analytics_selected_count">Selezionati: %d</string>
     <string name="analytics_record_reps">Record: %d reps</string>
+    <string name="analytics_no_data_range">Nessun dato per il periodo selezionato</string>
+    <string name="analytics_clear">Cancella</string>
+    <string name="analytics_remove">Rimuovi</string>
+    <string name="analytics_edit_selection">Modifica Selezione</string>
+    <string name="analytics_clear_search">Cancella ricerca</string>
+    <string name="analytics_consistency_summary">%1$d/%2$d sessioni pianificate completate.</string>
+    <string name="analytics_consistency_no_sessions">Nessuna sessione pianificata ancora.</string>
+    <string name="analytics_strength_summary_positive">+%s%% rispetto ai precedenti 30 giorni</string>
+    <string name="analytics_strength_summary_negative">-%s%% rispetto ai precedenti 30 giorni</string>
+    <string name="analytics_strength_no_data">Dati PR insufficienti.</string>
     <string name="analytics_body_weight">PESO CORPOREO</string>
     <string name="analytics_no_weight_data">Nessun dato sul peso disponibile</string>
     <string name="analytics_todays_weight">Peso di oggi</string>
