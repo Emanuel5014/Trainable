@@ -111,6 +111,7 @@ fun SettingsScreen(
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val dynamicColor by viewModel.dynamicColor.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
+    val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     
     val latestRelease by viewModel.latestRelease.collectAsState()
@@ -765,6 +766,32 @@ fun SettingsScreen(
                                         viewModel.setTimerNotificationsEnabled(enabled)
                                     }
                                 }
+                            )
+                        }
+
+                        Divider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.RestartAlt, 
+                                    contentDescription = null, 
+                                    tint = Primary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = swipeActionsEnabled,
+                                onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
                             )
                         }
                     }

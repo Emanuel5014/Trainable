@@ -102,6 +102,34 @@ class RoutinesViewModel @Inject constructor(
         }
     }
 
+    fun deleteSelectedPlans() {
+        viewModelScope.launch {
+            val ids = _uiState.value.selectedPlanIds
+            val allPlans = _uiState.value.plans + _uiState.value.archivedPlans
+            val selectedPlans = allPlans.filter { it.plan.id in ids }.map { it.plan }
+            selectedPlans.forEach { workoutRepository.deletePlan(it) }
+            clearSelection()
+        }
+    }
+
+    fun archiveSelectedPlans() {
+        viewModelScope.launch {
+            _uiState.value.selectedPlanIds.forEach { 
+                workoutRepository.setPlanActive(it, false)
+            }
+            clearSelection()
+        }
+    }
+
+    fun unarchiveSelectedPlans() {
+        viewModelScope.launch {
+            _uiState.value.selectedPlanIds.forEach { 
+                workoutRepository.setPlanActive(it, true)
+            }
+            clearSelection()
+        }
+    }
+
     fun importPlans(jsonData: String) {
         viewModelScope.launch {
             try {

@@ -175,6 +175,9 @@
     <string name="dynamic_color_desc">Usa colori Material You dallo sfondo</string>
     <string name="timer_notifications">Notifiche Timer</string>
     <string name="timer_notifications_desc">Mostra il timer di recupero nelle notifiche</string>
+    <string name="swipe_actions">Azioni Rapide Swipe</string>
+    <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi</string>
+    <string name="more_options">Altre Opzioni</string>
     <string name="rest_timer_remaining">%s rimanenti</string>
     <string name="folder_selected">Cartella selezionata</string>
     <string name="choose_folder">Scegli cartella</string>

@@ -22,6 +22,8 @@ data class HistoryUiState(
     val sessions: List<SessionWithDetails> = emptyList(),
     val selectedSession: SessionWithDetails? = null,
     val isLoading: Boolean = false,
+    val isSelectionMode: Boolean = false,
+    val selectedSessionIds: Set<Int> = emptySet(),
     val error: String? = null,
     val weightUnit: String = "kg"
 )
@@ -96,6 +98,33 @@ class HistoryViewModel @Inject constructor(
     fun deleteSet(set: SetLogEntity) {
         viewModelScope.launch {
             repository.deleteSet(set)
+        }
+    }
+
+    fun toggleSessionSelection(sessionId: Int) {
+        _uiState.update { state ->
+            val newSelection = if (state.selectedSessionIds.contains(sessionId)) {
+                state.selectedSessionIds - sessionId
+            } else {
+                state.selectedSessionIds + sessionId
+            }
+            state.copy(
+                selectedSessionIds = newSelection,
+                isSelectionMode = newSelection.isNotEmpty()
+            )
+        }
+    }
+
+    fun clearSelection() {
+        _uiState.update { it.copy(selectedSessionIds = emptySet(), isSelectionMode = false) }
+    }
+
+    fun deleteSelectedSessions() {
+        viewModelScope.launch {
+            _uiState.value.selectedSessionIds.forEach { 
+                repository.deleteSession(it)
+            }
+            clearSelection()
         }
     }
 }

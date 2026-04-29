@@ -43,11 +43,14 @@ import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -124,12 +127,17 @@ fun RoutineListScreen(
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
     
+    val swipeActionsEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true }
+    }.collectAsState(initial = true)
+    
     val pagerState = rememberPagerState(pageCount = { 2 })
     val isCurrentlyArchived by remember { derivedStateOf { pagerState.currentPage == 1 } }
     val coroutineScope = rememberCoroutineScope()
 
     var showSheet by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
+    var showBulkDeleteDialog by remember { mutableStateOf(false) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
@@ -216,6 +224,23 @@ fun RoutineListScreen(
                 navigationIcon = null,
                 actions = if (uiState.isSelectionMode) {
                     {
+                        if (!swipeActionsEnabled) {
+                            GymIconButton(
+                                icon = if (pagerState.currentPage == 0) Icons.Rounded.Archive else Icons.Rounded.Unarchive,
+                                onClick = { 
+                                    if (pagerState.currentPage == 0) viewModel.archiveSelectedPlans() 
+                                    else viewModel.unarchiveSelectedPlans() 
+                                },
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = Primary
+                            )
+                            GymIconButton(
+                                icon = Icons.Rounded.DeleteSweep,
+                                onClick = { showBulkDeleteDialog = true },
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = Error
+                            )
+                        }
                         GymIconButton(
                             icon = Icons.Rounded.Close,
                             onClick = { viewModel.clearSelection() },
@@ -327,12 +352,44 @@ fun RoutineListScreen(
                         onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
                         isLoading = uiState.isLoading,
                         isSelectionMode = uiState.isSelectionMode,
+                        swipeActionsEnabled = swipeActionsEnabled,
                         selectedPlanIds = uiState.selectedPlanIds,
                         onToggleSelection = { viewModel.togglePlanSelection(it) }
                     )
                 }
             }
         }
+    }
+
+    if (showBulkDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showBulkDeleteDialog = false },
+            title = { Text(stringResource(R.string.delete_routine)) },
+            text = { Text(stringResource(R.string.delete_routine_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.deleteSelectedPlans()
+                        showBulkDeleteDialog = false
+                    },
+                    containerColor = Error
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showBulkDeleteDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = Surface,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
     }
 
     if (planToDelete != null) {
@@ -549,6 +606,7 @@ private fun RoutineListPage(
     onReorder: (Int, Int) -> Unit,
     isLoading: Boolean,
     isSelectionMode: Boolean = false,
+    swipeActionsEnabled: Boolean = true,
     selectedPlanIds: Set<Int> = emptySet(),
     onToggleSelection: (Int) -> Unit = {}
 ) {
@@ -607,8 +665,8 @@ private fun RoutineListPage(
 
                 SwipeToDismissBox(
                     state = dismissState,
-                    enableDismissFromStartToEnd = !isSelectionMode,
-                    enableDismissFromEndToStart = !isSelectionMode,
+                    enableDismissFromStartToEnd = !isSelectionMode && swipeActionsEnabled,
+                    enableDismissFromEndToStart = !isSelectionMode && swipeActionsEnabled,
                     backgroundContent = {
                         val progress = dismissState.progress
                         
@@ -705,7 +763,9 @@ private fun RoutineListPage(
                             }
                         },
                         isSelectionMode = isSelectionMode,
-                        isSelected = isSelected
+                        isSelected = isSelected,
+                        swipeActionsEnabled = swipeActionsEnabled,
+                        isArchived = isArchived
                     )
                 }
             }
@@ -721,7 +781,9 @@ private fun RoutineCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     isSelectionMode: Boolean,
-    isSelected: Boolean
+    isSelected: Boolean,
+    swipeActionsEnabled: Boolean = true,
+    isArchived: Boolean = false
 ) {
     val context = LocalContext.current
     val plan = planWithDetails.plan

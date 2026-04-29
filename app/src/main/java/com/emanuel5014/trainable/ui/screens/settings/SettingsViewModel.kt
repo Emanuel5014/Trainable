@@ -120,6 +120,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus: StateFlow<String?> = _backupStatus
 
@@ -322,6 +328,12 @@ class SettingsViewModel @Inject constructor(
     fun setTimerNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setTimerNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setSwipeActionsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setSwipeActionsEnabled(enabled)
         }
     }
 
