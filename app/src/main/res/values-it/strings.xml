@@ -342,4 +342,29 @@
     <string name="camera">Fotocamera</string>
     <string name="gallery">Galleria</string>
     <string name="camera_permission_denied">Il permesso della fotocamera è necessario per scattare foto</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">TRAINABLE</string>
+    <string name="onboarding_welcome_desc">Il tuo nuovo compagno monolitico per l\'allenamento della forza. Pulito, potente e costruito per la performance.</string>
+    <string name="onboarding_features_title">Eleva il tuo\nallenamento.</string>
+    <string name="onboarding_feature_suggestions_title">Suggerimenti Intelligenti</string>
+    <string name="onboarding_feature_suggestions_desc">Trainable impara i tuoi orari e ti suggerisce il prossimo allenamento ideale.</string>
+    <string name="onboarding_feature_control_title">Controllo Totale</string>
+    <string name="onboarding_feature_control_desc">Trascina e personalizza le tue routine con un\'interfaccia tattile.</string>
+    <string name="onboarding_feature_insights_title">Analisi Profonda</string>
+    <string name="onboarding_feature_insights_desc">Visualizza il volume e i record personali con grafici editoriali.</string>
+
+    <string name="onboarding_connectivity_title">Connesso &amp;\nSicuro.</string>
+    <string name="onboarding_connectivity_backup_title">Backup Locali e Automatici</string>
+    <string name="onboarding_connectivity_backup_desc">Mantieni i tuoi dati al sicuro con backup locali programmati e ripristino facile.</string>
+    <string name="onboarding_connectivity_share_plans_title">Condividi Schede</string>
+    <string name="onboarding_connectivity_share_plans_desc">Esporta le tue routine come file .trainableplan e condividile con i tuoi amici.</string>
+    <string name="onboarding_connectivity_share_workouts_title">Mostra i tuoi Progressi</string>
+    <string name="onboarding_connectivity_share_workouts_desc">Condividi i tuoi allenamenti completati e i record personali con bellissime card.</string>
+
+    <string name="onboarding_setup_title">Personalizza la\ntua esperienza.</string>
+    <string name="onboarding_setup_username_label">Come dovremmo chiamarti?</string>
+    <string name="onboarding_setup_weight_label">Peso attuale (opzionale)</string>
+    <string name="onboarding_setup_goal_label">Obiettivo settimanale</string>
+    <string name="onboarding_setup_footer">Potrai sempre cambiare queste impostazioni in seguito.</string>
 </resources>

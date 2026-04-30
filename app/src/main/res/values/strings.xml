@@ -342,4 +342,29 @@
     <string name="camera">Camera</string>
     <string name="gallery">Gallery</string>
     <string name="camera_permission_denied">Camera permission is required to take photos</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">TRAINABLE</string>
+    <string name="onboarding_welcome_desc">Your new monolithic companion for strength training. Clean, powerful, and built for performance.</string>
+    <string name="onboarding_features_title">Elevate your\ntraining.</string>
+    <string name="onboarding_feature_suggestions_title">Smart Suggestions</string>
+    <string name="onboarding_feature_suggestions_desc">Trainable learns your schedule and suggests the perfect workout next.</string>
+    <string name="onboarding_feature_control_title">Total Control</string>
+    <string name="onboarding_feature_control_desc">Drag, drop, and customize your routines with a tactile interface.</string>
+    <string name="onboarding_feature_insights_title">Deep Insights</string>
+    <string name="onboarding_feature_insights_desc">Visualize your volume and personal bests with editorial charts.</string>
+
+    <string name="onboarding_connectivity_title">Connected &amp;\nSecure.</string>
+    <string name="onboarding_connectivity_backup_title">Local &amp; Auto Backups</string>
+    <string name="onboarding_connectivity_backup_desc">Keep your data safe with scheduled local backups and easy restoration.</string>
+    <string name="onboarding_connectivity_share_plans_title">Share Plans</string>
+    <string name="onboarding_connectivity_share_plans_desc">Export your routines as .trainableplan files and share them with your friends.</string>
+    <string name="onboarding_connectivity_share_workouts_title">Show your Progress</string>
+    <string name="onboarding_connectivity_share_workouts_desc">Share your completed workouts and personal bests as beautiful cards.</string>
+
+    <string name="onboarding_setup_title">Personalize\nyour experience.</string>
+    <string name="onboarding_setup_username_label">How should we call you?</string>
+    <string name="onboarding_setup_weight_label">Current weight (optional)</string>
+    <string name="onboarding_setup_goal_label">Weekly workout goal</string>
+    <string name="onboarding_setup_footer">You can always change these later in settings.</string>
 </resources>

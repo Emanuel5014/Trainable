@@ -82,14 +82,6 @@ fun WorkoutShareCard(
                 tint = primaryColor,
                 modifier = Modifier.size(32.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "TRAINABLE",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
-                color = primaryColor
-            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
