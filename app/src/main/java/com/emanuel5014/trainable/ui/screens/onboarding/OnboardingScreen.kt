@@ -25,9 +25,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DragHandle
+import androidx.compose.material.icons.rounded.IosShare
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -66,7 +70,7 @@ fun OnboardingScreen(
     onFinished: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
 
     var username by remember { mutableStateOf("") }
@@ -103,7 +107,8 @@ fun OnboardingScreen(
                 when (page) {
                     0 -> WelcomeSlide()
                     1 -> FeaturesSlide()
-                    2 -> ProfileSetupSlide(
+                    2 -> ConnectivitySlide()
+                    3 -> ProfileSetupSlide(
                         username = username,
                         onUsernameChange = { username = it },
                         weightInput = weightInput,
@@ -166,7 +171,7 @@ fun OnboardingScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = if (isLastPage) "FINISH SETUP" else "CONTINUE",
+                    text = if (isLastPage) stringResource(R.string.finish_setup) else stringResource(R.string.continue_text),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp
@@ -209,7 +214,7 @@ private fun WelcomeSlide() {
         Spacer(modifier = Modifier.height(48.dp))
         
         Text(
-            text = "TRAINABLE",
+            text = stringResource(R.string.onboarding_welcome_title),
             style = MaterialTheme.typography.displayMedium,
             color = OnSurface,
             fontWeight = FontWeight.Black,
@@ -220,7 +225,7 @@ private fun WelcomeSlide() {
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "Your new monolithic companion for strength training. Clean, powerful, and built for performance.",
+            text = stringResource(R.string.onboarding_welcome_desc),
             style = MaterialTheme.typography.bodyLarge,
             color = OnSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -239,7 +244,7 @@ private fun FeaturesSlide() {
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
         Text(
-            text = "Elevate your\ntraining.",
+            text = stringResource(R.string.onboarding_features_title),
             style = MaterialTheme.typography.displaySmall,
             color = OnSurface,
             fontWeight = FontWeight.Black,
@@ -249,18 +254,55 @@ private fun FeaturesSlide() {
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             FeatureItemExpressive(
                 icon = Icons.Rounded.Bolt,
-                title = "Smart Suggestions",
-                desc = "Trainable learns your schedule and suggests the perfect workout next."
+                title = stringResource(R.string.onboarding_feature_suggestions_title),
+                desc = stringResource(R.string.onboarding_feature_suggestions_desc)
             )
             FeatureItemExpressive(
                 icon = Icons.Rounded.DragHandle,
-                title = "Total Control",
-                desc = "Drag, drop, and customize your routines with a tactile interface."
+                title = stringResource(R.string.onboarding_feature_control_title),
+                desc = stringResource(R.string.onboarding_feature_control_desc)
             )
             FeatureItemExpressive(
                 icon = Icons.Rounded.Analytics,
-                title = "Deep Insights",
-                desc = "Visualize your volume and personal bests with editorial charts."
+                title = stringResource(R.string.onboarding_feature_insights_title),
+                desc = stringResource(R.string.onboarding_feature_insights_desc)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConnectivitySlide() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(32.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.onboarding_connectivity_title),
+            style = MaterialTheme.typography.displaySmall,
+            color = OnSurface,
+            fontWeight = FontWeight.Black,
+            lineHeight = 44.sp
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            FeatureItemExpressive(
+                icon = Icons.Rounded.Backup,
+                title = stringResource(R.string.onboarding_connectivity_backup_title),
+                desc = stringResource(R.string.onboarding_connectivity_backup_desc)
+            )
+            FeatureItemExpressive(
+                icon = Icons.Rounded.Share,
+                title = stringResource(R.string.onboarding_connectivity_share_plans_title),
+                desc = stringResource(R.string.onboarding_connectivity_share_plans_desc)
+            )
+            FeatureItemExpressive(
+                icon = Icons.Rounded.IosShare,
+                title = stringResource(R.string.onboarding_connectivity_share_workouts_title),
+                desc = stringResource(R.string.onboarding_connectivity_share_workouts_desc)
             )
         }
     }
@@ -315,7 +357,7 @@ private fun ProfileSetupSlide(
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "Personalize\nyour experience.",
+            text = stringResource(R.string.onboarding_setup_title),
             style = MaterialTheme.typography.displaySmall,
             color = OnSurface,
             fontWeight = FontWeight.Black,
@@ -328,13 +370,13 @@ private fun ProfileSetupSlide(
             GymInputField(
                 value = username,
                 onValueChange = onUsernameChange,
-                label = "How should we call you?",
+                label = stringResource(R.string.onboarding_setup_username_label),
                 modifier = Modifier.fillMaxWidth()
             )
             
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Current weight (optional)",
+                    text = stringResource(R.string.onboarding_setup_weight_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.Bold,
@@ -396,12 +438,12 @@ private fun ProfileSetupSlide(
                         onWeeklyGoalChange(newValue)
                     }
                 },
-                label = "Weekly workout goal",
+                label = stringResource(R.string.onboarding_setup_goal_label),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     Text(
-                        "days", 
+                        stringResource(R.string.days_this_week), 
                         modifier = Modifier.padding(end = 16.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
@@ -413,7 +455,7 @@ private fun ProfileSetupSlide(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "You can always change these later in settings.",
+            text = stringResource(R.string.onboarding_setup_footer),
             style = MaterialTheme.typography.bodySmall,
             color = OnSurfaceVariant
         )

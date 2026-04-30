@@ -6,6 +6,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,8 @@ data class HistoryUiState(
     val sessions: List<SessionWithDetails> = emptyList(),
     val selectedSession: SessionWithDetails? = null,
     val isLoading: Boolean = false,
+    val isSelectionMode: Boolean = false,
+    val selectedSessionIds: Set<Int> = emptySet(),
     val error: String? = null,
     val weightUnit: String = "kg"
 )
@@ -28,17 +31,26 @@ data class HistoryUiState(
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val repository: WorkoutRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val localeManager: AppLocaleManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
+
+    private val _languageCode = MutableStateFlow("en")
+    val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
     init {
         loadHistory()
         viewModelScope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _uiState.update { it.copy(weightUnit = unit) }
+            }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.userLanguage.collect { userLang ->
+                _languageCode.value = localeManager.resolveLanguageForCompose(userLang)
             }
         }
     }
@@ -86,6 +98,33 @@ class HistoryViewModel @Inject constructor(
     fun deleteSet(set: SetLogEntity) {
         viewModelScope.launch {
             repository.deleteSet(set)
+        }
+    }
+
+    fun toggleSessionSelection(sessionId: Int) {
+        _uiState.update { state ->
+            val newSelection = if (state.selectedSessionIds.contains(sessionId)) {
+                state.selectedSessionIds - sessionId
+            } else {
+                state.selectedSessionIds + sessionId
+            }
+            state.copy(
+                selectedSessionIds = newSelection,
+                isSelectionMode = newSelection.isNotEmpty()
+            )
+        }
+    }
+
+    fun clearSelection() {
+        _uiState.update { it.copy(selectedSessionIds = emptySet(), isSelectionMode = false) }
+    }
+
+    fun deleteSelectedSessions() {
+        viewModelScope.launch {
+            _uiState.value.selectedSessionIds.forEach { 
+                repository.deleteSession(it)
+            }
+            clearSelection()
         }
     }
 }

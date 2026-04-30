@@ -175,6 +175,9 @@
     <string name="dynamic_color_desc">Usa colori Material You dallo sfondo</string>
     <string name="timer_notifications">Notifiche Timer</string>
     <string name="timer_notifications_desc">Mostra il timer di recupero nelle notifiche</string>
+    <string name="swipe_actions">Azioni Rapide Swipe</string>
+    <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi</string>
+    <string name="more_options">Altre Opzioni</string>
     <string name="rest_timer_remaining">%s rimanenti</string>
     <string name="folder_selected">Cartella selezionata</string>
     <string name="choose_folder">Scegli cartella</string>
@@ -301,6 +304,16 @@
     <string name="analytics_estimated_1rm_short">1RM stimato</string>
     <string name="analytics_selected_count">Selezionati: %d</string>
     <string name="analytics_record_reps">Record: %d reps</string>
+    <string name="analytics_no_data_range">Nessun dato per il periodo selezionato</string>
+    <string name="analytics_clear">Cancella</string>
+    <string name="analytics_remove">Rimuovi</string>
+    <string name="analytics_edit_selection">Modifica Selezione</string>
+    <string name="analytics_clear_search">Cancella ricerca</string>
+    <string name="analytics_consistency_summary">%1$d/%2$d sessioni pianificate completate.</string>
+    <string name="analytics_consistency_no_sessions">Nessuna sessione pianificata ancora.</string>
+    <string name="analytics_strength_summary_positive">+%s%% rispetto ai precedenti 30 giorni</string>
+    <string name="analytics_strength_summary_negative">-%s%% rispetto ai precedenti 30 giorni</string>
+    <string name="analytics_strength_no_data">Dati PR insufficienti.</string>
     <string name="analytics_body_weight">PESO CORPOREO</string>
     <string name="analytics_no_weight_data">Nessun dato sul peso disponibile</string>
     <string name="analytics_todays_weight">Peso di oggi</string>
@@ -311,6 +324,10 @@
     <string name="selected">selezionate</string>
     <string name="sharing_options">OPZIONI CONDIVISIONE</string>
     <string name="share">Condividi</string>
+    <string name="share_include_images_title">Includere le Foto?</string>
+    <string name="share_include_images_message">Questa scheda ha delle foto allegate. Vuoi includerle nel file .trainableplan?</string>
+    <string name="share_with_images">CONDIVIDI CON FOTO</string>
+    <string name="share_without_images">SOLO DATI SCHEDA</string>
     <string name="import_plans_title">Importare le Schede?</string>
     <string name="import_plans_message">Stai per importare le seguenti schede:</string>
     <string name="import_plan_summary">%1$s (%2$d esercizi)</string>
@@ -321,4 +338,33 @@
     <string name="downloading">Download in corso...</string>
     <string name="update_now">Aggiorna ora</string>
     <string name="later">Più tardi</string>
+    <string name="select_photo_source">Seleziona sorgente foto</string>
+    <string name="camera">Fotocamera</string>
+    <string name="gallery">Galleria</string>
+    <string name="camera_permission_denied">Il permesso della fotocamera è necessario per scattare foto</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">TRAINABLE</string>
+    <string name="onboarding_welcome_desc">Il tuo nuovo compagno monolitico per l\'allenamento della forza. Pulito, potente e costruito per la performance.</string>
+    <string name="onboarding_features_title">Eleva il tuo\nallenamento.</string>
+    <string name="onboarding_feature_suggestions_title">Suggerimenti Intelligenti</string>
+    <string name="onboarding_feature_suggestions_desc">Trainable impara i tuoi orari e ti suggerisce il prossimo allenamento ideale.</string>
+    <string name="onboarding_feature_control_title">Controllo Totale</string>
+    <string name="onboarding_feature_control_desc">Trascina e personalizza le tue routine con un\'interfaccia tattile.</string>
+    <string name="onboarding_feature_insights_title">Analisi Profonda</string>
+    <string name="onboarding_feature_insights_desc">Visualizza il volume e i record personali con grafici editoriali.</string>
+
+    <string name="onboarding_connectivity_title">Connesso &amp;\nSicuro.</string>
+    <string name="onboarding_connectivity_backup_title">Backup Locali e Automatici</string>
+    <string name="onboarding_connectivity_backup_desc">Mantieni i tuoi dati al sicuro con backup locali programmati e ripristino facile.</string>
+    <string name="onboarding_connectivity_share_plans_title">Condividi Schede</string>
+    <string name="onboarding_connectivity_share_plans_desc">Esporta le tue routine come file .trainableplan e condividile con i tuoi amici.</string>
+    <string name="onboarding_connectivity_share_workouts_title">Mostra i tuoi Progressi</string>
+    <string name="onboarding_connectivity_share_workouts_desc">Condividi i tuoi allenamenti completati e i record personali con bellissime card.</string>
+
+    <string name="onboarding_setup_title">Personalizza la\ntua esperienza.</string>
+    <string name="onboarding_setup_username_label">Come dovremmo chiamarti?</string>
+    <string name="onboarding_setup_weight_label">Peso attuale (opzionale)</string>
+    <string name="onboarding_setup_goal_label">Obiettivo settimanale</string>
+    <string name="onboarding_setup_footer">Potrai sempre cambiare queste impostazioni in seguito.</string>
 </resources>

@@ -7,13 +7,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.AutoBackupWorker
 import com.emanuel5014.trainable.util.BackupManager
-import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.util.UpdateManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -115,6 +115,12 @@ class SettingsViewModel @Inject constructor(
     )
 
     val timerNotificationsEnabled = userPrefsRepository.timerNotificationsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = true
@@ -266,6 +272,9 @@ class SettingsViewModel @Inject constructor(
             try {
                 GymDatabase.resetDatabase(context)
                 userPrefsRepository.clearAllPreferences()
+                // Clear analytics widgets preferences
+                context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE).edit().clear().commit()
+                
                 _backupStatus.value = "Reset complete. Restarting..."
                 _resetComplete.value = true
                 onResetComplete()
@@ -319,6 +328,12 @@ class SettingsViewModel @Inject constructor(
     fun setTimerNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setTimerNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setSwipeActionsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setSwipeActionsEnabled(enabled)
         }
     }
 

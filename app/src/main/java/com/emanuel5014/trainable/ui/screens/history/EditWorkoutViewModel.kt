@@ -8,16 +8,14 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,6 +40,7 @@ class EditWorkoutViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val localeManager: AppLocaleManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -50,12 +49,17 @@ class EditWorkoutViewModel @Inject constructor(
 
     private val sessionId: Int = savedStateHandle.get<Int>("sessionId") ?: 0
 
-    val languageCode = userPreferencesRepository.userLanguage
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "en")
+    private val _languageCode = MutableStateFlow("en")
+    val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
     init {
         loadSessionData()
         loadAvailableExercises()
+        viewModelScope.launch {
+            userPreferencesRepository.userLanguage.collect { _ ->
+                _languageCode.value = localeManager.getResolvedLanguage()
+            }
+        }
         viewModelScope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _state.update { it.copy(weightUnit = unit) }

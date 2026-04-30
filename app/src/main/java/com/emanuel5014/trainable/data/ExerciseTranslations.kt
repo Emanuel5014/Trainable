@@ -159,10 +159,26 @@ object ExerciseTranslations {
         "Multipurpose" to "Multipurpose"
     )
 
+    val itCategories = mapOf(
+        "Chest" to "Petto",
+        "Back" to "Schiena",
+        "Legs" to "Gambe",
+        "Shoulders" to "Spalle",
+        "Arms" to "Braccia",
+        "Core" to "Addome"
+    )
+
     fun translate(name: String, targetLang: String): String {
         return when (targetLang) {
             "it" -> it[name] ?: name
             else -> name
+        }
+    }
+
+    fun translateCategory(category: String, targetLang: String): String {
+        return when (targetLang) {
+            "it" -> itCategories[category] ?: category
+            else -> category
         }
     }
 }

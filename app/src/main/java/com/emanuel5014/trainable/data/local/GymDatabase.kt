@@ -18,6 +18,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.UserEntity
 import com.emanuel5014.trainable.data.local.entity.WeightLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +30,13 @@ import kotlinx.coroutines.launch
         WeightLogEntity::class,
         ExerciseEntity::class,
         WorkoutPlanEntity::class,
+        WorkoutPlanImageEntity::class,
         PlanExerciseEntity::class,
         WorkoutSessionEntity::class,
         SetLogEntity::class,
         SessionExerciseSwapEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -100,6 +102,27 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS workout_plan_images (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        plan_id INTEGER NOT NULL,
+                        image_uri TEXT NOT NULL,
+                        ordine INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(plan_id) REFERENCES workout_plans(id) ON DELETE CASCADE
+                    )
+                """)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_plan_images_plan_id ON workout_plan_images(plan_id)")
+                
+                // Migrate existing images
+                db.execSQL("""
+                    INSERT INTO workout_plan_images (plan_id, image_uri, ordine)
+                    SELECT id, image_uri, 0 FROM workout_plans WHERE image_uri IS NOT NULL
+                """)
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -112,7 +135,7 @@ abstract class GymDatabase : RoomDatabase() {
                     GymDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

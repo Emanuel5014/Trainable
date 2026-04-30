@@ -1,10 +1,13 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +27,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -39,11 +46,15 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +67,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
+import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
@@ -89,6 +104,8 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
+    var sessionToDelete by remember { mutableStateOf<SessionWithPlanName?>(null) }
+    var showBulkDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
@@ -114,6 +131,74 @@ fun DashboardScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (sessionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { sessionToDelete = null },
+            title = { Text(stringResource(R.string.delete_session)) },
+            text = { Text(stringResource(R.string.delete_session_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        sessionToDelete?.let { viewModel.deleteSession(it.session.id) }
+                        sessionToDelete = null
+                    },
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { sessionToDelete = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (showBulkDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showBulkDeleteDialog = false },
+            title = { Text(stringResource(R.string.delete_session)) },
+            text = { Text(stringResource(R.string.delete_session_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.deleteSelectedSessions()
+                        showBulkDeleteDialog = false
+                    },
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showBulkDeleteDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
     }
 
     Scaffold(
@@ -152,7 +237,12 @@ fun DashboardScreen(
             ) {
                 item {
                     DashboardSimpleHeader(
-                        onSettingsClick = onNavigateToSettings
+                        onSettingsClick = onNavigateToSettings,
+                        dynamicColor = uiState.dynamicColor,
+                        isSelectionMode = uiState.isSelectionMode,
+                        selectedCount = uiState.selectedSessionIds.size,
+                        onClearSelection = { viewModel.clearSelection() },
+                        onDeleteSelection = { showBulkDeleteDialog = true }
                     )
                 }
 
@@ -181,10 +271,68 @@ fun DashboardScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             uiState.unfinishedSessions.forEach { session ->
-                                UnfinishedSessionCard(
-                                    session = session,
-                                    onClick = { onNavigateToWorkout(session.session.planId, session.session.id) }
-                                )
+                                val haptic = LocalHapticFeedback.current
+                                val dismissState = rememberSwipeToDismissBoxState()
+
+                                LaunchedEffect(dismissState.targetValue) {
+                                    if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        sessionToDelete = session
+                                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                                    }
+                                }
+
+                                SwipeToDismissBox(
+                                    state = dismissState,
+                                    enableDismissFromStartToEnd = false,
+                                    enableDismissFromEndToStart = uiState.swipeActionsEnabled,
+                                    backgroundContent = {
+                                        val progress = dismissState.progress
+                                        val color by animateColorAsState(
+                                            when {
+                                                progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                                else -> Color.Transparent
+                                            }, label = "swipe_bg"
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(Shapes.extraLarge)
+                                                .background(color)
+                                                .padding(horizontal = 28.dp)
+                                        ) {
+                                            if (progress > 0f && dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                                Icon(
+                                                    Icons.Rounded.DeleteSweep,
+                                                    contentDescription = "Delete",
+                                                    tint = Error,
+                                                    modifier = Modifier.align(Alignment.CenterEnd).size(28.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    UnfinishedSessionCard(
+                                        session = session,
+                                        isSelected = uiState.selectedSessionIds.contains(session.session.id),
+                                        isSelectionMode = uiState.isSelectionMode,
+                                        onClick = { 
+                                            if (dismissState.targetValue == SwipeToDismissBoxValue.Settled) {
+                                                if (uiState.isSelectionMode) {
+                                                    viewModel.toggleSelection(session.session.id)
+                                                } else {
+                                                    onNavigateToWorkout(session.session.planId, session.session.id)
+                                                }
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!uiState.swipeActionsEnabled || uiState.isSelectionMode) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                viewModel.toggleSelection(session.session.id)
+                                            }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -415,35 +563,68 @@ fun GymMembershipCard(
 }
 
 @Composable
-private fun DashboardSimpleHeader(onSettingsClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+private fun DashboardSimpleHeader(
+    onSettingsClick: () -> Unit,
+    dynamicColor: Boolean,
+    isSelectionMode: Boolean = false,
+    selectedCount: Int = 0,
+    onClearSelection: () -> Unit = {},
+    onDeleteSelection: () -> Unit = {}
+) {
+    if (isSelectionMode) {
         Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.small),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_splash_logo),
-                contentDescription = "Trainable Logo",
-                tint = Primary,
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Trainable",
-                style = MaterialTheme.typography.headlineLarge,
+                text = "$selectedCount ${stringResource(R.string.selected)}",
+                style = MaterialTheme.typography.headlineMedium,
                 color = OnSurface,
                 fontWeight = FontWeight.Black,
-                letterSpacing = (-0.5).sp
+                letterSpacing = (-1).sp
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GymIconButton(
+                    icon = Icons.Rounded.DeleteSweep,
+                    onClick = onDeleteSelection,
+                    containerColor = SurfaceContainerHigh,
+                    contentColor = Error
+                )
+                GymIconButton(
+                    icon = Icons.Rounded.Close,
+                    onClick = onClearSelection,
+                    containerColor = SurfaceContainerHigh
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.small),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = if (dynamicColor) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
+                    contentDescription = "Trainable Logo",
+                    tint = if (dynamicColor) Primary else Color.Unspecified,
+                    modifier = Modifier
+                        .size(56.dp)
+                )
+            }
+            GymIconButton(
+                icon = Icons.Default.Settings,
+                onClick = onSettingsClick,
+                description = stringResource(R.string.nav_settings)
             )
         }
-        GymIconButton(
-            icon = Icons.Default.Settings,
-            onClick = onSettingsClick,
-            description = stringResource(R.string.nav_settings)
-        )
     }
 }
 
@@ -498,13 +679,23 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun UnfinishedSessionCard(session: SessionWithPlanName, onClick: () -> Unit) {
+private fun UnfinishedSessionCard(
+    session: SessionWithPlanName,
+    isSelected: Boolean,
+    isSelectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        containerColor = Primary.copy(alpha = 0.05f)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        containerColor = if (isSelected) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -516,15 +707,24 @@ private fun UnfinishedSessionCard(session: SessionWithPlanName, onClick: () -> U
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Primary),
+                        .background(if (isSelected) Primary else if (isSelectionMode) Primary.copy(alpha = 0.2f) else Primary),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.PlayCircle,
-                        contentDescription = null,
-                        tint = OnPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Selected",
+                            tint = OnPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayCircle,
+                            contentDescription = null,
+                            tint = OnPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {

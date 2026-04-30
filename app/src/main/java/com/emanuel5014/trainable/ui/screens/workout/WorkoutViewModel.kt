@@ -10,6 +10,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.TimerNotificationHelper
 import com.emanuel5014.trainable.util.TimerNotificationReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -80,6 +80,7 @@ class WorkoutViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val exerciseRepository: ExerciseRepository,
     private val timerNotificationHelper: TimerNotificationHelper,
+    private val localeManager: AppLocaleManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -106,8 +107,8 @@ class WorkoutViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            userPreferencesRepository.userLanguage.collect { lang ->
-                _languageCode.value = lang ?: "en"
+            userPreferencesRepository.userLanguage.collect { _ ->
+                _languageCode.value = localeManager.getResolvedLanguage()
             }
         }
 
@@ -126,6 +127,7 @@ class WorkoutViewModel @Inject constructor(
                     TimerNotificationReceiver.TimerAction.SKIP -> skipRestTimer()
                     TimerNotificationReceiver.TimerAction.ADD_30S -> addRestTime(30)
                     TimerNotificationReceiver.TimerAction.DISMISS -> timerNotificationHelper.cancelTimer()
+                    TimerNotificationReceiver.TimerAction.FINISHED -> handleTimerFinished()
                 }
             }
         }
@@ -521,6 +523,18 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    private fun handleTimerFinished() {
+        if (_state.value.restTimerEndTime != null) {
+            _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                timerNotificationHelper.showRestFinished()
+            }
+            clearTimerInSession()
+            timerJob?.cancel()
+            timerJob = null
+        }
+    }
+
     private fun startTimerJob() {
         timerJob = viewModelScope.launch {
             while (true) {
@@ -529,11 +543,7 @@ class WorkoutViewModel @Inject constructor(
                 val remaining = ((end - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
                 
                 if (remaining == 0) {
-                    _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
-                    if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                        timerNotificationHelper.showRestFinished()
-                    }
-                    clearTimerInSession()
+                    handleTimerFinished()
                     break
                 }
                 

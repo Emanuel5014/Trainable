@@ -6,8 +6,10 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Edit
@@ -35,7 +38,10 @@ import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,12 +58,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -67,6 +76,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.emanuel5014.trainable.R
@@ -79,9 +90,12 @@ import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.ScreenHeader
+import com.emanuel5014.trainable.ui.components.WorkoutShareCard
+import com.emanuel5014.trainable.ui.components.captureViewToBitmap
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -93,38 +107,30 @@ import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.util.ShareUtils
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
 
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.material.icons.rounded.Share
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
-import com.emanuel5014.trainable.ui.components.captureViewToBitmap
-import com.emanuel5014.trainable.util.ShareUtils
-import com.emanuel5014.trainable.ui.components.WorkoutShareCard
-import com.emanuel5014.trainable.ui.components.GymIconButton
-import kotlinx.coroutines.delay
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HistoryScreen(
     navController: NavController? = null,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
-    val languageCode by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.USER_LANGUAGE] ?: "en" }
-    }.collectAsState(initial = "en")
-    var selectedSessionId by remember { mutableStateOf<Int?>(null) }
+    var expandedSessionId by remember { mutableStateOf<Int?>(null) }
+    var sessionToEdit by remember { mutableStateOf<SessionWithDetails?>(null) }
     var sessionToDelete by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
-    var sessionToEdit by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
+    var showBulkDeleteDialog by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+    }.collectAsState(initial = true)
+
+    val swipeActionsEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true }
     }.collectAsState(initial = true)
 
     var isNavigating by remember { mutableStateOf(false) }
@@ -140,29 +146,70 @@ fun HistoryScreen(
         Scaffold(
             containerColor = Surface
         ) { paddingValues ->
-            if (uiState.isLoading && uiState.sessions.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                    GymLoadingIndicator()
-                }
-            } else if (uiState.sessions.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Rounded.History,
-                    title = stringResource(R.string.no_history_yet),
-                    description = stringResource(R.string.no_history_description_screen),
-                    modifier = Modifier.padding(paddingValues)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                ScreenHeader(
+                    titleContent = {
+                        Text(
+                            text = if (uiState.isSelectionMode) {
+                                "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
+                            } else {
+                                stringResource(R.string.history_title)
+                            },
+                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1).sp
+                        )
+                    },
+                    subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.workout_logs),
+                    icon = if (uiState.isSelectionMode) null else Icons.Rounded.History,
+                    actions = if (uiState.isSelectionMode) {
+                        {
+                            if (!swipeActionsEnabled) {
+                                if (uiState.selectedSessionIds.size == 1) {
+                                    GymIconButton(
+                                        icon = Icons.Rounded.Edit,
+                                        onClick = { 
+                                            val sessionId = uiState.selectedSessionIds.first()
+                                            sessionToEdit = uiState.sessions.find { it.session.id == sessionId }
+                                        },
+                                        containerColor = SurfaceContainerHigh,
+                                        contentColor = Primary
+                                    )
+                                }
+                                GymIconButton(
+                                    icon = Icons.Rounded.DeleteSweep,
+                                    onClick = { showBulkDeleteDialog = true },
+                                    containerColor = SurfaceContainerHigh,
+                                    contentColor = Error
+                                )
+                            }
+                            GymIconButton(
+                                icon = Icons.Rounded.Close,
+                                onClick = { viewModel.clearSelection() },
+                                containerColor = SurfaceContainerHigh
+                            )
+                        }
+                    } else null,
+                    titleInRow = uiState.isSelectionMode
                 )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    ScreenHeader(
-                        title = stringResource(R.string.history_title),
-                        subtitle = "WORKOUT LOGS",
-                        icon = Icons.Rounded.History
+
+                if (uiState.isLoading && uiState.sessions.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        GymLoadingIndicator()
+                    }
+                } else if (uiState.sessions.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Rounded.History,
+                        title = stringResource(R.string.no_history_yet),
+                        description = stringResource(R.string.no_history_description_screen),
+                        modifier = Modifier.weight(1f)
                     )
-                    
+                } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
@@ -172,33 +219,33 @@ fun HistoryScreen(
                     itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
                         val session = sessionDetails.session
                         val planName = sessionDetails.plan.nome
+                        val isExpanded = expandedSessionId == session.id
 
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                if (value == SwipeToDismissBoxValue.EndToStart) {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    sessionToDelete = session
-                                    false
-                                } else if (value == SwipeToDismissBoxValue.StartToEnd) {
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    sessionToEdit = session
-                                    false
-                                } else {
-                                    false
+                        val dismissState = rememberSwipeToDismissBoxState()
+
+                        LaunchedEffect(dismissState.targetValue) {
+                            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                                if (swipeActionsEnabled && !uiState.isSelectionMode) {
+                                    when (dismissState.targetValue) {
+                                        SwipeToDismissBoxValue.EndToStart -> {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            sessionToDelete = session
+                                        }
+                                        SwipeToDismissBoxValue.StartToEnd -> {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            sessionToEdit = sessionDetails
+                                        }
+                                        else -> {}
+                                    }
                                 }
-                            }
-                        )
-
-                        // Reset swipe state when dialog is dismissed
-                        LaunchedEffect(sessionToDelete) {
-                            if (sessionToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                                dismissState.reset()
+                                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                             }
                         }
 
                         SwipeToDismissBox(
                             state = dismissState,
-                            enableDismissFromStartToEnd = true,
+                            enableDismissFromStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
+                            enableDismissFromEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
                             backgroundContent = {
                                 val direction = dismissState.dismissDirection
 
@@ -240,18 +287,31 @@ fun HistoryScreen(
                             SessionHistoryCard(
                                 session = session,
                                 planName = planName,
-                                isExpanded = selectedSessionId == session.id,
-                                onClick = {
-                                    selectedSessionId = if (selectedSessionId == session.id) null else session.id
-                                    if (selectedSessionId == session.id) {
-                                        viewModel.loadSessionDetails(session.id)
-                                    }
-                                },
-                                details = if (selectedSessionId == session.id) uiState.selectedSession else null,
+                                isExpanded = isExpanded,
+                                details = if (isExpanded) uiState.selectedSession else null,
                                 languageCode = languageCode,
                                 weightUnit = uiState.weightUnit,
                                 onShareClick = { details ->
                                     sessionToShare = details to planName
+                                },
+                                swipeActionsEnabled = swipeActionsEnabled,
+                                isSelectionMode = uiState.isSelectionMode,
+                                isSelected = uiState.selectedSessionIds.contains(session.id),
+                                onClick = {
+                                    if (uiState.isSelectionMode) {
+                                        viewModel.toggleSessionSelection(session.id)
+                                    } else {
+                                        expandedSessionId = if (isExpanded) null else session.id
+                                        if (!isExpanded) {
+                                            viewModel.loadSessionDetails(session.id)
+                                        }
+                                    }
+                                },
+                                onLongClick = {
+                                    if (!uiState.isSelectionMode && !swipeActionsEnabled) {
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.toggleSessionSelection(session.id)
+                                    }
                                 }
                             )
                         }
@@ -281,7 +341,6 @@ fun HistoryScreen(
                         style = MaterialTheme.typography.labelLarge
                     )
 
-                    // Use AndroidView for capturing - allow unbounded height
                     Box(
                         modifier = Modifier
                             .alpha(0f)
@@ -314,42 +373,70 @@ fun HistoryScreen(
                 }
             }
         }
-    }
+        
+        if (showBulkDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showBulkDeleteDialog = false },
+                title = { Text(stringResource(R.string.delete_session)) },
+                text = { Text(stringResource(R.string.delete_session_message)) },
+                confirmButton = {
+                    GymButton(
+                        onClick = {
+                            viewModel.deleteSelectedSessions()
+                            showBulkDeleteDialog = false
+                        },
+                        containerColor = Error.copy(alpha = 0.1f),
+                        contentColor = Error
+                    ) {
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    GymButton(
+                        onClick = { showBulkDeleteDialog = false },
+                        containerColor = Color.Transparent,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase())
+                    }
+                },
+                containerColor = SurfaceContainerHigh,
+                titleContentColor = OnSurface,
+                textContentColor = OnSurfaceVariant
+            )
+        }
 
-    if (sessionToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { 
-                sessionToDelete = null
-            },
-            title = { Text(stringResource(R.string.delete_session)) },
-            text = { Text(stringResource(R.string.delete_session_message)) },
-            confirmButton = {
-                GymButton(
-                    onClick = {
-                        sessionToDelete?.let { viewModel.deleteSession(it.id) }
-                        sessionToDelete = null
-                    },
-                    containerColor = Error.copy(alpha = 0.1f),
-                    contentColor = Error,
-                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
-                ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                GymButton(
-                    onClick = { sessionToDelete = null },
-                    containerColor = Color.Transparent,
-                    contentColor = OnSurfaceVariant,
-                    modifier = Modifier.height(48.dp)
-                ) {
-                    Text(stringResource(R.string.cancel).uppercase())
-                }
-            },
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
+        if (sessionToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { sessionToDelete = null },
+                title = { Text(stringResource(R.string.delete_session)) },
+                text = { Text(stringResource(R.string.delete_session_message)) },
+                confirmButton = {
+                    GymButton(
+                        onClick = {
+                            sessionToDelete?.let { viewModel.deleteSession(it.id) }
+                            sessionToDelete = null
+                        },
+                        containerColor = Error.copy(alpha = 0.1f),
+                        contentColor = Error
+                    ) {
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    GymButton(
+                        onClick = { sessionToDelete = null },
+                        containerColor = Color.Transparent,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase())
+                    }
+                },
+                containerColor = SurfaceContainerHigh,
+                titleContentColor = OnSurface,
+                textContentColor = OnSurfaceVariant
+            )
+        }
     }
 
     if (sessionToEdit != null) {
@@ -373,9 +460,9 @@ fun HistoryScreen(
                     }
                     GymButton(
                         onClick = {
-                            sessionToEdit?.let { session ->
+                            sessionToEdit?.let { details ->
                                 isNavigating = true
-                                navController?.navigate(EditWorkoutSession(sessionId = session.id))
+                                navController?.navigate(EditWorkoutSession(sessionId = details.session.id))
                             }
                             sessionToEdit = null
                         },
@@ -394,21 +481,29 @@ fun HistoryScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryCard(
     session: WorkoutSessionEntity,
     planName: String,
     isExpanded: Boolean,
-    onClick: () -> Unit,
     details: SessionWithDetails?,
     languageCode: String = "en",
     weightUnit: String = "kg",
-    onShareClick: (SessionWithDetails) -> Unit = {}
+    onShareClick: (SessionWithDetails) -> Unit = {},
+    swipeActionsEnabled: Boolean = true,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
 ) {
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -448,11 +543,24 @@ fun SessionHistoryCard(
                     }
                 }
                 
-                Icon(
-                    imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                    contentDescription = null,
-                    tint = OnSurfaceVariant.copy(alpha = 0.5f)
-                )
+                if (isSelectionMode) {
+                    Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = { onClick() },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Primary,
+                                uncheckedColor = OnSurfaceVariant
+                            )
+                        )
+                    }
+                } else {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        contentDescription = null,
+                        tint = OnSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
             }
 
             AnimatedVisibility(

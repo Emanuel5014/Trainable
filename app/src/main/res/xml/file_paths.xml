@@ -2,4 +2,5 @@
 <paths>
     <external-cache-path name="my_cache" path="." />
     <cache-path name="my_cache_internal" path="." />
+    <files-path name="my_files" path="." />
 </paths>

@@ -1,11 +1,13 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircleOutline
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -42,8 +44,8 @@ import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -110,6 +112,7 @@ fun SettingsScreen(
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val dynamicColor by viewModel.dynamicColor.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
+    val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     
     val latestRelease by viewModel.latestRelease.collectAsState()
@@ -120,6 +123,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var showResetDialog by remember { mutableStateOf(false) }
+    var easterEggClicks by remember { mutableIntStateOf(0) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
@@ -402,7 +406,7 @@ fun SettingsScreen(
                 navigationIcon = {
                     Box(modifier = Modifier.padding(start = 8.dp)) {
                         GymIconButton(
-                            icon = Icons.Rounded.ArrowBack,
+                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
                             onClick = onNavigateBack,
                             containerColor = Color.Transparent,
                             contentColor = OnSurface,
@@ -553,7 +557,7 @@ fun SettingsScreen(
                             }
                         }
 
-                        Divider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -585,7 +589,7 @@ fun SettingsScreen(
                             }
                         }
 
-                        Divider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -606,7 +610,7 @@ fun SettingsScreen(
                             )
                         }
 
-                        Divider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         var showLanguageDialog by remember { mutableStateOf(false) }
                         val currentLanguage by viewModel.userLanguage.collectAsState()
@@ -692,7 +696,7 @@ fun SettingsScreen(
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
-                        Divider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -713,7 +717,7 @@ fun SettingsScreen(
                             )
                         }
 
-                        Divider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -734,7 +738,7 @@ fun SettingsScreen(
                             )
                         }
 
-                        Divider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -763,6 +767,32 @@ fun SettingsScreen(
                                         viewModel.setTimerNotificationsEnabled(enabled)
                                     }
                                 }
+                            )
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.RestartAlt, 
+                                    contentDescription = null, 
+                                    tint = Primary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = swipeActionsEnabled,
+                                onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
                             )
                         }
                     }
@@ -802,7 +832,7 @@ fun SettingsScreen(
                             }
 
                             if (autoBackupEnabled) {
-                                Divider(color = Surface.copy(alpha = 0.5f))
+                                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -839,7 +869,7 @@ fun SettingsScreen(
                             containerColor = SurfaceContainerHigh,
                             contentColor = OnSurface
                         ) {
-                            Icon(Icons.Rounded.CloudUpload, contentDescription = null)
+                            Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = Primary)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
                         }
@@ -850,7 +880,7 @@ fun SettingsScreen(
                             containerColor = SurfaceContainerHigh,
                             contentColor = OnSurface
                         ) {
-                            Icon(Icons.Rounded.CloudDownload, contentDescription = null)
+                            Icon(Icons.Rounded.CloudDownload, contentDescription = null, tint = Primary)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.import_database), fontWeight = FontWeight.Bold)
                         }
@@ -866,7 +896,7 @@ fun SettingsScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurface
                     ) {
-                        Icon(Icons.Rounded.TableChart, contentDescription = null)
+                        Icon(Icons.Rounded.TableChart, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(stringResource(R.string.export_csv), fontWeight = FontWeight.Bold)
                     }
@@ -894,7 +924,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Trainable v1.1.1",
+                                    text = "Trainable v1.2.0",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.Bold
@@ -902,7 +932,18 @@ fun SettingsScreen(
                                 Text(
                                     text = "Made with ❤️ by Emanuel5014",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
+                                    color = OnSurfaceVariant,
+                                    modifier = Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        easterEggClicks++
+                                        if (easterEggClicks >= 3) {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=fHLTWJ8X7iQ"))
+                                            context.startActivity(intent)
+                                            easterEggClicks = 0
+                                        }
+                                    }
                                 )
                             }
                             GymButton(

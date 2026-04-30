@@ -58,6 +58,25 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                     zos.closeEntry()
                 }
 
+                // 2b. Export Analytics Preferences (Widgets)
+                val prefs = context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE)
+                val selectedExerciseIds = prefs.getStringSet("selected_exercise_ids", null)
+                val widgetOrder = prefs.getString("widget_order", null)
+                
+                if (selectedExerciseIds != null || widgetOrder != null) {
+                    val jsonObject = org.json.JSONObject()
+                    selectedExerciseIds?.let { ids ->
+                        val jsonArray = org.json.JSONArray()
+                        ids.forEach { jsonArray.put(it) }
+                        jsonObject.put("selected_exercise_ids", jsonArray)
+                    }
+                    widgetOrder?.let { jsonObject.put("widget_order", it) }
+                    
+                    zos.putNextEntry(ZipEntry("analytics_settings.json"))
+                    zos.write(jsonObject.toString().toByteArray())
+                    zos.closeEntry()
+                }
+
                 // 3. Export Images if requested
                 if (includeImages) {
                     val filesDir = context.filesDir
@@ -157,6 +176,31 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                                             prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_DATE] = expiryDate
                                         }
                                     }
+                                }
+                            }
+                            entry.name == "analytics_settings.json" -> {
+                                try {
+                                    val jsonContent = zis.bufferedReader().readText()
+                                    val jsonObject = org.json.JSONObject(jsonContent)
+                                    val prefs = context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE)
+                                    val editor = prefs.edit()
+                                    
+                                    if (jsonObject.has("selected_exercise_ids")) {
+                                        val jsonArray = jsonObject.getJSONArray("selected_exercise_ids")
+                                        val ids = mutableSetOf<String>()
+                                        for (i in 0 until jsonArray.length()) {
+                                            ids.add(jsonArray.getString(i))
+                                        }
+                                        editor.putStringSet("selected_exercise_ids", ids)
+                                    }
+                                    
+                                    if (jsonObject.has("widget_order")) {
+                                        editor.putString("widget_order", jsonObject.getString("widget_order"))
+                                    }
+                                    
+                                    editor.apply()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
                             }
                             entry.name.startsWith("images/") -> {

@@ -71,6 +71,26 @@ class AppLocaleManager @Inject constructor(
         }
     }
 
+    fun getSystemLanguageCompat(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Locale.getDefault().language
+        } else {
+            Locale.getDefault().language
+        }
+    }
+
+    fun resolveLanguageForCompose(userLang: String?): String {
+        if (userLang != null && userLang != LANGUAGE_SYSTEM) {
+            return userLang
+        }
+        val systemLang = getSystemLanguageCompat()
+        return if (systemLang in SUPPORTED_LANGUAGES) {
+            systemLang
+        } else {
+            "en"
+        }
+    }
+
     suspend fun setUserLanguage(languageCode: String?) {
         userPreferencesRepository.setUserLanguage(languageCode)
         

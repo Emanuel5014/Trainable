@@ -36,6 +36,7 @@ class UserPreferencesRepository @Inject constructor(
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
+        val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
     }
 
@@ -107,6 +108,11 @@ class UserPreferencesRepository @Inject constructor(
     val timerNotificationsEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[TIMER_NOTIFICATIONS_ENABLED] ?: true
+        }
+
+    val swipeActionsEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[SWIPE_ACTIONS_ENABLED] ?: true
         }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -198,6 +204,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setTimerNotificationsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_NOTIFICATIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setSwipeActionsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SWIPE_ACTIONS_ENABLED] = enabled
         }
     }
 
