@@ -27,7 +27,18 @@ data class DashboardUiState(
     val unfinishedSessions: List<SessionWithPlanName> = emptyList(),
     val prSnapshots: List<PrSnapshot> = emptyList(),
     val gymMembershipExpiryDate: Long? = null,
+    val dynamicColor: Boolean = true,
+    val swipeActionsEnabled: Boolean = true,
+    val selectedSessionIds: Set<Int> = emptySet(),
+    val isSelectionMode: Boolean = false,
     val isLoading: Boolean = true
+)
+
+private data class PreferencesData(
+    val goal: Int,
+    val expiry: Long?,
+    val dynamic: Boolean,
+    val swipe: Boolean
 )
 
 data class PrSnapshot(
@@ -58,21 +69,30 @@ class DashboardViewModel @Inject constructor(
     }.timeInMillis
 
     private val _uiState = MutableStateFlow(DashboardUiState(isLoading = true))
+    private val _selectedSessionIds = MutableStateFlow<Set<Int>>(emptySet())
     
     val uiState: StateFlow<DashboardUiState> = combine(
-        workoutRepository.getActivePlans(),
-        analyticsRepository.getTotalVolume(),
+        combine(
+            workoutRepository.getActivePlans(),
+            analyticsRepository.getTotalVolume()
+        ) { plans, volume -> plans to volume },
         userRepository.currentUser,
         combine(
             userPrefsRepository.weeklyGoal,
-            userPrefsRepository.gymMembershipExpiryDate
-        ) { goal, expiry -> goal to expiry },
+            userPrefsRepository.gymMembershipExpiryDate,
+            userPrefsRepository.dynamicColor,
+            userPrefsRepository.swipeActionsEnabled
+        ) { goal, expiry, dynamic, swipe -> 
+            PreferencesData(goal, expiry, dynamic, swipe)
+        },
         combine(
             workoutRepository.getAllSessions(),
             workoutRepository.getUnfinishedSessionsWithPlanName()
-        ) { all, unf -> all to unf }
-    ) { plans, volume, user, prefs, sessionData ->
-        val (goal, membershipExpiry) = prefs
+        ) { all, unf -> all to unf },
+        _selectedSessionIds
+    ) { planVolumePair, user, prefs, sessionData, selectedIds ->
+        val (plans, volume) = planVolumePair
+        val (goal, membershipExpiry, dynamic, swipe) = prefs
         val (allSessions, unfinished) = sessionData
         val workoutsThisWeek = allSessions.count { it.timestamp >= weekStartMillis }
         
@@ -102,6 +122,10 @@ class DashboardViewModel @Inject constructor(
             unfinishedSessions = unfinished,
             isLoading = false,
             gymMembershipExpiryDate = membershipExpiry,
+            dynamicColor = dynamic,
+            swipeActionsEnabled = swipe,
+            selectedSessionIds = selectedIds,
+            isSelectionMode = selectedIds.isNotEmpty(),
             prSnapshots = listOf(
                 PrSnapshot("BENCH PRESS", 120.0f, true),
                 PrSnapshot("SQUAT", 160.5f, false)
@@ -116,6 +140,35 @@ class DashboardViewModel @Inject constructor(
     fun setGymMembershipExpiryDate(timestampMillis: Long?) {
         viewModelScope.launch {
             userPrefsRepository.setGymMembershipExpiryDate(timestampMillis)
+        }
+    }
+
+    fun deleteSession(sessionId: Int) {
+        viewModelScope.launch {
+            workoutRepository.deleteSession(sessionId)
+        }
+    }
+
+    fun toggleSelection(sessionId: Int) {
+        val current = _selectedSessionIds.value.toMutableSet()
+        if (current.contains(sessionId)) {
+            current.remove(sessionId)
+        } else {
+            current.add(sessionId)
+        }
+        _selectedSessionIds.value = current
+    }
+
+    fun clearSelection() {
+        _selectedSessionIds.value = emptySet()
+    }
+
+    fun deleteSelectedSessions() {
+        viewModelScope.launch {
+            _selectedSessionIds.value.forEach { sessionId ->
+                workoutRepository.deleteSession(sessionId)
+            }
+            clearSelection()
         }
     }
 }

@@ -146,70 +146,70 @@ fun HistoryScreen(
         Scaffold(
             containerColor = Surface
         ) { paddingValues ->
-            if (uiState.isLoading && uiState.sessions.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                    GymLoadingIndicator()
-                }
-            } else if (uiState.sessions.isEmpty()) {
-                EmptyState(
-                    icon = Icons.Rounded.History,
-                    title = stringResource(R.string.no_history_yet),
-                    description = stringResource(R.string.no_history_description_screen),
-                    modifier = Modifier.padding(paddingValues)
-                )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    ScreenHeader(
-                        titleContent = {
-                            Text(
-                                text = if (uiState.isSelectionMode) {
-                                    "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
-                                } else {
-                                    stringResource(R.string.history_title)
-                                },
-                                style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
-                                color = OnSurface,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = (-1).sp
-                            )
-                        },
-                        subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.workout_logs),
-                        icon = if (uiState.isSelectionMode) null else Icons.Rounded.History,
-                        actions = if (uiState.isSelectionMode) {
-                            {
-                                if (!swipeActionsEnabled) {
-                                    if (uiState.selectedSessionIds.size == 1) {
-                                        GymIconButton(
-                                            icon = Icons.Rounded.Edit,
-                                            onClick = { 
-                                                val sessionId = uiState.selectedSessionIds.first()
-                                                sessionToEdit = uiState.sessions.find { it.session.id == sessionId }
-                                            },
-                                            containerColor = SurfaceContainerHigh,
-                                            contentColor = Primary
-                                        )
-                                    }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                ScreenHeader(
+                    titleContent = {
+                        Text(
+                            text = if (uiState.isSelectionMode) {
+                                "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
+                            } else {
+                                stringResource(R.string.history_title)
+                            },
+                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1).sp
+                        )
+                    },
+                    subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.workout_logs),
+                    icon = if (uiState.isSelectionMode) null else Icons.Rounded.History,
+                    actions = if (uiState.isSelectionMode) {
+                        {
+                            if (!swipeActionsEnabled) {
+                                if (uiState.selectedSessionIds.size == 1) {
                                     GymIconButton(
-                                        icon = Icons.Rounded.DeleteSweep,
-                                        onClick = { showBulkDeleteDialog = true },
+                                        icon = Icons.Rounded.Edit,
+                                        onClick = { 
+                                            val sessionId = uiState.selectedSessionIds.first()
+                                            sessionToEdit = uiState.sessions.find { it.session.id == sessionId }
+                                        },
                                         containerColor = SurfaceContainerHigh,
-                                        contentColor = Error
+                                        contentColor = Primary
                                     )
                                 }
                                 GymIconButton(
-                                    icon = Icons.Rounded.Close,
-                                    onClick = { viewModel.clearSelection() },
-                                    containerColor = SurfaceContainerHigh
+                                    icon = Icons.Rounded.DeleteSweep,
+                                    onClick = { showBulkDeleteDialog = true },
+                                    containerColor = SurfaceContainerHigh,
+                                    contentColor = Error
                                 )
                             }
-                        } else null,
-                        titleInRow = uiState.isSelectionMode
+                            GymIconButton(
+                                icon = Icons.Rounded.Close,
+                                onClick = { viewModel.clearSelection() },
+                                containerColor = SurfaceContainerHigh
+                            )
+                        }
+                    } else null,
+                    titleInRow = uiState.isSelectionMode
+                )
+
+                if (uiState.isLoading && uiState.sessions.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        GymLoadingIndicator()
+                    }
+                } else if (uiState.sessions.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Rounded.History,
+                        title = stringResource(R.string.no_history_yet),
+                        description = stringResource(R.string.no_history_description_screen),
+                        modifier = Modifier.weight(1f)
                     )
-                    
+                } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),

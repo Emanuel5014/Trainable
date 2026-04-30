@@ -8,6 +8,14 @@
 [![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org/)
 [![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-orange.svg)](https://developer.android.com/jetpack/compose)
 [![Design](https://img.shields.io/badge/Design-Material%203%20Expressive-purple.svg)](https://m3.material.io/)
+[![Latest Release](https://img.shields.io/github/v/release/Emanuel5014/Trainable?logo=github)](https://github.com/Emanuel5014/Trainable/releases/latest)
+
+<div align="center">
+  <br>
+  <a href="https://github.com/Emanuel5014/Trainable/releases/latest/download/Trainable.apk">
+    <img src="https://img.shields.io/badge/Download-Latest%20APK-00C853?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" height="40">
+  </a>
+</div>
 
 
 **Trainable** is a premium, native Android workout tracker designed for lifters. It focuses on a "Monolithic" dark-only aesthetic, perfectly aligned with Google's **Material 3 Expressive** guidelines, offering a seamless experience specifically optimized for Pixel devices.

@@ -10,16 +10,16 @@ val MonolithicSurfaceContainer = Color(0xFF1A191E)
 val MonolithicSurfaceContainerHigh = Color(0xFF201F25)
 val MonolithicSurfaceContainerHighest = Color(0xFF26252C)
 
-val MonolithicPrimary = Color(0xFF42A5F5)
-val MonolithicOnPrimary = Color(0xFF003258)
+val MonolithicPrimary = Color(0xFF3A59D1)
+val MonolithicOnPrimary = Color(0xFFFFFFFF)
 
 val MonolithicSecondaryContainer = Color(0xFF292336)
 val MonolithicOnSecondaryContainer = Color(0xFFA9A0B9)
 
-val MonolithicTertiary = Color(0xFFFFD9E3)
-val MonolithicTertiaryContainer = Color(0xFFFEC5D6)
-val MonolithicOnTertiary = Color(0xFF492534)
-val MonolithicOnTertiaryContainer = Color(0xFF492534)
+val MonolithicTertiary = Color(0xFF7AC6D2)
+val MonolithicTertiaryContainer = Color(0xFF5AB1BF)
+val MonolithicOnTertiary = Color(0xFF00363D)
+val MonolithicOnTertiaryContainer = Color(0xFF00363D)
 
 val MonolithicOnSurface = Color(0xFFE7E1EC)
 val MonolithicOnSurfaceVariant = Color(0xFFADA9B3)
