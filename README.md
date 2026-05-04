@@ -2,6 +2,7 @@
   <img src="ICON/icon.png" alt="Trainable Logo" width="120">
 
   # Trainable
+  <sub>Logo by br1_production</sub>
 </div>
 
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/)
