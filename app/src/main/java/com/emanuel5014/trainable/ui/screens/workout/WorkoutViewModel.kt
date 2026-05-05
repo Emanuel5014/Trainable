@@ -651,4 +651,22 @@ class WorkoutViewModel @Inject constructor(
             onComplete()
         }
     }
+
+    fun addCustomExercise(nome: String, categoria: String) {
+        viewModelScope.launch {
+            exerciseRepository.addCustomExercise(nome, categoria)
+        }
+    }
+
+    fun updateCustomExercise(exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            exerciseRepository.saveExercise(exercise)
+        }
+    }
+
+    fun deleteCustomExercise(exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            exerciseRepository.deleteExercise(exercise)
+        }
+    }
 }

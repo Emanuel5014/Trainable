@@ -460,6 +460,15 @@ onNext = {
                     viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps)
                     showSwapExerciseSheet = false
                 },
+                onAddCustomExercise = { nome, categoria ->
+                    viewModel.addCustomExercise(nome, categoria)
+                },
+                onEditCustomExercise = { exercise ->
+                    viewModel.updateCustomExercise(exercise)
+                },
+                onDeleteCustomExercise = { exercise ->
+                    viewModel.deleteCustomExercise(exercise)
+                },
                 onDismiss = { showSwapExerciseSheet = false }
             )
         }
