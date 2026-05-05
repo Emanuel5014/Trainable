@@ -141,7 +141,7 @@ class RoutinesViewModel @Inject constructor(
         }
     }
     
-    fun createEmptyPlan(name: String, note: String? = null) {
+    fun createEmptyPlan(name: String, note: String? = null, giorniSettimana: String? = null) {
         viewModelScope.launch {
             val currentPlans = _uiState.value.plans.map { it.plan } + _uiState.value.archivedPlans.map { it.plan }
             val nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
@@ -152,7 +152,8 @@ class RoutinesViewModel @Inject constructor(
                 dataInizio = System.currentTimeMillis(),
                 note = note,
                 isActive = true,
-                ordine = nextOrder
+                ordine = nextOrder,
+                giorniSettimana = giorniSettimana
             )
             workoutRepository.savePlan(newPlan)
         }

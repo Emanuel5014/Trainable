@@ -113,6 +113,9 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.util.UriMigrationHelper
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -128,11 +131,11 @@ fun RoutineListScreen(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+        context.dataStore.data.map { preferences -> preferences[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
     
     val swipeActionsEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true }
+        context.dataStore.data.map { preferences -> preferences[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true }
     }.collectAsState(initial = true)
     
     val pagerState = rememberPagerState(pageCount = { 2 })
@@ -147,10 +150,12 @@ fun RoutineListScreen(
     var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
+    val selectedDays = remember { mutableStateListOf<DayOfWeek>() }
 
     fun openCreateSheet() {
         routineName = ""
         routineNote = ""
+        selectedDays.clear()
         showSheet = true
     }
 
@@ -548,6 +553,51 @@ fun RoutineListScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = stringResource(R.string.schedule_days),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            DayOfWeek.entries.forEach { day ->
+                                val isSelected = selectedDays.contains(day)
+                                val backgroundColor by animateColorAsState(
+                                    targetValue = if (isSelected) Primary else SurfaceContainerHigh,
+                                    label = "day_bg"
+                                )
+                                val contentColor by animateColorAsState(
+                                    targetValue = if (isSelected) OnPrimary else OnSurfaceVariant,
+                                    label = "day_content"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(backgroundColor)
+                                        .clickable {
+                                            if (isSelected) selectedDays.remove(day)
+                                            else selectedDays.add(day)
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = contentColor
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     GymInputField(
                         value = routineNote,
                         onValueChange = { routineNote = it },
@@ -575,7 +625,9 @@ fun RoutineListScreen(
                             val trimmedName = routineName.trim()
                             if (trimmedName.isNotEmpty()) {
                                 val note = routineNote.trim().takeIf { it.isNotBlank() }
-                                viewModel.createEmptyPlan(trimmedName, note)
+                                val daysString = if (selectedDays.isEmpty()) null 
+                                               else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
+                                viewModel.createEmptyPlan(trimmedName, note, daysString)
                                 showSheet = false
                             }
                         },
@@ -656,7 +708,7 @@ private fun RoutineListPage(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+        context.dataStore.data.map { preferences -> preferences[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
     val listState = rememberLazyListState()
     
@@ -807,7 +859,7 @@ private fun RoutineCard(
     val plan = planWithDetails.plan
     val firstImageUri = planWithDetails.images.firstOrNull()?.imageUri ?: plan.imageUri
     val fixedImageUri = remember(firstImageUri) {
-        UriMigrationHelper.fixPath(firstImageUri, context)
+        firstImageUri?.let { uri -> UriMigrationHelper.fixPath(uri, context) }
     }
 
     GymCard(
@@ -873,6 +925,37 @@ private fun RoutineCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    
+                    if (!plan.giorniSettimana.isNullOrBlank()) {
+                        val scheduledDays = remember(plan.giorniSettimana) {
+                            plan.giorniSettimana.split(",").mapNotNull { 
+                                it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
+                            }
+                        }
+                        
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            DayOfWeek.entries.forEach { day ->
+                                val isScheduled = scheduledDays.contains(day)
+                                Box(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isScheduled) Primary else OnSurfaceVariant.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
             

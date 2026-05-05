@@ -36,7 +36,7 @@
     <string name="no_active_plan">Nessuna scheda attiva</string>
     <string name="select_routine">Seleziona una scheda per iniziare</string>
     <string name="welcome_back">Bentornato</string>
-    <string name="today_workout">Allenamento di Oggi</string>
+    <string name="today_workout">ALLENAMENTO DI OGGI</string>
     <string name="no_workout_today">Nessun allenamento previsto per oggi</string>
     <string name="resume_workout">RIPRENDI ALLENAMENTO</string>
     <string name="days_this_week">giorni questa settimana</string>
@@ -62,6 +62,7 @@
     <string name="routine_name">Nome Scheda</string>
     <string name="routine_details">Dettagli</string>
     <string name="routine_notes">Note (opzionale)</string>
+    <string name="schedule_days">GIORNI PROGRAMMATI</string>
     <string name="delete_routine">Elimina Scheda?</string>
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
     <string name="archive_routine">Archivia Scheda?</string>

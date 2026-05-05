@@ -38,5 +38,7 @@ data class WorkoutPlanEntity(
     @ColumnInfo(name = "ordine")
     val ordine: Int = 0,
     @ColumnInfo(name = "image_uri")
-    val imageUri: String? = null
+    val imageUri: String? = null,
+    @ColumnInfo(name = "giorni_settimana")
+    val giorniSettimana: String? = null
 )

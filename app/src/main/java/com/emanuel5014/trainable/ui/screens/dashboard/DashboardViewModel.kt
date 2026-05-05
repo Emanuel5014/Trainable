@@ -21,6 +21,7 @@ import javax.inject.Inject
 data class DashboardUiState(
     val username: String = "Athlete",
     val suggestedPlan: WorkoutPlanEntity? = null,
+    val isPlanForToday: Boolean = false,
     val weeklyVolumeTons: Float = 0f,
     val weeklyGoal: Int = 3,
     val workoutsThisWeek: Int = 0,
@@ -97,25 +98,43 @@ class DashboardViewModel @Inject constructor(
         val workoutsThisWeek = allSessions.count { it.timestamp >= weekStartMillis }
         
         // Suggested Plan Logic:
-        // If we did a session today, suggest the next one in sequence.
-        // Otherwise, suggest the one that corresponds to our current progress this week.
+        // 1. If we haven't trained today and there's a plan assigned for today, prioritize it.
+        // 2. If we did a session today, suggest the next one in sequence.
+        // 3. Otherwise, suggest the one that corresponds to our current progress this week.
+        
+        val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+        val currentDayValue = when (today) {
+            Calendar.MONDAY -> 1
+            Calendar.TUESDAY -> 2
+            Calendar.WEDNESDAY -> 3
+            Calendar.THURSDAY -> 4
+            Calendar.FRIDAY -> 5
+            Calendar.SATURDAY -> 6
+            Calendar.SUNDAY -> 7
+            else -> 1
+        }.toString()
+
+        val planForToday = plans.find { it.giorniSettimana?.split(",")?.contains(currentDayValue) == true }
         val lastSession = allSessions.firstOrNull()
+        val trainedToday = lastSession != null && lastSession.timestamp >= todayStartMillis
+
         val suggestedPlan = if (plans.isNotEmpty()) {
-            if (lastSession != null && lastSession.timestamp >= todayStartMillis) {
-                // We trained today, suggest the NEXT one
-                val lastPlanIndex = plans.indexOfFirst { it.id == lastSession.planId }
-                if (lastPlanIndex != -1) {
-                    plans[(lastPlanIndex + 1) % plans.size]
-                } else plans.first()
-            } else {
-                // Suggest based on how many workouts we've done this week
-                plans[workoutsThisWeek % plans.size]
+            when {
+                !trainedToday && planForToday != null -> planForToday
+                trainedToday -> {
+                    val lastPlanIndex = plans.indexOfFirst { it.id == lastSession?.planId }
+                    if (lastPlanIndex != -1) {
+                        plans[(lastPlanIndex + 1) % plans.size]
+                    } else plans.first()
+                }
+                else -> plans[workoutsThisWeek % plans.size]
             }
         } else null
 
         DashboardUiState(
             username = user?.username ?: "Athlete",
             suggestedPlan = suggestedPlan,
+            isPlanForToday = !trainedToday && planForToday != null && suggestedPlan?.id == planForToday.id,
             weeklyVolumeTons = (volume ?: 0f) / 1000f,
             weeklyGoal = goal,
             workoutsThisWeek = workoutsThisWeek,

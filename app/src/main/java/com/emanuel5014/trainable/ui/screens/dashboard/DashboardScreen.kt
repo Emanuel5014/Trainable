@@ -340,7 +340,7 @@ fun DashboardScreen(
 
                 item {
                     Text(
-                        text = stringResource(R.string.suggested_plan),
+                        text = stringResource(if (uiState.isPlanForToday) R.string.today_workout else R.string.suggested_plan),
                         style = MaterialTheme.typography.labelMedium,
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.Bold,

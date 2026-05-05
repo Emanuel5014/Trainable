@@ -1,8 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +67,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emanuel5014.trainable.R
@@ -90,6 +93,9 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -119,6 +125,7 @@ fun RoutineDetailScreen(
     var showRoutineEditSheet by remember { mutableStateOf(false) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
+    val selectedDays = remember { mutableStateListOf<DayOfWeek>() }
 
     var selectedExerciseId by remember { mutableStateOf<Int?>(null) }
     var setsText by remember { mutableStateOf("3") }
@@ -161,6 +168,10 @@ fun RoutineDetailScreen(
         uiState.planDetails?.plan?.let { plan ->
             routineName = plan.nome
             routineNote = plan.note.orEmpty()
+            selectedDays.clear()
+            plan.giorniSettimana?.split(",")?.forEach {
+                it.toIntOrNull()?.let { value -> selectedDays.add(DayOfWeek.of(value)) }
+            }
             showRoutineEditSheet = true
         }
     }
@@ -252,12 +263,47 @@ fun RoutineDetailScreen(
 
                 item {
                     Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp, bottom = 8.dp)) {
-                        Text(
-                            text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(details.plan.dataInizio),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Primary,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(details.plan.dataInizio),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            
+                            if (!details.plan.giorniSettimana.isNullOrBlank()) {
+                                val scheduledDays = remember(details.plan.giorniSettimana) {
+                                    details.plan.giorniSettimana.split(",").mapNotNull { 
+                                        it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
+                                    }
+                                }
+                                
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    DayOfWeek.entries.forEach { day ->
+                                        val isScheduled = scheduledDays.contains(day)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isScheduled) Primary else SurfaceContainerHigh),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
                         details.plan.note?.let { note ->
                             Text(
                                 text = note,
@@ -631,6 +677,51 @@ fun RoutineDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = stringResource(R.string.schedule_days),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            DayOfWeek.entries.forEach { day ->
+                                val isSelected = selectedDays.contains(day)
+                                val backgroundColor by animateColorAsState(
+                                    targetValue = if (isSelected) Primary else SurfaceContainerHigh,
+                                    label = "day_bg"
+                                )
+                                val contentColor by animateColorAsState(
+                                    targetValue = if (isSelected) OnPrimary else OnSurfaceVariant,
+                                    label = "day_content"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(backgroundColor)
+                                        .clickable {
+                                            if (isSelected) selectedDays.remove(day)
+                                            else selectedDays.add(day)
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = contentColor
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     GymInputField(
                         value = routineNote,
                         onValueChange = { routineNote = it },
@@ -664,7 +755,9 @@ fun RoutineDetailScreen(
                             val trimmedName = routineName.trim()
                             if (trimmedName.isNotEmpty()) {
                                 val note = routineNote.trim().takeIf { it.isNotBlank() }
-                                viewModel.updatePlan(trimmedName, note)
+                                val daysString = if (selectedDays.isEmpty()) null 
+                                               else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
+                                viewModel.updatePlan(trimmedName, note, daysString)
                                 scope.launch { routineSheetState.hide() }.invokeOnCompletion {
                                     if (!routineSheetState.isVisible) {
                                         showRoutineEditSheet = false
