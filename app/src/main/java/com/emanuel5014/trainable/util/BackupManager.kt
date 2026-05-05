@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.edit
+import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,7 +21,10 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 
-class BackupManager @Inject constructor(@ApplicationContext private val context: Context) {
+class BackupManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val workoutDao: WorkoutDao
+) {
 
     private val dbName = "gym_tracking_database"
 
@@ -77,11 +81,19 @@ class BackupManager @Inject constructor(@ApplicationContext private val context:
                     zos.closeEntry()
                 }
 
-                // 3. Export Images if requested
+                // 3. Export Images if requested - Only if referenced in database
                 if (includeImages) {
+                    val planImages = workoutDao.getAllPlanImages()
+                    val multiplePlanImages = workoutDao.getAllMultiplePlanImages()
+                    val referencedFilenames = (planImages + multiplePlanImages)
+                        .mapNotNull { path ->
+                            path.takeIf { it.isNotBlank() }?.let { File(it).name }
+                        }
+                        .toSet()
+
                     val filesDir = context.filesDir
                     filesDir.listFiles()?.forEach { file ->
-                        if (file.isFile && !file.name.endsWith(".db") && !file.name.contains(dbName)) {
+                        if (file.isFile && referencedFilenames.contains(file.name)) {
                             FileInputStream(file).use { fis ->
                                 zos.putNextEntry(ZipEntry("images/${file.name}"))
                                 fis.copyTo(zos)

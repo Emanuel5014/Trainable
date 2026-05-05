@@ -85,6 +85,12 @@ interface WorkoutDao {
         images.forEach { updatePlanImage(it) }
     }
 
+    @Query("SELECT image_uri FROM workout_plans WHERE image_uri IS NOT NULL")
+    suspend fun getAllPlanImages(): List<String>
+
+    @Query("SELECT image_uri FROM workout_plan_images")
+    suspend fun getAllMultiplePlanImages(): List<String>
+
     // --- Plan Exercises ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlanExercise(exercise: PlanExerciseEntity): Long
