@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,6 +28,7 @@ data class EditWorkoutState(
     val planName: String = "",
     val exercises: List<EditExerciseState> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
+    val sessionTimestamp: Long = 0L,
     val error: String? = null,
     val weightUnit: String = "kg"
 )
@@ -92,6 +95,7 @@ class EditWorkoutViewModel @Inject constructor(
                                 isLoading = false,
                                 sessionId = sessionId,
                                 planName = sessionDetails.plan.nome,
+                                sessionTimestamp = sessionDetails.session.timestamp,
                                 exercises = exercises
                             )
                         }
@@ -454,5 +458,14 @@ class EditWorkoutViewModel @Inject constructor(
         }
         
         workoutRepository.updateSetOrders(updatedSets)
+    }
+
+    fun updateSessionDate(newTimestamp: Long) {
+        viewModelScope.launch {
+            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
+            if (sessionDetails != null) {
+                workoutRepository.updateSession(sessionDetails.session.copy(timestamp = newTimestamp))
+            }
+        }
     }
 }
