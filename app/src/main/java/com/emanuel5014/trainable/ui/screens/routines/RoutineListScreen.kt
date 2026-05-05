@@ -48,6 +48,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -224,7 +225,7 @@ fun RoutineListScreen(
                     }
                 },
                 subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.training_plans),
-                icon = if (uiState.isSelectionMode) null else Icons.Rounded.FitnessCenter,
+                icon = if (uiState.isSelectionMode) null else Icons.AutoMirrored.Rounded.Notes,
                 navigationIcon = null,
                 actions = if (uiState.isSelectionMode) {
                     {
@@ -670,7 +671,7 @@ private fun RoutineListPage(
         }
     } else if (plans.isEmpty()) {
         EmptyState(
-            icon = Icons.Rounded.FitnessCenter,
+            icon = Icons.AutoMirrored.Rounded.Notes,
             title = if (isArchived) stringResource(R.string.no_archived) else stringResource(R.string.no_routines),
             description = if (isArchived) stringResource(R.string.archived_appear_here) else stringResource(R.string.tap_to_create)
         )
@@ -849,7 +850,7 @@ private fun RoutineCard(
                         )
                     } else {
                         Icon(
-                            Icons.Rounded.FitnessCenter,
+                            Icons.AutoMirrored.Rounded.Notes,
                             contentDescription = null,
                             tint = if (isSelectionMode) Primary else OnSurfaceVariant
                         )
