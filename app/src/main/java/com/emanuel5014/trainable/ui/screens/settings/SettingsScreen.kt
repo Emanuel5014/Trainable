@@ -73,6 +73,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -952,6 +953,54 @@ fun SettingsScreen(
                                 contentColor = Primary
                             ) {
                                 Text(stringResource(R.string.check_for_updates), fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = Surface.copy(alpha = 0.5f)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            GymButton(
+                                onClick = { 
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.weight(1f),
+                                containerColor = Surface.copy(alpha = 0.5f),
+                                contentColor = OnSurface
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_github), 
+                                    contentDescription = null, 
+                                    tint = OnSurface,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                            }
+
+                            GymButton(
+                                onClick = { 
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.weight(1f),
+                                containerColor = Surface.copy(alpha = 0.5f),
+                                contentColor = OnSurface
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_kofi), 
+                                    contentDescription = null, 
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }

@@ -298,7 +298,12 @@
     <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
-<string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string><string name="expired">Expired</string><string name="expires_in_days">Expires in %d days</string><string name="set_expiry_date">Set Expiry Date</string><string name="tap_to_set">Tap to set</string>    <string name="analytics_subtitle">ACTIVE PLAN INSIGHTS</string>
+    <string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string>
+    <string name="expired">Expired</string>
+    <string name="expires_in_days">Expires in %d days</string>
+    <string name="set_expiry_date">Set Expiry Date</string>
+    <string name="tap_to_set">Tap to set</string>
+    <string name="analytics_subtitle">ACTIVE PLAN INSIGHTS</string>
     <string name="analytics_max_progress">MAX PROGRESS</string>
     <string name="analytics_select_exercises_desc">Select exercises to track your personal bests</string>
     <string name="analytics_choose_exercises">Choose Exercises</string>
@@ -385,4 +390,6 @@
     <string name="search_routines">Search routines…</string>
     <string name="active_routines">Active</string>
     <string name="archived_routines_header">Archived</string>
-    </resources>
+    <string name="star_on_github">Star on GitHub</string>
+    <string name="buy_me_a_coffee">Buy me a coffee</string>
+</resources>
