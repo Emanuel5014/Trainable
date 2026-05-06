@@ -19,20 +19,25 @@ fun GymInputField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    containerColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Transparent,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
-    readOnly: Boolean = false,
-    trailingIcon: @Composable (() -> Unit)? = null
+    readOnly: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = keyboardOptions,
         singleLine = singleLine,
         readOnly = readOnly,
-        trailingIcon = trailingIcon,
         shape = Shapes.large,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = OnSurface,
@@ -41,7 +46,9 @@ fun GymInputField(
             unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
             focusedLabelColor = Primary,
             unfocusedLabelColor = OnSurfaceVariant,
-            cursorColor = Primary
+            cursorColor = Primary,
+            focusedContainerColor = containerColor,
+            unfocusedContainerColor = containerColor
         ),
         textStyle = MaterialTheme.typography.bodyLarge
     )

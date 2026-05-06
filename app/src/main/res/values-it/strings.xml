@@ -369,4 +369,20 @@
     <string name="onboarding_setup_weight_label">Peso attuale (opzionale)</string>
     <string name="onboarding_setup_goal_label">Obiettivo settimanale</string>
     <string name="onboarding_setup_footer">Potrai sempre cambiare queste impostazioni in seguito.</string>
+
+    <string name="no_results_filters">Nessun Risultato con questi Filtri</string>
+    <string name="try_adjust_filters">Prova a modificare la selezione o a cancellare tutti i filtri.</string>
+    <string name="clear_filters">Cancella Filtri</string>
+    <string name="filters">Filtri</string>
+    <string name="clear_all">Cancella Tutto</string>
+    <string name="routines">Schede</string>
+    <string name="all">Tutti</string>
+    <string name="date_range">Intervallo Date</string>
+    <string name="select_date_range">Seleziona Intervallo Date</string>
+    <string name="apply_filters">Applica Filtri</string>
+    <string name="this_month">Questo Mese</string>
+    <string name="last_month">Mese Scorso</string>
+    <string name="search_routines">Cerca schede…</string>
+    <string name="active_routines">Attive</string>
+    <string name="archived_routines_header">Archiviate</string>
 </resources>

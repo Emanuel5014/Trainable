@@ -369,4 +369,20 @@
     <string name="onboarding_setup_weight_label">Current weight (optional)</string>
     <string name="onboarding_setup_goal_label">Weekly workout goal</string>
     <string name="onboarding_setup_footer">You can always change these later in settings.</string>
-</resources>
+
+    <string name="no_results_filters">No results for these filters</string>
+    <string name="try_adjust_filters">Try adjusting your selection or clearing all filters.</string>
+    <string name="clear_filters">Clear Filters</string>
+    <string name="filters">Filters</string>
+    <string name="clear_all">Clear All</string>
+    <string name="routines">Routines</string>
+    <string name="all">All</string>
+    <string name="date_range">Date Range</string>
+    <string name="select_date_range">Select Date Range</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="this_month">This Month</string>
+    <string name="last_month">Last Month</string>
+    <string name="search_routines">Search routines…</string>
+    <string name="active_routines">Active</string>
+    <string name="archived_routines_header">Archived</string>
+    </resources>

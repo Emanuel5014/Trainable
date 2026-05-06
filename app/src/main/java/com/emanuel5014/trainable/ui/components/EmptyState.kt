@@ -22,7 +22,8 @@ fun EmptyState(
     icon: ImageVector,
     title: String,
     description: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    action: @Composable (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -51,5 +52,10 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+        
+        if (action != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+            action()
+        }
     }
 }

@@ -71,9 +71,9 @@ fun ScreenHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .padding(top = if (navigationIcon != null || actions != null) 8.dp else 24.dp, bottom = 16.dp)
+            .padding(top = if (navigationIcon != null || (actions != null && titleInRow)) 8.dp else 24.dp, bottom = 16.dp)
     ) {
-        if (navigationIcon != null || actions != null || titleInRow) {
+        if (navigationIcon != null || (actions != null && titleInRow) || titleInRow) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -91,11 +91,13 @@ fun ScreenHeader(
                         titleContent()
                     }
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    actions?.invoke(this)
+                if (actions != null && (titleInRow || navigationIcon != null)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        actions?.invoke(this)
+                    }
                 }
             }
         }
@@ -138,6 +140,15 @@ fun ScreenHeader(
                         )
                     }
                     titleContent()
+                }
+
+                if (actions != null && navigationIcon == null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        actions.invoke(this)
+                    }
                 }
             }
         }

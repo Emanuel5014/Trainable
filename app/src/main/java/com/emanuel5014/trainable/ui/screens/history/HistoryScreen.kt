@@ -84,6 +84,7 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -110,6 +111,17 @@ import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.ShareUtils
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.FilterListOff
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.rememberDateRangePickerState
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -120,6 +132,16 @@ fun HistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
+    
+    // Resolve colors at the top of the Composable
+    val surfaceColor = Surface
+    val onSurfaceColor = OnSurface
+    val onSurfaceVariantColor = OnSurfaceVariant
+    val primaryColor = Primary
+    val errorColor = Error
+    val surfaceContainerHighColor = SurfaceContainerHigh
+    val surfaceContainerHighestColor = SurfaceContainerHighest
+
     var expandedSessionId by remember { mutableStateOf<Int?>(null) }
     var sessionToEdit by remember { mutableStateOf<SessionWithDetails?>(null) }
     var sessionToDelete by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
@@ -134,6 +156,8 @@ fun HistoryScreen(
     }.collectAsState(initial = true)
 
     var isNavigating by remember { mutableStateOf(false) }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     var sessionToShare by remember { mutableStateOf<Pair<SessionWithDetails, String>?>(null) }
@@ -144,7 +168,7 @@ fun HistoryScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            containerColor = Surface
+            containerColor = surfaceColor
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -160,7 +184,7 @@ fun HistoryScreen(
                                 stringResource(R.string.history_title)
                             },
                             style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
-                            color = OnSurface,
+                            color = onSurfaceColor,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-1).sp
                         )
@@ -177,24 +201,34 @@ fun HistoryScreen(
                                             val sessionId = uiState.selectedSessionIds.first()
                                             sessionToEdit = uiState.sessions.find { it.session.id == sessionId }
                                         },
-                                        containerColor = SurfaceContainerHigh,
-                                        contentColor = Primary
+                                        containerColor = surfaceContainerHighColor,
+                                        contentColor = primaryColor
                                     )
                                 }
                                 GymIconButton(
                                     icon = Icons.Rounded.DeleteSweep,
                                     onClick = { showBulkDeleteDialog = true },
-                                    containerColor = SurfaceContainerHigh,
-                                    contentColor = Error
+                                    containerColor = surfaceContainerHighColor,
+                                    contentColor = errorColor
                                 )
                             }
                             GymIconButton(
                                 icon = Icons.Rounded.Close,
                                 onClick = { viewModel.clearSelection() },
-                                containerColor = SurfaceContainerHigh
+                                containerColor = surfaceContainerHighColor
                             )
                         }
-                    } else null,
+                    } else {
+                        {
+                            val hasActiveFilters = uiState.selectedPlanId != null || uiState.startDate != null || uiState.endDate != null
+                            GymIconButton(
+                                icon = if (hasActiveFilters) Icons.Rounded.FilterListOff else Icons.Rounded.FilterList,
+                                onClick = { showFilterSheet = true },
+                                containerColor = if (hasActiveFilters) primaryColor.copy(alpha = 0.1f) else surfaceContainerHighColor,
+                                contentColor = if (hasActiveFilters) primaryColor else onSurfaceColor
+                            )
+                        }
+                    },
                     titleInRow = uiState.isSelectionMode
                 )
 
@@ -209,6 +243,18 @@ fun HistoryScreen(
                         description = stringResource(R.string.no_history_description_screen),
                         modifier = Modifier.weight(1f)
                     )
+                } else if (uiState.filteredSessions.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Rounded.FilterListOff,
+                        title = stringResource(R.string.no_results_filters),
+                        description = stringResource(R.string.try_adjust_filters),
+                        action = {
+                            GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
+                                Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -216,7 +262,7 @@ fun HistoryScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 
-                    itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
+                    itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
                         val session = sessionDetails.session
                         val planName = sessionDetails.plan.nome
                         val isExpanded = expandedSessionId == session.id
@@ -385,8 +431,8 @@ fun HistoryScreen(
                             viewModel.deleteSelectedSessions()
                             showBulkDeleteDialog = false
                         },
-                        containerColor = Error.copy(alpha = 0.1f),
-                        contentColor = Error
+                        containerColor = errorColor.copy(alpha = 0.1f),
+                        contentColor = errorColor
                     ) {
                         Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
                     }
@@ -395,14 +441,14 @@ fun HistoryScreen(
                     GymButton(
                         onClick = { showBulkDeleteDialog = false },
                         containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant
+                        contentColor = onSurfaceVariantColor
                     ) {
                         Text(stringResource(R.string.cancel).uppercase())
                     }
                 },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
+                containerColor = surfaceContainerHighColor,
+                titleContentColor = onSurfaceColor,
+                textContentColor = onSurfaceVariantColor
             )
         }
 
@@ -417,8 +463,8 @@ fun HistoryScreen(
                             sessionToDelete?.let { viewModel.deleteSession(it.id) }
                             sessionToDelete = null
                         },
-                        containerColor = Error.copy(alpha = 0.1f),
-                        contentColor = Error
+                        containerColor = errorColor.copy(alpha = 0.1f),
+                        contentColor = errorColor
                     ) {
                         Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
                     }
@@ -427,57 +473,155 @@ fun HistoryScreen(
                     GymButton(
                         onClick = { sessionToDelete = null },
                         containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant
+                        contentColor = onSurfaceVariantColor
                     ) {
                         Text(stringResource(R.string.cancel).uppercase())
                     }
                 },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
+                containerColor = surfaceContainerHighColor,
+                titleContentColor = onSurfaceColor,
+                textContentColor = onSurfaceVariantColor
+            )
+        }
+
+        if (sessionToEdit != null) {
+            AlertDialog(
+                onDismissRequest = { 
+                    sessionToEdit = null
+                },
+                title = { Text(stringResource(R.string.edit_session)) },
+                text = { Text(stringResource(R.string.edit_session_message)) },
+                confirmButton = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                        modifier = Modifier.padding(bottom = Spacing.small)
+                    ) {
+                        GymButton(
+                            onClick = { sessionToEdit = null },
+                            containerColor = surfaceContainerHighColor,
+                            contentColor = onSurfaceVariantColor
+                        ) {
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        }
+                        GymButton(
+                            onClick = {
+                                sessionToEdit?.let { details ->
+                                    isNavigating = true
+                                    navController?.navigate(EditWorkoutSession(sessionId = details.session.id))
+                                }
+                                sessionToEdit = null
+                            },
+                            containerColor = primaryColor.copy(alpha = 0.15f),
+                            contentColor = primaryColor
+                        ) {
+                            Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                dismissButton = {},
+                containerColor = surfaceContainerHighColor,
+                titleContentColor = onSurfaceColor,
+                textContentColor = onSurfaceVariantColor
+            )
+        }
+
+        if (showFilterSheet) {
+            HistoryFilterBottomSheet(
+                selectedPlanId = uiState.selectedPlanId,
+                availablePlans = uiState.availablePlans,
+                startDate = uiState.startDate,
+                endDate = uiState.endDate,
+                onPlanSelected = { planId ->
+                    viewModel.setFilters(planId, uiState.startDate, uiState.endDate)
+                },
+                onDateRangeSelected = { start, end ->
+                    viewModel.setFilters(uiState.selectedPlanId, start, end)
+                },
+                onDateClick = { showDatePicker = true },
+                onClearDate = {
+                    viewModel.setFilters(uiState.selectedPlanId, null, null)
+                },
+                onClearAll = {
+                    viewModel.setFilters(null, null, null)
+                },
+                onDismiss = { showFilterSheet = false }
+            )
+        }
+        if (showDatePicker) {
+
+        val dateRangePickerState = rememberDateRangePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        val start = dateRangePickerState.selectedStartDateMillis
+                        val end = dateRangePickerState.selectedEndDateMillis
+                        if (start != null && end != null) {
+                            viewModel.setFilters(uiState.selectedPlanId, start, end)
+                        }
+                        showDatePicker = false
+                    },
+                    enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null
+                ) {
+                    Text(stringResource(R.string.apply_filters).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showDatePicker = false },
+                    containerColor = Color.Transparent,
+                    contentColor = onSurfaceVariantColor
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = surfaceContainerHighColor
+            )
+        ) {
+            DateRangePicker(
+                state = dateRangePickerState,
+                modifier = Modifier.height(500.dp),
+                title = {
+                    Text(
+                        text = stringResource(R.string.select_date_range),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
+                headline = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (dateRangePickerState.selectedStartDateMillis != null) {
+                                DateFormatter.formatShort(dateRangePickerState.selectedStartDateMillis!!)
+                            } else "Start",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Text("-", style = MaterialTheme.typography.headlineSmall)
+                        Text(
+                            text = if (dateRangePickerState.selectedEndDateMillis != null) {
+                                DateFormatter.formatShort(dateRangePickerState.selectedEndDateMillis!!)
+                            } else "End",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = surfaceContainerHighColor,
+                    selectedDayContainerColor = primaryColor,
+                    todayDateBorderColor = primaryColor,
+                    dayInSelectionRangeContainerColor = primaryColor.copy(alpha = 0.1f)
+                )
             )
         }
     }
-
-    if (sessionToEdit != null) {
-        AlertDialog(
-            onDismissRequest = { 
-                sessionToEdit = null
-            },
-            title = { Text(stringResource(R.string.edit_session)) },
-            text = { Text(stringResource(R.string.edit_session_message)) },
-            confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                    modifier = Modifier.padding(bottom = Spacing.small)
-                ) {
-                    GymButton(
-                        onClick = { sessionToEdit = null },
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurfaceVariant
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
-                    }
-                    GymButton(
-                        onClick = {
-                            sessionToEdit?.let { details ->
-                                isNavigating = true
-                                navController?.navigate(EditWorkoutSession(sessionId = details.session.id))
-                            }
-                            sessionToEdit = null
-                        },
-                        containerColor = Primary.copy(alpha = 0.15f),
-                        contentColor = Primary
-                    ) {
-                        Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
-                    }
-                }
-            },
-            dismissButton = {},
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
     }
 }
 
