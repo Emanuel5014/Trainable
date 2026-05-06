@@ -204,13 +204,10 @@ fun DashboardScreen(
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
-            if (uiState.suggestedPlan != null) {
+            val planToStart = uiState.todayPlan ?: uiState.suggestedPlan
+            if (planToStart != null) {
                 ExtendedFloatingActionButton(
-                    onClick = { 
-                        uiState.suggestedPlan?.let { plan ->
-                            onNavigateToWorkout(plan.id, null)
-                        }
-                    },
+                    onClick = { onNavigateToWorkout(planToStart.id, null) },
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
@@ -338,52 +335,108 @@ fun DashboardScreen(
                     }
                 }
 
-                item {
-                    Text(
-                        text = stringResource(if (uiState.isPlanForToday) R.string.today_workout else R.string.suggested_plan),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = Spacing.medium)
-                    )
-                    uiState.suggestedPlan?.let { plan ->
-                        GymCard(
-                            modifier = Modifier.clickable { onNavigateToWorkout(plan.id, null) }
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                if (uiState.todayPlan != null) {
+                    item {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.today_workout),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Primary,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = Spacing.medium)
+                            )
+                            GymCard(
+                                modifier = Modifier.clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
                             ) {
-                                Column {
-                                    Text(
-                                        text = plan.nome,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = plan.note ?: stringResource(R.string.select_routine),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                        .background(Primary.copy(alpha = 0.1f)),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.FitnessCenter,
-                                        contentDescription = null,
-                                        tint = Primary
-                                    )
+                                    Column {
+                                        Text(
+                                            text = uiState.todayPlan!!.nome,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = uiState.todayPlan!!.note ?: stringResource(R.string.select_routine),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(Primary.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.FitnessCenter,
+                                            contentDescription = null,
+                                            tint = Primary
+                                        )
+                                    }
                                 }
                             }
                         }
-                    } ?: run {
+                    }
+                }
+
+                if (uiState.suggestedPlan != null) {
+                    item {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.suggested_plan),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = OnSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = Spacing.medium)
+                            )
+                            GymCard(
+                                modifier = Modifier.clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = uiState.suggestedPlan!!.nome,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = uiState.suggestedPlan!!.note ?: stringResource(R.string.select_routine),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(Primary.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.FitnessCenter,
+                                            contentDescription = null,
+                                            tint = Primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (uiState.todayPlan == null && uiState.suggestedPlan == null) {
+                    item {
                         Text(
                             text = stringResource(R.string.no_active_routines_message),
                             style = MaterialTheme.typography.bodyMedium,
