@@ -72,6 +72,9 @@
     <string name="archive">Archive</string>
     <string name="unarchive">Restore</string>
     <string name="start_date">START DATE:</string>
+    <string name="end_date">EXPIRATION DATE:</string>
+    <string name="expires">Expires:</string>
+    <string name="expiration_date">Expiration Date</string>
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
     

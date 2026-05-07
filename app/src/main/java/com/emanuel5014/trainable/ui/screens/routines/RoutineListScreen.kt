@@ -40,6 +40,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteSweep
@@ -119,6 +120,10 @@ import java.util.Locale
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RoutineListScreen(
@@ -150,11 +155,17 @@ fun RoutineListScreen(
     var planToArchive by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
+    var startDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var endDate by remember { mutableStateOf<Long?>(null) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
     val selectedDays = remember { mutableStateListOf<DayOfWeek>() }
 
     fun openCreateSheet() {
         routineName = ""
         routineNote = ""
+        startDate = System.currentTimeMillis()
+        endDate = null
         selectedDays.clear()
         showSheet = true
     }
@@ -553,6 +564,49 @@ fun RoutineListScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f).clickable { showStartDatePicker = true }) {
+                            GymInputField(
+                                value = com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
+                                onValueChange = {},
+                                label = stringResource(R.string.start_date).replace(":", ""),
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                                enabled = false,
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            )
+                        }
+
+                        Box(modifier = Modifier.weight(1f).clickable { showEndDatePicker = true }) {
+                            GymInputField(
+                                value = endDate?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.tap_to_set),
+                                onValueChange = {},
+                                label = stringResource(R.string.expiration_date),
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                                enabled = false,
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = if (endDate != null) Primary else OnSurfaceVariant.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = stringResource(R.string.schedule_days),
@@ -627,7 +681,13 @@ fun RoutineListScreen(
                                 val note = routineNote.trim().takeIf { it.isNotBlank() }
                                 val daysString = if (selectedDays.isEmpty()) null 
                                                else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
-                                viewModel.createEmptyPlan(trimmedName, note, daysString)
+                                viewModel.createEmptyPlan(
+                                    name = trimmedName,
+                                    note = note,
+                                    giorniSettimana = daysString,
+                                    dataInizio = startDate,
+                                    dataFine = endDate
+                                )
                                 showSheet = false
                             }
                         },
@@ -640,6 +700,70 @@ fun RoutineListScreen(
                     }
                 }
             }
+        }
+    }
+
+    val startDatePickerState = rememberDatePickerState(initialSelectedDateMillis = startDate)
+    val endDatePickerState = rememberDatePickerState(initialSelectedDateMillis = endDate ?: System.currentTimeMillis())
+
+    if (showStartDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showStartDatePicker = false },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        startDatePickerState.selectedDateMillis?.let { startDate = it }
+                        showStartDatePicker = false
+                    },
+                    containerColor = Color.Transparent,
+                    contentColor = Primary
+                ) {
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showStartDatePicker = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            }
+        ) {
+            DatePicker(state = startDatePickerState)
+        }
+    }
+
+    if (showEndDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showEndDatePicker = false },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        endDate = endDatePickerState.selectedDateMillis
+                        showEndDatePicker = false
+                    },
+                    containerColor = Color.Transparent,
+                    contentColor = Primary
+                ) {
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = {
+                        endDate = null
+                        showEndDatePicker = false
+                    },
+                    containerColor = Color.Transparent,
+                    contentColor = Error
+                ) {
+                    Text(stringResource(R.string.reset).uppercase())
+                }
+            }
+        ) {
+            DatePicker(state = endDatePickerState)
         }
     }
 
@@ -918,13 +1042,17 @@ private fun RoutineCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = "Added: ${com.emanuel5014.trainable.ui.util.DateFormatter.format(plan.dataInizio)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = OnSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    
+                    plan.dataFine?.let { expiry ->
+                        Text(
+                            text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (expiry < System.currentTimeMillis()) Error else Primary,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     
                     if (!plan.giorniSettimana.isNullOrBlank()) {
                         val scheduledDays = remember(plan.giorniSettimana) {

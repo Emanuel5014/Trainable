@@ -141,7 +141,13 @@ class RoutinesViewModel @Inject constructor(
         }
     }
     
-    fun createEmptyPlan(name: String, note: String? = null, giorniSettimana: String? = null) {
+    fun createEmptyPlan(
+        name: String,
+        note: String? = null,
+        giorniSettimana: String? = null,
+        dataInizio: Long = System.currentTimeMillis(),
+        dataFine: Long? = null
+    ) {
         viewModelScope.launch {
             val currentPlans = _uiState.value.plans.map { it.plan } + _uiState.value.archivedPlans.map { it.plan }
             val nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
@@ -149,7 +155,8 @@ class RoutinesViewModel @Inject constructor(
                 id = 0,
                 userId = 1,
                 nome = name,
-                dataInizio = System.currentTimeMillis(),
+                dataInizio = dataInizio,
+                dataFine = dataFine,
                 note = note,
                 isActive = true,
                 ordine = nextOrder,
@@ -159,12 +166,22 @@ class RoutinesViewModel @Inject constructor(
         }
     }
 
-    fun updatePlan(plan: WorkoutPlanEntity, name: String, note: String?) {
+    fun updatePlan(
+        plan: WorkoutPlanEntity,
+        name: String,
+        note: String?,
+        giorniSettimana: String? = null,
+        dataInizio: Long = plan.dataInizio,
+        dataFine: Long? = plan.dataFine
+    ) {
         viewModelScope.launch {
             workoutRepository.updatePlan(
                 plan.copy(
                     nome = name,
-                    note = note?.takeIf { it.isNotBlank() }
+                    note = note?.takeIf { it.isNotBlank() },
+                    giorniSettimana = giorniSettimana,
+                    dataInizio = dataInizio,
+                    dataFine = dataFine
                 )
             )
         }

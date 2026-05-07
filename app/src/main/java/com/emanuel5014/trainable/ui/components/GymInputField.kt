@@ -25,7 +25,8 @@ fun GymInputField(
     containerColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Transparent,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
@@ -38,17 +39,24 @@ fun GymInputField(
         keyboardOptions = keyboardOptions,
         singleLine = singleLine,
         readOnly = readOnly,
+        enabled = enabled,
         shape = Shapes.large,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = OnSurface,
             unfocusedTextColor = OnSurface,
+            disabledTextColor = OnSurface,
             focusedBorderColor = Primary,
             unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
+            disabledBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
             focusedLabelColor = Primary,
             unfocusedLabelColor = OnSurfaceVariant,
+            disabledLabelColor = OnSurfaceVariant,
             cursorColor = Primary,
             focusedContainerColor = containerColor,
-            unfocusedContainerColor = containerColor
+            unfocusedContainerColor = containerColor,
+            disabledContainerColor = containerColor,
+            disabledLeadingIconColor = OnSurfaceVariant,
+            disabledTrailingIconColor = OnSurfaceVariant
         ),
         textStyle = MaterialTheme.typography.bodyLarge
     )

@@ -259,14 +259,22 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun updatePlan(nome: String, note: String?, giorniSettimana: String? = null) {
+    fun updatePlan(
+        nome: String,
+        note: String?,
+        giorniSettimana: String? = null,
+        dataInizio: Long? = null,
+        dataFine: Long? = null
+    ) {
         viewModelScope.launch {
             uiState.value.planDetails?.plan?.let { plan ->
                 workoutRepository.updatePlan(
                     plan.copy(
                         nome = nome,
                         note = note,
-                        giorniSettimana = giorniSettimana
+                        giorniSettimana = giorniSettimana,
+                        dataInizio = dataInizio ?: plan.dataInizio,
+                        dataFine = dataFine ?: plan.dataFine
                     )
                 )
             }
