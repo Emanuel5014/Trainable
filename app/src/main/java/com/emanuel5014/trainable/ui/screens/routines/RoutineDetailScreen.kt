@@ -66,6 +66,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -315,86 +316,114 @@ fun RoutineDetailScreen(
                     }
                 }
 
-                itemsIndexed(localExercises, key = { _, item -> item.planExercise.id }) { index, item ->
-                    val isDragging = draggedItemIndex == index
-                    val elevation by animateDpAsState(if (isDragging) 12.dp else 0.dp, label = "elevation")
-                    
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .zIndex(if (isDragging) 1f else 0f)
-                            .graphicsLayer {
-                                translationY = if (isDragging) dragOffsetY else 0f
-                                scaleX = if (isDragging) 1.02f else 1f
-                                scaleY = if (isDragging) 1.02f else 1f
-                                shadowElevation = elevation.toPx()
-                                shape = RoundedCornerShape(28.dp)
-                                clip = isDragging
-                            }
-                            .pointerInput(Unit) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        draggedItemIndex = index
-                                        dragOffsetY = 0f
-                                    },
-                                    onDrag = { change, dragAmount ->
-                                        change.consume()
-                                        dragOffsetY += dragAmount.y
-                                        
-                                        val itemHeight = 80.dp.toPx() 
-                                        if (dragOffsetY > itemHeight / 2 && draggedItemIndex!! < localExercises.size - 1) {
-                                            val targetIndex = draggedItemIndex!! + 1
-                                            localExercises.add(targetIndex, localExercises.removeAt(draggedItemIndex!!))
-                                            draggedItemIndex = targetIndex
-                                            dragOffsetY -= itemHeight
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        } else if (dragOffsetY < -itemHeight / 2 && draggedItemIndex!! > 0) {
-                                            val targetIndex = draggedItemIndex!! - 1
-                                            localExercises.add(targetIndex, localExercises.removeAt(draggedItemIndex!!))
-                                            draggedItemIndex = targetIndex
-                                            dragOffsetY += itemHeight
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        }
-
-                                    },
-                                    onDragEnd = {
-                                        val finalIndex = draggedItemIndex!!
-                                        viewModel.moveExercise(index, finalIndex)
-                                        draggedItemIndex = null
-                                        dragOffsetY = 0f
-                                    },
-                                    onDragCancel = {
-                                        draggedItemIndex = null
-                                        dragOffsetY = 0f
-                                    }
-                                )
-                            }
-                    ) {
-                        Box(
+                if (localExercises.isEmpty()) {
+                    item {
+                        Column(
                             modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(if (isDragging) Primary else SurfaceContainerHigh),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .padding(top = 80.dp, bottom = 40.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "${index + 1}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (isDragging) OnPrimary else Primary,
-                                fontWeight = FontWeight.Bold
+                                text = stringResource(R.string.no_exercises_in_routine),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.xtraSmall))
+                            Text(
+                                text = stringResource(R.string.tap_plus_to_add),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = OnSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 48.dp)
                             )
                         }
+                    }
+                } else {
+                    itemsIndexed(localExercises, key = { _, item -> item.planExercise.id }) { index, item ->
+                        val isDragging = draggedItemIndex == index
+                        val elevation by animateDpAsState(if (isDragging) 12.dp else 0.dp, label = "elevation")
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                                .zIndex(if (isDragging) 1f else 0f)
+                                .graphicsLayer {
+                                    translationY = if (isDragging) dragOffsetY else 0f
+                                    scaleX = if (isDragging) 1.02f else 1f
+                                    scaleY = if (isDragging) 1.02f else 1f
+                                    shadowElevation = elevation.toPx()
+                                    shadowElevation = elevation.toPx()
+                                    shape = RoundedCornerShape(28.dp)
+                                    clip = isDragging
+                                }
+                                .pointerInput(Unit) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            draggedItemIndex = index
+                                            dragOffsetY = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragOffsetY += dragAmount.y
+                                            
+                                            val itemHeight = 80.dp.toPx() 
+                                            if (dragOffsetY > itemHeight / 2 && draggedItemIndex!! < localExercises.size - 1) {
+                                                val targetIndex = draggedItemIndex!! + 1
+                                                localExercises.add(targetIndex, localExercises.removeAt(draggedItemIndex!!))
+                                                draggedItemIndex = targetIndex
+                                                dragOffsetY -= itemHeight
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            } else if (dragOffsetY < -itemHeight / 2 && draggedItemIndex!! > 0) {
+                                                val targetIndex = draggedItemIndex!! - 1
+                                                localExercises.add(targetIndex, localExercises.removeAt(draggedItemIndex!!))
+                                                draggedItemIndex = targetIndex
+                                                dragOffsetY += itemHeight
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            }
 
-                        ExerciseEntryCard(
-                            item = item,
-                            onClick = { openEditSheet(item) },
-                            modifier = Modifier.weight(1f),
-                            languageCode = languageCode
-                        )
+                                        },
+                                        onDragEnd = {
+                                            val finalIndex = draggedItemIndex!!
+                                            viewModel.moveExercise(index, finalIndex)
+                                            draggedItemIndex = null
+                                            dragOffsetY = 0f
+                                        },
+                                        onDragCancel = {
+                                            draggedItemIndex = null
+                                            dragOffsetY = 0f
+                                        }
+                                    )
+                                }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isDragging) Primary else SurfaceContainerHigh),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${index + 1}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isDragging) OnPrimary else Primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            ExerciseEntryCard(
+                                item = item,
+                                onClick = { openEditSheet(item) },
+                                modifier = Modifier.weight(1f),
+                                languageCode = languageCode
+                            )
+                        }
                     }
                 }
 
