@@ -84,6 +84,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WorkoutExecutionScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToRoutine: (Int) -> Unit,
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -152,7 +153,10 @@ fun WorkoutExecutionScreen(
                                 text = state.planName, 
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .clickable { state.planId?.let(onNavigateToRoutine) }
                             )
                             if (state.totalExercises > 0) {
                                 Surface(
