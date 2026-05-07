@@ -161,7 +161,6 @@
     <string name="backup_disabled">Disabilitato</string>
     <string name="storage_location">Posizione Archiviazione</string>
     <string name="custom_folder">Cartella personalizzata</string>
-    <string name="app_internal">Memoria interna app</string>
     <string name="export_database">ESPORTA DATABASE</string>
     <string name="export_csv">ESPORTA CSV</string>
     <string name="import_database">IMPORTA DATABASE</string>
@@ -249,7 +248,7 @@
     <string name="keep_last">Mantieni ultimi</string>
     <string name="backup_s">%d backup</string>
     <string name="day_s">%d giorno(i)</string>
-    <string name="save_to_custom_folder">Salva in cartella personalizzata</string>
+    <string name="folder_required_desc">È obbligatorio selezionare una cartella per attivare il backup automatico.</string>
     <string name="auto_backup_setup">Configurazione Backup</string>
     <string name="configure_backup">Configura le impostazioni di backup automatico</string>
     <string name="database_imported">Database importato. Riavvio app...</string>

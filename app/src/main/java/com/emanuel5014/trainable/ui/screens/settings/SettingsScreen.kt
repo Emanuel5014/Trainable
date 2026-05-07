@@ -212,7 +212,6 @@ fun SettingsScreen(
         var tempFrequency by remember { mutableIntStateOf(autoBackupFrequency) }
         var tempMaxCount by remember { mutableIntStateOf(autoBackupMaxCount) }
         var tempIncludeImages by remember { mutableStateOf(autoBackupIncludeImages) }
-        var useCustomFolder by remember { mutableStateOf(autoBackupFolderUri != null) }
 
         AlertDialog(
             onDismissRequest = { showBackupSetupDialog = false },
@@ -262,41 +261,46 @@ fun SettingsScreen(
                         )
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.save_to_custom_folder), color = OnSurface)
-                        SettingsSwitch(
-                            checked = useCustomFolder,
-                            onCheckedChange = { useCustomFolder = it }
-                        )
-                    }
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                    if (useCustomFolder) {
-                        TextButton(onClick = { folderPickerLauncher.launch(null) }) {
-                            Icon(Icons.Rounded.Folder, contentDescription = "Folder", tint = OnSurface)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (autoBackupFolderUri != null) stringResource(R.string.folder_selected) else stringResource(R.string.choose_folder))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.storage_location), fontWeight = FontWeight.Bold, color = OnSurface)
+                        GymButton(
+                            onClick = { folderPickerLauncher.launch(null) },
+                            containerColor = if (autoBackupFolderUri == null) Primary.copy(alpha = 0.1f) else SurfaceContainerHighest,
+                            contentColor = if (autoBackupFolderUri == null) Primary else OnSurface
+                        ) {
+                            Icon(Icons.Rounded.Folder, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                if (autoBackupFolderUri != null) 
+                                    viewModel.getFolderDisplayPath(autoBackupFolderUri) 
+                                else 
+                                    stringResource(R.string.choose_folder)
+                            )
+                        }
+                        if (autoBackupFolderUri == null) {
+                            Text(
+                                stringResource(R.string.folder_required_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Error
+                            )
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(
+                    enabled = autoBackupFolderUri != null,
                     onClick = {
                         viewModel.setAutoBackupFrequency(tempFrequency)
                         viewModel.setAutoBackupMaxCount(tempMaxCount)
                         viewModel.setAutoBackupIncludeImages(tempIncludeImages)
-                        if (!useCustomFolder) {
-                            viewModel.setAutoBackupFolder(android.net.Uri.EMPTY)
-                        }
                         viewModel.setAutoBackupEnabled(true)
                         showBackupSetupDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.save).uppercase(), color = Primary)
+                    Text(stringResource(R.string.save).uppercase(), color = if (autoBackupFolderUri != null) Primary else OnSurfaceVariant)
                 }
             },
             dismissButton = {
@@ -846,7 +850,7 @@ fun SettingsScreen(
                                         Column {
                                             Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
                                             Text(
-                                                if (autoBackupFolderUri != null) viewModel.getFolderDisplayPath(autoBackupFolderUri) else stringResource(R.string.app_internal),
+                                                viewModel.getFolderDisplayPath(autoBackupFolderUri),
                                                 style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
                                             )
                                         }

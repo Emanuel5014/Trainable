@@ -34,27 +34,20 @@ class AutoBackupWorker @AssistedInject constructor(
             val maxBackups = userPrefsRepository.autoBackupMaxCount.first()
             val includeImages = userPrefsRepository.autoBackupIncludeImages.first()
 
+            if (folderUriString.isNullOrEmpty()) {
+                // Should not happen if UI enforces it, but handle it gracefully
+                return Result.failure()
+            }
+
             val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
             val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
 
-            if (folderUriString.isNullOrEmpty()) {
-                val internalBackupDir = File(context.filesDir, "auto_backups")
-                if (!internalBackupDir.exists()) internalBackupDir.mkdirs()
-                
-                val backupFile = File(internalBackupDir, fileName)
-                if (backupManager.exportDatabaseToFile(backupFile, includeImages)) {
-                    cleanupOldBackups(internalBackupDir, maxBackups)
-                } else {
-                    return Result.retry()
-                }
+            val uri = Uri.parse(folderUriString)
+            val success = backupManager.exportDatabaseToFolder(uri, fileName, includeImages)
+            if (success) {
+                cleanupOldBackupsSaf(uri, maxBackups)
             } else {
-                val uri = Uri.parse(folderUriString)
-                val success = backupManager.exportDatabaseToFolder(uri, fileName, includeImages)
-                if (success) {
-                    cleanupOldBackupsSaf(uri, maxBackups)
-                } else {
-                    return Result.retry()
-                }
+                return Result.retry()
             }
             Result.success()
         } catch (e: Exception) {
@@ -64,6 +57,7 @@ class AutoBackupWorker @AssistedInject constructor(
     }
 
     private fun cleanupOldBackups(backupDir: File, maxBackups: Int) {
+        // No longer used for internal backups, but kept for potential cleanup of legacy files
         val backups = backupDir.listFiles { file -> file.extension == "zip" }
             ?.sortedByDescending { it.lastModified() }
             ?: return

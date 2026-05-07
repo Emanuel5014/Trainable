@@ -252,16 +252,6 @@ class BackupManager @Inject constructor(
         }
     }
 
-    fun getAutoBackupFiles(): List<File> {
-        val backupDir = File(context.filesDir, "auto_backups")
-        return if (backupDir.exists()) {
-            backupDir.listFiles { file -> file.extension == "zip" }
-                ?.sortedByDescending { it.lastModified() }
-                ?: emptyList()
-        } else {
-            emptyList()
-        }
-    }
 
     @Deprecated("Use exportDatabaseToFolder or exportDatabaseZip", ReplaceWith("exportDatabaseZip(folderUri, includeImages)"))
     suspend fun exportDatabaseZipToUri(folderUri: Uri, includeImages: Boolean = false): Boolean {

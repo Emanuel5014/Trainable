@@ -161,7 +161,6 @@
     <string name="backup_disabled">Disabled</string>
     <string name="storage_location">Storage Location</string>
     <string name="custom_folder">Custom folder</string>
-    <string name="app_internal">App internal storage</string>
     <string name="export_database">EXPORT DATABASE</string>
     <string name="export_csv">EXPORT CSV</string>
     <string name="import_database">IMPORT DATABASE</string>
@@ -249,7 +248,7 @@
     <string name="keep_last">Keep last</string>
     <string name="backup_s">%d backup(s)</string>
     <string name="day_s">%d day(s)</string>
-    <string name="save_to_custom_folder">Save to custom folder</string>
+    <string name="folder_required_desc">Selecting a folder is required to enable automatic backups.</string>
     <string name="auto_backup_setup">Auto Backup Setup</string>
     <string name="configure_backup">Configure your automatic backup settings</string>
     <string name="database_imported">Database imported. Restarting app...</string>
