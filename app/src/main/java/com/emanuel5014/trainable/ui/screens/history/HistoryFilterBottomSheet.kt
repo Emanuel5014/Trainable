@@ -2,7 +2,6 @@ package com.emanuel5014.trainable.ui.screens.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,18 +25,16 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emanuel5014.trainable.R
@@ -59,6 +57,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import kotlinx.coroutines.launch
 import java.text.DateFormatSymbols
 import java.util.Calendar
 import java.util.Locale
@@ -78,6 +77,7 @@ fun HistoryFilterBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
     
     // Resolve colors
     val onSurfaceColor = OnSurface
@@ -204,13 +204,34 @@ fun HistoryFilterBottomSheet(
             // Routines Section
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = stringResource(R.string.routines),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = primaryColor,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.routines),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = primaryColor,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        
+                        val selectedPlanName = remember(selectedPlanId, availablePlans) {
+                            availablePlans.find { it.id == selectedPlanId }?.nome
+                        }
+                        
+                        if (selectedPlanName != null) {
+                            Text(
+                                text = "• $selectedPlanName",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = onSurfaceVariantColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                     
                     GymInputField(
                         value = routineSearchQuery,
@@ -223,15 +244,17 @@ fun HistoryFilterBottomSheet(
                         containerColor = surfaceContainerHighestColor
                     )
 
-                    Row(
+                    // Tabs (All, Active, Archived)
+                    val tabLabels = listOf(
+                        stringResource(R.string.all),
+                        stringResource(R.string.active_routines),
+                        stringResource(R.string.archived_routines_header)
+                    )
+                    LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf(
-                            stringResource(R.string.all),
-                            stringResource(R.string.active_routines),
-                            stringResource(R.string.archived_routines_header)
-                        ).forEachIndexed { index, label ->
+                        itemsIndexed(tabLabels) { index, label ->
                             FilterChip(
                                 selected = routineTab == index,
                                 onClick = { routineTab = index },
@@ -250,46 +273,58 @@ fun HistoryFilterBottomSheet(
                             )
                         }
                     }
-                }
-            }
 
-            // Routine List
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(Shapes.medium)
-                        .background(surfaceContainerHighestColor)
-                ) {
-                    // "All" option in list if in "All" tab and no search
-                    if (routineTab == 0 && routineSearchQuery.isBlank()) {
-                        RoutineSelectionRow(
-                            name = stringResource(R.string.all),
-                            isSelected = selectedPlanId == null,
-                            onClick = { onPlanSelected(null) },
-                            primaryColor = primaryColor,
-                            onSurfaceColor = onSurfaceColor
-                        )
-                        HorizontalDivider(color = surfaceContainerHighColor, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                    }
+                    // Routine Chips
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // "All" chip for current selection
+                        if (routineTab == 0 && routineSearchQuery.isBlank()) {
+                            item {
+                                FilterChip(
+                                    selected = selectedPlanId == null,
+                                    onClick = { onPlanSelected(null) },
+                                    label = { Text(stringResource(R.string.all)) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                        selectedLabelColor = primaryColor,
+                                        labelColor = onSurfaceVariantColor
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = selectedPlanId == null,
+                                        borderColor = surfaceContainerHighestColor,
+                                        selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                    )
+                                )
+                            }
+                        }
 
-                    filteredPlans.forEachIndexed { index, plan ->
-                        RoutineSelectionRow(
-                            name = plan.nome,
-                            isSelected = selectedPlanId == plan.id,
-                            onClick = { onPlanSelected(plan.id) },
-                            primaryColor = primaryColor,
-                            onSurfaceColor = onSurfaceColor
-                        )
-                        if (index < filteredPlans.size - 1) {
-                            HorizontalDivider(color = surfaceContainerHighColor, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                        items(filteredPlans) { plan ->
+                            FilterChip(
+                                selected = selectedPlanId == plan.id,
+                                onClick = { onPlanSelected(plan.id) },
+                                label = { Text(plan.nome) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                    selectedLabelColor = primaryColor,
+                                    labelColor = onSurfaceVariantColor
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = selectedPlanId == plan.id,
+                                    borderColor = surfaceContainerHighestColor,
+                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                )
+                            )
                         }
                     }
                     
                     if (filteredPlans.isEmpty() && (routineTab != 0 || routineSearchQuery.isNotBlank())) {
                         Text(
                             text = stringResource(R.string.no_results_filters),
-                            modifier = Modifier.padding(24.dp).align(Alignment.CenterHorizontally),
+                            modifier = Modifier.padding(vertical = 8.dp),
                             style = MaterialTheme.typography.bodyMedium,
                             color = onSurfaceVariantColor
                         )
@@ -451,7 +486,15 @@ fun HistoryFilterBottomSheet(
             
             item {
                 GymButton(
-                    onClick = onDismiss,
+                    onClick = {
+                        scope.launch {
+                            sheetState.hide()
+                        }.invokeOnCompletion {
+                            if (!sheetState.isVisible) {
+                                onDismiss()
+                            }
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.done).uppercase(), fontWeight = FontWeight.Bold)
@@ -460,39 +503,5 @@ fun HistoryFilterBottomSheet(
             
             item { Spacer(modifier = Modifier.height(12.dp)) }
         }
-    }
-}
-
-@Composable
-fun RoutineSelectionRow(
-    name: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    primaryColor: Color,
-    onSurfaceColor: Color
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (isSelected) primaryColor else onSurfaceColor,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            modifier = Modifier.weight(1f)
-        )
-        RadioButton(
-            selected = isSelected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(
-                selectedColor = primaryColor,
-                unselectedColor = onSurfaceColor.copy(alpha = 0.3f)
-            )
-        )
     }
 }

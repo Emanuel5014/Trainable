@@ -51,10 +51,10 @@
     <string name="add_photo">AGGIUNGI FOTO</string>
     <string name="change_photo">CAMBIA FOTO</string>
     <string name="remove_photo">RIMUOVI FOTO</string>
-    <string name="new_routine">Nuovo Piano</string>
-    <string name="update_plan">Aggiorna Piano</string>
+    <string name="new_routine">Nuova Scheda</string>
+    <string name="update_plan">Aggiorna Scheda</string>
     <string name="no_routines">Nessuna scheda ancora</string>
-    <string name="tap_to_create">Tocca il pulsante + per creare il tuo primo piano di allenamento.</string>
+    <string name="tap_to_create">Tocca il pulsante + per creare la tua prima scheda di allenamento.</string>
     <string name="no_archived">Nessuna scheda archiviata</string>
     <string name="archived_appear_here">Le schede archiviate appariranno qui.</string>
     <string name="swipe_for_archived">Scorri in basso per archiviate</string>
