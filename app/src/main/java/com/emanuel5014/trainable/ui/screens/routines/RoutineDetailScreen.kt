@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +46,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -105,7 +110,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RoutineDetailScreen(
     onNavigateBack: () -> Unit,
@@ -122,8 +127,8 @@ fun RoutineDetailScreen(
     val listState = rememberLazyListState()
 
     val scope = rememberCoroutineScope()
-    val exerciseSheetState = rememberModalBottomSheetState()
-    val routineSheetState = rememberModalBottomSheetState()
+    val exerciseSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val routineSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var editingExercise by remember { mutableStateOf<PlanExerciseWithDetails?>(null) }
     var showExerciseSheet by remember { mutableStateOf(false) }
@@ -779,36 +784,28 @@ fun RoutineDetailScreen(
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                         ) {
-                            DayOfWeek.entries.forEach { day ->
+                            DayOfWeek.entries.forEachIndexed { index, day ->
                                 val isSelected = selectedDays.contains(day)
-                                val backgroundColor by animateColorAsState(
-                                    targetValue = if (isSelected) Primary else SurfaceContainerHigh,
-                                    label = "day_bg"
-                                )
-                                val contentColor by animateColorAsState(
-                                    targetValue = if (isSelected) OnPrimary else OnSurfaceVariant,
-                                    label = "day_content"
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(backgroundColor)
-                                        .clickable {
-                                            if (isSelected) selectedDays.remove(day)
-                                            else selectedDays.add(day)
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        },
-                                    contentAlignment = Alignment.Center
+                                ToggleButton(
+                                    checked = isSelected,
+                                    onCheckedChange = {
+                                        if (isSelected) selectedDays.remove(day)
+                                        else selectedDays.add(day)
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    }
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = contentColor
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }

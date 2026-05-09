@@ -74,6 +74,7 @@
     <string name="start_date">DATA INIZIO:</string>
     <string name="end_date">DATA SCADENZA:</string>
     <string name="expires">Scade il:</string>
+    <string name="created_on">Creata il:</string>
     <string name="expiration_date">Data Scadenza</string>
     <string name="swap_exercise">CAMBIA ESERCIZIO</string>
     <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>

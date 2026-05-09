@@ -54,6 +54,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,6 +64,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -124,7 +129,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RoutineListScreen(
     onNavigateToDetail: (Int) -> Unit,
@@ -616,36 +621,28 @@ fun RoutineListScreen(
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                         ) {
-                            DayOfWeek.entries.forEach { day ->
+                            DayOfWeek.entries.forEachIndexed { index, day ->
                                 val isSelected = selectedDays.contains(day)
-                                val backgroundColor by animateColorAsState(
-                                    targetValue = if (isSelected) Primary else SurfaceContainerHigh,
-                                    label = "day_bg"
-                                )
-                                val contentColor by animateColorAsState(
-                                    targetValue = if (isSelected) OnPrimary else OnSurfaceVariant,
-                                    label = "day_content"
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(backgroundColor)
-                                        .clickable {
-                                            if (isSelected) selectedDays.remove(day)
-                                            else selectedDays.add(day)
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        },
-                                    contentAlignment = Alignment.Center
+                                ToggleButton(
+                                    checked = isSelected,
+                                    onCheckedChange = {
+                                        if (isSelected) selectedDays.remove(day)
+                                        else selectedDays.add(day)
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    }
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = contentColor
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
@@ -1048,6 +1045,17 @@ private fun RoutineCard(
                             text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (expiry < System.currentTimeMillis()) Error else Primary,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    if (isArchived) {
+                        Text(
+                            text = stringResource(R.string.created_on) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(plan.dataInizio),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis

@@ -97,14 +97,14 @@ fun HistoryFilterBottomSheet(
     }
 
     var routineSearchQuery by remember { mutableStateOf("") }
-    var routineTab by remember { mutableStateOf(0) } // 0: All, 1: Active, 2: Archived
+    var routineTab by remember { mutableStateOf(0) } // 0: Active, 1: Archived, 2: All
 
     val filteredPlans = remember(availablePlans, routineSearchQuery, routineTab) {
         availablePlans.filter { plan ->
             val matchesSearch = plan.nome.contains(routineSearchQuery, ignoreCase = true)
             val matchesTab = when (routineTab) {
-                1 -> plan.isActive
-                2 -> !plan.isActive
+                0 -> plan.isActive
+                1 -> !plan.isActive
                 else -> true
             }
             matchesSearch && matchesTab
@@ -246,9 +246,9 @@ fun HistoryFilterBottomSheet(
 
                     // Tabs (All, Active, Archived)
                     val tabLabels = listOf(
-                        stringResource(R.string.all),
                         stringResource(R.string.active_routines),
-                        stringResource(R.string.archived_routines_header)
+                        stringResource(R.string.archived_routines_header),
+                        stringResource(R.string.all)
                     )
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -280,7 +280,7 @@ fun HistoryFilterBottomSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         // "All" chip for current selection
-                        if (routineTab == 0 && routineSearchQuery.isBlank()) {
+                        if (routineTab == 2 && routineSearchQuery.isBlank()) {
                             item {
                                 FilterChip(
                                     selected = selectedPlanId == null,

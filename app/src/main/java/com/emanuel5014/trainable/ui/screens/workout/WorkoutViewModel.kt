@@ -381,8 +381,13 @@ class WorkoutViewModel @Inject constructor(
                 )
                 newSetId = logId.toInt()
 
-                val restTime = exState.planDetails?.recuperoTarget ?: 90
-                startRestTimer(restTime)
+                val isLastExercise = exerciseIndex == currentState.exercises.size - 1
+                val isLastSet = setIndex == exState.sets.size - 1
+                
+                if (!(isLastExercise && isLastSet)) {
+                    val restTime = exState.planDetails?.recuperoTarget ?: 90
+                    startRestTimer(restTime)
+                }
             } else if (!newIsCompleted && setState.id != null) {
                 workoutRepository.deleteSet(
                     SetLogEntity(
