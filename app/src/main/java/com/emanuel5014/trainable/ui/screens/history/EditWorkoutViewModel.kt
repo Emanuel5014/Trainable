@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -27,6 +28,7 @@ data class EditWorkoutState(
     val sessionId: Int = 0,
     val planName: String = "",
     val exercises: List<EditExerciseState> = emptyList(),
+    val cardioLogs: List<CardioLogEntity> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
     val sessionTimestamp: Long = 0L,
     val error: String? = null,
@@ -96,7 +98,8 @@ class EditWorkoutViewModel @Inject constructor(
                                 sessionId = sessionId,
                                 planName = sessionDetails.plan.nome,
                                 sessionTimestamp = sessionDetails.session.timestamp,
-                                exercises = exercises
+                                exercises = exercises,
+                                cardioLogs = sessionDetails.cardio
                             )
                         }
                     } else {
@@ -135,6 +138,35 @@ class EditWorkoutViewModel @Inject constructor(
     fun updateSet(updatedSet: SetLogEntity) {
         viewModelScope.launch {
             workoutRepository.updateSet(updatedSet)
+        }
+    }
+
+    fun updateCardioLog(updatedCardio: CardioLogEntity) {
+        viewModelScope.launch {
+            workoutRepository.saveCardioLog(updatedCardio)
+        }
+    }
+
+    fun addCardioLog(categoria: String, distanza: Float, durataSecondi: Int) {
+        viewModelScope.launch {
+            val newCardio = CardioLogEntity(
+                sessionId = sessionId,
+                categoria = categoria,
+                distanza = distanza,
+                durataSecondi = durataSecondi,
+                timestamp = _state.value.sessionTimestamp
+            )
+            workoutRepository.saveCardioLog(newCardio)
+        }
+    }
+
+    fun deleteCardioLog(cardio: CardioLogEntity) {
+        viewModelScope.launch {
+            // Optimistic update
+            _state.update { curr ->
+                curr.copy(cardioLogs = curr.cardioLogs.filter { it.id != cardio.id })
+            }
+            workoutRepository.deleteCardioLog(cardio)
         }
     }
 

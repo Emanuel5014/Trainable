@@ -21,7 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import com.emanuel5014.trainable.ui.components.CardioInputForm
+import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
@@ -54,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,20 +67,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
+import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import androidx.compose.ui.platform.LocalLocale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,10 +95,12 @@ fun EditWorkoutScreen(
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
+    var editingCardio by remember { mutableStateOf<CardioLogEntity?>(null) }
     var showExercisePicker by remember { mutableStateOf(false) }
     var exerciseToSwap by remember { mutableStateOf<Int?>(null) }
     var showDeleteExerciseDialog by remember { mutableStateOf<Int?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showAddCardio by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -107,7 +119,7 @@ fun EditWorkoutScreen(
                                 .clickable { showDatePicker = true }
                         ) {
                             Text(
-                                text = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault())
+                                text = SimpleDateFormat("EEEE, d MMMM yyyy", LocalLocale.current.platformLocale)
                                     .format(Date(state.sessionTimestamp)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Primary,
@@ -125,7 +137,7 @@ fun EditWorkoutScreen(
                 },
                 navigationIcon = {
                     GymIconButton(
-                        icon = Icons.Rounded.ArrowBack,
+                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
                         onClick = onNavigateBack,
                         containerColor = Color.Transparent
                     )
@@ -134,8 +146,12 @@ fun EditWorkoutScreen(
                     GymIconButton(
                         icon = Icons.Rounded.Add,
                         onClick = { 
-                            exerciseToSwap = null
-                            showExercisePicker = true 
+                            if (state.planName.equals("Cardio", ignoreCase = true)) {
+                                showAddCardio = true 
+                            } else {
+                                exerciseToSwap = null
+                                showExercisePicker = true
+                            }
                         },
                         containerColor = Primary.copy(alpha = 0.1f),
                         contentColor = Primary
@@ -179,6 +195,14 @@ fun EditWorkoutScreen(
                         onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) }
                     )
                 }
+
+                itemsIndexed(state.cardioLogs) { _, cardioLog ->
+                    CardioEditCard(
+                        cardioLog = cardioLog,
+                        onEdit = { editingCardio = it },
+                        onDelete = { viewModel.deleteCardioLog(it) }
+                    )
+                }
                 
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
@@ -198,6 +222,27 @@ fun EditWorkoutScreen(
             onDelete = {
                 viewModel.deleteSet(it)
                 editingSet = null
+            }
+        )
+    }
+
+    if (editingCardio != null) {
+        EditCardioDialog(
+            cardioLog = editingCardio!!,
+            onDismiss = { editingCardio = null },
+            onConfirm = {
+                viewModel.updateCardioLog(it)
+                editingCardio = null
+            }
+        )
+    }
+
+    if (showAddCardio) {
+        AddCardioDialog(
+            onDismiss = { showAddCardio = false },
+            onConfirm = { categoria, distanza, durataSecondi ->
+                viewModel.addCardioLog(categoria, distanza, durataSecondi)
+                showAddCardio = false
             }
         )
     }
@@ -473,4 +518,150 @@ fun EditSetRow(
             }
         }
     }
+}
+
+@Composable
+fun CardioEditCard(
+    cardioLog: CardioLogEntity,
+    onEdit: (CardioLogEntity) -> Unit,
+    onDelete: (CardioLogEntity) -> Unit
+) {
+    val icon = when (cardioLog.categoria.lowercase()) {
+        "corsa", "run" -> Icons.AutoMirrored.Rounded.DirectionsRun
+        "bici", "bike", "cycling" -> Icons.AutoMirrored.Rounded.DirectionsBike
+        "camminata", "walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
+        else -> Icons.AutoMirrored.Rounded.DirectionsRun
+    }
+    
+    GymCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onEdit(cardioLog) }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Primary.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = cardioLog.categoria.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "${cardioLog.distanza} km",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                        Text(
+                            text = " • ",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = OnSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        val h = cardioLog.durataSecondi / 3600
+                        val m = (cardioLog.durataSecondi % 3600) / 60
+                        val s = cardioLog.durataSecondi % 60
+                        val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                        Text(
+                            text = durationText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    }
+                }
+            }
+            
+            GymIconButton(
+                icon = Icons.Rounded.DeleteOutline,
+                onClick = { onDelete(cardioLog) },
+                containerColor = Error.copy(alpha = 0.1f),
+                contentColor = Error
+            )
+        }
+    }
+}
+
+@Composable
+fun EditCardioDialog(
+    cardioLog: CardioLogEntity,
+    onDismiss: () -> Unit,
+    onConfirm: (CardioLogEntity) -> Unit
+) {
+    var categoria by remember { mutableStateOf(cardioLog.categoria) }
+    var distanza by remember { mutableStateOf(cardioLog.distanza.toString()) }
+    var durataOre by remember { mutableStateOf((cardioLog.durataSecondi / 3600).let { if (it > 0) it.toString() else "" }) }
+    var durataMinuti by remember { mutableStateOf(((cardioLog.durataSecondi % 3600) / 60).toString()) }
+    var durataSecondi by remember { mutableStateOf((cardioLog.durataSecondi % 60).toString()) }
+
+    val isValid = categoria.isNotBlank() && (distanza.isNotBlank() || durataMinuti.isNotBlank() || durataOre.isNotBlank())
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(
+                stringResource(R.string.edit_exercise_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black
+            ) 
+        },
+        text = {
+            CardioInputForm(
+                categoria = categoria,
+                onCategoriaChange = { categoria = it },
+                distanza = distanza,
+                onDistanzaChange = { distanza = it },
+                durataOre = durataOre,
+                onDurataOreChange = { durataOre = it },
+                durataMinuti = durataMinuti,
+                onDurataMinutiChange = { durataMinuti = it },
+                durataSecondi = durataSecondi,
+                onDurataSecondiChange = { durataSecondi = it }
+            )
+        },
+        confirmButton = {
+            GymButton(
+                onClick = {
+                    val dist = distanza.toFloatOrNull() ?: 0f
+                    val h = durataOre.toIntOrNull() ?: 0
+                    val m = durataMinuti.toIntOrNull() ?: 0
+                    val s = durataSecondi.toIntOrNull() ?: 0
+                    val dur = h * 3600 + m * 60 + s
+                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur))
+                },
+                enabled = isValid
+            ) {
+                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            GymButton(
+                onClick = onDismiss,
+                containerColor = Color.Transparent,
+                contentColor = OnSurfaceVariant
+            ) {
+                Text(stringResource(R.string.cancel).uppercase())
+            }
+        },
+        containerColor = Surface,
+        titleContentColor = OnSurface,
+        textContentColor = OnSurfaceVariant,
+        shape = Shapes.extraLarge
+    )
 }

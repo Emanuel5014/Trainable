@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
@@ -237,9 +238,98 @@ class WorkoutRepository @Inject constructor(
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     
+    suspend fun saveCardioLog(cardio: CardioLogEntity) = workoutDao.insertCardioLog(cardio)
+
+    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long) {
+        val user = userDao.getUser().first() ?: return
+
+        // Find or create "Cardio" plan
+        val plans = workoutDao.getAllPlans().first()
+        var cardioPlan = plans.find { it.nome == "Cardio" }
+
+        if (cardioPlan == null) {
+            val newPlan = WorkoutPlanEntity(
+                userId = user.id,
+                nome = "Cardio",
+                dataInizio = System.currentTimeMillis(),
+                isActive = false, // Not a regular training plan
+                ordine = (plans.maxOfOrNull { it.ordine } ?: -1) + 1
+            )
+            val planId = workoutDao.insertPlan(newPlan).toInt()
+            cardioPlan = newPlan.copy(id = planId)
+        }
+
+        val sessionId = workoutDao.insertSession(
+            WorkoutSessionEntity(
+                planId = cardioPlan!!.id,
+                timestamp = timestamp,
+                isFinished = true
+            )
+        ).toInt()
+
+        workoutDao.insertCardioLog(
+            CardioLogEntity(
+                sessionId = sessionId,
+                categoria = categoria,
+                distanza = distanza,
+                durataSecondi = durataSecondi,
+                timestamp = timestamp
+            )
+        )
+    }
+
+    suspend fun createManualSessionFromPlan(planId: Int, timestamp: Long): Long {
+        val planDetails = workoutDao.getPlanWithDetails(planId).first() ?: return -1
+        
+        // Find last session for this plan to autocomplete values
+        val lastSession = workoutDao.getLastFinishedSessionForPlan(planId).first()
+        val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
+        
+        val sessionId = workoutDao.insertSession(
+            WorkoutSessionEntity(
+                planId = planId,
+                timestamp = timestamp,
+                isFinished = true
+            )
+        )
+        
+        planDetails.exercises.forEach { exerciseWithDetails ->
+            val planEx = exerciseWithDetails.planExercise
+            val exerciseId = planEx.exerciseId
+            
+            // Try to find sets for this exercise in the last session
+            val prevSets = lastSessionSets?.filter { it.exerciseId == exerciseId }?.sortedBy { it.numeroSerie }
+            
+            val numSets = if (prevSets != null && prevSets.isNotEmpty()) {
+                prevSets.size
+            } else if (planEx.serieTarget > 0) {
+                planEx.serieTarget
+            } else {
+                3
+            }
+            
+            for (i in 1..numSets) {
+                val prevSet = prevSets?.getOrNull(i - 1)
+                workoutDao.insertSet(
+                    SetLogEntity(
+                        sessionId = sessionId.toInt(),
+                        exerciseId = exerciseId,
+                        pesoSollevato = prevSet?.pesoSollevato ?: 0f,
+                        repsEffettive = prevSet?.repsEffettive ?: planEx.repsTarget.toIntOrNull() ?: 10,
+                        numeroSerie = i,
+                        ordineEsercizio = planEx.ordine
+                    )
+                )
+            }
+        }
+        return sessionId
+    }
+
     suspend fun updateSet(set: SetLogEntity) = workoutDao.updateSet(set)
-    
+
     suspend fun deleteSet(set: SetLogEntity) = workoutDao.deleteSet(set)
+
+    suspend fun deleteCardioLog(cardio: CardioLogEntity) = workoutDao.deleteCardioLog(cardio)
     
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 

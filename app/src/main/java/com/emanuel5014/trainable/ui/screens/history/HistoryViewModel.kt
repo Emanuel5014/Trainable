@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -46,6 +48,9 @@ class HistoryViewModel @Inject constructor(
 
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
+
+    private val _navigationEvent = MutableSharedFlow<Int>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
 
     init {
         loadHistory()
@@ -118,6 +123,21 @@ class HistoryViewModel @Inject constructor(
     fun deleteSession(sessionId: Int) {
         viewModelScope.launch {
             repository.deleteSession(sessionId)
+        }
+    }
+
+    fun addManualWorkout(planId: Int) {
+        viewModelScope.launch {
+            val sessionId = repository.createManualSessionFromPlan(planId, System.currentTimeMillis())
+            if (sessionId != -1L) {
+                _navigationEvent.emit(sessionId.toInt())
+            }
+        }
+    }
+
+    fun saveCardioWorkout(categoria: String, distanza: Float, durataSecondi: Int) {
+        viewModelScope.launch {
+            repository.saveCardioSession(categoria, distanza, durataSecondi, System.currentTimeMillis())
         }
     }
 

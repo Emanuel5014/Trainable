@@ -397,5 +397,15 @@
     <string name="star_on_github">Vota su GitHub</string>
     <string name="buy_me_a_coffee">Offrimi un caffè</string>
     <string name="no_exercises_in_routine">Nessun esercizio in questa scheda</string>
-    <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a costruire il tuo allenamento.</string>
+    <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
+    <string name="add_cardio">Aggiungi Cardio</string>
+    <string name="add_workout">Aggiungi Allenamento</string>
+    <string name="select_plan_to_add">Seleziona una scheda da aggiungere allo storico</string>
+    <string name="distance">Distanza</string>
+    <string name="cardio_run">Corsa</string>
+    <string name="cardio_bike">Bici</string>
+    <string name="cardio_walk">Camminata</string>
+    <string name="cardio_other">Altro</string>
+    <string name="activity_name">Nome Attività</string>
+    <string name="activity_name_placeholder">es. Nuoto, Trekking...</string>
 </resources>
