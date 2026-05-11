@@ -4,6 +4,7 @@ import android.content.Context
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
@@ -213,8 +214,33 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun deletePlan(plan: WorkoutPlanEntity) = workoutDao.deletePlan(plan)
     
-    suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false): Long {
-        return workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished))
+    suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false, note: String? = null): Long {
+        return workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished, noteSessione = note))
+    }
+
+    suspend fun startQuickWorkoutSession(name: String? = null): Long {
+        val user = userDao.getUser().first() ?: return -1
+        val allPlans = workoutDao.getAllPlans().first()
+        val quickWorkoutPlan = allPlans.find { it.nome == "Quick Workout" && it.note == "SYSTEM_PLAN" }
+            ?: allPlans.find { it.nome == "Allenamento Veloce" && it.note == "SYSTEM_PLAN" }
+            ?: run {
+                val newId = workoutDao.insertPlan(
+                    WorkoutPlanEntity(
+                        userId = user.id,
+                        nome = "Quick Workout",
+                        note = "SYSTEM_PLAN",
+                        dataInizio = System.currentTimeMillis(),
+                        isActive = false
+                    )
+                )
+                workoutDao.getAllPlans().first().find { it.id == newId.toInt() }!!
+            }
+        
+        return startSession(
+            planId = quickWorkoutPlan.id,
+            timestamp = System.currentTimeMillis(),
+            note = name
+        )
     }
     
     fun getSessionWithSets(sessionId: Int): Flow<SessionWithSets?> = workoutDao.getSessionWithSets(sessionId)
@@ -237,9 +263,136 @@ class WorkoutRepository @Inject constructor(
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     
+    suspend fun saveCardioLog(cardio: CardioLogEntity) = workoutDao.insertCardioLog(cardio)
+
+    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long) {
+        val user = userDao.getUser().first() ?: return
+
+        // Find or create "Cardio" plan with system tag
+        val plans = workoutDao.getAllPlans().first()
+        var cardioPlan = plans.find { it.nome == "Cardio" && it.note == "SYSTEM_PLAN" }
+            ?: plans.find { it.nome == "Cardio" && it.note == null && !it.isActive } // Legacy check
+
+        if (cardioPlan == null) {
+            val newPlan = WorkoutPlanEntity(
+                userId = user.id,
+                nome = "Cardio",
+                note = "SYSTEM_PLAN",
+                dataInizio = System.currentTimeMillis(),
+                isActive = false, // Not a regular training plan
+                ordine = (plans.maxOfOrNull { it.ordine } ?: -1) + 1
+            )
+            val planId = workoutDao.insertPlan(newPlan).toInt()
+            cardioPlan = newPlan.copy(id = planId)
+        } else if (cardioPlan.note == null) {
+            // Tag legacy plan
+            cardioPlan = cardioPlan.copy(note = "SYSTEM_PLAN")
+            workoutDao.updatePlan(cardioPlan)
+        }
+
+        val sessionId = workoutDao.insertSession(
+            WorkoutSessionEntity(
+                planId = cardioPlan!!.id,
+                timestamp = timestamp,
+                isFinished = true
+            )
+        ).toInt()
+
+        workoutDao.insertCardioLog(
+            CardioLogEntity(
+                sessionId = sessionId,
+                categoria = categoria,
+                distanza = distanza,
+                durataSecondi = durataSecondi,
+                timestamp = timestamp
+            )
+        )
+    }
+
+    suspend fun createEmptyManualSession(timestamp: Long): Long {
+        val user = userDao.getUser().first() ?: return -1
+        val allPlans = workoutDao.getAllPlans().first()
+        val customPlan = allPlans.find { it.nome == "Custom Workout" && it.note == "SYSTEM_PLAN" }
+            ?: allPlans.find { it.nome == "Custom Workout" && it.note == null && !it.isActive } // Legacy
+            ?: run {
+                val newId = workoutDao.insertPlan(
+                    WorkoutPlanEntity(
+                        userId = user.id,
+                        nome = "Custom Workout",
+                        note = "SYSTEM_PLAN",
+                        dataInizio = System.currentTimeMillis(),
+                        isActive = false
+                    )
+                )
+                // Retrieve the inserted plan
+                workoutDao.getAllPlans().first().find { it.id == newId.toInt() }!!
+            }
+        
+        if (customPlan.note == null) {
+            workoutDao.updatePlan(customPlan.copy(note = "SYSTEM_PLAN"))
+        }
+
+        return workoutDao.insertSession(
+            WorkoutSessionEntity(
+                planId = customPlan.id,
+                timestamp = timestamp,
+                isFinished = true
+            )
+        )
+    }
+
+    suspend fun createManualSessionFromPlan(planId: Int, timestamp: Long): Long {
+        val planDetails = workoutDao.getPlanWithDetails(planId).first() ?: return -1
+        
+        // Find last session for this plan to autocomplete values
+        val lastSession = workoutDao.getLastFinishedSessionForPlan(planId).first()
+        val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
+        
+        val sessionId = workoutDao.insertSession(
+            WorkoutSessionEntity(
+                planId = planId,
+                timestamp = timestamp,
+                isFinished = true
+            )
+        )
+        
+        planDetails.exercises.forEach { exerciseWithDetails ->
+            val planEx = exerciseWithDetails.planExercise
+            val exerciseId = planEx.exerciseId
+            
+            // Try to find sets for this exercise in the last session
+            val prevSets = lastSessionSets?.filter { it.exerciseId == exerciseId }?.sortedBy { it.numeroSerie }
+            
+            val numSets = if (prevSets != null && prevSets.isNotEmpty()) {
+                prevSets.size
+            } else if (planEx.serieTarget > 0) {
+                planEx.serieTarget
+            } else {
+                3
+            }
+            
+            for (i in 1..numSets) {
+                val prevSet = prevSets?.getOrNull(i - 1)
+                workoutDao.insertSet(
+                    SetLogEntity(
+                        sessionId = sessionId.toInt(),
+                        exerciseId = exerciseId,
+                        pesoSollevato = prevSet?.pesoSollevato ?: 0f,
+                        repsEffettive = prevSet?.repsEffettive ?: planEx.repsTarget.toIntOrNull() ?: 10,
+                        numeroSerie = i,
+                        ordineEsercizio = planEx.ordine
+                    )
+                )
+            }
+        }
+        return sessionId
+    }
+
     suspend fun updateSet(set: SetLogEntity) = workoutDao.updateSet(set)
-    
+
     suspend fun deleteSet(set: SetLogEntity) = workoutDao.deleteSet(set)
+
+    suspend fun deleteCardioLog(cardio: CardioLogEntity) = workoutDao.deleteCardioLog(cardio)
     
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 

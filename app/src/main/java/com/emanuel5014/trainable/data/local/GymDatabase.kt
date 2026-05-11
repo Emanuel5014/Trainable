@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
@@ -25,7 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [ // 8 Entities
+    entities = [ // 10 Entities
         UserEntity::class,
         WeightLogEntity::class,
         ExerciseEntity::class,
@@ -34,9 +35,10 @@ import kotlinx.coroutines.launch
         PlanExerciseEntity::class,
         WorkoutSessionEntity::class,
         SetLogEntity::class,
-        SessionExerciseSwapEntity::class
+        SessionExerciseSwapEntity::class,
+        CardioLogEntity::class
     ],
-    version = 9,
+    version = 11,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -123,6 +125,29 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_plans ADD COLUMN giorni_settimana TEXT")
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS cardio_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        session_id INTEGER NOT NULL,
+                        categoria TEXT NOT NULL,
+                        distanza REAL NOT NULL,
+                        durata_secondi INTEGER NOT NULL,
+                        timestamp INTEGER NOT NULL,
+                        FOREIGN KEY(session_id) REFERENCES workout_sessions(id) ON DELETE CASCADE
+                    )
+                """)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_cardio_logs_session_id ON cardio_logs(session_id)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -135,7 +160,7 @@ abstract class GymDatabase : RoomDatabase() {
                     GymDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

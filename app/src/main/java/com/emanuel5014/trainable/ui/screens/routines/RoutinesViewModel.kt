@@ -31,7 +31,18 @@ class RoutinesViewModel @Inject constructor(
         viewModelScope.launch {
             workoutRepository.getAllPlansWithDetails()
                 .collect { allPlans ->
-                    val (active, archived) = allPlans.partition { it.plan.isActive }
+                    // Auto-tag legacy system plans if they exist without the note
+                    allPlans.forEach { 
+                        if (it.plan.note == null && !it.plan.isActive && 
+                            (it.plan.nome == "Cardio" || it.plan.nome == "Custom Workout")) {
+                            viewModelScope.launch {
+                                workoutRepository.updatePlan(it.plan.copy(note = "SYSTEM_PLAN"))
+                            }
+                        }
+                    }
+
+                    val filteredPlans = allPlans.filter { it.plan.note != "SYSTEM_PLAN" }
+                    val (active, archived) = filteredPlans.partition { it.plan.isActive }
                     _uiState.update { it.copy(
                         plans = active,
                         archivedPlans = archived,
@@ -141,7 +152,13 @@ class RoutinesViewModel @Inject constructor(
         }
     }
     
-    fun createEmptyPlan(name: String, note: String? = null) {
+    fun createEmptyPlan(
+        name: String,
+        note: String? = null,
+        giorniSettimana: String? = null,
+        dataInizio: Long = System.currentTimeMillis(),
+        dataFine: Long? = null
+    ) {
         viewModelScope.launch {
             val currentPlans = _uiState.value.plans.map { it.plan } + _uiState.value.archivedPlans.map { it.plan }
             val nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
@@ -149,21 +166,33 @@ class RoutinesViewModel @Inject constructor(
                 id = 0,
                 userId = 1,
                 nome = name,
-                dataInizio = System.currentTimeMillis(),
+                dataInizio = dataInizio,
+                dataFine = dataFine,
                 note = note,
                 isActive = true,
-                ordine = nextOrder
+                ordine = nextOrder,
+                giorniSettimana = giorniSettimana
             )
             workoutRepository.savePlan(newPlan)
         }
     }
 
-    fun updatePlan(plan: WorkoutPlanEntity, name: String, note: String?) {
+    fun updatePlan(
+        plan: WorkoutPlanEntity,
+        name: String,
+        note: String?,
+        giorniSettimana: String? = null,
+        dataInizio: Long = plan.dataInizio,
+        dataFine: Long? = plan.dataFine
+    ) {
         viewModelScope.launch {
             workoutRepository.updatePlan(
                 plan.copy(
                     nome = name,
-                    note = note?.takeIf { it.isNotBlank() }
+                    note = note?.takeIf { it.isNotBlank() },
+                    giorniSettimana = giorniSettimana,
+                    dataInizio = dataInizio,
+                    dataFine = dataFine
                 )
             )
         }

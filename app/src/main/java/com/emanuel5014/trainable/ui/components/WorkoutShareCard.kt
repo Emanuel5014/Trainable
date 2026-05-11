@@ -154,6 +154,41 @@ fun WorkoutShareCard(
                     }
                 }
             }
+
+            sessionDetails.cardio.forEach { cardio ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = cardio.categoria.uppercase(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = primaryColor,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${cardio.distanza} KM",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = onSurfaceColor
+                        )
+                        val h = cardio.durataSecondi / 3600
+                        val m = (cardio.durataSecondi % 3600) / 60
+                        val s = cardio.durataSecondi % 60
+                        val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                        Text(
+                            text = durationText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = onSurfaceVariantColor,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(40.dp))

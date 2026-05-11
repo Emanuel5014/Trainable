@@ -10,6 +10,8 @@
 [![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-orange.svg)](https://developer.android.com/jetpack/compose)
 [![Design](https://img.shields.io/badge/Design-Material%203%20Expressive-purple.svg)](https://m3.material.io/)
 [![Latest Release](https://img.shields.io/github/v/release/Emanuel5014/Trainable?logo=github)](https://github.com/Emanuel5014/Trainable/releases/latest)
+[![Stars](https://img.shields.io/github/stars/Emanuel5014/Trainable?style=flat&logo=github&color=gold)](https://github.com/Emanuel5014/Trainable/stargazers)
+[![Support](https://img.shields.io/badge/Support-Ko--fi-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/emanuel5014)
 
 <div align="center">
   <br>
@@ -105,6 +107,18 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 *   **Charts**: Vico
 *   **Serialization**: Kotlinx Serialization
 *   **Concurrency**: Kotlin Coroutines & Flow
+
+---
+
+## ❤️ Support the project
+
+If you find this project useful, please consider giving it a ⭐ on GitHub or supporting development via Ko-fi!
+
+<div align="center">
+  <a href="https://ko-fi.com/emanuel5014" target="_blank">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee" height="40">
+  </a>
+</div>
 
 ---
 

@@ -21,6 +21,7 @@ import javax.inject.Inject
 data class DashboardUiState(
     val username: String = "Athlete",
     val suggestedPlan: WorkoutPlanEntity? = null,
+    val todayPlan: WorkoutPlanEntity? = null,
     val weeklyVolumeTons: Float = 0f,
     val weeklyGoal: Int = 3,
     val workoutsThisWeek: Int = 0,
@@ -94,31 +95,59 @@ class DashboardViewModel @Inject constructor(
         val (plans, volume) = planVolumePair
         val (goal, membershipExpiry, dynamic, swipe) = prefs
         val (allSessions, unfinished) = sessionData
-        val workoutsThisWeek = allSessions.count { it.timestamp >= weekStartMillis }
+        val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
+        val numWorkoutsThisWeek = workoutsThisWeek.size
         
         // Suggested Plan Logic:
-        // If we did a session today, suggest the next one in sequence.
-        // Otherwise, suggest the one that corresponds to our current progress this week.
+        // 1. If we haven't trained today and there's a plan assigned for today, prioritize it.
+        // 2. Otherwise, find the first plan in the list that hasn't been performed yet this week.
+        // 3. If all plans have been performed at least once this week, suggest the next one in sequence after the last session.
+        
+        val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+        val currentDayValue = when (today) {
+            Calendar.MONDAY -> 1
+            Calendar.TUESDAY -> 2
+            Calendar.WEDNESDAY -> 3
+            Calendar.THURSDAY -> 4
+            Calendar.FRIDAY -> 5
+            Calendar.SATURDAY -> 6
+            Calendar.SUNDAY -> 7
+            else -> 1
+        }.toString()
+
+        val planForToday = plans.find { it.giorniSettimana?.split(",")?.contains(currentDayValue) == true }
         val lastSession = allSessions.firstOrNull()
-        val suggestedPlan = if (plans.isNotEmpty()) {
-            if (lastSession != null && lastSession.timestamp >= todayStartMillis) {
-                // We trained today, suggest the NEXT one
-                val lastPlanIndex = plans.indexOfFirst { it.id == lastSession.planId }
+        val trainedToday = lastSession != null && lastSession.timestamp >= todayStartMillis
+        
+        val idsPerformedThisWeek = workoutsThisWeek.map { it.planId }.toSet()
+        val firstNotPerformedThisWeek = plans.find { it.id !in idsPerformedThisWeek }
+
+        val todayPlan = if (!trainedToday) planForToday else null
+        
+        var suggestedPlan: WorkoutPlanEntity? = null
+        if (plans.isNotEmpty()) {
+            suggestedPlan = if (firstNotPerformedThisWeek != null) {
+                firstNotPerformedThisWeek
+            } else {
+                val lastPlanIndex = plans.indexOfFirst { it.id == lastSession?.planId }
                 if (lastPlanIndex != -1) {
                     plans[(lastPlanIndex + 1) % plans.size]
-                } else plans.first()
-            } else {
-                // Suggest based on how many workouts we've done this week
-                plans[workoutsThisWeek % plans.size]
+                } else {
+                    plans.first()
+                }
             }
-        } else null
+        }
+
+        // Avoid showing the same plan twice
+        val finalSuggestedPlan = if (suggestedPlan?.id == todayPlan?.id) null else suggestedPlan
 
         DashboardUiState(
             username = user?.username ?: "Athlete",
-            suggestedPlan = suggestedPlan,
+            suggestedPlan = finalSuggestedPlan,
+            todayPlan = todayPlan,
             weeklyVolumeTons = (volume ?: 0f) / 1000f,
             weeklyGoal = goal,
-            workoutsThisWeek = workoutsThisWeek,
+            workoutsThisWeek = numWorkoutsThisWeek,
             unfinishedSessions = unfinished,
             isLoading = false,
             gymMembershipExpiryDate = membershipExpiry,

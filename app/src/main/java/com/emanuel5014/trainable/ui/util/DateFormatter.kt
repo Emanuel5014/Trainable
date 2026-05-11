@@ -10,4 +10,8 @@ object DateFormatter {
     fun format(timestamp: Long): String {
         return formatter.format(Date(timestamp))
     }
+
+    fun formatShort(timestamp: Long): String {
+        return SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(timestamp))
+    }
 }

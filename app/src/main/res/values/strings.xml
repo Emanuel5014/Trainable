@@ -36,7 +36,7 @@
     <string name="no_active_plan">No active plan</string>
     <string name="select_routine">Select a routine to start</string>
     <string name="welcome_back">Welcome back</string>
-    <string name="today_workout">Today\'s Workout</string>
+    <string name="today_workout">TODAY\'S WORKOUT</string>
     <string name="no_workout_today">No workout scheduled for today</string>
     <string name="resume_workout">RESUME WORKOUT</string>
     <string name="days_this_week">days this week</string>
@@ -62,6 +62,7 @@
     <string name="routine_name">Routine Name</string>
     <string name="routine_details">Details</string>
     <string name="routine_notes">Notes (optional)</string>
+    <string name="schedule_days">SCHEDULE DAYS</string>
     <string name="delete_routine">Delete Routine?</string>
     <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
     <string name="archive_routine">Archive Routine?</string>
@@ -71,6 +72,10 @@
     <string name="archive">Archive</string>
     <string name="unarchive">Restore</string>
     <string name="start_date">START DATE:</string>
+    <string name="end_date">EXPIRATION DATE:</string>
+    <string name="expires">Expires:</string>
+    <string name="created_on">Created on:</string>
+    <string name="expiration_date">Expiration Date</string>
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
     
@@ -160,7 +165,6 @@
     <string name="backup_disabled">Disabled</string>
     <string name="storage_location">Storage Location</string>
     <string name="custom_folder">Custom folder</string>
-    <string name="app_internal">App internal storage</string>
     <string name="export_database">EXPORT DATABASE</string>
     <string name="export_csv">EXPORT CSV</string>
     <string name="import_database">IMPORT DATABASE</string>
@@ -248,7 +252,7 @@
     <string name="keep_last">Keep last</string>
     <string name="backup_s">%d backup(s)</string>
     <string name="day_s">%d day(s)</string>
-    <string name="save_to_custom_folder">Save to custom folder</string>
+    <string name="folder_required_desc">Selecting a folder is required to enable automatic backups.</string>
     <string name="auto_backup_setup">Auto Backup Setup</string>
     <string name="configure_backup">Configure your automatic backup settings</string>
     <string name="database_imported">Database imported. Restarting app...</string>
@@ -260,6 +264,7 @@
     
     
     <string name="edit_exercise_title">Edit Exercise</string>
+    <string name="edit_date">Edit Date</string>
     
     
     <string name="start">START</string>
@@ -296,7 +301,18 @@
     <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
-<string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string><string name="expired">Expired</string><string name="expires_in_days">Expires in %d days</string><string name="set_expiry_date">Set Expiry Date</string><string name="tap_to_set">Tap to set</string>    <string name="analytics_subtitle">ACTIVE PLAN INSIGHTS</string>
+    <string name="quick_workout">Quick Workout</string>
+    <string name="quick_workout_name_hint">Workout Name (optional)</string>
+    <string name="add_set">ADD SET</string>
+    <string name="remove_set">REMOVE SET</string>
+    <string name="add_exercise_to_workout">ADD EXERCISE</string>
+    <string name="rename_workout">Rename Workout</string>
+    <string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string>
+    <string name="expired">Expired</string>
+    <string name="expires_in_days">Expires in %d days</string>
+    <string name="set_expiry_date">Set Expiry Date</string>
+    <string name="tap_to_set">Tap to set</string>
+    <string name="analytics_subtitle">ACTIVE PLAN INSIGHTS</string>
     <string name="analytics_max_progress">MAX PROGRESS</string>
     <string name="analytics_select_exercises_desc">Select exercises to track your personal bests</string>
     <string name="analytics_choose_exercises">Choose Exercises</string>
@@ -367,4 +383,36 @@
     <string name="onboarding_setup_weight_label">Current weight (optional)</string>
     <string name="onboarding_setup_goal_label">Weekly workout goal</string>
     <string name="onboarding_setup_footer">You can always change these later in settings.</string>
+
+    <string name="no_results_filters">No results for these filters</string>
+    <string name="try_adjust_filters">Try adjusting your selection or clearing all filters.</string>
+    <string name="clear_filters">Clear Filters</string>
+    <string name="filters">Filters</string>
+    <string name="clear_all">Clear All</string>
+    <string name="routines">Routines</string>
+    <string name="all">All</string>
+    <string name="date_range">Date Range</string>
+    <string name="select_date_range">Select Date Range</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="this_month">This Month</string>
+    <string name="last_month">Last Month</string>
+    <string name="search_routines">Search routines…</string>
+    <string name="active_routines">Active</string>
+    <string name="archived_routines_header">Archived</string>
+    <string name="star_on_github">Star on GitHub</string>
+    <string name="buy_me_a_coffee">Buy me a coffee</string>
+    <string name="no_exercises_in_routine">No exercises in this routine</string>
+    <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
+    <string name="add_cardio">Add Cardio Workout</string>
+    <string name="add_workout">Add Workout</string>
+    <string name="add_empty_workout">Add Empty Workout</string>
+    <string name="custom_workout">Custom Workout</string>
+    <string name="select_plan_to_add">Select a plan to add to history</string>
+    <string name="distance">Distance</string>
+    <string name="cardio_run">Run</string>
+    <string name="cardio_bike">Bike</string>
+    <string name="cardio_walk">Walk</string>
+    <string name="cardio_other">Other</string>
+    <string name="activity_name">Activity Name</string>
+    <string name="activity_name_placeholder">e.g. Swimming, Hiking...</string>
 </resources>

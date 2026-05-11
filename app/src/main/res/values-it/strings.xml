@@ -36,7 +36,7 @@
     <string name="no_active_plan">Nessuna scheda attiva</string>
     <string name="select_routine">Seleziona una scheda per iniziare</string>
     <string name="welcome_back">Bentornato</string>
-    <string name="today_workout">Allenamento di Oggi</string>
+    <string name="today_workout">ALLENAMENTO DI OGGI</string>
     <string name="no_workout_today">Nessun allenamento previsto per oggi</string>
     <string name="resume_workout">RIPRENDI ALLENAMENTO</string>
     <string name="days_this_week">giorni questa settimana</string>
@@ -51,10 +51,10 @@
     <string name="add_photo">AGGIUNGI FOTO</string>
     <string name="change_photo">CAMBIA FOTO</string>
     <string name="remove_photo">RIMUOVI FOTO</string>
-    <string name="new_routine">Nuovo Piano</string>
-    <string name="update_plan">Aggiorna Piano</string>
+    <string name="new_routine">Nuova Scheda</string>
+    <string name="update_plan">Aggiorna Scheda</string>
     <string name="no_routines">Nessuna scheda ancora</string>
-    <string name="tap_to_create">Tocca il pulsante + per creare il tuo primo piano di allenamento.</string>
+    <string name="tap_to_create">Tocca il pulsante + per creare la tua prima scheda di allenamento.</string>
     <string name="no_archived">Nessuna scheda archiviata</string>
     <string name="archived_appear_here">Le schede archiviate appariranno qui.</string>
     <string name="swipe_for_archived">Scorri in basso per archiviate</string>
@@ -62,6 +62,7 @@
     <string name="routine_name">Nome Scheda</string>
     <string name="routine_details">Dettagli</string>
     <string name="routine_notes">Note (opzionale)</string>
+    <string name="schedule_days">GIORNI PROGRAMMATI</string>
     <string name="delete_routine">Elimina Scheda?</string>
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
     <string name="archive_routine">Archivia Scheda?</string>
@@ -71,6 +72,10 @@
     <string name="archive">Archivia</string>
     <string name="unarchive">Ripristina</string>
     <string name="start_date">DATA INIZIO:</string>
+    <string name="end_date">DATA SCADENZA:</string>
+    <string name="expires">Scade il:</string>
+    <string name="created_on">Creata il:</string>
+    <string name="expiration_date">Data Scadenza</string>
     <string name="swap_exercise">CAMBIA ESERCIZIO</string>
     <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>
     
@@ -160,7 +165,6 @@
     <string name="backup_disabled">Disabilitato</string>
     <string name="storage_location">Posizione Archiviazione</string>
     <string name="custom_folder">Cartella personalizzata</string>
-    <string name="app_internal">Memoria interna app</string>
     <string name="export_database">ESPORTA DATABASE</string>
     <string name="export_csv">ESPORTA CSV</string>
     <string name="import_database">IMPORTA DATABASE</string>
@@ -248,7 +252,7 @@
     <string name="keep_last">Mantieni ultimi</string>
     <string name="backup_s">%d backup</string>
     <string name="day_s">%d giorno(i)</string>
-    <string name="save_to_custom_folder">Salva in cartella personalizzata</string>
+    <string name="folder_required_desc">È obbligatorio selezionare una cartella per attivare il backup automatico.</string>
     <string name="auto_backup_setup">Configurazione Backup</string>
     <string name="configure_backup">Configura le impostazioni di backup automatico</string>
     <string name="database_imported">Database importato. Riavvio app...</string>
@@ -260,6 +264,7 @@
     
     
     <string name="edit_exercise_title">Modifica Esercizio</string>
+    <string name="edit_date">Modifica Data</string>
     
     
     <string name="start">INIZIA</string>
@@ -296,7 +301,19 @@
     <string name="include_images_description">Vuoi includere le foto delle routine nel backup? Questo aumenterà la dimensione del file.</string>
     <string name="yes">SÌ</string>
     <string name="no">NO</string>
-<string name="gym_membership">Abbonamento Palestra</string><string name="valid_thru">Scade il</string><string name="expired">Scaduto</string><string name="expires_in_days">Scade in %d giorni</string><string name="set_expiry_date">Imposta Scadenza</string><string name="tap_to_set">Tocca per impostare</string>    <string name="analytics_subtitle">DETTAGLI PIANO ATTIVO</string>
+    <string name="quick_workout">Allenamento Veloce</string>
+    <string name="quick_workout_name_hint">Nome Allenamento (opzionale)</string>
+    <string name="add_set">AGGIUNGI SERIE</string>
+    <string name="remove_set">RIMUOVI SERIE</string>
+    <string name="add_exercise_to_workout">AGGIUNGI ESERCIZIO</string>
+    <string name="rename_workout">Rinomina Allenamento</string>
+    <string name="gym_membership">Abbonamento Palestra</string>
+    <string name="valid_thru">Scade il</string>
+    <string name="expired">Scaduto</string>
+    <string name="expires_in_days">Scade in %d giorni</string>
+    <string name="set_expiry_date">Imposta Scadenza</string>
+    <string name="tap_to_set">Tocca per impostare</string>
+    <string name="analytics_subtitle">DETTAGLI PIANO ATTIVO</string>
     <string name="analytics_max_progress">PROGRESSI MASSIMALI</string>
     <string name="analytics_select_exercises_desc">Seleziona gli esercizi per tracciare i tuoi massimali</string>
     <string name="analytics_choose_exercises">Scegli Esercizi</string>
@@ -320,7 +337,7 @@
     <string name="weight_unit">Unità di Misura</string>
     <string name="weight_unit_desc">Scegli tra Kilogrammi e Libbre</string>
     <string name="check_for_updates">Controlla aggiornamenti</string>
-        <string name="preparing_share">Preparazione scheda allenamento...</string>
+    <string name="preparing_share">Preparazione scheda allenamento...</string>
     <string name="selected">selezionate</string>
     <string name="sharing_options">OPZIONI CONDIVISIONE</string>
     <string name="share">Condividi</string>
@@ -367,4 +384,36 @@
     <string name="onboarding_setup_weight_label">Peso attuale (opzionale)</string>
     <string name="onboarding_setup_goal_label">Obiettivo settimanale</string>
     <string name="onboarding_setup_footer">Potrai sempre cambiare queste impostazioni in seguito.</string>
+
+    <string name="no_results_filters">Nessun Risultato con questi Filtri</string>
+    <string name="try_adjust_filters">Prova a modificare la selezione o a cancellare tutti i filtri.</string>
+    <string name="clear_filters">Cancella Filtri</string>
+    <string name="filters">Filtri</string>
+    <string name="clear_all">Cancella Tutto</string>
+    <string name="routines">Schede</string>
+    <string name="all">Tutti</string>
+    <string name="date_range">Intervallo Date</string>
+    <string name="select_date_range">Seleziona Intervallo Date</string>
+    <string name="apply_filters">Applica Filtri</string>
+    <string name="this_month">Questo Mese</string>
+    <string name="last_month">Mese Scorso</string>
+    <string name="search_routines">Cerca schede…</string>
+    <string name="active_routines">Attive</string>
+    <string name="archived_routines_header">Archiviate</string>
+    <string name="star_on_github">Vota su GitHub</string>
+    <string name="buy_me_a_coffee">Offrimi un caffè</string>
+    <string name="no_exercises_in_routine">Nessun esercizio in questa scheda</string>
+    <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
+    <string name="add_cardio">Aggiungi Cardio</string>
+    <string name="add_workout">Aggiungi Allenamento</string>
+    <string name="add_empty_workout">Aggiungi Allenamento Vuoto</string>
+    <string name="custom_workout">Allenamento Personalizzato</string>
+    <string name="select_plan_to_add">Seleziona una scheda da aggiungere allo storico</string>
+    <string name="distance">Distanza</string>
+    <string name="cardio_run">Corsa</string>
+    <string name="cardio_bike">Bici</string>
+    <string name="cardio_walk">Camminata</string>
+    <string name="cardio_other">Altro</string>
+    <string name="activity_name">Nome Attività</string>
+    <string name="activity_name_placeholder">es. Nuoto, Trekking...</string>
 </resources>

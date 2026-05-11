@@ -50,7 +50,10 @@ fun MainNavGraph(
         }
         composable<WorkoutExecution> {
             WorkoutExecutionScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToRoutine = { planId ->
+                    navController.navigate(RoutineDetail(planId = planId))
+                }
             )
         }
         composable<EditWorkoutSession> {

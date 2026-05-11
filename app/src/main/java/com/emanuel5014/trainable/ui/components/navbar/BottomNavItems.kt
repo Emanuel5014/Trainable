@@ -1,7 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Insights
@@ -18,7 +18,7 @@ fun localizedNavItems(): List<LocalizedNavItem> = listOf(
     ),
     LocalizedNavItem(
         stringResource(R.string.nav_routines),
-        Icons.Rounded.FitnessCenter
+        Icons.AutoMirrored.Rounded.Notes
     ),
     LocalizedNavItem(
         stringResource(R.string.nav_history),

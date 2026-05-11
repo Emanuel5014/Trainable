@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
@@ -44,7 +45,8 @@ data class WorkoutState(
     val isNavigating: Boolean = false,
     val exerciseSwaps: Map<Int, Int> = emptyMap(),
     val weightUnit: String = "kg",
-    val timerNotificationsEnabled: Boolean = true
+    val timerNotificationsEnabled: Boolean = true,
+    val isQuickWorkout: Boolean = false
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -146,10 +148,14 @@ class WorkoutViewModel @Inject constructor(
 
         val planId: Int? = savedStateHandle.get<Int>("planId")
         val sessionId: Int? = savedStateHandle.get<Int>("sessionId")
+        val quickStart: Boolean = savedStateHandle.get<Boolean>("quickStart") ?: false
+        val workoutName: String? = savedStateHandle.get<String>("workoutName")
         
         viewModelScope.launch {
             if (sessionId != null && sessionId != 0 && sessionId != -1) {
                 resumeWorkout(sessionId)
+            } else if (quickStart) {
+                initializeQuickWorkout(workoutName)
             } else if (planId != null && planId != -1 && planId != 0) {
                 initializeNewWorkout(planId)
             } else {
@@ -162,7 +168,7 @@ class WorkoutViewModel @Inject constructor(
         val sessionWithSets = workoutRepository.getSessionWithSets(sessionId).firstOrNull() ?: return
         val planId = sessionWithSets.session.planId
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).firstOrNull() ?: return
-        val planName = planWithDetails.plan.nome
+        val planName = sessionWithSets.session.noteSessione ?: planWithDetails.plan.nome
         
         val swaps = workoutRepository.getSwapsForSession(sessionId).firstOrNull()
         val swapMap = swaps?.associate { it.originalExerciseId to it.replacementExerciseId } ?: emptyMap()
@@ -174,25 +180,36 @@ class WorkoutViewModel @Inject constructor(
             ((it - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
         } ?: 0
 
-        val exerciseStates = planWithDetails.exercises.sortedBy { it.planExercise.ordine }.map { detail ->
-            val previousSets = workoutRepository.getLastSessionSetsForExercise(planId, detail.exercise.id, detail.planExercise.serieTarget).firstOrNull()
+        val planExercises = planWithDetails.exercises.sortedBy { it.planExercise.ordine }
+        
+        // Handle exercises already in the session (logged sets)
+        val loggedExerciseIds = sessionWithSets.sets.map { it.exerciseId }.distinct()
+        
+        // Merge plan exercises with any other exercises that might have been added manually
+        val allExerciseIds = (planExercises.map { it.exercise.id } + loggedExerciseIds).distinct()
+        
+        val exerciseStates = allExerciseIds.mapIndexed { index, exerciseId ->
+            val detail = planExercises.find { it.exercise.id == exerciseId }
+            val exercise = detail?.exercise ?: exerciseRepository.getAllExercises().firstOrNull()?.find { it.id == exerciseId } ?: return@mapIndexed null
+
+            val previousSets = workoutRepository.getLastSessionSetsForExercise(planId, exercise.id, detail?.planExercise?.serieTarget ?: 3).firstOrNull()
             val prevPerfStr = if (!previousSets.isNullOrEmpty()) {
                 val bestSet = previousSets.maxByOrNull { it.pesoSollevato }
                 if (bestSet != null) "Last: ${bestSet.pesoSollevato}kg × ${bestSet.repsEffettive}" else null
             } else null
 
             // Load already completed sets for this session
-            val loggedSets = sessionWithSets.sets.filter { it.exerciseId == detail.exercise.id }
+            val loggedSets = sessionWithSets.sets.filter { it.exerciseId == exercise.id }
             
-            val targetSets = detail.planExercise.serieTarget
+            val targetSets = detail?.planExercise?.serieTarget ?: loggedSets.size.coerceAtLeast(3)
             val repsList = if (previousSets.isNullOrEmpty()) {
-                parseReps(detail.planExercise.repsTarget, targetSets)
+                parseReps(detail?.planExercise?.repsTarget ?: "8", targetSets)
             } else {
                 previousSets.map { it.repsEffettive }
             }
             val lastLoggedWeight = loggedSets.lastOrNull()?.pesoSollevato ?: previousSets?.lastOrNull()?.pesoSollevato ?: 0f
 
-            val sets = (1..targetSets).map { num ->
+            val sets = (1..targetSets.coerceAtLeast(loggedSets.size)).map { num ->
                 val loggedSet = loggedSets.find { it.numeroSerie == num }
                 if (loggedSet != null) {
                     WorkoutSetState(
@@ -215,16 +232,17 @@ class WorkoutViewModel @Inject constructor(
             }
 
             WorkoutExerciseState(
-                exercise = detail.exercise,
-                planDetails = detail.planExercise,
+                exercise = exercise,
+                planDetails = detail?.planExercise,
                 sets = sets,
                 previousPerformance = prevPerfStr,
-                swappedExerciseId = swapMap[detail.planExercise.id]
+                swappedExerciseId = detail?.planExercise?.id?.let { swapMap[it] }
             )
-        }
+        }.filterNotNull()
 
         // Find first unfinished exercise
         val activeIndex = exerciseStates.indexOfFirst { ex -> ex.sets.any { !it.isCompleted } }.coerceAtLeast(0)
+        val isQuick = planWithDetails.plan.note == "SYSTEM_PLAN" && (planWithDetails.plan.nome == "Quick Workout" || planWithDetails.plan.nome == "Allenamento Veloce")
 
         _state.update {
             it.copy(
@@ -237,7 +255,8 @@ class WorkoutViewModel @Inject constructor(
                 exerciseSwaps = swapMap,
                 remainingRestSeconds = savedRemainingSeconds,
                 totalRestSeconds = savedTotalSeconds ?: 90,
-                restTimerEndTime = if (savedRemainingSeconds > 0) savedEndTime else null
+                restTimerEndTime = if (savedRemainingSeconds > 0) savedEndTime else null,
+                isQuickWorkout = isQuick
             )
         }
 
@@ -294,6 +313,22 @@ class WorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exercises = exerciseStates,
                 currentExerciseIndex = 0
+            )
+        }
+    }
+
+    private suspend fun initializeQuickWorkout(name: String?) {
+        val sessionId = workoutRepository.startQuickWorkoutSession(name).toInt()
+        val displayName = name ?: localeManager.getString(R.string.quick_workout)
+        
+        _state.update {
+            it.copy(
+                isLoading = false,
+                planName = displayName,
+                sessionId = sessionId,
+                exercises = emptyList(),
+                currentExerciseIndex = 0,
+                isQuickWorkout = true
             )
         }
     }
@@ -381,8 +416,13 @@ class WorkoutViewModel @Inject constructor(
                 )
                 newSetId = logId.toInt()
 
-                val restTime = exState.planDetails?.recuperoTarget ?: 90
-                startRestTimer(restTime)
+                val isLastExercise = exerciseIndex == currentState.exercises.size - 1
+                val isLastSet = setIndex == exState.sets.size - 1
+                
+                if (!(isLastExercise && isLastSet)) {
+                    val restTime = exState.planDetails?.recuperoTarget ?: 90
+                    startRestTimer(restTime)
+                }
             } else if (!newIsCompleted && setState.id != null) {
                 workoutRepository.deleteSet(
                     SetLogEntity(
@@ -649,6 +689,120 @@ class WorkoutViewModel @Inject constructor(
             }
             stopRestTimer()
             onComplete()
+        }
+    }
+
+    fun addCustomExercise(nome: String, categoria: String) {
+        viewModelScope.launch {
+            exerciseRepository.addCustomExercise(nome, categoria)
+        }
+    }
+
+    fun updateCustomExercise(exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            exerciseRepository.saveExercise(exercise)
+        }
+    }
+
+    fun deleteCustomExercise(exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            exerciseRepository.deleteExercise(exercise)
+        }
+    }
+
+    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8") {
+        val repsList = parseReps(repsTarget, targetSets)
+        val initialSets = (1..targetSets).map { num ->
+            WorkoutSetState(
+                setNumber = num,
+                weight = 0f,
+                reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
+            )
+        }
+
+        _state.update { curr ->
+            val mutableExercises = curr.exercises.toMutableList()
+            val newIndex = mutableExercises.size
+            mutableExercises.add(
+                WorkoutExerciseState(
+                    exercise = exercise,
+                    planDetails = null,
+                    sets = initialSets
+                )
+            )
+            curr.copy(
+                exercises = mutableExercises,
+                currentExerciseIndex = newIndex
+            )
+        }
+    }
+
+    fun addSetToExercise(exerciseIndex: Int) {
+        _state.update { curr ->
+            val mutableExercises = curr.exercises.toMutableList()
+            val exState = mutableExercises.getOrNull(exerciseIndex) ?: return@update curr
+            val mutableSets = exState.sets.toMutableList()
+            
+            val lastSet = mutableSets.lastOrNull()
+            val newSetNumber = (lastSet?.setNumber ?: 0) + 1
+            
+            mutableSets.add(
+                WorkoutSetState(
+                    setNumber = newSetNumber,
+                    weight = lastSet?.weight ?: 0f,
+                    reps = lastSet?.reps ?: 8
+                )
+            )
+            
+            mutableExercises[exerciseIndex] = exState.copy(sets = mutableSets)
+            curr.copy(exercises = mutableExercises)
+        }
+    }
+
+    fun removeSetFromExercise(exerciseIndex: Int, setIndex: Int) {
+        val currentState = _state.value
+        val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return
+        val setState = exState.sets.getOrNull(setIndex) ?: return
+
+        viewModelScope.launch {
+            if (setState.id != null) {
+                workoutRepository.deleteSet(
+                    SetLogEntity(
+                        id = setState.id,
+                        sessionId = currentState.sessionId ?: 0,
+                        exerciseId = exState.exercise.id,
+                        pesoSollevato = setState.weight,
+                        repsEffettive = setState.reps,
+                        numeroSerie = setState.setNumber,
+                        isWarmup = setState.isWarmup,
+                        note = setState.note
+                    )
+                )
+            }
+            
+            _state.update { curr ->
+                val mutableExercises = curr.exercises.toMutableList()
+                val innerExState = mutableExercises[exerciseIndex]
+                val mutableSets = innerExState.sets.toMutableList()
+                mutableSets.removeAt(setIndex)
+                
+                // Re-number subsequent sets
+                val renumberedSets = mutableSets.mapIndexed { idx, s ->
+                    s.copy(setNumber = idx + 1)
+                }
+                
+                mutableExercises[exerciseIndex] = innerExState.copy(sets = renumberedSets)
+                curr.copy(exercises = mutableExercises)
+            }
+        }
+    }
+
+    fun updateSessionName(newName: String) {
+        val sessionId = _state.value.sessionId ?: return
+        viewModelScope.launch {
+            val session = workoutRepository.getSessionWithSets(sessionId).firstOrNull()?.session ?: return@launch
+            workoutRepository.updateSession(session.copy(noteSessione = newName))
+            _state.update { it.copy(planName = newName) }
         }
     }
 }

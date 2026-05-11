@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.history
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,7 +27,9 @@ data class EditWorkoutState(
     val sessionId: Int = 0,
     val planName: String = "",
     val exercises: List<EditExerciseState> = emptyList(),
+    val cardioLogs: List<CardioLogEntity> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
+    val sessionTimestamp: Long = 0L,
     val error: String? = null,
     val weightUnit: String = "kg"
 )
@@ -92,7 +96,9 @@ class EditWorkoutViewModel @Inject constructor(
                                 isLoading = false,
                                 sessionId = sessionId,
                                 planName = sessionDetails.plan.nome,
-                                exercises = exercises
+                                sessionTimestamp = sessionDetails.session.timestamp,
+                                exercises = exercises,
+                                cardioLogs = sessionDetails.cardio
                             )
                         }
                     } else {
@@ -134,6 +140,35 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
+    fun updateCardioLog(updatedCardio: CardioLogEntity) {
+        viewModelScope.launch {
+            workoutRepository.saveCardioLog(updatedCardio)
+        }
+    }
+
+    fun addCardioLog(categoria: String, distanza: Float, durataSecondi: Int) {
+        viewModelScope.launch {
+            val newCardio = CardioLogEntity(
+                sessionId = sessionId,
+                categoria = categoria,
+                distanza = distanza,
+                durataSecondi = durataSecondi,
+                timestamp = _state.value.sessionTimestamp
+            )
+            workoutRepository.saveCardioLog(newCardio)
+        }
+    }
+
+    fun deleteCardioLog(cardio: CardioLogEntity) {
+        viewModelScope.launch {
+            // Optimistic update
+            _state.update { curr ->
+                curr.copy(cardioLogs = curr.cardioLogs.filter { it.id != cardio.id })
+            }
+            workoutRepository.deleteCardioLog(cardio)
+        }
+    }
+
     fun deleteSet(set: SetLogEntity) {
         viewModelScope.launch {
             // Optimistic update
@@ -160,7 +195,7 @@ class EditWorkoutViewModel @Inject constructor(
             val exerciseState = _state.value.exercises.find { it.exercise.id == exerciseId }
             val nextSerie = (exerciseState?.sets?.maxOfOrNull { it.numeroSerie } ?: 0) + 1
             val lastWeight = exerciseState?.sets?.lastOrNull()?.pesoSollevato ?: 0f
-            val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 10
+            val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 8
             val exerciseOrder = exerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
 
             val newSet = SetLogEntity(
@@ -210,6 +245,12 @@ class EditWorkoutViewModel @Inject constructor(
                 curr.copy(exercises = curr.exercises.filter { it.exercise.id != exerciseId })
             }
             workoutRepository.deleteExerciseFromSession(sessionId, exerciseId)
+        }
+    }
+
+    fun deleteSession() {
+        viewModelScope.launch {
+            workoutRepository.deleteSession(sessionId)
         }
     }
 
@@ -271,7 +312,7 @@ class EditWorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exerciseId = exerciseId,
                 pesoSollevato = 0f,
-                repsEffettive = 10,
+                repsEffettive = 8,
                 numeroSerie = 1,
                 ordineEsercizio = nextOrder
             )
@@ -454,5 +495,14 @@ class EditWorkoutViewModel @Inject constructor(
         }
         
         workoutRepository.updateSetOrders(updatedSets)
+    }
+
+    fun updateSessionDate(newTimestamp: Long) {
+        viewModelScope.launch {
+            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
+            if (sessionDetails != null) {
+                workoutRepository.updateSession(sessionDetails.session.copy(timestamp = newTimestamp))
+            }
+        }
     }
 }

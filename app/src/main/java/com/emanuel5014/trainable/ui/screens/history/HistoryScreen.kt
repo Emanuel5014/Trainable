@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
@@ -19,52 +20,83 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Assignment
+import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AddBox
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.FilterListOff
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
@@ -80,13 +112,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
@@ -108,10 +143,11 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.ShareUtils
+import com.emanuel5014.trainable.util.UriMigrationHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HistoryScreen(
     navController: NavController? = null,
@@ -120,6 +156,18 @@ fun HistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
+    
+    val listState = rememberLazyListState()
+
+    // Resolve colors at the top of the Composable
+    val surfaceColor = Surface
+    val onSurfaceColor = OnSurface
+    val onSurfaceVariantColor = OnSurfaceVariant
+    val primaryColor = Primary
+    val errorColor = Error
+    val surfaceContainerHighColor = SurfaceContainerHigh
+    val surfaceContainerHighestColor = SurfaceContainerHighest
+
     var expandedSessionId by remember { mutableStateOf<Int?>(null) }
     var sessionToEdit by remember { mutableStateOf<SessionWithDetails?>(null) }
     var sessionToDelete by remember { mutableStateOf<WorkoutSessionEntity?>(null) }
@@ -134,6 +182,20 @@ fun HistoryScreen(
     }.collectAsState(initial = true)
 
     var isNavigating by remember { mutableStateOf(false) }
+    var showCardioDialog by remember { mutableStateOf(false) }
+    var showAddWorkoutSheet by remember { mutableStateOf(false) }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    LaunchedEffect(viewModel.navigationEvent) {
+        viewModel.navigationEvent.collect { sessionId ->
+            navController?.navigate(EditWorkoutSession(sessionId))
+        }
+    }
+
+    var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     var sessionToShare by remember { mutableStateOf<Pair<SessionWithDetails, String>?>(null) }
@@ -142,9 +204,72 @@ fun HistoryScreen(
         isNavigating = false
     }
 
+    val fabVisible by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 || !listState.canScrollForward
+        }
+    }
+
+    BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            containerColor = Surface
+            containerColor = surfaceColor,
+            floatingActionButton = {
+                if (!uiState.isSelectionMode) {
+                    FloatingActionButtonMenu(
+                        modifier = Modifier.padding(bottom = 72.dp).offset(x = 12.dp).zIndex(10f),
+                        expanded = fabMenuExpanded,
+                        button = {
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                    if (fabMenuExpanded) TooltipAnchorPosition.Start else TooltipAnchorPosition.Above
+                                ),
+                                tooltip = { PlainTooltip { Text(stringResource(if (fabMenuExpanded) R.string.close else R.string.add)) } },
+                                state = rememberTooltipState()
+                            ) {
+                                ToggleFloatingActionButton(
+                                    checked = fabMenuExpanded,
+                                    onCheckedChange = { 
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        fabMenuExpanded = !fabMenuExpanded 
+                                    }
+                                ) {
+                                    val imageVector by remember {
+                                        derivedStateOf {
+                                            if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
+                                        }
+                                    }
+                                    Icon(
+                                        painter = rememberVectorPainter(imageVector),
+                                        contentDescription = null,
+                                        modifier = Modifier.animateIcon({ checkedProgress })
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        FloatingActionButtonMenuItem(
+                            onClick = { 
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                fabMenuExpanded = false
+                                showCardioDialog = true
+                            },
+                            icon = { Icon(Icons.AutoMirrored.Rounded.DirectionsRun, contentDescription = null) },
+                            text = { Text(text = stringResource(R.string.add_cardio)) }
+                        )
+                        FloatingActionButtonMenuItem(
+                            onClick = { 
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                fabMenuExpanded = false
+                                showAddWorkoutSheet = true
+                            },
+                            icon = { Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = null) },
+                            text = { Text(text = stringResource(R.string.add_workout)) }
+                        )
+                    }
+                }
+            }
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -160,7 +285,7 @@ fun HistoryScreen(
                                 stringResource(R.string.history_title)
                             },
                             style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
-                            color = OnSurface,
+                            color = onSurfaceColor,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-1).sp
                         )
@@ -177,24 +302,34 @@ fun HistoryScreen(
                                             val sessionId = uiState.selectedSessionIds.first()
                                             sessionToEdit = uiState.sessions.find { it.session.id == sessionId }
                                         },
-                                        containerColor = SurfaceContainerHigh,
-                                        contentColor = Primary
+                                        containerColor = surfaceContainerHighColor,
+                                        contentColor = primaryColor
                                     )
                                 }
                                 GymIconButton(
                                     icon = Icons.Rounded.DeleteSweep,
                                     onClick = { showBulkDeleteDialog = true },
-                                    containerColor = SurfaceContainerHigh,
-                                    contentColor = Error
+                                    containerColor = surfaceContainerHighColor,
+                                    contentColor = errorColor
                                 )
                             }
                             GymIconButton(
                                 icon = Icons.Rounded.Close,
                                 onClick = { viewModel.clearSelection() },
-                                containerColor = SurfaceContainerHigh
+                                containerColor = surfaceContainerHighColor
                             )
                         }
-                    } else null,
+                    } else {
+                        {
+                            val hasActiveFilters = uiState.selectedPlanId != null || uiState.startDate != null || uiState.endDate != null
+                            GymIconButton(
+                                icon = if (hasActiveFilters) Icons.Rounded.FilterListOff else Icons.Rounded.FilterList,
+                                onClick = { showFilterSheet = true },
+                                containerColor = if (hasActiveFilters) primaryColor.copy(alpha = 0.1f) else surfaceContainerHighColor,
+                                contentColor = if (hasActiveFilters) primaryColor else onSurfaceColor
+                            )
+                        }
+                    },
                     titleInRow = uiState.isSelectionMode
                 )
 
@@ -209,16 +344,29 @@ fun HistoryScreen(
                         description = stringResource(R.string.no_history_description_screen),
                         modifier = Modifier.weight(1f)
                     )
+                } else if (uiState.filteredSessions.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Rounded.FilterListOff,
+                        title = stringResource(R.string.no_results_filters),
+                        description = stringResource(R.string.try_adjust_filters),
+                        action = {
+                            GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
+                                Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                 } else {
                     LazyColumn(
+                        state = listState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 
-                    itemsIndexed(uiState.sessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
+                    itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
                         val session = sessionDetails.session
-                        val planName = sessionDetails.plan.nome
+                        val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
                         val isExpanded = expandedSessionId == session.id
 
                         val dismissState = rememberSwipeToDismissBoxState()
@@ -385,8 +533,8 @@ fun HistoryScreen(
                             viewModel.deleteSelectedSessions()
                             showBulkDeleteDialog = false
                         },
-                        containerColor = Error.copy(alpha = 0.1f),
-                        contentColor = Error
+                        containerColor = errorColor.copy(alpha = 0.1f),
+                        contentColor = errorColor
                     ) {
                         Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
                     }
@@ -395,14 +543,14 @@ fun HistoryScreen(
                     GymButton(
                         onClick = { showBulkDeleteDialog = false },
                         containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant
+                        contentColor = onSurfaceVariantColor
                     ) {
                         Text(stringResource(R.string.cancel).uppercase())
                     }
                 },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
+                containerColor = surfaceContainerHighColor,
+                titleContentColor = onSurfaceColor,
+                textContentColor = onSurfaceVariantColor
             )
         }
 
@@ -417,8 +565,8 @@ fun HistoryScreen(
                             sessionToDelete?.let { viewModel.deleteSession(it.id) }
                             sessionToDelete = null
                         },
-                        containerColor = Error.copy(alpha = 0.1f),
-                        contentColor = Error
+                        containerColor = errorColor.copy(alpha = 0.1f),
+                        contentColor = errorColor
                     ) {
                         Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
                     }
@@ -427,57 +575,348 @@ fun HistoryScreen(
                     GymButton(
                         onClick = { sessionToDelete = null },
                         containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant
+                        contentColor = onSurfaceVariantColor
                     ) {
                         Text(stringResource(R.string.cancel).uppercase())
                     }
                 },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
+                containerColor = surfaceContainerHighColor,
+                titleContentColor = onSurfaceColor,
+                textContentColor = onSurfaceVariantColor
+            )
+        }
+
+        if (sessionToEdit != null) {
+            AlertDialog(
+                onDismissRequest = { 
+                    sessionToEdit = null
+                },
+                title = { Text(stringResource(R.string.edit_session)) },
+                text = { Text(stringResource(R.string.edit_session_message)) },
+                confirmButton = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                        modifier = Modifier.padding(bottom = Spacing.small)
+                    ) {
+                        GymButton(
+                            onClick = { sessionToEdit = null },
+                            containerColor = surfaceContainerHighColor,
+                            contentColor = onSurfaceVariantColor
+                        ) {
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        }
+                        GymButton(
+                            onClick = {
+                                sessionToEdit?.let { details ->
+                                    isNavigating = true
+                                    navController?.navigate(EditWorkoutSession(sessionId = details.session.id))
+                                }
+                                sessionToEdit = null
+                            },
+                            containerColor = primaryColor.copy(alpha = 0.15f),
+                            contentColor = primaryColor
+                        ) {
+                            Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                dismissButton = {},
+                containerColor = surfaceContainerHighColor,
+                titleContentColor = onSurfaceColor,
+                textContentColor = onSurfaceVariantColor
+            )
+        }
+
+        if (showFilterSheet) {
+            HistoryFilterBottomSheet(
+                selectedPlanId = uiState.selectedPlanId,
+                availablePlans = uiState.availablePlans,
+                startDate = uiState.startDate,
+                endDate = uiState.endDate,
+                onPlanSelected = { planId ->
+                    viewModel.setFilters(planId, uiState.startDate, uiState.endDate)
+                },
+                onDateRangeSelected = { start, end ->
+                    viewModel.setFilters(uiState.selectedPlanId, start, end)
+                },
+                onDateClick = { showDatePicker = true },
+                onClearDate = {
+                    viewModel.setFilters(uiState.selectedPlanId, null, null)
+                },
+                onClearAll = {
+                    viewModel.setFilters(null, null, null)
+                },
+                onDismiss = { showFilterSheet = false }
+            )
+        }
+        if (showDatePicker) {
+
+        val dateRangePickerState = rememberDateRangePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        val start = dateRangePickerState.selectedStartDateMillis
+                        val end = dateRangePickerState.selectedEndDateMillis
+                        if (start != null && end != null) {
+                            viewModel.setFilters(uiState.selectedPlanId, start, end)
+                        }
+                        showDatePicker = false
+                    },
+                    enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null
+                ) {
+                    Text(stringResource(R.string.apply_filters).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showDatePicker = false },
+                    containerColor = Color.Transparent,
+                    contentColor = onSurfaceVariantColor
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = surfaceContainerHighColor
+            )
+        ) {
+            DateRangePicker(
+                state = dateRangePickerState,
+                modifier = Modifier.height(500.dp),
+                title = {
+                    Text(
+                        text = stringResource(R.string.select_date_range),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
+                headline = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (dateRangePickerState.selectedStartDateMillis != null) {
+                                DateFormatter.formatShort(dateRangePickerState.selectedStartDateMillis!!)
+                            } else "Start",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Text("-", style = MaterialTheme.typography.headlineSmall)
+                        Text(
+                            text = if (dateRangePickerState.selectedEndDateMillis != null) {
+                                DateFormatter.formatShort(dateRangePickerState.selectedEndDateMillis!!)
+                            } else "End",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = surfaceContainerHighColor,
+                    selectedDayContainerColor = primaryColor,
+                    todayDateBorderColor = primaryColor,
+                    dayInSelectionRangeContainerColor = primaryColor.copy(alpha = 0.1f)
+                )
             )
         }
     }
 
-    if (sessionToEdit != null) {
-        AlertDialog(
-            onDismissRequest = { 
-                sessionToEdit = null
-            },
-            title = { Text(stringResource(R.string.edit_session)) },
-            text = { Text(stringResource(R.string.edit_session_message)) },
-            confirmButton = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                    modifier = Modifier.padding(bottom = Spacing.small)
+    if (showAddWorkoutSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddWorkoutSheet = false },
+            sheetState = bottomSheetState,
+            containerColor = surfaceColor,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(CircleShape)
+                        .background(OnSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+        ) {
+            AddWorkoutFromPlanContent(
+                plans = uiState.availablePlans,
+                onPlanSelected = { planId ->
+                    viewModel.addManualWorkout(planId)
+                    showAddWorkoutSheet = false
+                },
+                onEmptyWorkoutClick = {
+                    viewModel.addEmptyWorkout()
+                    showAddWorkoutSheet = false
+                }
+            )
+        }
+    }
+
+    if (showCardioDialog) {
+        AddCardioDialog(
+            onDismiss = { showCardioDialog = false },
+            onConfirm = { categoria, distanza, durataSecondi ->
+                viewModel.saveCardioWorkout(categoria, distanza, durataSecondi)
+                showCardioDialog = false
+            }
+        )
+    }
+}
+}
+
+// AddCardioDialog was moved to CardioInputForm.kt as a reusable component
+
+@Composable
+fun AddWorkoutFromPlanContent(
+    plans: List<WorkoutPlanEntity>,
+    onPlanSelected: (Int) -> Unit,
+    onEmptyWorkoutClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.add_workout),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Black,
+            color = OnSurface
+        )
+        
+        Text(
+            text = stringResource(R.string.select_plan_to_add),
+            style = MaterialTheme.typography.bodyMedium,
+            color = OnSurfaceVariant
+        )
+        
+        val filteredPlans = remember(plans) { 
+            plans.filter { it.note != "SYSTEM_PLAN" } 
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                GymCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onEmptyWorkoutClick() }
                 ) {
-                    GymButton(
-                        onClick = { sessionToEdit = null },
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurfaceVariant
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
-                    }
-                    GymButton(
-                        onClick = {
-                            sessionToEdit?.let { details ->
-                                isNavigating = true
-                                navController?.navigate(EditWorkoutSession(sessionId = details.session.id))
-                            }
-                            sessionToEdit = null
-                        },
-                        containerColor = Primary.copy(alpha = 0.15f),
-                        contentColor = Primary
-                    ) {
-                        Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.AddBox,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.add_empty_workout),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                            Text(
+                                text = stringResource(R.string.custom_workout),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
                     }
                 }
-            },
-            dismissButton = {},
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
+            }
+
+            items(filteredPlans) { plan ->
+                GymCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onPlanSelected(plan.id) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (plan.imageUri != null) {
+                                val context = LocalContext.current
+                                val model = remember(plan.imageUri) {
+                                    UriMigrationHelper.fixPath(plan.imageUri, context) ?: plan.imageUri
+                                }
+                                AsyncImage(
+                                    model = model,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.Notes,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = plan.nome,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                            if (!plan.note.isNullOrBlank()) {
+                                Text(
+                                    text = plan.note,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        
+                        Icon(
+                            Icons.Rounded.ChevronRight,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -512,6 +951,7 @@ fun SessionHistoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val mainIcon = if (planName == "Cardio") Icons.AutoMirrored.Rounded.DirectionsRun else Icons.Rounded.FitnessCenter
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -520,7 +960,7 @@ fun SessionHistoryCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.FitnessCenter,
+                            imageVector = mainIcon,
                             contentDescription = null,
                             tint = Primary,
                             modifier = Modifier.size(24.dp)
@@ -535,7 +975,11 @@ fun SessionHistoryCard(
                             color = OnSurface
                         )
                         Text(
-                            text = planName,
+                            text = when (planName) {
+                                "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                                "Custom Workout" -> stringResource(R.string.custom_workout)
+                                else -> planName
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = Primary,
                             fontWeight = FontWeight.Bold
@@ -599,7 +1043,7 @@ fun SessionHistoryCard(
                         Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                             GymLoadingIndicator(size = 24.dp)
                         }
-                    } else if (details.sets.isEmpty()) {
+                    } else if (details.sets.isEmpty() && details.cardio.isEmpty()) {
                         Text(stringResource(R.string.no_exercises_in_session_detail), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
                     } else {
                         val sortedSets = details.sets.sortedWith(
@@ -670,6 +1114,51 @@ fun SessionHistoryCard(
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+
+                        details.cardio.forEach { cardio ->
+                            val icon = when (cardio.categoria.lowercase()) {
+                                "corsa", "run" -> Icons.AutoMirrored.Rounded.DirectionsRun
+                                "bici", "bike", "cycling" -> Icons.AutoMirrored.Rounded.DirectionsBike
+                                "camminata", "walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
+                                else -> Icons.AutoMirrored.Rounded.DirectionsRun
+                            }
+                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = cardio.categoria.uppercase(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Primary,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "${cardio.distanza} km",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OnSurface
+                                    )
+                                    Text(
+                                        text = run {
+                                            val h = cardio.durataSecondi / 3600
+                                            val m = (cardio.durataSecondi % 3600) / 60
+                                            val s = cardio.durataSecondi % 60
+                                            if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = OnSurfaceVariant
+                                    )
                                 }
                             }
                         }
@@ -782,7 +1271,7 @@ fun EditSetDialog(
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
                             repsEffettive = reps.toIntOrNull() ?: 0,
-                            note = if (note.isBlank()) null else note
+                            note = note.ifBlank { null }
                         )
                         onConfirm(updatedSet)
                     },

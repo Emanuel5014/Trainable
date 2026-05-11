@@ -32,6 +32,9 @@ fun MainPagerScreen(
                 onNavigateToSettings = { navController.navigate(Settings) },
                 onNavigateToWorkout = { planId, sessionId ->
                     navController.navigate(WorkoutExecution(planId = planId, sessionId = sessionId))
+                },
+                onNavigateToQuickWorkout = { name ->
+                    navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
                 }
             )
             1 -> RoutineListScreen(

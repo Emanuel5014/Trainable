@@ -1,10 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +54,7 @@ import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SetLogRow(
     setNumber: Int,
@@ -63,6 +66,8 @@ fun SetLogRow(
     onToggleComplete: () -> Unit,
     onNoteChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onEditValues: (() -> Unit)? = null,
     isActive: Boolean = false,
     weightUnit: String = "kg"
 ) {
@@ -103,12 +108,19 @@ fun SetLogRow(
                 } else Modifier
             )
             .background(backgroundColor)
+            .combinedClickable(
+                onClick = { 
+                    if (isActive) {
+                        if (onEditValues != null) onEditValues() else onToggleComplete()
+                    }
+                },
+                onLongClick = onLongClick
+            )
             .animateContentSize()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onToggleComplete() }
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

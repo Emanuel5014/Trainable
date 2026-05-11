@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -85,6 +86,12 @@ interface WorkoutDao {
         images.forEach { updatePlanImage(it) }
     }
 
+    @Query("SELECT image_uri FROM workout_plans WHERE image_uri IS NOT NULL")
+    suspend fun getAllPlanImages(): List<String>
+
+    @Query("SELECT image_uri FROM workout_plan_images")
+    suspend fun getAllMultiplePlanImages(): List<String>
+
     // --- Plan Exercises ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlanExercise(exercise: PlanExerciseEntity): Long
@@ -132,6 +139,9 @@ interface WorkoutDao {
     """)
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>>
 
+    @Query("SELECT * FROM workout_sessions WHERE plan_id = :planId AND is_finished = 1 ORDER BY timestamp DESC LIMIT 1")
+    fun getLastFinishedSessionForPlan(planId: Int): Flow<WorkoutSessionEntity?>
+
     @Query("UPDATE workout_sessions SET is_finished = 1 WHERE id = :sessionId")
     suspend fun setSessionFinished(sessionId: Int)
 
@@ -141,11 +151,17 @@ interface WorkoutDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSet(set: SetLogEntity): Long
     
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCardioLog(cardio: CardioLogEntity): Long
+    
     @Update
     suspend fun updateSet(set: SetLogEntity)
     
     @Delete
     suspend fun deleteSet(set: SetLogEntity)
+    
+    @Delete
+    suspend fun deleteCardioLog(cardio: CardioLogEntity)
     
     @Query("""
         SELECT * FROM set_logs 

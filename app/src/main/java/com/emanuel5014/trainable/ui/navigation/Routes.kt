@@ -24,7 +24,12 @@ object Onboarding
 object History
 
 @Serializable
-data class WorkoutExecution(val planId: Int? = null, val sessionId: Int? = null)
+data class WorkoutExecution(
+    val planId: Int? = null,
+    val sessionId: Int? = null,
+    val quickStart: Boolean = false,
+    val workoutName: String? = null
+)
 
 @Serializable
 data class RoutineDetail(val planId: Int)

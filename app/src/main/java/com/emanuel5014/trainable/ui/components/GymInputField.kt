@@ -19,29 +19,44 @@ fun GymInputField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
+    placeholder: String? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    containerColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Transparent,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
     readOnly: Boolean = false,
-    trailingIcon: @Composable (() -> Unit)? = null
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = keyboardOptions,
         singleLine = singleLine,
         readOnly = readOnly,
-        trailingIcon = trailingIcon,
+        enabled = enabled,
         shape = Shapes.large,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = OnSurface,
             unfocusedTextColor = OnSurface,
+            disabledTextColor = OnSurface,
             focusedBorderColor = Primary,
             unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
+            disabledBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
             focusedLabelColor = Primary,
             unfocusedLabelColor = OnSurfaceVariant,
-            cursorColor = Primary
+            disabledLabelColor = OnSurfaceVariant,
+            cursorColor = Primary,
+            focusedContainerColor = containerColor,
+            unfocusedContainerColor = containerColor,
+            disabledContainerColor = containerColor,
+            disabledLeadingIconColor = OnSurfaceVariant,
+            disabledTrailingIconColor = OnSurfaceVariant
         ),
         textStyle = MaterialTheme.typography.bodyLarge
     )
