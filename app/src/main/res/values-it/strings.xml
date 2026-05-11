@@ -301,6 +301,12 @@
     <string name="include_images_description">Vuoi includere le foto delle routine nel backup? Questo aumenterà la dimensione del file.</string>
     <string name="yes">SÌ</string>
     <string name="no">NO</string>
+    <string name="quick_workout">Allenamento Veloce</string>
+    <string name="quick_workout_name_hint">Nome Allenamento (opzionale)</string>
+    <string name="add_set">AGGIUNGI SERIE</string>
+    <string name="remove_set">RIMUOVI SERIE</string>
+    <string name="add_exercise_to_workout">AGGIUNGI ESERCIZIO</string>
+    <string name="rename_workout">Rinomina Allenamento</string>
     <string name="gym_membership">Abbonamento Palestra</string>
     <string name="valid_thru">Scade il</string>
     <string name="expired">Scaduto</string>

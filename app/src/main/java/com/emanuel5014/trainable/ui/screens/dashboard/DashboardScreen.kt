@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
@@ -99,12 +100,57 @@ import java.util.concurrent.TimeUnit
 fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToWorkout: (planId: Int?, sessionId: Int?) -> Unit,
+    onNavigateToQuickWorkout: (name: String?) -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionWithPlanName?>(null) }
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
+    var showQuickWorkoutDialog by remember { mutableStateOf(false) }
+    var quickWorkoutName by remember { mutableStateOf("") }
+
+    if (showQuickWorkoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showQuickWorkoutDialog = false },
+            title = { Text(stringResource(R.string.quick_workout)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.emanuel5014.trainable.ui.components.GymInputField(
+                        value = quickWorkoutName,
+                        onValueChange = { quickWorkoutName = it },
+                        label = stringResource(R.string.quick_workout_name_hint),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        onNavigateToQuickWorkout(quickWorkoutName.takeIf { it.isNotBlank() })
+                        showQuickWorkoutDialog = false
+                        quickWorkoutName = ""
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showQuickWorkoutDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
@@ -200,37 +246,40 @@ fun DashboardScreen(
         )
     }
 
-    Scaffold(
-        containerColor = Surface,
-        floatingActionButton = {
-            val planToStart = uiState.todayPlan ?: uiState.suggestedPlan
-            if (planToStart != null) {
-                ExtendedFloatingActionButton(
-                    onClick = { onNavigateToWorkout(planToStart.id, null) },
-                    containerColor = Primary,
-                    contentColor = OnPrimary,
-                    shape = Shapes.large,
-                    modifier = Modifier.padding(bottom = 80.dp)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.start))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.start), fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    ) { paddingValues ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 GymLoadingIndicator()
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(Spacing.CardPadding),
-                verticalArrangement = Arrangement.spacedBy(Spacing.doubleLarge)
-            ) {
+            Scaffold(
+                containerColor = Surface,
+                floatingActionButton = {
+                    ExtendedFloatingActionButton(
+                        onClick = { showQuickWorkoutDialog = true },
+                        containerColor = Primary,
+                        contentColor = OnPrimary,
+                        shape = Shapes.large,
+                        modifier = Modifier.padding(bottom = 80.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Bolt,
+                            contentDescription = stringResource(R.string.quick_workout)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.quick_workout),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            ) { paddingValues ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(Spacing.CardPadding),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.doubleLarge)
+                ) {
                 item {
                     DashboardSimpleHeader(
                         onSettingsClick = onNavigateToSettings,

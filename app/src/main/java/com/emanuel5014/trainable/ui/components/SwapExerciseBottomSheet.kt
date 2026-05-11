@@ -45,10 +45,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.dataStore
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.map
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,12 +81,13 @@ fun SwapExerciseBottomSheet(
     currentReps: String,
     availableExercises: List<ExerciseEntity>,
     languageCode: String,
-    onExerciseSelected: (ExerciseEntity, Int, String) -> Unit,
+    onExerciseSelected: (ExerciseEntity, Int, String, Int?) -> Unit,
     onAddCustomExercise: (String, String) -> Unit,
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isAdding: Boolean = false
 ) {
     var step by remember { mutableStateOf(1) }
     var selectedExercise by remember { mutableStateOf<ExerciseEntity?>(null) }
@@ -138,13 +143,13 @@ fun SwapExerciseBottomSheet(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                         Text(
-                            text = stringResource(R.string.swap_exercise),
+                            text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
                             style = MaterialTheme.typography.labelMedium,
                             color = Primary,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = stringResource(R.string.swap_exercise_message),
+                            text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
                             style = MaterialTheme.typography.headlineMedium,
                             color = OnSurface,
                             fontWeight = FontWeight.ExtraBold
@@ -248,12 +253,13 @@ fun SwapExerciseBottomSheet(
                     languageCode = languageCode,
                     initialSets = setsText,
                     initialReps = repsText,
-                    onConfirm = { sets, reps ->
-                        onExerciseSelected(selectedExercise!!, sets, reps)
+                    onConfirm = { sets, reps, rest ->
+                        onExerciseSelected(selectedExercise!!, sets, reps, rest)
                         onDismiss()
                     },
                     onBack = { step = 1 },
-                    onDismiss = onDismiss
+                    onDismiss = onDismiss,
+                    isAdding = isAdding
                 )
             }
         }
@@ -621,19 +627,29 @@ private fun SwapExerciseConfigDialog(
     languageCode: String,
     initialSets: String,
     initialReps: String,
-    onConfirm: (Int, String) -> Unit,
+    onConfirm: (Int, String, Int?) -> Unit,
     onBack: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isAdding: Boolean = false
 ) {
     var setsText by remember { mutableStateOf(initialSets) }
     var repsText by remember { mutableStateOf(initialReps) }
+    var restText by remember { mutableStateOf("120") }
+    
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { preferences ->
+            preferences[UserPreferencesRepository.HAPTIC_ENABLED] ?: true
+        }
+    }.collectAsState(initial = true)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Surface,
         title = {
             Text(
-                text = stringResource(R.string.swap_exercise),
+                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -647,7 +663,7 @@ private fun SwapExerciseConfigDialog(
                 )
 
                 Text(
-                    text = "Configure the new exercise:",
+                    text = if (isAdding) stringResource(R.string.exercise_details) else "Configure the new exercise:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
@@ -670,6 +686,14 @@ private fun SwapExerciseConfigDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
+
+                RestSlider(
+                    value = restText.toIntOrNull() ?: 120,
+                    onValueChange = { restText = it.toString() },
+                    hapticEnabled = hapticEnabled,
+                    haptic = haptic,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
@@ -677,7 +701,8 @@ private fun SwapExerciseConfigDialog(
                 onClick = {
                     val sets = setsText.trim().toIntOrNull() ?: return@TextButton
                     val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@TextButton
-                    onConfirm(sets, reps)
+                    val rest = restText.toIntOrNull()
+                    onConfirm(sets, reps, rest)
                 }
             ) {
                 Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.Bold)
@@ -689,4 +714,73 @@ private fun SwapExerciseConfigDialog(
             }
         }
     )
+}
+
+@Composable
+private fun RestSlider(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    hapticEnabled: Boolean,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    modifier: Modifier = Modifier
+) {
+    val steps = listOf(0, 30, 60, 90, 120, 180, 240, 300)
+    val currentIndex = remember(value) { steps.indexOf(value).coerceAtLeast(0) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.rest_seconds),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${value}s",
+                style = MaterialTheme.typography.titleMedium,
+                color = Primary,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = formatRestTime(value),
+                style = MaterialTheme.typography.labelSmall,
+                color = OnSurfaceVariant
+            )
+        }
+        
+        androidx.compose.material3.Slider(
+            value = currentIndex.toFloat(),
+            onValueChange = { rawValue ->
+                val index = kotlin.math.round(rawValue).toInt()
+                val clampedIndex = index.coerceIn(0, steps.size - 1)
+                if (clampedIndex != currentIndex) {
+                    if (hapticEnabled) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    onValueChange(steps[clampedIndex])
+                }
+            },
+            valueRange = 0f..(steps.size - 1).toFloat(),
+            steps = steps.size - 2,
+            colors = androidx.compose.material3.SliderDefaults.colors(
+                thumbColor = Primary,
+                activeTrackColor = Primary,
+                inactiveTrackColor = SurfaceContainerHighest
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun formatRestTime(seconds: Int): String {
+    val minutes = seconds / 60
+    val secs = seconds % 60
+    return when {
+        minutes == 0 -> "${secs}s"
+        secs == 0 -> "${minutes}m"
+        else -> "${minutes}m ${secs}s"
+    }
 }

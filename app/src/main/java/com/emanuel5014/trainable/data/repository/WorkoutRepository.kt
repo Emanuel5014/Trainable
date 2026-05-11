@@ -214,8 +214,33 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun deletePlan(plan: WorkoutPlanEntity) = workoutDao.deletePlan(plan)
     
-    suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false): Long {
-        return workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished))
+    suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false, note: String? = null): Long {
+        return workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished, noteSessione = note))
+    }
+
+    suspend fun startQuickWorkoutSession(name: String? = null): Long {
+        val user = userDao.getUser().first() ?: return -1
+        val allPlans = workoutDao.getAllPlans().first()
+        val quickWorkoutPlan = allPlans.find { it.nome == "Quick Workout" && it.note == "SYSTEM_PLAN" }
+            ?: allPlans.find { it.nome == "Allenamento Veloce" && it.note == "SYSTEM_PLAN" }
+            ?: run {
+                val newId = workoutDao.insertPlan(
+                    WorkoutPlanEntity(
+                        userId = user.id,
+                        nome = "Quick Workout",
+                        note = "SYSTEM_PLAN",
+                        dataInizio = System.currentTimeMillis(),
+                        isActive = false
+                    )
+                )
+                workoutDao.getAllPlans().first().find { it.id == newId.toInt() }!!
+            }
+        
+        return startSession(
+            planId = quickWorkoutPlan.id,
+            timestamp = System.currentTimeMillis(),
+            note = name
+        )
     }
     
     fun getSessionWithSets(sessionId: Int): Flow<SessionWithSets?> = workoutDao.getSessionWithSets(sessionId)

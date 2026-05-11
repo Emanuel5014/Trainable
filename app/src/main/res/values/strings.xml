@@ -301,6 +301,12 @@
     <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
+    <string name="quick_workout">Quick Workout</string>
+    <string name="quick_workout_name_hint">Workout Name (optional)</string>
+    <string name="add_set">ADD SET</string>
+    <string name="remove_set">REMOVE SET</string>
+    <string name="add_exercise_to_workout">ADD EXERCISE</string>
+    <string name="rename_workout">Rename Workout</string>
     <string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string>
     <string name="expired">Expired</string>
     <string name="expires_in_days">Expires in %d days</string>

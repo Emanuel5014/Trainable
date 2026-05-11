@@ -195,7 +195,7 @@ class EditWorkoutViewModel @Inject constructor(
             val exerciseState = _state.value.exercises.find { it.exercise.id == exerciseId }
             val nextSerie = (exerciseState?.sets?.maxOfOrNull { it.numeroSerie } ?: 0) + 1
             val lastWeight = exerciseState?.sets?.lastOrNull()?.pesoSollevato ?: 0f
-            val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 10
+            val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 8
             val exerciseOrder = exerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
 
             val newSet = SetLogEntity(
@@ -312,7 +312,7 @@ class EditWorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exerciseId = exerciseId,
                 pesoSollevato = 0f,
-                repsEffettive = 10,
+                repsEffettive = 8,
                 numeroSerie = 1,
                 ordineEsercizio = nextOrder
             )
