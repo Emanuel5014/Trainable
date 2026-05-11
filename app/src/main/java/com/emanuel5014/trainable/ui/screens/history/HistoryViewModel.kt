@@ -135,6 +135,15 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
+    fun addEmptyWorkout() {
+        viewModelScope.launch {
+            val sessionId = repository.createEmptyManualSession(System.currentTimeMillis())
+            if (sessionId != -1L) {
+                _navigationEvent.emit(sessionId.toInt())
+            }
+        }
+    }
+
     fun saveCardioWorkout(categoria: String, distanza: Float, durataSecondi: Int) {
         viewModelScope.launch {
             repository.saveCardioSession(categoria, distanza, durataSecondi, System.currentTimeMillis())

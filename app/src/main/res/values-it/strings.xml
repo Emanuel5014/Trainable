@@ -400,6 +400,8 @@
     <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
     <string name="add_cardio">Aggiungi Cardio</string>
     <string name="add_workout">Aggiungi Allenamento</string>
+    <string name="add_empty_workout">Aggiungi Allenamento Vuoto</string>
+    <string name="custom_workout">Allenamento Personalizzato</string>
     <string name="select_plan_to_add">Seleziona una scheda da aggiungere allo storico</string>
     <string name="distance">Distanza</string>
     <string name="cardio_run">Corsa</string>

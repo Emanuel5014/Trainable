@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AddBox
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
@@ -141,11 +142,12 @@ import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
-import androidx.compose.material.icons.rounded.Assignment
+import androidx.compose.material.icons.automirrored.rounded.Assignment
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -223,7 +225,7 @@ fun HistoryScreen(
             floatingActionButton = {
                 if (!uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
-                        modifier = Modifier.padding(bottom = 72.dp).zIndex(10f),
+                        modifier = Modifier.padding(bottom = 72.dp).offset(x = 12.dp).zIndex(10f),
                         expanded = fabMenuExpanded,
                         button = {
                             TooltipBox(
@@ -264,7 +266,7 @@ fun HistoryScreen(
                                 fabMenuExpanded = false
                                 showAddWorkoutSheet = true
                             },
-                            icon = { Icon(Icons.Rounded.Assignment, contentDescription = null) },
+                            icon = { Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = null) },
                             text = { Text(text = stringResource(R.string.add_workout)) }
                         )
                     }
@@ -745,6 +747,10 @@ fun HistoryScreen(
                 onPlanSelected = { planId ->
                     viewModel.addManualWorkout(planId)
                     showAddWorkoutSheet = false
+                },
+                onEmptyWorkoutClick = {
+                    viewModel.addEmptyWorkout()
+                    showAddWorkoutSheet = false
                 }
             )
         }
@@ -767,7 +773,8 @@ fun HistoryScreen(
 @Composable
 fun AddWorkoutFromPlanContent(
     plans: List<WorkoutPlanEntity>,
-    onPlanSelected: (Int) -> Unit
+    onPlanSelected: (Int) -> Unit,
+    onEmptyWorkoutClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -790,13 +797,62 @@ fun AddWorkoutFromPlanContent(
         )
         
         val filteredPlans = remember(plans) { 
-            plans.filter { it.nome.lowercase() != "cardio" } 
+            plans.filter { 
+                val nameLower = it.nome.lowercase()
+                nameLower != "cardio" && nameLower != "custom workout"
+            } 
         }
 
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item {
+                GymCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onEmptyWorkoutClick() }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.AddBox,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.add_empty_workout),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                            Text(
+                                text = stringResource(R.string.custom_workout),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
             items(filteredPlans) { plan ->
                 GymCard(
                     modifier = Modifier
@@ -812,7 +868,7 @@ fun AddWorkoutFromPlanContent(
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(16.dp))
                                 .background(Primary.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
@@ -829,7 +885,7 @@ fun AddWorkoutFromPlanContent(
                                 )
                             } else {
                                 Icon(
-                                    Icons.Rounded.Assignment,
+                                    Icons.AutoMirrored.Rounded.Notes,
                                     contentDescription = null,
                                     tint = Primary,
                                     modifier = Modifier.size(24.dp)
@@ -924,7 +980,11 @@ fun SessionHistoryCard(
                             color = OnSurface
                         )
                         Text(
-                            text = planName,
+                            text = when (planName) {
+                                "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                                "Custom Workout" -> stringResource(R.string.custom_workout)
+                                else -> planName
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = Primary,
                             fontWeight = FontWeight.Bold
@@ -1216,7 +1276,7 @@ fun EditSetDialog(
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
                             repsEffettive = reps.toIntOrNull() ?: 0,
-                            note = if (note.isBlank()) null else note
+                            note = note.ifBlank { null }
                         )
                         onConfirm(updatedSet)
                     },

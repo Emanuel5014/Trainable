@@ -249,6 +249,12 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
+    fun deleteSession() {
+        viewModelScope.launch {
+            workoutRepository.deleteSession(sessionId)
+        }
+    }
+
     fun swapExercise(oldExerciseId: Int, newExerciseId: Int) {
         viewModelScope.launch {
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch

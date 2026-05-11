@@ -399,6 +399,8 @@
     <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
     <string name="add_cardio">Add Cardio Workout</string>
     <string name="add_workout">Add Workout</string>
+    <string name="add_empty_workout">Add Empty Workout</string>
+    <string name="custom_workout">Custom Workout</string>
     <string name="select_plan_to_add">Select a plan to add to history</string>
     <string name="distance">Distance</string>
     <string name="cardio_run">Run</string>

@@ -278,6 +278,32 @@ class WorkoutRepository @Inject constructor(
         )
     }
 
+    suspend fun createEmptyManualSession(timestamp: Long): Long {
+        val user = userDao.getUser().first() ?: return -1
+        val allPlans = workoutDao.getAllPlans().first()
+        val customPlan = allPlans.find { it.nome == "Custom Workout" }
+            ?: run {
+                val newId = workoutDao.insertPlan(
+                    WorkoutPlanEntity(
+                        userId = user.id,
+                        nome = "Custom Workout",
+                        dataInizio = System.currentTimeMillis(),
+                        isActive = false
+                    )
+                )
+                // Retrieve the inserted plan
+                workoutDao.getAllPlans().first().find { it.id == newId.toInt() }!!
+            }
+
+        return workoutDao.insertSession(
+            WorkoutSessionEntity(
+                planId = customPlan.id,
+                timestamp = timestamp,
+                isFinished = true
+            )
+        )
+    }
+
     suspend fun createManualSessionFromPlan(planId: Int, timestamp: Long): Long {
         val planDetails = workoutDao.getPlanWithDetails(planId).first() ?: return -1
         

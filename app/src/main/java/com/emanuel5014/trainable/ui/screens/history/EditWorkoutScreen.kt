@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
@@ -40,6 +42,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -77,14 +81,17 @@ import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import androidx.compose.ui.platform.LocalLocale
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,6 +108,7 @@ fun EditWorkoutScreen(
     var showDeleteExerciseDialog by remember { mutableStateOf<Int?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showAddCardio by remember { mutableStateOf(false) }
+    var showDeleteSessionDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -108,7 +116,11 @@ fun EditWorkoutScreen(
                 title = {
                     Column {
                         Text(
-                            text = state.planName,
+                            text = when (state.planName) {
+                                "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                                "Custom Workout" -> stringResource(R.string.custom_workout)
+                                else -> state.planName
+                            },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold
                         )
@@ -144,22 +156,33 @@ fun EditWorkoutScreen(
                 },
                 actions = {
                     GymIconButton(
-                        icon = Icons.Rounded.Add,
-                        onClick = { 
-                            if (state.planName.equals("Cardio", ignoreCase = true)) {
-                                showAddCardio = true 
-                            } else {
-                                exerciseToSwap = null
-                                showExercisePicker = true
-                            }
-                        },
-                        containerColor = Primary.copy(alpha = 0.1f),
-                        contentColor = Primary
+                        icon = Icons.Rounded.Delete,
+                        onClick = { showDeleteSessionDialog = true },
+                        containerColor = Error.copy(alpha = 0.1f),
+                        contentColor = Error
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface)
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { 
+                    if (state.planName.equals("Cardio", ignoreCase = true)) {
+                        showAddCardio = true 
+                    } else {
+                        exerciseToSwap = null
+                        showExercisePicker = true
+                    }
+                },
+                containerColor = Primary,
+                contentColor = OnPrimary,
+                shape = CircleShape,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(28.dp))
+            }
         },
         containerColor = Surface
     ) { paddingValues ->
@@ -336,6 +359,39 @@ fun EditWorkoutScreen(
             DatePicker(state = datePickerState)
         }
     }
+
+    if (showDeleteSessionDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteSessionDialog = false },
+            title = { Text(stringResource(R.string.delete_session)) },
+            text = { Text(stringResource(R.string.delete_session_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.deleteSession()
+                        showDeleteSessionDialog = false
+                        onNavigateBack()
+                    },
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showDeleteSessionDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 }
 
 @Composable
@@ -417,7 +473,7 @@ fun EditExerciseCard(
             
             GymButton(
                 onClick = onAddSet,
-                containerColor = Primary.copy(alpha = 0.05f),
+                containerColor = Primary.copy(alpha = 0.1f),
                 contentColor = Primary,
                 modifier = Modifier.fillMaxWidth().height(40.dp)
             ) {
