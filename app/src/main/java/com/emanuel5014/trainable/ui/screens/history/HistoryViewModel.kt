@@ -9,15 +9,15 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -70,7 +70,8 @@ class HistoryViewModel @Inject constructor(
     private fun loadPlans() {
         viewModelScope.launch {
             repository.getAllPlans().collect { plans ->
-                _uiState.update { it.copy(availablePlans = plans) }
+                val filtered = plans.filter { it.note != "SYSTEM_PLAN" }
+                _uiState.update { it.copy(availablePlans = filtered) }
             }
         }
     }

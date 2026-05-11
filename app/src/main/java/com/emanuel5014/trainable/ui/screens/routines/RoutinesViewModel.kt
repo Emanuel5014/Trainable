@@ -31,7 +31,18 @@ class RoutinesViewModel @Inject constructor(
         viewModelScope.launch {
             workoutRepository.getAllPlansWithDetails()
                 .collect { allPlans ->
-                    val (active, archived) = allPlans.partition { it.plan.isActive }
+                    // Auto-tag legacy system plans if they exist without the note
+                    allPlans.forEach { 
+                        if (it.plan.note == null && !it.plan.isActive && 
+                            (it.plan.nome == "Cardio" || it.plan.nome == "Custom Workout")) {
+                            viewModelScope.launch {
+                                workoutRepository.updatePlan(it.plan.copy(note = "SYSTEM_PLAN"))
+                            }
+                        }
+                    }
+
+                    val filteredPlans = allPlans.filter { it.plan.note != "SYSTEM_PLAN" }
+                    val (active, archived) = filteredPlans.partition { it.plan.isActive }
                     _uiState.update { it.copy(
                         plans = active,
                         archivedPlans = archived,
