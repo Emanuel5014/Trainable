@@ -115,6 +115,7 @@
     <string name="rest_end">REST TERMINATED</string>
     <string name="previous_exercise">Previous</string>
     <string name="next_exercise">Next</string>
+    <string name="next_exercise_wrk">Next Exercise</string>
     <string name="skip_rest">Skip</string>
     <string name="add_time">+30s</string>
     <string name="rest_timer">Rest Timer</string>
@@ -307,7 +308,8 @@
     <string name="remove_set">REMOVE SET</string>
     <string name="add_exercise_to_workout">ADD EXERCISE</string>
     <string name="rename_workout">Rename Workout</string>
-    <string name="gym_membership">Gym Membership</string><string name="valid_thru">Valid Thru</string>
+    <string name="gym_membership">Gym Membership</string>
+    <string name="valid_thru">Valid Thru</string>
     <string name="expired">Expired</string>
     <string name="expires_in_days">Expires in %d days</string>
     <string name="set_expiry_date">Set Expiry Date</string>

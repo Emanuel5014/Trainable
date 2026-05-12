@@ -115,6 +115,7 @@
     <string name="rest_end">RIPOSO TERMINATO</string>
     <string name="previous_exercise">Precedente</string>
     <string name="next_exercise">Successivo</string>
+    <string name="next_exercise_wrk">Esercizio Successivo</string>
     <string name="skip_rest">Salta</string>
     <string name="add_time">+30s</string>
     <string name="rest_timer">Timer Recupero</string>
