@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.util
 
 import android.app.LocaleManager
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -9,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -94,13 +96,16 @@ class AppLocaleManager @Inject constructor(
     suspend fun setUserLanguage(languageCode: String?) {
         userPreferencesRepository.setUserLanguage(languageCode)
         
+        val resolvedLang = if (languageCode == null || languageCode == LANGUAGE_SYSTEM) {
+            getSystemLanguage().takeIf { it in SUPPORTED_LANGUAGES } ?: "en"
+        } else {
+            languageCode
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val resolvedLang = if (languageCode == null || languageCode == LANGUAGE_SYSTEM) {
-                getSystemLanguage().takeIf { it in SUPPORTED_LANGUAGES } ?: "en"
-            } else {
-                languageCode
-            }
             applyLanguage(resolvedLang)
+        } else {
+            applyLanguageLegacy(context, resolvedLang)
         }
     }
 
@@ -111,11 +116,50 @@ class AppLocaleManager @Inject constructor(
         }
     }
 
-    suspend fun applyStoredLanguage() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val lang = getResolvedLanguage()
-            applyLanguage(lang)
+    @Suppress("DEPRECATION")
+    private fun applyLanguageLegacy(context: Context, languageCode: String) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        val resources = context.resources
+        val configuration = resources.configuration
+        configuration.setLocale(locale)
+        resources.updateConfiguration(configuration, resources.displayMetrics)
+        
+        // Also update application context
+        val appContext = context.applicationContext
+        if (appContext != null && appContext !== context) {
+            val appConfig = appContext.resources.configuration
+            appConfig.setLocale(locale)
+            appContext.resources.updateConfiguration(appConfig, appContext.resources.displayMetrics)
         }
+    }
+
+    suspend fun applyStoredLanguage() {
+        val lang = getResolvedLanguage()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            applyLanguage(lang)
+        } else {
+            applyLanguageLegacy(context, lang)
+        }
+    }
+
+    fun wrapContext(context: Context): Context {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return context
+        
+        // This is a synchronous call but it's only called during context attachment
+        // and it's fast because it's local DataStore
+        val userLang = runBlocking { userPreferencesRepository.userLanguage.first() }
+        if (userLang == null || userLang == LANGUAGE_SYSTEM) {
+            return context
+        }
+
+        val locale = Locale(userLang)
+        Locale.setDefault(locale)
+
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+
+        return context.createConfigurationContext(config)
     }
 
     fun getString(id: Int): String {

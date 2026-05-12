@@ -42,12 +42,14 @@ import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingScreen
 import com.emanuel5014.trainable.ui.theme.GymTrackingTheme
+import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import java.util.Locale
 import javax.inject.Inject
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -60,14 +62,45 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var workoutRepository: WorkoutRepository
 
+    @Inject
+    lateinit var localeManager: AppLocaleManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // For Android < 13, apply the stored language before setContent
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+            runBlocking {
+                localeManager.applyStoredLanguage()
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
+            val userLanguage by userPreferencesRepository.userLanguage.collectAsState(initial = "system")
             val dynamicColor by userPreferencesRepository.dynamicColor.collectAsState(initial = true)
 
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+
+            val locale = remember(userLanguage) {
+                if (userLanguage == null || userLanguage == "system") {
+                    Locale.getDefault()
+                } else {
+                    Locale(userLanguage!!)
+                }
+            }
+
+            LaunchedEffect(locale) {
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+                    configuration.setLocale(locale)
+                    context.resources.updateConfiguration(configuration, context.resources.displayMetrics)
+                }
+            }
+
             var showUpdateDialog by remember { mutableStateOf(false) }
+
             var latestRelease by remember { mutableStateOf<GitHubRelease?>(null) }
             var isDownloading by remember { mutableStateOf(false) }
             var downloadProgress by remember { mutableFloatStateOf(0f) }

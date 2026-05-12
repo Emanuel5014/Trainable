@@ -25,10 +25,8 @@ class GymTrackingApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            applicationScope.launch {
-                localeManager.applyStoredLanguage()
-            }
+        applicationScope.launch {
+            localeManager.applyStoredLanguage()
         }
     }
 
