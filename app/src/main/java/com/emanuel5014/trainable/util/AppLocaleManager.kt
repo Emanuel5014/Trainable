@@ -118,7 +118,7 @@ class AppLocaleManager @Inject constructor(
 
     @Suppress("DEPRECATION")
     private fun applyLanguageLegacy(context: Context, languageCode: String) {
-        val locale = Locale(languageCode)
+        val locale = Locale.forLanguageTag(languageCode)
         Locale.setDefault(locale)
         val resources = context.resources
         val configuration = resources.configuration
@@ -153,7 +153,7 @@ class AppLocaleManager @Inject constructor(
             return context
         }
 
-        val locale = Locale(userLang)
+        val locale = Locale.forLanguageTag(userLang)
         Locale.setDefault(locale)
 
         val config = Configuration(context.resources.configuration)

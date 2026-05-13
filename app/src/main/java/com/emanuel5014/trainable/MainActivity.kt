@@ -88,13 +88,14 @@ class MainActivity : ComponentActivity() {
                 if (userLanguage == null || userLanguage == "system") {
                     Locale.getDefault()
                 } else {
-                    Locale(userLanguage!!)
+                    Locale.forLanguageTag(userLanguage!!)
                 }
             }
 
             LaunchedEffect(locale) {
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
                     configuration.setLocale(locale)
+                    @Suppress("DEPRECATION")
                     context.resources.updateConfiguration(configuration, context.resources.displayMetrics)
                 }
             }
