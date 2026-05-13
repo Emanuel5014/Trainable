@@ -380,7 +380,6 @@ fun RoutineDetailScreen(
                                     scaleX = if (isDragging) 1.02f else 1f
                                     scaleY = if (isDragging) 1.02f else 1f
                                     shadowElevation = elevation.toPx()
-                                    shadowElevation = elevation.toPx()
                                     shape = RoundedCornerShape(28.dp)
                                     clip = isDragging
                                 }

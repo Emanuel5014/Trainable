@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -255,6 +256,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.include_images), color = OnSurface)
+                        Spacer(modifier = Modifier.width(16.dp))
                         SettingsSwitch(
                             checked = tempIncludeImages,
                             onCheckedChange = { tempIncludeImages = it }
@@ -609,6 +611,7 @@ fun SettingsScreen(
                                     Text(stringResource(R.string.tactile_feedback_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
                                 checked = hapticEnabled,
                                 onCheckedChange = { viewModel.setHapticEnabled(it) }
@@ -716,6 +719,7 @@ fun SettingsScreen(
                                     Text(stringResource(R.string.floating_nav_bar_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
                                 checked = floatingNavBar,
                                 onCheckedChange = { viewModel.setFloatingNavBar(it) }
@@ -737,6 +741,7 @@ fun SettingsScreen(
                                     Text(stringResource(R.string.dynamic_color_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
                                 checked = dynamicColor,
                                 onCheckedChange = { viewModel.setDynamicColor(it) }
@@ -763,6 +768,7 @@ fun SettingsScreen(
                                     Text(stringResource(R.string.timer_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
                                 checked = timerNotificationsEnabled,
                                 onCheckedChange = { enabled ->
@@ -795,6 +801,7 @@ fun SettingsScreen(
                                     Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
                                 checked = swipeActionsEnabled,
                                 onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
@@ -929,7 +936,7 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Trainable v1.3.0",
+                                    text = "Trainable v1.3.1",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.Bold
@@ -951,12 +958,19 @@ fun SettingsScreen(
                                     }
                                 )
                             }
+                            Spacer(modifier = Modifier.width(16.dp))
                             GymButton(
                                 onClick = { viewModel.checkForUpdates() },
                                 containerColor = Primary.copy(alpha = 0.1f),
-                                contentColor = Primary
+                                contentColor = Primary,
+                                height = 56,
+                                contentPadding = PaddingValues(horizontal = 16.dp)
                             ) {
-                                Text(stringResource(R.string.check_for_updates), fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = stringResource(R.string.check_for_updates),
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
                             }
                         }
 
@@ -1068,7 +1082,8 @@ private fun SettingsSwitch(
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                    tint = Primary
                 )
             }
         } else {

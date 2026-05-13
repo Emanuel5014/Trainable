@@ -185,14 +185,12 @@ class WorkoutViewModel @Inject constructor(
         // Handle exercises already in the session (logged sets)
         val loggedExerciseIds = sessionWithSets.sets.map { it.exerciseId }.distinct()
         
-        // Merge plan exercises with any other exercises that might have been added manually
-        val allExerciseIds = (planExercises.map { it.exercise.id } + loggedExerciseIds).distinct()
-        
-        val exerciseStates = allExerciseIds.mapIndexed { index, exerciseId ->
-            val detail = planExercises.find { it.exercise.id == exerciseId }
-            val exercise = detail?.exercise ?: exerciseRepository.getAllExercises().firstOrNull()?.find { it.id == exerciseId } ?: return@mapIndexed null
+        val allAvailableExercises = _availableExercises.value.ifEmpty { 
+            exerciseRepository.getAllExercises().firstOrNull() ?: emptyList() 
+        }
 
-            val previousSets = workoutRepository.getLastSessionSetsForExercise(planId, exercise.id, detail?.planExercise?.serieTarget ?: 3).firstOrNull()
+        suspend fun createExerciseState(exercise: ExerciseEntity, planDetail: PlanExerciseEntity?): WorkoutExerciseState {
+            val previousSets = workoutRepository.getLastSessionSetsForExercise(planId, exercise.id, planDetail?.serieTarget ?: 3).firstOrNull()
             val prevPerfStr = if (!previousSets.isNullOrEmpty()) {
                 val bestSet = previousSets.maxByOrNull { it.pesoSollevato }
                 if (bestSet != null) "Last: ${bestSet.pesoSollevato}kg × ${bestSet.repsEffettive}" else null
@@ -201,9 +199,9 @@ class WorkoutViewModel @Inject constructor(
             // Load already completed sets for this session
             val loggedSets = sessionWithSets.sets.filter { it.exerciseId == exercise.id }
             
-            val targetSets = detail?.planExercise?.serieTarget ?: loggedSets.size.coerceAtLeast(3)
+            val targetSets = planDetail?.serieTarget ?: loggedSets.size.coerceAtLeast(3)
             val repsList = if (previousSets.isNullOrEmpty()) {
-                parseReps(detail?.planExercise?.repsTarget ?: "8", targetSets)
+                parseReps(planDetail?.repsTarget ?: "8", targetSets)
             } else {
                 previousSets.map { it.repsEffettive }
             }
@@ -231,14 +229,34 @@ class WorkoutViewModel @Inject constructor(
                 }
             }
 
-            WorkoutExerciseState(
+            return WorkoutExerciseState(
                 exercise = exercise,
-                planDetails = detail?.planExercise,
+                planDetails = planDetail,
                 sets = sets,
                 previousPerformance = prevPerfStr,
-                swappedExerciseId = detail?.planExercise?.id?.let { swapMap[it] }
+                swappedExerciseId = planDetail?.id?.let { swapMap[it] }
             )
-        }.filterNotNull()
+        }
+
+        val planExerciseStates = planExercises.map { detail ->
+            val swappedId = swapMap[detail.planExercise.id]
+            val exercise = if (swappedId != null) {
+                allAvailableExercises.find { it.id == swappedId } ?: detail.exercise
+            } else {
+                detail.exercise
+            }
+            createExerciseState(exercise, detail.planExercise)
+        }
+
+        val consumedExerciseIds = planExerciseStates.map { it.exercise.id }.toSet()
+        val extraExerciseIds = loggedExerciseIds.filter { it !in consumedExerciseIds }
+        
+        val extraExerciseStates = extraExerciseIds.mapNotNull { exerciseId ->
+            val exercise = allAvailableExercises.find { it.id == exerciseId } ?: return@mapNotNull null
+            createExerciseState(exercise, null)
+        }
+
+        val exerciseStates = planExerciseStates + extraExerciseStates
 
         // Find first unfinished exercise
         val activeIndex = exerciseStates.indexOfFirst { ex -> ex.sets.any { !it.isCompleted } }.coerceAtLeast(0)
