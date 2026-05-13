@@ -598,7 +598,7 @@ fun WorkoutExecutionScreen(
                     availableExercises = availableExercises,
                     languageCode = languageCode,
                     onExerciseSelected = { newExercise, sets, reps, rest ->
-                        viewModel.swapExercise(exState.exercise.id, newExercise.id, sets, reps)
+                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps)
                         showSwapExerciseSheet = false
                     },
                     onAddCustomExercise = { nome, categoria ->
