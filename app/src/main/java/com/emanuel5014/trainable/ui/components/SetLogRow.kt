@@ -110,8 +110,10 @@ fun SetLogRow(
             .background(backgroundColor)
             .combinedClickable(
                 onClick = { 
-                    if (isActive) {
-                        if (onEditValues != null) onEditValues() else onToggleComplete()
+                    if (isActive && onEditValues != null) {
+                        onEditValues()
+                    } else {
+                        onToggleComplete()
                     }
                 },
                 onLongClick = onLongClick
@@ -194,7 +196,8 @@ fun SetLogRow(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (isCompleted) Tertiary else SurfaceContainerHigh),
+                .background(if (isCompleted) Tertiary else SurfaceContainerHigh)
+                .clickable { onToggleComplete() },
             contentAlignment = Alignment.Center
         ) {
             if (isCompleted) {
