@@ -95,6 +95,7 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
@@ -270,12 +271,12 @@ fun RoutineDetailScreen(
                         images = details.images,
                         onImageAdd = { uri -> viewModel.addPlanImage(uri) },
                         onImageRemove = { image -> viewModel.removePlanImage(image) },
-                        modifier = Modifier.padding(horizontal = Spacing.CardPadding)
+                        modifier = Modifier.padding(horizontal = ResponsiveSize.cardPadding)
                     )
                 }
 
                 item {
-                    Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp, bottom = 8.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(top = 8.dp, bottom = 8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -479,7 +480,7 @@ fun RoutineDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.CardPadding)
+                    .padding(horizontal = ResponsiveSize.cardPadding)
                     .padding(top = Spacing.medium, bottom = Spacing.extreme)
                     .navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.large)

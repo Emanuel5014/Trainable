@@ -87,6 +87,7 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -156,7 +157,7 @@ fun AnalyticsScreen(
                             showChartPicker = true
                             fabMenuExpanded = false
                         },
-                        modifier = Modifier.padding(end = Spacing.CardPadding, top = Spacing.small)
+                        modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
                     )
                 }
 
@@ -333,7 +334,7 @@ fun ExerciseCarouselSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = Spacing.CardPadding, end = Spacing.CardPadding, bottom = Spacing.medium),
+                .padding(start = ResponsiveSize.cardPadding, end = ResponsiveSize.cardPadding, bottom = Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -386,7 +387,7 @@ fun ExerciseCarouselSection(
             Column(modifier = Modifier.fillMaxWidth()) {
                 HorizontalPager(
                     state = pagerState,
-                    contentPadding = PaddingValues(horizontal = Spacing.CardPadding),
+                    contentPadding = PaddingValues(horizontal = ResponsiveSize.horizontalPadding),
                     pageSpacing = Spacing.small,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -521,7 +522,7 @@ fun BodyWeightChartSection(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.CardPadding, vertical = Spacing.medium)
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
             .border(
                 width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
                 color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
@@ -640,7 +641,7 @@ fun ExerciseChartSection(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.CardPadding, vertical = Spacing.medium)
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
             .border(
                 width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
                 color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),

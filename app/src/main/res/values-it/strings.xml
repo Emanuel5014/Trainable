@@ -302,7 +302,7 @@
     <string name="include_images_description">Vuoi includere le foto delle routine nel backup? Questo aumenterà la dimensione del file.</string>
     <string name="yes">SÌ</string>
     <string name="no">NO</string>
-    <string name="quick_workout">Allenamento Veloce</string>
+    <string name="quick_workout">ALLENAMENTO VELOCE</string>
     <string name="quick_workout_name_hint">Nome Allenamento (opzionale)</string>
     <string name="add_set">AGGIUNGI SERIE</string>
     <string name="remove_set">RIMUOVI SERIE</string>
@@ -314,7 +314,7 @@
     <string name="expires_in_days">Scade in %d giorni</string>
     <string name="set_expiry_date">Imposta Scadenza</string>
     <string name="tap_to_set">Tocca per impostare</string>
-    <string name="analytics_subtitle">DETTAGLI PIANO ATTIVO</string>
+    <string name="analytics_subtitle">I TUOI PROGRESSI</string>
     <string name="analytics_max_progress">PROGRESSI MASSIMALI</string>
     <string name="analytics_select_exercises_desc">Seleziona gli esercizi per tracciare i tuoi massimali</string>
     <string name="analytics_choose_exercises">Scegli Esercizi</string>

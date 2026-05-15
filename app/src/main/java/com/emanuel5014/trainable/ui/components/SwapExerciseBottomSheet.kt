@@ -68,6 +68,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
@@ -138,12 +139,12 @@ fun SwapExerciseBottomSheet(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.CardPadding)
+                        .padding(horizontal = ResponsiveSize.cardPadding)
                         .padding(bottom = Spacing.extreme)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
-                        Text(
-                            text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                            Text(
+                                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
                             style = MaterialTheme.typography.labelMedium,
                             color = Primary,
                             fontWeight = FontWeight.ExtraBold

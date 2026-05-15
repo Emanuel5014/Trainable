@@ -88,6 +88,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -277,8 +278,8 @@ fun DashboardScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(Spacing.CardPadding),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.doubleLarge)
+                    contentPadding = PaddingValues(ResponsiveSize.cardPadding),
+                    verticalArrangement = Arrangement.spacedBy(if (ResponsiveSize.isCompact) Spacing.large else Spacing.doubleLarge)
                 ) {
                 item {
                     DashboardSimpleHeader(

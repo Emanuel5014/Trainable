@@ -111,6 +111,7 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -221,17 +222,19 @@ fun RoutineListScreen(
                         },
                         label = "title_anim"
                     ) { state ->
+                        val routineStyle = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall
+                        val responsiveFs = ResponsiveSize.responsiveFontSize(routineStyle.fontSize)
                         Text(
                             text = when (state) {
                                 -1 -> "${uiState.selectedPlanIds.size} ${stringResource(R.string.selected)}"
                                 0 -> stringResource(R.string.your_routines)
                                 else -> stringResource(R.string.archived_routines)
                             },
-                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
+                            style = routineStyle.copy(fontSize = responsiveFs),
                             color = OnSurface,
                             fontWeight = FontWeight.Black,
                             letterSpacing = (-1).sp,
-                            lineHeight = if (uiState.isSelectionMode) 32.sp else 40.sp,
+                            lineHeight = if (uiState.isSelectionMode) responsiveFs * 1.2f else responsiveFs * 1.1f,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -271,7 +274,7 @@ fun RoutineListScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = ResponsiveSize.horizontalPadding)
                     .clip(Shapes.large)
                     .background(SurfaceContainerHigh)
                     .padding(4.dp)
@@ -534,7 +537,7 @@ fun RoutineListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = ResponsiveSize.horizontalPadding)
                     .padding(bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -844,7 +847,7 @@ private fun RoutineListPage(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(24.dp),
+            contentPadding = PaddingValues(ResponsiveSize.horizontalPadding),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(localPlans, key = { _, planWithDetails -> planWithDetails.plan.id }) { index, planWithDetails ->

@@ -931,12 +931,12 @@ fun SettingsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Trainable v1.3.2",
+                                    text = "Trainable v1.4.0",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.ExtraBold
@@ -958,13 +958,13 @@ fun SettingsScreen(
                                     }
                                 )
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
                             GymButton(
                                 onClick = { viewModel.checkForUpdates() },
                                 containerColor = Primary.copy(alpha = 0.1f),
                                 contentColor = Primary,
                                 height = 56,
-                                contentPadding = PaddingValues(horizontal = 16.dp)
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
                                 Text(
                                     text = stringResource(R.string.check_for_updates),

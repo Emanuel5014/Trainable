@@ -19,11 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
 @Composable
@@ -35,17 +38,26 @@ fun ScreenHeader(
     actions: (@Composable RowScope.() -> Unit)? = null,
     modifier: Modifier = Modifier,
     titleInRow: Boolean = false,
-    titleStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.displaySmall
+    titleStyle: TextStyle = MaterialTheme.typography.displaySmall
 ) {
+    val fontSize = ResponsiveSize.responsiveFontSize(titleStyle.fontSize)
+    val lineHeight = when {
+        titleStyle.lineHeight.value.isNaN() || titleStyle.lineHeight.value == 0f ->
+            if (fontSize == titleStyle.fontSize) ResponsiveSize.screenHeaderLineHeightSp
+            else fontSize * 1.1f
+        else -> titleStyle.lineHeight
+    }
     ScreenHeader(
         titleContent = {
             Text(
                 text = title,
-                style = titleStyle,
+                style = titleStyle.copy(fontSize = fontSize),
                 color = OnSurface,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-1).sp,
-                lineHeight = 40.sp
+                lineHeight = lineHeight,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         },
         subtitle = subtitle,
@@ -67,10 +79,11 @@ fun ScreenHeader(
     modifier: Modifier = Modifier,
     titleInRow: Boolean = false
 ) {
+    val horizontalPad = ResponsiveSize.horizontalPadding
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = horizontalPad)
             .padding(top = if (navigationIcon != null || (actions != null && titleInRow)) 8.dp else 24.dp, bottom = 16.dp)
     ) {
         if (navigationIcon != null || (actions != null && titleInRow) || titleInRow) {
@@ -136,7 +149,9 @@ fun ScreenHeader(
                             style = MaterialTheme.typography.labelMedium,
                             color = Primary,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
+                            letterSpacing = 1.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     titleContent()

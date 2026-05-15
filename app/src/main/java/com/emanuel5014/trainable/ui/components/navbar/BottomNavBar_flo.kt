@@ -44,6 +44,7 @@ import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -69,8 +70,8 @@ fun BottomNavBarFlo(
 
     Surface(
         modifier = modifier
-            .padding(horizontal = 32.dp)
-            .padding(bottom = 32.dp),
+            .padding(horizontal = if (ResponsiveSize.isCompact) 16.dp else 32.dp)
+            .padding(bottom = if (ResponsiveSize.isCompact) 16.dp else 32.dp),
         shape = RoundedCornerShape(24.dp),
         color = SurfaceContainerHigh,
         tonalElevation = 0.dp,
@@ -83,6 +84,7 @@ fun BottomNavBarFlo(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val itemWidth = if (ResponsiveSize.isCompact) 52.dp else 64.dp
             localizedNavItems().forEachIndexed { index, item ->
                 val isSelected = isOnMainTabs && selectedIndex == index
                 
@@ -104,7 +106,7 @@ fun BottomNavBarFlo(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .width(64.dp)
+                        .width(itemWidth)
                         .clip(RoundedCornerShape(12.dp))
                         .background(
                             if (isSelected) Primary.copy(alpha = 0.1f) 

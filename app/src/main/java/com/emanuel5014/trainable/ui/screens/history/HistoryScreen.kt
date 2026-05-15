@@ -137,6 +137,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -278,16 +279,19 @@ fun HistoryScreen(
             ) {
                 ScreenHeader(
                     titleContent = {
+                        val historyStyle = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall
                         Text(
                             text = if (uiState.isSelectionMode) {
                                 "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
                             } else {
                                 stringResource(R.string.history_title)
                             },
-                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
+                            style = historyStyle.copy(fontSize = ResponsiveSize.responsiveFontSize(historyStyle.fontSize)),
                             color = onSurfaceColor,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = (-1).sp
+                            letterSpacing = (-1).sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     },
                     subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.workout_logs),
@@ -360,7 +364,7 @@ fun HistoryScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                        contentPadding = PaddingValues(horizontal = ResponsiveSize.horizontalPadding, vertical = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 

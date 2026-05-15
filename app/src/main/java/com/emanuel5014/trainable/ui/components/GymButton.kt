@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import kotlinx.coroutines.flow.map
 
@@ -38,8 +40,8 @@ fun GymButton(
     contentColor: Color = OnPrimary,
     shape: Shape = Shapes.large,
     enabled: Boolean = true,
-    height: Int = 56,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp),
+    height: Int = if (ResponsiveSize.isCompact) 48 else 56,
+    contentPadding: PaddingValues = PaddingValues(horizontal = if (ResponsiveSize.isCompact) 16.dp else 24.dp),
     content: @Composable RowScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -60,7 +62,7 @@ fun GymButton(
             }
             onClick()
         },
-        modifier = modifier.height(height.dp).scale(scale),
+        modifier = modifier.height(height.dp).scale(scale).widthIn(min = 0.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,

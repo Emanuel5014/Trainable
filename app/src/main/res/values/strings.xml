@@ -302,7 +302,7 @@
     <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
-    <string name="quick_workout">Quick Workout</string>
+    <string name="quick_workout">QUICK WORKOUT</string>
     <string name="quick_workout_name_hint">Workout Name (optional)</string>
     <string name="add_set">ADD SET</string>
     <string name="remove_set">REMOVE SET</string>
@@ -314,7 +314,7 @@
     <string name="expires_in_days">Expires in %d days</string>
     <string name="set_expiry_date">Set Expiry Date</string>
     <string name="tap_to_set">Tap to set</string>
-    <string name="analytics_subtitle">ACTIVE PLAN INSIGHTS</string>
+    <string name="analytics_subtitle">YOUR PROGRESS</string>
     <string name="analytics_max_progress">MAX PROGRESS</string>
     <string name="analytics_select_exercises_desc">Select exercises to track your personal bests</string>
     <string name="analytics_choose_exercises">Choose Exercises</string>
