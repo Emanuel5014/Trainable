@@ -110,8 +110,10 @@ fun SetLogRow(
             .background(backgroundColor)
             .combinedClickable(
                 onClick = { 
-                    if (isActive) {
-                        if (onEditValues != null) onEditValues() else onToggleComplete()
+                    if (isActive && onEditValues != null) {
+                        onEditValues()
+                    } else {
+                        onToggleComplete()
                     }
                 },
                 onLongClick = onLongClick
@@ -183,7 +185,11 @@ fun SetLogRow(
             Icon(
                 imageVector = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote,
                 contentDescription = "Edit Note",
-                tint = if (!note.isNullOrBlank()) Primary else OnSurfaceVariant.copy(alpha = 0.6f)
+                tint = when {
+                    isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
+                    !note.isNullOrBlank() -> Primary
+                    else -> OnSurfaceVariant.copy(alpha = 0.6f)
+                }
             )
         }
 
@@ -194,7 +200,8 @@ fun SetLogRow(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (isCompleted) Tertiary else SurfaceContainerHigh),
+                .background(if (isCompleted) Tertiary else SurfaceContainerHigh)
+                .clickable { onToggleComplete() },
             contentAlignment = Alignment.Center
         ) {
             if (isCompleted) {
