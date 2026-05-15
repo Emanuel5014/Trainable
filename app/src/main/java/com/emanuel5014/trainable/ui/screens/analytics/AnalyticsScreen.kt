@@ -139,7 +139,7 @@ fun AnalyticsScreen(
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
                         ScreenHeader(
-                            title = stringResource(R.string.nav_analytics),
+                            title = stringResource(R.string.analytics_title),
                             subtitle = stringResource(R.string.analytics_subtitle),
                             icon = Icons.Rounded.Insights
                         )

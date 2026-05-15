@@ -185,7 +185,11 @@ fun SetLogRow(
             Icon(
                 imageVector = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote,
                 contentDescription = "Edit Note",
-                tint = if (!note.isNullOrBlank()) Primary else OnSurfaceVariant.copy(alpha = 0.6f)
+                tint = when {
+                    isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
+                    !note.isNullOrBlank() -> Primary
+                    else -> OnSurfaceVariant.copy(alpha = 0.6f)
+                }
             )
         }
 
