@@ -38,7 +38,7 @@ fun UpdateDialog(
             Text(
                 text = stringResource(R.string.update_available),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -50,13 +50,13 @@ fun UpdateDialog(
                 Text(
                     text = stringResource(R.string.version, release.tagName),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.changelog),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 Text(
                     text = release.body,

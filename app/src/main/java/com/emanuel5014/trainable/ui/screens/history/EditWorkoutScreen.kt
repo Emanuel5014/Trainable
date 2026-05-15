@@ -117,7 +117,7 @@ fun EditWorkoutScreen(
                                 else -> state.planName
                             },
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -130,14 +130,14 @@ fun EditWorkoutScreen(
                                     .format(Date(state.sessionTimestamp)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Primary,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = " • " + stringResource(R.string.edit_date).uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -305,7 +305,7 @@ fun EditWorkoutScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -339,7 +339,7 @@ fun EditWorkoutScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold, color = Primary)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             },
             dismissButton = {
@@ -370,7 +370,7 @@ fun EditWorkoutScreen(
                     containerColor = Error.copy(alpha = 0.1f),
                     contentColor = Error
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -417,7 +417,7 @@ fun EditExerciseCard(
                         text = exerciseState.exercise.categoria.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
@@ -508,7 +508,7 @@ fun EditSetRow(
             Text(
                 text = set.numeroSerie.toString(),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = OnSurface
             )
         }
@@ -522,7 +522,7 @@ fun EditSetRow(
                     weightUnit
                 ) + " × ${set.repsEffettive}",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 color = OnSurface
             )
             if (!set.note.isNullOrBlank()) {
@@ -617,7 +617,7 @@ fun CardioEditCard(
                         Text(
                             text = "${cardioLog.distanza} km",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                         Text(
@@ -632,7 +632,7 @@ fun CardioEditCard(
                         Text(
                             text = durationText,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                     }
@@ -698,7 +698,7 @@ fun EditCardioDialog(
                 },
                 enabled = isValid
             ) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {

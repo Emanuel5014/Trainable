@@ -351,7 +351,7 @@ fun HistoryScreen(
                         description = stringResource(R.string.try_adjust_filters),
                         action = {
                             GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
-                                Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -536,7 +536,7 @@ fun HistoryScreen(
                         containerColor = errorColor.copy(alpha = 0.1f),
                         contentColor = errorColor
                     ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -568,7 +568,7 @@ fun HistoryScreen(
                         containerColor = errorColor.copy(alpha = 0.1f),
                         contentColor = errorColor
                     ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -603,7 +603,7 @@ fun HistoryScreen(
                             containerColor = surfaceContainerHighColor,
                             contentColor = onSurfaceVariantColor
                         ) {
-                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                         GymButton(
                             onClick = {
@@ -616,7 +616,7 @@ fun HistoryScreen(
                             containerColor = primaryColor.copy(alpha = 0.15f),
                             contentColor = primaryColor
                         ) {
-                            Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 },
@@ -666,7 +666,7 @@ fun HistoryScreen(
                     },
                     enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null
                 ) {
-                    Text(stringResource(R.string.apply_filters).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.apply_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -835,7 +835,7 @@ fun AddWorkoutFromPlanContent(
                             Text(
                                 text = stringResource(R.string.add_empty_workout),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
                             Text(
@@ -894,7 +894,7 @@ fun AddWorkoutFromPlanContent(
                             Text(
                                 text = plan.nome,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
                             if (!plan.note.isNullOrBlank()) {
@@ -971,7 +971,7 @@ fun SessionHistoryCard(
                         Text(
                             text = DateFormatter.format(session.timestamp),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                         Text(
@@ -982,7 +982,7 @@ fun SessionHistoryCard(
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = Primary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -1062,7 +1062,7 @@ fun SessionHistoryCard(
                                     text = exerciseName.uppercase(),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = Primary,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.ExtraBold,
                                     letterSpacing = 1.sp
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -1089,7 +1089,7 @@ fun SessionHistoryCard(
                                                     weightUnit
                                                 ) + " × ${set.repsEffettive}",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold,
+                                                fontWeight = FontWeight.Bold,
                                                 color = OnSurface
                                             )
                                         }
@@ -1133,7 +1133,7 @@ fun SessionHistoryCard(
                                         text = cardio.categoria.uppercase(),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = Primary,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.ExtraBold,
                                         letterSpacing = 1.sp
                                     )
                                 }
@@ -1146,7 +1146,7 @@ fun SessionHistoryCard(
                                     Text(
                                         text = "${cardio.distanza} km",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
+                                        fontWeight = FontWeight.Bold,
                                         color = OnSurface
                                     )
                                     Text(
@@ -1257,7 +1257,7 @@ fun EditSetDialog(
                 ) {
                     Text(
                         stringResource(R.string.cancel).uppercase(),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1282,7 +1282,7 @@ fun EditSetDialog(
                 ) {
                     Text(
                         stringResource(R.string.save).uppercase(),
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

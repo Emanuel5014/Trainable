@@ -135,7 +135,7 @@ fun ScreenHeader(
                             text = subtitle.uppercase(),
                             style = MaterialTheme.typography.labelMedium,
                             color = Primary,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
                         )
                     }

@@ -1,100 +1,54 @@
+@file:OptIn(ExperimentalTextApi::class)
 package com.emanuel5014.trainable.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
-import androidx.compose.ui.unit.sp
+import com.emanuel5014.trainable.R
 
-private val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts.provider",
-    providerPackage = "com.google.android.gms",
-    certificates = com.emanuel5014.trainable.R.array.com_google_android_gms_fonts_certs
+private val RobotoFlex = FontFamily(
+    Font(R.font.roboto_flex, weight = FontWeight.Thin, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 100f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.ExtraLight, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 200f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.Light, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 300f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.Normal, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 400f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.Medium, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 500f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.SemiBold, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 600f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.Bold, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 700f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.ExtraBold, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 800f), FontVariation.Setting("GRAD", 80f))),
+    Font(R.font.roboto_flex, weight = FontWeight.Black, style = FontStyle.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.Setting("wght", 900f), FontVariation.Setting("GRAD", 80f))),
 )
 
-private val Montserrat = GoogleFont("Montserrat")
+private val SystemTypography = Typography()
 
-private val MontserratFontFamily = FontFamily(
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.Light),
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.Bold),
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.ExtraBold),
-    Font(googleFont = Montserrat, fontProvider = provider, weight = FontWeight.Black)
-)
-
-val Typography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Black,
-        fontSize = 56.sp,
-        lineHeight = 64.sp,
-        letterSpacing = (-0.25).sp,
-    ),
-    displayMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Black,
-        fontSize = 45.sp,
-        lineHeight = 52.sp,
-        letterSpacing = 0.sp,
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Black,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = (-0.02).sp,
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Black,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
-        letterSpacing = 0.sp,
-    ),
-    titleLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp,
-    ),
-    titleMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.15.sp,
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp,
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp,
-    ),
-    labelMedium = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp,
-    ),
-    labelSmall = TextStyle(
-        fontFamily = MontserratFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp,
+val AppTypography = SystemTypography.run {
+    copy(
+        displayLarge = displayLarge.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.ExtraBold),
+        displayMedium = displayMedium.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.ExtraBold),
+        displaySmall = displaySmall.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.ExtraBold),
+        headlineLarge = headlineLarge.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Bold),
+        headlineMedium = headlineMedium.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Bold),
+        headlineSmall = headlineSmall.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Bold),
+        titleLarge = titleLarge.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.SemiBold),
+        titleMedium = titleMedium.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.SemiBold),
+        titleSmall = titleSmall.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.SemiBold),
+        bodyLarge = bodyLarge.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Medium),
+        bodyMedium = bodyMedium.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Medium),
+        bodySmall = bodySmall.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Medium),
+        labelLarge = labelLarge.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.SemiBold),
+        labelMedium = labelMedium.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.SemiBold),
+        labelSmall = labelSmall.copy(fontFamily = RobotoFlex, fontWeight = FontWeight.Medium),
     )
-)
+}

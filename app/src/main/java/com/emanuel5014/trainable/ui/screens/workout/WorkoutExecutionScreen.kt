@@ -127,7 +127,7 @@ fun WorkoutExecutionScreen(
                     viewModel.updateSessionName(newSessionName)
                     showRenameDialog = false
                 }) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -207,7 +207,7 @@ fun WorkoutExecutionScreen(
                             Text(
                                 text = state.planName, 
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Black,
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                         }
@@ -215,7 +215,7 @@ fun WorkoutExecutionScreen(
                             text = stringResource(R.string.session_in_progress_title), 
                             style = MaterialTheme.typography.labelSmall, 
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 },
@@ -237,7 +237,7 @@ fun WorkoutExecutionScreen(
                                 text = "${state.completedExercises}/${state.totalExercises}",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Primary,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
@@ -287,7 +287,7 @@ fun WorkoutExecutionScreen(
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         GymButton(onClick = { showAddExerciseSheet = true }) {
-                            Text(stringResource(R.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 }
@@ -310,7 +310,7 @@ fun WorkoutExecutionScreen(
                                 text = "$setsCount × $repsCount",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Primary,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.weight(1f)
                             )
                             IconButton(
@@ -354,7 +354,7 @@ fun WorkoutExecutionScreen(
                                             viewModel.removeSetFromExercise(state.currentExerciseIndex, index)
                                             showDeleteConfirm = false
                                         }) {
-                                            Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.Bold)
+                                            Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
                                         }
                                     },
                                     dismissButton = {
@@ -408,7 +408,7 @@ fun WorkoutExecutionScreen(
                                     ) {
                                         Icon(Icons.Rounded.Add, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.add_set), fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
                                     }
                                     GymButton(
                                         onClick = { showAddExerciseSheet = true },
@@ -418,7 +418,7 @@ fun WorkoutExecutionScreen(
                                     ) {
                                         Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.next_exercise_wrk).uppercase(), fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.next_exercise_wrk).uppercase(), fontWeight = FontWeight.ExtraBold)
                                     }
                                 }
                             }
@@ -481,7 +481,7 @@ fun WorkoutExecutionScreen(
                                                     stringResource(R.string.adjust_set_number, set.setNumber),
                                                     style = MaterialTheme.typography.labelLarge,
                                                     color = Primary,
-                                                    fontWeight = FontWeight.Bold
+                                                    fontWeight = FontWeight.ExtraBold
                                                 )
                                                 IconButton(onClick = { isEditingValues = false }) {
                                                     Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
@@ -516,7 +516,7 @@ fun WorkoutExecutionScreen(
                                                     .background(Primary.copy(alpha = 0.1f)),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.Bold)
+                                                Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
                                             }
                                             Spacer(modifier = Modifier.width(16.dp))
                                             Column(modifier = Modifier.weight(1f)) {
@@ -527,7 +527,7 @@ fun WorkoutExecutionScreen(
                                                         state.weightUnit
                                                     ) + " × ${set.reps}", 
                                                     style = MaterialTheme.typography.titleLarge, 
-                                                    fontWeight = FontWeight.Bold
+                                                    fontWeight = FontWeight.ExtraBold
                                                 )
                                             }
                                             Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
@@ -552,7 +552,7 @@ fun WorkoutExecutionScreen(
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(Icons.Rounded.DoneAll, contentDescription = null, tint = Tertiary)
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(stringResource(R.string.exercise_completed_title), style = MaterialTheme.typography.labelLarge, color = Tertiary, fontWeight = FontWeight.Bold)
+                                            Text(stringResource(R.string.exercise_completed_title), style = MaterialTheme.typography.labelLarge, color = Tertiary, fontWeight = FontWeight.ExtraBold)
                                         }
                                     }
                                 }
@@ -648,7 +648,7 @@ fun WorkoutExecutionScreen(
                         contentColor = Error,
                         modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                     ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -680,7 +680,7 @@ fun WorkoutExecutionScreen(
                         },
                         modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                     ) {
-                        Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -717,7 +717,7 @@ fun LogSetButton(
             Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(if (compact) 20.dp else 24.dp))
             if (!compact) {
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.log_set), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.log_set), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

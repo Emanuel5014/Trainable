@@ -341,7 +341,7 @@ fun ExerciseCarouselSection(
                 text = stringResource(R.string.analytics_max_progress),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             IconButton(
                 onClick = onEditClick,
@@ -545,7 +545,7 @@ fun BodyWeightChartSection(
                     text = stringResource(R.string.analytics_body_weight),
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 WidgetControls(onRemove)
             }
@@ -570,7 +570,7 @@ fun BodyWeightChartSection(
                         Text(
                             text = latestWeight?.let { WeightUnitConverter.formatWithUnit(it, weightUnit) } ?: "-",
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = Primary
                         )
                         if (weightChangePercent != null && weightChangePercent != 0f) {
@@ -664,7 +664,7 @@ fun ExerciseChartSection(
                     text = exerciseName,
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 WidgetControls(onRemove)
             }
@@ -687,7 +687,7 @@ fun ExerciseChartSection(
                         Text(
                             text = WeightUnitConverter.formatWithUnit(latest, weightUnit),
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = Primary
                         )
                         Text(
@@ -783,7 +783,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
                         text = exercise.category.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = exercise.exerciseName,
@@ -800,7 +800,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
                         Text(
                             text = WeightUnitConverter.format(displayWeight),
                             style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Text(
                             text = weightUnit,
@@ -838,7 +838,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
                                 text = WeightUnitConverter.formatWithUnit(estimated1RM, weightUnit),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = OnPrimary,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
@@ -893,7 +893,7 @@ fun ExercisePickerBottomSheet(
                 Text(
                     text = stringResource(R.string.analytics_choose_exercises),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 if (selectedIds.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
@@ -911,7 +911,7 @@ fun ExercisePickerBottomSheet(
                 text = stringResource(R.string.analytics_selected_count, selectedIds.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (selectedIds.isNotEmpty()) Primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (selectedIds.isNotEmpty()) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (selectedIds.isNotEmpty()) FontWeight.ExtraBold else FontWeight.Medium
             )
             
             Spacer(modifier = Modifier.height(Spacing.small))
@@ -993,7 +993,7 @@ fun ExercisePickerItem(
                 Text(
                     text = exercise.exerciseName,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(

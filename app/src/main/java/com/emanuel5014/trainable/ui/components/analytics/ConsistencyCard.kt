@@ -33,7 +33,7 @@ fun ConsistencyCard(consistency: ConsistencyUiModel) {
                 text = "${consistency.progress.times(100).toInt()}%",
                 style = MaterialTheme.typography.displayMedium,
                 color = Primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
 
             Text(

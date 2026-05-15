@@ -148,7 +148,7 @@ fun BottomNavBarFlo(
                         text = item.title,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 9.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold
                         ),
                         color = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = 0.6f),
                         maxLines = 1

@@ -216,7 +216,7 @@ fun RoutineDetailScreen(
                         ) {
                             Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.start))
                             Spacer(modifier = Modifier.width(Spacing.small))
-                            Text(stringResource(R.string.start), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.start), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 }
@@ -286,14 +286,14 @@ fun RoutineDetailScreen(
                                     text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(details.plan.dataInizio),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Primary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                                 details.plan.dataFine?.let { expiry ->
                                     Text(
                                         text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (expiry < System.currentTimeMillis()) Error else OnSurfaceVariant,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
@@ -318,7 +318,7 @@ fun RoutineDetailScreen(
                                             Text(
                                                 text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                fontWeight = FontWeight.Bold,
+                                                fontWeight = FontWeight.ExtraBold,
                                                 color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
                                             )
                                         }
@@ -350,7 +350,7 @@ fun RoutineDetailScreen(
                             Text(
                                 text = stringResource(R.string.no_exercises_in_routine),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
                             Spacer(modifier = Modifier.height(Spacing.xtraSmall))
@@ -434,7 +434,7 @@ fun RoutineDetailScreen(
                                     text = "${index + 1}",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = if (isDragging) OnPrimary else Primary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                             }
 
@@ -489,13 +489,13 @@ fun RoutineDetailScreen(
                         text = if (editingExercise == null) stringResource(R.string.add_exercise) else stringResource(R.string.edit_exercise),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = if (editingExercise == null) stringResource(R.string.exercise_details) else stringResource(R.string.update_exercise),
                         style = MaterialTheme.typography.headlineMedium,
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -612,7 +612,7 @@ fun RoutineDetailScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     
                     GymButton(
@@ -649,7 +649,7 @@ fun RoutineDetailScreen(
                     ) {
                         Text(
                             text = if (editingExercise == null) stringResource(R.string.add).uppercase() else stringResource(R.string.save).uppercase(),
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
@@ -709,13 +709,13 @@ fun RoutineDetailScreen(
                         text = stringResource(R.string.edit_routine),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = stringResource(R.string.update_plan),
                         style = MaterialTheme.typography.headlineMedium,
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -775,7 +775,7 @@ fun RoutineDetailScreen(
                             text = stringResource(R.string.schedule_days),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -800,7 +800,7 @@ fun RoutineDetailScreen(
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
@@ -832,7 +832,7 @@ fun RoutineDetailScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     
                     GymButton(
@@ -860,7 +860,7 @@ fun RoutineDetailScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.save).uppercase(),
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
@@ -883,7 +883,7 @@ fun RoutineDetailScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -912,7 +912,7 @@ fun RoutineDetailScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -960,7 +960,7 @@ private fun RestSlider(
                 text = "${value}s",
                 style = MaterialTheme.typography.titleMedium,
                 color = Primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = formatRestTime(value),

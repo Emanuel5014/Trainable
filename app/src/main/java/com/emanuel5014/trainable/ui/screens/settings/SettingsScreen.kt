@@ -218,14 +218,14 @@ fun SettingsScreen(
             onDismissRequest = { showBackupSetupDialog = false },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text(stringResource(R.string.auto_backup_setup), fontWeight = FontWeight.Bold, color = OnSurface)
+                Text(stringResource(R.string.auto_backup_setup), fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     Text(stringResource(R.string.configure_backup), color = OnSurfaceVariant)
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.frequency), fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.frequency), fontWeight = FontWeight.ExtraBold, color = OnSurface)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                             IconButton(onClick = { if (tempFrequency > 1) tempFrequency-- }) {
                                 Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
@@ -238,7 +238,7 @@ fun SettingsScreen(
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.keep_last), fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.keep_last), fontWeight = FontWeight.ExtraBold, color = OnSurface)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                             IconButton(onClick = { if (tempMaxCount > 1) tempMaxCount-- }) {
                                 Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
@@ -266,7 +266,7 @@ fun SettingsScreen(
                     HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.storage_location), fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.storage_location), fontWeight = FontWeight.ExtraBold, color = OnSurface)
                         GymButton(
                             onClick = { folderPickerLauncher.launch(null) },
                             containerColor = if (autoBackupFolderUri == null) Primary.copy(alpha = 0.1f) else SurfaceContainerHighest,
@@ -320,7 +320,7 @@ fun SettingsScreen(
             title = {
                 Text(
                     stringResource(R.string.include_images),
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
             },
@@ -362,7 +362,7 @@ fun SettingsScreen(
             title = {
                     Text(
                         stringResource(R.string.reset_app_dialog),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = OnSurface
                     )
             },
@@ -445,7 +445,7 @@ fun SettingsScreen(
                     AlertDialog(
                         onDismissRequest = { showEditUsernameDialog = false },
                         containerColor = SurfaceContainerHigh,
-                        title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.Bold, color = OnSurface) },
+                        title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
                         text = {
                             OutlinedTextField(
                                 value = newUsername,
@@ -501,7 +501,7 @@ fun SettingsScreen(
                                 text = currentUser?.username ?: "Athlete",
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = OnSurface,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             Text(
                                 text = stringResource(R.string.member_since, currentUser?.dataIscrizione?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.today)),
@@ -528,7 +528,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Scale, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.weight_unit_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -548,7 +548,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
                                     color = if (weightUnit == "kg") OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
                                     text = "lb",
@@ -559,7 +559,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
                                     color = if (weightUnit == "lb") OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                             }
                         }
@@ -575,7 +575,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Flag, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.weekly_goal), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.weekly_goal), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.target_workouts), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -607,7 +607,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Vibration, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.tactile_feedback), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.tactile_feedback), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.tactile_feedback_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -628,7 +628,7 @@ fun SettingsScreen(
                             AlertDialog(
                                 onDismissRequest = { showLanguageDialog = false },
                                 containerColor = SurfaceContainerHigh,
-                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.Bold, color = OnSurface) },
+                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
                                 text = {
                                     Column {
                                         LanguageOption(
@@ -691,7 +691,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Language, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(
                                         when (currentLanguage) {
                                             "en" -> stringResource(R.string.language_english)
@@ -715,7 +715,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Dashboard, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.floating_nav_bar), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.floating_nav_bar), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.floating_nav_bar_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -737,7 +737,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.dynamic_color_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -764,7 +764,7 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.timer_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.timer_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.timer_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -797,7 +797,7 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -824,7 +824,7 @@ fun SettingsScreen(
                                     Icon(Icons.Rounded.Backup, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column {
-                                        Text(stringResource(R.string.auto_backup), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.auto_backup), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                         Text(
                                             if (autoBackupEnabled) stringResource(R.string.backup_enabled, autoBackupFrequency) else stringResource(R.string.backup_disabled),
                                             style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -855,7 +855,7 @@ fun SettingsScreen(
                                         Icon(Icons.Rounded.Folder, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                         Spacer(modifier = Modifier.width(16.dp))
                                         Column {
-                                            Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                            Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                             Text(
                                                 viewModel.getFolderDisplayPath(autoBackupFolderUri),
                                                 style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -883,7 +883,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = Primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.export_database), fontWeight = FontWeight.ExtraBold)
                         }
 
                         GymButton(
@@ -894,7 +894,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Rounded.CloudDownload, contentDescription = null, tint = Primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.import_database), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.import_database), fontWeight = FontWeight.ExtraBold)
                         }
                     }
 
@@ -910,7 +910,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Rounded.TableChart, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.export_csv), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.export_csv), fontWeight = FontWeight.ExtraBold)
                     }
 
                     GymButton(
@@ -921,7 +921,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Error)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.Bold, color = Error)
+                        Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.ExtraBold, color = Error)
                     }
                 }
             }
@@ -939,7 +939,7 @@ fun SettingsScreen(
                                     text = "Trainable v1.3.2",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
                                     text = "Made with ❤️ by Emanuel5014",
@@ -968,7 +968,7 @@ fun SettingsScreen(
                             ) {
                                 Text(
                                     text = stringResource(R.string.check_for_updates),
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.labelLarge
                                 )
                             }
@@ -999,7 +999,7 @@ fun SettingsScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
                             }
 
                             GymButton(
@@ -1018,7 +1018,7 @@ fun SettingsScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -1037,7 +1037,7 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
             text = title,
             style = MaterialTheme.typography.labelLarge,
             color = Primary,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             letterSpacing = 1.sp
         )
         content()

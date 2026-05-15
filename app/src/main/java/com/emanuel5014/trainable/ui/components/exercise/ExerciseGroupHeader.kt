@@ -47,7 +47,7 @@ fun ExerciseGroupHeader(
             text = groupName.uppercase(),
             style = MaterialTheme.typography.titleMedium,
             color = OnSurface,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
         Spacer(modifier = Modifier.width(Spacing.small))
         Text(

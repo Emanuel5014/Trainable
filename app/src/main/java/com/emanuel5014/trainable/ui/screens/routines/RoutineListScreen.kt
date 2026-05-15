@@ -186,7 +186,7 @@ fun RoutineListScreen(
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             } else {
                 ExtendedFloatingActionButton(
@@ -198,7 +198,7 @@ fun RoutineListScreen(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -325,7 +325,7 @@ fun RoutineListScreen(
                             Text(
                                 text = title.uppercase(),
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
                                 color = contentColor,
                                 letterSpacing = 1.sp
                             )
@@ -391,7 +391,7 @@ fun RoutineListScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -427,7 +427,7 @@ fun RoutineListScreen(
                     contentColor = Primary,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -461,7 +461,7 @@ fun RoutineListScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -496,7 +496,7 @@ fun RoutineListScreen(
                     contentColor = Primary,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -543,13 +543,13 @@ fun RoutineListScreen(
                         text = stringResource(R.string.create_routine),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = stringResource(R.string.new_routine),
                         style = MaterialTheme.typography.headlineMedium,
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -609,7 +609,7 @@ fun RoutineListScreen(
                             text = stringResource(R.string.schedule_days),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -634,7 +634,7 @@ fun RoutineListScreen(
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                         style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
@@ -660,7 +660,7 @@ fun RoutineListScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     
                     GymButton(
@@ -684,7 +684,7 @@ fun RoutineListScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.create).uppercase(),
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
@@ -707,7 +707,7 @@ fun RoutineListScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -736,7 +736,7 @@ fun RoutineListScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -770,7 +770,7 @@ fun RoutineListScreen(
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text(stringResource(R.string.share_with_images).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.share_with_images).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -781,7 +781,7 @@ fun RoutineListScreen(
                         contentColor = OnSurface,
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text(stringResource(R.string.share_without_images).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.share_without_images).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             },
@@ -1027,7 +1027,7 @@ private fun RoutineCard(
                         text = plan.nome,
                         style = MaterialTheme.typography.titleLarge,
                         color = if (isSelected) Primary else OnSurface,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1037,7 +1037,7 @@ private fun RoutineCard(
                             text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (expiry < System.currentTimeMillis()) Error else Primary,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -1048,7 +1048,7 @@ private fun RoutineCard(
                             text = stringResource(R.string.created_on) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(plan.dataInizio),
                             style = MaterialTheme.typography.labelSmall,
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -1077,7 +1077,7 @@ private fun RoutineCard(
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.ExtraBold,
                                         color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
                                     )
                                 }

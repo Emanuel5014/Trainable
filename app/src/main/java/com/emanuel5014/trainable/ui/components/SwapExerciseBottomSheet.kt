@@ -146,13 +146,13 @@ fun SwapExerciseBottomSheet(
                             text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
                             style = MaterialTheme.typography.labelMedium,
                             color = Primary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Text(
                             text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
                             style = MaterialTheme.typography.headlineMedium,
                             color = OnSurface,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
 
@@ -241,7 +241,7 @@ fun SwapExerciseBottomSheet(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(Spacing.small))
-                        Text("Add Custom Exercise", fontWeight = FontWeight.Bold)
+                        Text("Add Custom Exercise", fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -293,7 +293,7 @@ fun SwapExerciseBottomSheet(
             onDismissRequest = { exerciseToDelete = null },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text("Delete Exercise?", fontWeight = FontWeight.Bold, color = OnSurface)
+                Text("Delete Exercise?", fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
                 Text("Delete \"${exerciseToDelete!!.nome}\"? This cannot be undone.", color = OnSurfaceVariant)
@@ -350,7 +350,7 @@ private fun ExerciseListItem(
                         text = ExerciseTranslations.translate(exercise.nome, languageCode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.SemiBold
                     )
                     if (exercise.id >= 1000) {
                         Spacer(modifier = Modifier.width(4.dp))
@@ -442,7 +442,7 @@ private fun AddCustomExerciseDialog(
             Text(
                 text = "New Exercise",
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -538,7 +538,7 @@ private fun EditCustomExerciseDialog(
             Text(
                 text = "Edit Exercise",
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -651,7 +651,7 @@ private fun SwapExerciseConfigDialog(
             Text(
                 text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -705,7 +705,7 @@ private fun SwapExerciseConfigDialog(
                     onConfirm(sets, reps, rest)
                 }
             ) {
-                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -743,7 +743,7 @@ private fun RestSlider(
                 text = "${value}s",
                 style = MaterialTheme.typography.titleMedium,
                 color = Primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = formatRestTime(value),

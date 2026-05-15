@@ -326,7 +326,7 @@ private fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -379,7 +379,7 @@ private fun ProfileSetupSlide(
                     text = stringResource(R.string.onboarding_setup_weight_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(start = 4.dp)
                 )
                 

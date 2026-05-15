@@ -137,7 +137,7 @@ fun SetLogRow(
             Text(
                 text = "$setNumber",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = when {
                     isCompleted -> OnTertiary
                     isActive -> OnPrimary
@@ -160,7 +160,7 @@ fun SetLogRow(
                         weightUnit
                     ) + " × $reps",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = textColor
                 )
                 if (isWarmup) {
@@ -171,7 +171,7 @@ fun SetLogRow(
                         Text(
                             text = "WARM UP",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )

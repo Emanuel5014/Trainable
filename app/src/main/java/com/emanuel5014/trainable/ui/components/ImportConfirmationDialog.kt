@@ -42,7 +42,7 @@ fun ImportConfirmationDialog(
                             plan.exercises.size
                         ),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = OnSurface
                     )
                 }
@@ -55,7 +55,7 @@ fun ImportConfirmationDialog(
                 contentColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
             ) {
-                Text(stringResource(R.string.import_confirm).uppercase(), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.import_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {

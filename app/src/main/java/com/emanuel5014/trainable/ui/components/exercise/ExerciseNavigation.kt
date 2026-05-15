@@ -62,12 +62,12 @@ fun ExerciseNavigation(
                         text = stringResource(R.string.previous_exercise_btn).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = previousName?.let { ExerciseTranslations.translate(it, languageCode) } ?: stringResource(R.string.previous_exercise_btn),
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -88,12 +88,12 @@ fun ExerciseNavigation(
                         text = stringResource(R.string.next_exercise_btn).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = nextName?.let { ExerciseTranslations.translate(it, languageCode) } ?: stringResource(R.string.next_exercise_btn),
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -116,7 +116,7 @@ fun ExerciseNavigation(
             ) {
                 Text(
                     text = stringResource(R.string.finish),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
             }
         }

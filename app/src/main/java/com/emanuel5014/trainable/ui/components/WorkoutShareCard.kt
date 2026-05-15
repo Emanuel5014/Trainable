@@ -90,7 +90,7 @@ fun WorkoutShareCard(
         Text(
             text = planName.uppercase(),
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             color = onSurfaceColor,
             lineHeight = 32.sp
         )
@@ -98,7 +98,7 @@ fun WorkoutShareCard(
             text = DateFormatter.format(sessionDetails.session.timestamp).uppercase(),
             style = MaterialTheme.typography.labelLarge,
             color = primaryColor,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.ExtraBold,
             letterSpacing = 1.sp
         )
 
@@ -118,7 +118,7 @@ fun WorkoutShareCard(
                     Text(
                         text = exerciseName.uppercase(),
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = primaryColor,
                         letterSpacing = 0.5.sp
                     )
@@ -139,7 +139,7 @@ fun WorkoutShareCard(
                                 text = "SET ${set.numeroSerie}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = onSurfaceVariantColor,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = WeightUnitConverter.formatWithUnit(
@@ -147,7 +147,7 @@ fun WorkoutShareCard(
                                     weightUnit
                                 ) + " × ${set.repsEffettive}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = onSurfaceColor
                             )
                         }
@@ -160,7 +160,7 @@ fun WorkoutShareCard(
                     Text(
                         text = cardio.categoria.uppercase(),
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = primaryColor,
                         letterSpacing = 0.5.sp
                     )
@@ -173,7 +173,7 @@ fun WorkoutShareCard(
                         Text(
                             text = "${cardio.distanza} KM",
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = onSurfaceColor
                         )
                         val h = cardio.durataSecondi / 3600
@@ -184,7 +184,7 @@ fun WorkoutShareCard(
                             text = durationText,
                             style = MaterialTheme.typography.bodyMedium,
                             color = onSurfaceVariantColor,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -198,7 +198,7 @@ fun WorkoutShareCard(
             text = "TRACK YOUR PROGRESS WITH TRAINABLE",
             style = MaterialTheme.typography.labelSmall,
             color = onSurfaceVariantColor.copy(alpha = 0.5f),
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.height(8.dp))
     }

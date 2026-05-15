@@ -133,7 +133,7 @@ fun DashboardScreen(
                     },
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -193,7 +193,7 @@ fun DashboardScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -227,7 +227,7 @@ fun DashboardScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -268,7 +268,7 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.quick_workout),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -313,7 +313,7 @@ fun DashboardScreen(
                                 text = stringResource(R.string.resume_workout),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             uiState.unfinishedSessions.forEach { session ->
                                 val haptic = LocalHapticFeedback.current
@@ -390,7 +390,7 @@ fun DashboardScreen(
                                 text = stringResource(R.string.today_workout),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Primary,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
@@ -406,7 +406,7 @@ fun DashboardScreen(
                                             text = uiState.todayPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
                                             color = OnSurface,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.ExtraBold
                                         )
                                         Text(
                                             text = uiState.todayPlan!!.note ?: stringResource(R.string.select_routine),
@@ -440,7 +440,7 @@ fun DashboardScreen(
                                 text = stringResource(R.string.suggested_plan),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
@@ -456,7 +456,7 @@ fun DashboardScreen(
                                             text = uiState.suggestedPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
                                             color = OnSurface,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.ExtraBold
                                         )
                                         Text(
                                             text = uiState.suggestedPlan!!.note ?: stringResource(R.string.select_routine),
@@ -595,7 +595,7 @@ fun GymMembershipCard(
                             text = stringResource(R.string.gym_membership).uppercase(),
                             style = MaterialTheme.typography.labelLarge,
                             color = textColor.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
                         )
                     }
@@ -619,7 +619,7 @@ fun GymMembershipCard(
                             text = username.uppercase(),
                             style = MaterialTheme.typography.titleMedium,
                             color = textColor,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             letterSpacing = androidx.compose.ui.unit.TextUnit(1f, androidx.compose.ui.unit.TextUnitType.Sp)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -652,7 +652,7 @@ fun GymMembershipCard(
                                 },
                                 style = MaterialTheme.typography.labelMedium,
                                 color = textColor,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                             )
                         }
@@ -745,14 +745,14 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int) {
                         text = stringResource(R.string.weekly_goal),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.workouts_this_week, workoutsThisWeek, weeklyGoal),
                         style = MaterialTheme.typography.titleLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
                 if (workoutsThisWeek >= weeklyGoal) {
@@ -833,7 +833,7 @@ private fun UnfinishedSessionCard(
                         text = session.planNome,
                         style = MaterialTheme.typography.titleMedium,
                         color = OnSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = stringResource(R.string.started, DateFormatter.format(session.session.timestamp)),
