@@ -350,7 +350,7 @@ fun RoutineDetailScreen(
                         ) {
                             Text(
                                 text = stringResource(R.string.no_exercises_in_routine),
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
                                 fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
@@ -494,7 +494,7 @@ fun RoutineDetailScreen(
                     )
                     Text(
                         text = if (editingExercise == null) stringResource(R.string.exercise_details) else stringResource(R.string.update_exercise),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
                         color = OnSurface,
                         fontWeight = FontWeight.Black
                     )
@@ -527,7 +527,7 @@ fun RoutineDetailScreen(
                                     text = selectedExercise?.let {
                                         ExerciseTranslations.translate(it.nome, languageCode)
                                     } ?: stringResource(R.string.select_exercise),
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
                                     color = OnSurface
                                 )
                                 selectedExercise?.let {
@@ -714,7 +714,7 @@ fun RoutineDetailScreen(
                     )
                     Text(
                         text = stringResource(R.string.update_plan),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
                         color = OnSurface,
                         fontWeight = FontWeight.Black
                     )
@@ -800,7 +800,7 @@ fun RoutineDetailScreen(
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
                                         fontWeight = FontWeight.ExtraBold
                                     )
                                 }

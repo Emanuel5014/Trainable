@@ -83,13 +83,16 @@ fun ScreenHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = horizontalPad)
             .padding(top = if (navigationIcon != null || (actions != null && titleInRow)) 8.dp else 24.dp, bottom = 16.dp)
     ) {
         if (navigationIcon != null || (actions != null && titleInRow) || titleInRow) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(
+                        start = if (navigationIcon != null && titleInRow) 12.dp else horizontalPad,
+                        end = horizontalPad
+                    )
                     .padding(bottom = if (titleInRow) 8.dp else 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -117,7 +120,9 @@ fun ScreenHeader(
 
         if (!titleInRow) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalPad),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {

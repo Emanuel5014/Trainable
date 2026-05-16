@@ -40,9 +40,9 @@ object ResponsiveSize {
     }
 
     val headlineLargeSize: TextUnit get() = when {
-        screenWidthDp < 360 -> 22.sp
-        screenWidthDp < 400 -> 26.sp
-        else -> 32.sp
+        screenWidthDp < 360 -> 18.sp
+        screenWidthDp < 400 -> 22.sp
+        else -> 28.sp
     }
 
     val headlineMediumSize: TextUnit get() = when {
@@ -63,6 +63,12 @@ object ResponsiveSize {
         else -> 16.sp
     }
 
+    val labelLargeSize: TextUnit get() = when {
+        screenWidthDp < 360 -> 12.sp
+        screenWidthDp < 400 -> 13.sp
+        else -> 14.sp
+    }
+
     fun update(widthDp: Int) {
         screenWidthDp = widthDp
     }
@@ -73,6 +79,7 @@ object ResponsiveSize {
         original == 28.sp -> headlineMediumSize
         original == 22.sp -> titleLargeSize
         original == 16.sp -> titleMediumSize
+        original == 14.sp -> labelLargeSize
         else -> original
     }
 }

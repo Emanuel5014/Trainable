@@ -327,7 +327,7 @@ fun RoutineListScreen(
                         ) {
                             Text(
                                 text = title.uppercase(),
-                                style = MaterialTheme.typography.labelLarge,
+                                style = MaterialTheme.typography.labelLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize)),
                                 fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
                                 color = contentColor,
                                 letterSpacing = 1.sp
@@ -550,7 +550,7 @@ fun RoutineListScreen(
                     )
                     Text(
                         text = stringResource(R.string.new_routine),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
                         color = OnSurface,
                         fontWeight = FontWeight.Black
                     )
@@ -636,7 +636,7 @@ fun RoutineListScreen(
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
                                         fontWeight = FontWeight.ExtraBold
                                     )
                                 }
@@ -1028,7 +1028,7 @@ private fun RoutineCard(
                 Column {
                     Text(
                         text = plan.nome,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleLarge.fontSize)),
                         color = if (isSelected) Primary else OnSurface,
                         fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
