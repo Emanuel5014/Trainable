@@ -384,7 +384,7 @@ fun RoutineDetailScreen(
                                     shape = RoundedCornerShape(28.dp)
                                     clip = isDragging
                                 }
-                                .pointerInput(Unit) {
+                                .pointerInput(item.planExercise.id) {
                                     detectDragGesturesAfterLongPress(
                                         onDragStart = {
                                             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
