@@ -63,7 +63,8 @@ data class WorkoutExerciseState(
     val planDetails: PlanExerciseEntity?,
     val sets: List<WorkoutSetState> = emptyList(),
     val previousPerformance: String? = null,
-    val swappedExerciseId: Int? = null
+    val swappedExerciseId: Int? = null,
+    val customRestSeconds: Int? = null
 )
 
 data class WorkoutSetState(
@@ -438,7 +439,7 @@ class WorkoutViewModel @Inject constructor(
                 val isLastSet = setIndex == exState.sets.size - 1
                 
                 if (!(isLastExercise && isLastSet)) {
-                    val restTime = exState.planDetails?.recuperoTarget ?: 90
+                    val restTime = exState.customRestSeconds ?: exState.planDetails?.recuperoTarget ?: 90
                     startRestTimer(restTime)
                 }
             } else if (!newIsCompleted && setState.id != null) {
@@ -645,7 +646,7 @@ class WorkoutViewModel @Inject constructor(
         clearTimerInSession()
     }
 
-    fun swapExercise(exerciseIndex: Int, newExerciseId: Int, targetSets: Int, repsTarget: String) {
+    fun swapExercise(exerciseIndex: Int, newExerciseId: Int, targetSets: Int, repsTarget: String, restTimer: Int? = null) {
         val currentState = _state.value
         val sessionId = currentState.sessionId ?: return
         val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return
@@ -683,7 +684,8 @@ class WorkoutViewModel @Inject constructor(
                 exercise = replacementExercise,
                 swappedExerciseId = newExerciseId,
                 sets = newSets,
-                previousPerformance = null
+                previousPerformance = null,
+                customRestSeconds = restTimer
             )
             curr.copy(exercises = mutableExercises, exerciseSwaps = mutableSwaps)
         }
@@ -728,7 +730,7 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8") {
+    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8", restTimer: Int? = 90) {
         val repsList = parseReps(repsTarget, targetSets)
         val initialSets = (1..targetSets).map { num ->
             WorkoutSetState(
@@ -745,7 +747,8 @@ class WorkoutViewModel @Inject constructor(
                 WorkoutExerciseState(
                     exercise = exercise,
                     planDetails = null,
-                    sets = initialSets
+                    sets = initialSets,
+                    customRestSeconds = restTimer
                 )
             )
             curr.copy(
