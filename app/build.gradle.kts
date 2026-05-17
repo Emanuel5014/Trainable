@@ -90,6 +90,9 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
 
+    // Material Components
+    implementation(libs.material)
+
     // OkHttp
     implementation(libs.okhttp)
 

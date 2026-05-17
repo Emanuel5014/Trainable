@@ -5,8 +5,10 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -94,6 +97,9 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.getPaletteColor
+import com.emanuel5014.trainable.ui.theme.getPalettePreviewColors
+import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,6 +119,10 @@ fun SettingsScreen(
     val backupStatus by viewModel.backupStatus.collectAsState()
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val dynamicColor by viewModel.dynamicColor.collectAsState()
+    val dynamicColorSeed by viewModel.dynamicColorSeed.collectAsState()
+    val wallpaperColors by viewModel.wallpaperColors.collectAsState()
+    val themePalette by viewModel.themePalette.collectAsState()
+    val themeStyle by viewModel.themeStyle.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
@@ -737,15 +747,119 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.dynamic_color_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    val isDynamicColorSupported = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
+                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = if (isDynamicColorSupported) OnSurface else OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (isDynamicColorSupported) stringResource(R.string.dynamic_color_desc) else stringResource(R.string.dynamic_color_not_supported),
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
                                 }
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
-                                checked = dynamicColor,
-                                onCheckedChange = { viewModel.setDynamicColor(it) }
+                                checked = dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S,
+                                onCheckedChange = { viewModel.setDynamicColor(it) },
+                                enabled = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
                             )
+                        }
+
+                        if (dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && wallpaperColors.isNotEmpty()) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                        Text(stringResource(R.string.app_palette_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Reset to system default option
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(CircleShape)
+                                            .background(SurfaceContainerHighest)
+                                            .clickable { 
+                                                viewModel.setDynamicColorSeed(null)
+                                                viewModel.setThemeStyle(0)
+                                            }
+                                            .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (dynamicColorSeed == null) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    Icons.Rounded.RestartAlt,
+                                                    contentDescription = "System Default",
+                                                    tint = Primary,
+                                                    modifier = Modifier.size(28.dp)
+                                                )
+                                            }
+                                        } else {
+                                            Icon(
+                                                Icons.Rounded.RestartAlt,
+                                                contentDescription = "System Default",
+                                                tint = OnSurfaceVariant,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+
+                                    // Use primary wallpaper color as seed and show 5 different styles
+                                    val primarySeed = wallpaperColors.first()
+                                    (0..4).forEach { styleIndex ->
+                                        val previewColors = getSeedPreviewColors(primarySeed, styleIndex)
+                                        PalettePreviewCircle(
+                                            colors = previewColors,
+                                            isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
+                                            onClick = { 
+                                                viewModel.setDynamicColorSeed(primarySeed)
+                                                viewModel.setThemeStyle(styleIndex)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!dynamicColor || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                        Text(stringResource(R.string.app_palette_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    (0..7).forEach { index ->
+                                        val previewColors = getPalettePreviewColors(index)
+                                        PalettePreviewCircle(
+                                            colors = previewColors,
+                                            isSelected = themePalette == index,
+                                            onClick = { viewModel.setThemePalette(index) }
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
@@ -1072,11 +1186,13 @@ private fun LanguageOption(
 @Composable
 private fun SettingsSwitch(
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
+        enabled = enabled,
         thumbContent = if (checked) {
             {
                 Icon(
@@ -1090,4 +1206,82 @@ private fun SettingsSwitch(
             null
         }
     )
+}
+
+@Composable
+private fun PalettePreviewCircle(
+    colors: List<Color>,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) Primary.copy(alpha = 0.2f) else Color.Transparent)
+            .clickable { onClick() }
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                if (colors.size == 1) {
+                    drawCircle(color = colors[0])
+                } else {
+                    val primary = colors.getOrElse(0) { Color.Gray }
+                    val secondary = colors.getOrElse(1) { primary.copy(alpha = 0.7f) }
+                    val tertiary = colors.getOrElse(2) { primary.copy(alpha = 0.5f) }
+                    val neutral = colors.getOrElse(3) { primary.copy(alpha = 0.3f) }
+
+                    // Top-left quadrant
+                    drawArc(
+                        color = primary,
+                        startAngle = 180f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                    // Top-right quadrant
+                    drawArc(
+                        color = secondary,
+                        startAngle = 270f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                    // Bottom-right quadrant
+                    drawArc(
+                        color = tertiary,
+                        startAngle = 0f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                    // Bottom-left quadrant
+                    drawArc(
+                        color = neutral,
+                        startAngle = 90f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                }
+            }
+        }
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
 }

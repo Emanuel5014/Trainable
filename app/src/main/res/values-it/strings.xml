@@ -271,6 +271,9 @@
     <string name="vibration_on_interactions">Vibrazione sulle interazioni</string>
     <string name="dynamic_color">Colore Dinamico</string>
     <string name="dynamic_color_desc">Usa colori Material You dallo sfondo</string>
+    <string name="dynamic_color_not_supported">Non supportato (richiesto Android 12+)</string>
+    <string name="app_palette">Palette App</string>
+    <string name="app_palette_desc">Scegli una combinazione di colori personalizzata per l\'app</string>
     <string name="timer_notifications">Notifiche Timer</string>
     <string name="timer_notifications_desc">Mostra il timer di recupero nelle notifiche</string>
     <string name="weight_unit">Unità di Misura</string>

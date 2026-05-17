@@ -80,6 +80,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val userLanguage by userPreferencesRepository.userLanguage.collectAsState(initial = "system")
             val dynamicColor by userPreferencesRepository.dynamicColor.collectAsState(initial = true)
+            val dynamicColorSeed by userPreferencesRepository.dynamicColorSeed.collectAsState(initial = null)
+            val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
+            val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
 
             val context = androidx.compose.ui.platform.LocalContext.current
             val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -137,7 +140,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            GymTrackingTheme(dynamicColor = dynamicColor) {
+            GymTrackingTheme(
+                dynamicColor = dynamicColor,
+                paletteIndex = themePalette,
+                seedColor = dynamicColorSeed,
+                themeStyle = themeStyle
+            ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()

@@ -21,8 +21,10 @@ workmanager = "2.11.2"
 coil = "2.7.0"
 core-splashscreen = "1.2.0"
 okhttp = "4.12.0"
+material = "1.14.0"
 
 [libraries]
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }

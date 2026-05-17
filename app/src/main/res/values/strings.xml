@@ -271,6 +271,9 @@
     <string name="vibration_on_interactions">Vibration on interactions</string>
     <string name="dynamic_color">Dynamic Color</string>
     <string name="dynamic_color_desc">Use Material You colors from wallpaper</string>
+    <string name="dynamic_color_not_supported">Not supported (Android 12+ required)</string>
+    <string name="app_palette">App Palette</string>
+    <string name="app_palette_desc">Choose a custom color scheme for the app</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show rest timer in system notifications</string>
     <string name="weight_unit">Weight Unit</string>

@@ -29,6 +29,7 @@ data class DashboardUiState(
     val prSnapshots: List<PrSnapshot> = emptyList(),
     val gymMembershipExpiryDate: Long? = null,
     val dynamicColor: Boolean = true,
+    val themePalette: Int = 0,
     val swipeActionsEnabled: Boolean = true,
     val selectedSessionIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
@@ -39,6 +40,7 @@ private data class PreferencesData(
     val goal: Int,
     val expiry: Long?,
     val dynamic: Boolean,
+    val palette: Int,
     val swipe: Boolean
 )
 
@@ -82,9 +84,10 @@ class DashboardViewModel @Inject constructor(
             userPrefsRepository.weeklyGoal,
             userPrefsRepository.gymMembershipExpiryDate,
             userPrefsRepository.dynamicColor,
+            userPrefsRepository.themePalette,
             userPrefsRepository.swipeActionsEnabled
-        ) { goal, expiry, dynamic, swipe -> 
-            PreferencesData(goal, expiry, dynamic, swipe)
+        ) { goal, expiry, dynamic, palette, swipe -> 
+            PreferencesData(goal, expiry, dynamic, palette, swipe)
         },
         combine(
             workoutRepository.getAllSessions(),
@@ -93,7 +96,7 @@ class DashboardViewModel @Inject constructor(
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
-        val (goal, membershipExpiry, dynamic, swipe) = prefs
+        val (goal, membershipExpiry, dynamic, palette, swipe) = prefs
         val (allSessions, unfinished) = sessionData
         val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
         val numWorkoutsThisWeek = workoutsThisWeek.size
@@ -152,6 +155,7 @@ class DashboardViewModel @Inject constructor(
             isLoading = false,
             gymMembershipExpiryDate = membershipExpiry,
             dynamicColor = dynamic,
+            themePalette = palette,
             swipeActionsEnabled = swipe,
             selectedSessionIds = selectedIds,
             isSelectionMode = selectedIds.isNotEmpty(),

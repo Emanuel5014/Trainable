@@ -285,6 +285,7 @@ fun DashboardScreen(
                     DashboardSimpleHeader(
                         onSettingsClick = onNavigateToSettings,
                         dynamicColor = uiState.dynamicColor,
+                        themePalette = uiState.themePalette,
                         isSelectionMode = uiState.isSelectionMode,
                         selectedCount = uiState.selectedSessionIds.size,
                         onClearSelection = { viewModel.clearSelection() },
@@ -668,6 +669,7 @@ fun GymMembershipCard(
 private fun DashboardSimpleHeader(
     onSettingsClick: () -> Unit,
     dynamicColor: Boolean,
+    themePalette: Int = 0,
     isSelectionMode: Boolean = false,
     selectedCount: Int = 0,
     onClearSelection: () -> Unit = {},
@@ -713,10 +715,11 @@ private fun DashboardSimpleHeader(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val useCustomTint = dynamicColor || themePalette != 0
                 Icon(
-                    painter = painterResource(id = if (dynamicColor) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
+                    painter = painterResource(id = if (useCustomTint) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
                     contentDescription = "Trainable Logo",
-                    tint = if (dynamicColor) Primary else Color.Unspecified,
+                    tint = if (useCustomTint) Primary else Color.Unspecified,
                     modifier = Modifier
                         .size(56.dp)
                 )
