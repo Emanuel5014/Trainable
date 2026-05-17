@@ -62,7 +62,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
@@ -196,7 +196,7 @@ fun EditWorkoutScreen(
                 itemsIndexed(state.exercises) { index, exerciseState ->
                     EditExerciseCard(
                         exerciseState = exerciseState,
-                        languageCode = languageCode ?: "en",
+                        languageCode = languageCode,
                         isFirst = index == 0,
                         isLast = index == state.exercises.size - 1,
                         weightUnit = state.weightUnit,
@@ -286,7 +286,7 @@ fun EditWorkoutScreen(
             onAddCustomExercise = { name, category ->
                 viewModel.addCustomExercise(name, category)
             },
-            languageCode = languageCode ?: "en"
+            languageCode = languageCode
         )
     }
 

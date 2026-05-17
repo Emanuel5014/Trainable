@@ -292,7 +292,7 @@ class WorkoutRepository @Inject constructor(
 
         val sessionId = workoutDao.insertSession(
             WorkoutSessionEntity(
-                planId = cardioPlan!!.id,
+                planId = cardioPlan.id,
                 timestamp = timestamp,
                 isFinished = true
             )

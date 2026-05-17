@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
                             currentDestination?.route?.startsWith("MainTabs") == true) && 
-                            currentDestination?.hasRoute(WorkoutExecution::class) == false
+                            currentDestination.hasRoute(WorkoutExecution::class) == false
 
                         val floatingNavBar by userPreferencesRepository.floatingNavBar.collectAsState(initial = false)
 

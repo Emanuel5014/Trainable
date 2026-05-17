@@ -112,7 +112,7 @@ fun ScreenHeader(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        actions?.invoke(this)
+                        actions.invoke(this)
                     }
                 }
             }

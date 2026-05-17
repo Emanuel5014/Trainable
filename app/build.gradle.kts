@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
@@ -11,7 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 android {
     namespace = "com.emanuel5014.trainable"
-    compileSdk = 36
+    compileSdk = 37
     
     defaultConfig {
         applicationId = "com.emanuel5014.trainable"
@@ -45,6 +44,7 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
 
@@ -64,7 +64,6 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation(libs.androidx.material3)
     ksp(libs.room.compiler)
 
     // Hilt
