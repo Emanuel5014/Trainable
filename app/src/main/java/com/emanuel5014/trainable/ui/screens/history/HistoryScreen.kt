@@ -7,6 +7,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -279,20 +280,34 @@ fun HistoryScreen(
             ) {
                 ScreenHeader(
                     titleContent = {
-                        val historyStyle = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall
-                        Text(
-                            text = if (uiState.isSelectionMode) {
-                                "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
-                            } else {
-                                stringResource(R.string.history_title)
+                        androidx.compose.animation.AnimatedContent(
+                            targetState = uiState.isSelectionMode,
+                            transitionSpec = {
+                                val direction = if (targetState) 1 else -1
+                                (androidx.compose.animation.slideInHorizontally { width -> direction * width / 2 } + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(400, easing = androidx.compose.animation.core.EaseOutExpo)))
+                                    .togetherWith(androidx.compose.animation.slideOutHorizontally { width -> -direction * width / 2 } + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(400, easing = androidx.compose.animation.core.EaseOutExpo)))
+                                    .using(androidx.compose.animation.SizeTransform(clip = true))
                             },
-                            style = historyStyle.copy(fontSize = ResponsiveSize.responsiveFontSize(historyStyle.fontSize)),
-                            color = onSurfaceColor,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-1).sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                            label = "title_anim"
+                        ) { isSelection ->
+                            val historyStyle = if (isSelection) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.displaySmall
+                            val responsiveFs = ResponsiveSize.responsiveFontSize(historyStyle.fontSize)
+                            Text(
+                                text = if (isSelection) {
+                                    "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
+                                } else {
+                                    stringResource(R.string.history_title)
+                                },
+                                style = historyStyle.copy(fontSize = responsiveFs),
+                                color = onSurfaceColor,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = if (isSelection) 0.sp else (-1).sp,
+                                lineHeight = if (isSelection) responsiveFs * 1.2f else responsiveFs * 1.1f,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
+                            )
+                        }
                     },
                     subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.workout_logs),
                     icon = if (uiState.isSelectionMode) null else Icons.Rounded.History,
@@ -337,140 +352,152 @@ fun HistoryScreen(
                     titleInRow = uiState.isSelectionMode
                 )
 
-                if (uiState.isLoading && uiState.sessions.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        GymLoadingIndicator()
-                    }
-                } else if (uiState.sessions.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Rounded.History,
-                        title = stringResource(R.string.no_history_yet),
-                        description = stringResource(R.string.no_history_description_screen),
-                        modifier = Modifier.weight(1f)
-                    )
-                } else if (uiState.filteredSessions.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Rounded.FilterListOff,
-                        title = stringResource(R.string.no_results_filters),
-                        description = stringResource(R.string.try_adjust_filters),
-                        action = {
-                            GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
-                                Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = ResponsiveSize.horizontalPadding, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                    itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
-                        val session = sessionDetails.session
-                        val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
-                        val isExpanded = expandedSessionId == session.id
-
-                        val dismissState = rememberSwipeToDismissBoxState()
-
-                        LaunchedEffect(dismissState.targetValue) {
-                            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                                if (swipeActionsEnabled && !uiState.isSelectionMode) {
-                                    when (dismissState.targetValue) {
-                                        SwipeToDismissBoxValue.EndToStart -> {
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            sessionToDelete = session
-                                        }
-                                        SwipeToDismissBoxValue.StartToEnd -> {
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            sessionToEdit = sessionDetails
-                                        }
-                                        else -> {}
-                                    }
-                                }
-                                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                            }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (uiState.isLoading && uiState.sessions.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            GymLoadingIndicator()
                         }
-
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            enableDismissFromStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
-                            enableDismissFromEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
-                            backgroundContent = {
-                                val direction = dismissState.dismissDirection
-
-                                val color by animateColorAsState(
-                                    when (direction) {
-                                        SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                                        SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
-                                        else -> Color.Transparent
-                                    },
-                                    label = "bg_color"
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(Shapes.extraLarge)
-                                        .background(color)
-                                        .padding(horizontal = 28.dp),
-                                    contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                                ) {
-                                    if (direction == SwipeToDismissBoxValue.EndToStart) {
-                                        Icon(
-                                            Icons.Rounded.DeleteSweep,
-                                            contentDescription = "Delete",
-                                            tint = Error,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                                        Icon(
-                                            Icons.Rounded.Edit,
-                                            contentDescription = "Edit",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    }
+                    } else if (uiState.sessions.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Rounded.History,
+                            title = stringResource(R.string.no_history_yet),
+                            description = stringResource(R.string.no_history_description_screen)
+                        )
+                    } else if (uiState.filteredSessions.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Rounded.FilterListOff,
+                            title = stringResource(R.string.no_results_filters),
+                            description = stringResource(R.string.try_adjust_filters),
+                            action = {
+                                GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
+                                    Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
                                 }
                             }
+                        )
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = ResponsiveSize.horizontalPadding, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            SessionHistoryCard(
-                                session = session,
-                                planName = planName,
-                                isExpanded = isExpanded,
-                                details = if (isExpanded) uiState.selectedSession else null,
-                                languageCode = languageCode,
-                                weightUnit = uiState.weightUnit,
-                                onShareClick = { details ->
-                                    sessionToShare = details to planName
-                                },
-                                swipeActionsEnabled = swipeActionsEnabled,
-                                isSelectionMode = uiState.isSelectionMode,
-                                isSelected = uiState.selectedSessionIds.contains(session.id),
-                                onClick = {
-                                    if (uiState.isSelectionMode) {
-                                        viewModel.toggleSessionSelection(session.id)
-                                    } else {
-                                        expandedSessionId = if (isExpanded) null else session.id
-                                        if (!isExpanded) {
-                                            viewModel.loadSessionDetails(session.id)
+
+                        itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
+                            val session = sessionDetails.session
+                            val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
+                            val isExpanded = expandedSessionId == session.id
+
+                            val dismissState = rememberSwipeToDismissBoxState()
+
+                            LaunchedEffect(dismissState.targetValue) {
+                                if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                                    if (swipeActionsEnabled && !uiState.isSelectionMode) {
+                                        when (dismissState.targetValue) {
+                                            SwipeToDismissBoxValue.EndToStart -> {
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                sessionToDelete = session
+                                            }
+                                            SwipeToDismissBoxValue.StartToEnd -> {
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                sessionToEdit = sessionDetails
+                                            }
+                                            else -> {}
                                         }
                                     }
-                                },
-                                onLongClick = {
-                                    if (!uiState.isSelectionMode && !swipeActionsEnabled) {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.toggleSessionSelection(session.id)
+                                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                                }
+                            }
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
+                                enableDismissFromEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
+                                backgroundContent = {
+                                    val direction = dismissState.dismissDirection
+
+                                    val color by animateColorAsState(
+                                        when (direction) {
+                                            SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                            SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                                            else -> Color.Transparent
+                                        },
+                                        label = "bg_color"
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(Shapes.extraLarge)
+                                            .background(color)
+                                            .padding(horizontal = 28.dp),
+                                        contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                    ) {
+                                        if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                            Icon(
+                                                Icons.Rounded.DeleteSweep,
+                                                contentDescription = "Delete",
+                                                tint = Error,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                            Icon(
+                                                Icons.Rounded.Edit,
+                                                contentDescription = "Edit",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
                                     }
                                 }
-                            )
+                            ) {
+                                SessionHistoryCard(
+                                    session = session,
+                                    planName = planName,
+                                    isExpanded = isExpanded,
+                                    details = if (isExpanded) uiState.selectedSession else null,
+                                    languageCode = languageCode,
+                                    weightUnit = uiState.weightUnit,
+                                    onShareClick = { details ->
+                                        sessionToShare = details to planName
+                                    },
+                                    swipeActionsEnabled = swipeActionsEnabled,
+                                    isSelectionMode = uiState.isSelectionMode,
+                                    isSelected = uiState.selectedSessionIds.contains(session.id),
+                                    onClick = {
+                                        if (uiState.isSelectionMode) {
+                                            viewModel.toggleSessionSelection(session.id)
+                                        } else {
+                                            expandedSessionId = if (isExpanded) null else session.id
+                                            if (!isExpanded) {
+                                                viewModel.loadSessionDetails(session.id)
+                                            }
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!uiState.isSelectionMode && !swipeActionsEnabled) {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.toggleSessionSelection(session.id)
+                                        }
+                                    }
+                                )
+                            }
                         }
+                        
+                        item { Spacer(modifier = Modifier.height(100.dp)) }
                     }
-                    
-                    item { Spacer(modifier = Modifier.height(100.dp)) }
                 }
+                
+                // Top gradient fade to smoothly hide items when scrolling up
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(surfaceColor, Color.Transparent)
+                            )
+                        )
+                )
             }
             }
         }
