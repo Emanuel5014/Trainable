@@ -218,11 +218,11 @@ fun RoutineListScreen(
                             val direction = if (targetState > initialState) 1 else -1
                             (slideInHorizontally { width -> direction * width / 2 } + fadeIn(animationSpec = tween(400, easing = EaseOutExpo)))
                                 .togetherWith(slideOutHorizontally { width -> -direction * width / 2 } + fadeOut(animationSpec = tween(400, easing = EaseOutExpo)))
-                                .using(SizeTransform(clip = false))
+                                .using(SizeTransform(clip = true))
                         },
                         label = "title_anim"
                     ) { state ->
-                        val routineStyle = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall
+                        val routineStyle = if (uiState.isSelectionMode) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.displaySmall
                         val responsiveFs = ResponsiveSize.responsiveFontSize(routineStyle.fontSize)
                         Text(
                             text = when (state) {
@@ -233,10 +233,11 @@ fun RoutineListScreen(
                             style = routineStyle.copy(fontSize = responsiveFs),
                             color = OnSurface,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = (-1).sp,
+                            letterSpacing = if (uiState.isSelectionMode) 0.sp else (-1).sp,
                             lineHeight = if (uiState.isSelectionMode) responsiveFs * 1.2f else responsiveFs * 1.1f,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false
                         )
                     }
                 },
@@ -275,6 +276,7 @@ fun RoutineListScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = ResponsiveSize.horizontalPadding)
+                    .padding(bottom = 8.dp)
                     .clip(Shapes.large)
                     .background(SurfaceContainerHigh)
                     .padding(4.dp)
@@ -337,44 +339,58 @@ fun RoutineListScreen(
                 }
             }
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1,
-                verticalAlignment = Alignment.Top,
-                userScrollEnabled = false
-            ) { page ->
-                val isArchivedPage = page == 1
-                val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
+            Box(modifier = Modifier.fillMaxSize()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 1,
+                    verticalAlignment = Alignment.Top,
+                    userScrollEnabled = false
+                ) { page ->
+                    val isArchivedPage = page == 1
+                    val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
+                    
+                    // M3 Expressive: Page transformation based on scroll progress
+                    val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                // Slight scale and alpha during transition
+                                val scale = 1f - (kotlin.math.abs(pageOffset) * 0.05f)
+                                scaleX = scale
+                                scaleY = scale
+                                alpha = 1f - kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
+                            }
+                    ) {
+                        RoutineListPage(
+                            plans = plans,
+                            isArchived = isArchivedPage,
+                            onNavigateToDetail = onNavigateToDetail,
+                            onDelete = { planToDelete = it },
+                            onArchiveToggle = { planToArchive = it },
+                            onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
+                            isLoading = uiState.isLoading,
+                            isSelectionMode = uiState.isSelectionMode,
+                            swipeActionsEnabled = swipeActionsEnabled,
+                            selectedPlanIds = uiState.selectedPlanIds,
+                            onToggleSelection = { viewModel.togglePlanSelection(it) }
+                        )
+                    }
+                }
                 
-                // M3 Expressive: Page transformation based on scroll progress
-                val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
-                
+                // Top gradient fade to smoothly hide items when scrolling up
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            // Slight scale and alpha during transition
-                            val scale = 1f - (kotlin.math.abs(pageOffset) * 0.05f)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = 1f - kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
-                        }
-                ) {
-                    RoutineListPage(
-                        plans = plans,
-                        isArchived = isArchivedPage,
-                        onNavigateToDetail = onNavigateToDetail,
-                        onDelete = { planToDelete = it },
-                        onArchiveToggle = { planToArchive = it },
-                        onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
-                        isLoading = uiState.isLoading,
-                        isSelectionMode = uiState.isSelectionMode,
-                        swipeActionsEnabled = swipeActionsEnabled,
-                        selectedPlanIds = uiState.selectedPlanIds,
-                        onToggleSelection = { viewModel.togglePlanSelection(it) }
-                    )
-                }
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(Surface, androidx.compose.ui.graphics.Color.Transparent)
+                            )
+                        )
+                )
             }
         }
     }

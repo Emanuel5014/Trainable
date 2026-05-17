@@ -104,7 +104,9 @@ fun ScreenHeader(
                 ) {
                     navigationIcon?.invoke()
                     if (titleInRow) {
-                        titleContent()
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                            titleContent()
+                        }
                     }
                 }
                 if (actions != null && (titleInRow || navigationIcon != null)) {
