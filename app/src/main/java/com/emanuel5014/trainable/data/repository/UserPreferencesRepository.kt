@@ -100,7 +100,7 @@ class UserPreferencesRepository @Inject constructor(
 
     val floatingNavBar: Flow<Boolean> = dataStore.data
         .map { preferences ->
-            preferences[FLOATING_NAV_BAR] ?: false
+            preferences[FLOATING_NAV_BAR] ?: true
         }
 
     val dynamicColor: Flow<Boolean> = dataStore.data

@@ -171,7 +171,10 @@ fun RoutineListScreen(
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
-            val fabPadding = if (ResponsiveSize.isCompact) 2.dp else 8.dp
+            val fabPadding = if (uiState.floatingNavBar) {
+                if (ResponsiveSize.isCompact) 2.dp else 8.dp
+            } else 0.dp
+            
             if (uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
                     onClick = { 

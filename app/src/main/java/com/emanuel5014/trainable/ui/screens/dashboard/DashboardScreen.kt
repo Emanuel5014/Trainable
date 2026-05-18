@@ -261,7 +261,11 @@ fun DashboardScreen(
                         contentColor = OnPrimary,
                         shape = Shapes.large,
                         modifier = Modifier
-                            .padding(end = if (ResponsiveSize.isCompact) 2.dp else 8.dp)
+                            .padding(
+                                end = if (uiState.floatingNavBar) {
+                                    if (ResponsiveSize.isCompact) 2.dp else 8.dp
+                                } else 0.dp
+                            )
                             .padding(bottom = 80.dp)
                     ) {
 

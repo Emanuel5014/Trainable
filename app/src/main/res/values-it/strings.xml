@@ -10,8 +10,8 @@
     <string name="nav_history">Storico</string>
     <string name="nav_analytics">Statistiche</string>
     <string name="nav_settings">Impostazioni</string>
-    <string name="floating_nav_bar">Navigazione Fluttuante</string>
-    <string name="floating_nav_bar_desc">Barra di navigazione arrotondata fluttuante</string>
+    <string name="floating_nav_bar">Navigazione Classica</string>
+    <string name="floating_nav_bar_desc">Barra di navigazione standard Material 3</string>
 
     <!-- Common Actions -->
     <string name="save">Salva</string>

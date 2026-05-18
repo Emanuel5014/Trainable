@@ -30,6 +30,7 @@ data class DashboardUiState(
     val gymMembershipExpiryDate: Long? = null,
     val dynamicColor: Boolean = true,
     val themePalette: Int = 0,
+    val floatingNavBar: Boolean = false,
     val swipeActionsEnabled: Boolean = true,
     val selectedSessionIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
@@ -41,7 +42,8 @@ private data class PreferencesData(
     val expiry: Long?,
     val dynamic: Boolean,
     val palette: Int,
-    val swipe: Boolean
+    val swipe: Boolean,
+    val floating: Boolean
 )
 
 data class PrSnapshot(
@@ -81,13 +83,25 @@ class DashboardViewModel @Inject constructor(
         ) { plans, volume -> plans to volume },
         userRepository.currentUser,
         combine(
-            userPrefsRepository.weeklyGoal,
-            userPrefsRepository.gymMembershipExpiryDate,
-            userPrefsRepository.dynamicColor,
-            userPrefsRepository.themePalette,
-            userPrefsRepository.swipeActionsEnabled
-        ) { goal, expiry, dynamic, palette, swipe -> 
-            PreferencesData(goal, expiry, dynamic, palette, swipe)
+            combine(
+                userPrefsRepository.weeklyGoal,
+                userPrefsRepository.gymMembershipExpiryDate,
+                userPrefsRepository.dynamicColor,
+                userPrefsRepository.themePalette,
+                userPrefsRepository.swipeActionsEnabled
+            ) { goal, expiry, dynamic, palette, swipe -> 
+                listOf(goal, expiry, dynamic, palette, swipe)
+            },
+            userPrefsRepository.floatingNavBar
+        ) { prefsList, floating -> 
+            PreferencesData(
+                goal = prefsList[0] as Int,
+                expiry = prefsList[1] as Long?,
+                dynamic = prefsList[2] as Boolean,
+                palette = prefsList[3] as Int,
+                swipe = prefsList[4] as Boolean,
+                floating = floating
+            )
         },
         combine(
             workoutRepository.getAllSessions(),
@@ -96,7 +110,7 @@ class DashboardViewModel @Inject constructor(
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
-        val (goal, membershipExpiry, dynamic, palette, swipe) = prefs
+        val (goal, membershipExpiry, dynamic, palette, swipe, floating) = prefs
         val (allSessions, unfinished) = sessionData
         val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
         val numWorkoutsThisWeek = workoutsThisWeek.size
@@ -156,6 +170,7 @@ class DashboardViewModel @Inject constructor(
             gymMembershipExpiryDate = membershipExpiry,
             dynamicColor = dynamic,
             themePalette = palette,
+            floatingNavBar = floating,
             swipeActionsEnabled = swipe,
             selectedSessionIds = selectedIds,
             isSelectionMode = selectedIds.isNotEmpty(),

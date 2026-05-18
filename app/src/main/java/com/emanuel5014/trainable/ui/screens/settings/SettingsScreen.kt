@@ -731,8 +731,8 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
-                                checked = floatingNavBar,
-                                onCheckedChange = { viewModel.setFloatingNavBar(it) }
+                                checked = !floatingNavBar,
+                                onCheckedChange = { viewModel.setFloatingNavBar(!it) }
                             )
                         }
 

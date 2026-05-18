@@ -10,8 +10,8 @@
     <string name="nav_history">History</string>
     <string name="nav_analytics">Analytics</string>
     <string name="nav_settings">Settings</string>
-    <string name="floating_nav_bar">Floating Navigation</string>
-    <string name="floating_nav_bar_desc">Rounded floating navigation bar</string>
+    <string name="floating_nav_bar">Classic Navigation</string>
+    <string name="floating_nav_bar_desc">Standard Material 3 bottom navigation</string>
 
     <!-- Common Actions -->
     <string name="save">Save</string>
