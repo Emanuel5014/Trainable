@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -9,11 +10,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -63,98 +67,122 @@ fun BottomNavBarFlo(
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
-    val interactionSource = remember { MutableInteractionSource() }
 
     val isOnMainTabs = currentRoute?.contains("MainTabs") == true || currentRoute == null
     val selectedIndex = if (isOnMainTabs) pagerState.currentPage else 0
+    val items = localizedNavItems()
 
     Surface(
         modifier = modifier
-            .padding(horizontal = if (ResponsiveSize.isCompact) 16.dp else 32.dp)
-            .padding(bottom = if (ResponsiveSize.isCompact) 16.dp else 32.dp),
-        shape = RoundedCornerShape(24.dp),
+            .padding(horizontal = if (ResponsiveSize.isCompact) 12.dp else 24.dp)
+            .padding(bottom = if (ResponsiveSize.isCompact) 12.dp else 20.dp),
+        shape = RoundedCornerShape(32.dp),
         color = SurfaceContainerHigh,
-        tonalElevation = 0.dp,
-        shadowElevation = 8.dp
+        tonalElevation = 6.dp,
+        shadowElevation = 12.dp
     ) {
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 6.dp, vertical = 6.dp)
         ) {
-            val itemWidth = if (ResponsiveSize.isCompact) 52.dp else 64.dp
-            localizedNavItems().forEachIndexed { index, item ->
-                val isSelected = isOnMainTabs && selectedIndex == index
-                
-                val scale by animateFloatAsState(
-                    targetValue = if (isSelected) 1.15f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "scale"
-                )
-                
-                val iconAlpha by animateFloatAsState(
-                    targetValue = if (isSelected) 1f else 0.5f,
-                    animationSpec = tween(150),
-                    label = "alpha"
-                )
-                
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .width(itemWidth)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isSelected) Primary.copy(alpha = 0.1f) 
-                            else SurfaceContainerHigh
-                        )
-                        .clickable(
-                            interactionSource = interactionSource,
-                            indication = null
-                        ) {
-                            if (!isSelected) {
-                                if (hapticEnabled) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                }
-                                if (!isOnMainTabs) {
-                                    navController.navigate(MainTabs) {
-                                        launchSingleTop = true
+            val totalWidth = maxWidth
+            val itemWidth = totalWidth / items.size
+            
+            // Sliding Indicator (Expressive Motion)
+            val indicatorOffset by animateDpAsState(
+                targetValue = itemWidth * selectedIndex,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+                label = "indicatorOffset"
+            )
+
+            Box(
+                modifier = Modifier
+                    .offset(x = indicatorOffset)
+                    .width(itemWidth)
+                    .height(64.dp) // Match item height exactly
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Primary.copy(alpha = 0.12f))
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEachIndexed { index, item ->
+                    val isSelected = isOnMainTabs && selectedIndex == index
+                    
+                    val contentAlpha by animateFloatAsState(
+                        targetValue = if (isSelected) 1f else 0.5f,
+                        animationSpec = tween(200),
+                        label = "contentAlpha"
+                    )
+                    
+                    val scale by animateFloatAsState(
+                        targetValue = if (isSelected) 1.1f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "scale"
+                    )
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(64.dp) // Match indicator height
+                            .clip(RoundedCornerShape(28.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                if (!isSelected) {
+                                    if (hapticEnabled) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
+                                    if (!isOnMainTabs) {
+                                        navController.navigate(MainTabs) {
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(index)
                                     }
                                 }
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
                             }
-                        }
-                        .padding(vertical = 6.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.scale(scale)
                     ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.title,
-                            tint = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = iconAlpha),
-                            modifier = Modifier.size(if (isSelected) 22.dp else 20.dp)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.scale(scale)
+                        ) {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title,
+                                tint = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = contentAlpha),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(1.dp))
+                        
+                        Text(
+                            text = item.title,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                letterSpacing = 0.1.sp
+                            ),
+                            color = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = contentAlpha),
+                            maxLines = 1
                         )
                     }
-                    
-                    Spacer(modifier = Modifier.height(2.dp))
-                    
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 9.sp,
-                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold
-                        ),
-                        color = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = 0.6f),
-                        maxLines = 1
-                    )
                 }
             }
         }

@@ -171,6 +171,7 @@ fun RoutineListScreen(
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
+            val fabPadding = if (ResponsiveSize.isCompact) 2.dp else 8.dp
             if (uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
                     onClick = { 
@@ -183,7 +184,9 @@ fun RoutineListScreen(
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
-                    modifier = Modifier.padding(bottom = 80.dp)
+                    modifier = Modifier
+                        .padding(end = fabPadding)
+                        .padding(bottom = 80.dp)
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -195,7 +198,9 @@ fun RoutineListScreen(
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
-                    modifier = Modifier.padding(bottom = 80.dp)
+                    modifier = Modifier
+                        .padding(end = fabPadding)
+                        .padding(bottom = 80.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
                     Spacer(modifier = Modifier.width(8.dp))

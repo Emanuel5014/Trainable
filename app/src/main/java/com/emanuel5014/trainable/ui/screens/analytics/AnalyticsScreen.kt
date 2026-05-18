@@ -134,7 +134,7 @@ fun AnalyticsScreen(
                     ) { focusManager.clearFocus() }
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -161,136 +161,150 @@ fun AnalyticsScreen(
                     )
                 }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    item {
-                        ExerciseCarouselSection(
-                            selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
-                            weightUnit = weightUnit,
-                            onEditClick = { showExercisePicker = true }
-                        )
-                    }
-                    
-                    items(uiState.widgets, key = { it.id }) { widget ->
-                        var dragAccumulator by remember(widget.id) { mutableStateOf(0f) }
-                        var dragOffsetY by remember(widget.id) { mutableStateOf(0f) }
-                        val isDragging = draggedWidgetId == widget.id
-                        val isRecentlyMoved = recentlyMovedWidgetId == widget.id
-                        val displacedOffsetTarget = if (displacedWidgetId == widget.id) displacedWidgetOffset else 0f
-                        val displacedAnimatedOffset by animateFloatAsState(
-                            targetValue = displacedOffsetTarget,
-                            label = "widget_displaced_offset"
-                        )
-                        val animatedOffsetY by animateFloatAsState(
-                            targetValue = (if (isDragging) dragOffsetY else 0f) + displacedAnimatedOffset,
-                            label = "widget_drag_offset"
-                        )
-                        val animatedScale by animateFloatAsState(
-                            targetValue = when {
-                                isDragging -> 1.02f
-                                isRecentlyMoved -> 1.01f
-                                else -> 1f
-                            },
-                            label = "widget_drag_scale"
-                        )
-                        val dragModifier = Modifier
-                            .graphicsLayer {
-                                translationY = animatedOffsetY
-                                scaleX = animatedScale
-                                scaleY = animatedScale
-                            }
-                            .pointerInput(widget.id, uiState.widgets.size) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = {
-                                        draggedWidgetId = widget.id
-                                        dragAccumulator = 0f
-                                        dragOffsetY = 0f
-                                    },
-                                    onDragEnd = {
-                                        draggedWidgetId = null
-                                        displacedWidgetId = null
-                                        displacedWidgetOffset = 0f
-                                        dragAccumulator = 0f
-                                        dragOffsetY = 0f
-                                    },
-                                    onDragCancel = {
-                                        draggedWidgetId = null
-                                        displacedWidgetId = null
-                                        displacedWidgetOffset = 0f
-                                        dragAccumulator = 0f
-                                        dragOffsetY = 0f
-                                    }
-                                ) { change, dragAmount ->
-                                    change.consume()
-                                    dragAccumulator += dragAmount.y
-                                    dragOffsetY += dragAmount.y
-
-                                    val currentIndex = uiState.widgets.indexOfFirst { it.id == widget.id }
-                                    if (currentIndex == -1) return@detectDragGesturesAfterLongPress
-
-                                    if (dragAccumulator > moveThresholdPx && currentIndex < uiState.widgets.lastIndex) {
-                                        displacedWidgetId = uiState.widgets.getOrNull(currentIndex + 1)?.id
-                                        displacedWidgetOffset = -swapNudgePx
-                                        scope.launch {
-                                            delay(30)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 100.dp)
+                    ) {
+                        item {
+                            ExerciseCarouselSection(
+                                selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
+                                weightUnit = weightUnit,
+                                onEditClick = { showExercisePicker = true }
+                            )
+                        }
+                        
+                        items(uiState.widgets, key = { it.id }) { widget ->
+                            var dragAccumulator by remember(widget.id) { mutableStateOf(0f) }
+                            var dragOffsetY by remember(widget.id) { mutableStateOf(0f) }
+                            val isDragging = draggedWidgetId == widget.id
+                            val isRecentlyMoved = recentlyMovedWidgetId == widget.id
+                            val displacedOffsetTarget = if (displacedWidgetId == widget.id) displacedWidgetOffset else 0f
+                            val displacedAnimatedOffset by animateFloatAsState(
+                                targetValue = displacedOffsetTarget,
+                                label = "widget_displaced_offset"
+                            )
+                            val animatedOffsetY by animateFloatAsState(
+                                targetValue = (if (isDragging) dragOffsetY else 0f) + displacedAnimatedOffset,
+                                label = "widget_drag_offset"
+                            )
+                            val animatedScale by animateFloatAsState(
+                                targetValue = when {
+                                    isDragging -> 1.02f
+                                    isRecentlyMoved -> 1.01f
+                                    else -> 1f
+                                },
+                                label = "widget_drag_scale"
+                            )
+                            val dragModifier = Modifier
+                                .graphicsLayer {
+                                    translationY = animatedOffsetY
+                                    scaleX = animatedScale
+                                    scaleY = animatedScale
+                                }
+                                .pointerInput(widget.id, uiState.widgets.size) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {
+                                            draggedWidgetId = widget.id
+                                            dragAccumulator = 0f
+                                            dragOffsetY = 0f
+                                        },
+                                        onDragEnd = {
+                                            draggedWidgetId = null
+                                            displacedWidgetId = null
                                             displacedWidgetOffset = 0f
-                                        }
-                                        viewModel.moveWidget(widget.id, up = false)
-                                        recentlyMovedWidgetId = widget.id
-                                        scope.launch {
-                                            delay(220)
-                                            if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
-                                        }
-                                        dragAccumulator = 0f
-                                        dragOffsetY -= moveThresholdPx
-                                    } else if (dragAccumulator < -moveThresholdPx && currentIndex > 0) {
-                                        displacedWidgetId = uiState.widgets.getOrNull(currentIndex - 1)?.id
-                                        displacedWidgetOffset = swapNudgePx
-                                        scope.launch {
-                                            delay(30)
+                                            dragAccumulator = 0f
+                                            dragOffsetY = 0f
+                                        },
+                                        onDragCancel = {
+                                            draggedWidgetId = null
+                                            displacedWidgetId = null
                                             displacedWidgetOffset = 0f
+                                            dragAccumulator = 0f
+                                            dragOffsetY = 0f
                                         }
-                                        viewModel.moveWidget(widget.id, up = true)
-                                        recentlyMovedWidgetId = widget.id
-                                        scope.launch {
-                                            delay(220)
-                                            if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
+                                    ) { change, dragAmount ->
+                                        change.consume()
+                                        dragAccumulator += dragAmount.y
+                                        dragOffsetY += dragAmount.y
+
+                                        val currentIndex = uiState.widgets.indexOfFirst { it.id == widget.id }
+                                        if (currentIndex == -1) return@detectDragGesturesAfterLongPress
+
+                                        if (dragAccumulator > moveThresholdPx && currentIndex < uiState.widgets.lastIndex) {
+                                            displacedWidgetId = uiState.widgets.getOrNull(currentIndex + 1)?.id
+                                            displacedWidgetOffset = -swapNudgePx
+                                            scope.launch {
+                                                delay(30)
+                                                displacedWidgetOffset = 0f
+                                            }
+                                            viewModel.moveWidget(widget.id, up = false)
+                                            recentlyMovedWidgetId = widget.id
+                                            scope.launch {
+                                                delay(220)
+                                                if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
+                                            }
+                                            dragAccumulator = 0f
+                                            dragOffsetY -= moveThresholdPx
+                                        } else if (dragAccumulator < -moveThresholdPx && currentIndex > 0) {
+                                            displacedWidgetId = uiState.widgets.getOrNull(currentIndex - 1)?.id
+                                            displacedWidgetOffset = swapNudgePx
+                                            scope.launch {
+                                                delay(30)
+                                                displacedWidgetOffset = 0f
+                                            }
+                                            viewModel.moveWidget(widget.id, up = true)
+                                            recentlyMovedWidgetId = widget.id
+                                            scope.launch {
+                                                delay(220)
+                                                if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
+                                            }
+                                            dragAccumulator = 0f
+                                            dragOffsetY += moveThresholdPx
                                         }
-                                        dragAccumulator = 0f
-                                        dragOffsetY += moveThresholdPx
                                     }
                                 }
-                            }
 
-                        when (widget) {
-                            is AnalyticsWidget.BodyWeight -> {
-                                BodyWeightChartSection(
-                                    modifier = dragModifier,
-                                    isDragging = isDragging,
-                                    isRecentlyMoved = isRecentlyMoved,
-                                    bodyWeightHistory = widget.history,
-                                    bodyWeightInput = uiState.bodyWeightInput,
-                                    weightUnit = weightUnit,
-                                    onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
-                                    onSubmitWeight = viewModel::submitWeight,
-                                    onRemove = { viewModel.removeWidget(widget.id) }
-                                )
-                            }
-                            is AnalyticsWidget.Exercise -> {
-                                ExerciseChartSection(
-                                    modifier = dragModifier,
-                                    isDragging = isDragging,
-                                    isRecentlyMoved = isRecentlyMoved,
-                                    exerciseName = widget.exerciseName,
-                                    history = widget.history,
-                                    weightUnit = weightUnit,
-                                    onRemove = { viewModel.removeWidget(widget.id) }
-                                )
+                            when (widget) {
+                                is AnalyticsWidget.BodyWeight -> {
+                                    BodyWeightChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyMoved,
+                                        bodyWeightHistory = widget.history,
+                                        bodyWeightInput = uiState.bodyWeightInput,
+                                        weightUnit = weightUnit,
+                                        onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
+                                        onSubmitWeight = viewModel::submitWeight,
+                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
+                                is AnalyticsWidget.Exercise -> {
+                                    ExerciseChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyMoved,
+                                        exerciseName = widget.exerciseName,
+                                        history = widget.history,
+                                        weightUnit = weightUnit,
+                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
                             }
                         }
                     }
+
+                    // Top gradient fade to smoothly hide items when scrolling up
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(Surface, Color.Transparent)
+                                )
+                            )
+                    )
                 }
             }
         }

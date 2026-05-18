@@ -260,8 +260,11 @@ fun DashboardScreen(
                         containerColor = Primary,
                         contentColor = OnPrimary,
                         shape = Shapes.large,
-                        modifier = Modifier.padding(bottom = 80.dp)
+                        modifier = Modifier
+                            .padding(end = if (ResponsiveSize.isCompact) 2.dp else 8.dp)
+                            .padding(bottom = 80.dp)
                     ) {
+
                         Icon(
                             imageVector = Icons.Rounded.Bolt,
                             contentDescription = stringResource(R.string.quick_workout)
@@ -400,7 +403,6 @@ fun DashboardScreen(
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
@@ -414,19 +416,6 @@ fun DashboardScreen(
                                             text = uiState.todayPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(Primary.copy(alpha = 0.1f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.FitnessCenter,
-                                            contentDescription = null,
-                                            tint = Primary
                                         )
                                     }
                                 }
@@ -450,7 +439,6 @@ fun DashboardScreen(
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
@@ -464,19 +452,6 @@ fun DashboardScreen(
                                             text = uiState.suggestedPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(Primary.copy(alpha = 0.1f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.FitnessCenter,
-                                            contentDescription = null,
-                                            tint = Primary
                                         )
                                     }
                                 }

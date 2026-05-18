@@ -1043,12 +1043,12 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.about)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "Trainable v1.4.0",
                                     style = MaterialTheme.typography.titleMedium,
@@ -1076,9 +1076,8 @@ fun SettingsScreen(
                                 onClick = { viewModel.checkForUpdates() },
                                 containerColor = Primary.copy(alpha = 0.1f),
                                 contentColor = Primary,
-                                height = 56,
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                modifier = Modifier.weight(1f)
+                                height = 48,
+                                contentPadding = PaddingValues(horizontal = 24.dp)
                             ) {
                                 Text(
                                     text = stringResource(R.string.check_for_updates),
