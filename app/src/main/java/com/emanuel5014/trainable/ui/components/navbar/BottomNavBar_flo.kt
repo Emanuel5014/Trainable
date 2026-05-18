@@ -41,6 +41,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -57,6 +60,7 @@ import kotlinx.coroutines.launch
 fun BottomNavBarFlo(
     navController: NavHostController,
     pagerState: androidx.compose.foundation.pager.PagerState,
+    hazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -71,6 +75,7 @@ fun BottomNavBarFlo(
     val isOnMainTabs = currentRoute?.contains("MainTabs") == true || currentRoute == null
     val selectedIndex = if (isOnMainTabs) pagerState.currentPage else 0
     val items = localizedNavItems()
+    val hazeTintColor = SurfaceContainerHigh.copy(alpha = 0.65f)
 
     Surface(
         modifier = modifier
@@ -78,14 +83,23 @@ fun BottomNavBarFlo(
             .padding(bottom = if (ResponsiveSize.isCompact) 12.dp else 20.dp),
         shape = RoundedCornerShape(32.dp),
         color = SurfaceContainerHigh,
-        tonalElevation = 6.dp,
+        tonalElevation = 0.dp,
         shadowElevation = 12.dp
     ) {
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 6.dp)
+                .hazeEffect(state = hazeState) {
+                    blurRadius = 24.dp
+                    tints = listOf(HazeTint(hazeTintColor))
+                    noiseFactor = 0.15f
+                }
         ) {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 6.dp)
+            ) {
             val totalWidth = maxWidth
             val itemWidth = totalWidth / items.size
             
@@ -187,4 +201,5 @@ fun BottomNavBarFlo(
             }
         }
     }
+}
 }

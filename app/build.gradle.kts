@@ -96,8 +96,11 @@ dependencies {
     // OkHttp
     implementation(libs.okhttp)
 
-    // Google Fonts
-    implementation(libs.google.fonts)
+// Google Fonts
+implementation(libs.google.fonts)
+
+// Haze - Frosted Glass Blur
+implementation(libs.haze)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

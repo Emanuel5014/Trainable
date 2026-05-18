@@ -25,6 +25,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -161,6 +163,8 @@ class MainActivity : ComponentActivity() {
 
                 val pagerState = rememberPagerState(pageCount = { 4 })
 
+                val hazeState = rememberHazeState()
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -171,7 +175,9 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             pagerState = pagerState,
                             startDestination = MainTabs,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .hazeSource(state = hazeState)
                         )
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
@@ -189,7 +195,8 @@ class MainActivity : ComponentActivity() {
                             if (floatingNavBar) {
                                 BottomNavBarFlo(
                                     navController = navController,
-                                    pagerState = pagerState
+                                    pagerState = pagerState,
+                                    hazeState = hazeState
                                 )
                             } else {
                                 BottomNavBar(

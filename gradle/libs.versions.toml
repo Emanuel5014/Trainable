@@ -22,6 +22,7 @@ coil = "2.7.0"
 core-splashscreen = "1.2.0"
 okhttp = "4.12.0"
 material = "1.14.0"
+haze = "1.7.2"
 
 [libraries]
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
@@ -57,6 +58,7 @@ hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltNa
 hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltNavigationCompose" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
+haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 
 [plugins]
