@@ -610,7 +610,9 @@ class WorkoutViewModel @Inject constructor(
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-            timerNotificationHelper.startOrUpdateTimerNotification(seconds)
+            _state.value.sessionId?.let { sessionId ->
+                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId)
+            }
         }
         saveTimerToSession(endTime, seconds)
         startTimerJob()
@@ -623,7 +625,9 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = remaining, restTimerEndTime = endTime) }
         if (remaining > 0) {
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateTimerNotification(remaining)
+                _state.value.sessionId?.let { sessionId ->
+                    timerNotificationHelper.startOrUpdateTimerNotification(remaining, sessionId)
+                }
             }
             startTimerJob()
         } else {
@@ -684,7 +688,9 @@ class WorkoutViewModel @Inject constructor(
             val newTotal = _state.value.totalRestSeconds + seconds
             _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateTimerNotification(newRemaining)
+                _state.value.sessionId?.let { sessionId ->
+                    timerNotificationHelper.startOrUpdateTimerNotification(newRemaining, sessionId)
+                }
             }
             saveTimerToSession(newEnd, newTotal)
         }

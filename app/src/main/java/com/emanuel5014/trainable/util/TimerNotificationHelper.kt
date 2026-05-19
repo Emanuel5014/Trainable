@@ -74,7 +74,7 @@ class TimerNotificationHelper @Inject constructor(
      * Uses Android's internal Chronometer to update the countdown in the System UI
      * without requiring a notify() call every second.
      */
-    fun startOrUpdateTimerNotification(remainingSeconds: Int) {
+    fun startOrUpdateTimerNotification(remainingSeconds: Int, sessionId: Int) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -85,10 +85,16 @@ class TimerNotificationHelper @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val skipIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_SKIP }
+        val skipIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
+            action = TimerNotificationReceiver.ACTION_SKIP
+            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+        }
         val skipPendingIntent = PendingIntent.getBroadcast(context, 1, skipIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val addIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_ADD_30S }
+        val addIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
+            action = TimerNotificationReceiver.ACTION_ADD_30S
+            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+        }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(context, runningChannelId)
@@ -111,7 +117,10 @@ class TimerNotificationHelper @Inject constructor(
         notificationManager.notify(notificationId, notification)
 
         // Schedule Alarm for exact finish
-        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_TIMER_FINISHED }
+        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
+            action = TimerNotificationReceiver.ACTION_TIMER_FINISHED
+            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+        }
         val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         
         AlarmManagerCompat.setExactAndAllowWhileIdle(
