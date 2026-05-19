@@ -18,6 +18,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 fun GymCard(
     modifier: Modifier = Modifier,
     containerColor: Color = SurfaceContainerLow,
+    border: androidx.compose.foundation.BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -26,7 +27,8 @@ fun GymCard(
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = border
     ) {
         Column(
             modifier = Modifier.padding(ResponsiveSize.cardPadding),

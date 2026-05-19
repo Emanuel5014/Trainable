@@ -329,6 +329,33 @@ fun WorkoutExecutionScreen(
                             color = OnSurface,
                             fontWeight = FontWeight.Black
                         )
+                        
+                        if (currentExState.supersetId != null) {
+                            Surface(
+                                color = Primary.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Timer, // Or a more suitable icon if available
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.superset),
+                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                        color = Primary,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                }
+                            }
+                        }
                     }
                     
                     // Sets List

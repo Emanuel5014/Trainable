@@ -44,5 +44,7 @@ data class SetLogEntity(
     @ColumnInfo(name = "note")
     val note: String? = null,
     @ColumnInfo(name = "ordine_esercizio")
-    val ordineEsercizio: Int = 0
+    val ordineEsercizio: Int = 0,
+    @ColumnInfo(name = "superset_id")
+    val supersetId: String? = null
 )

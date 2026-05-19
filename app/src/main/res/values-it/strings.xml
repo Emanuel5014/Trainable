@@ -149,6 +149,9 @@
     <string name="add_custom_exercise">Aggiungi Esercizio Personalizzato</string>
     <string name="exercise_name">Nome Esercizio</string>
     <string name="category">Categoria</string>
+    <string name="superset">SUPER SERIE</string>
+    <string name="link_with_next">COLLEGA AL SUCCESSIVO</string>
+    <string name="unlink_superset">SCOLLEGA SUPER SERIE</string>
     <string name="set_number">Serie %d</string>
     <string name="add_set">AGGIUNGI SERIE</string>
     <string name="remove_set">RIMUOVI SERIE</string>

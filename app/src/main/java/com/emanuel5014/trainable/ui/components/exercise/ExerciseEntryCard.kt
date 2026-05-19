@@ -33,14 +33,16 @@ fun ExerciseEntryCard(
     item: PlanExerciseWithDetails,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    languageCode: String = "en"
+    languageCode: String = "en",
+    isSuperset: Boolean = false
 ) {
     val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-    GymCard(
+    com.emanuel5014.trainable.ui.components.GymCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        containerColor = SurfaceContainer
+        containerColor = if (isSuperset) com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.04f) else SurfaceContainer,
+        border = if (isSuperset) androidx.compose.foundation.BorderStroke(1.dp, com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.15f)) else null
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

@@ -149,6 +149,9 @@
     <string name="add_custom_exercise">Add Custom Exercise</string>
     <string name="exercise_name">Exercise Name</string>
     <string name="category">Category</string>
+    <string name="superset">SUPERSET</string>
+    <string name="link_with_next">LINK WITH NEXT</string>
+    <string name="unlink_superset">UNLINK SUPERSET</string>
     <string name="set_number">Set %d</string>
     <string name="add_set">ADD SET</string>
     <string name="remove_set">REMOVE SET</string>

@@ -2,8 +2,10 @@ package com.emanuel5014.trainable.ui.screens.analytics
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,10 +71,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -112,6 +117,7 @@ fun AnalyticsScreen(
     var displacedWidgetOffset by remember { mutableStateOf(0f) }
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
     val moveThresholdPx = with(LocalDensity.current) { 72.dp.toPx() }
     val swapNudgePx = with(LocalDensity.current) { 28.dp.toPx() }
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
@@ -182,29 +188,45 @@ fun AnalyticsScreen(
                             val displacedOffsetTarget = if (displacedWidgetId == widget.id) displacedWidgetOffset else 0f
                             val displacedAnimatedOffset by animateFloatAsState(
                                 targetValue = displacedOffsetTarget,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                ),
                                 label = "widget_displaced_offset"
                             )
                             val animatedOffsetY by animateFloatAsState(
                                 targetValue = (if (isDragging) dragOffsetY else 0f) + displacedAnimatedOffset,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
                                 label = "widget_drag_offset"
                             )
                             val animatedScale by animateFloatAsState(
                                 targetValue = when {
-                                    isDragging -> 1.02f
-                                    isRecentlyMoved -> 1.01f
+                                    isDragging -> 1.04f
+                                    isRecentlyMoved -> 1.02f
                                     else -> 1f
                                 },
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
                                 label = "widget_drag_scale"
                             )
                             val dragModifier = Modifier
+                                .zIndex(if (isDragging) 1f else 0f)
                                 .graphicsLayer {
                                     translationY = animatedOffsetY
                                     scaleX = animatedScale
                                     scaleY = animatedScale
+                                    clip = !isDragging
+                                    rotationZ = if (isDragging) 1.2f else 0f
                                 }
                                 .pointerInput(widget.id, uiState.widgets.size) {
                                     detectDragGesturesAfterLongPress(
                                         onDragStart = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             draggedWidgetId = widget.id
                                             dragAccumulator = 0f
                                             dragOffsetY = 0f
@@ -232,6 +254,7 @@ fun AnalyticsScreen(
                                         if (currentIndex == -1) return@detectDragGesturesAfterLongPress
 
                                         if (dragAccumulator > moveThresholdPx && currentIndex < uiState.widgets.lastIndex) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             displacedWidgetId = uiState.widgets.getOrNull(currentIndex + 1)?.id
                                             displacedWidgetOffset = -swapNudgePx
                                             scope.launch {
@@ -247,6 +270,7 @@ fun AnalyticsScreen(
                                             dragAccumulator = 0f
                                             dragOffsetY -= moveThresholdPx
                                         } else if (dragAccumulator < -moveThresholdPx && currentIndex > 0) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             displacedWidgetId = uiState.widgets.getOrNull(currentIndex - 1)?.id
                                             displacedWidgetOffset = swapNudgePx
                                             scope.launch {

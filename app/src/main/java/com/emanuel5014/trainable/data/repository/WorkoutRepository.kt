@@ -380,7 +380,8 @@ class WorkoutRepository @Inject constructor(
                         pesoSollevato = prevSet?.pesoSollevato ?: 0f,
                         repsEffettive = prevSet?.repsEffettive ?: planEx.repsTarget.toIntOrNull() ?: 10,
                         numeroSerie = i,
-                        ordineEsercizio = planEx.ordine
+                        ordineEsercizio = planEx.ordine,
+                        supersetId = planEx.supersetId
                     )
                 )
             }

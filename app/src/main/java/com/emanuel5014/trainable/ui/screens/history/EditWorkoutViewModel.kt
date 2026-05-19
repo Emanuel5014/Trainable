@@ -95,7 +95,7 @@ class EditWorkoutViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 sessionId = sessionId,
-                                planName = sessionDetails.plan.nome,
+                                planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome,
                                 sessionTimestamp = sessionDetails.session.timestamp,
                                 exercises = exercises,
                                 cardioLogs = sessionDetails.cardio
@@ -197,6 +197,7 @@ class EditWorkoutViewModel @Inject constructor(
             val lastWeight = exerciseState?.sets?.lastOrNull()?.pesoSollevato ?: 0f
             val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 8
             val exerciseOrder = exerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
+            val supersetId = exerciseState?.sets?.firstOrNull()?.supersetId
 
             val newSet = SetLogEntity(
                 sessionId = sessionId,
@@ -204,7 +205,8 @@ class EditWorkoutViewModel @Inject constructor(
                 pesoSollevato = lastWeight,
                 repsEffettive = lastReps,
                 numeroSerie = nextSerie,
-                ordineEsercizio = exerciseOrder
+                ordineEsercizio = exerciseOrder,
+                supersetId = supersetId
             )
 
             // Optimistic update to prevent duplicates on rapid clicks
@@ -259,6 +261,7 @@ class EditWorkoutViewModel @Inject constructor(
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
             val sets = oldExerciseState.sets
             val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
+            val supersetId = sets.firstOrNull()?.supersetId
 
             // Optimistic update
             val replacementExercise = _state.value.availableExercises.find { it.id == newExerciseId }
@@ -269,7 +272,7 @@ class EditWorkoutViewModel @Inject constructor(
                     if (index != -1) {
                         mutableExercises[index] = EditExerciseState(
                             exercise = replacementExercise,
-                            sets = sets.map { it.copy(exerciseId = newExerciseId, id = 0) }
+                            sets = sets.map { it.copy(exerciseId = newExerciseId, id = 0, supersetId = supersetId) }
                         )
                     }
                     curr.copy(exercises = mutableExercises)
@@ -282,7 +285,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Insert new sets with new exerciseId and same order, then update state with real IDs
             val newSetIds = sets.map { set ->
                 workoutRepository.logSet(
-                    set.copy(id = 0, exerciseId = newExerciseId, ordineEsercizio = exerciseOrder)
+                    set.copy(id = 0, exerciseId = newExerciseId, ordineEsercizio = exerciseOrder, supersetId = supersetId)
                 )
             }
             
@@ -314,7 +317,8 @@ class EditWorkoutViewModel @Inject constructor(
                 pesoSollevato = 0f,
                 repsEffettive = 8,
                 numeroSerie = 1,
-                ordineEsercizio = nextOrder
+                ordineEsercizio = nextOrder,
+                supersetId = null
             )
 
             // Optimistic update
@@ -495,6 +499,54 @@ class EditWorkoutViewModel @Inject constructor(
         }
         
         workoutRepository.updateSetOrders(updatedSets)
+    }
+
+    fun toggleSupersetWithNext(exerciseId: Int) {
+        viewModelScope.launch {
+            val exercises = _state.value.exercises
+            val index = exercises.indexOfFirst { it.exercise.id == exerciseId }
+            if (index != -1 && index < exercises.size - 1) {
+                val currentEx = exercises[index]
+                val nextEx = exercises[index + 1]
+
+                val currentSid = currentEx.sets.firstOrNull()?.supersetId
+                val nextSid = nextEx.sets.firstOrNull()?.supersetId
+
+                val isLinked = currentSid != null && currentSid == nextSid
+
+                val newSid = if (isLinked) {
+                    null
+                } else {
+                    currentSid ?: nextSid ?: java.util.UUID.randomUUID().toString()
+                }
+
+                val setsToUpdate = mutableListOf<SetLogEntity>()
+                val updatedCurrentSets = currentEx.sets.map { it.copy(supersetId = newSid) }
+                val updatedNextSets = nextEx.sets.map { it.copy(supersetId = newSid) }
+
+                setsToUpdate.addAll(updatedCurrentSets)
+                setsToUpdate.addAll(updatedNextSets)
+
+                // Optimistic update
+                _state.update { curr ->
+                    val mutableExercises = curr.exercises.toMutableList()
+                    mutableExercises[index] = currentEx.copy(sets = updatedCurrentSets)
+                    mutableExercises[index + 1] = nextEx.copy(sets = updatedNextSets)
+                    curr.copy(exercises = mutableExercises)
+                }
+
+                workoutRepository.updateSetOrders(setsToUpdate)
+            }
+        }
+    }
+
+    fun updateSessionName(name: String) {
+        viewModelScope.launch {
+            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
+            if (sessionDetails != null) {
+                workoutRepository.updateSession(sessionDetails.session.copy(noteSessione = name.ifBlank { null }))
+            }
+        }
     }
 
     fun updateSessionDate(newTimestamp: Long) {

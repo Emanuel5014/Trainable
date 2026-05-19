@@ -10,6 +10,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +54,10 @@ import androidx.compose.material.icons.rounded.FilterListOff
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePickerDefaults
@@ -99,6 +103,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -142,12 +147,23 @@ import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.ShareUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+
+private data class ExerciseWithSets(
+    val exercise: com.emanuel5014.trainable.data.local.entity.ExerciseEntity,
+    val sets: MutableList<com.emanuel5014.trainable.data.local.relation.SetWithExercise>
+)
+
+private data class HistoryBlock(
+    val supersetId: String?,
+    val exercises: List<ExerciseWithSets>
+)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -951,6 +967,75 @@ fun AddWorkoutFromPlanContent(
     }
 }
 
+@Composable
+private fun HistoryExerciseGroup(
+    exWithSets: ExerciseWithSets,
+    isSuperset: Boolean,
+    languageCode: String,
+    weightUnit: String,
+    modifier: Modifier = Modifier
+) {
+    val exerciseName = ExerciseTranslations.translate(exWithSets.exercise.nome, languageCode)
+    Column(modifier = modifier) {
+        Text(
+            text = exerciseName.uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            color = if (isSuperset) Primary else OnSurface,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        exWithSets.sets.sortedBy { it.setLog.numeroSerie }.forEach { setWithEx ->
+            val set = setWithEx.setLog
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp, horizontal = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stringResource(R.string.set_number, set.numeroSerie),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant
+                    )
+                    Text(
+                        text = WeightUnitConverter.formatWithUnit(
+                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                            weightUnit
+                        ) + " × ${set.repsEffettive}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface
+                    )
+                }
+                if (!set.note.isNullOrBlank()) {
+                    Row(
+                        modifier = Modifier.padding(top = 2.dp, start = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.Notes,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = set.note,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryCard(
@@ -967,17 +1052,29 @@ fun SessionHistoryCard(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
-    GymCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
-            )
+            ),
+        shape = Shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = SurfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = ResponsiveSize.cardPadding,
+                        end = ResponsiveSize.cardPadding,
+                        top = ResponsiveSize.cardPadding,
+                        bottom = if (isExpanded) 0.dp else ResponsiveSize.cardPadding
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1049,7 +1146,9 @@ fun SessionHistoryCard(
                         .padding(top = 20.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = ResponsiveSize.cardPadding),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1075,7 +1174,14 @@ fun SessionHistoryCard(
                             GymLoadingIndicator(size = 24.dp)
                         }
                     } else if (details.sets.isEmpty() && details.cardio.isEmpty()) {
-                        Text(stringResource(R.string.no_exercises_in_session_detail), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+                        Text(
+                            text = stringResource(R.string.no_exercises_in_session_detail),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant,
+                            modifier = Modifier
+                                .padding(horizontal = ResponsiveSize.cardPadding)
+                                .padding(bottom = ResponsiveSize.cardPadding)
+                        )
                     } else {
                         val sortedSets = details.sets.sortedWith(
                             compareBy(
@@ -1083,68 +1189,101 @@ fun SessionHistoryCard(
                                 { it.setLog.numeroSerie }
                             )
                         )
-                        val groupedSets = sortedSets.groupBy { it.exercise.id }
                         
-                        groupedSets.forEach { (_, sets) ->
-                            val exerciseName = ExerciseTranslations.translate(sets.first().exercise.nome, languageCode)
-                            
-                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                                Text(
-                                    text = exerciseName.uppercase(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Primary,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 1.sp
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                sets.forEach { setWithEx ->
-                                    val set = setWithEx.setLog
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .padding(vertical = 4.dp, horizontal = 4.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.set_number, set.numeroSerie),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = OnSurfaceVariant
-                                            )
-                                            Text(
-                                                text = WeightUnitConverter.formatWithUnit(
-                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                                    weightUnit
-                                                ) + " × ${set.repsEffettive}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = OnSurface
-                                            )
-                                        }
-                                        if (!set.note.isNullOrBlank()) {
-                                            Row(
-                                                modifier = Modifier.padding(top = 2.dp, start = 8.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(
-                                                    Icons.AutoMirrored.Rounded.Notes,
-                                                    contentDescription = null,
-                                                    tint = OnSurfaceVariant.copy(alpha = 0.5f),
-                                                    modifier = Modifier.size(12.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = set.note,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = OnSurfaceVariant,
-                                                    fontStyle = FontStyle.Italic
-                                                )
-                                            }
-                                        }
+                        // 1. Group sets by exercise while preserving order
+                        val exercisesWithSets = mutableListOf<ExerciseWithSets>()
+                        sortedSets.forEach { setWithEx ->
+                            val existing = exercisesWithSets.find { it.exercise.id == setWithEx.exercise.id && it.sets.first().setLog.ordineEsercizio == setWithEx.setLog.ordineEsercizio }
+                            if (existing != null) {
+                                existing.sets.add(setWithEx)
+                            } else {
+                                exercisesWithSets.add(ExerciseWithSets(setWithEx.exercise, mutableListOf(setWithEx)))
+                            }
+                        }
+
+                        // 2. Group exercises into blocks by supersetId
+                        val blocks = mutableListOf<HistoryBlock>()
+                        var currentSupersetId: String? = null
+                        var currentBlock = mutableListOf<ExerciseWithSets>()
+
+                        exercisesWithSets.forEach { item ->
+                            val sid = item.sets.first().setLog.supersetId
+                            if (sid != null) {
+                                if (sid == currentSupersetId) {
+                                    currentBlock.add(item)
+                                } else {
+                                    if (currentBlock.isNotEmpty()) {
+                                        blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
+                                        currentBlock = mutableListOf()
                                     }
+                                    currentSupersetId = sid
+                                    currentBlock.add(item)
+                                }
+                            } else {
+                                if (currentBlock.isNotEmpty()) {
+                                    blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
+                                    currentBlock = mutableListOf()
+                                }
+                                currentSupersetId = null
+                                blocks.add(HistoryBlock(null, listOf(item)))
+                            }
+                        }
+                        if (currentBlock.isNotEmpty()) {
+                            blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
+                        }
+
+                        blocks.forEach { block ->
+                            val isSuperset = block.supersetId != null
+
+                            if (isSuperset) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 12.dp)
+                                        .background(Primary.copy(alpha = 0.04f), shape = Shapes.large)
+                                        .border(1.dp, Primary.copy(alpha = 0.1f), shape = Shapes.large)
+                                        .padding(horizontal = ResponsiveSize.cardPadding, vertical = 12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.Timer,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = stringResource(R.string.superset),
+                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                            color = Primary,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+
+                                    block.exercises.forEachIndexed { exIndex, exWithSets ->
+                                        HistoryExerciseGroup(
+                                            exWithSets = exWithSets,
+                                            isSuperset = true,
+                                            languageCode = languageCode,
+                                            weightUnit = weightUnit,
+                                            modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp)
+                                        )
+                                    }
+                                }
+                            } else {
+                                block.exercises.forEach { exWithSets ->
+                                    HistoryExerciseGroup(
+                                        exWithSets = exWithSets,
+                                        isSuperset = false,
+                                        languageCode = languageCode,
+                                        weightUnit = weightUnit,
+                                        modifier = Modifier
+                                            .padding(horizontal = ResponsiveSize.cardPadding)
+                                            .padding(bottom = 16.dp)
+                                    )
                                 }
                             }
                         }
@@ -1156,7 +1295,11 @@ fun SessionHistoryCard(
                                 "camminata", "walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
                                 else -> Icons.AutoMirrored.Rounded.DirectionsRun
                             }
-                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = ResponsiveSize.cardPadding)
+                                    .padding(bottom = 16.dp)
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1193,6 +1336,8 @@ fun SessionHistoryCard(
                                 }
                             }
                         }
+                        
+                        Spacer(modifier = Modifier.height(ResponsiveSize.cardPadding - 16.dp))
                     }
                 }
             }

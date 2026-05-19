@@ -64,7 +64,8 @@ data class WorkoutExerciseState(
     val sets: List<WorkoutSetState> = emptyList(),
     val previousPerformance: String? = null,
     val swappedExerciseId: Int? = null,
-    val customRestSeconds: Int? = null
+    val customRestSeconds: Int? = null,
+    val supersetId: String? = null
 )
 
 data class WorkoutSetState(
@@ -235,7 +236,8 @@ class WorkoutViewModel @Inject constructor(
                 planDetails = planDetail,
                 sets = sets,
                 previousPerformance = prevPerfStr,
-                swappedExerciseId = planDetail?.id?.let { swapMap[it] }
+                swappedExerciseId = planDetail?.id?.let { swapMap[it] },
+                supersetId = planDetail?.supersetId
             )
         }
 
@@ -320,7 +322,8 @@ class WorkoutViewModel @Inject constructor(
                 exercise = detail.exercise,
                 planDetails = detail.planExercise,
                 sets = initialSets,
-                previousPerformance = prevPerfStr
+                previousPerformance = prevPerfStr,
+                supersetId = detail.planExercise.supersetId
             )
         }
 
@@ -430,7 +433,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = setState.note
+                        note = setState.note,
+                        supersetId = exState.supersetId
                     )
                 )
                 newSetId = logId.toInt()
@@ -452,7 +456,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = setState.note
+                        note = setState.note,
+                        supersetId = exState.supersetId
                     )
                 )
                 newSetId = null
@@ -461,6 +466,34 @@ class WorkoutViewModel @Inject constructor(
 
             updateSetState(exerciseIndex, setIndex) { 
                 it.copy(isCompleted = newIsCompleted, id = newSetId) 
+            }
+
+            // --- AUTO-NAVIGATION FOR SUPERSETS ---
+            if (newIsCompleted && exState.supersetId != null) {
+                val exercises = _state.value.exercises
+                val supersetId = exState.supersetId
+                
+                // Find all exercises in this superset block
+                val supersetBlock = exercises.filter { it.supersetId == supersetId }
+                if (supersetBlock.size > 1) {
+                    // Find the next exercise in the block that has uncompleted sets
+                    // We start looking from the exercise AFTER the current one, and wrap around
+                    val blockIndices = exercises.indices.filter { exercises[it].supersetId == supersetId }
+                    val currentPosInBlock = blockIndices.indexOf(exerciseIndex)
+                    
+                    for (i in 1 until blockIndices.size) {
+                        val nextIndex = blockIndices[(currentPosInBlock + i) % blockIndices.size]
+                        val nextEx = exercises[nextIndex]
+                        if (nextEx.sets.any { !it.isCompleted }) {
+                            // Found it! Navigate after a short delay to allow the user to see the completion
+                            viewModelScope.launch {
+                                delay(300)
+                                _state.update { it.copy(currentExerciseIndex = nextIndex) }
+                            }
+                            break
+                        }
+                    }
+                }
             }
         }
     }
@@ -493,7 +526,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = note
+                        note = note,
+                        supersetId = exState.supersetId
                     )
                 )
             }
@@ -796,7 +830,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = setState.note
+                        note = setState.note,
+                        supersetId = exState.supersetId
                     )
                 )
             }
