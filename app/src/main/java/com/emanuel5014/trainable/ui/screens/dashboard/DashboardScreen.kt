@@ -94,7 +94,9 @@ import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.util.DateFormatter
-import java.util.concurrent.TimeUnit
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -488,13 +490,9 @@ fun GymMembershipCard(
     username: String,
     onClick: () -> Unit
 ) {
-    val todayMillis = System.currentTimeMillis()
-    
-    val daysLeft = if (expiryDateMillis != null) {
-        val diff = expiryDateMillis - todayMillis
-        TimeUnit.MILLISECONDS.toDays(diff).toInt()
-    } else {
-        null
+    val daysLeft = expiryDateMillis?.let {
+        val expiryDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+        ChronoUnit.DAYS.between(java.time.LocalDate.now(), expiryDate).toInt()
     }
 
     val isExpired = daysLeft != null && daysLeft < 0

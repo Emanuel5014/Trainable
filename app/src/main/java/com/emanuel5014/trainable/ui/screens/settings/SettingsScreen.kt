@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
+import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Flag
@@ -124,6 +125,8 @@ fun SettingsScreen(
     val themePalette by viewModel.themePalette.collectAsState()
     val themeStyle by viewModel.themeStyle.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
+    val gymMembershipExpiryNotificationsEnabled by viewModel.gymMembershipExpiryNotificationsEnabled.collectAsState()
+    val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     
@@ -139,15 +142,20 @@ fun SettingsScreen(
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
+    var pendingNotificationType by remember { mutableStateOf<String?>(null) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            viewModel.setTimerNotificationsEnabled(true)
+            when (pendingNotificationType) {
+                "timer" -> viewModel.setTimerNotificationsEnabled(true)
+                "membership" -> viewModel.setGymMembershipExpiryNotificationsEnabled(true)
+            }
         } else {
             Toast.makeText(context, "Permission denied for notifications", Toast.LENGTH_SHORT).show()
         }
+        pendingNotificationType = null
     }
 
     LaunchedEffect(backupStatus) {
@@ -744,6 +752,37 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.RestartAlt, 
+                                    contentDescription = null, 
+                                    tint = Primary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = swipeActionsEnabled,
+                                onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.personalization)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
@@ -861,9 +900,13 @@ fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
 
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
+            SettingsSection(title = stringResource(R.string.notifications)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -887,6 +930,7 @@ fun SettingsScreen(
                                 checked = timerNotificationsEnabled,
                                 onCheckedChange = { enabled ->
                                     if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        pendingNotificationType = "timer"
                                         notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                                     } else {
                                         viewModel.setTimerNotificationsEnabled(enabled)
@@ -904,22 +948,63 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.RestartAlt, 
+                                    imageVector = Icons.Rounded.CreditCard, 
                                     contentDescription = null, 
                                     tint = Primary, 
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(R.string.gym_membership_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.gym_membership_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
-                                checked = swipeActionsEnabled,
-                                onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
+                                checked = gymMembershipExpiryNotificationsEnabled,
+                                onCheckedChange = { enabled ->
+                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        pendingNotificationType = "membership"
+                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        viewModel.setGymMembershipExpiryNotificationsEnabled(enabled)
+                                    }
+                                }
                             )
+                        }
+
+                        if (gymMembershipExpiryNotificationsEnabled) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(Icons.Rounded.Flag, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(stringResource(R.string.notify_days_before), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                        Text(stringResource(R.string.notify_days_before_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = { if (gymMembershipExpiryNotificationDaysBefore > 1) viewModel.setGymMembershipExpiryNotificationDaysBefore(gymMembershipExpiryNotificationDaysBefore - 1) }) {
+                                        Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
+                                    }
+                                    Text(
+                                        text = gymMembershipExpiryNotificationDaysBefore.toString(),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = Primary,
+                                        fontWeight = FontWeight.Black,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                    IconButton(onClick = { if (gymMembershipExpiryNotificationDaysBefore < 30) viewModel.setGymMembershipExpiryNotificationDaysBefore(gymMembershipExpiryNotificationDaysBefore + 1) }) {
+                                        Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

@@ -1310,7 +1310,7 @@ fun WorkoutCalendarSection(
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = if (hasWorkout || isToday) FontWeight.Bold else FontWeight.Normal,
                                     color = when {
-                                        hasWorkout -> Color.White
+                                        hasWorkout -> OnPrimary
                                         !isCurrentMonth -> OnSurfaceVariant.copy(alpha = 0.25f)
                                         else -> MaterialTheme.colorScheme.onSurface
                                     }

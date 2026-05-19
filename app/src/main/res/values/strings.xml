@@ -262,6 +262,7 @@
     <string name="settings_title">SETTINGS</string>
     <string name="profile">PROFILE</string>
     <string name="preferences">PREFERENCES</string>
+    <string name="personalization">PERSONALIZATION</string>
     <string name="data_backup">DATA &amp; BACKUP</string>
     <string name="account">Account</string>
     <string name="member_since">Member since %s</string>
@@ -277,8 +278,15 @@
     <string name="dynamic_color_not_supported">Not supported (Android 12+ required)</string>
     <string name="app_palette">App Palette</string>
     <string name="app_palette_desc">Choose a custom color scheme for the app</string>
+    <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show rest timer in system notifications</string>
+    <string name="gym_membership_notifications">Membership Alerts</string>
+    <string name="gym_membership_notifications_desc">Notify before your membership expires</string>
+    <string name="notify_days_before">Lead Time</string>
+    <string name="notify_days_before_desc">Days before expiry to receive alert</string>
+    <string name="gym_membership_expiring">Membership Expiring</string>
+    <string name="gym_membership_expiring_desc">Your gym membership will expire in %d days. Don\'t forget to renew!</string>
     <string name="weight_unit">Weight Unit</string>
     <string name="weight_unit_desc">Choose between Kilograms and Pounds</string>
     <string name="language">Language</string>
@@ -414,7 +422,7 @@
     <string name="activity_name_placeholder">e.g. Swimming, Hiking...</string>
 
     <!-- About -->
-    <string name="about">About</string>
+    <string name="about">ABOUT</string>
     <string name="star_on_github">Star on GitHub</string>
     <string name="buy_me_a_coffee">Buy me a coffee</string>
 

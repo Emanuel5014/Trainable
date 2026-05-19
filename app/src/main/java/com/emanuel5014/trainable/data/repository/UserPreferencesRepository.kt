@@ -41,6 +41,9 @@ class UserPreferencesRepository @Inject constructor(
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
+        val GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("gym_membership_expiry_notifications_enabled")
+        val GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE = intPreferencesKey("gym_membership_expiry_notification_days_before")
+        val LAST_NOTIFIED_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("last_notified_expiry_date")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -51,6 +54,21 @@ class UserPreferencesRepository @Inject constructor(
     val gymMembershipExpiryDate: Flow<Long?> = dataStore.data
         .map { preferences ->
             preferences[GYM_MEMBERSHIP_EXPIRY_DATE]
+        }
+
+    val gymMembershipExpiryNotificationsEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] ?: false
+        }
+
+    val gymMembershipExpiryNotificationDaysBefore: Flow<Int> = dataStore.data
+        .map { preferences ->
+            preferences[GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] ?: 3
+        }
+
+    val lastNotifiedExpiryDate: Flow<Long> = dataStore.data
+        .map { preferences ->
+            preferences[LAST_NOTIFIED_EXPIRY_DATE] ?: 0L
         }
 
     val weeklyGoal: Flow<Int> = dataStore.data
@@ -260,6 +278,24 @@ class UserPreferencesRepository @Inject constructor(
             } else {
                 preferences.remove(GYM_MEMBERSHIP_EXPIRY_DATE)
             }
+        }
+    }
+
+    suspend fun setGymMembershipExpiryNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setGymMembershipExpiryNotificationDaysBefore(days: Int) {
+        dataStore.edit { preferences ->
+            preferences[GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] = days
+        }
+    }
+
+    suspend fun setLastNotifiedExpiryDate(timestampMillis: Long) {
+        dataStore.edit { preferences ->
+            preferences[LAST_NOTIFIED_EXPIRY_DATE] = timestampMillis
         }
     }
 }

@@ -170,6 +170,18 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val gymMembershipExpiryNotificationsEnabled = userPrefsRepository.gymMembershipExpiryNotificationsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    val gymMembershipExpiryNotificationDaysBefore = userPrefsRepository.gymMembershipExpiryNotificationDaysBefore.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 3
+    )
+
     val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -396,6 +408,18 @@ class SettingsViewModel @Inject constructor(
     fun setTimerNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setTimerNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setGymMembershipExpiryNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setGymMembershipExpiryNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setGymMembershipExpiryNotificationDaysBefore(days: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setGymMembershipExpiryNotificationDaysBefore(days)
         }
     }
 
