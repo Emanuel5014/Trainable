@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -160,6 +161,7 @@ class AnalyticsViewModel @Inject constructor(
         }
 
         val weightFlow = analyticsRepository.getWeightHistory(context.startDate)
+        val sessionsFlow = workoutRepository.getAllSessions()
         
         val exerciseChartFlows = context.widgetOrder
             .filter { it.startsWith("exercise_") }
@@ -181,8 +183,9 @@ class AnalyticsViewModel @Inject constructor(
             combine(
                 strengthFlow,
                 weightFlow,
+                sessionsFlow,
                 exerciseHistoriesFlow
-            ) { strengthCategory, weightHistory, exerciseHistories ->
+            ) { strengthCategory, weightHistory, sessions, exerciseHistories ->
                 buildAnalyticsState(
                     activePlanName = context.activePlan?.nome ?: "No Active Plan",
                     timeRange = context.timeRange,
@@ -196,6 +199,7 @@ class AnalyticsViewModel @Inject constructor(
                     strengthIndex = strengthCategory.strengthIndex,
                     categoryVolumes = strengthCategory.categoryVolumes,
                     weightHistory = weightHistory,
+                    sessions = sessions ?: emptyList(),
                     exerciseHistories = exerciseHistories,
                     weightUnit = context.weightUnit,
                     languageCode = context.languageCode
@@ -261,6 +265,15 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
+    fun addCalendarChart() {
+        widgetOrder.update { current ->
+            if (current.contains("calendar")) return@update current
+            val newList = current + "calendar"
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
     fun removeWidget(id: String) {
         widgetOrder.update { current ->
             val newList = current.filter { it != id }
@@ -316,6 +329,7 @@ class AnalyticsViewModel @Inject constructor(
         strengthIndex: Float?,
         categoryVolumes: List<CategoryVolumeRow>,
         weightHistory: List<com.emanuel5014.trainable.data.local.entity.WeightLogEntity>,
+        sessions: List<WorkoutSessionEntity>,
         exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
         weightUnit: String,
         languageCode: String
@@ -344,6 +358,11 @@ class AnalyticsViewModel @Inject constructor(
             )
         }
 
+        // Extract finished session timestamps
+        val finishedSessionDates = sessions
+            .filter { it.isFinished }
+            .map { it.timestamp }
+
         val widgets = widgetOrder.mapNotNull { id ->
             when {
                 id == "weight" -> {
@@ -355,6 +374,9 @@ class AnalyticsViewModel @Inject constructor(
                             )
                         }
                     )
+                }
+                id == "calendar" -> {
+                    AnalyticsWidget.Calendar(workoutDates = finishedSessionDates)
                 }
                 id.startsWith("exercise_") -> {
                     val exerciseId = id.removePrefix("exercise_").toInt()
@@ -408,6 +430,7 @@ class AnalyticsViewModel @Inject constructor(
                 )
             },
             weightUnit = weightUnit,
+            workoutDates = finishedSessionDates,
             isLoading = false,
             error = null
         )

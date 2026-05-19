@@ -442,7 +442,22 @@ class WorkoutViewModel @Inject constructor(
                 val isLastExercise = exerciseIndex == currentState.exercises.size - 1
                 val isLastSet = setIndex == exState.sets.size - 1
                 
-                if (!(isLastExercise && isLastSet)) {
+                var shouldStartTimer = true
+                if (exState.supersetId != null) {
+                    val setNumber = setState.setNumber
+                    val supersetId = exState.supersetId
+                    val supersetExercises = currentState.exercises.filter { it.supersetId == supersetId }
+                    val otherExercises = supersetExercises.filter { it.exercise.id != exState.exercise.id }
+                    val allOthersCompleted = otherExercises.all { otherEx ->
+                        val otherSet = otherEx.sets.find { it.setNumber == setNumber }
+                        otherSet == null || otherSet.isCompleted
+                    }
+                    if (!allOthersCompleted) {
+                        shouldStartTimer = false
+                    }
+                }
+                
+                if (shouldStartTimer && !(isLastExercise && isLastSet)) {
                     val restTime = exState.customRestSeconds ?: exState.planDetails?.recuperoTarget ?: 90
                     startRestTimer(restTime)
                 }

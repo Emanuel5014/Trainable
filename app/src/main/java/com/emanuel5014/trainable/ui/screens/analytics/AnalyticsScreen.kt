@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -82,6 +83,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
@@ -101,6 +103,17 @@ import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.YearMonth
+import java.time.format.TextStyle
+import java.util.Locale
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material.icons.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,6 +134,7 @@ fun AnalyticsScreen(
     val moveThresholdPx = with(LocalDensity.current) { 72.dp.toPx() }
     val swapNudgePx = with(LocalDensity.current) { 28.dp.toPx() }
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
+    val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
     val weightUnit = uiState.weightUnit
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
@@ -154,9 +168,14 @@ fun AnalyticsScreen(
                     AnalyticsHeaderFabMenu(
                         expanded = fabMenuExpanded,
                         hasBodyWeightWidget = hasBodyWeightWidget,
+                        hasCalendarWidget = hasCalendarWidget,
                         onExpandedChange = { fabMenuExpanded = it },
                         onAddBodyWeight = {
                             viewModel.addBodyWeightChart()
+                            fabMenuExpanded = false
+                        },
+                        onAddCalendar = {
+                            viewModel.addCalendarChart()
                             fabMenuExpanded = false
                         },
                         onAddExercise = {
@@ -300,6 +319,15 @@ fun AnalyticsScreen(
                                         weightUnit = weightUnit,
                                         onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
                                         onSubmitWeight = viewModel::submitWeight,
+                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
+                                is AnalyticsWidget.Calendar -> {
+                                    WorkoutCalendarSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyMoved,
+                                        workoutDates = widget.workoutDates,
                                         onRemove = { viewModel.removeWidget(widget.id) }
                                     )
                                 }
@@ -492,8 +520,10 @@ fun ExerciseCarouselSection(
 private fun AnalyticsHeaderFabMenu(
     expanded: Boolean,
     hasBodyWeightWidget: Boolean,
+    hasCalendarWidget: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onAddBodyWeight: () -> Unit,
+    onAddCalendar: () -> Unit,
     onAddExercise: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -517,6 +547,22 @@ private fun AnalyticsHeaderFabMenu(
             expanded = expanded,
             onDismissRequest = { onExpandedChange(false) }
         ) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        if (Locale.getDefault().language == "it") "Calendario Attività"
+                        else "Workout Calendar"
+                    )
+                },
+                leadingIcon = { Icon(Icons.Rounded.DateRange, contentDescription = null) },
+                enabled = !hasCalendarWidget,
+                onClick = {
+                    if (!hasCalendarWidget) {
+                        onAddCalendar()
+                    }
+                    onExpandedChange(false)
+                }
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.analytics_body_weight)) },
                 leadingIcon = { Icon(Icons.Rounded.Insights, contentDescription = null) },
@@ -1065,4 +1111,215 @@ fun calculateEpley1RM(weight: Float, reps: Int): Float {
         if (reps == 1) weight
         else weight * (1f + reps / 30f)
     } else 0f
+}
+
+@Composable
+fun WorkoutCalendarSection(
+    modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
+    isRecentlyMoved: Boolean = false,
+    workoutDates: List<Long>,
+    onRemove: (() -> Unit)? = null
+) {
+    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
+        label = "calendar_card_elevation"
+    )
+
+    // Today's date to highlight today
+    val today = LocalDate.now()
+
+    // 42 days grid calculations (6 weeks of 7 days)
+    val days = remember(currentMonth) {
+        val list = mutableListOf<LocalDate>()
+        val firstDay = currentMonth.atDay(1)
+        val firstDayOfWeek = firstDay.dayOfWeek.value // 1 = Monday, 7 = Sunday
+        val leadingDays = firstDayOfWeek - 1
+        
+        // Start from Monday of the week containing the 1st of the month
+        val startDate = firstDay.minusDays(leadingDays.toLong())
+        
+        for (i in 0 until 42) {
+            list.add(startDate.plusDays(i.toLong()))
+        }
+        list
+    }
+
+    // Group workouts in the system's timezone to LocalDate format for extremely fast contains() lookup
+    val workoutLocalDates = remember(workoutDates) {
+        workoutDates.map {
+            Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+        }.toSet()
+    }
+
+    // Total workouts in the selected month
+    val workoutsInMonthCount = remember(currentMonth, workoutLocalDates) {
+        workoutLocalDates.count { date ->
+            date.year == currentMonth.year && date.month == currentMonth.month
+        }
+    }
+
+    val monthDisplayName = remember(currentMonth) {
+        val monthName = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+        // Capitalize first letter of month
+        val capitalizedMonthName = monthName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        "$capitalizedMonthName ${currentMonth.year}"
+    }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
+            .border(
+                width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
+                color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            // Header: Month Title & Left/Right Arrows
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.workout_logs).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = monthDisplayName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        color = Primary
+                    )
+                    Text(
+                        text = if (Locale.getDefault().language == "it") {
+                            "$workoutsInMonthCount allenamenti questo mese"
+                        } else {
+                            "$workoutsInMonthCount workouts this month"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                // Left & Right Navigation Buttons
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = { currentMonth = currentMonth.minusMonths(1) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.KeyboardArrowLeft,
+                            contentDescription = "Previous Month",
+                            tint = Primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = { currentMonth = currentMonth.plusMonths(1) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.KeyboardArrowRight,
+                            contentDescription = "Next Month",
+                            tint = Primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    WidgetControls(onRemove)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            // Day of Week Header Row (Lun, Mar, Mer, Gio, Ven, Sab, Dom)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                val dayHeaders = if (Locale.getDefault().language == "it") {
+                    listOf("Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom")
+                } else {
+                    listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                }
+                dayHeaders.forEach { header ->
+                    Text(
+                        text = header,
+                        modifier = Modifier.width(36.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            // 6 Rows of 7 Days Grid
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                repeat(6) { weekIndex ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        repeat(7) { dayIndex ->
+                            val cellDate = days[weekIndex * 7 + dayIndex]
+                            val isCurrentMonth = cellDate.month == currentMonth.month
+                            val hasWorkout = workoutLocalDates.contains(cellDate)
+                            val isToday = cellDate == today
+
+                            val cellModifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .then(
+                                    when {
+                                        hasWorkout -> Modifier.background(Primary)
+                                        isToday -> Modifier.border(1.5.dp, Primary, CircleShape)
+                                        else -> Modifier
+                                    }
+                                )
+
+                            Box(
+                                modifier = cellModifier,
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = cellDate.dayOfMonth.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (hasWorkout || isToday) FontWeight.Bold else FontWeight.Normal,
+                                    color = when {
+                                        hasWorkout -> Color.White
+                                        !isCurrentMonth -> OnSurfaceVariant.copy(alpha = 0.25f)
+                                        else -> MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

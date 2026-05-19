@@ -40,6 +40,7 @@ data class StrengthIndexUiModel(
 
 sealed class AnalyticsWidget(val id: String) {
     data class BodyWeight(val history: List<AnalyticsChartPoint>) : AnalyticsWidget("weight")
+    data class Calendar(val workoutDates: List<Long>) : AnalyticsWidget("calendar")
     data class Exercise(
         val exerciseId: Int,
         val exerciseName: String,
@@ -60,6 +61,7 @@ data class AnalyticsUiState(
     val bodyWeightHistory: List<AnalyticsChartPoint> = emptyList(),
     val bodyWeightInput: String = "",
     val weightUnit: String = "kg",
+    val workoutDates: List<Long> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
