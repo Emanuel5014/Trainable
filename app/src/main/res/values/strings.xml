@@ -37,6 +37,14 @@
     <string name="all">All</string>
     <string name="total">Total</string>
     <string name="share">Share</string>
+    <string name="share_preview">Share Preview</string>
+    <string name="image_saved_gallery">Image saved to Gallery!</string>
+    <string name="failed_save_image">Failed to save image.</string>
+    <string name="share_exercises">Exercises</string>
+    <string name="share_sets">Sets</string>
+    <string name="share_volume">Volume</string>
+    <string name="share_built_for_strength">BUILT FOR STRENGTH</string>
+    <string name="share_footer_message">TRACK YOUR PROGRESS WITH TRAINABLE</string>
     <string name="later">Later</string>
     <string name="start">START</string>
 

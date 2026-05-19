@@ -37,6 +37,14 @@
     <string name="all">Tutti</string>
     <string name="total">Totale</string>
     <string name="share">Condividi</string>
+    <string name="share_preview">Anteprima Condivisione</string>
+    <string name="image_saved_gallery">Immagine salvata in Galleria!</string>
+    <string name="failed_save_image">Impossibile salvare l\'immagine.</string>
+    <string name="share_exercises">Esercizi</string>
+    <string name="share_sets">Serie</string>
+    <string name="share_volume">Volume</string>
+    <string name="share_built_for_strength">COSTRUITO PER LA FORZA</string>
+    <string name="share_footer_message">TRACCIA I TUOI PROGRESSI CON TRAINABLE</string>
     <string name="later">Più tardi</string>
     <string name="start">INIZIA</string>
 

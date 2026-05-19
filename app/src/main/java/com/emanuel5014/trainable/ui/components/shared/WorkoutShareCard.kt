@@ -2,8 +2,11 @@ package com.emanuel5014.trainable.ui.components
 
 import android.graphics.Bitmap
 import android.view.View
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,27 +16,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.drawToBitmap
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
-import com.emanuel5014.trainable.ui.theme.OnSurface
-import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
-import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
@@ -45,102 +51,155 @@ fun WorkoutShareCard(
     weightUnit: String,
     modifier: Modifier = Modifier
 ) {
-    // Capture the @Composable colors here, in a Composable context
     val primaryColor = Primary
-    val surfaceColor = Surface
-    val onSurfaceColor = OnSurface
-    val onSurfaceVariantColor = OnSurfaceVariant
+    
+    // Curated dark obsidian brand palette
+    val obsidianBackground = Brush.verticalGradient(
+        colors = listOf(Color(0xFF0C0C0E), Color(0xFF18181C))
+    )
+    val cardBackground = Color(0xFF1E1E24).copy(alpha = 0.5f)
+    val cardBorder = Color.White.copy(alpha = 0.06f)
+    val textPrimary = Color.White
+    val textSecondary = Color(0xFF9E9EA8)
+
+    // Calculate Workout Statistics
+    val groupedSets = sessionDetails.sets.groupBy { it.exercise.id }
+    val totalExercises = groupedSets.size + sessionDetails.cardio.size
+    val totalSets = sessionDetails.sets.size
+    val totalWeight = sessionDetails.sets.sumOf { it.setLog.pesoSollevato.toDouble() }.toFloat()
 
     Column(
         modifier = modifier
-            .width(400.dp)
+            .width(420.dp)
             .wrapContentHeight()
-            .background(surfaceColor)
+            .background(obsidianBackground)
             .drawBehind {
+                // Top-right glowing radial primary gradient
                 drawCircle(
                     brush = Brush.radialGradient(
-                        colors = listOf(primaryColor.copy(alpha = 0.05f), Color.Transparent),
+                        colors = listOf(primaryColor.copy(alpha = 0.18f), Color.Transparent),
                         center = Offset(size.width, 0f),
-                        radius = size.width * 0.8f
+                        radius = size.width * 0.9f
                     ),
                     center = Offset(size.width, 0f),
-                    radius = size.width * 0.8f
+                    radius = size.width * 0.9f
+                )
+                // Bottom-left glowing accent gradient
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(primaryColor.copy(alpha = 0.08f), Color.Transparent),
+                        center = Offset(0f, size.height),
+                        radius = size.width * 0.7f
+                    ),
+                    center = Offset(0f, size.height),
+                    radius = size.width * 0.7f
                 )
             }
-            .padding(24.dp),
+            .padding(26.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header: App Logo and Name
+        // Sleek App Logo & Brand Capsule
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.03f))
+                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), CircleShape)
+                .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
             Icon(
                 painter = painterResource(id = com.emanuel5014.trainable.R.drawable.ic_app_logo),
                 contentDescription = null,
                 tint = primaryColor,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(id = com.emanuel5014.trainable.R.string.app_name).uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Black,
+                color = textPrimary,
+                letterSpacing = 1.5.sp
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // Workout Info
+        // Title and Date
         Text(
             text = planName.uppercase(),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Black,
-            color = onSurfaceColor,
-            lineHeight = 32.sp
+            fontStyle = FontStyle.Italic,
+            color = textPrimary,
+            textAlign = TextAlign.Center,
+            lineHeight = 36.sp,
+            letterSpacing = (-0.5).sp
         )
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = DateFormatter.format(sessionDetails.session.timestamp).uppercase(),
             style = MaterialTheme.typography.labelLarge,
             color = primaryColor,
             fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.sp
+            letterSpacing = 1.5.sp
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // Exercise List
-        val groupedSets = sessionDetails.sets.groupBy { it.exercise.id }
-        
+        // Exercises Cards List
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             groupedSets.forEach { (_, sets) ->
                 val exerciseName = ExerciseTranslations.translate(sets.first().exercise.nome, languageCode)
-                
-                Column(modifier = Modifier.fillMaxWidth()) {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(cardBackground)
+                        .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
+                        .padding(14.dp)
+                ) {
                     Text(
                         text = exerciseName.uppercase(),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Black,
                         color = primaryColor,
                         letterSpacing = 0.5.sp
                     )
-                    
-                    Spacer(modifier = Modifier.height(6.dp))
-                    
-                    // Show all sets for this exercise
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     sets.forEach { setWithEx ->
                         val set = setWithEx.setLog
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 2.dp),
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "SET ${set.numeroSerie}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = onSurfaceVariantColor,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 24.dp, height = 18.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color.White.copy(alpha = 0.05f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${set.numeroSerie}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = textSecondary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
                             Text(
                                 text = WeightUnitConverter.formatWithUnit(
                                     WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
@@ -148,7 +207,7 @@ fun WorkoutShareCard(
                                 ) + " × ${set.repsEffettive}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = onSurfaceColor
+                                color = textPrimary
                             )
                         }
                     }
@@ -156,15 +215,22 @@ fun WorkoutShareCard(
             }
 
             sessionDetails.cardio.forEach { cardio ->
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(cardBackground)
+                        .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
+                        .padding(14.dp)
+                ) {
                     Text(
                         text = cardio.categoria.uppercase(),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Black,
                         color = primaryColor,
                         letterSpacing = 0.5.sp
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -174,7 +240,7 @@ fun WorkoutShareCard(
                             text = "${cardio.distanza} KM",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = onSurfaceColor
+                            color = textPrimary
                         )
                         val h = cardio.durataSecondi / 3600
                         val m = (cardio.durataSecondi % 3600) / 60
@@ -183,24 +249,30 @@ fun WorkoutShareCard(
                         Text(
                             text = durationText,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = onSurfaceVariantColor,
-                            fontWeight = FontWeight.SemiBold
+                            color = textSecondary,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
-        
-        // Footer
-        Text(
-            text = "TRACK YOUR PROGRESS WITH TRAINABLE",
-            style = MaterialTheme.typography.labelSmall,
-            color = onSurfaceVariantColor.copy(alpha = 0.5f),
-            fontWeight = FontWeight.SemiBold
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Divider & Premium Footer Brand Statement
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.White.copy(alpha = 0.05f))
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = stringResource(id = com.emanuel5014.trainable.R.string.share_footer_message).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = textSecondary.copy(alpha = 0.5f),
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

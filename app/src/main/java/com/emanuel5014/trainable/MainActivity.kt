@@ -37,6 +37,7 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.ui.components.BottomNavBar
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
 import com.emanuel5014.trainable.ui.components.UpdateDialog
 import com.emanuel5014.trainable.ui.navigation.MainNavGraph
@@ -182,7 +183,8 @@ class MainActivity : ComponentActivity() {
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
                             currentDestination?.route?.startsWith("MainTabs") == true) && 
-                            currentDestination.hasRoute(WorkoutExecution::class) == false
+                            currentDestination.hasRoute(WorkoutExecution::class) == false &&
+                            BottomBarManager.isVisibleOverride
 
                         val floatingNavBar by userPreferencesRepository.floatingNavBar.collectAsState(initial = false)
 
