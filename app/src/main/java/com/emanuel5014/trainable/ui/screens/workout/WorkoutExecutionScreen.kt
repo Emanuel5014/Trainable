@@ -1,10 +1,13 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,12 +26,15 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -82,6 +88,7 @@ import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
 import com.emanuel5014.trainable.ui.theme.Error
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -101,7 +108,6 @@ fun WorkoutExecutionScreen(
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val availableExercises by viewModel.availableExercises.collectAsState()
-    val listState = rememberLazyListState()
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }
@@ -172,11 +178,7 @@ fun WorkoutExecutionScreen(
         }
     }
 
-    LaunchedEffect(activeSetIndex) {
-        if (activeSetIndex != -1) {
-            listState.animateScrollToItem(activeSetIndex)
-        }
-    }
+
 
     // Auto-collapse editing when a set is logged or timer starts
     LaunchedEffect(activeSetIndex, state.remainingRestSeconds > 0) {
@@ -249,6 +251,7 @@ fun WorkoutExecutionScreen(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                     }
+
                     Surface(
                         onClick = { showCancelDialog = true },
                         shape = CircleShape,
@@ -298,168 +301,221 @@ fun WorkoutExecutionScreen(
                     }
                 }
             } else if (currentExState != null) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Exercise Header
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val setsCount = currentExState.sets.size
-                            val repsCount = currentExState.planDetails?.repsTarget ?: currentExState.sets.firstOrNull()?.reps?.toString() ?: "0"
-                            Text(
-                                text = "$setsCount × $repsCount",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Primary,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.weight(1f)
+                AnimatedContent(
+                    targetState = state.currentExerciseIndex,
+                    transitionSpec = {
+                        val direction = if (targetState > initialState) 1 else -1
+                        (slideInHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = 0.85f,
+                                stiffness = 380f
                             )
-                            IconButton(
-                                onClick = { showSwapExerciseSheet = true }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.SwapHoriz,
-                                    contentDescription = stringResource(R.string.swap_exercise),
-                                    tint = OnSurfaceVariant
+                        ) { width -> direction * width } + fadeIn(
+                            animationSpec = spring(stiffness = 380f)
+                        )).togetherWith(
+                            slideOutHorizontally(
+                                animationSpec = spring(
+                                    dampingRatio = 0.85f,
+                                    stiffness = 380f
                                 )
-                            }
-                        }
-                        Text(
-                            text = ExerciseTranslations.translate(currentExState.exercise.nome, languageCode),
-                            style = MaterialTheme.typography.displaySmall,
-                            color = OnSurface,
-                            fontWeight = FontWeight.Black
+                            ) { width -> -direction * width } + fadeOut(
+                                animationSpec = spring(stiffness = 380f)
+                            )
                         )
-                        
-                        if (currentExState.supersetId != null) {
-                            Surface(
-                                color = Primary.copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.padding(top = 8.dp)
+                    },
+                    label = "exercise_transition",
+                    modifier = Modifier.fillMaxSize()
+                ) { targetIndex ->
+                    val targetExState = state.exercises.getOrNull(targetIndex)
+                    if (targetExState != null) {
+                        val exerciseListState = rememberLazyListState()
+                        val targetActiveSetIndex = remember(targetExState.sets) {
+                            targetExState.sets.indexOfFirst { !it.isCompleted }.takeIf { it != -1 } ?: ((targetExState.sets.size) - 1)
+                        }
+                        val targetActiveSet = remember(targetExState.sets, targetActiveSetIndex) {
+                            targetExState.sets.getOrNull(targetActiveSetIndex)
+                        }
+                        val targetIsExerciseCompleted = remember(targetActiveSet) {
+                            targetActiveSet == null || targetActiveSet.isCompleted
+                        }
+
+                        LaunchedEffect(targetActiveSetIndex) {
+                            if (targetActiveSetIndex != -1 && targetExState.sets.isNotEmpty()) {
+                                exerciseListState.animateScrollToItem(targetActiveSetIndex)
+                            }
+                        }
+
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Exercise Header
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 16.dp)
                             ) {
                                 Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Timer, // Or a more suitable icon if available
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    val setsCount = targetExState.sets.size
+                                    val repsCount = targetExState.planDetails?.repsTarget ?: targetExState.sets.firstOrNull()?.reps?.toString() ?: "0"
                                     Text(
-                                        text = stringResource(R.string.superset),
-                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                        text = "$setsCount × $repsCount",
+                                        style = MaterialTheme.typography.titleMedium,
                                         color = Primary,
-                                        fontWeight = FontWeight.Black
+                                        fontWeight = FontWeight.ExtraBold,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(
+                                        onClick = { showSwapExerciseSheet = true }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.SwapHoriz,
+                                            contentDescription = stringResource(R.string.swap_exercise),
+                                            tint = OnSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode),
+                                    style = MaterialTheme.typography.displaySmall,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.Black
+                                )
+                                
+                                if (targetExState.supersetId != null) {
+                                    Surface(
+                                        color = Primary.copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Timer,
+                                                contentDescription = null,
+                                                tint = Primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = stringResource(R.string.superset),
+                                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                                color = Primary,
+                                                fontWeight = FontWeight.Black
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Sets List
+                            LazyColumn(
+                                state = exerciseListState,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                itemsIndexed(targetExState.sets) { index, set ->
+                                    val isActive = index == targetActiveSetIndex && !set.isCompleted
+                                    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+                                    if (showDeleteConfirm) {
+                                        AlertDialog(
+                                            onDismissRequest = { showDeleteConfirm = false },
+                                            title = { Text(stringResource(R.string.remove_set)) },
+                                            text = { Text("Are you sure you want to remove this set?") },
+                                            confirmButton = {
+                                                TextButton(onClick = {
+                                                    viewModel.removeSetFromExercise(targetIndex, index)
+                                                    showDeleteConfirm = false
+                                                }) {
+                                                    Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                                                }
+                                            },
+                                            dismissButton = {
+                                                TextButton(onClick = { showDeleteConfirm = false }) {
+                                                    Text(stringResource(R.string.cancel).uppercase())
+                                                }
+                                            },
+                                            containerColor = SurfaceContainerHigh,
+                                            titleContentColor = OnSurface,
+                                            textContentColor = OnSurfaceVariant
+                                        )
+                                    }
+
+                                    val haptic = LocalHapticFeedback.current
+                                    SetLogRow(
+                                        setNumber = set.setNumber,
+                                        weight = set.weight,
+                                        reps = set.reps,
+                                        note = set.note,
+                                        isWarmup = set.isWarmup,
+                                        isCompleted = set.isCompleted,
+                                        onToggleComplete = { 
+                                            viewModel.toggleSetComplete(targetIndex, index) 
+                                        },
+                                        onNoteChange = { newNote ->
+                                            viewModel.updateSetNote(targetIndex, index, newNote)
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showDeleteConfirm = true
+                                        },
+                                        onEditValues = { isEditingValues = !isEditingValues },
+                                        isActive = isActive,
+                                        weightUnit = state.weightUnit
                                     )
                                 }
-                            }
-                        }
-                    }
-                    
-                    // Sets List
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        itemsIndexed(currentExState.sets) { index, set ->
-                            val isActive = index == activeSetIndex && !set.isCompleted
-                            var showDeleteConfirm by remember { mutableStateOf(false) }
 
-                            if (showDeleteConfirm) {
-                                AlertDialog(
-                                    onDismissRequest = { showDeleteConfirm = false },
-                                    title = { Text(stringResource(R.string.remove_set)) },
-                                    text = { Text("Are you sure you want to remove this set?") },
-                                    confirmButton = {
-                                        TextButton(onClick = {
-                                            viewModel.removeSetFromExercise(state.currentExerciseIndex, index)
-                                            showDeleteConfirm = false
-                                        }) {
-                                            Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = { showDeleteConfirm = false }) {
-                                            Text(stringResource(R.string.cancel).uppercase())
-                                        }
-                                    },
-                                    containerColor = SurfaceContainerHigh,
-                                    titleContentColor = OnSurface,
-                                    textContentColor = OnSurfaceVariant
-                                )
-                            }
-
-                            val haptic = LocalHapticFeedback.current
-                            SetLogRow(
-                                setNumber = set.setNumber,
-                                weight = set.weight,
-                                reps = set.reps,
-                                note = set.note,
-                                isWarmup = set.isWarmup,
-                                isCompleted = set.isCompleted,
-                                onToggleComplete = { 
-                                    viewModel.toggleSetComplete(state.currentExerciseIndex, index) 
-                                },
-                                onNoteChange = { newNote ->
-                                    viewModel.updateSetNote(state.currentExerciseIndex, index, newNote)
-                                },
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    showDeleteConfirm = true
-                                },
-                                onEditValues = { isEditingValues = !isEditingValues },
-                                isActive = isActive,
-                                weightUnit = state.weightUnit
-                            )
-                        }
-
-                        if (state.isQuickWorkout) {
-                            item {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    GymButton(
-                                        onClick = { viewModel.addSetToExercise(state.currentExerciseIndex) },
-                                        modifier = if (isExerciseCompleted) Modifier.fillMaxWidth() else Modifier.weight(1f),
-                                        containerColor = SurfaceContainerHigh,
-                                        contentColor = Primary
-                                    ) {
-                                        Icon(Icons.Rounded.Add, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
-                                    }
-                                    if (!isExerciseCompleted) {
-                                        GymButton(
-                                            onClick = { showAddExerciseSheet = true },
-                                            modifier = Modifier.weight(1f),
-                                            containerColor = SurfaceContainerHigh,
-                                            contentColor = Primary
+                                if (state.isQuickWorkout) {
+                                    item {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(stringResource(R.string.next_exercise_wrk).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                            GymButton(
+                                                onClick = { viewModel.addSetToExercise(targetIndex) },
+                                                modifier = if (targetIsExerciseCompleted) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                                                containerColor = SurfaceContainerHigh,
+                                                contentColor = Primary
+                                            ) {
+                                                Icon(Icons.Rounded.Add, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
+                                            }
+                                            if (!targetIsExerciseCompleted) {
+                                                val isLastExercise = targetIndex == state.exercises.size - 1
+                                                GymButton(
+                                                    onClick = { showAddExerciseSheet = true },
+                                                    modifier = Modifier.weight(1f),
+                                                    containerColor = SurfaceContainerHigh,
+                                                    contentColor = Primary
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.KeyboardDoubleArrowRight,
+                                                        contentDescription = null
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = stringResource(if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk).uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
+                                item {
+                                    Spacer(modifier = Modifier.height(300.dp)) // Sufficient space for the dynamic hub
+                                }
                             }
-                        }
-                        item {
-                            Spacer(modifier = Modifier.height(300.dp)) // Sufficient space for the dynamic hub
                         }
                     }
                 }
@@ -575,32 +631,171 @@ fun WorkoutExecutionScreen(
                                     }
                                 }
                                 HubMode.Completed -> {
-                                    if (state.isQuickWorkout) {
-                                        GymButton(
-                                            onClick = { showAddExerciseSheet = true },
-                                            modifier = Modifier.fillMaxWidth()
+                                    val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
+                                    if (state.isQuickWorkout && isLastExercise) {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(R.string.next_exercise_wrk).uppercase(),
-                                                fontWeight = FontWeight.ExtraBold,
-                                                style = MaterialTheme.typography.titleMedium
-                                            )
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
+                                                // Previous Exercise Button
+                                                if (state.currentExerciseIndex > 0) {
+                                                    val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
+                                                    val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
+                                                    GymButton(
+                                                        onClick = { viewModel.previousExercise() },
+                                                        modifier = Modifier.weight(1f),
+                                                        containerColor = SurfaceContainerHigh,
+                                                        contentColor = OnSurface
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                                                            contentDescription = null
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Column(
+                                                            horizontalAlignment = Alignment.Start,
+                                                            modifier = Modifier.weight(1f, fill = false)
+                                                        ) {
+                                                            Text(
+                                                                text = stringResource(R.string.previous_exercise_btn).uppercase(),
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = OnSurfaceVariant,
+                                                                fontWeight = FontWeight.ExtraBold
+                                                            )
+                                                            Text(
+                                                                text = translatedPrev,
+                                                                style = MaterialTheme.typography.labelLarge,
+                                                                fontWeight = FontWeight.ExtraBold,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                // Add Exercise Button
+                                                GymButton(
+                                                    onClick = { showAddExerciseSheet = true },
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = stringResource(R.string.add_exercise).uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
+                                            }
+
+                                            // Finish Workout Button
+                                            GymButton(
+                                                onClick = { showFinishDialog = true },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                containerColor = Tertiary.copy(alpha = 0.1f),
+                                                contentColor = Tertiary
+                                            ) {
+                                                Icon(Icons.Rounded.Check, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = stringResource(R.string.finish_workout).uppercase(),
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                            }
                                         }
                                     } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(24.dp))
-                                                .background(Tertiary.copy(alpha = 0.1f))
-                                                .padding(16.dp),
-                                            contentAlignment = Alignment.Center
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(Icons.Rounded.DoneAll, contentDescription = null, tint = Tertiary)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(stringResource(R.string.exercise_completed_title), style = MaterialTheme.typography.labelLarge, color = Tertiary, fontWeight = FontWeight.ExtraBold)
+                                            // Previous Exercise Button
+                                            if (state.currentExerciseIndex > 0) {
+                                                val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
+                                                val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
+                                                GymButton(
+                                                    onClick = { viewModel.previousExercise() },
+                                                    modifier = Modifier.weight(1f),
+                                                    containerColor = SurfaceContainerHigh,
+                                                    contentColor = OnSurface,
+                                                    height = 64
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                                                        contentDescription = null
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Column(
+                                                        horizontalAlignment = Alignment.Start,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.previous_exercise_btn).uppercase(),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = OnSurfaceVariant,
+                                                            fontWeight = FontWeight.ExtraBold
+                                                        )
+                                                        Text(
+                                                            text = translatedPrev,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            fontWeight = FontWeight.Black,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            // Next / Finish Button
+                                            if (!isLastExercise) {
+                                                val nextName = state.exercises[state.currentExerciseIndex + 1].exercise.nome
+                                                val translatedNext = ExerciseTranslations.translate(nextName, languageCode)
+                                                GymButton(
+                                                    onClick = { viewModel.nextExercise() },
+                                                    modifier = Modifier.weight(1f),
+                                                    height = 64
+                                                ) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.End,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.next_exercise_btn).uppercase(),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = OnPrimary.copy(alpha = 0.75f),
+                                                            fontWeight = FontWeight.ExtraBold
+                                                        )
+                                                        Text(
+                                                            text = translatedNext,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = OnPrimary,
+                                                            fontWeight = FontWeight.Black,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                                        contentDescription = null
+                                                    )
+                                                }
+                                            } else {
+                                                // Guided workout last exercise finish button
+                                                GymButton(
+                                                    onClick = { showFinishDialog = true },
+                                                    modifier = Modifier.weight(1f),
+                                                    height = 64
+                                                ) {
+                                                    Icon(Icons.Rounded.Check, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = stringResource(R.string.finish_workout).uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -608,23 +803,25 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        if (!isExerciseCompleted) {
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        ExerciseNavigation(
-                            onPrevious = { viewModel.previousExercise() },
-                            onNext = {
-                                if (state.currentExerciseIndex == state.exercises.size - 1) {
-                                    showFinishDialog = true
-                                } else {
-                                    viewModel.nextExercise()
-                                }
-                            },
-                            hasPrevious = state.currentExerciseIndex > 0,
-                            hasNext = state.currentExerciseIndex < state.exercises.size - 1,
-                            previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
-                            nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
-                            languageCode = languageCode
-                        )
+                            ExerciseNavigation(
+                                onPrevious = { viewModel.previousExercise() },
+                                onNext = {
+                                    if (state.currentExerciseIndex == state.exercises.size - 1) {
+                                        showFinishDialog = true
+                                    } else {
+                                        viewModel.nextExercise()
+                                    }
+                                },
+                                hasPrevious = state.currentExerciseIndex > 0,
+                                hasNext = state.currentExerciseIndex < state.exercises.size - 1,
+                                previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
+                                nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
+                                languageCode = languageCode
+                            )
+                        }
                     }
                 }
             }
