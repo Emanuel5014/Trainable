@@ -20,6 +20,9 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 
 @HiltWorker
@@ -40,9 +43,9 @@ class GymMembershipWorker @AssistedInject constructor(
         // Don't notify again for the same expiry date if already notified
         if (lastNotified == expiryDate) return Result.success()
 
-        val today = System.currentTimeMillis()
-        val diff = expiryDate - today
-        val daysLeft = TimeUnit.MILLISECONDS.toDays(diff).toInt()
+        val expiryLocalDate = Instant.ofEpochMilli(expiryDate).atZone(ZoneId.systemDefault()).toLocalDate()
+        val todayLocalDate = java.time.LocalDate.now()
+        val daysLeft = ChronoUnit.DAYS.between(todayLocalDate, expiryLocalDate).toInt()
 
         if (daysLeft in 0..daysBefore) {
             sendNotification(daysLeft)
@@ -100,6 +103,12 @@ class GymMembershipWorker @AssistedInject constructor(
                 ExistingPeriodicWorkPolicy.KEEP,
                 workRequest
             )
+        }
+
+        fun enqueueImmediateCheck(context: Context) {
+            val workRequest = androidx.work.OneTimeWorkRequestBuilder<GymMembershipWorker>()
+                .build()
+            WorkManager.getInstance(context).enqueue(workRequest)
         }
     }
 }

@@ -17,6 +17,7 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -414,12 +415,16 @@ class SettingsViewModel @Inject constructor(
     fun setGymMembershipExpiryNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setGymMembershipExpiryNotificationsEnabled(enabled)
+            if (enabled) {
+                GymMembershipWorker.enqueueImmediateCheck(context)
+            }
         }
     }
 
     fun setGymMembershipExpiryNotificationDaysBefore(days: Int) {
         viewModelScope.launch {
             userPrefsRepository.setGymMembershipExpiryNotificationDaysBefore(days)
+            GymMembershipWorker.enqueueImmediateCheck(context)
         }
     }
 

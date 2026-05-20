@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,14 +29,17 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -107,6 +111,7 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionWithPlanName?>(null) }
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
@@ -147,6 +152,169 @@ fun DashboardScreen(
                     modifier = Modifier.height(48.dp)
                 ) {
                     Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (showMembershipDialog) {
+        AlertDialog(
+            onDismissRequest = { showMembershipDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.gym_membership).uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val currentExpiry = uiState.gymMembershipExpiryDate
+                    if (currentExpiry != null) {
+                        Text(
+                            text = "${stringResource(R.string.valid_thru)} ${DateFormatter.format(currentExpiry)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.tap_to_set),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                    
+                    Text(
+                        text = stringResource(R.string.quick_renewal).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    val options = listOf(
+                        Pair(R.string.month_1, 1),
+                        Pair(R.string.months_3, 3),
+                        Pair(R.string.months_6, 6),
+                        Pair(R.string.year_1, 12)
+                    )
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (i in 0 until options.size step 2) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                for (j in 0..1) {
+                                    if (i + j < options.size) {
+                                        val option = options[i + j]
+                                        GymButton(
+                                            onClick = {
+                                                val baseTime = if (currentExpiry != null && currentExpiry > System.currentTimeMillis()) {
+                                                    currentExpiry
+                                                } else {
+                                                    System.currentTimeMillis()
+                                                }
+                                                val baseLocalDate = java.time.Instant.ofEpochMilli(baseTime)
+                                                    .atZone(java.time.ZoneId.of("UTC"))
+                                                    .toLocalDate()
+                                                val newExpiry = baseLocalDate.plusMonths(option.second.toLong())
+                                                    .atStartOfDay(java.time.ZoneId.of("UTC"))
+                                                    .toInstant()
+                                                    .toEpochMilli()
+                                                viewModel.setGymMembershipExpiryDate(newExpiry)
+                                                showMembershipDialog = false
+                                            },
+                                            containerColor = Primary.copy(alpha = 0.1f),
+                                            contentColor = Primary,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(48.dp)
+                                        ) {
+                                            Text(
+                                                text = "+ ${stringResource(option.first)}",
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                    
+                    GymButton(
+                        onClick = {
+                            showMembershipDialog = false
+                            showDatePicker = true
+                        },
+                        containerColor = Primary.copy(alpha = 0.05f),
+                        contentColor = Primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .border(1.dp, Primary.copy(alpha = 0.3f), shape = Shapes.large)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = Primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.choose_custom_date).uppercase(),
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                    
+                    if (currentExpiry != null) {
+                        GymButton(
+                            onClick = {
+                                viewModel.setGymMembershipExpiryDate(null)
+                                showMembershipDialog = false
+                            },
+                            containerColor = Error.copy(alpha = 0.1f),
+                            contentColor = Error,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.remove_membership).uppercase(),
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showMembershipDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -306,7 +474,13 @@ fun DashboardScreen(
                     GymMembershipCard(
                         expiryDateMillis = uiState.gymMembershipExpiryDate,
                         username = uiState.username,
-                        onClick = { showDatePicker = true }
+                        onClick = {
+                            if (uiState.gymMembershipExpiryDate == null) {
+                                showDatePicker = true
+                            } else {
+                                showMembershipDialog = true
+                            }
+                        }
                     )
                 }
 

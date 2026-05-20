@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
@@ -8,7 +9,9 @@ import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +60,8 @@ class DashboardViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val analyticsRepository: AnalyticsRepository,
     private val userRepository: UserRepository,
-    private val userPrefsRepository: UserPreferencesRepository
+    private val userPrefsRepository: UserPreferencesRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val weekStartMillis = Calendar.getInstance().apply {
@@ -188,6 +192,9 @@ class DashboardViewModel @Inject constructor(
     fun setGymMembershipExpiryDate(timestampMillis: Long?) {
         viewModelScope.launch {
             userPrefsRepository.setGymMembershipExpiryDate(timestampMillis)
+            if (timestampMillis != null) {
+                GymMembershipWorker.enqueueImmediateCheck(context)
+            }
         }
     }
 

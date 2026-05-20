@@ -428,6 +428,13 @@
     <string name="expires_in_days">Expires in %d days</string>
     <string name="set_expiry_date">Set Expiry Date</string>
     <string name="tap_to_set">Tap to set</string>
+    <string name="quick_renewal">Quick Renewal</string>
+    <string name="month_1">1 Month</string>
+    <string name="months_3">3 Months</string>
+    <string name="months_6">6 Months</string>
+    <string name="year_1">1 Year</string>
+    <string name="choose_custom_date">CHOOSE CUSTOM DATE</string>
+    <string name="remove_membership">REMOVE MEMBERSHIP</string>
 
     <!-- Cardio -->
     <string name="distance">Distance</string>

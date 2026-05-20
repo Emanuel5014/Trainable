@@ -428,6 +428,13 @@
     <string name="expires_in_days">Scade in %d giorni</string>
     <string name="set_expiry_date">Imposta Scadenza</string>
     <string name="tap_to_set">Tocca per impostare</string>
+    <string name="quick_renewal">Rinnovo rapido</string>
+    <string name="month_1">1 Mese</string>
+    <string name="months_3">3 Mesi</string>
+    <string name="months_6">6 Mesi</string>
+    <string name="year_1">1 Anno</string>
+    <string name="choose_custom_date">SCEGLI DATA PERSONALIZZATA</string>
+    <string name="remove_membership">RIMUOVI ABBONAMENTO</string>
 
     <!-- Cardio -->
     <string name="distance">Distanza</string>

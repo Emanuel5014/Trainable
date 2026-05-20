@@ -245,6 +245,18 @@ fun HistoryScreen(
         }
     }
 
+    var capturedBitmapToPreview by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+
+    DisposableEffect(capturedBitmapToPreview) {
+        if (capturedBitmapToPreview != null) {
+            BottomBarManager.isVisibleOverride = false
+        }
+        onDispose {
+            BottomBarManager.isVisibleOverride = true
+        }
+    }
+
+    BackHandler(capturedBitmapToPreview != null) { capturedBitmapToPreview = null }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -532,17 +544,6 @@ fun HistoryScreen(
                         )
                 )
             }
-            }
-        }
-
-        var capturedBitmapToPreview by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-
-        DisposableEffect(capturedBitmapToPreview) {
-            if (capturedBitmapToPreview != null) {
-                BottomBarManager.isVisibleOverride = false
-            }
-            onDispose {
-                BottomBarManager.isVisibleOverride = true
             }
         }
 
