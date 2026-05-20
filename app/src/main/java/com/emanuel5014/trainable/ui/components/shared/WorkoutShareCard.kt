@@ -148,6 +148,101 @@ fun WorkoutShareCard(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Glassmorphic Workout Statistics Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White.copy(alpha = 0.03f))
+                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), RoundedCornerShape(20.dp))
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Exercises Count Segment
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "$totalExercises",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = textPrimary
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(id = com.emanuel5014.trainable.R.string.share_exercises).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = textSecondary.copy(alpha = 0.7f),
+                    letterSpacing = 1.sp
+                )
+            }
+
+            // Divider 1
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(28.dp)
+                    .background(Color.White.copy(alpha = 0.08f))
+            )
+
+            // Total Sets Segment
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "$totalSets",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = textPrimary
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(id = com.emanuel5014.trainable.R.string.share_sets).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = textSecondary.copy(alpha = 0.7f),
+                    letterSpacing = 1.sp
+                )
+            }
+
+            // Divider 2
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(28.dp)
+                    .background(Color.White.copy(alpha = 0.08f))
+            )
+
+            // Total Volume Segment
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = WeightUnitConverter.formatWithUnit(
+                        WeightUnitConverter.convertDisplay(totalWeight, weightUnit),
+                        weightUnit
+                    ),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = textPrimary
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(id = com.emanuel5014.trainable.R.string.share_volume).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = textSecondary.copy(alpha = 0.7f),
+                    letterSpacing = 1.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         // Exercises Cards List
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -180,25 +275,25 @@ fun WorkoutShareCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = 24.dp, height = 18.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color.White.copy(alpha = 0.05f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${set.numeroSerie}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = textSecondary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 38.dp, height = 18.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color.White.copy(alpha = 0.05f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "SET ${set.numeroSerie}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = textSecondary,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
+
+                            Spacer(modifier = Modifier.width(8.dp))
 
                             Text(
                                 text = WeightUnitConverter.formatWithUnit(

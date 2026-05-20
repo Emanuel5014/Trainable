@@ -108,7 +108,7 @@ fun BottomNavBarFlo(
                 targetValue = itemWidth * selectedIndex,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
+                    stiffness = Spring.StiffnessMedium
                 ),
                 label = "indicatorOffset"
             )
@@ -140,8 +140,8 @@ fun BottomNavBarFlo(
                     val scale by animateFloatAsState(
                         targetValue = if (isSelected) 1.1f else 1f,
                         animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMedium
                         ),
                         label = "scale"
                     )

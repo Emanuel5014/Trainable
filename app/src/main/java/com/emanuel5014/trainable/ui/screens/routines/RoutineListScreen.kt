@@ -5,6 +5,7 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -293,7 +294,10 @@ fun RoutineListScreen(
                     val indicatorWidth = maxWidth / 2
                     val indicatorOffset by animateDpAsState(
                         targetValue = if (pagerState.currentPage == 0) 0.dp else indicatorWidth,
-                        animationSpec = tween(500, easing = EaseOutExpo),
+                        animationSpec = spring(
+                            dampingRatio = 0.78f,
+                            stiffness = 380f
+                        ),
                         label = "indicator_offset"
                     )
 
@@ -318,7 +322,10 @@ fun RoutineListScreen(
                         val isSelected = pagerState.currentPage == index
                         val contentColor by animateColorAsState(
                             targetValue = if (isSelected) Primary else OnSurfaceVariant,
-                            animationSpec = tween(500, easing = EaseOutExpo),
+                            animationSpec = spring(
+                                dampingRatio = 0.78f,
+                                stiffness = 380f
+                            ),
                             label = "tab_content"
                         )
 
@@ -365,11 +372,15 @@ fun RoutineListScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer {
-                                // Slight scale and alpha during transition
-                                val scale = 1f - (kotlin.math.abs(pageOffset) * 0.05f)
+                                // Dynamic parallax glide effect
+                                translationX = pageOffset * (size.width * 0.3f)
+                                
+                                // Premium scale and alpha transitions
+                                val progress = kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
+                                val scale = 1f - (progress * 0.08f)
                                 scaleX = scale
                                 scaleY = scale
-                                alpha = 1f - kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
+                                alpha = 1f - progress
                             }
                     ) {
                         RoutineListPage(

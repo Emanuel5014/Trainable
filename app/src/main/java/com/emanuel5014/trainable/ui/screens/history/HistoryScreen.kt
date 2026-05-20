@@ -1158,7 +1158,7 @@ private fun HistoryExerciseGroup(
         Text(
             text = exerciseName.uppercase(),
             style = MaterialTheme.typography.labelLarge,
-            color = if (isSuperset) Primary else OnSurface,
+            color = Primary,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 1.sp
         )

@@ -152,6 +152,12 @@ fun WorkoutExecutionScreen(
     val activeSetIndex = remember(currentExState?.sets) {
         currentExState?.sets?.indexOfFirst { !it.isCompleted }?.takeIf { it != -1 } ?: ((currentExState?.sets?.size ?: 1) - 1)
     }
+    val activeSet = remember(currentExState?.sets, activeSetIndex) {
+        currentExState?.sets?.getOrNull(activeSetIndex)
+    }
+    val isExerciseCompleted = remember(activeSet) {
+        activeSet == null || activeSet.isCompleted
+    }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
@@ -429,7 +435,7 @@ fun WorkoutExecutionScreen(
                                 ) {
                                     GymButton(
                                         onClick = { viewModel.addSetToExercise(state.currentExerciseIndex) },
-                                        modifier = Modifier.weight(1f),
+                                        modifier = if (isExerciseCompleted) Modifier.fillMaxWidth() else Modifier.weight(1f),
                                         containerColor = SurfaceContainerHigh,
                                         contentColor = Primary
                                     ) {
@@ -437,15 +443,17 @@ fun WorkoutExecutionScreen(
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
                                     }
-                                    GymButton(
-                                        onClick = { showAddExerciseSheet = true },
-                                        modifier = Modifier.weight(1f),
-                                        containerColor = SurfaceContainerHigh,
-                                        contentColor = Primary
-                                    ) {
-                                        Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.next_exercise_wrk).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                    if (!isExerciseCompleted) {
+                                        GymButton(
+                                            onClick = { showAddExerciseSheet = true },
+                                            modifier = Modifier.weight(1f),
+                                            containerColor = SurfaceContainerHigh,
+                                            contentColor = Primary
+                                        ) {
+                                            Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(stringResource(R.string.next_exercise_wrk).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                        }
                                     }
                                 }
                             }
@@ -471,7 +479,6 @@ fun WorkoutExecutionScreen(
                             .navigationBarsPadding()
                             .padding(horizontal = 20.dp, vertical = 16.dp)
                     ) {
-                        val activeSet = currentExState.sets.getOrNull(activeSetIndex)
                         val isResting = state.remainingRestSeconds > 0
 
                         AnimatedContent(
@@ -568,18 +575,33 @@ fun WorkoutExecutionScreen(
                                     }
                                 }
                                 HubMode.Completed -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(24.dp))
-                                            .background(Tertiary.copy(alpha = 0.1f))
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Rounded.DoneAll, contentDescription = null, tint = Tertiary)
+                                    if (state.isQuickWorkout) {
+                                        GymButton(
+                                            onClick = { showAddExerciseSheet = true },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(stringResource(R.string.exercise_completed_title), style = MaterialTheme.typography.labelLarge, color = Tertiary, fontWeight = FontWeight.ExtraBold)
+                                            Text(
+                                                text = stringResource(R.string.next_exercise_wrk).uppercase(),
+                                                fontWeight = FontWeight.ExtraBold,
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(24.dp))
+                                                .background(Tertiary.copy(alpha = 0.1f))
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(Icons.Rounded.DoneAll, contentDescription = null, tint = Tertiary)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(stringResource(R.string.exercise_completed_title), style = MaterialTheme.typography.labelLarge, color = Tertiary, fontWeight = FontWeight.ExtraBold)
+                                            }
                                         }
                                     }
                                 }
