@@ -199,7 +199,7 @@ class AnalyticsViewModel @Inject constructor(
                     strengthIndex = strengthCategory.strengthIndex,
                     categoryVolumes = strengthCategory.categoryVolumes,
                     weightHistory = weightHistory,
-                    sessions = sessions ?: emptyList(),
+                    sessions = sessions,
                     exerciseHistories = exerciseHistories,
                     weightUnit = context.weightUnit,
                     languageCode = context.languageCode

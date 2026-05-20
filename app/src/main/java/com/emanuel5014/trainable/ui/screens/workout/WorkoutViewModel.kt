@@ -12,8 +12,8 @@ import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
-import com.emanuel5014.trainable.util.TimerNotificationHelper
-import com.emanuel5014.trainable.util.TimerNotificationReceiver
+import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
+import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

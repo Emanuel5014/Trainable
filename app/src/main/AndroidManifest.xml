@@ -75,7 +75,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <receiver android:name=".util.TimerNotificationReceiver" android:exported="false">
+        <receiver android:name=".util.notification.TimerNotificationReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="com.emanuel5014.trainable.ACTION_SKIP" />
                 <action android:name="com.emanuel5014.trainable.ACTION_ADD_30S" />

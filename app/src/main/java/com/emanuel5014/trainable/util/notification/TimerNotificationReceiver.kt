@@ -1,4 +1,4 @@
-package com.emanuel5014.trainable.util
+package com.emanuel5014.trainable.util.notification
 
 import android.content.BroadcastReceiver
 import android.content.Context

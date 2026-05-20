@@ -253,7 +253,7 @@ fun HistoryScreen(
             floatingActionButton = {
                 if (!uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
-                        modifier = Modifier.padding(bottom = 72.dp).offset(x = 12.dp).zIndex(10f),
+                        modifier = Modifier.padding(bottom = 60.dp).offset(x = 12.dp).zIndex(10f),
                         expanded = fabMenuExpanded,
                         button = {
                             TooltipBox(
@@ -621,12 +621,12 @@ fun HistoryScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
                     modifier = Modifier
-                        .padding(24.dp)
+                        .padding(ResponsiveSize.cardPadding)
                         .fillMaxWidth(0.92f)
                         .clickable(enabled = false) {}
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(ResponsiveSize.cardPadding),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Row(
@@ -652,7 +652,9 @@ fun HistoryScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = stringResource(R.string.share_preview),
-                                    style = MaterialTheme.typography.headlineSmall,
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineSmall.fontSize)
+                                    ),
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                     letterSpacing = (-0.5).sp
@@ -669,7 +671,11 @@ fun HistoryScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                        Spacer(modifier = Modifier.height(when {
+                            ResponsiveSize.screenWidthDp < 360 -> 12.dp
+                            ResponsiveSize.screenWidthDp < 400 -> 16.dp
+                            else -> 18.dp
+                        }))
 
                         Card(
                             shape = RoundedCornerShape(20.dp),
@@ -689,7 +695,11 @@ fun HistoryScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(when {
+                            ResponsiveSize.screenWidthDp < 360 -> 14.dp
+                            ResponsiveSize.screenWidthDp < 400 -> 18.dp
+                            else -> 20.dp
+                        }))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -709,13 +719,8 @@ fun HistoryScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Download,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = stringResource(R.string.save),
-                                    fontWeight = FontWeight.Bold
+                                    contentDescription = stringResource(R.string.save),
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
 
@@ -732,13 +737,8 @@ fun HistoryScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Share,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = stringResource(R.string.share),
-                                    fontWeight = FontWeight.ExtraBold
+                                    contentDescription = stringResource(R.string.share),
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }

@@ -111,9 +111,11 @@ import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -548,12 +550,7 @@ private fun AnalyticsHeaderFabMenu(
             onDismissRequest = { onExpandedChange(false) }
         ) {
             DropdownMenuItem(
-                text = {
-                    Text(
-                        if (Locale.getDefault().language == "it") "Calendario Attività"
-                        else "Workout Calendar"
-                    )
-                },
+                text = { Text(stringResource(R.string.analytics_workout_calendar)) },
                 leadingIcon = { Icon(Icons.Rounded.DateRange, contentDescription = null) },
                 enabled = !hasCalendarWidget,
                 onClick = {
@@ -1206,11 +1203,7 @@ fun WorkoutCalendarSection(
                         color = Primary
                     )
                     Text(
-                        text = if (Locale.getDefault().language == "it") {
-                            "$workoutsInMonthCount allenamenti questo mese"
-                        } else {
-                            "$workoutsInMonthCount workouts this month"
-                        },
+                        text = stringResource(R.string.analytics_workouts_this_month, workoutsInMonthCount),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant.copy(alpha = 0.7f),
                         fontWeight = FontWeight.SemiBold
@@ -1226,8 +1219,9 @@ fun WorkoutCalendarSection(
                         onClick = { currentMonth = currentMonth.minusMonths(1) },
                         modifier = Modifier.size(36.dp)
                     ) {
+
                         Icon(
-                            imageVector = Icons.Rounded.KeyboardArrowLeft,
+                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                             contentDescription = "Previous Month",
                             tint = Primary,
                             modifier = Modifier.size(28.dp)
@@ -1238,7 +1232,7 @@ fun WorkoutCalendarSection(
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.KeyboardArrowRight,
+                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                             contentDescription = "Next Month",
                             tint = Primary,
                             modifier = Modifier.size(28.dp)
@@ -1255,11 +1249,15 @@ fun WorkoutCalendarSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                val dayHeaders = if (Locale.getDefault().language == "it") {
-                    listOf("Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom")
-                } else {
-                    listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                }
+                val dayHeaders = listOf(
+                    stringResource(R.string.analytics_day_mon),
+                    stringResource(R.string.analytics_day_tue),
+                    stringResource(R.string.analytics_day_wed),
+                    stringResource(R.string.analytics_day_thu),
+                    stringResource(R.string.analytics_day_fri),
+                    stringResource(R.string.analytics_day_sat),
+                    stringResource(R.string.analytics_day_sun)
+                )
                 dayHeaders.forEach { header ->
                     Text(
                         text = header,

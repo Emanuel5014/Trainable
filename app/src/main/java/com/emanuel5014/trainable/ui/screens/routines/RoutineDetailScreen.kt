@@ -655,13 +655,13 @@ fun RoutineDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise?.planExercise?.id } < localExercises.size - 1) {
-                            val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise?.planExercise?.id } + 1)
-                            val isLinked = editingExercise?.planExercise?.supersetId != null && editingExercise?.planExercise?.supersetId == nextItem?.planExercise?.supersetId
+                        if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
+                            val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
+                            val isLinked = editingExercise.planExercise.supersetId != null && editingExercise.planExercise.supersetId == nextItem?.planExercise?.supersetId
                             
                             OutlinedButton(
                                 onClick = {
-                                    editingExercise?.let { current ->
+                                    editingExercise.let { current ->
                                         val index = localExercises.indexOfFirst { it.planExercise.id == current.planExercise.id }
                                         if (index != -1 && index < localExercises.size - 1) {
                                             val nextIndex = index + 1

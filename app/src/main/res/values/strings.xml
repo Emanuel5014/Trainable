@@ -252,6 +252,15 @@
     <string name="analytics_strength_summary_negative">-%s%% vs previous 30 days</string>
     <string name="analytics_strength_no_data">Not enough PR history yet.</string>
     <string name="analytics_body_weight">BODY WEIGHT</string>
+    <string name="analytics_workout_calendar">Workout Calendar</string>
+    <string name="analytics_workouts_this_month">%d workouts this month</string>
+    <string name="analytics_day_mon">Mon</string>
+    <string name="analytics_day_tue">Tue</string>
+    <string name="analytics_day_wed">Wed</string>
+    <string name="analytics_day_thu">Thu</string>
+    <string name="analytics_day_fri">Fri</string>
+    <string name="analytics_day_sat">Sat</string>
+    <string name="analytics_day_sun">Sun</string>
     <string name="analytics_no_weight_data">No weight data available</string>
     <string name="analytics_todays_weight">Today\'s weight</string>
     <string name="total_volume_label">Total Volume</string>

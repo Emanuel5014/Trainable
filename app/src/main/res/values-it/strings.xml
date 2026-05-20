@@ -252,6 +252,15 @@
     <string name="analytics_strength_summary_negative">-%s%% rispetto ai precedenti 30 giorni</string>
     <string name="analytics_strength_no_data">Dati PR insufficienti.</string>
     <string name="analytics_body_weight">PESO CORPOREO</string>
+    <string name="analytics_workout_calendar">Calendario Attività</string>
+    <string name="analytics_workouts_this_month">%d allenamenti questo mese</string>
+    <string name="analytics_day_mon">Lun</string>
+    <string name="analytics_day_tue">Mar</string>
+    <string name="analytics_day_wed">Mer</string>
+    <string name="analytics_day_thu">Gio</string>
+    <string name="analytics_day_fri">Ven</string>
+    <string name="analytics_day_sat">Sab</string>
+    <string name="analytics_day_sun">Dom</string>
     <string name="analytics_no_weight_data">Nessun dato sul peso disponibile</string>
     <string name="analytics_todays_weight">Peso di oggi</string>
     <string name="total_volume_label">Volume Totale</string>

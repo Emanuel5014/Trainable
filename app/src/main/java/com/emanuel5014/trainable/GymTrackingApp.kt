@@ -5,7 +5,7 @@ import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.emanuel5014.trainable.util.AppLocaleManager
-import com.emanuel5014.trainable.util.GymMembershipWorker
+import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

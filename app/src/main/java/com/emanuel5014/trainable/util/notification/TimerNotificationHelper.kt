@@ -1,4 +1,4 @@
-package com.emanuel5014.trainable.util
+package com.emanuel5014.trainable.util.notification
 
 import android.app.AlarmManager
 import android.app.NotificationChannel
