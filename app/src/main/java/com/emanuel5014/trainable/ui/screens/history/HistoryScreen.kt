@@ -87,6 +87,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.aspectRatio
 import android.widget.Toast
+import androidx.compose.material.icons.rounded.Link
 import java.util.Locale
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
@@ -1428,7 +1429,7 @@ fun SessionHistoryCard(
                                         modifier = Modifier.padding(bottom = 12.dp)
                                     ) {
                                         Icon(
-                                            Icons.Rounded.Timer,
+                                            Icons.Rounded.Link,
                                             contentDescription = null,
                                             tint = Primary,
                                             modifier = Modifier.size(14.dp)

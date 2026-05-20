@@ -31,6 +31,8 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ButtonDefaults
@@ -395,6 +397,7 @@ fun RoutineDetailScreen(
                         val currentSid = item.planExercise.supersetId
                         val isSuperset = currentSid != null
                         val isStart = isSuperset && (index == 0 || localExercises[index - 1].planExercise.supersetId != currentSid)
+                        val isEnd = isSuperset && (index == localExercises.lastIndex || localExercises[index + 1].planExercise.supersetId != currentSid)
 
                         Column(
                             modifier = Modifier
@@ -407,7 +410,7 @@ fun RoutineDetailScreen(
                                     modifier = Modifier.padding(start = 64.dp, bottom = 4.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Timer,
+                                        imageVector = Icons.Rounded.Link,
                                         contentDescription = null,
                                         tint = Primary,
                                         modifier = Modifier.size(14.dp)
@@ -505,18 +508,52 @@ fun RoutineDetailScreen(
                                     }
                             ) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isDragging) Primary else if (isSuperset) Primary.copy(alpha = 0.12f) else SurfaceContainerHigh),
+                                    modifier = Modifier.size(32.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = "${index + 1}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (isDragging) OnPrimary else Primary,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
+                                    if (isSuperset && !isDragging) {
+                                        val density = androidx.compose.ui.platform.LocalDensity.current
+                                        val strokeWidthPx = with(density) { 3.dp.toPx() }
+                                        val lineLengthPx = with(density) { 100.dp.toPx() }
+                                        val lineColor = Primary
+
+                                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                                            val centerY = size.height / 2
+                                            val centerX = size.width / 2
+                                            
+                                            if (!isStart) {
+                                                drawLine(
+                                                    color = lineColor,
+                                                    start = androidx.compose.ui.geometry.Offset(centerX, centerY),
+                                                    end = androidx.compose.ui.geometry.Offset(centerX, centerY - lineLengthPx),
+                                                    strokeWidth = strokeWidthPx
+                                                )
+                                            }
+                                            if (!isEnd) {
+                                                drawLine(
+                                                    color = lineColor,
+                                                    start = androidx.compose.ui.geometry.Offset(centerX, centerY),
+                                                    end = androidx.compose.ui.geometry.Offset(centerX, centerY + lineLengthPx),
+                                                    strokeWidth = strokeWidthPx
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isDragging || isSuperset) Primary else SurfaceContainerHigh),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "${index + 1}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = if (isDragging || isSuperset) OnPrimary else Primary,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
                                 }
 
                                 ExerciseEntryCard(
@@ -659,7 +696,7 @@ fun RoutineDetailScreen(
                             val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
                             val isLinked = editingExercise.planExercise.supersetId != null && editingExercise.planExercise.supersetId == nextItem?.planExercise?.supersetId
                             
-                            OutlinedButton(
+                            GymButton(
                                 onClick = {
                                     editingExercise.let { current ->
                                         val index = localExercises.indexOfFirst { it.planExercise.id == current.planExercise.id }
@@ -681,12 +718,15 @@ fun RoutineDetailScreen(
                                     if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = Shapes.large,
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = if (isLinked) Error else Primary
-                                ),
-                                border = BorderStroke(1.dp, (if (isLinked) Error else Primary).copy(alpha = 0.5f))
+                                containerColor = if (isLinked) Error.copy(alpha = 0.12f) else Primary.copy(alpha = 0.12f),
+                                contentColor = if (isLinked) Error else Primary
                             ) {
+                                Icon(
+                                    imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = if (isLinked) stringResource(R.string.unlink_superset).uppercase() else stringResource(R.string.link_with_next).uppercase(),
                                     fontWeight = FontWeight.ExtraBold

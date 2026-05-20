@@ -450,6 +450,9 @@
     <string name="star_on_github">Vota su GitHub</string>
     <string name="buy_me_a_coffee">Offrimi un caffè</string>
 
+    <!-- Double back to exit -->
+    <string name="press_back_again">Premi ancora per uscire</string>
+
     <!-- Errors -->
     <string name="error_unknown">Errore sconosciuto</string>
     <string name="routine_not_found">Scheda non trovata</string>

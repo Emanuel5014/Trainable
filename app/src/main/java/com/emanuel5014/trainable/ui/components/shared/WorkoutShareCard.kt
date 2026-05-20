@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,7 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.drawToBitmap
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.local.relation.SetWithExercise
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
@@ -63,8 +67,58 @@ fun WorkoutShareCard(
     val textSecondary = Color(0xFF9E9EA8)
 
     // Calculate Workout Statistics
-    val groupedSets = sessionDetails.sets.groupBy { it.exercise.id }
-    val totalExercises = groupedSets.size + sessionDetails.cardio.size
+    val sortedSets = sessionDetails.sets.sortedWith(
+        compareBy(
+            { it.setLog.ordineEsercizio },
+            { it.setLog.numeroSerie }
+        )
+    )
+
+    val exercisesWithSets = mutableListOf<ShareExerciseItem>()
+    sortedSets.forEach { setWithEx ->
+        val existingIndex = exercisesWithSets.indexOfFirst { 
+            it.exercise.id == setWithEx.exercise.id && 
+            it.sets.first().setLog.ordineEsercizio == setWithEx.setLog.ordineEsercizio 
+        }
+        if (existingIndex != -1) {
+            val existing = exercisesWithSets[existingIndex]
+            exercisesWithSets[existingIndex] = existing.copy(sets = existing.sets + setWithEx)
+        } else {
+            exercisesWithSets.add(ShareExerciseItem(setWithEx.exercise, listOf(setWithEx)))
+        }
+    }
+
+    val blocks = mutableListOf<ShareBlock>()
+    var currentSupersetId: String? = null
+    var currentBlock = mutableListOf<ShareExerciseItem>()
+
+    exercisesWithSets.forEach { item ->
+        val sid = item.sets.first().setLog.supersetId
+        if (sid != null) {
+            if (sid == currentSupersetId) {
+                currentBlock.add(item)
+            } else {
+                if (currentBlock.isNotEmpty()) {
+                    blocks.add(ShareBlock(currentSupersetId, currentBlock.toList()))
+                    currentBlock = mutableListOf()
+                }
+                currentSupersetId = sid
+                currentBlock.add(item)
+            }
+        } else {
+            if (currentBlock.isNotEmpty()) {
+                blocks.add(ShareBlock(currentSupersetId, currentBlock.toList()))
+                currentBlock = mutableListOf()
+            }
+            currentSupersetId = null
+            blocks.add(ShareBlock(null, listOf(item)))
+        }
+    }
+    if (currentBlock.isNotEmpty()) {
+        blocks.add(ShareBlock(currentSupersetId, currentBlock.toList()))
+    }
+
+    val totalExercises = exercisesWithSets.size + sessionDetails.cardio.size
     val totalSets = sessionDetails.sets.size
     val totalWeight = sessionDetails.sets.sumOf { it.setLog.pesoSollevato.toDouble() }.toFloat()
 
@@ -248,62 +302,159 @@ fun WorkoutShareCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            groupedSets.forEach { (_, sets) ->
-                val exerciseName = ExerciseTranslations.translate(sets.first().exercise.nome, languageCode)
+            blocks.forEach { block ->
+                val isSuperset = block.supersetId != null
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(cardBackground)
-                        .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
-                        .padding(14.dp)
-                ) {
-                    Text(
-                        text = exerciseName.uppercase(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Black,
-                        color = primaryColor,
-                        letterSpacing = 0.5.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    sets.forEach { setWithEx ->
-                        val set = setWithEx.setLog
+                if (isSuperset) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(cardBackground)
+                            .border(BorderStroke(1.dp, primaryColor.copy(alpha = 0.35f)), RoundedCornerShape(16.dp))
+                            .padding(14.dp)
+                    ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 10.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(width = 38.dp, height = 18.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color.White.copy(alpha = 0.05f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "SET ${set.numeroSerie}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = textSecondary,
-                                    fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.Rounded.Link,
+                                contentDescription = null,
+                                tint = primaryColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(id = com.emanuel5014.trainable.R.string.superset).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Black,
+                                color = primaryColor,
+                                letterSpacing = 1.sp
+                            )
+                        }
+
+                        block.exercises.forEachIndexed { exIndex, item ->
+                            if (exIndex > 0) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(Color.White.copy(alpha = 0.05f))
                                 )
+                                Spacer(modifier = Modifier.height(12.dp))
                             }
 
-                            Spacer(modifier = Modifier.width(8.dp))
-
+                            val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
                             Text(
-                                text = WeightUnitConverter.formatWithUnit(
-                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                    weightUnit
-                                ) + " × ${set.repsEffettive}",
+                                text = exerciseName.uppercase(),
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = textPrimary
+                                fontWeight = FontWeight.Black,
+                                color = primaryColor,
+                                letterSpacing = 0.5.sp
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            item.sets.forEach { setWithEx ->
+                                val set = setWithEx.setLog
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = 38.dp, height = 18.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color.White.copy(alpha = 0.05f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "SET ${set.numeroSerie}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = textSecondary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Text(
+                                        text = WeightUnitConverter.formatWithUnit(
+                                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                                            weightUnit
+                                        ) + " × ${set.repsEffettive}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = textPrimary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    block.exercises.forEach { item ->
+                        val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(cardBackground)
+                                .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
+                                .padding(14.dp)
+                        ) {
+                            Text(
+                                text = exerciseName.uppercase(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Black,
+                                color = primaryColor,
+                                letterSpacing = 0.5.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            item.sets.forEach { setWithEx ->
+                                val set = setWithEx.setLog
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = 38.dp, height = 18.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color.White.copy(alpha = 0.05f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "SET ${set.numeroSerie}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = textSecondary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Text(
+                                        text = WeightUnitConverter.formatWithUnit(
+                                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                                            weightUnit
+                                        ) + " × ${set.repsEffettive}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = textPrimary
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -374,3 +525,13 @@ fun WorkoutShareCard(
 fun captureViewToBitmap(view: View): Bitmap {
     return view.drawToBitmap()
 }
+
+private data class ShareExerciseItem(
+    val exercise: ExerciseEntity,
+    val sets: List<SetWithExercise>
+)
+
+private data class ShareBlock(
+    val supersetId: String?,
+    val exercises: List<ShareExerciseItem>
+)

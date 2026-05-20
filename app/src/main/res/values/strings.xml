@@ -450,6 +450,9 @@
     <string name="star_on_github">Star on GitHub</string>
     <string name="buy_me_a_coffee">Buy me a coffee</string>
 
+    <!-- Double back to exit -->
+    <string name="press_back_again">Press back again to exit</string>
+
     <!-- Errors -->
     <string name="error_unknown">Unknown error</string>
     <string name="routine_not_found">Routine not found</string>
