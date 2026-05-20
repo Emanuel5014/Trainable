@@ -69,6 +69,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
+import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
@@ -90,6 +91,8 @@ fun SwapExerciseBottomSheet(
     modifier: Modifier = Modifier,
     isAdding: Boolean = false
 ) {
+    rememberResponsiveSize()
+
     var step by remember { mutableStateOf(1) }
     var selectedExercise by remember { mutableStateOf<ExerciseEntity?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -140,18 +143,22 @@ fun SwapExerciseBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = ResponsiveSize.cardPadding)
-                        .padding(bottom = Spacing.extreme)
+                        .padding(bottom = ResponsiveSize.cardPadding)
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                             Text(
                                 text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = ResponsiveSize.labelLargeSize
+                            ),
                             color = Primary,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
                             text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontSize = ResponsiveSize.headlineMediumSize
+                            ),
                             color = OnSurface,
                             fontWeight = FontWeight.Black
                         )
@@ -201,7 +208,7 @@ fun SwapExerciseBottomSheet(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 400.dp),
+                            .weight(1f, fill = false),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(filteredExercises) { exercise ->

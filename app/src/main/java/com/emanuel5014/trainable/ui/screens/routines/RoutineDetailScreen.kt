@@ -5,6 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -599,8 +601,9 @@ fun RoutineDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = ResponsiveSize.cardPadding)
-                    .padding(top = Spacing.medium, bottom = Spacing.extreme)
+                    .padding(top = Spacing.medium, bottom = ResponsiveSize.cardPadding)
                     .navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.large)
             ) {
@@ -862,8 +865,9 @@ fun RoutineDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 48.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = ResponsiveSize.cardPadding)
+                    .padding(bottom = ResponsiveSize.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

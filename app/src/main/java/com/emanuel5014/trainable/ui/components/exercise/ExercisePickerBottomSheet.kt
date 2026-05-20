@@ -63,6 +63,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
+import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
@@ -82,6 +83,8 @@ fun ExercisePickerBottomSheet(
     modifier: Modifier = Modifier,
     languageCode: String = "en"
 ) {
+    rememberResponsiveSize()
+
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
@@ -120,18 +123,22 @@ fun ExercisePickerBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = ResponsiveSize.cardPadding)
-                .padding(bottom = Spacing.extreme)
+                .padding(bottom = ResponsiveSize.cardPadding)
         ) {
             Text(
                 text = "SELECT EXERCISE",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontSize = ResponsiveSize.labelLargeSize
+                ),
                 color = Primary,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(modifier = Modifier.height(Spacing.xtraSmall))
             Text(
                 text = "Choose from library",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = ResponsiveSize.headlineMediumSize
+                ),
                 color = OnSurface,
                 fontWeight = FontWeight.Black
             )
