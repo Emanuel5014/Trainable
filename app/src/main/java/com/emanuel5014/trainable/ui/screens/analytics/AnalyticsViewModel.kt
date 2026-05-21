@@ -8,11 +8,11 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import com.emanuel5014.trainable.data.local.dao.ConsistencyRow
 import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
-import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
-import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import dagger.hilt.android.lifecycle.HiltViewModel

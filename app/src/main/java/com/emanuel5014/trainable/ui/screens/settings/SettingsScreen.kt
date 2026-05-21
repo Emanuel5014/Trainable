@@ -98,7 +98,6 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
-import com.emanuel5014.trainable.ui.theme.getPaletteColor
 import com.emanuel5014.trainable.ui.theme.getPalettePreviewColors
 import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
 import kotlin.system.exitProcess

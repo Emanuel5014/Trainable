@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -35,17 +34,16 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -91,8 +89,8 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
-import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
+import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -216,29 +214,29 @@ fun DashboardScreen(
                                 for (j in 0..1) {
                                     if (i + j < options.size) {
                                         val option = options[i + j]
-                                        GymButton(
-                                            onClick = {
-                                                val baseTime = if (currentExpiry != null && currentExpiry > System.currentTimeMillis()) {
-                                                    currentExpiry
-                                                } else {
-                                                    System.currentTimeMillis()
-                                                }
-                                                val baseLocalDate = java.time.Instant.ofEpochMilli(baseTime)
-                                                    .atZone(java.time.ZoneId.of("UTC"))
-                                                    .toLocalDate()
-                                                val newExpiry = baseLocalDate.plusMonths(option.second.toLong())
-                                                    .atStartOfDay(java.time.ZoneId.of("UTC"))
-                                                    .toInstant()
-                                                    .toEpochMilli()
-                                                viewModel.setGymMembershipExpiryDate(newExpiry)
-                                                showMembershipDialog = false
-                                            },
-                                            containerColor = Primary.copy(alpha = 0.1f),
-                                            contentColor = Primary,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(48.dp)
-                                        ) {
+                                            GymButton(
+                                                onClick = {
+                                                    val baseTime = if (currentExpiry != null && currentExpiry > System.currentTimeMillis()) {
+                                                        currentExpiry
+                                                    } else {
+                                                        System.currentTimeMillis()
+                                                    }
+                                                    val baseLocalDate = java.time.Instant.ofEpochMilli(baseTime)
+                                                        .atZone(java.time.ZoneId.of("UTC"))
+                                                        .toLocalDate()
+                                                    val newExpiry = baseLocalDate.plusMonths(option.second.toLong())
+                                                        .atStartOfDay(java.time.ZoneId.of("UTC"))
+                                                        .toInstant()
+                                                        .toEpochMilli()
+                                                    viewModel.setGymMembershipExpiryDate(newExpiry)
+                                                    showMembershipDialog = false
+                                                },
+                                                containerColor = Primary,
+                                                contentColor = OnPrimary,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(48.dp)
+                                            ) {
                                             Text(
                                                 text = "+ ${stringResource(option.first)}",
                                                 fontWeight = FontWeight.Bold,
@@ -258,12 +256,11 @@ fun DashboardScreen(
                             showMembershipDialog = false
                             showDatePicker = true
                         },
-                        containerColor = Primary.copy(alpha = 0.05f),
-                        contentColor = Primary,
+                        containerColor = Primary,
+                        contentColor = OnPrimary,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
-                            .border(1.dp, Primary.copy(alpha = 0.3f), shape = Shapes.large)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

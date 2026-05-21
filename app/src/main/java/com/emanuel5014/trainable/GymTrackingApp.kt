@@ -1,7 +1,6 @@
 package com.emanuel5014.trainable
 
 import android.app.Application
-import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.emanuel5014.trainable.util.AppLocaleManager
