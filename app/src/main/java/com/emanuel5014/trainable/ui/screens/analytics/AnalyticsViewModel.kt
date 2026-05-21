@@ -86,6 +86,7 @@ class AnalyticsViewModel @Inject constructor(
         localeManager.currentLanguage
     ) { args ->
         val activePlan = args[0] as WorkoutPlanEntity?
+        @Suppress("UNCHECKED_CAST")
         val allPlans = args[1] as List<WorkoutPlanEntity>
         val timeRange = args[2] as AnalyticsTimeRange
         @Suppress("UNCHECKED_CAST")
