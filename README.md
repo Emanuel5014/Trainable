@@ -26,12 +26,12 @@
 ## 📱 Screenshots
 
 <div align="center">
-  <img src="SCREENS/1.png" width="130" alt="Dashboard" />
-  <img src="SCREENS/2.png" width="130" alt="Routines" />
-  <img src="SCREENS/3.png" width="130" alt="Routine Detail" />
-  <img src="SCREENS/6.png" width="130" alt="Workout Execution" />
-  <img src="SCREENS/4.png" width="130" alt="Session History" />
-  <img src="SCREENS/5.png" width="130" alt="Analytics" />
+  <img src="SCREENS/dashboard.png" width="130" alt="Dashboard" />
+  <img src="SCREENS/routines.png" width="130" alt="Routines" />
+  <img src="SCREENS/routine_detail.png" width="130" alt="Routine Detail" />
+  <img src="SCREENS/workout.png" width="130" alt="Workout Execution" />
+  <img src="SCREENS/history.png" width="130" alt="Session History" />
+  <img src="SCREENS/analytics.png" width="130" alt="Analytics" />
 </div>
 
 
