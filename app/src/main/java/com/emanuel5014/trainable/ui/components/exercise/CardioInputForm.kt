@@ -81,7 +81,7 @@ fun CardioInputForm(
                 text = stringResource(R.string.category).uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             LazyRow(
@@ -123,7 +123,7 @@ fun CardioInputForm(
                                 text = if (isCustom) categoria else stringResource(R.string.cardio_other),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (isCustom) Primary else OnSurface,
-                                fontWeight = if (isCustom) FontWeight.Bold else FontWeight.Medium
+                                fontWeight = if (isCustom) FontWeight.ExtraBold else FontWeight.SemiBold
                             )
                         }
                     }
@@ -146,7 +146,7 @@ fun CardioInputForm(
                 text = (stringResource(R.string.distance) + " (KM)").uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             Row(
@@ -197,7 +197,7 @@ fun CardioInputForm(
                 text = (stringResource(R.string.duration) + " (HH:MM:SS)").uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             Row(
@@ -260,7 +260,7 @@ private fun CardioCategoryChip(
                 text = category.name,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isSelected) Primary else OnSurface,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold
             )
         }
     }
@@ -279,7 +279,7 @@ private fun DurationUnitField(
         modifier = modifier,
         textStyle = MaterialTheme.typography.titleLarge.copy(
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.ExtraBold,
             color = OnSurface
         ),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -368,7 +368,7 @@ fun AddCardioDialog(
                 },
                 enabled = isValid
             ) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {

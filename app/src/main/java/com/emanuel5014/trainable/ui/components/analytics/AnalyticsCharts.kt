@@ -11,7 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -93,15 +96,32 @@ fun AnalyticsLineChart(
                     fillPath.moveTo(x, size.height - verticalPadding)
                     fillPath.lineTo(x, y)
                 } else {
-                    linePath.lineTo(x, y)
-                    fillPath.lineTo(x, y)
+                    val prevX = xFor(index - 1)
+                    val prevY = yFor(points[index - 1].value)
+                    
+                    val controlX1 = prevX + (x - prevX) / 2f
+                    val controlY1 = prevY
+                    val controlX2 = prevX + (x - prevX) / 2f
+                    val controlY2 = y
+                    
+                    linePath.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y)
+                    fillPath.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y)
                 }
             }
 
             fillPath.lineTo(xFor(points.lastIndex), size.height - verticalPadding)
             fillPath.close()
 
-            drawPath(path = fillPath, color = fillColor)
+            val fillBrush = Brush.verticalGradient(
+                colors = listOf(
+                    lineColor.copy(alpha = 0.38f),
+                    Color.Transparent
+                ),
+                startY = yFor(maxValue),
+                endY = size.height - verticalPadding
+            )
+
+            drawPath(path = fillPath, brush = fillBrush)
             drawPath(
                 path = linePath,
                 color = lineColor,
@@ -112,19 +132,57 @@ fun AnalyticsLineChart(
                 val x = xFor(index)
                 val y = yFor(point.value)
                 drawCircle(color = lineColor, radius = 6f, center = Offset(x, y))
-                drawContext.canvas.nativeCanvas.apply {
-                    val text = String.format("%.1f kg", point.value)
-                    drawText(
-                        text,
-                        x,
-                        y - 30f,
-                        android.graphics.Paint().apply {
-                            color = android.graphics.Color.parseColor("#666666")
-                            textSize = 28f
-                            textAlign = android.graphics.Paint.Align.CENTER
-                        }
-                    )
+
+                val text = String.format("%.1f", point.value)
+                val textPaint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.WHITE
+                    textSize = 32f
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    isAntiAlias = true
+                    isFakeBoldText = true
                 }
+                val textWidth = textPaint.measureText(text)
+                val badgeHPadding = 14f
+                val badgeVPadding = 8f
+                val badgeWidth = textWidth + badgeHPadding * 2
+                val badgeTotalHeight = (textPaint.descent() - textPaint.ascent()) + badgeVPadding * 2
+                val gapFromPoint = 8f
+                val badgeLeft = (x - badgeWidth / 2f).coerceIn(
+                    0f,
+                    (size.width - badgeWidth).coerceAtLeast(0f)
+                )
+                val textCenterX = badgeLeft + badgeWidth / 2f
+
+                val placeBelow = (y - 6f - gapFromPoint - badgeTotalHeight) < 0f
+                val badgeTop: Float
+                val textBaselineY: Float
+                if (placeBelow) {
+                    badgeTop = y + 6f + gapFromPoint
+                    textBaselineY = badgeTop + badgeVPadding - textPaint.ascent()
+                } else {
+                    badgeTop = y - 6f - gapFromPoint - badgeTotalHeight
+                    textBaselineY = badgeTop + badgeVPadding - textPaint.ascent()
+                }
+
+                drawRoundRect(
+                    color = Color.Black.copy(alpha = 0.12f),
+                    topLeft = Offset(badgeLeft + 1f, badgeTop + 1f),
+                    size = Size(badgeWidth, badgeTotalHeight),
+                    cornerRadius = CornerRadius(12f, 12f)
+                )
+                drawRoundRect(
+                    color = Color(0xFF2D2D2D).copy(alpha = 0.9f),
+                    topLeft = Offset(badgeLeft, badgeTop),
+                    size = Size(badgeWidth, badgeTotalHeight),
+                    cornerRadius = CornerRadius(12f, 12f)
+                )
+
+                drawContext.canvas.nativeCanvas.drawText(
+                    text,
+                    textCenterX,
+                    textBaselineY,
+                    textPaint
+                )
             }
         }
 

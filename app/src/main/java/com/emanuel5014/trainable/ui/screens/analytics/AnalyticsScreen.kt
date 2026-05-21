@@ -2,12 +2,15 @@ package com.emanuel5014.trainable.ui.screens.analytics
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +32,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Insights
@@ -56,6 +62,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,20 +73,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.zIndex
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
@@ -87,13 +99,19 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,17 +123,62 @@ fun AnalyticsScreen(
     var showExercisePicker by remember { mutableStateOf(false) }
     var showChartPicker by remember { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var draggedWidgetId by remember { mutableStateOf<String?>(null) }
-    var recentlyMovedWidgetId by remember { mutableStateOf<String?>(null) }
-    var displacedWidgetId by remember { mutableStateOf<String?>(null) }
-    var displacedWidgetOffset by remember { mutableStateOf(0f) }
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
-    val moveThresholdPx = with(LocalDensity.current) { 72.dp.toPx() }
-    val swapNudgePx = with(LocalDensity.current) { 28.dp.toPx() }
+    val haptic = LocalHapticFeedback.current
+    val lazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val dragDropState = rememberDragDropState(
+        lazyListState = lazyListState,
+        haptic = haptic,
+        scope = scope,
+        onMove = { id, up ->
+            viewModel.moveWidget(id, up)
+        }
+    )
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
+    val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
     val weightUnit = uiState.weightUnit
+    var showVolumeSettings by remember { mutableStateOf<String?>(null) }
+    var showAddVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+
+    val autoScrollThreshold = with(LocalDensity.current) { 80.dp.toPx() }
+    val autoScrollSpeed = 15f
+    
+    // Hide navbar during drag
+    LaunchedEffect(dragDropState.draggedWidgetId != null) {
+        BottomBarManager.isVisibleOverride = dragDropState.draggedWidgetId == null
+    }
+
+    LaunchedEffect(dragDropState.draggedWidgetId) {
+        val draggedId = dragDropState.draggedWidgetId
+        if (draggedId != null) {
+            while (true) {
+                val viewportHeight = lazyListState.layoutInfo.viewportSize.height.toFloat()
+                if (viewportHeight > 0f) {
+                    val fingerY = dragDropState.fingerY
+                    
+                    if (fingerY < autoScrollThreshold) {
+                        val ratio = (1f - (fingerY / autoScrollThreshold)).coerceIn(0f, 1f)
+                        val speed = autoScrollSpeed * ratio
+                        if (speed > 0.5f) {
+                            lazyListState.scrollBy(-speed)
+                            dragDropState.onDrag(fingerY)
+                        }
+                    } else if (fingerY > viewportHeight - autoScrollThreshold) {
+                        val distanceToBottom = viewportHeight - fingerY
+                        val ratio = (1f - (distanceToBottom / autoScrollThreshold)).coerceIn(0f, 1f)
+                        val speed = autoScrollSpeed * ratio
+                        if (speed > 0.5f) {
+                            lazyListState.scrollBy(speed)
+                            dragDropState.onDrag(fingerY)
+                        }
+                    }
+                }
+                delay(16)
+            }
+        }
+    }
 
     Scaffold(containerColor = Surface) { paddingValues ->
         if (uiState.isLoading) {
@@ -133,7 +196,7 @@ fun AnalyticsScreen(
                     ) { focusManager.clearFocus() }
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -147,149 +210,167 @@ fun AnalyticsScreen(
                     AnalyticsHeaderFabMenu(
                         expanded = fabMenuExpanded,
                         hasBodyWeightWidget = hasBodyWeightWidget,
+                        hasCalendarWidget = hasCalendarWidget,
                         onExpandedChange = { fabMenuExpanded = it },
                         onAddBodyWeight = {
                             viewModel.addBodyWeightChart()
+                            fabMenuExpanded = false
+                        },
+                        onAddCalendar = {
+                            viewModel.addCalendarChart()
+                            fabMenuExpanded = false
+                        },
+                        onAddVolume = {
+                            showAddVolumeDialog = true
                             fabMenuExpanded = false
                         },
                         onAddExercise = {
                             showChartPicker = true
                             fabMenuExpanded = false
                         },
-                        modifier = Modifier.padding(end = Spacing.CardPadding, top = Spacing.small)
+                        modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
                     )
                 }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    item {
-                        ExerciseCarouselSection(
-                            selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
-                            weightUnit = weightUnit,
-                            onEditClick = { showExercisePicker = true }
-                        )
-                    }
-                    
-                    items(uiState.widgets, key = { it.id }) { widget ->
-                        var dragAccumulator by remember(widget.id) { mutableStateOf(0f) }
-                        var dragOffsetY by remember(widget.id) { mutableStateOf(0f) }
-                        val isDragging = draggedWidgetId == widget.id
-                        val isRecentlyMoved = recentlyMovedWidgetId == widget.id
-                        val displacedOffsetTarget = if (displacedWidgetId == widget.id) displacedWidgetOffset else 0f
-                        val displacedAnimatedOffset by animateFloatAsState(
-                            targetValue = displacedOffsetTarget,
-                            label = "widget_displaced_offset"
-                        )
-                        val animatedOffsetY by animateFloatAsState(
-                            targetValue = (if (isDragging) dragOffsetY else 0f) + displacedAnimatedOffset,
-                            label = "widget_drag_offset"
-                        )
-                        val animatedScale by animateFloatAsState(
-                            targetValue = when {
-                                isDragging -> 1.02f
-                                isRecentlyMoved -> 1.01f
-                                else -> 1f
-                            },
-                            label = "widget_drag_scale"
-                        )
-                        val dragModifier = Modifier
-                            .graphicsLayer {
-                                translationY = animatedOffsetY
-                                scaleX = animatedScale
-                                scaleY = animatedScale
-                            }
-                            .pointerInput(widget.id, uiState.widgets.size) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
                                 detectDragGesturesAfterLongPress(
-                                    onDragStart = {
-                                        draggedWidgetId = widget.id
-                                        dragAccumulator = 0f
-                                        dragOffsetY = 0f
+                                    onDragStart = { offset ->
+                                        val item = lazyListState.layoutInfo.visibleItemsInfo.find { info ->
+                                            info.index > 0 && offset.y >= info.offset && offset.y <= info.offset + info.size
+                                        }
+                                        if (item != null) {
+                                            val widgetId = item.key as String
+                                            val itemRelativeOffset = offset - Offset(0f, item.offset.toFloat())
+                                            dragDropState.onDragStart(
+                                                absoluteInitialY = offset.y,
+                                                itemRelativeY = itemRelativeOffset.y,
+                                                widgetId = widgetId
+                                            )
+                                        }
                                     },
                                     onDragEnd = {
-                                        draggedWidgetId = null
-                                        displacedWidgetId = null
-                                        displacedWidgetOffset = 0f
-                                        dragAccumulator = 0f
-                                        dragOffsetY = 0f
+                                        dragDropState.onDragEnd()
                                     },
                                     onDragCancel = {
-                                        draggedWidgetId = null
-                                        displacedWidgetId = null
-                                        displacedWidgetOffset = 0f
-                                        dragAccumulator = 0f
-                                        dragOffsetY = 0f
+                                        dragDropState.onDragEnd()
+                                    },
+                                    onDrag = { change, _ ->
+                                        change.consume()
+                                        dragDropState.onDrag(change.position.y)
                                     }
-                                ) { change, dragAmount ->
-                                    change.consume()
-                                    dragAccumulator += dragAmount.y
-                                    dragOffsetY += dragAmount.y
+                                )
+                            },
+                        contentPadding = PaddingValues(bottom = 100.dp)
+                    ) {
+                        item {
+                            ExerciseCarouselSection(
+                                selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
+                                weightUnit = weightUnit,
+                                onEditClick = { showExercisePicker = true }
+                            )
+                        }
+                        
+                        items(uiState.widgets, key = { it.id }) { widget ->
+                            val isDragging = dragDropState.draggedWidgetId == widget.id
+                            val isRecentlyDropped = dragDropState.recentlyDroppedWidgetId == widget.id
+                            
+                            val translationY = if (isDragging) {
+                                dragDropState.dragTranslationY(widget.id)
+                            } else if (isRecentlyDropped) {
+                                dragDropState.dropAnimatable.value
+                            } else {
+                                0f
+                            }
+                            
+                            val animatedScale by animateFloatAsState(
+                                targetValue = if (isDragging) 1.05f else 1f,
+                                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                                label = "widget_drag_scale"
+                            )
+                            val animatedAlpha by animateFloatAsState(
+                                targetValue = if (dragDropState.draggedWidgetId != null && !isDragging) 0.6f else 1f,
+                                label = "widget_drag_alpha"
+                            )
 
-                                    val currentIndex = uiState.widgets.indexOfFirst { it.id == widget.id }
-                                    if (currentIndex == -1) return@detectDragGesturesAfterLongPress
-
-                                    if (dragAccumulator > moveThresholdPx && currentIndex < uiState.widgets.lastIndex) {
-                                        displacedWidgetId = uiState.widgets.getOrNull(currentIndex + 1)?.id
-                                        displacedWidgetOffset = -swapNudgePx
-                                        scope.launch {
-                                            delay(30)
-                                            displacedWidgetOffset = 0f
-                                        }
-                                        viewModel.moveWidget(widget.id, up = false)
-                                        recentlyMovedWidgetId = widget.id
-                                        scope.launch {
-                                            delay(220)
-                                            if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
-                                        }
-                                        dragAccumulator = 0f
-                                        dragOffsetY -= moveThresholdPx
-                                    } else if (dragAccumulator < -moveThresholdPx && currentIndex > 0) {
-                                        displacedWidgetId = uiState.widgets.getOrNull(currentIndex - 1)?.id
-                                        displacedWidgetOffset = swapNudgePx
-                                        scope.launch {
-                                            delay(30)
-                                            displacedWidgetOffset = 0f
-                                        }
-                                        viewModel.moveWidget(widget.id, up = true)
-                                        recentlyMovedWidgetId = widget.id
-                                        scope.launch {
-                                            delay(220)
-                                            if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
-                                        }
-                                        dragAccumulator = 0f
-                                        dragOffsetY += moveThresholdPx
-                                    }
+                            val dragModifier = Modifier
+                                .then(if (isDragging) Modifier else Modifier.animateItem())
+                                .zIndex(if (isDragging) 10f else 1f)
+                                .graphicsLayer {
+                                    this.translationY = translationY
+                                    scaleX = animatedScale
+                                    scaleY = animatedScale
+                                    alpha = animatedAlpha
+                                    shadowElevation = if (isDragging) 16.dp.toPx() else 0f
+                                    clip = false
                                 }
-                            }
 
-                        when (widget) {
-                            is AnalyticsWidget.BodyWeight -> {
-                                BodyWeightChartSection(
-                                    modifier = dragModifier,
-                                    isDragging = isDragging,
-                                    isRecentlyMoved = isRecentlyMoved,
-                                    bodyWeightHistory = widget.history,
-                                    bodyWeightInput = uiState.bodyWeightInput,
-                                    weightUnit = weightUnit,
-                                    onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
-                                    onSubmitWeight = viewModel::submitWeight,
-                                    onRemove = { viewModel.removeWidget(widget.id) }
-                                )
-                            }
-                            is AnalyticsWidget.Exercise -> {
-                                ExerciseChartSection(
-                                    modifier = dragModifier,
-                                    isDragging = isDragging,
-                                    isRecentlyMoved = isRecentlyMoved,
-                                    exerciseName = widget.exerciseName,
-                                    history = widget.history,
-                                    weightUnit = weightUnit,
-                                    onRemove = { viewModel.removeWidget(widget.id) }
-                                )
+                            when (widget) {
+                                is AnalyticsWidget.BodyWeight -> {
+                                    BodyWeightChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        bodyWeightHistory = widget.history,
+                                        bodyWeightInput = uiState.bodyWeightInput,
+                                        weightUnit = weightUnit,
+                                        onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
+                                        onSubmitWeight = viewModel::submitWeight,
+                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
+                                is AnalyticsWidget.Calendar -> {
+                                    WorkoutCalendarSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        workoutDates = widget.workoutDates,
+                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
+                                is AnalyticsWidget.Exercise -> {
+                                    ExerciseChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        exerciseName = widget.exerciseName,
+                                        history = widget.history,
+                                        weightUnit = weightUnit,
+                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
+                                is AnalyticsWidget.Volume -> {
+                                    VolumeChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        planName = widget.planName,
+                                        timeRange = widget.timeRange,
+                                        history = widget.history,
+                                        weightUnit = weightUnit,
+                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onEdit = { showVolumeSettings = widget.id }
+                                    )
+                                }
                             }
                         }
                     }
+
+                    // Top gradient fade to smoothly hide items when scrolling up
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(Surface, Color.Transparent)
+                                )
+                            )
+                    )
                 }
             }
         }
@@ -305,15 +386,54 @@ fun AnalyticsScreen(
         }
 
         if (showChartPicker) {
+            val existingExerciseIds = uiState.widgets
+                .filterIsInstance<AnalyticsWidget.Exercise>()
+                .map { it.exerciseId }
+                .toSet()
             ExercisePickerBottomSheet(
                 allExercises = uiState.personalBests,
-                selectedIds = emptySet(), // Not used for this picker
+                selectedIds = existingExerciseIds,
                 onDismiss = { showChartPicker = false },
                 onToggleSelection = { id ->
-                    viewModel.addExerciseChart(id)
-                    showChartPicker = false
+                    if (id !in existingExerciseIds) {
+                        viewModel.addExerciseChart(id)
+                    }
                 },
-                onClearAll = {}
+                onClearAll = {
+                    viewModel.removeAllExerciseCharts()
+                }
+            )
+        }
+
+        if (showVolumeSettings != null) {
+            val widgetId = showVolumeSettings!!
+            val widget = uiState.widgets.find { it.id == widgetId } as? AnalyticsWidget.Volume
+            if (widget != null) {
+                VolumeSettingsBottomSheet(
+                    allPlans = uiState.allPlans,
+                    currentPlanId = widget.planId,
+                    currentTimeRange = widget.timeRange,
+                    onDismiss = { showVolumeSettings = null },
+                    onConfirm = { planId, timeRange ->
+                        viewModel.updateVolumeChart(widgetId, planId, timeRange)
+                        showVolumeSettings = null
+                    }
+                )
+            }
+        }
+
+        if (showAddVolumeDialog) {
+            val activePlan = uiState.allPlans.find { it.nome == uiState.activePlanName }
+            val planId = activePlan?.id ?: uiState.allPlans.firstOrNull()?.id ?: -1
+            VolumeSettingsBottomSheet(
+                allPlans = uiState.allPlans,
+                currentPlanId = planId,
+                currentTimeRange = AnalyticsTimeRange.OneMonth,
+                onDismiss = { showAddVolumeDialog = false },
+                onConfirm = { selectedPlanId, selectedTimeRange ->
+                    viewModel.addVolumeChart(selectedPlanId, selectedTimeRange)
+                    showAddVolumeDialog = false
+                }
             )
         }
     }
@@ -333,7 +453,7 @@ fun ExerciseCarouselSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = Spacing.CardPadding, end = Spacing.CardPadding, bottom = Spacing.medium),
+                .padding(start = ResponsiveSize.cardPadding, end = ResponsiveSize.cardPadding, bottom = Spacing.medium),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -341,7 +461,7 @@ fun ExerciseCarouselSection(
                 text = stringResource(R.string.analytics_max_progress),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             IconButton(
                 onClick = onEditClick,
@@ -386,7 +506,7 @@ fun ExerciseCarouselSection(
             Column(modifier = Modifier.fillMaxWidth()) {
                 HorizontalPager(
                     state = pagerState,
-                    contentPadding = PaddingValues(horizontal = Spacing.CardPadding),
+                    contentPadding = PaddingValues(horizontal = ResponsiveSize.horizontalPadding),
                     pageSpacing = Spacing.small,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -453,8 +573,11 @@ fun ExerciseCarouselSection(
 private fun AnalyticsHeaderFabMenu(
     expanded: Boolean,
     hasBodyWeightWidget: Boolean,
+    hasCalendarWidget: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onAddBodyWeight: () -> Unit,
+    onAddCalendar: () -> Unit,
+    onAddVolume: () -> Unit,
     onAddExercise: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -479,6 +602,17 @@ private fun AnalyticsHeaderFabMenu(
             onDismissRequest = { onExpandedChange(false) }
         ) {
             DropdownMenuItem(
+                text = { Text(stringResource(R.string.analytics_workout_calendar)) },
+                leadingIcon = { Icon(Icons.Rounded.DateRange, contentDescription = null) },
+                enabled = !hasCalendarWidget,
+                onClick = {
+                    if (!hasCalendarWidget) {
+                        onAddCalendar()
+                    }
+                    onExpandedChange(false)
+                }
+            )
+            DropdownMenuItem(
                 text = { Text(stringResource(R.string.analytics_body_weight)) },
                 leadingIcon = { Icon(Icons.Rounded.Insights, contentDescription = null) },
                 enabled = !hasBodyWeightWidget,
@@ -490,8 +624,16 @@ private fun AnalyticsHeaderFabMenu(
                 }
             )
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.analytics_choose_exercises)) },
+                text = { Text(stringResource(R.string.analytics_total_volume)) },
                 leadingIcon = { Icon(Icons.Rounded.FitnessCenter, contentDescription = null) },
+                onClick = {
+                    onAddVolume()
+                    onExpandedChange(false)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.analytics_add_1rm_graphic)) },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 onClick = {
                     onAddExercise()
                     onExpandedChange(false)
@@ -521,7 +663,7 @@ fun BodyWeightChartSection(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.CardPadding, vertical = Spacing.medium)
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
             .border(
                 width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
                 color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
@@ -545,7 +687,7 @@ fun BodyWeightChartSection(
                     text = stringResource(R.string.analytics_body_weight),
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 WidgetControls(onRemove)
             }
@@ -570,7 +712,7 @@ fun BodyWeightChartSection(
                         Text(
                             text = latestWeight?.let { WeightUnitConverter.formatWithUnit(it, weightUnit) } ?: "-",
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = Primary
                         )
                         if (weightChangePercent != null && weightChangePercent != 0f) {
@@ -640,7 +782,7 @@ fun ExerciseChartSection(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.CardPadding, vertical = Spacing.medium)
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
             .border(
                 width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
                 color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
@@ -664,7 +806,7 @@ fun ExerciseChartSection(
                     text = exerciseName,
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 WidgetControls(onRemove)
             }
@@ -687,7 +829,7 @@ fun ExerciseChartSection(
                         Text(
                             text = WeightUnitConverter.formatWithUnit(latest, weightUnit),
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = Primary
                         )
                         Text(
@@ -731,11 +873,22 @@ fun ExerciseChartSection(
 
 @Composable
 fun WidgetControls(
-    onRemove: (() -> Unit)?
+    onRemove: (() -> Unit)?,
+    onEdit: (() -> Unit)? = null
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (onRemove != null) {
+        if (onEdit != null) {
+            IconButton(onClick = onEdit, modifier = Modifier.size(24.dp)) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = stringResource(R.string.edit),
+                    tint = Primary.copy(alpha = 0.8f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(4.dp))
+        }
+        if (onRemove != null) {
             IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                 Icon(
                     Icons.Rounded.Clear,
@@ -783,7 +936,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
                         text = exercise.category.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = exercise.exerciseName,
@@ -800,7 +953,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
                         Text(
                             text = WeightUnitConverter.format(displayWeight),
                             style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Text(
                             text = weightUnit,
@@ -838,7 +991,7 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
                                 text = WeightUnitConverter.formatWithUnit(estimated1RM, weightUnit),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = OnPrimary,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
@@ -855,7 +1008,8 @@ fun ExercisePickerBottomSheet(
     selectedIds: Set<Int>,
     onDismiss: () -> Unit,
     onToggleSelection: (Int) -> Unit,
-    onClearAll: () -> Unit
+    onClearAll: () -> Unit,
+    onConfirmAdd: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
     var searchQuery by remember { mutableStateOf("") }
@@ -893,7 +1047,7 @@ fun ExercisePickerBottomSheet(
                 Text(
                     text = stringResource(R.string.analytics_choose_exercises),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 if (selectedIds.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
@@ -911,7 +1065,7 @@ fun ExercisePickerBottomSheet(
                 text = stringResource(R.string.analytics_selected_count, selectedIds.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (selectedIds.isNotEmpty()) Primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (selectedIds.isNotEmpty()) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (selectedIds.isNotEmpty()) FontWeight.ExtraBold else FontWeight.Medium
             )
             
             Spacer(modifier = Modifier.height(Spacing.small))
@@ -949,7 +1103,7 @@ fun ExercisePickerBottomSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(350.dp)
+                    .height(if (onConfirmAdd != null) 300.dp else 350.dp)
             ) {
                 items(filteredExercises) { exercise ->
                     val isSelected = exercise.exerciseId in selectedIds
@@ -960,6 +1114,30 @@ fun ExercisePickerBottomSheet(
                         enabled = true
                     )
                 }
+            }
+
+            if (onConfirmAdd != null) {
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.small)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (selectedIds.isNotEmpty()) Primary else SurfaceContainerHigh)
+                        .clickable(enabled = selectedIds.isNotEmpty()) {
+                            onConfirmAdd()
+                        }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.add).uppercase(),
+                        color = if (selectedIds.isNotEmpty()) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                Spacer(modifier = Modifier.height(Spacing.small))
             }
         }
     }
@@ -993,7 +1171,7 @@ fun ExercisePickerItem(
                 Text(
                     text = exercise.exerciseName,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -1021,9 +1199,465 @@ fun ExercisePickerItem(
     }
 }
 
+@Composable
+fun VolumeChartSection(
+    modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
+    isRecentlyMoved: Boolean = false,
+    planName: String,
+    timeRange: AnalyticsTimeRange,
+    history: List<AnalyticsChartPoint>,
+    weightUnit: String,
+    onRemove: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null
+) {
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
+        label = "volume_card_elevation"
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
+            .border(
+                width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
+                color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.analytics_total_volume),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = planName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Primary
+                    )
+                }
+                WidgetControls(onRemove, onEdit)
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            if (history.isNotEmpty()) {
+                val latest = history.last().value
+                val first = history.first().value
+                val changePercent = if (first != 0f) ((latest - first) / first) * 100f else 0f
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        Text(
+                            text = WeightUnitConverter.formatWithUnit(latest, weightUnit),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Primary
+                        )
+                        Text(
+                            text = timeRange.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        if (changePercent != 0f) {
+                            Text(
+                                text = String.format("%+.1f%%", changePercent),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (changePercent > 0) Primary else Tertiary
+                            )
+                        }
+                    }
+                }
+
+                AnalyticsLineChart(
+                    points = history,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineColor = Primary,
+                    fillColor = Primary.copy(alpha = 0.14f)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.analytics_no_data_range),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VolumeSettingsBottomSheet(
+    allPlans: List<WorkoutPlanEntity>,
+    currentPlanId: Int,
+    currentTimeRange: AnalyticsTimeRange,
+    onDismiss: () -> Unit,
+    onConfirm: (Int, AnalyticsTimeRange) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    var selectedPlanId by remember { mutableStateOf(currentPlanId) }
+    var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.analytics_volume_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(bottom = Spacing.medium)
+            )
+
+            Text(
+                text = stringResource(R.string.training_plans),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                items(allPlans) { plan ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedPlanId == plan.id) Primary.copy(alpha = 0.1f) else Color.Transparent)
+                            .clickable { selectedPlanId = plan.id }
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .border(2.dp, Primary, CircleShape)
+                                .padding(4.dp)
+                                .clip(CircleShape)
+                                .background(if (selectedPlanId == plan.id) Primary else Color.Transparent)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.medium))
+                        Text(
+                            text = plan.nome,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (selectedPlanId == plan.id) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            Text(
+                text = stringResource(R.string.analytics_time_range),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            ) {
+                AnalyticsTimeRange.values().forEach { range ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedTimeRange == range) Primary else SurfaceContainerHigh)
+                            .clickable { selectedTimeRange = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = range.label,
+                            color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.large))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary)
+                    .clickable { onConfirm(selectedPlanId, selectedTimeRange) }
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    color = OnPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
 fun calculateEpley1RM(weight: Float, reps: Int): Float {
     return if (reps > 0) {
         if (reps == 1) weight
         else weight * (1f + reps / 30f)
     } else 0f
+}
+
+@Composable
+fun WorkoutCalendarSection(
+    modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
+    isRecentlyMoved: Boolean = false,
+    workoutDates: List<Long>,
+    onRemove: (() -> Unit)? = null
+) {
+    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
+        label = "calendar_card_elevation"
+    )
+
+    // Today's date to highlight today
+    val today = LocalDate.now()
+
+    // 42 days grid calculations (6 weeks of 7 days)
+    val days = remember(currentMonth) {
+        val list = mutableListOf<LocalDate>()
+        val firstDay = currentMonth.atDay(1)
+        val firstDayOfWeek = firstDay.dayOfWeek.value // 1 = Monday, 7 = Sunday
+        val leadingDays = firstDayOfWeek - 1
+        
+        // Start from Monday of the week containing the 1st of the month
+        val startDate = firstDay.minusDays(leadingDays.toLong())
+        
+        for (i in 0 until 42) {
+            list.add(startDate.plusDays(i.toLong()))
+        }
+        list
+    }
+
+    // Group workouts in the system's timezone to LocalDate format for extremely fast contains() lookup
+    val workoutLocalDates = remember(workoutDates) {
+        workoutDates.map {
+            Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+        }.toSet()
+    }
+
+    // Total workouts in the selected month
+    val workoutsInMonthCount = remember(currentMonth, workoutLocalDates) {
+        workoutLocalDates.count { date ->
+            date.year == currentMonth.year && date.month == currentMonth.month
+        }
+    }
+
+    val monthDisplayName = remember(currentMonth) {
+        val monthName = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+        // Capitalize first letter of month
+        val capitalizedMonthName = monthName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        "$capitalizedMonthName ${currentMonth.year}"
+    }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
+            .border(
+                width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
+                color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            // Header: Month Title & Left/Right Arrows
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.workout_logs).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = monthDisplayName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        color = Primary
+                    )
+                    Text(
+                        text = stringResource(R.string.analytics_workouts_this_month, workoutsInMonthCount),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                // Left & Right Navigation Buttons
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = { currentMonth = currentMonth.minusMonths(1) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                            contentDescription = "Previous Month",
+                            tint = Primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = { currentMonth = currentMonth.plusMonths(1) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = "Next Month",
+                            tint = Primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    WidgetControls(onRemove)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            // Day of Week Header Row (Lun, Mar, Mer, Gio, Ven, Sab, Dom)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                val dayHeaders = listOf(
+                    stringResource(R.string.analytics_day_mon),
+                    stringResource(R.string.analytics_day_tue),
+                    stringResource(R.string.analytics_day_wed),
+                    stringResource(R.string.analytics_day_thu),
+                    stringResource(R.string.analytics_day_fri),
+                    stringResource(R.string.analytics_day_sat),
+                    stringResource(R.string.analytics_day_sun)
+                )
+                dayHeaders.forEach { header ->
+                    Text(
+                        text = header,
+                        modifier = Modifier.width(36.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            // 6 Rows of 7 Days Grid
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                repeat(6) { weekIndex ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        repeat(7) { dayIndex ->
+                            val cellDate = days[weekIndex * 7 + dayIndex]
+                            val isCurrentMonth = cellDate.month == currentMonth.month
+                            val hasWorkout = workoutLocalDates.contains(cellDate)
+                            val isToday = cellDate == today
+
+                            val cellModifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .then(
+                                    when {
+                                        hasWorkout -> Modifier.background(Primary)
+                                        isToday -> Modifier.border(1.5.dp, Primary, CircleShape)
+                                        else -> Modifier
+                                    }
+                                )
+
+                            Box(
+                                modifier = cellModifier,
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = cellDate.dayOfMonth.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (hasWorkout || isToday) FontWeight.Bold else FontWeight.Normal,
+                                    color = when {
+                                        hasWorkout -> OnPrimary
+                                        !isCurrentMonth -> OnSurfaceVariant.copy(alpha = 0.25f)
+                                        else -> MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

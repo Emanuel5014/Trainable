@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,14 +26,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
@@ -42,6 +43,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -75,7 +77,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -87,13 +89,16 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.util.DateFormatter
-import java.util.concurrent.TimeUnit
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,6 +109,7 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionWithPlanName?>(null) }
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
@@ -133,7 +139,7 @@ fun DashboardScreen(
                     },
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -144,6 +150,168 @@ fun DashboardScreen(
                     modifier = Modifier.height(48.dp)
                 ) {
                     Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (showMembershipDialog) {
+        AlertDialog(
+            onDismissRequest = { showMembershipDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.gym_membership).uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val currentExpiry = uiState.gymMembershipExpiryDate
+                    if (currentExpiry != null) {
+                        Text(
+                            text = "${stringResource(R.string.valid_thru)} ${DateFormatter.format(currentExpiry)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.tap_to_set),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                    
+                    Text(
+                        text = stringResource(R.string.quick_renewal).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    val options = listOf(
+                        Pair(R.string.month_1, 1),
+                        Pair(R.string.months_3, 3),
+                        Pair(R.string.months_6, 6),
+                        Pair(R.string.year_1, 12)
+                    )
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (i in 0 until options.size step 2) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                for (j in 0..1) {
+                                    if (i + j < options.size) {
+                                        val option = options[i + j]
+                                            GymButton(
+                                                onClick = {
+                                                    val baseTime = if (currentExpiry != null && currentExpiry > System.currentTimeMillis()) {
+                                                        currentExpiry
+                                                    } else {
+                                                        System.currentTimeMillis()
+                                                    }
+                                                    val baseLocalDate = java.time.Instant.ofEpochMilli(baseTime)
+                                                        .atZone(java.time.ZoneId.of("UTC"))
+                                                        .toLocalDate()
+                                                    val newExpiry = baseLocalDate.plusMonths(option.second.toLong())
+                                                        .atStartOfDay(java.time.ZoneId.of("UTC"))
+                                                        .toInstant()
+                                                        .toEpochMilli()
+                                                    viewModel.setGymMembershipExpiryDate(newExpiry)
+                                                    showMembershipDialog = false
+                                                },
+                                                containerColor = Primary,
+                                                contentColor = OnPrimary,
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(48.dp)
+                                            ) {
+                                            Text(
+                                                text = "+ ${stringResource(option.first)}",
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                    
+                    GymButton(
+                        onClick = {
+                            showMembershipDialog = false
+                            showDatePicker = true
+                        },
+                        containerColor = Primary,
+                        contentColor = OnPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = Primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.choose_custom_date).uppercase(),
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                    
+                    if (currentExpiry != null) {
+                        GymButton(
+                            onClick = {
+                                viewModel.setGymMembershipExpiryDate(null)
+                                showMembershipDialog = false
+                            },
+                            containerColor = Error.copy(alpha = 0.1f),
+                            contentColor = Error,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.remove_membership).uppercase(),
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showMembershipDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -193,7 +361,7 @@ fun DashboardScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -227,7 +395,7 @@ fun DashboardScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -259,8 +427,15 @@ fun DashboardScreen(
                         containerColor = Primary,
                         contentColor = OnPrimary,
                         shape = Shapes.large,
-                        modifier = Modifier.padding(bottom = 80.dp)
+                        modifier = Modifier
+                            .padding(
+                                end = if (uiState.floatingNavBar) {
+                                    if (ResponsiveSize.isCompact) 2.dp else 8.dp
+                                } else 0.dp
+                            )
+                            .padding(bottom = 80.dp)
                     ) {
+
                         Icon(
                             imageVector = Icons.Rounded.Bolt,
                             contentDescription = stringResource(R.string.quick_workout)
@@ -268,7 +443,7 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.quick_workout),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -277,13 +452,14 @@ fun DashboardScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(Spacing.CardPadding),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.doubleLarge)
+                    contentPadding = PaddingValues(ResponsiveSize.cardPadding),
+                    verticalArrangement = Arrangement.spacedBy(if (ResponsiveSize.isCompact) Spacing.large else Spacing.doubleLarge)
                 ) {
                 item {
                     DashboardSimpleHeader(
                         onSettingsClick = onNavigateToSettings,
                         dynamicColor = uiState.dynamicColor,
+                        themePalette = uiState.themePalette,
                         isSelectionMode = uiState.isSelectionMode,
                         selectedCount = uiState.selectedSessionIds.size,
                         onClearSelection = { viewModel.clearSelection() },
@@ -295,7 +471,13 @@ fun DashboardScreen(
                     GymMembershipCard(
                         expiryDateMillis = uiState.gymMembershipExpiryDate,
                         username = uiState.username,
-                        onClick = { showDatePicker = true }
+                        onClick = {
+                            if (uiState.gymMembershipExpiryDate == null) {
+                                showDatePicker = true
+                            } else {
+                                showMembershipDialog = true
+                            }
+                        }
                     )
                 }
 
@@ -313,7 +495,7 @@ fun DashboardScreen(
                                 text = stringResource(R.string.resume_workout),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             uiState.unfinishedSessions.forEach { session ->
                                 val haptic = LocalHapticFeedback.current
@@ -390,7 +572,7 @@ fun DashboardScreen(
                                 text = stringResource(R.string.today_workout),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Primary,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
@@ -398,7 +580,6 @@ fun DashboardScreen(
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
@@ -406,25 +587,12 @@ fun DashboardScreen(
                                             text = uiState.todayPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
                                             color = OnSurface,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.ExtraBold
                                         )
                                         Text(
                                             text = uiState.todayPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(Primary.copy(alpha = 0.1f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.FitnessCenter,
-                                            contentDescription = null,
-                                            tint = Primary
                                         )
                                     }
                                 }
@@ -440,7 +608,7 @@ fun DashboardScreen(
                                 text = stringResource(R.string.suggested_plan),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
@@ -448,7 +616,6 @@ fun DashboardScreen(
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column {
@@ -456,25 +623,12 @@ fun DashboardScreen(
                                             text = uiState.suggestedPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
                                             color = OnSurface,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.ExtraBold
                                         )
                                         Text(
                                             text = uiState.suggestedPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape)
-                                            .background(Primary.copy(alpha = 0.1f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.FitnessCenter,
-                                            contentDescription = null,
-                                            tint = Primary
                                         )
                                     }
                                 }
@@ -507,13 +661,9 @@ fun GymMembershipCard(
     username: String,
     onClick: () -> Unit
 ) {
-    val todayMillis = System.currentTimeMillis()
-    
-    val daysLeft = if (expiryDateMillis != null) {
-        val diff = expiryDateMillis - todayMillis
-        TimeUnit.MILLISECONDS.toDays(diff).toInt()
-    } else {
-        null
+    val daysLeft = expiryDateMillis?.let {
+        val expiryDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+        ChronoUnit.DAYS.between(java.time.LocalDate.now(), expiryDate).toInt()
     }
 
     val isExpired = daysLeft != null && daysLeft < 0
@@ -595,7 +745,7 @@ fun GymMembershipCard(
                             text = stringResource(R.string.gym_membership).uppercase(),
                             style = MaterialTheme.typography.labelLarge,
                             color = textColor.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
                         )
                     }
@@ -619,7 +769,7 @@ fun GymMembershipCard(
                             text = username.uppercase(),
                             style = MaterialTheme.typography.titleMedium,
                             color = textColor,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             letterSpacing = androidx.compose.ui.unit.TextUnit(1f, androidx.compose.ui.unit.TextUnitType.Sp)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -652,7 +802,7 @@ fun GymMembershipCard(
                                 },
                                 style = MaterialTheme.typography.labelMedium,
                                 color = textColor,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                             )
                         }
@@ -667,6 +817,7 @@ fun GymMembershipCard(
 private fun DashboardSimpleHeader(
     onSettingsClick: () -> Unit,
     dynamicColor: Boolean,
+    themePalette: Int = 0,
     isSelectionMode: Boolean = false,
     selectedCount: Int = 0,
     onClearSelection: () -> Unit = {},
@@ -712,10 +863,11 @@ private fun DashboardSimpleHeader(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val useCustomTint = dynamicColor || themePalette != 0
                 Icon(
-                    painter = painterResource(id = if (dynamicColor) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
+                    painter = painterResource(id = if (useCustomTint) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
                     contentDescription = "Trainable Logo",
-                    tint = if (dynamicColor) Primary else Color.Unspecified,
+                    tint = if (useCustomTint) Primary else Color.Unspecified,
                     modifier = Modifier
                         .size(56.dp)
                 )
@@ -745,14 +897,14 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int) {
                         text = stringResource(R.string.weekly_goal),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.workouts_this_week, workoutsThisWeek, weeklyGoal),
                         style = MaterialTheme.typography.titleLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
                 if (workoutsThisWeek >= weeklyGoal) {
@@ -833,7 +985,7 @@ private fun UnfinishedSessionCard(
                         text = session.planNome,
                         style = MaterialTheme.typography.titleMedium,
                         color = OnSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = stringResource(R.string.started, DateFormatter.format(session.session.timestamp)),

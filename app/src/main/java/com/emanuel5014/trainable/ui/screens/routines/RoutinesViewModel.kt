@@ -5,19 +5,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.ShareUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RoutinesViewModel @Inject constructor(
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val userPrefsRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoutinesUiState(isLoading = true))
@@ -29,26 +32,31 @@ class RoutinesViewModel @Inject constructor(
 
     private fun loadPlans() {
         viewModelScope.launch {
-            workoutRepository.getAllPlansWithDetails()
-                .collect { allPlans ->
-                    // Auto-tag legacy system plans if they exist without the note
-                    allPlans.forEach { 
-                        if (it.plan.note == null && !it.plan.isActive && 
-                            (it.plan.nome == "Cardio" || it.plan.nome == "Custom Workout")) {
-                            viewModelScope.launch {
-                                workoutRepository.updatePlan(it.plan.copy(note = "SYSTEM_PLAN"))
-                            }
+            combine(
+                workoutRepository.getAllPlansWithDetails(),
+                userPrefsRepository.floatingNavBar
+            ) { allPlans, floating ->
+                allPlans to floating
+            }.collect { (allPlans, floating) ->
+                // Auto-tag legacy system plans if they exist without the note
+                allPlans.forEach { 
+                    if (it.plan.note == null && !it.plan.isActive && 
+                        (it.plan.nome == "Cardio" || it.plan.nome == "Custom Workout")) {
+                        viewModelScope.launch {
+                            workoutRepository.updatePlan(it.plan.copy(note = "SYSTEM_PLAN"))
                         }
                     }
-
-                    val filteredPlans = allPlans.filter { it.plan.note != "SYSTEM_PLAN" }
-                    val (active, archived) = filteredPlans.partition { it.plan.isActive }
-                    _uiState.update { it.copy(
-                        plans = active,
-                        archivedPlans = archived,
-                        isLoading = false
-                    )}
                 }
+
+                val filteredPlans = allPlans.filter { it.plan.note != "SYSTEM_PLAN" }
+                val (active, archived) = filteredPlans.partition { it.plan.isActive }
+                _uiState.update { it.copy(
+                    plans = active,
+                    archivedPlans = archived,
+                    floatingNavBar = floating,
+                    isLoading = false
+                )}
+            }
         }
     }
 
@@ -220,5 +228,6 @@ data class RoutinesUiState(
     val archivedPlans: List<PlanWithDetails> = emptyList(),
     val selectedPlanIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
+    val floatingNavBar: Boolean = false,
     val error: String? = null
 )

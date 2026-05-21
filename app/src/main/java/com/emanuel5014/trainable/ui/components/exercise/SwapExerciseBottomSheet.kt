@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,14 +44,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.flow.map
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,17 +58,22 @@ import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
+import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,6 +90,8 @@ fun SwapExerciseBottomSheet(
     modifier: Modifier = Modifier,
     isAdding: Boolean = false
 ) {
+    rememberResponsiveSize()
+
     var step by remember { mutableStateOf(1) }
     var selectedExercise by remember { mutableStateOf<ExerciseEntity?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -138,21 +141,25 @@ fun SwapExerciseBottomSheet(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.CardPadding)
-                        .padding(bottom = Spacing.extreme)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
-                        Text(
-                            text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
-                            style = MaterialTheme.typography.labelMedium,
+                        .padding(horizontal = ResponsiveSize.cardPadding)
+                        .padding(bottom = ResponsiveSize.cardPadding)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                            Text(
+                                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = ResponsiveSize.labelLargeSize
+                            ),
                             color = Primary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Text(
                             text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontSize = ResponsiveSize.headlineMediumSize
+                            ),
                             color = OnSurface,
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
 
@@ -200,7 +207,7 @@ fun SwapExerciseBottomSheet(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 400.dp),
+                            .weight(1f, fill = false),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(filteredExercises) { exercise ->
@@ -241,7 +248,7 @@ fun SwapExerciseBottomSheet(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(Spacing.small))
-                        Text("Add Custom Exercise", fontWeight = FontWeight.Bold)
+                        Text("Add Custom Exercise", fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -293,7 +300,7 @@ fun SwapExerciseBottomSheet(
             onDismissRequest = { exerciseToDelete = null },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text("Delete Exercise?", fontWeight = FontWeight.Bold, color = OnSurface)
+                Text("Delete Exercise?", fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
                 Text("Delete \"${exerciseToDelete!!.nome}\"? This cannot be undone.", color = OnSurfaceVariant)
@@ -350,7 +357,7 @@ private fun ExerciseListItem(
                         text = ExerciseTranslations.translate(exercise.nome, languageCode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.SemiBold
                     )
                     if (exercise.id >= 1000) {
                         Spacer(modifier = Modifier.width(4.dp))
@@ -442,7 +449,7 @@ private fun AddCustomExerciseDialog(
             Text(
                 text = "New Exercise",
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -538,7 +545,7 @@ private fun EditCustomExerciseDialog(
             Text(
                 text = "Edit Exercise",
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -651,7 +658,7 @@ private fun SwapExerciseConfigDialog(
             Text(
                 text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -705,7 +712,7 @@ private fun SwapExerciseConfigDialog(
                     onConfirm(sets, reps, rest)
                 }
             ) {
-                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -743,7 +750,7 @@ private fun RestSlider(
                 text = "${value}s",
                 style = MaterialTheme.typography.titleMedium,
                 color = Primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = formatRestTime(value),

@@ -65,4 +65,38 @@ object ShareUtils {
             e.printStackTrace()
         }
     }
+
+    fun saveBitmapToGallery(context: Context, bitmap: Bitmap, title: String = "Workout_Summary"): Boolean {
+        try {
+            val resolver = context.contentResolver
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, "${title}_${System.currentTimeMillis()}.png")
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/Trainable")
+                    put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+            }
+
+            val imageUri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues) ?: return false
+
+            resolver.openOutputStream(imageUri).use { outStream ->
+                if (outStream == null) {
+                    resolver.delete(imageUri, null, null)
+                    return false
+                }
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+            }
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                contentValues.clear()
+                contentValues.put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+                resolver.update(imageUri, contentValues, null, null)
+            }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
 }

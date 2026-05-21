@@ -27,9 +27,13 @@ import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -40,6 +44,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,9 +65,10 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
@@ -84,6 +90,7 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -104,21 +111,40 @@ fun EditWorkoutScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showAddCardio by remember { mutableStateOf(false) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(
-                            text = when (state.planName) {
-                                "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-                                "Custom Workout" -> stringResource(R.string.custom_workout)
-                                else -> state.planName
-                            },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { showRenameDialog = true }
+                                .padding(end = 8.dp)
+                        ) {
+                            Text(
+                                text = when (state.planName) {
+                                    "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                                    "Custom Workout" -> stringResource(R.string.custom_workout)
+                                    else -> state.planName
+                                },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.Edit,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -130,14 +156,14 @@ fun EditWorkoutScreen(
                                     .format(Date(state.sessionTimestamp)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Primary,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = " • " + stringResource(R.string.edit_date).uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -186,43 +212,91 @@ fun EditWorkoutScreen(
                 GymLoadingIndicator()
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                itemsIndexed(state.exercises) { index, exerciseState ->
-                    EditExerciseCard(
-                        exerciseState = exerciseState,
-                        languageCode = languageCode ?: "en",
-                        isFirst = index == 0,
-                        isLast = index == state.exercises.size - 1,
-                        weightUnit = state.weightUnit,
-                        onEditSet = { editingSet = it },
-                        onAddSet = { viewModel.addSet(exerciseState.exercise.id) },
-                        onSwapExercise = { 
-                            exerciseToSwap = exerciseState.exercise.id
-                            showExercisePicker = true
-                        },
-                        onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
-                        onMoveSetUp = { viewModel.moveSetUp(it) },
-                        onMoveSetDown = { viewModel.moveSetDown(it) },
-                        onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
-                        onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) }
-                    )
+            if (state.exercises.isEmpty() && state.cardioLogs.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(Primary.copy(alpha = 0.12f), CircleShape)
+                                .padding(16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_exercises_in_session),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.tap_plus_to_add),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    itemsIndexed(state.exercises) { index, exerciseState ->
+                        val currentSid = exerciseState.sets.firstOrNull()?.supersetId
+                        val isSuperset = currentSid != null
+                        val isLinked = isSuperset && index < state.exercises.lastIndex &&
+                                       state.exercises[index + 1].sets.firstOrNull()?.supersetId == currentSid
 
-                itemsIndexed(state.cardioLogs) { _, cardioLog ->
-                    CardioEditCard(
-                        cardioLog = cardioLog,
-                        onEdit = { editingCardio = it },
-                        onDelete = { viewModel.deleteCardioLog(it) }
-                    )
+                        EditExerciseCard(
+                            exerciseState = exerciseState,
+                            languageCode = languageCode,
+                            isFirst = index == 0,
+                            isLast = index == state.exercises.size - 1,
+                            isSuperset = isSuperset,
+                            isLinked = isLinked,
+                            weightUnit = state.weightUnit,
+                            onEditSet = { editingSet = it },
+                            onAddSet = { viewModel.addSet(exerciseState.exercise.id) },
+                            onSwapExercise = { 
+                                exerciseToSwap = exerciseState.exercise.id
+                                showExercisePicker = true
+                            },
+                            onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
+                            onMoveSetUp = { viewModel.moveSetUp(it) },
+                            onMoveSetDown = { viewModel.moveSetDown(it) },
+                            onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
+                            onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) },
+                            onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) }
+                        )
+                    }
+
+                    itemsIndexed(state.cardioLogs) { _, cardioLog ->
+                        CardioEditCard(
+                            cardioLog = cardioLog,
+                            onEdit = { editingCardio = it },
+                            onDelete = { viewModel.deleteCardioLog(it) }
+                        )
+                    }
+                    
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
-                
-                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
     }
@@ -265,6 +339,43 @@ fun EditWorkoutScreen(
         )
     }
 
+    if (showRenameDialog) {
+        var newName by remember { 
+            mutableStateOf(
+                if (state.planName == "Custom Workout") "" else state.planName
+            )
+        }
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text(text = stringResource(R.string.rename_workout)) },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    placeholder = { Text(text = stringResource(R.string.custom_workout)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = Shapes.medium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateSessionName(newName)
+                        showRenameDialog = false
+                    }
+                ) {
+                    Text(text = stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
+                    Text(text = stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
+
     if (showExercisePicker) {
         val categories = remember(state.availableExercises) {
             state.availableExercises.map { it.categoria }.distinct().sorted()
@@ -286,7 +397,7 @@ fun EditWorkoutScreen(
             onAddCustomExercise = { name, category ->
                 viewModel.addCustomExercise(name, category)
             },
-            languageCode = languageCode ?: "en"
+            languageCode = languageCode
         )
     }
 
@@ -305,7 +416,7 @@ fun EditWorkoutScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -339,7 +450,7 @@ fun EditWorkoutScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold, color = Primary)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             },
             dismissButton = {
@@ -370,7 +481,7 @@ fun EditWorkoutScreen(
                     containerColor = Error.copy(alpha = 0.1f),
                     contentColor = Error
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -395,6 +506,8 @@ fun EditExerciseCard(
     languageCode: String,
     isFirst: Boolean,
     isLast: Boolean,
+    isSuperset: Boolean,
+    isLinked: Boolean,
     weightUnit: String = "kg",
     onEditSet: (SetLogEntity) -> Unit,
     onAddSet: () -> Unit,
@@ -403,9 +516,17 @@ fun EditExerciseCard(
     onMoveSetUp: (SetLogEntity) -> Unit,
     onMoveSetDown: (SetLogEntity) -> Unit,
     onMoveExerciseUp: () -> Unit,
-    onMoveExerciseDown: () -> Unit
+    onMoveExerciseDown: () -> Unit,
+    onToggleSuperset: () -> Unit
 ) {
-    GymCard(modifier = Modifier.fillMaxWidth()) {
+    val cardBgColor = if (isSuperset) Primary.copy(alpha = 0.04f) else SurfaceContainerLow
+    val cardBorder = if (isSuperset) androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.15f)) else null
+
+    GymCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = cardBgColor,
+        border = cardBorder
+    ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -413,11 +534,31 @@ fun EditExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    if (isSuperset) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Timer,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.superset).uppercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                color = Primary,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
                     Text(
                         text = exerciseState.exercise.categoria.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
@@ -427,12 +568,21 @@ fun EditExerciseCard(
                     )
                 }
                 
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onMoveExerciseUp, enabled = !isFirst) {
                         Icon(Icons.Rounded.KeyboardArrowUp, contentDescription = null, tint = if (isFirst) OnSurfaceVariant.copy(alpha = 0.2f) else Primary)
                     }
                     IconButton(onClick = onMoveExerciseDown, enabled = !isLast) {
                         Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = if (isLast) OnSurfaceVariant.copy(alpha = 0.2f) else Primary)
+                    }
+                    if (!isLast) {
+                        IconButton(onClick = onToggleSuperset) {
+                            Icon(
+                                imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
+                                contentDescription = null,
+                                tint = if (isLinked) Primary else OnSurfaceVariant
+                            )
+                        }
                     }
                     IconButton(onClick = onSwapExercise) {
                         Icon(Icons.Rounded.SwapHoriz, contentDescription = null, tint = OnSurfaceVariant)
@@ -508,7 +658,7 @@ fun EditSetRow(
             Text(
                 text = set.numeroSerie.toString(),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = OnSurface
             )
         }
@@ -522,7 +672,7 @@ fun EditSetRow(
                     weightUnit
                 ) + " × ${set.repsEffettive}",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 color = OnSurface
             )
             if (!set.note.isNullOrBlank()) {
@@ -617,7 +767,7 @@ fun CardioEditCard(
                         Text(
                             text = "${cardioLog.distanza} km",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                         Text(
@@ -632,7 +782,7 @@ fun CardioEditCard(
                         Text(
                             text = durationText,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                     }
@@ -698,7 +848,7 @@ fun EditCardioDialog(
                 },
                 enabled = isValid
             ) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {

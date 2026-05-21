@@ -256,7 +256,7 @@ private fun <T> WheelPickerBox(
             text = label,
             style = MaterialTheme.typography.labelMedium,
             color = OnSurfaceVariant,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         
@@ -304,7 +304,7 @@ private fun <T> WheelPickerBox(
                             text = format(item),
                             style = MaterialTheme.typography.headlineSmall,
                             color = if (isSelected) Primary else OnSurface.copy(alpha = 0.3f),
-                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Normal,
+                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
                             fontSize = if (isSelected) 24.sp else 18.sp
                         )
                     }

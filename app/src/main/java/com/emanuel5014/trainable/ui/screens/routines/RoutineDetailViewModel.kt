@@ -280,4 +280,41 @@ class RoutineDetailViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateExercisesOrder(orderedExercises: List<PlanExerciseEntity>) {
+        viewModelScope.launch {
+            val updates = orderedExercises.mapIndexed { index, it ->
+                it.copy(ordine = index)
+            }
+            workoutRepository.savePlanExercises(updates)
+        }
+    }
+
+    fun toggleSupersetWithNext(planExercise: PlanExerciseEntity, customSupersetId: String? = null) {
+        viewModelScope.launch {
+            val details = _uiState.value.planDetails ?: return@launch
+            val exercises = details.exercises.sortedBy { it.planExercise.ordine }
+            val index = exercises.indexOfFirst { it.planExercise.id == planExercise.id }
+
+            if (index != -1 && index < exercises.size - 1) {
+                val current = exercises[index].planExercise
+                val next = exercises[index + 1].planExercise
+
+                if (current.supersetId != null && current.supersetId == next.supersetId) {
+                    // Break link
+                    workoutRepository.savePlanExercises(listOf(
+                        current.copy(supersetId = null),
+                        next.copy(supersetId = null)
+                    ))
+                } else {
+                    // Create link
+                    val sid = current.supersetId ?: next.supersetId ?: customSupersetId ?: java.util.UUID.randomUUID().toString()
+                    workoutRepository.savePlanExercises(listOf(
+                        current.copy(supersetId = sid),
+                        next.copy(supersetId = sid)
+                    ))
+                }
+            }
+        }
+    }
 }

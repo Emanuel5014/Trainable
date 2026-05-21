@@ -21,9 +21,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -31,6 +33,8 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -76,7 +80,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
@@ -95,6 +99,7 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
@@ -105,6 +110,22 @@ import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
+
+private fun getSupersetRange(index: Int, list: List<PlanExerciseWithDetails>): IntRange {
+    val sid = list.getOrNull(index)?.planExercise?.supersetId ?: return index..index
+    
+    var start = index
+    while (start > 0 && list[start - 1].planExercise.supersetId == sid) {
+        start--
+    }
+    
+    var end = index
+    while (end < list.lastIndex && list[end + 1].planExercise.supersetId == sid) {
+        end++
+    }
+    
+    return start..end
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -126,7 +147,6 @@ fun RoutineDetailScreen(
     val exerciseSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val routineSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var editingExercise by remember { mutableStateOf<PlanExerciseWithDetails?>(null) }
     var showExerciseSheet by remember { mutableStateOf(false) }
     var showExercisePicker by remember { mutableStateOf(false) }
     var showRoutineEditSheet by remember { mutableStateOf(false) }
@@ -148,6 +168,11 @@ fun RoutineDetailScreen(
     var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
 
+    var editingExerciseId by remember { mutableStateOf<Int?>(null) }
+    val editingExercise = remember(editingExerciseId, localExercises.size, localExercises.map { it.planExercise.supersetId }) {
+        localExercises.find { it.planExercise.id == editingExerciseId }
+    }
+
     // Sync local list with UI state when not dragging
     LaunchedEffect(uiState.planDetails?.exercises) {
         if (draggedItemIndex == null) {
@@ -157,7 +182,7 @@ fun RoutineDetailScreen(
     }
 
     fun openAddSheet() {
-        editingExercise = null
+        editingExerciseId = null
         selectedExerciseId = null
         setsText = "3"
         repsText = "8"
@@ -167,7 +192,7 @@ fun RoutineDetailScreen(
     }
 
     fun openEditSheet(item: PlanExerciseWithDetails) {
-        editingExercise = item
+        editingExerciseId = item.planExercise.id
         selectedExerciseId = item.exercise.id
         setsText = item.planExercise.serieTarget.toString()
         repsText = item.planExercise.repsTarget
@@ -216,7 +241,7 @@ fun RoutineDetailScreen(
                         ) {
                             Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.start))
                             Spacer(modifier = Modifier.width(Spacing.small))
-                            Text(stringResource(R.string.start), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.start), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 }
@@ -270,12 +295,12 @@ fun RoutineDetailScreen(
                         images = details.images,
                         onImageAdd = { uri -> viewModel.addPlanImage(uri) },
                         onImageRemove = { image -> viewModel.removePlanImage(image) },
-                        modifier = Modifier.padding(horizontal = Spacing.CardPadding)
+                        modifier = Modifier.padding(horizontal = ResponsiveSize.cardPadding)
                     )
                 }
 
                 item {
-                    Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 8.dp, bottom = 8.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(top = 8.dp, bottom = 8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -286,14 +311,14 @@ fun RoutineDetailScreen(
                                     text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(details.plan.dataInizio),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Primary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                                 details.plan.dataFine?.let { expiry ->
                                     Text(
                                         text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (expiry < System.currentTimeMillis()) Error else OnSurfaceVariant,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
@@ -318,7 +343,7 @@ fun RoutineDetailScreen(
                                             Text(
                                                 text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                fontWeight = FontWeight.Bold,
+                                                fontWeight = FontWeight.ExtraBold,
                                                 color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
                                             )
                                         }
@@ -349,8 +374,8 @@ fun RoutineDetailScreen(
                         ) {
                             Text(
                                 text = stringResource(R.string.no_exercises_in_routine),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
+                                fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
                             Spacer(modifier = Modifier.height(Spacing.xtraSmall))
@@ -365,85 +390,181 @@ fun RoutineDetailScreen(
                     }
                 } else {
                     itemsIndexed(localExercises, key = { _, item -> item.planExercise.id }) { index, item ->
-                        val isDragging = draggedItemIndex == index
+                        val draggedRange = draggedItemIndex?.let { getSupersetRange(it, localExercises) }
+                        val isDragging = draggedRange != null && index in draggedRange
                         val elevation by animateDpAsState(if (isDragging) 12.dp else 0.dp, label = "elevation")
                         
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        // Superset logic
+                        val currentSid = item.planExercise.supersetId
+                        val isSuperset = currentSid != null
+                        val isStart = isSuperset && (index == 0 || localExercises[index - 1].planExercise.supersetId != currentSid)
+                        val isEnd = isSuperset && (index == localExercises.lastIndex || localExercises[index + 1].planExercise.supersetId != currentSid)
+
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp)
                                 .zIndex(if (isDragging) 1f else 0f)
-                                .graphicsLayer {
-                                    translationY = if (isDragging) dragOffsetY else 0f
-                                    scaleX = if (isDragging) 1.02f else 1f
-                                    scaleY = if (isDragging) 1.02f else 1f
-                                    shadowElevation = elevation.toPx()
-                                    shape = RoundedCornerShape(28.dp)
-                                    clip = isDragging
-                                }
-                                .pointerInput(Unit) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            draggedItemIndex = index
-                                            dragOffsetY = 0f
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            dragOffsetY += dragAmount.y
-                                            
-                                            val itemHeight = 80.dp.toPx() 
-                                            if (dragOffsetY > itemHeight / 2 && draggedItemIndex!! < localExercises.size - 1) {
-                                                val targetIndex = draggedItemIndex!! + 1
-                                                localExercises.add(targetIndex, localExercises.removeAt(draggedItemIndex!!))
-                                                draggedItemIndex = targetIndex
-                                                dragOffsetY -= itemHeight
-                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            } else if (dragOffsetY < -itemHeight / 2 && draggedItemIndex!! > 0) {
-                                                val targetIndex = draggedItemIndex!! - 1
-                                                localExercises.add(targetIndex, localExercises.removeAt(draggedItemIndex!!))
-                                                draggedItemIndex = targetIndex
-                                                dragOffsetY += itemHeight
-                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            }
-
-                                        },
-                                        onDragEnd = {
-                                            val finalIndex = draggedItemIndex!!
-                                            viewModel.moveExercise(index, finalIndex)
-                                            draggedItemIndex = null
-                                            dragOffsetY = 0f
-                                        },
-                                        onDragCancel = {
-                                            draggedItemIndex = null
-                                            dragOffsetY = 0f
-                                        }
+                        ) {
+                            if (isStart) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(start = 64.dp, bottom = 4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Link,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = stringResource(R.string.superset),
+                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                        color = Primary,
+                                        fontWeight = FontWeight.Black
                                     )
                                 }
-                        ) {
-                            Box(
+                            }
+                            
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isDragging) Primary else SurfaceContainerHigh),
-                                contentAlignment = Alignment.Center
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp)
+                                    .graphicsLayer {
+                                        translationY = if (isDragging) dragOffsetY else 0f
+                                        scaleX = if (isDragging) 1.02f else 1f
+                                        scaleY = if (isDragging) 1.02f else 1f
+                                        shadowElevation = elevation.toPx()
+                                        shape = RoundedCornerShape(28.dp)
+                                        clip = isDragging
+                                    }
+                                    .pointerInput(item.planExercise.id) {
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = {
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                draggedItemIndex = index
+                                                dragOffsetY = 0f
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                dragOffsetY += dragAmount.y
+                                                
+                                                val itemHeight = 80.dp.toPx()
+                                                val currentDraggedIndex = draggedItemIndex
+                                                if (currentDraggedIndex != null) {
+                                                    val range = getSupersetRange(currentDraggedIndex, localExercises)
+                                                    val size = range.endInclusive - range.start + 1
+                                                    
+                                                    if (dragOffsetY > 0 && range.endInclusive < localExercises.lastIndex) {
+                                                        val nextIndex = range.endInclusive + 1
+                                                        val nextRange = getSupersetRange(nextIndex, localExercises)
+                                                        val nextSize = nextRange.endInclusive - nextRange.start + 1
+                                                        val threshold = (nextSize * itemHeight) / 2f
+                                                        
+                                                        if (dragOffsetY > threshold) {
+                                                            val draggedItems = localExercises.subList(range.start, range.endInclusive + 1).toList()
+                                                            repeat(size) {
+                                                                localExercises.removeAt(range.start)
+                                                            }
+                                                            val insertIndex = range.start + nextSize
+                                                            localExercises.addAll(insertIndex, draggedItems)
+                                                            
+                                                            draggedItemIndex = insertIndex + (currentDraggedIndex - range.start)
+                                                            dragOffsetY -= nextSize * itemHeight
+                                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        }
+                                                    } else if (dragOffsetY < 0 && range.start > 0) {
+                                                        val prevIndex = range.start - 1
+                                                        val prevRange = getSupersetRange(prevIndex, localExercises)
+                                                        val prevSize = prevRange.endInclusive - prevRange.start + 1
+                                                        val threshold = -(prevSize * itemHeight) / 2f
+                                                        
+                                                        if (dragOffsetY < threshold) {
+                                                            val draggedItems = localExercises.subList(range.start, range.endInclusive + 1).toList()
+                                                            repeat(size) {
+                                                                localExercises.removeAt(range.start)
+                                                            }
+                                                            val insertIndex = prevRange.start
+                                                            localExercises.addAll(insertIndex, draggedItems)
+                                                            
+                                                            draggedItemIndex = insertIndex + (currentDraggedIndex - range.start)
+                                                            dragOffsetY += prevSize * itemHeight
+                                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                viewModel.updateExercisesOrder(localExercises.map { it.planExercise })
+                                                draggedItemIndex = null
+                                                dragOffsetY = 0f
+                                            },
+                                            onDragCancel = {
+                                                draggedItemIndex = null
+                                                dragOffsetY = 0f
+                                            }
+                                        )
+                                    }
                             ) {
-                                Text(
-                                    text = "${index + 1}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (isDragging) OnPrimary else Primary,
-                                    fontWeight = FontWeight.Bold
+                                Box(
+                                    modifier = Modifier.size(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSuperset && !isDragging) {
+                                        val density = androidx.compose.ui.platform.LocalDensity.current
+                                        val strokeWidthPx = with(density) { 3.dp.toPx() }
+                                        val lineLengthPx = with(density) { 100.dp.toPx() }
+                                        val lineColor = Primary
+
+                                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                                            val centerY = size.height / 2
+                                            val centerX = size.width / 2
+                                            
+                                            if (!isStart) {
+                                                drawLine(
+                                                    color = lineColor,
+                                                    start = androidx.compose.ui.geometry.Offset(centerX, centerY),
+                                                    end = androidx.compose.ui.geometry.Offset(centerX, centerY - lineLengthPx),
+                                                    strokeWidth = strokeWidthPx
+                                                )
+                                            }
+                                            if (!isEnd) {
+                                                drawLine(
+                                                    color = lineColor,
+                                                    start = androidx.compose.ui.geometry.Offset(centerX, centerY),
+                                                    end = androidx.compose.ui.geometry.Offset(centerX, centerY + lineLengthPx),
+                                                    strokeWidth = strokeWidthPx
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isDragging || isSuperset) Primary else SurfaceContainerHigh),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "${index + 1}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = if (isDragging || isSuperset) OnPrimary else Primary,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+
+                                ExerciseEntryCard(
+                                    item = item,
+                                    onClick = { openEditSheet(item) },
+                                    modifier = Modifier.weight(1f),
+                                    languageCode = languageCode,
+                                    isSuperset = isSuperset
                                 )
                             }
-
-                            ExerciseEntryCard(
-                                item = item,
-                                onClick = { openEditSheet(item) },
-                                modifier = Modifier.weight(1f),
-                                languageCode = languageCode
-                            )
                         }
                     }
                 }
@@ -479,8 +600,9 @@ fun RoutineDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacing.CardPadding)
-                    .padding(top = Spacing.medium, bottom = Spacing.extreme)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = ResponsiveSize.cardPadding)
+                    .padding(top = Spacing.medium, bottom = ResponsiveSize.cardPadding)
                     .navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(Spacing.large)
             ) {
@@ -489,13 +611,13 @@ fun RoutineDetailScreen(
                         text = if (editingExercise == null) stringResource(R.string.add_exercise) else stringResource(R.string.edit_exercise),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = if (editingExercise == null) stringResource(R.string.exercise_details) else stringResource(R.string.update_exercise),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -526,7 +648,7 @@ fun RoutineDetailScreen(
                                     text = selectedExercise?.let {
                                         ExerciseTranslations.translate(it.nome, languageCode)
                                     } ?: stringResource(R.string.select_exercise),
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
                                     color = OnSurface
                                 )
                                 selectedExercise?.let {
@@ -564,16 +686,58 @@ fun RoutineDetailScreen(
                         )
                     }
 
-                    RestSlider(
-                        value = restText.toIntOrNull() ?: 120,
-                        onValueChange = { restText = it.toString() },
-                        hapticEnabled = hapticEnabled,
-                        haptic = haptic,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                        RestSlider(
+                            value = restText.toIntOrNull() ?: 120,
+                            onValueChange = { restText = it.toString() },
+                            hapticEnabled = hapticEnabled,
+                            haptic = haptic,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                Row(
+                        if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
+                            val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
+                            val isLinked = editingExercise.planExercise.supersetId != null && editingExercise.planExercise.supersetId == nextItem?.planExercise?.supersetId
+                            
+                            GymButton(
+                                onClick = {
+                                    editingExercise.let { current ->
+                                        val index = localExercises.indexOfFirst { it.planExercise.id == current.planExercise.id }
+                                        if (index != -1 && index < localExercises.size - 1) {
+                                            val nextIndex = index + 1
+                                            val nextItem = localExercises[nextIndex]
+                                            val newSid = if (isLinked) null else (current.planExercise.supersetId ?: nextItem.planExercise.supersetId ?: java.util.UUID.randomUUID().toString())
+                                            
+                                            // Update local list for instant feedback
+                                            val updatedCurrent = current.copy(planExercise = current.planExercise.copy(supersetId = newSid))
+                                            val updatedNext = nextItem.copy(planExercise = nextItem.planExercise.copy(supersetId = newSid))
+                                            
+                                            localExercises[index] = updatedCurrent
+                                            localExercises[nextIndex] = updatedNext
+                                            
+                                            viewModel.toggleSupersetWithNext(current.planExercise, newSid)
+                                        }
+                                    }
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                containerColor = if (isLinked) Error.copy(alpha = 0.12f) else Primary.copy(alpha = 0.12f),
+                                contentColor = if (isLinked) Error else Primary
+                            ) {
+                                Icon(
+                                    imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isLinked) stringResource(R.string.unlink_superset).uppercase() else stringResource(R.string.link_with_next).uppercase(),
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
                     verticalAlignment = Alignment.CenterVertically
@@ -612,7 +776,7 @@ fun RoutineDetailScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     
                     GymButton(
@@ -649,7 +813,7 @@ fun RoutineDetailScreen(
                     ) {
                         Text(
                             text = if (editingExercise == null) stringResource(R.string.add).uppercase() else stringResource(R.string.save).uppercase(),
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
@@ -700,8 +864,9 @@ fun RoutineDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 48.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = ResponsiveSize.cardPadding)
+                    .padding(bottom = ResponsiveSize.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -709,13 +874,13 @@ fun RoutineDetailScreen(
                         text = stringResource(R.string.edit_routine),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = stringResource(R.string.update_plan),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -775,7 +940,7 @@ fun RoutineDetailScreen(
                             text = stringResource(R.string.schedule_days),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -799,8 +964,8 @@ fun RoutineDetailScreen(
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
@@ -832,7 +997,7 @@ fun RoutineDetailScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     
                     GymButton(
@@ -860,7 +1025,7 @@ fun RoutineDetailScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.save).uppercase(),
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
@@ -883,7 +1048,7 @@ fun RoutineDetailScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -912,7 +1077,7 @@ fun RoutineDetailScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -960,7 +1125,7 @@ private fun RestSlider(
                 text = "${value}s",
                 style = MaterialTheme.typography.titleMedium,
                 color = Primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = formatRestTime(value),

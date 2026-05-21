@@ -65,7 +65,7 @@ fun StatCard(
                 text = value,
                 style = MaterialTheme.typography.displayMedium,
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = unit,

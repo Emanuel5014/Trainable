@@ -12,8 +12,8 @@ import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
-import com.emanuel5014.trainable.util.TimerNotificationHelper
-import com.emanuel5014.trainable.util.TimerNotificationReceiver
+import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
+import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -63,7 +63,9 @@ data class WorkoutExerciseState(
     val planDetails: PlanExerciseEntity?,
     val sets: List<WorkoutSetState> = emptyList(),
     val previousPerformance: String? = null,
-    val swappedExerciseId: Int? = null
+    val swappedExerciseId: Int? = null,
+    val customRestSeconds: Int? = null,
+    val supersetId: String? = null
 )
 
 data class WorkoutSetState(
@@ -234,7 +236,8 @@ class WorkoutViewModel @Inject constructor(
                 planDetails = planDetail,
                 sets = sets,
                 previousPerformance = prevPerfStr,
-                swappedExerciseId = planDetail?.id?.let { swapMap[it] }
+                swappedExerciseId = planDetail?.id?.let { swapMap[it] },
+                supersetId = planDetail?.supersetId
             )
         }
 
@@ -319,7 +322,8 @@ class WorkoutViewModel @Inject constructor(
                 exercise = detail.exercise,
                 planDetails = detail.planExercise,
                 sets = initialSets,
-                previousPerformance = prevPerfStr
+                previousPerformance = prevPerfStr,
+                supersetId = detail.planExercise.supersetId
             )
         }
 
@@ -429,7 +433,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = setState.note
+                        note = setState.note,
+                        supersetId = exState.supersetId
                     )
                 )
                 newSetId = logId.toInt()
@@ -437,8 +442,23 @@ class WorkoutViewModel @Inject constructor(
                 val isLastExercise = exerciseIndex == currentState.exercises.size - 1
                 val isLastSet = setIndex == exState.sets.size - 1
                 
-                if (!(isLastExercise && isLastSet)) {
-                    val restTime = exState.planDetails?.recuperoTarget ?: 90
+                var shouldStartTimer = true
+                if (exState.supersetId != null) {
+                    val setNumber = setState.setNumber
+                    val supersetId = exState.supersetId
+                    val supersetExercises = currentState.exercises.filter { it.supersetId == supersetId }
+                    val otherExercises = supersetExercises.filter { it.exercise.id != exState.exercise.id }
+                    val allOthersCompleted = otherExercises.all { otherEx ->
+                        val otherSet = otherEx.sets.find { it.setNumber == setNumber }
+                        otherSet == null || otherSet.isCompleted
+                    }
+                    if (!allOthersCompleted) {
+                        shouldStartTimer = false
+                    }
+                }
+                
+                if (shouldStartTimer && !(isLastExercise && isLastSet)) {
+                    val restTime = exState.customRestSeconds ?: exState.planDetails?.recuperoTarget ?: 90
                     startRestTimer(restTime)
                 }
             } else if (!newIsCompleted && setState.id != null) {
@@ -451,7 +471,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = setState.note
+                        note = setState.note,
+                        supersetId = exState.supersetId
                     )
                 )
                 newSetId = null
@@ -460,6 +481,34 @@ class WorkoutViewModel @Inject constructor(
 
             updateSetState(exerciseIndex, setIndex) { 
                 it.copy(isCompleted = newIsCompleted, id = newSetId) 
+            }
+
+            // --- AUTO-NAVIGATION FOR SUPERSETS ---
+            if (newIsCompleted && exState.supersetId != null) {
+                val exercises = _state.value.exercises
+                val supersetId = exState.supersetId
+                
+                // Find all exercises in this superset block
+                val supersetBlock = exercises.filter { it.supersetId == supersetId }
+                if (supersetBlock.size > 1) {
+                    // Find the next exercise in the block that has uncompleted sets
+                    // We start looking from the exercise AFTER the current one, and wrap around
+                    val blockIndices = exercises.indices.filter { exercises[it].supersetId == supersetId }
+                    val currentPosInBlock = blockIndices.indexOf(exerciseIndex)
+                    
+                    for (i in 1 until blockIndices.size) {
+                        val nextIndex = blockIndices[(currentPosInBlock + i) % blockIndices.size]
+                        val nextEx = exercises[nextIndex]
+                        if (nextEx.sets.any { !it.isCompleted }) {
+                            // Found it! Navigate after a short delay to allow the user to see the completion
+                            viewModelScope.launch {
+                                delay(300)
+                                _state.update { it.copy(currentExerciseIndex = nextIndex) }
+                            }
+                            break
+                        }
+                    }
+                }
             }
         }
     }
@@ -492,7 +541,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = note
+                        note = note,
+                        supersetId = exState.supersetId
                     )
                 )
             }
@@ -560,7 +610,9 @@ class WorkoutViewModel @Inject constructor(
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-            timerNotificationHelper.startOrUpdateTimerNotification(seconds)
+            _state.value.sessionId?.let { sessionId ->
+                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId)
+            }
         }
         saveTimerToSession(endTime, seconds)
         startTimerJob()
@@ -573,7 +625,9 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = remaining, restTimerEndTime = endTime) }
         if (remaining > 0) {
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateTimerNotification(remaining)
+                _state.value.sessionId?.let { sessionId ->
+                    timerNotificationHelper.startOrUpdateTimerNotification(remaining, sessionId)
+                }
             }
             startTimerJob()
         } else {
@@ -634,7 +688,9 @@ class WorkoutViewModel @Inject constructor(
             val newTotal = _state.value.totalRestSeconds + seconds
             _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateTimerNotification(newRemaining)
+                _state.value.sessionId?.let { sessionId ->
+                    timerNotificationHelper.startOrUpdateTimerNotification(newRemaining, sessionId)
+                }
             }
             saveTimerToSession(newEnd, newTotal)
         }
@@ -645,7 +701,7 @@ class WorkoutViewModel @Inject constructor(
         clearTimerInSession()
     }
 
-    fun swapExercise(exerciseIndex: Int, newExerciseId: Int, targetSets: Int, repsTarget: String) {
+    fun swapExercise(exerciseIndex: Int, newExerciseId: Int, targetSets: Int, repsTarget: String, restTimer: Int? = null) {
         val currentState = _state.value
         val sessionId = currentState.sessionId ?: return
         val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return
@@ -683,7 +739,8 @@ class WorkoutViewModel @Inject constructor(
                 exercise = replacementExercise,
                 swappedExerciseId = newExerciseId,
                 sets = newSets,
-                previousPerformance = null
+                previousPerformance = null,
+                customRestSeconds = restTimer
             )
             curr.copy(exercises = mutableExercises, exerciseSwaps = mutableSwaps)
         }
@@ -728,7 +785,7 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8") {
+    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8", restTimer: Int? = 90) {
         val repsList = parseReps(repsTarget, targetSets)
         val initialSets = (1..targetSets).map { num ->
             WorkoutSetState(
@@ -745,7 +802,8 @@ class WorkoutViewModel @Inject constructor(
                 WorkoutExerciseState(
                     exercise = exercise,
                     planDetails = null,
-                    sets = initialSets
+                    sets = initialSets,
+                    customRestSeconds = restTimer
                 )
             )
             curr.copy(
@@ -793,7 +851,8 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = setState.reps,
                         numeroSerie = setState.setNumber,
                         isWarmup = setState.isWarmup,
-                        note = setState.note
+                        note = setState.note,
+                        supersetId = exState.supersetId
                     )
                 )
             }

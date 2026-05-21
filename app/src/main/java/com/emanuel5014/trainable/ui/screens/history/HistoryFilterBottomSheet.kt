@@ -193,7 +193,7 @@ fun HistoryFilterBottomSheet(
                             text = stringResource(R.string.clear_all),
                             style = MaterialTheme.typography.labelLarge,
                             color = errorColor,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             modifier = Modifier.clickable { onClearAll() }
                         )
                     }
@@ -212,7 +212,7 @@ fun HistoryFilterBottomSheet(
                             text = stringResource(R.string.routines),
                             style = MaterialTheme.typography.labelMedium,
                             color = primaryColor,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.sp
                         )
                         
@@ -338,7 +338,7 @@ fun HistoryFilterBottomSheet(
                         text = stringResource(R.string.date_range),
                         style = MaterialTheme.typography.labelMedium,
                         color = primaryColor,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.sp
                     )
 
@@ -496,7 +496,7 @@ fun HistoryFilterBottomSheet(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(R.string.done).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.done).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
             

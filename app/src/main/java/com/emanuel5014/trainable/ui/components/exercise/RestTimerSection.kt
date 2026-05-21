@@ -92,7 +92,7 @@ fun RestTimerSection(
                             text = "REST",
                             style = MaterialTheme.typography.labelSmall,
                             color = OnTertiary.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         val minutes = remainingSeconds / 60
                         val seconds = remainingSeconds % 60
@@ -100,7 +100,7 @@ fun RestTimerSection(
                             text = String.format("%d:%02d", minutes, seconds),
                             style = MaterialTheme.typography.titleLarge,
                             color = OnTertiary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -115,7 +115,7 @@ fun RestTimerSection(
                             contentColor = OnTertiary
                         )
                     ) {
-                        Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
                     }
                     
                     FilledIconButton(

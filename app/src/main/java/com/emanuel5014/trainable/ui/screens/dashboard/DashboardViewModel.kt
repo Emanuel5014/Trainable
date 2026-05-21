@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
@@ -8,7 +9,9 @@ import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +32,8 @@ data class DashboardUiState(
     val prSnapshots: List<PrSnapshot> = emptyList(),
     val gymMembershipExpiryDate: Long? = null,
     val dynamicColor: Boolean = true,
+    val themePalette: Int = 0,
+    val floatingNavBar: Boolean = false,
     val swipeActionsEnabled: Boolean = true,
     val selectedSessionIds: Set<Int> = emptySet(),
     val isSelectionMode: Boolean = false,
@@ -39,7 +44,9 @@ private data class PreferencesData(
     val goal: Int,
     val expiry: Long?,
     val dynamic: Boolean,
-    val swipe: Boolean
+    val palette: Int,
+    val swipe: Boolean,
+    val floating: Boolean
 )
 
 data class PrSnapshot(
@@ -53,7 +60,8 @@ class DashboardViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val analyticsRepository: AnalyticsRepository,
     private val userRepository: UserRepository,
-    private val userPrefsRepository: UserPreferencesRepository
+    private val userPrefsRepository: UserPreferencesRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val weekStartMillis = Calendar.getInstance().apply {
@@ -79,12 +87,25 @@ class DashboardViewModel @Inject constructor(
         ) { plans, volume -> plans to volume },
         userRepository.currentUser,
         combine(
-            userPrefsRepository.weeklyGoal,
-            userPrefsRepository.gymMembershipExpiryDate,
-            userPrefsRepository.dynamicColor,
-            userPrefsRepository.swipeActionsEnabled
-        ) { goal, expiry, dynamic, swipe -> 
-            PreferencesData(goal, expiry, dynamic, swipe)
+            combine(
+                userPrefsRepository.weeklyGoal,
+                userPrefsRepository.gymMembershipExpiryDate,
+                userPrefsRepository.dynamicColor,
+                userPrefsRepository.themePalette,
+                userPrefsRepository.swipeActionsEnabled
+            ) { goal, expiry, dynamic, palette, swipe -> 
+                listOf(goal, expiry, dynamic, palette, swipe)
+            },
+            userPrefsRepository.floatingNavBar
+        ) { prefsList, floating -> 
+            PreferencesData(
+                goal = prefsList[0] as Int,
+                expiry = prefsList[1] as Long?,
+                dynamic = prefsList[2] as Boolean,
+                palette = prefsList[3] as Int,
+                swipe = prefsList[4] as Boolean,
+                floating = floating
+            )
         },
         combine(
             workoutRepository.getAllSessions(),
@@ -93,7 +114,7 @@ class DashboardViewModel @Inject constructor(
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
-        val (goal, membershipExpiry, dynamic, swipe) = prefs
+        val (goal, membershipExpiry, dynamic, palette, swipe, floating) = prefs
         val (allSessions, unfinished) = sessionData
         val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
         val numWorkoutsThisWeek = workoutsThisWeek.size
@@ -152,6 +173,8 @@ class DashboardViewModel @Inject constructor(
             isLoading = false,
             gymMembershipExpiryDate = membershipExpiry,
             dynamicColor = dynamic,
+            themePalette = palette,
+            floatingNavBar = floating,
             swipeActionsEnabled = swipe,
             selectedSessionIds = selectedIds,
             isSelectionMode = selectedIds.isNotEmpty(),
@@ -169,6 +192,9 @@ class DashboardViewModel @Inject constructor(
     fun setGymMembershipExpiryDate(timestampMillis: Long?) {
         viewModelScope.launch {
             userPrefsRepository.setGymMembershipExpiryDate(timestampMillis)
+            if (timestampMillis != null) {
+                GymMembershipWorker.enqueueImmediateCheck(context)
+            }
         }
     }
 

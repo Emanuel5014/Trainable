@@ -1,7 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import android.app.WallpaperManager
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -12,9 +14,10 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
-import com.emanuel5014.trainable.util.AutoBackupWorker
-import com.emanuel5014.trainable.util.BackupManager
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.backup.AutoBackupWorker
+import com.emanuel5014.trainable.util.backup.BackupManager
+import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -108,6 +111,54 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val dynamicColorSeed = userPrefsRepository.dynamicColorSeed.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    private val _wallpaperColors = MutableStateFlow<List<Int>>(emptyList())
+    val wallpaperColors = _wallpaperColors.asStateFlow()
+
+    init {
+        extractWallpaperColors()
+    }
+
+    private fun extractWallpaperColors() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            try {
+                val wallpaperManager = WallpaperManager.getInstance(context)
+                val colors = wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
+                val list = mutableListOf<Int>()
+                
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    colors?.primaryColor?.toArgb()?.let { list.add(it) }
+                    colors?.secondaryColor?.toArgb()?.let { list.add(it) }
+                    colors?.tertiaryColor?.toArgb()?.let { list.add(it) }
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                    // toArgb() is available from API 26+ for Color, but WallpaperColors.getPrimaryColor returns Color
+                    @Suppress("NewApi")
+                    colors?.primaryColor?.toArgb()?.let { list.add(it) }
+                }
+                _wallpaperColors.value = list.distinct()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    val themePalette = userPrefsRepository.themePalette.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    val themeStyle = userPrefsRepository.themeStyle.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     val weightUnit = userPrefsRepository.weightUnit.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -118,6 +169,18 @@ class SettingsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = true
+    )
+
+    val gymMembershipExpiryNotificationsEnabled = userPrefsRepository.gymMembershipExpiryNotificationsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    val gymMembershipExpiryNotificationDaysBefore = userPrefsRepository.gymMembershipExpiryNotificationDaysBefore.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 3
     )
 
     val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
@@ -325,9 +388,43 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setDynamicColorSeed(seed: Int?) {
+        viewModelScope.launch {
+            userPrefsRepository.setDynamicColorSeed(seed)
+        }
+    }
+
+    fun setThemePalette(index: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setThemePalette(index)
+        }
+    }
+
+    fun setThemeStyle(index: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setThemeStyle(index)
+        }
+    }
+
     fun setTimerNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setTimerNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setGymMembershipExpiryNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setGymMembershipExpiryNotificationsEnabled(enabled)
+            if (enabled) {
+                GymMembershipWorker.enqueueImmediateCheck(context)
+            }
+        }
+    }
+
+    fun setGymMembershipExpiryNotificationDaysBefore(days: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setGymMembershipExpiryNotificationDaysBefore(days)
+            GymMembershipWorker.enqueueImmediateCheck(context)
         }
     }
 

@@ -56,8 +56,7 @@ class AppLocaleManager @Inject constructor(
 
     private fun getSystemLanguage(): String {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val localeManager = context.getSystemService(LocaleManager::class.java)
-            val locales = localeManager?.applicationLocales ?: LocaleList.getEmptyLocaleList()
+            val locales = LocaleList.getDefault()
             if (locales.isEmpty) {
                 Locale.getDefault().language
             } else {
@@ -96,17 +95,25 @@ class AppLocaleManager @Inject constructor(
     suspend fun setUserLanguage(languageCode: String?) {
         userPreferencesRepository.setUserLanguage(languageCode)
         
-        val resolvedLang = if (languageCode == null || languageCode == LANGUAGE_SYSTEM) {
-            getSystemLanguage().takeIf { it in SUPPORTED_LANGUAGES } ?: "en"
+        if (languageCode == null || languageCode == LANGUAGE_SYSTEM) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                clearAppLocale()
+            } else {
+                val systemLang = getSystemLanguage().takeIf { it in SUPPORTED_LANGUAGES } ?: "en"
+                applyLanguageLegacy(context, systemLang)
+            }
         } else {
-            languageCode
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                applyLanguage(languageCode)
+            } else {
+                applyLanguageLegacy(context, languageCode)
+            }
         }
+    }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            applyLanguage(resolvedLang)
-        } else {
-            applyLanguageLegacy(context, resolvedLang)
-        }
+    private fun clearAppLocale() {
+        val localeManager = context.getSystemService(LocaleManager::class.java)
+        localeManager?.applicationLocales = LocaleList.getEmptyLocaleList()
     }
 
     private fun applyLanguage(languageCode: String) {

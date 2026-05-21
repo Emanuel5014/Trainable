@@ -196,7 +196,7 @@ private fun ImagePickerContent(
                     text = stringResource(R.string.select_photo_source),
                     style = MaterialTheme.typography.headlineSmall,
                     color = OnSurface,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.Black
                 )
 
                 Row(
@@ -318,7 +318,7 @@ private fun OptionItem(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             color = OnSurface,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
     }
 }
@@ -379,7 +379,7 @@ private fun FullscreenImageViewerContent(
                 text = "${pagerState.currentPage + 1} / ${images.size}",
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier
                     .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)

@@ -53,7 +53,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
@@ -326,7 +326,7 @@ private fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -379,7 +379,7 @@ private fun ProfileSetupSlide(
                     text = stringResource(R.string.onboarding_setup_weight_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(start = 4.dp)
                 )
                 

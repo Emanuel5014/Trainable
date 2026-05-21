@@ -1,14 +1,23 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +26,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,6 +54,7 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -51,8 +62,13 @@ import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.FilterListOff
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePickerDefaults
@@ -67,6 +83,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
@@ -82,6 +99,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -96,6 +114,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ComposeView
@@ -110,7 +129,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
@@ -122,6 +141,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
@@ -136,16 +156,28 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.ShareUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+
+private data class ExerciseWithSets(
+    val exercise: com.emanuel5014.trainable.data.local.entity.ExerciseEntity,
+    val sets: MutableList<com.emanuel5014.trainable.data.local.relation.SetWithExercise>
+)
+
+private data class HistoryBlock(
+    val supersetId: String?,
+    val exercises: List<ExerciseWithSets>
+)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -210,6 +242,18 @@ fun HistoryScreen(
         }
     }
 
+    var capturedBitmapToPreview by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+
+    DisposableEffect(capturedBitmapToPreview) {
+        if (capturedBitmapToPreview != null) {
+            BottomBarManager.isVisibleOverride = false
+        }
+        onDispose {
+            BottomBarManager.isVisibleOverride = true
+        }
+    }
+
+    BackHandler(capturedBitmapToPreview != null) { capturedBitmapToPreview = null }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -218,7 +262,7 @@ fun HistoryScreen(
             floatingActionButton = {
                 if (!uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
-                        modifier = Modifier.padding(bottom = 72.dp).offset(x = 12.dp).zIndex(10f),
+                        modifier = Modifier.padding(bottom = 60.dp).offset(x = 12.dp).zIndex(10f),
                         expanded = fabMenuExpanded,
                         button = {
                             TooltipBox(
@@ -278,17 +322,34 @@ fun HistoryScreen(
             ) {
                 ScreenHeader(
                     titleContent = {
-                        Text(
-                            text = if (uiState.isSelectionMode) {
-                                "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
-                            } else {
-                                stringResource(R.string.history_title)
+                        androidx.compose.animation.AnimatedContent(
+                            targetState = uiState.isSelectionMode,
+                            transitionSpec = {
+                                val direction = if (targetState) 1 else -1
+                                (androidx.compose.animation.slideInHorizontally { width -> direction * width / 2 } + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(400, easing = androidx.compose.animation.core.EaseOutExpo)))
+                                    .togetherWith(androidx.compose.animation.slideOutHorizontally { width -> -direction * width / 2 } + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(400, easing = androidx.compose.animation.core.EaseOutExpo)))
+                                    .using(androidx.compose.animation.SizeTransform(clip = true))
                             },
-                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
-                            color = onSurfaceColor,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-1).sp
-                        )
+                            label = "title_anim"
+                        ) { isSelection ->
+                            val historyStyle = if (isSelection) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.displaySmall
+                            val responsiveFs = ResponsiveSize.responsiveFontSize(historyStyle.fontSize)
+                            Text(
+                                text = if (isSelection) {
+                                    "${uiState.selectedSessionIds.size} ${stringResource(R.string.selected)}"
+                                } else {
+                                    stringResource(R.string.history_title)
+                                },
+                                style = historyStyle.copy(fontSize = responsiveFs),
+                                color = onSurfaceColor,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = if (isSelection) 0.sp else (-1).sp,
+                                lineHeight = if (isSelection) responsiveFs * 1.2f else responsiveFs * 1.1f,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
+                            )
+                        }
                     },
                     subtitle = if (uiState.isSelectionMode) null else stringResource(R.string.workout_logs),
                     icon = if (uiState.isSelectionMode) null else Icons.Rounded.History,
@@ -333,140 +394,152 @@ fun HistoryScreen(
                     titleInRow = uiState.isSelectionMode
                 )
 
-                if (uiState.isLoading && uiState.sessions.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        GymLoadingIndicator()
-                    }
-                } else if (uiState.sessions.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Rounded.History,
-                        title = stringResource(R.string.no_history_yet),
-                        description = stringResource(R.string.no_history_description_screen),
-                        modifier = Modifier.weight(1f)
-                    )
-                } else if (uiState.filteredSessions.isEmpty()) {
-                    EmptyState(
-                        icon = Icons.Rounded.FilterListOff,
-                        title = stringResource(R.string.no_results_filters),
-                        description = stringResource(R.string.try_adjust_filters),
-                        action = {
-                            GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
-                                Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.Bold)
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                    itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
-                        val session = sessionDetails.session
-                        val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
-                        val isExpanded = expandedSessionId == session.id
-
-                        val dismissState = rememberSwipeToDismissBoxState()
-
-                        LaunchedEffect(dismissState.targetValue) {
-                            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                                if (swipeActionsEnabled && !uiState.isSelectionMode) {
-                                    when (dismissState.targetValue) {
-                                        SwipeToDismissBoxValue.EndToStart -> {
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            sessionToDelete = session
-                                        }
-                                        SwipeToDismissBoxValue.StartToEnd -> {
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            sessionToEdit = sessionDetails
-                                        }
-                                        else -> {}
-                                    }
-                                }
-                                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                            }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (uiState.isLoading && uiState.sessions.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            GymLoadingIndicator()
                         }
-
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            enableDismissFromStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
-                            enableDismissFromEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
-                            backgroundContent = {
-                                val direction = dismissState.dismissDirection
-
-                                val color by animateColorAsState(
-                                    when (direction) {
-                                        SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
-                                        SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
-                                        else -> Color.Transparent
-                                    },
-                                    label = "bg_color"
-                                )
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(Shapes.extraLarge)
-                                        .background(color)
-                                        .padding(horizontal = 28.dp),
-                                    contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                                ) {
-                                    if (direction == SwipeToDismissBoxValue.EndToStart) {
-                                        Icon(
-                                            Icons.Rounded.DeleteSweep,
-                                            contentDescription = "Delete",
-                                            tint = Error,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                                        Icon(
-                                            Icons.Rounded.Edit,
-                                            contentDescription = "Edit",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    }
+                    } else if (uiState.sessions.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Rounded.History,
+                            title = stringResource(R.string.no_history_yet),
+                            description = stringResource(R.string.no_history_description_screen)
+                        )
+                    } else if (uiState.filteredSessions.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Rounded.FilterListOff,
+                            title = stringResource(R.string.no_results_filters),
+                            description = stringResource(R.string.try_adjust_filters),
+                            action = {
+                                GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
+                                    Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
                                 }
                             }
+                        )
+                    } else {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = ResponsiveSize.horizontalPadding, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            SessionHistoryCard(
-                                session = session,
-                                planName = planName,
-                                isExpanded = isExpanded,
-                                details = if (isExpanded) uiState.selectedSession else null,
-                                languageCode = languageCode,
-                                weightUnit = uiState.weightUnit,
-                                onShareClick = { details ->
-                                    sessionToShare = details to planName
-                                },
-                                swipeActionsEnabled = swipeActionsEnabled,
-                                isSelectionMode = uiState.isSelectionMode,
-                                isSelected = uiState.selectedSessionIds.contains(session.id),
-                                onClick = {
-                                    if (uiState.isSelectionMode) {
-                                        viewModel.toggleSessionSelection(session.id)
-                                    } else {
-                                        expandedSessionId = if (isExpanded) null else session.id
-                                        if (!isExpanded) {
-                                            viewModel.loadSessionDetails(session.id)
+
+                        itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
+                            val session = sessionDetails.session
+                            val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
+                            val isExpanded = expandedSessionId == session.id
+
+                            val dismissState = rememberSwipeToDismissBoxState()
+
+                            LaunchedEffect(dismissState.targetValue) {
+                                if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                                    if (swipeActionsEnabled && !uiState.isSelectionMode) {
+                                        when (dismissState.targetValue) {
+                                            SwipeToDismissBoxValue.EndToStart -> {
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                sessionToDelete = session
+                                            }
+                                            SwipeToDismissBoxValue.StartToEnd -> {
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                sessionToEdit = sessionDetails
+                                            }
+                                            else -> {}
                                         }
                                     }
-                                },
-                                onLongClick = {
-                                    if (!uiState.isSelectionMode && !swipeActionsEnabled) {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.toggleSessionSelection(session.id)
+                                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                                }
+                            }
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = swipeActionsEnabled && !uiState.isSelectionMode,
+                                enableDismissFromEndToStart = swipeActionsEnabled && !uiState.isSelectionMode,
+                                backgroundContent = {
+                                    val direction = dismissState.dismissDirection
+
+                                    val color by animateColorAsState(
+                                        when (direction) {
+                                            SwipeToDismissBoxValue.EndToStart -> Error.copy(alpha = 0.6f)
+                                            SwipeToDismissBoxValue.StartToEnd -> Primary.copy(alpha = 0.6f)
+                                            else -> Color.Transparent
+                                        },
+                                        label = "bg_color"
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(Shapes.extraLarge)
+                                            .background(color)
+                                            .padding(horizontal = 28.dp),
+                                        contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                    ) {
+                                        if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                            Icon(
+                                                Icons.Rounded.DeleteSweep,
+                                                contentDescription = "Delete",
+                                                tint = Error,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                            Icon(
+                                                Icons.Rounded.Edit,
+                                                contentDescription = "Edit",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
                                     }
                                 }
-                            )
+                            ) {
+                                SessionHistoryCard(
+                                    session = session,
+                                    planName = planName,
+                                    isExpanded = isExpanded,
+                                    details = if (isExpanded) uiState.selectedSession else null,
+                                    languageCode = languageCode,
+                                    weightUnit = uiState.weightUnit,
+                                    onShareClick = { details ->
+                                        sessionToShare = details to planName
+                                    },
+                                    swipeActionsEnabled = swipeActionsEnabled,
+                                    isSelectionMode = uiState.isSelectionMode,
+                                    isSelected = uiState.selectedSessionIds.contains(session.id),
+                                    onClick = {
+                                        if (uiState.isSelectionMode) {
+                                            viewModel.toggleSessionSelection(session.id)
+                                        } else {
+                                            expandedSessionId = if (isExpanded) null else session.id
+                                            if (!isExpanded) {
+                                                viewModel.loadSessionDetails(session.id)
+                                            }
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!uiState.isSelectionMode && !swipeActionsEnabled) {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.toggleSessionSelection(session.id)
+                                        }
+                                    }
+                                )
+                            }
                         }
+                        
+                        item { Spacer(modifier = Modifier.height(100.dp)) }
                     }
-                    
-                    item { Spacer(modifier = Modifier.height(100.dp)) }
                 }
+                
+                // Top gradient fade to smoothly hide items when scrolling up
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(surfaceColor, Color.Transparent)
+                            )
+                        )
+                )
             }
             }
         }
@@ -512,11 +585,161 @@ fun HistoryScreen(
                             update = { view ->
                                 view.post {
                                     val bitmap = captureViewToBitmap(view)
-                                    ShareUtils.shareBitmap(context, bitmap)
+                                    capturedBitmapToPreview = bitmap
                                     sessionToShare = null
                                 }
                             }
                         )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = capturedBitmapToPreview != null,
+            enter = fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.90f, animationSpec = spring(dampingRatio = 0.75f, stiffness = 300f)),
+            exit = fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.90f, animationSpec = tween(200)),
+            modifier = Modifier.zIndex(200f)
+        ) {
+            val imageSavedMessage = stringResource(R.string.image_saved_gallery)
+            val failedSaveMessage = stringResource(R.string.failed_save_image)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.76f))
+                    .clickable { capturedBitmapToPreview = null },
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+                    modifier = Modifier
+                        .padding(ResponsiveSize.cardPadding)
+                        .fillMaxWidth(0.92f)
+                        .clickable(enabled = false) {}
+                ) {
+                    Column(
+                        modifier = Modifier.padding(ResponsiveSize.cardPadding),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(Primary.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Share,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = stringResource(R.string.share_preview),
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineSmall.fontSize)
+                                    ),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    letterSpacing = (-0.5).sp
+                                )
+                            }
+                            IconButton(
+                                onClick = { capturedBitmapToPreview = null }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = stringResource(R.string.close),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(when {
+                            ResponsiveSize.screenWidthDp < 360 -> 12.dp
+                            ResponsiveSize.screenWidthDp < 400 -> 16.dp
+                            else -> 18.dp
+                        }))
+
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.72f)
+                        ) {
+                            if (capturedBitmapToPreview != null) {
+                                Image(
+                                    bitmap = capturedBitmapToPreview!!.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(when {
+                            ResponsiveSize.screenWidthDp < 360 -> 14.dp
+                            ResponsiveSize.screenWidthDp < 400 -> 18.dp
+                            else -> 20.dp
+                        }))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    val success = ShareUtils.saveBitmapToGallery(context, capturedBitmapToPreview!!, "Workout")
+                                    val message = if (success) imageSavedMessage else failedSaveMessage
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Download,
+                                    contentDescription = stringResource(R.string.save),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    ShareUtils.shareBitmap(context, capturedBitmapToPreview!!)
+                                    capturedBitmapToPreview = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Share,
+                                    contentDescription = stringResource(R.string.share),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -536,7 +759,7 @@ fun HistoryScreen(
                         containerColor = errorColor.copy(alpha = 0.1f),
                         contentColor = errorColor
                     ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -568,7 +791,7 @@ fun HistoryScreen(
                         containerColor = errorColor.copy(alpha = 0.1f),
                         contentColor = errorColor
                     ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 dismissButton = {
@@ -603,7 +826,7 @@ fun HistoryScreen(
                             containerColor = surfaceContainerHighColor,
                             contentColor = onSurfaceVariantColor
                         ) {
-                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                         GymButton(
                             onClick = {
@@ -616,7 +839,7 @@ fun HistoryScreen(
                             containerColor = primaryColor.copy(alpha = 0.15f),
                             contentColor = primaryColor
                         ) {
-                            Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.edit).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                     }
                 },
@@ -666,7 +889,7 @@ fun HistoryScreen(
                     },
                     enabled = dateRangePickerState.selectedStartDateMillis != null && dateRangePickerState.selectedEndDateMillis != null
                 ) {
-                    Text(stringResource(R.string.apply_filters).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.apply_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -835,7 +1058,7 @@ fun AddWorkoutFromPlanContent(
                             Text(
                                 text = stringResource(R.string.add_empty_workout),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
                             Text(
@@ -894,7 +1117,7 @@ fun AddWorkoutFromPlanContent(
                             Text(
                                 text = plan.nome,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = OnSurface
                             )
                             if (!plan.note.isNullOrBlank()) {
@@ -920,6 +1143,75 @@ fun AddWorkoutFromPlanContent(
     }
 }
 
+@Composable
+private fun HistoryExerciseGroup(
+    exWithSets: ExerciseWithSets,
+    isSuperset: Boolean,
+    languageCode: String,
+    weightUnit: String,
+    modifier: Modifier = Modifier
+) {
+    val exerciseName = ExerciseTranslations.translate(exWithSets.exercise.nome, languageCode)
+    Column(modifier = modifier) {
+        Text(
+            text = exerciseName.uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            color = Primary,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        exWithSets.sets.sortedBy { it.setLog.numeroSerie }.forEach { setWithEx ->
+            val set = setWithEx.setLog
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp, horizontal = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stringResource(R.string.set_number, set.numeroSerie),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant
+                    )
+                    Text(
+                        text = WeightUnitConverter.formatWithUnit(
+                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                            weightUnit
+                        ) + " × ${set.repsEffettive}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface
+                    )
+                }
+                if (!set.note.isNullOrBlank()) {
+                    Row(
+                        modifier = Modifier.padding(top = 2.dp, start = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.Notes,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = set.note,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryCard(
@@ -936,17 +1228,29 @@ fun SessionHistoryCard(
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {}
 ) {
-    GymCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
-            )
+            ),
+        shape = Shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = SurfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = ResponsiveSize.cardPadding,
+                        end = ResponsiveSize.cardPadding,
+                        top = ResponsiveSize.cardPadding,
+                        bottom = if (isExpanded) 0.dp else ResponsiveSize.cardPadding
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -971,7 +1275,7 @@ fun SessionHistoryCard(
                         Text(
                             text = DateFormatter.format(session.timestamp),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSurface
                         )
                         Text(
@@ -982,7 +1286,7 @@ fun SessionHistoryCard(
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = Primary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -1018,7 +1322,9 @@ fun SessionHistoryCard(
                         .padding(top = 20.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = ResponsiveSize.cardPadding),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1044,7 +1350,14 @@ fun SessionHistoryCard(
                             GymLoadingIndicator(size = 24.dp)
                         }
                     } else if (details.sets.isEmpty() && details.cardio.isEmpty()) {
-                        Text(stringResource(R.string.no_exercises_in_session_detail), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+                        Text(
+                            text = stringResource(R.string.no_exercises_in_session_detail),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant,
+                            modifier = Modifier
+                                .padding(horizontal = ResponsiveSize.cardPadding)
+                                .padding(bottom = ResponsiveSize.cardPadding)
+                        )
                     } else {
                         val sortedSets = details.sets.sortedWith(
                             compareBy(
@@ -1052,68 +1365,101 @@ fun SessionHistoryCard(
                                 { it.setLog.numeroSerie }
                             )
                         )
-                        val groupedSets = sortedSets.groupBy { it.exercise.id }
                         
-                        groupedSets.forEach { (_, sets) ->
-                            val exerciseName = ExerciseTranslations.translate(sets.first().exercise.nome, languageCode)
-                            
-                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                                Text(
-                                    text = exerciseName.uppercase(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Primary,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                sets.forEach { setWithEx ->
-                                    val set = setWithEx.setLog
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .padding(vertical = 4.dp, horizontal = 4.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.set_number, set.numeroSerie),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = OnSurfaceVariant
-                                            )
-                                            Text(
-                                                text = WeightUnitConverter.formatWithUnit(
-                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                                    weightUnit
-                                                ) + " × ${set.repsEffettive}",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = OnSurface
-                                            )
-                                        }
-                                        if (!set.note.isNullOrBlank()) {
-                                            Row(
-                                                modifier = Modifier.padding(top = 2.dp, start = 8.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(
-                                                    Icons.AutoMirrored.Rounded.Notes,
-                                                    contentDescription = null,
-                                                    tint = OnSurfaceVariant.copy(alpha = 0.5f),
-                                                    modifier = Modifier.size(12.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = set.note,
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = OnSurfaceVariant,
-                                                    fontStyle = FontStyle.Italic
-                                                )
-                                            }
-                                        }
+                        // 1. Group sets by exercise while preserving order
+                        val exercisesWithSets = mutableListOf<ExerciseWithSets>()
+                        sortedSets.forEach { setWithEx ->
+                            val existing = exercisesWithSets.find { it.exercise.id == setWithEx.exercise.id && it.sets.first().setLog.ordineEsercizio == setWithEx.setLog.ordineEsercizio }
+                            if (existing != null) {
+                                existing.sets.add(setWithEx)
+                            } else {
+                                exercisesWithSets.add(ExerciseWithSets(setWithEx.exercise, mutableListOf(setWithEx)))
+                            }
+                        }
+
+                        // 2. Group exercises into blocks by supersetId
+                        val blocks = mutableListOf<HistoryBlock>()
+                        var currentSupersetId: String? = null
+                        var currentBlock = mutableListOf<ExerciseWithSets>()
+
+                        exercisesWithSets.forEach { item ->
+                            val sid = item.sets.first().setLog.supersetId
+                            if (sid != null) {
+                                if (sid == currentSupersetId) {
+                                    currentBlock.add(item)
+                                } else {
+                                    if (currentBlock.isNotEmpty()) {
+                                        blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
+                                        currentBlock = mutableListOf()
                                     }
+                                    currentSupersetId = sid
+                                    currentBlock.add(item)
+                                }
+                            } else {
+                                if (currentBlock.isNotEmpty()) {
+                                    blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
+                                    currentBlock = mutableListOf()
+                                }
+                                currentSupersetId = null
+                                blocks.add(HistoryBlock(null, listOf(item)))
+                            }
+                        }
+                        if (currentBlock.isNotEmpty()) {
+                            blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
+                        }
+
+                        blocks.forEach { block ->
+                            val isSuperset = block.supersetId != null
+
+                            if (isSuperset) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 12.dp)
+                                        .background(Primary.copy(alpha = 0.04f), shape = Shapes.large)
+                                        .border(1.dp, Primary.copy(alpha = 0.1f), shape = Shapes.large)
+                                        .padding(horizontal = ResponsiveSize.cardPadding, vertical = 12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.Link,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = stringResource(R.string.superset),
+                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                            color = Primary,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+
+                                    block.exercises.forEachIndexed { exIndex, exWithSets ->
+                                        HistoryExerciseGroup(
+                                            exWithSets = exWithSets,
+                                            isSuperset = true,
+                                            languageCode = languageCode,
+                                            weightUnit = weightUnit,
+                                            modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp)
+                                        )
+                                    }
+                                }
+                            } else {
+                                block.exercises.forEach { exWithSets ->
+                                    HistoryExerciseGroup(
+                                        exWithSets = exWithSets,
+                                        isSuperset = false,
+                                        languageCode = languageCode,
+                                        weightUnit = weightUnit,
+                                        modifier = Modifier
+                                            .padding(horizontal = ResponsiveSize.cardPadding)
+                                            .padding(bottom = 16.dp)
+                                    )
                                 }
                             }
                         }
@@ -1125,7 +1471,11 @@ fun SessionHistoryCard(
                                 "camminata", "walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
                                 else -> Icons.AutoMirrored.Rounded.DirectionsRun
                             }
-                            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = ResponsiveSize.cardPadding)
+                                    .padding(bottom = 16.dp)
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1133,7 +1483,7 @@ fun SessionHistoryCard(
                                         text = cardio.categoria.uppercase(),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = Primary,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.ExtraBold,
                                         letterSpacing = 1.sp
                                     )
                                 }
@@ -1146,7 +1496,7 @@ fun SessionHistoryCard(
                                     Text(
                                         text = "${cardio.distanza} km",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
+                                        fontWeight = FontWeight.Bold,
                                         color = OnSurface
                                     )
                                     Text(
@@ -1162,6 +1512,8 @@ fun SessionHistoryCard(
                                 }
                             }
                         }
+                        
+                        Spacer(modifier = Modifier.height(ResponsiveSize.cardPadding - 16.dp))
                     }
                 }
             }
@@ -1257,7 +1609,7 @@ fun EditSetDialog(
                 ) {
                     Text(
                         stringResource(R.string.cancel).uppercase(),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1282,7 +1634,7 @@ fun EditSetDialog(
                 ) {
                     Text(
                         stringResource(R.string.save).uppercase(),
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.labelLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

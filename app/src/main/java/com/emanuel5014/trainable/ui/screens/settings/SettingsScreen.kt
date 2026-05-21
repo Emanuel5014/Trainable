@@ -5,8 +5,10 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,6 +34,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
+import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Flag
@@ -79,7 +83,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -94,6 +98,8 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.getPalettePreviewColors
+import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,7 +119,13 @@ fun SettingsScreen(
     val backupStatus by viewModel.backupStatus.collectAsState()
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val dynamicColor by viewModel.dynamicColor.collectAsState()
+    val dynamicColorSeed by viewModel.dynamicColorSeed.collectAsState()
+    val wallpaperColors by viewModel.wallpaperColors.collectAsState()
+    val themePalette by viewModel.themePalette.collectAsState()
+    val themeStyle by viewModel.themeStyle.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
+    val gymMembershipExpiryNotificationsEnabled by viewModel.gymMembershipExpiryNotificationsEnabled.collectAsState()
+    val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     
@@ -129,15 +141,20 @@ fun SettingsScreen(
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
+    var pendingNotificationType by remember { mutableStateOf<String?>(null) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            viewModel.setTimerNotificationsEnabled(true)
+            when (pendingNotificationType) {
+                "timer" -> viewModel.setTimerNotificationsEnabled(true)
+                "membership" -> viewModel.setGymMembershipExpiryNotificationsEnabled(true)
+            }
         } else {
             Toast.makeText(context, "Permission denied for notifications", Toast.LENGTH_SHORT).show()
         }
+        pendingNotificationType = null
     }
 
     LaunchedEffect(backupStatus) {
@@ -218,14 +235,14 @@ fun SettingsScreen(
             onDismissRequest = { showBackupSetupDialog = false },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text(stringResource(R.string.auto_backup_setup), fontWeight = FontWeight.Bold, color = OnSurface)
+                Text(stringResource(R.string.auto_backup_setup), fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     Text(stringResource(R.string.configure_backup), color = OnSurfaceVariant)
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.frequency), fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.frequency), fontWeight = FontWeight.ExtraBold, color = OnSurface)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                             IconButton(onClick = { if (tempFrequency > 1) tempFrequency-- }) {
                                 Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
@@ -238,7 +255,7 @@ fun SettingsScreen(
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.keep_last), fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.keep_last), fontWeight = FontWeight.ExtraBold, color = OnSurface)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                             IconButton(onClick = { if (tempMaxCount > 1) tempMaxCount-- }) {
                                 Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
@@ -266,7 +283,7 @@ fun SettingsScreen(
                     HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.storage_location), fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.storage_location), fontWeight = FontWeight.ExtraBold, color = OnSurface)
                         GymButton(
                             onClick = { folderPickerLauncher.launch(null) },
                             containerColor = if (autoBackupFolderUri == null) Primary.copy(alpha = 0.1f) else SurfaceContainerHighest,
@@ -320,7 +337,7 @@ fun SettingsScreen(
             title = {
                 Text(
                     stringResource(R.string.include_images),
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
             },
@@ -362,7 +379,7 @@ fun SettingsScreen(
             title = {
                     Text(
                         stringResource(R.string.reset_app_dialog),
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = OnSurface
                     )
             },
@@ -445,7 +462,7 @@ fun SettingsScreen(
                     AlertDialog(
                         onDismissRequest = { showEditUsernameDialog = false },
                         containerColor = SurfaceContainerHigh,
-                        title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.Bold, color = OnSurface) },
+                        title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
                         text = {
                             OutlinedTextField(
                                 value = newUsername,
@@ -501,7 +518,7 @@ fun SettingsScreen(
                                 text = currentUser?.username ?: "Athlete",
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = OnSurface,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.ExtraBold
                             )
                             Text(
                                 text = stringResource(R.string.member_since, currentUser?.dataIscrizione?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.today)),
@@ -528,7 +545,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Scale, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.weight_unit), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.weight_unit_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -548,7 +565,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
                                     color = if (weightUnit == "kg") OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
                                     text = "lb",
@@ -559,7 +576,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 12.dp, vertical = 6.dp),
                                     color = if (weightUnit == "lb") OnPrimary else OnSurfaceVariant,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                             }
                         }
@@ -575,7 +592,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Flag, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.weekly_goal), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.weekly_goal), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.target_workouts), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -607,7 +624,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Vibration, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.tactile_feedback), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.tactile_feedback), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.tactile_feedback_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -628,7 +645,7 @@ fun SettingsScreen(
                             AlertDialog(
                                 onDismissRequest = { showLanguageDialog = false },
                                 containerColor = SurfaceContainerHigh,
-                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.Bold, color = OnSurface) },
+                                title = { Text(stringResource(R.string.language), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
                                 text = {
                                     Column {
                                         LanguageOption(
@@ -691,7 +708,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Language, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(
                                         when (currentLanguage) {
                                             "en" -> stringResource(R.string.language_english)
@@ -715,69 +732,14 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Dashboard, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.floating_nav_bar), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.floating_nav_bar), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.floating_nav_bar_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             SettingsSwitch(
-                                checked = floatingNavBar,
-                                onCheckedChange = { viewModel.setFloatingNavBar(it) }
-                            )
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
-                                    Text(stringResource(R.string.dynamic_color_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = dynamicColor,
-                                onCheckedChange = { viewModel.setDynamicColor(it) }
-                            )
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Notifications, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.timer_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
-                                    Text(stringResource(R.string.timer_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = timerNotificationsEnabled,
-                                onCheckedChange = { enabled ->
-                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                    } else {
-                                        viewModel.setTimerNotificationsEnabled(enabled)
-                                    }
-                                }
+                                checked = !floatingNavBar,
+                                onCheckedChange = { viewModel.setFloatingNavBar(!it) }
                             )
                         }
 
@@ -797,7 +759,7 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.swipe_actions), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.swipe_actions_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
@@ -806,6 +768,242 @@ fun SettingsScreen(
                                 checked = swipeActionsEnabled,
                                 onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
                             )
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.personalization)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    val isDynamicColorSupported = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
+                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = if (isDynamicColorSupported) OnSurface else OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (isDynamicColorSupported) stringResource(R.string.dynamic_color_desc) else stringResource(R.string.dynamic_color_not_supported),
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S,
+                                onCheckedChange = { viewModel.setDynamicColor(it) },
+                                enabled = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
+                            )
+                        }
+
+                        if (dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && wallpaperColors.isNotEmpty()) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                        Text(stringResource(R.string.app_palette_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Reset to system default option
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(CircleShape)
+                                            .background(SurfaceContainerHighest)
+                                            .clickable { 
+                                                viewModel.setDynamicColorSeed(null)
+                                                viewModel.setThemeStyle(0)
+                                            }
+                                            .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (dynamicColorSeed == null) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    Icons.Rounded.RestartAlt,
+                                                    contentDescription = "System Default",
+                                                    tint = Primary,
+                                                    modifier = Modifier.size(28.dp)
+                                                )
+                                            }
+                                        } else {
+                                            Icon(
+                                                Icons.Rounded.RestartAlt,
+                                                contentDescription = "System Default",
+                                                tint = OnSurfaceVariant,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+
+                                    // Use primary wallpaper color as seed and show 5 different styles
+                                    val primarySeed = wallpaperColors.first()
+                                    (0..4).forEach { styleIndex ->
+                                        val previewColors = getSeedPreviewColors(primarySeed, styleIndex)
+                                        PalettePreviewCircle(
+                                            colors = previewColors,
+                                            isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
+                                            onClick = { 
+                                                viewModel.setDynamicColorSeed(primarySeed)
+                                                viewModel.setThemeStyle(styleIndex)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!dynamicColor || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                        Text(stringResource(R.string.app_palette_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    (0..7).forEach { index ->
+                                        val previewColors = getPalettePreviewColors(index)
+                                        PalettePreviewCircle(
+                                            colors = previewColors,
+                                            isSelected = themePalette == index,
+                                            onClick = { viewModel.setThemePalette(index) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.notifications)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Notifications, 
+                                    contentDescription = null, 
+                                    tint = Primary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.timer_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.timer_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = timerNotificationsEnabled,
+                                onCheckedChange = { enabled ->
+                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        pendingNotificationType = "timer"
+                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        viewModel.setTimerNotificationsEnabled(enabled)
+                                    }
+                                }
+                            )
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CreditCard, 
+                                    contentDescription = null, 
+                                    tint = Primary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.gym_membership_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.gym_membership_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = gymMembershipExpiryNotificationsEnabled,
+                                onCheckedChange = { enabled ->
+                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        pendingNotificationType = "membership"
+                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        viewModel.setGymMembershipExpiryNotificationsEnabled(enabled)
+                                    }
+                                }
+                            )
+                        }
+
+                        if (gymMembershipExpiryNotificationsEnabled) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(Icons.Rounded.Flag, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(stringResource(R.string.notify_days_before), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                        Text(stringResource(R.string.notify_days_before_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = { if (gymMembershipExpiryNotificationDaysBefore > 1) viewModel.setGymMembershipExpiryNotificationDaysBefore(gymMembershipExpiryNotificationDaysBefore - 1) }) {
+                                        Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
+                                    }
+                                    Text(
+                                        text = gymMembershipExpiryNotificationDaysBefore.toString(),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = Primary,
+                                        fontWeight = FontWeight.Black,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                    IconButton(onClick = { if (gymMembershipExpiryNotificationDaysBefore < 30) viewModel.setGymMembershipExpiryNotificationDaysBefore(gymMembershipExpiryNotificationDaysBefore + 1) }) {
+                                        Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -824,7 +1022,7 @@ fun SettingsScreen(
                                     Icon(Icons.Rounded.Backup, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column {
-                                        Text(stringResource(R.string.auto_backup), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.auto_backup), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                         Text(
                                             if (autoBackupEnabled) stringResource(R.string.backup_enabled, autoBackupFrequency) else stringResource(R.string.backup_disabled),
                                             style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -855,7 +1053,7 @@ fun SettingsScreen(
                                         Icon(Icons.Rounded.Folder, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                         Spacer(modifier = Modifier.width(16.dp))
                                         Column {
-                                            Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.Bold)
+                                            Text(stringResource(R.string.storage_location), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                             Text(
                                                 viewModel.getFolderDisplayPath(autoBackupFolderUri),
                                                 style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -883,7 +1081,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = Primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.export_database), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.export_database), fontWeight = FontWeight.ExtraBold)
                         }
 
                         GymButton(
@@ -894,7 +1092,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Rounded.CloudDownload, contentDescription = null, tint = Primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.import_database), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.import_database), fontWeight = FontWeight.ExtraBold)
                         }
                     }
 
@@ -910,7 +1108,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Rounded.TableChart, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.export_csv), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.export_csv), fontWeight = FontWeight.ExtraBold)
                     }
 
                     GymButton(
@@ -921,7 +1119,7 @@ fun SettingsScreen(
                     ) {
                         Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Error)
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.Bold, color = Error)
+                        Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.ExtraBold, color = Error)
                     }
                 }
             }
@@ -929,17 +1127,17 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.about)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Trainable v1.3.2",
+                                    text = "Trainable v1.4.0",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
                                     text = "Made with ❤️ by Emanuel5014",
@@ -958,17 +1156,16 @@ fun SettingsScreen(
                                     }
                                 )
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
                             GymButton(
                                 onClick = { viewModel.checkForUpdates() },
                                 containerColor = Primary.copy(alpha = 0.1f),
                                 contentColor = Primary,
-                                height = 56,
-                                contentPadding = PaddingValues(horizontal = 16.dp)
+                                height = 48,
+                                contentPadding = PaddingValues(horizontal = 24.dp)
                             ) {
                                 Text(
                                     text = stringResource(R.string.check_for_updates),
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.labelLarge
                                 )
                             }
@@ -999,7 +1196,7 @@ fun SettingsScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
                             }
 
                             GymButton(
@@ -1018,7 +1215,7 @@ fun SettingsScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -1037,7 +1234,7 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
             text = title,
             style = MaterialTheme.typography.labelLarge,
             color = Primary,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             letterSpacing = 1.sp
         )
         content()
@@ -1072,11 +1269,13 @@ private fun LanguageOption(
 @Composable
 private fun SettingsSwitch(
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
+        enabled = enabled,
         thumbContent = if (checked) {
             {
                 Icon(
@@ -1090,4 +1289,82 @@ private fun SettingsSwitch(
             null
         }
     )
+}
+
+@Composable
+private fun PalettePreviewCircle(
+    colors: List<Color>,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) Primary.copy(alpha = 0.2f) else Color.Transparent)
+            .clickable { onClick() }
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape)
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                if (colors.size == 1) {
+                    drawCircle(color = colors[0])
+                } else {
+                    val primary = colors.getOrElse(0) { Color.Gray }
+                    val secondary = colors.getOrElse(1) { primary.copy(alpha = 0.7f) }
+                    val tertiary = colors.getOrElse(2) { primary.copy(alpha = 0.5f) }
+                    val neutral = colors.getOrElse(3) { primary.copy(alpha = 0.3f) }
+
+                    // Top-left quadrant
+                    drawArc(
+                        color = primary,
+                        startAngle = 180f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                    // Top-right quadrant
+                    drawArc(
+                        color = secondary,
+                        startAngle = 270f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                    // Bottom-right quadrant
+                    drawArc(
+                        color = tertiary,
+                        startAngle = 0f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                    // Bottom-left quadrant
+                    drawArc(
+                        color = neutral,
+                        startAngle = 90f,
+                        sweepAngle = 90f,
+                        useCenter = true
+                    )
+                }
+            }
+        }
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
 }

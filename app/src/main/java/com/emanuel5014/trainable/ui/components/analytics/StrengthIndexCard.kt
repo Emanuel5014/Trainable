@@ -43,7 +43,7 @@ fun StrengthIndexCard(strengthIndex: StrengthIndexUiModel) {
                 text = strengthIndex.percent?.let { formatSignedPercent(it) } ?: "--",
                 style = MaterialTheme.typography.displayMedium,
                 color = OnPrimary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
 
             Text(

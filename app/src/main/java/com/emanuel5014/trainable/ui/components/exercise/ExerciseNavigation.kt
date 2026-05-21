@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,27 +51,37 @@ fun ExerciseNavigation(
         if (hasPrevious) {
             TextButton(
                 onClick = onPrevious,
-                colors = ButtonDefaults.textButtonColors(contentColor = OnSurface)
+                colors = ButtonDefaults.textButtonColors(contentColor = OnSurface),
+                modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                    contentDescription = stringResource(R.string.previous_exercise_btn)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text(
-                        text = stringResource(R.string.previous_exercise_btn).uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.previous_exercise_btn)
                     )
-                    Text(
-                        text = previousName?.let { ExerciseTranslations.translate(it, languageCode) } ?: stringResource(R.string.previous_exercise_btn),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.previous_exercise_btn).uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = previousName?.let { ExerciseTranslations.translate(it, languageCode) } ?: stringResource(R.string.previous_exercise_btn),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         } else {
@@ -81,43 +92,58 @@ fun ExerciseNavigation(
         if (hasNext) {
             TextButton(
                 onClick = onNext,
-                colors = ButtonDefaults.textButtonColors(contentColor = OnSurface)
+                colors = ButtonDefaults.textButtonColors(contentColor = OnSurface),
+                modifier = Modifier.weight(1f)
             ) {
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = stringResource(R.string.next_exercise_btn).uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = nextName?.let { ExerciseTranslations.translate(it, languageCode) } ?: stringResource(R.string.next_exercise_btn),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.next_exercise_btn).uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = nextName?.let { ExerciseTranslations.translate(it, languageCode) } ?: stringResource(R.string.next_exercise_btn),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.next_exercise_btn)
                     )
                 }
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = stringResource(R.string.next_exercise_btn)
-                )
             }
         } else {
             // Finish Button or placeholder if no next
-            FilledTonalButton(
-                onClick = onNext,
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = Primary,
-                    contentColor = OnPrimary
-                ),
-                shape = RoundedCornerShape(16.dp)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                Text(
-                    text = stringResource(R.string.finish),
-                    fontWeight = FontWeight.Bold
-                )
+                FilledTonalButton(
+                    onClick = onNext,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = Primary,
+                        contentColor = OnPrimary
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.finish),
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
         }
     }

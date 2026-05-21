@@ -54,7 +54,7 @@ fun PersonalBestsSection(personalBests: List<PersonalBestUiModel>) {
                 text = "PERSONAL BESTS",
                 style = MaterialTheme.typography.headlineSmall,
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = if (isShowingAll) "SHOW CAROUSEL" else "VIEW ALL",
@@ -193,7 +193,7 @@ private fun PersonalBestCard(
                     text = best.exerciseName,
                     style = if (isLarge) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
                     color = OnSurface,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     textAlign = if (isLarge) androidx.compose.ui.text.style.TextAlign.Center else null
                 )
                 Text(
@@ -206,7 +206,7 @@ private fun PersonalBestCard(
                         text = String.format(java.util.Locale.getDefault(), "%.1f", best.maxWeightKg),
                         style = if (isLarge) MaterialTheme.typography.displayLarge else MaterialTheme.typography.displaySmall,
                         color = OnSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = "kg",

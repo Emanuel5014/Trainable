@@ -33,6 +33,7 @@ import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.BottomNavBar
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
@@ -45,11 +46,14 @@ import com.emanuel5014.trainable.ui.theme.GymTrackingTheme
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
 import dagger.hilt.android.AndroidEntryPoint
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import javax.inject.Inject
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -80,6 +84,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val userLanguage by userPreferencesRepository.userLanguage.collectAsState(initial = "system")
             val dynamicColor by userPreferencesRepository.dynamicColor.collectAsState(initial = true)
+            val dynamicColorSeed by userPreferencesRepository.dynamicColorSeed.collectAsState(initial = null)
+            val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
+            val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
 
             val context = androidx.compose.ui.platform.LocalContext.current
             val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -137,7 +144,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            GymTrackingTheme(dynamicColor = dynamicColor) {
+            GymTrackingTheme(
+                dynamicColor = dynamicColor,
+                paletteIndex = themePalette,
+                seedColor = dynamicColorSeed,
+                themeStyle = themeStyle
+            ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()
@@ -153,6 +165,8 @@ class MainActivity : ComponentActivity() {
 
                 val pagerState = rememberPagerState(pageCount = { 4 })
 
+                val hazeState = rememberHazeState()
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -163,12 +177,15 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             pagerState = pagerState,
                             startDestination = MainTabs,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .hazeSource(state = hazeState)
                         )
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
                             currentDestination?.route?.startsWith("MainTabs") == true) && 
-                            currentDestination?.hasRoute(WorkoutExecution::class) == false
+                            currentDestination.hasRoute(WorkoutExecution::class) == false &&
+                            BottomBarManager.isVisibleOverride
 
                         val floatingNavBar by userPreferencesRepository.floatingNavBar.collectAsState(initial = false)
 
@@ -181,7 +198,8 @@ class MainActivity : ComponentActivity() {
                             if (floatingNavBar) {
                                 BottomNavBarFlo(
                                     navController = navController,
-                                    pagerState = pagerState
+                                    pagerState = pagerState,
+                                    hazeState = hazeState
                                 )
                             } else {
                                 BottomNavBar(

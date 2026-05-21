@@ -5,6 +5,7 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseOutExpo
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -92,7 +93,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
@@ -111,6 +112,7 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -170,6 +172,10 @@ fun RoutineListScreen(
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
+            val fabPadding = if (uiState.floatingNavBar) {
+                if (ResponsiveSize.isCompact) 2.dp else 8.dp
+            } else 0.dp
+            
             if (uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
                     onClick = { 
@@ -182,11 +188,13 @@ fun RoutineListScreen(
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
-                    modifier = Modifier.padding(bottom = 80.dp)
+                    modifier = Modifier
+                        .padding(end = fabPadding)
+                        .padding(bottom = 80.dp)
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             } else {
                 ExtendedFloatingActionButton(
@@ -194,11 +202,13 @@ fun RoutineListScreen(
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
-                    modifier = Modifier.padding(bottom = 80.dp)
+                    modifier = Modifier
+                        .padding(end = fabPadding)
+                        .padding(bottom = 80.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.create_routine).replace("CREATE ", ""), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -217,23 +227,26 @@ fun RoutineListScreen(
                             val direction = if (targetState > initialState) 1 else -1
                             (slideInHorizontally { width -> direction * width / 2 } + fadeIn(animationSpec = tween(400, easing = EaseOutExpo)))
                                 .togetherWith(slideOutHorizontally { width -> -direction * width / 2 } + fadeOut(animationSpec = tween(400, easing = EaseOutExpo)))
-                                .using(SizeTransform(clip = false))
+                                .using(SizeTransform(clip = true))
                         },
                         label = "title_anim"
                     ) { state ->
+                        val routineStyle = if (uiState.isSelectionMode) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.displaySmall
+                        val responsiveFs = ResponsiveSize.responsiveFontSize(routineStyle.fontSize)
                         Text(
                             text = when (state) {
                                 -1 -> "${uiState.selectedPlanIds.size} ${stringResource(R.string.selected)}"
                                 0 -> stringResource(R.string.your_routines)
                                 else -> stringResource(R.string.archived_routines)
                             },
-                            style = if (uiState.isSelectionMode) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.displaySmall,
+                            style = routineStyle.copy(fontSize = responsiveFs),
                             color = OnSurface,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = (-1).sp,
-                            lineHeight = if (uiState.isSelectionMode) 32.sp else 40.sp,
+                            letterSpacing = if (uiState.isSelectionMode) 0.sp else (-1).sp,
+                            lineHeight = if (uiState.isSelectionMode) responsiveFs * 1.2f else responsiveFs * 1.1f,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false
                         )
                     }
                 },
@@ -271,7 +284,8 @@ fun RoutineListScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = ResponsiveSize.horizontalPadding)
+                    .padding(bottom = 8.dp)
                     .clip(Shapes.large)
                     .background(SurfaceContainerHigh)
                     .padding(4.dp)
@@ -280,7 +294,10 @@ fun RoutineListScreen(
                     val indicatorWidth = maxWidth / 2
                     val indicatorOffset by animateDpAsState(
                         targetValue = if (pagerState.currentPage == 0) 0.dp else indicatorWidth,
-                        animationSpec = tween(500, easing = EaseOutExpo),
+                        animationSpec = spring(
+                            dampingRatio = 0.78f,
+                            stiffness = 380f
+                        ),
                         label = "indicator_offset"
                     )
 
@@ -305,7 +322,10 @@ fun RoutineListScreen(
                         val isSelected = pagerState.currentPage == index
                         val contentColor by animateColorAsState(
                             targetValue = if (isSelected) Primary else OnSurfaceVariant,
-                            animationSpec = tween(500, easing = EaseOutExpo),
+                            animationSpec = spring(
+                                dampingRatio = 0.78f,
+                                stiffness = 380f
+                            ),
                             label = "tab_content"
                         )
 
@@ -324,8 +344,8 @@ fun RoutineListScreen(
                         ) {
                             Text(
                                 text = title.uppercase(),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                                style = MaterialTheme.typography.labelLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize)),
+                                fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
                                 color = contentColor,
                                 letterSpacing = 1.sp
                             )
@@ -334,44 +354,62 @@ fun RoutineListScreen(
                 }
             }
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1,
-                verticalAlignment = Alignment.Top,
-                userScrollEnabled = false
-            ) { page ->
-                val isArchivedPage = page == 1
-                val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
+            Box(modifier = Modifier.fillMaxSize()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 1,
+                    verticalAlignment = Alignment.Top,
+                    userScrollEnabled = false
+                ) { page ->
+                    val isArchivedPage = page == 1
+                    val plans = if (isArchivedPage) uiState.archivedPlans else uiState.plans
+                    
+                    // M3 Expressive: Page transformation based on scroll progress
+                    val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                // Dynamic parallax glide effect
+                                translationX = pageOffset * (size.width * 0.3f)
+                                
+                                // Premium scale and alpha transitions
+                                val progress = kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
+                                val scale = 1f - (progress * 0.08f)
+                                scaleX = scale
+                                scaleY = scale
+                                alpha = 1f - progress
+                            }
+                    ) {
+                        RoutineListPage(
+                            plans = plans,
+                            isArchived = isArchivedPage,
+                            onNavigateToDetail = onNavigateToDetail,
+                            onDelete = { planToDelete = it },
+                            onArchiveToggle = { planToArchive = it },
+                            onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
+                            isLoading = uiState.isLoading,
+                            isSelectionMode = uiState.isSelectionMode,
+                            swipeActionsEnabled = swipeActionsEnabled,
+                            selectedPlanIds = uiState.selectedPlanIds,
+                            onToggleSelection = { viewModel.togglePlanSelection(it) }
+                        )
+                    }
+                }
                 
-                // M3 Expressive: Page transformation based on scroll progress
-                val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
-                
+                // Top gradient fade to smoothly hide items when scrolling up
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            // Slight scale and alpha during transition
-                            val scale = 1f - (kotlin.math.abs(pageOffset) * 0.05f)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = 1f - kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
-                        }
-                ) {
-                    RoutineListPage(
-                        plans = plans,
-                        isArchived = isArchivedPage,
-                        onNavigateToDetail = onNavigateToDetail,
-                        onDelete = { planToDelete = it },
-                        onArchiveToggle = { planToArchive = it },
-                        onReorder = { from, to -> viewModel.movePlan(from, to, isArchivedPage) },
-                        isLoading = uiState.isLoading,
-                        isSelectionMode = uiState.isSelectionMode,
-                        swipeActionsEnabled = swipeActionsEnabled,
-                        selectedPlanIds = uiState.selectedPlanIds,
-                        onToggleSelection = { viewModel.togglePlanSelection(it) }
-                    )
-                }
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(Surface, androidx.compose.ui.graphics.Color.Transparent)
+                            )
+                        )
+                )
             }
         }
     }
@@ -391,7 +429,7 @@ fun RoutineListScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -427,7 +465,7 @@ fun RoutineListScreen(
                     contentColor = Primary,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -461,7 +499,7 @@ fun RoutineListScreen(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -496,7 +534,7 @@ fun RoutineListScreen(
                     contentColor = Primary,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(if (isArchiving) R.string.archive else R.string.unarchive).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -534,7 +572,7 @@ fun RoutineListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = ResponsiveSize.horizontalPadding)
                     .padding(bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
@@ -543,13 +581,13 @@ fun RoutineListScreen(
                         text = stringResource(R.string.create_routine),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                     Text(
                         text = stringResource(R.string.new_routine),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -609,7 +647,7 @@ fun RoutineListScreen(
                             text = stringResource(R.string.schedule_days),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -633,8 +671,8 @@ fun RoutineListScreen(
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
+                                        fontWeight = FontWeight.ExtraBold
                                     )
                                 }
                             }
@@ -660,7 +698,7 @@ fun RoutineListScreen(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     
                     GymButton(
@@ -684,7 +722,7 @@ fun RoutineListScreen(
                     ) {
                         Text(
                             text = stringResource(R.string.create).uppercase(),
-                            fontWeight = FontWeight.ExtraBold
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
@@ -707,7 +745,7 @@ fun RoutineListScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -736,7 +774,7 @@ fun RoutineListScreen(
                     containerColor = Color.Transparent,
                     contentColor = Primary
                 ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -770,7 +808,7 @@ fun RoutineListScreen(
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text(stringResource(R.string.share_with_images).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.share_with_images).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -781,7 +819,7 @@ fun RoutineListScreen(
                         contentColor = OnSurface,
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text(stringResource(R.string.share_without_images).uppercase(), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.share_without_images).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             },
@@ -844,7 +882,7 @@ private fun RoutineListPage(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(24.dp),
+            contentPadding = PaddingValues(ResponsiveSize.horizontalPadding),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             itemsIndexed(localPlans, key = { _, planWithDetails -> planWithDetails.plan.id }) { index, planWithDetails ->
@@ -1025,9 +1063,9 @@ private fun RoutineCard(
                 Column {
                     Text(
                         text = plan.nome,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleLarge.fontSize)),
                         color = if (isSelected) Primary else OnSurface,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1037,7 +1075,7 @@ private fun RoutineCard(
                             text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (expiry < System.currentTimeMillis()) Error else Primary,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -1048,7 +1086,7 @@ private fun RoutineCard(
                             text = stringResource(R.string.created_on) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(plan.dataInizio),
                             style = MaterialTheme.typography.labelSmall,
                             color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -1077,7 +1115,7 @@ private fun RoutineCard(
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
                                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.ExtraBold,
                                         color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
                                     )
                                 }

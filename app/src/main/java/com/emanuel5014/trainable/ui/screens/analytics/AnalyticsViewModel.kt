@@ -8,6 +8,8 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import com.emanuel5014.trainable.data.local.dao.ConsistencyRow
 import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -72,26 +74,32 @@ class AnalyticsViewModel @Inject constructor(
     private val activePlanFlow = workoutRepository.getActivePlans()
         .map { plans -> plans.firstOrNull() }
 
+    private val allPlansFlow = workoutRepository.getAllPlans()
+
     private val analyticsSnapshotFlow = combine(
         activePlanFlow,
+        allPlansFlow,
         selectedTimeRange,
         selectedExerciseIds,
         widgetOrder,
         userPreferencesRepository.weightUnit,
         localeManager.currentLanguage
     ) { args ->
-        val activePlan = args[0] as com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity?
-        val timeRange = args[1] as AnalyticsTimeRange
+        val activePlan = args[0] as WorkoutPlanEntity?
         @Suppress("UNCHECKED_CAST")
-        val selectedIds = args[2] as Set<Int>
+        val allPlans = args[1] as List<WorkoutPlanEntity>
+        val timeRange = args[2] as AnalyticsTimeRange
         @Suppress("UNCHECKED_CAST")
-        val order = args[3] as List<String>
-        val weightUnit = args[4] as String
-        val userLang = args[5] as String
+        val selectedIds = args[3] as Set<Int>
+        @Suppress("UNCHECKED_CAST")
+        val order = args[4] as List<String>
+        val weightUnit = args[5] as String
+        val userLang = args[6] as String
         
         val languageCode = localeManager.resolveLanguageForCompose(userLang)
         AnalyticsQueryContext(
             activePlan = activePlan,
+            allPlans = allPlans,
             timeRange = timeRange,
             startDate = timeRange.startDate(),
             selectedExerciseIds = selectedIds,
@@ -160,6 +168,7 @@ class AnalyticsViewModel @Inject constructor(
         }
 
         val weightFlow = analyticsRepository.getWeightHistory(context.startDate)
+        val sessionsFlow = workoutRepository.getAllSessions()
         
         val exerciseChartFlows = context.widgetOrder
             .filter { it.startsWith("exercise_") }
@@ -177,14 +186,35 @@ class AnalyticsViewModel @Inject constructor(
             }
         }
 
+        val volumeChartFlows = context.widgetOrder
+            .filter { it.startsWith("volume_") }
+            .map { idStr ->
+                val parts = idStr.split("_")
+                val planId = parts[1].toInt()
+                val timeRange = AnalyticsTimeRange.valueOf(parts[2])
+                analyticsRepository.getVolumeHistoryForPlan(planId, timeRange.startDate())
+                    .map { history -> idStr to history }
+            }
+
+        val volumeHistoriesFlow = if (volumeChartFlows.isEmpty()) {
+            flowOf(emptyMap<String, List<com.emanuel5014.trainable.data.local.dao.DailyVolume>>())
+        } else {
+            combine(volumeChartFlows) { pairs ->
+                pairs.associate { it.first to it.second }
+            }
+        }
+
         coreFlow.flatMapLatest { core ->
             combine(
                 strengthFlow,
                 weightFlow,
-                exerciseHistoriesFlow
-            ) { strengthCategory, weightHistory, exerciseHistories ->
+                sessionsFlow,
+                exerciseHistoriesFlow,
+                volumeHistoriesFlow
+            ) { strengthCategory, weightHistory, sessions, exerciseHistories, volumeHistories ->
                 buildAnalyticsState(
                     activePlanName = context.activePlan?.nome ?: "No Active Plan",
+                    allPlans = context.allPlans,
                     timeRange = context.timeRange,
                     startDate = context.startDate,
                     totalVolume = core.totalVolume,
@@ -196,7 +226,9 @@ class AnalyticsViewModel @Inject constructor(
                     strengthIndex = strengthCategory.strengthIndex,
                     categoryVolumes = strengthCategory.categoryVolumes,
                     weightHistory = weightHistory,
+                    sessions = sessions,
                     exerciseHistories = exerciseHistories,
+                    volumeHistories = volumeHistories,
                     weightUnit = context.weightUnit,
                     languageCode = context.languageCode
                 )
@@ -243,10 +275,18 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun addExerciseChart(exerciseId: Int) {
+        addMultipleExerciseCharts(setOf(exerciseId))
+    }
+
+    fun addMultipleExerciseCharts(exerciseIds: Set<Int>) {
         widgetOrder.update { current ->
-            val id = "exercise_$exerciseId"
-            if (current.contains(id)) return@update current
-            val newList = current + id
+            var newList = current
+            exerciseIds.forEach { id ->
+                val widgetId = "exercise_$id"
+                if (!newList.contains(widgetId)) {
+                    newList = newList + widgetId
+                }
+            }
             saveWidgetOrder(newList)
             newList
         }
@@ -256,6 +296,44 @@ class AnalyticsViewModel @Inject constructor(
         widgetOrder.update { current ->
             if (current.contains("weight")) return@update current
             val newList = current + "weight"
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun addCalendarChart() {
+        widgetOrder.update { current ->
+            if (current.contains("calendar")) return@update current
+            val newList = current + "calendar"
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun addVolumeChart(planId: Int, timeRange: AnalyticsTimeRange) {
+        widgetOrder.update { current ->
+            val id = "volume_${planId}_${timeRange.name}_${System.currentTimeMillis()}"
+            val newList = current + id
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun updateVolumeChart(widgetId: String, planId: Int, timeRange: AnalyticsTimeRange) {
+        widgetOrder.update { current ->
+            val index = current.indexOf(widgetId)
+            if (index == -1) return@update current
+            val newId = "volume_${planId}_${timeRange.name}_${widgetId.split("_").last()}"
+            val newList = current.toMutableList()
+            newList[index] = newId
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun removeAllExerciseCharts() {
+        widgetOrder.update { current ->
+            val newList = current.filter { !it.startsWith("exercise_") }
             saveWidgetOrder(newList)
             newList
         }
@@ -305,6 +383,7 @@ class AnalyticsViewModel @Inject constructor(
 
     private fun buildAnalyticsState(
         activePlanName: String,
+        allPlans: List<WorkoutPlanEntity>,
         timeRange: AnalyticsTimeRange,
         startDate: Long,
         totalVolume: Float,
@@ -316,7 +395,9 @@ class AnalyticsViewModel @Inject constructor(
         strengthIndex: Float?,
         categoryVolumes: List<CategoryVolumeRow>,
         weightHistory: List<com.emanuel5014.trainable.data.local.entity.WeightLogEntity>,
+        sessions: List<WorkoutSessionEntity>,
         exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
+        volumeHistories: Map<String, List<com.emanuel5014.trainable.data.local.dao.DailyVolume>>,
         weightUnit: String,
         languageCode: String
     ): AnalyticsUiState {
@@ -344,6 +425,11 @@ class AnalyticsViewModel @Inject constructor(
             )
         }
 
+        // Extract finished session timestamps
+        val finishedSessionDates = sessions
+            .filter { it.isFinished }
+            .map { it.timestamp }
+
         val widgets = widgetOrder.mapNotNull { id ->
             when {
                 id == "weight" -> {
@@ -355,6 +441,9 @@ class AnalyticsViewModel @Inject constructor(
                             )
                         }
                     )
+                }
+                id == "calendar" -> {
+                    AnalyticsWidget.Calendar(workoutDates = finishedSessionDates)
                 }
                 id.startsWith("exercise_") -> {
                     val exerciseId = id.removePrefix("exercise_").toInt()
@@ -371,6 +460,25 @@ class AnalyticsViewModel @Inject constructor(
                         history = history
                     )
                 }
+                id.startsWith("volume_") -> {
+                    val parts = id.split("_")
+                    val planId = parts[1].toInt()
+                    val timeRangeWidget = AnalyticsTimeRange.valueOf(parts[2])
+                    val planName = allPlans.find { it.id == planId }?.nome ?: "Unknown Plan"
+                    val history = volumeHistories[id]?.map { point ->
+                        AnalyticsChartPoint(
+                            timestamp = point.timestamp,
+                            value = WeightUnitConverter.convertDisplay(point.volume, weightUnit)
+                        )
+                    } ?: emptyList()
+                    AnalyticsWidget.Volume(
+                        widgetId = id,
+                        planId = planId,
+                        planName = planName,
+                        timeRange = timeRangeWidget,
+                        history = history
+                    )
+                }
                 else -> null
             }
         }
@@ -378,8 +486,12 @@ class AnalyticsViewModel @Inject constructor(
         // No automatic selection - let user choose freely from the picker
         val finalSelectedIds = selectedExerciseIds
 
+        // Filter plans to show only active, non-system ones
+        val filteredPlans = allPlans.filter { it.isActive && it.note != "SYSTEM_PLAN" }
+
         return AnalyticsUiState(
             activePlanName = activePlanName,
+            allPlans = filteredPlans,
             selectedTimeRange = timeRange,
             totalVolumeKg = totalVolume,
             volumeHistory = volumeHistory.map { point ->
@@ -408,6 +520,7 @@ class AnalyticsViewModel @Inject constructor(
                 )
             },
             weightUnit = weightUnit,
+            workoutDates = finishedSessionDates,
             isLoading = false,
             error = null
         )
@@ -429,7 +542,8 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private data class AnalyticsQueryContext(
-        val activePlan: com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity?,
+        val activePlan: WorkoutPlanEntity?,
+        val allPlans: List<WorkoutPlanEntity>,
         val timeRange: AnalyticsTimeRange,
         val startDate: Long,
         val selectedExerciseIds: Set<Int>,

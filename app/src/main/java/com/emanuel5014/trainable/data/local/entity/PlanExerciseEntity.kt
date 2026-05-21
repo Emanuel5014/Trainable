@@ -38,5 +38,7 @@ data class PlanExerciseEntity(
     @ColumnInfo(name = "recupero_target")
     val recuperoTarget: Int,
     @ColumnInfo(name = "ordine")
-    val ordine: Int
+    val ordine: Int,
+    @ColumnInfo(name = "superset_id")
+    val supersetId: String? = null
 )

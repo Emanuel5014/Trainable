@@ -42,7 +42,7 @@ fun BodyCompositionCard(
                 text = "WEIGHT HISTORY",
                 style = MaterialTheme.typography.headlineSmall,
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {

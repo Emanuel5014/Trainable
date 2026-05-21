@@ -1,8 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -137,7 +137,7 @@ fun SetLogRow(
             Text(
                 text = "$setNumber",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = when {
                     isCompleted -> OnTertiary
                     isActive -> OnPrimary
@@ -160,7 +160,7 @@ fun SetLogRow(
                         weightUnit
                     ) + " × $reps",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = textColor
                 )
                 if (isWarmup) {
@@ -171,7 +171,7 @@ fun SetLogRow(
                         Text(
                             text = "WARM UP",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.ExtraBold,
                             color = OnSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )

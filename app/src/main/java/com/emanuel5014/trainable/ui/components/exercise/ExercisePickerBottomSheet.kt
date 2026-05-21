@@ -61,12 +61,14 @@ import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +83,8 @@ fun ExercisePickerBottomSheet(
     modifier: Modifier = Modifier,
     languageCode: String = "en"
 ) {
+    rememberResponsiveSize()
+
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
@@ -118,21 +122,25 @@ fun ExercisePickerBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Spacing.CardPadding)
-                .padding(bottom = Spacing.extreme)
+                .padding(horizontal = ResponsiveSize.cardPadding)
+                .padding(bottom = ResponsiveSize.cardPadding)
         ) {
             Text(
                 text = "SELECT EXERCISE",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontSize = ResponsiveSize.labelLargeSize
+                ),
                 color = Primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             Spacer(modifier = Modifier.height(Spacing.xtraSmall))
             Text(
                 text = "Choose from library",
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = ResponsiveSize.headlineMediumSize
+                ),
                 color = OnSurface,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.Black
             )
 
             Spacer(modifier = Modifier.height(Spacing.large))
@@ -247,7 +255,7 @@ fun ExercisePickerBottomSheet(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(Spacing.small))
-                Text("Add Custom Exercise", fontWeight = FontWeight.Bold)
+                Text("Add Custom Exercise", fontWeight = FontWeight.ExtraBold)
             }
         }
     }
@@ -280,7 +288,7 @@ fun ExercisePickerBottomSheet(
             onDismissRequest = { exerciseToDelete = null },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text("Delete Exercise?", fontWeight = FontWeight.Bold, color = OnSurface)
+                Text("Delete Exercise?", fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
                 Text("Delete \"${exerciseToDelete!!.nome}\"? This cannot be undone.", color = OnSurfaceVariant)
@@ -332,7 +340,7 @@ private fun ExercisePickerItem(
                         text = ExerciseTranslations.translate(exercise.nome, languageCode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.SemiBold
                     )
                     if (exercise.id >= 1000) {
                         Spacer(modifier = Modifier.width(4.dp))
@@ -404,7 +412,7 @@ private fun AddCustomExerciseDialog(
             Text(
                 text = "New Exercise",
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
@@ -506,7 +514,7 @@ private fun EditCustomExerciseDialog(
             Text(
                 text = "Edit Exercise",
                 color = OnSurface,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
         },
         text = {
