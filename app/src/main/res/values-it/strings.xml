@@ -254,6 +254,9 @@
     <string name="analytics_body_weight">PESO CORPOREO</string>
     <string name="analytics_workout_calendar">Calendario Attività</string>
     <string name="analytics_workouts_this_month">%d allenamenti questo mese</string>
+    <string name="analytics_total_volume">VOLUME TOTALE</string>
+    <string name="analytics_volume_settings">Impostazioni Volume</string>
+    <string name="analytics_time_range">Periodo</string>
     <string name="analytics_day_mon">Lun</string>
     <string name="analytics_day_tue">Mar</string>
     <string name="analytics_day_wed">Mer</string>

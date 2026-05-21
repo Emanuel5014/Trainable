@@ -24,6 +24,9 @@ class AnalyticsRepository @Inject constructor(
     fun getVolumeHistory(startDate: Long): Flow<List<DailyVolume>> = 
         analyticsDao.getVolumeHistory(startDate)
 
+    fun getVolumeHistoryForPlan(planId: Int, startDate: Long): Flow<List<DailyVolume>> =
+        analyticsDao.getVolumeHistoryForPlan(planId, startDate)
+
     fun getAllPersonalBests(): Flow<List<PersonalBestRow>> = analyticsDao.getAllPersonalBests()
 
     fun getConsistency(planId: Int, startDate: Long): Flow<ConsistencyRow?> =

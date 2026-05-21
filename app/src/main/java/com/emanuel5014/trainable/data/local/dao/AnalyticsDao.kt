@@ -28,6 +28,16 @@ interface AnalyticsDao {
         ORDER BY MIN(w.timestamp) ASC
     """)
     fun getVolumeHistory(startDate: Long): Flow<List<DailyVolume>>
+
+    @Query("""
+        SELECT SUM(s.peso_sollevato * s.reps_effettive) AS volume, MIN(w.timestamp) AS timestamp
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON s.session_id = w.id
+        WHERE w.timestamp >= :startDate AND w.plan_id = :planId
+        GROUP BY date(w.timestamp / 1000, 'unixepoch')
+        ORDER BY MIN(w.timestamp) ASC
+    """)
+    fun getVolumeHistoryForPlan(planId: Int, startDate: Long): Flow<List<DailyVolume>>
     
     @Query("""
         SELECT MAX(peso_sollevato) 

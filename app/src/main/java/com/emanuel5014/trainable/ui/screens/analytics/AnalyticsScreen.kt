@@ -2,14 +2,17 @@ package com.emanuel5014.trainable.ui.screens.analytics
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,6 +78,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -87,6 +91,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
@@ -126,19 +132,62 @@ fun AnalyticsScreen(
     var showExercisePicker by remember { mutableStateOf(false) }
     var showChartPicker by remember { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var draggedWidgetId by remember { mutableStateOf<String?>(null) }
-    var recentlyMovedWidgetId by remember { mutableStateOf<String?>(null) }
-    var displacedWidgetId by remember { mutableStateOf<String?>(null) }
-    var displacedWidgetOffset by remember { mutableStateOf(0f) }
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
-    val moveThresholdPx = with(LocalDensity.current) { 72.dp.toPx() }
-    val swapNudgePx = with(LocalDensity.current) { 28.dp.toPx() }
+    val lazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val dragDropState = rememberDragDropState(
+        lazyListState = lazyListState,
+        haptic = haptic,
+        scope = scope,
+        onMove = { id, up ->
+            viewModel.moveWidget(id, up)
+        }
+    )
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
     val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
     val weightUnit = uiState.weightUnit
+    var showVolumeSettings by remember { mutableStateOf<String?>(null) }
+    var showAddVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+
+    val autoScrollThreshold = with(LocalDensity.current) { 80.dp.toPx() }
+    val autoScrollSpeed = 15f
+    
+    // Hide navbar during drag
+    LaunchedEffect(dragDropState.draggedWidgetId != null) {
+        BottomBarManager.isVisibleOverride = dragDropState.draggedWidgetId == null
+    }
+
+    LaunchedEffect(dragDropState.draggedWidgetId) {
+        val draggedId = dragDropState.draggedWidgetId
+        if (draggedId != null) {
+            while (true) {
+                val viewportHeight = lazyListState.layoutInfo.viewportSize.height.toFloat()
+                if (viewportHeight > 0f) {
+                    val fingerY = dragDropState.fingerY
+                    
+                    if (fingerY < autoScrollThreshold) {
+                        val ratio = (1f - (fingerY / autoScrollThreshold)).coerceIn(0f, 1f)
+                        val speed = autoScrollSpeed * ratio
+                        if (speed > 0.5f) {
+                            lazyListState.scrollBy(-speed)
+                            dragDropState.onDrag(fingerY)
+                        }
+                    } else if (fingerY > viewportHeight - autoScrollThreshold) {
+                        val distanceToBottom = viewportHeight - fingerY
+                        val ratio = (1f - (distanceToBottom / autoScrollThreshold)).coerceIn(0f, 1f)
+                        val speed = autoScrollSpeed * ratio
+                        if (speed > 0.5f) {
+                            lazyListState.scrollBy(speed)
+                            dragDropState.onDrag(fingerY)
+                        }
+                    }
+                }
+                delay(16)
+            }
+        }
+    }
 
     Scaffold(containerColor = Surface) { paddingValues ->
         if (uiState.isLoading) {
@@ -180,6 +229,10 @@ fun AnalyticsScreen(
                             viewModel.addCalendarChart()
                             fabMenuExpanded = false
                         },
+                        onAddVolume = {
+                            showAddVolumeDialog = true
+                            fabMenuExpanded = false
+                        },
                         onAddExercise = {
                             showChartPicker = true
                             fabMenuExpanded = false
@@ -190,7 +243,37 @@ fun AnalyticsScreen(
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        val item = lazyListState.layoutInfo.visibleItemsInfo.find { info ->
+                                            info.index > 0 && offset.y >= info.offset && offset.y <= info.offset + info.size
+                                        }
+                                        if (item != null) {
+                                            val widgetId = item.key as String
+                                            val itemRelativeOffset = offset - Offset(0f, item.offset.toFloat())
+                                            dragDropState.onDragStart(
+                                                absoluteInitialY = offset.y,
+                                                itemRelativeY = itemRelativeOffset.y,
+                                                widgetId = widgetId
+                                            )
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        dragDropState.onDragEnd()
+                                    },
+                                    onDragCancel = {
+                                        dragDropState.onDragEnd()
+                                    },
+                                    onDrag = { change, _ ->
+                                        change.consume()
+                                        dragDropState.onDrag(change.position.y)
+                                    }
+                                )
+                            },
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
                         item {
@@ -202,112 +285,37 @@ fun AnalyticsScreen(
                         }
                         
                         items(uiState.widgets, key = { it.id }) { widget ->
-                            var dragAccumulator by remember(widget.id) { mutableStateOf(0f) }
-                            var dragOffsetY by remember(widget.id) { mutableStateOf(0f) }
-                            val isDragging = draggedWidgetId == widget.id
-                            val isRecentlyMoved = recentlyMovedWidgetId == widget.id
-                            val displacedOffsetTarget = if (displacedWidgetId == widget.id) displacedWidgetOffset else 0f
-                            val displacedAnimatedOffset by animateFloatAsState(
-                                targetValue = displacedOffsetTarget,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
-                                ),
-                                label = "widget_displaced_offset"
-                            )
-                            val animatedOffsetY by animateFloatAsState(
-                                targetValue = (if (isDragging) dragOffsetY else 0f) + displacedAnimatedOffset,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                ),
-                                label = "widget_drag_offset"
-                            )
+                            val isDragging = dragDropState.draggedWidgetId == widget.id
+                            val isRecentlyDropped = dragDropState.recentlyDroppedWidgetId == widget.id
+                            
+                            val translationY = if (isDragging) {
+                                dragDropState.dragTranslationY(widget.id)
+                            } else if (isRecentlyDropped) {
+                                dragDropState.dropAnimatable.value
+                            } else {
+                                0f
+                            }
+                            
                             val animatedScale by animateFloatAsState(
-                                targetValue = when {
-                                    isDragging -> 1.04f
-                                    isRecentlyMoved -> 1.02f
-                                    else -> 1f
-                                },
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                ),
+                                targetValue = if (isDragging) 1.05f else 1f,
+                                animationSpec = spring(stiffness = Spring.StiffnessMedium),
                                 label = "widget_drag_scale"
                             )
+                            val animatedAlpha by animateFloatAsState(
+                                targetValue = if (dragDropState.draggedWidgetId != null && !isDragging) 0.6f else 1f,
+                                label = "widget_drag_alpha"
+                            )
+
                             val dragModifier = Modifier
-                                .zIndex(if (isDragging) 1f else 0f)
+                                .then(if (isDragging) Modifier else Modifier.animateItem())
+                                .zIndex(if (isDragging) 10f else 1f)
                                 .graphicsLayer {
-                                    translationY = animatedOffsetY
+                                    this.translationY = translationY
                                     scaleX = animatedScale
                                     scaleY = animatedScale
-                                    clip = !isDragging
-                                    rotationZ = if (isDragging) 1.2f else 0f
-                                }
-                                .pointerInput(widget.id, uiState.widgets.size) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            draggedWidgetId = widget.id
-                                            dragAccumulator = 0f
-                                            dragOffsetY = 0f
-                                        },
-                                        onDragEnd = {
-                                            draggedWidgetId = null
-                                            displacedWidgetId = null
-                                            displacedWidgetOffset = 0f
-                                            dragAccumulator = 0f
-                                            dragOffsetY = 0f
-                                        },
-                                        onDragCancel = {
-                                            draggedWidgetId = null
-                                            displacedWidgetId = null
-                                            displacedWidgetOffset = 0f
-                                            dragAccumulator = 0f
-                                            dragOffsetY = 0f
-                                        }
-                                    ) { change, dragAmount ->
-                                        change.consume()
-                                        dragAccumulator += dragAmount.y
-                                        dragOffsetY += dragAmount.y
-
-                                        val currentIndex = uiState.widgets.indexOfFirst { it.id == widget.id }
-                                        if (currentIndex == -1) return@detectDragGesturesAfterLongPress
-
-                                        if (dragAccumulator > moveThresholdPx && currentIndex < uiState.widgets.lastIndex) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            displacedWidgetId = uiState.widgets.getOrNull(currentIndex + 1)?.id
-                                            displacedWidgetOffset = -swapNudgePx
-                                            scope.launch {
-                                                delay(30)
-                                                displacedWidgetOffset = 0f
-                                            }
-                                            viewModel.moveWidget(widget.id, up = false)
-                                            recentlyMovedWidgetId = widget.id
-                                            scope.launch {
-                                                delay(220)
-                                                if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
-                                            }
-                                            dragAccumulator = 0f
-                                            dragOffsetY -= moveThresholdPx
-                                        } else if (dragAccumulator < -moveThresholdPx && currentIndex > 0) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            displacedWidgetId = uiState.widgets.getOrNull(currentIndex - 1)?.id
-                                            displacedWidgetOffset = swapNudgePx
-                                            scope.launch {
-                                                delay(30)
-                                                displacedWidgetOffset = 0f
-                                            }
-                                            viewModel.moveWidget(widget.id, up = true)
-                                            recentlyMovedWidgetId = widget.id
-                                            scope.launch {
-                                                delay(220)
-                                                if (recentlyMovedWidgetId == widget.id) recentlyMovedWidgetId = null
-                                            }
-                                            dragAccumulator = 0f
-                                            dragOffsetY += moveThresholdPx
-                                        }
-                                    }
+                                    alpha = animatedAlpha
+                                    shadowElevation = if (isDragging) 16.dp.toPx() else 0f
+                                    clip = false
                                 }
 
                             when (widget) {
@@ -315,7 +323,7 @@ fun AnalyticsScreen(
                                     BodyWeightChartSection(
                                         modifier = dragModifier,
                                         isDragging = isDragging,
-                                        isRecentlyMoved = isRecentlyMoved,
+                                        isRecentlyMoved = isRecentlyDropped,
                                         bodyWeightHistory = widget.history,
                                         bodyWeightInput = uiState.bodyWeightInput,
                                         weightUnit = weightUnit,
@@ -328,7 +336,7 @@ fun AnalyticsScreen(
                                     WorkoutCalendarSection(
                                         modifier = dragModifier,
                                         isDragging = isDragging,
-                                        isRecentlyMoved = isRecentlyMoved,
+                                        isRecentlyMoved = isRecentlyDropped,
                                         workoutDates = widget.workoutDates,
                                         onRemove = { viewModel.removeWidget(widget.id) }
                                     )
@@ -337,11 +345,24 @@ fun AnalyticsScreen(
                                     ExerciseChartSection(
                                         modifier = dragModifier,
                                         isDragging = isDragging,
-                                        isRecentlyMoved = isRecentlyMoved,
+                                        isRecentlyMoved = isRecentlyDropped,
                                         exerciseName = widget.exerciseName,
                                         history = widget.history,
                                         weightUnit = weightUnit,
                                         onRemove = { viewModel.removeWidget(widget.id) }
+                                    )
+                                }
+                                is AnalyticsWidget.Volume -> {
+                                    VolumeChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        planName = widget.planName,
+                                        timeRange = widget.timeRange,
+                                        history = widget.history,
+                                        weightUnit = weightUnit,
+                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onEdit = { showVolumeSettings = widget.id }
                                     )
                                 }
                             }
@@ -383,6 +404,38 @@ fun AnalyticsScreen(
                     showChartPicker = false
                 },
                 onClearAll = {}
+            )
+        }
+
+        if (showVolumeSettings != null) {
+            val widgetId = showVolumeSettings!!
+            val widget = uiState.widgets.find { it.id == widgetId } as? AnalyticsWidget.Volume
+            if (widget != null) {
+                VolumeSettingsBottomSheet(
+                    allPlans = uiState.allPlans,
+                    currentPlanId = widget.planId,
+                    currentTimeRange = widget.timeRange,
+                    onDismiss = { showVolumeSettings = null },
+                    onConfirm = { planId, timeRange ->
+                        viewModel.updateVolumeChart(widgetId, planId, timeRange)
+                        showVolumeSettings = null
+                    }
+                )
+            }
+        }
+
+        if (showAddVolumeDialog) {
+            val activePlan = uiState.allPlans.find { it.nome == uiState.activePlanName }
+            val planId = activePlan?.id ?: uiState.allPlans.firstOrNull()?.id ?: -1
+            VolumeSettingsBottomSheet(
+                allPlans = uiState.allPlans,
+                currentPlanId = planId,
+                currentTimeRange = AnalyticsTimeRange.OneMonth,
+                onDismiss = { showAddVolumeDialog = false },
+                onConfirm = { selectedPlanId, selectedTimeRange ->
+                    viewModel.addVolumeChart(selectedPlanId, selectedTimeRange)
+                    showAddVolumeDialog = false
+                }
             )
         }
     }
@@ -526,6 +579,7 @@ private fun AnalyticsHeaderFabMenu(
     onExpandedChange: (Boolean) -> Unit,
     onAddBodyWeight: () -> Unit,
     onAddCalendar: () -> Unit,
+    onAddVolume: () -> Unit,
     onAddExercise: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -572,8 +626,16 @@ private fun AnalyticsHeaderFabMenu(
                 }
             )
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.analytics_choose_exercises)) },
+                text = { Text(stringResource(R.string.analytics_total_volume)) },
                 leadingIcon = { Icon(Icons.Rounded.FitnessCenter, contentDescription = null) },
+                onClick = {
+                    onAddVolume()
+                    onExpandedChange(false)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.analytics_choose_exercises)) },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 onClick = {
                     onAddExercise()
                     onExpandedChange(false)
@@ -813,11 +875,22 @@ fun ExerciseChartSection(
 
 @Composable
 fun WidgetControls(
-    onRemove: (() -> Unit)?
+    onRemove: (() -> Unit)?,
+    onEdit: (() -> Unit)? = null
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (onRemove != null) {
+        if (onEdit != null) {
+            IconButton(onClick = onEdit, modifier = Modifier.size(24.dp)) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = stringResource(R.string.edit),
+                    tint = Primary.copy(alpha = 0.8f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(4.dp))
+        }
+        if (onRemove != null) {
             IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                 Icon(
                     Icons.Rounded.Clear,
@@ -1097,6 +1170,250 @@ fun ExercisePickerItem(
                     contentDescription = null,
                     tint = if (isSelected) OnPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VolumeChartSection(
+    modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
+    isRecentlyMoved: Boolean = false,
+    planName: String,
+    timeRange: AnalyticsTimeRange,
+    history: List<AnalyticsChartPoint>,
+    weightUnit: String,
+    onRemove: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null
+) {
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
+        label = "volume_card_elevation"
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
+            .border(
+                width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
+                color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.analytics_total_volume),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = planName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Primary
+                    )
+                }
+                WidgetControls(onRemove, onEdit)
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            if (history.isNotEmpty()) {
+                val latest = history.last().value
+                val first = history.first().value
+                val changePercent = if (first != 0f) ((latest - first) / first) * 100f else 0f
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Spacing.medium),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        Text(
+                            text = WeightUnitConverter.formatWithUnit(latest, weightUnit),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Primary
+                        )
+                        Text(
+                            text = timeRange.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        if (changePercent != 0f) {
+                            Text(
+                                text = String.format("%+.1f%%", changePercent),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (changePercent > 0) Primary else Tertiary
+                            )
+                        }
+                    }
+                }
+
+                AnalyticsLineChart(
+                    points = history,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineColor = Primary,
+                    fillColor = Primary.copy(alpha = 0.14f)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.analytics_no_data_range),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VolumeSettingsBottomSheet(
+    allPlans: List<WorkoutPlanEntity>,
+    currentPlanId: Int,
+    currentTimeRange: AnalyticsTimeRange,
+    onDismiss: () -> Unit,
+    onConfirm: (Int, AnalyticsTimeRange) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    var selectedPlanId by remember { mutableStateOf(currentPlanId) }
+    var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.analytics_volume_settings),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(bottom = Spacing.medium)
+            )
+
+            Text(
+                text = stringResource(R.string.training_plans),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                items(allPlans) { plan ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedPlanId == plan.id) Primary.copy(alpha = 0.1f) else Color.Transparent)
+                            .clickable { selectedPlanId = plan.id }
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .border(2.dp, Primary, CircleShape)
+                                .padding(4.dp)
+                                .clip(CircleShape)
+                                .background(if (selectedPlanId == plan.id) Primary else Color.Transparent)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.medium))
+                        Text(
+                            text = plan.nome,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (selectedPlanId == plan.id) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            Text(
+                text = stringResource(R.string.analytics_time_range),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            ) {
+                AnalyticsTimeRange.values().forEach { range ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedTimeRange == range) Primary else SurfaceContainerHigh)
+                            .clickable { selectedTimeRange = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = range.label,
+                            color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.large))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary)
+                    .clickable { onConfirm(selectedPlanId, selectedTimeRange) }
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    color = OnPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

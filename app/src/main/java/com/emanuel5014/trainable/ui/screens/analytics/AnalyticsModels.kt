@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import java.util.concurrent.TimeUnit
 
 enum class AnalyticsTimeRange(val label: String, private val durationDays: Long?) {
@@ -46,6 +47,14 @@ sealed class AnalyticsWidget(val id: String) {
         val exerciseName: String,
         val history: List<AnalyticsChartPoint>
     ) : AnalyticsWidget("exercise_$exerciseId")
+
+    data class Volume(
+        val widgetId: String,
+        val planId: Int,
+        val planName: String,
+        val timeRange: AnalyticsTimeRange,
+        val history: List<AnalyticsChartPoint>
+    ) : AnalyticsWidget(widgetId)
 }
 
 data class AnalyticsUiState(
@@ -62,6 +71,7 @@ data class AnalyticsUiState(
     val bodyWeightInput: String = "",
     val weightUnit: String = "kg",
     val workoutDates: List<Long> = emptyList(),
+    val allPlans: List<WorkoutPlanEntity> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )

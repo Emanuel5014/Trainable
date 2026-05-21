@@ -254,6 +254,9 @@
     <string name="analytics_body_weight">BODY WEIGHT</string>
     <string name="analytics_workout_calendar">Workout Calendar</string>
     <string name="analytics_workouts_this_month">%d workouts this month</string>
+    <string name="analytics_total_volume">TOTAL VOLUME</string>
+    <string name="analytics_volume_settings">Volume Settings</string>
+    <string name="analytics_time_range">Time Range</string>
     <string name="analytics_day_mon">Mon</string>
     <string name="analytics_day_tue">Tue</string>
     <string name="analytics_day_wed">Wed</string>
