@@ -62,6 +62,9 @@ interface WorkoutDao {
     @Delete
     suspend fun deletePlan(plan: WorkoutPlanEntity)
 
+    @Query("UPDATE workout_sessions SET plan_id = :newPlanId, note_sessione = COALESCE(note_sessione, :oldPlanName) WHERE plan_id = :oldPlanId")
+    suspend fun reassignSessions(oldPlanId: Int, newPlanId: Int, oldPlanName: String)
+
     // --- Workout Plan Images ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlanImage(image: WorkoutPlanImageEntity): Long

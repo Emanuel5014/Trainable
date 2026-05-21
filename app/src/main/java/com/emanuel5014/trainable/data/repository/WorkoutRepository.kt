@@ -212,7 +212,33 @@ class WorkoutRepository @Inject constructor(
         }
     }
 
-    suspend fun deletePlan(plan: WorkoutPlanEntity) = workoutDao.deletePlan(plan)
+    suspend fun deletePlan(plan: WorkoutPlanEntity) {
+        val user = userDao.getUser().first()
+        if (user != null) {
+            val allPlans = workoutDao.getAllPlans().first()
+            val customPlan = allPlans.find { it.nome == "Custom Workout" && it.note == "SYSTEM_PLAN" }
+                ?: allPlans.find { it.nome == "Custom Workout" && it.note == null && !it.isActive } // Legacy
+                ?: run {
+                    val newId = workoutDao.insertPlan(
+                        WorkoutPlanEntity(
+                            userId = user.id,
+                            nome = "Custom Workout",
+                            note = "SYSTEM_PLAN",
+                            dataInizio = System.currentTimeMillis(),
+                            isActive = false
+                        )
+                    )
+                    workoutDao.getAllPlans().first().find { it.id == newId.toInt() }!!
+                }
+
+            if (customPlan.note == null) {
+                workoutDao.updatePlan(customPlan.copy(note = "SYSTEM_PLAN"))
+            }
+
+            workoutDao.reassignSessions(plan.id, customPlan.id, plan.nome)
+        }
+        workoutDao.deletePlan(plan)
+    }
     
     suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false, note: String? = null): Long {
         return workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished, noteSessione = note))
