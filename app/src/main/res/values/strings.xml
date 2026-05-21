@@ -237,6 +237,7 @@
     <string name="analytics_max_progress">MAX PROGRESS</string>
     <string name="analytics_select_exercises_desc">Select exercises to track your personal bests</string>
     <string name="analytics_choose_exercises">Choose Exercises</string>
+    <string name="analytics_add_1rm_graphic">1RM GRAPHIC</string>
     <string name="analytics_estimated_1rm">ESTIMATED 1RM</string>
     <string name="analytics_estimated_1rm_short">Est. 1RM</string>
     <string name="analytics_selected_count">Selected: %d</string>
@@ -252,7 +253,7 @@
     <string name="analytics_strength_summary_negative">-%s%% vs previous 30 days</string>
     <string name="analytics_strength_no_data">Not enough PR history yet.</string>
     <string name="analytics_body_weight">BODY WEIGHT</string>
-    <string name="analytics_workout_calendar">Workout Calendar</string>
+    <string name="analytics_workout_calendar">WORKOUT CALENDAR</string>
     <string name="analytics_workouts_this_month">%d workouts this month</string>
     <string name="analytics_total_volume">TOTAL VOLUME</string>
     <string name="analytics_volume_settings">Volume Settings</string>
@@ -288,7 +289,7 @@
     <string name="member_since">Member since %s</string>
     <string name="username">Username</string>
     <string name="edit_username">Edit Username</string>
-    <string name="weekly_goal">Weekly Goal</string>
+    <string name="weekly_goal">WEEKLY GOAL</string>
     <string name="target_workouts">Target workouts per week</string>
     <string name="tactile_feedback">Tactile Feedback</string>
     <string name="tactile_feedback_desc">Vibration on interactions</string>

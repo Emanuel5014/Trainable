@@ -237,6 +237,7 @@
     <string name="analytics_max_progress">PROGRESSI MASSIMALI</string>
     <string name="analytics_select_exercises_desc">Seleziona gli esercizi per tracciare i tuoi massimali</string>
     <string name="analytics_choose_exercises">Scegli Esercizi</string>
+    <string name="analytics_add_1rm_graphic">GRAFICO 1RM</string>
     <string name="analytics_estimated_1rm">1RM STIMATO</string>
     <string name="analytics_estimated_1rm_short">1RM stimato</string>
     <string name="analytics_selected_count">Selezionati: %d</string>
@@ -252,7 +253,7 @@
     <string name="analytics_strength_summary_negative">-%s%% rispetto ai precedenti 30 giorni</string>
     <string name="analytics_strength_no_data">Dati PR insufficienti.</string>
     <string name="analytics_body_weight">PESO CORPOREO</string>
-    <string name="analytics_workout_calendar">Calendario Attività</string>
+    <string name="analytics_workout_calendar">CALENDARIO ATTIVITÀ</string>
     <string name="analytics_workouts_this_month">%d allenamenti questo mese</string>
     <string name="analytics_total_volume">VOLUME TOTALE</string>
     <string name="analytics_volume_settings">Impostazioni Volume</string>
@@ -288,7 +289,7 @@
     <string name="member_since">Membro dal %s</string>
     <string name="username">Nome utente</string>
     <string name="edit_username">Modifica Nome Utente</string>
-    <string name="weekly_goal">Obiettivo Settimanale</string>
+    <string name="weekly_goal">OBIETTIVO SETTIMANALE</string>
     <string name="target_workouts">Allenamenti obiettivo per settimana</string>
     <string name="tactile_feedback">Feedback Aptico</string>
     <string name="tactile_feedback_desc">Vibrazione sulle interazioni</string>

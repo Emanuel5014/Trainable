@@ -274,10 +274,18 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun addExerciseChart(exerciseId: Int) {
+        addMultipleExerciseCharts(setOf(exerciseId))
+    }
+
+    fun addMultipleExerciseCharts(exerciseIds: Set<Int>) {
         widgetOrder.update { current ->
-            val id = "exercise_$exerciseId"
-            if (current.contains(id)) return@update current
-            val newList = current + id
+            var newList = current
+            exerciseIds.forEach { id ->
+                val widgetId = "exercise_$id"
+                if (!newList.contains(widgetId)) {
+                    newList = newList + widgetId
+                }
+            }
             saveWidgetOrder(newList)
             newList
         }
@@ -317,6 +325,14 @@ class AnalyticsViewModel @Inject constructor(
             val newId = "volume_${planId}_${timeRange.name}_${widgetId.split("_").last()}"
             val newList = current.toMutableList()
             newList[index] = newId
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun removeAllExerciseCharts() {
+        widgetOrder.update { current ->
+            val newList = current.filter { !it.startsWith("exercise_") }
             saveWidgetOrder(newList)
             newList
         }

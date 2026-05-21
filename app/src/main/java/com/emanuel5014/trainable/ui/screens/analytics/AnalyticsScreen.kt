@@ -395,15 +395,22 @@ fun AnalyticsScreen(
         }
 
         if (showChartPicker) {
+            val existingExerciseIds = uiState.widgets
+                .filterIsInstance<AnalyticsWidget.Exercise>()
+                .map { it.exerciseId }
+                .toSet()
             ExercisePickerBottomSheet(
                 allExercises = uiState.personalBests,
-                selectedIds = emptySet(), // Not used for this picker
+                selectedIds = existingExerciseIds,
                 onDismiss = { showChartPicker = false },
                 onToggleSelection = { id ->
-                    viewModel.addExerciseChart(id)
-                    showChartPicker = false
+                    if (id !in existingExerciseIds) {
+                        viewModel.addExerciseChart(id)
+                    }
                 },
-                onClearAll = {}
+                onClearAll = {
+                    viewModel.removeAllExerciseCharts()
+                }
             )
         }
 
@@ -634,7 +641,7 @@ private fun AnalyticsHeaderFabMenu(
                 }
             )
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.analytics_choose_exercises)) },
+                text = { Text(stringResource(R.string.analytics_add_1rm_graphic)) },
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 onClick = {
                     onAddExercise()
@@ -1010,7 +1017,8 @@ fun ExercisePickerBottomSheet(
     selectedIds: Set<Int>,
     onDismiss: () -> Unit,
     onToggleSelection: (Int) -> Unit,
-    onClearAll: () -> Unit
+    onClearAll: () -> Unit,
+    onConfirmAdd: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
     var searchQuery by remember { mutableStateOf("") }
@@ -1104,7 +1112,7 @@ fun ExercisePickerBottomSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(350.dp)
+                    .height(if (onConfirmAdd != null) 300.dp else 350.dp)
             ) {
                 items(filteredExercises) { exercise ->
                     val isSelected = exercise.exerciseId in selectedIds
@@ -1115,6 +1123,30 @@ fun ExercisePickerBottomSheet(
                         enabled = true
                     )
                 }
+            }
+
+            if (onConfirmAdd != null) {
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.small)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (selectedIds.isNotEmpty()) Primary else SurfaceContainerHigh)
+                        .clickable(enabled = selectedIds.isNotEmpty()) {
+                            onConfirmAdd()
+                        }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.add).uppercase(),
+                        color = if (selectedIds.isNotEmpty()) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                Spacer(modifier = Modifier.height(Spacing.small))
             }
         }
     }
