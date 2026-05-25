@@ -34,7 +34,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -484,7 +484,8 @@ fun DashboardScreen(
                 item {
                     WeeklyGoalCard(
                         workoutsThisWeek = uiState.workoutsThisWeek,
-                        weeklyGoal = uiState.weeklyGoal
+                        weeklyGoal = uiState.weeklyGoal,
+                        cardioWorkoutsThisWeek = uiState.cardioWorkoutsThisWeek
                     )
                 }
 
@@ -882,7 +883,7 @@ private fun DashboardSimpleHeader(
 }
 
 @Composable
-private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int) {
+private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int) {
     val progress = if (weeklyGoal > 0) (workoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f) else 0f
     
     GymCard(containerColor = SurfaceContainerHigh) {
@@ -906,6 +907,15 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int) {
                         color = OnSurface,
                         fontWeight = FontWeight.ExtraBold
                     )
+                    if (cardioWorkoutsThisWeek > 0) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "$cardioWorkoutsThisWeek CARDIO",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
                 if (workoutsThisWeek >= weeklyGoal) {
                     Icon(
@@ -972,7 +982,7 @@ private fun UnfinishedSessionCard(
                         )
                     } else {
                         Icon(
-                            imageVector = Icons.Rounded.PlayCircle,
+                            imageVector = Icons.Rounded.PlayArrow,
                             contentDescription = null,
                             tint = OnPrimary,
                             modifier = Modifier.size(24.dp)

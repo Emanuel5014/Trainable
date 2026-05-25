@@ -276,6 +276,8 @@ class WorkoutRepository @Inject constructor(
     fun getAllSessionsWithDetails(): Flow<List<SessionWithDetails>> = workoutDao.getAllSessionsWithDetails()
 
     fun getAllSessions(): Flow<List<WorkoutSessionEntity>> = workoutDao.getAllSessions()
+
+    fun getCardioSessionCountSince(sinceTimestamp: Long): Flow<Int> = workoutDao.getCardioSessionCountSince(sinceTimestamp)
     
     fun getRecentSessions(limit: Int = 10): Flow<List<WorkoutSessionEntity>> = workoutDao.getRecentSessions(limit)
 
@@ -434,6 +436,8 @@ class WorkoutRepository @Inject constructor(
         workoutDao.deleteExerciseFromSession(sessionId, exerciseId)
 
     suspend fun updateSetOrders(sets: List<SetLogEntity>) = workoutDao.updateSetOrders(sets)
+
+    suspend fun deleteUncompletedSetsForSession(sessionId: Int) = workoutDao.deleteUncompletedSetsForSession(sessionId)
 
     suspend fun saveExerciseSwap(swap: SessionExerciseSwapEntity) = workoutDao.insertExerciseSwap(swap)
 

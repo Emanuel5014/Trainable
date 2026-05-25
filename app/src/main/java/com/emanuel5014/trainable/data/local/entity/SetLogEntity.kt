@@ -46,5 +46,7 @@ data class SetLogEntity(
     @ColumnInfo(name = "ordine_esercizio")
     val ordineEsercizio: Int = 0,
     @ColumnInfo(name = "superset_id")
-    val supersetId: String? = null
+    val supersetId: String? = null,
+    @ColumnInfo(name = "is_completed")
+    val isCompleted: Boolean = true
 )

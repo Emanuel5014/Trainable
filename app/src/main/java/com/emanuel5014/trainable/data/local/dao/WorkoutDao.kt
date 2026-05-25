@@ -127,6 +127,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_sessions WHERE is_finished = 1 ORDER BY timestamp DESC")
     fun getAllSessions(): Flow<List<WorkoutSessionEntity>>
 
+    @Query("SELECT COUNT(DISTINCT ws.id) FROM workout_sessions ws INNER JOIN cardio_logs cl ON ws.id = cl.session_id WHERE ws.is_finished = 1 AND ws.timestamp >= :sinceTimestamp")
+    fun getCardioSessionCountSince(sinceTimestamp: Long): Flow<Int>
+
     @Query("SELECT * FROM workout_sessions WHERE is_finished = 1 ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentSessions(limit: Int): Flow<List<WorkoutSessionEntity>>
 
@@ -197,6 +200,9 @@ interface WorkoutDao {
 
     @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND exercise_id = :exerciseId")
     suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int)
+
+    @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND is_completed = 0")
+    suspend fun deleteUncompletedSetsForSession(sessionId: Int)
 
     @Transaction
     suspend fun updateSetOrders(sets: List<SetLogEntity>) {
