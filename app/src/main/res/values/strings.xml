@@ -255,8 +255,8 @@
     <string name="analytics_body_weight">BODY WEIGHT</string>
     <string name="analytics_workout_calendar">WORKOUT CALENDAR</string>
     <string name="analytics_workouts_this_month">%d workouts this month</string>
-    <string name="analytics_total_volume">TOTAL VOLUME</string>
-    <string name="analytics_volume_settings">Volume Settings</string>
+    <string name="analytics_total_volume">TOTAL TONNAGE</string>
+    <string name="analytics_volume_settings">Tonnage Settings</string>
     <string name="analytics_time_range">Time Range</string>
     <string name="analytics_day_mon">Mon</string>
     <string name="analytics_day_tue">Tue</string>
@@ -267,7 +267,7 @@
     <string name="analytics_day_sun">Sun</string>
     <string name="analytics_no_weight_data">No weight data available</string>
     <string name="analytics_todays_weight">Today\'s weight</string>
-    <string name="total_volume_label">Total Volume</string>
+    <string name="total_volume_label">Total Tonnage</string>
     <string name="consistency">Consistency</string>
     <string name="strength_index">Strength Index</string>
     <string name="view_all">VIEW ALL</string>
@@ -277,7 +277,7 @@
     <string name="body_composition">Body Composition</string>
     <string name="structural_balance">Structural Balance</string>
     <string name="workouts_per_week">Workouts/Week</string>
-    <string name="avg_volume">Avg Volume</string>
+    <string name="avg_volume">Avg Tonnage</string>
 
     <!-- Settings -->
     <string name="settings_title">SETTINGS</string>

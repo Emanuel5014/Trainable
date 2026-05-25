@@ -799,7 +799,7 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
-                        if (!isExerciseCompleted) {
+                        if (!isExerciseCompleted || isResting) {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             ExerciseNavigation(

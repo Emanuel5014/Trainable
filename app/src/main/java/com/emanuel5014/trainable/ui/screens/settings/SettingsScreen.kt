@@ -1134,7 +1134,7 @@ fun SettingsScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Trainable v1.4.0",
+                                    text = "Trainable v1.4.1",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.ExtraBold

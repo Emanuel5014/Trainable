@@ -255,8 +255,8 @@
     <string name="analytics_body_weight">PESO CORPOREO</string>
     <string name="analytics_workout_calendar">CALENDARIO ATTIVITÀ</string>
     <string name="analytics_workouts_this_month">%d allenamenti questo mese</string>
-    <string name="analytics_total_volume">VOLUME TOTALE</string>
-    <string name="analytics_volume_settings">Impostazioni Volume</string>
+    <string name="analytics_total_volume">TONNELLAGGIO TOTALE</string>
+    <string name="analytics_volume_settings">Impostazioni Tonnellaggio</string>
     <string name="analytics_time_range">Periodo</string>
     <string name="analytics_day_mon">Lun</string>
     <string name="analytics_day_tue">Mar</string>
@@ -267,7 +267,7 @@
     <string name="analytics_day_sun">Dom</string>
     <string name="analytics_no_weight_data">Nessun dato sul peso disponibile</string>
     <string name="analytics_todays_weight">Peso di oggi</string>
-    <string name="total_volume_label">Volume Totale</string>
+    <string name="total_volume_label">Tonnellaggio Totale</string>
     <string name="consistency">Costanza</string>
     <string name="strength_index">Indice Forza</string>
     <string name="view_all">VEDI TUTTI</string>
@@ -277,7 +277,7 @@
     <string name="body_composition">Composizione Corporea</string>
     <string name="structural_balance">Bilanciamento Strutturale</string>
     <string name="workouts_per_week">Allenamenti/Settimana</string>
-    <string name="avg_volume">Volume Medio</string>
+    <string name="avg_volume">Tonnellaggio Medio</string>
 
     <!-- Settings -->
     <string name="settings_title">IMPOSTAZIONI</string>
