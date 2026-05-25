@@ -40,6 +40,8 @@ import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
@@ -362,6 +364,19 @@ fun WorkoutExecutionScreen(
                                         fontWeight = FontWeight.ExtraBold,
                                         modifier = Modifier.weight(1f)
                                     )
+                                    if (targetIndex < state.exercises.lastIndex) {
+                                        val nextEx = state.exercises[targetIndex + 1]
+                                        val isLinked = targetExState.supersetId != null && targetExState.supersetId == nextEx.supersetId
+                                        IconButton(
+                                            onClick = { viewModel.toggleSupersetWithNext(targetIndex) }
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
+                                                contentDescription = "Toggle Superset with Next",
+                                                tint = if (isLinked) Primary else OnSurfaceVariant
+                                            )
+                                        }
+                                    }
                                     IconButton(
                                         onClick = { showSwapExerciseSheet = true }
                                     ) {

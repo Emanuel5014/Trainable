@@ -198,6 +198,9 @@ interface WorkoutDao {
     @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND exercise_id = :exerciseId")
     suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int)
 
+    @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND is_completed = 0")
+    suspend fun deleteUncompletedSetsForSession(sessionId: Int)
+
     @Transaction
     suspend fun updateSetOrders(sets: List<SetLogEntity>) {
         sets.forEach { updateSet(it) }
