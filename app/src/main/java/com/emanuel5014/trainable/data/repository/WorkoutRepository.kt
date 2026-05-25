@@ -276,6 +276,8 @@ class WorkoutRepository @Inject constructor(
     fun getAllSessionsWithDetails(): Flow<List<SessionWithDetails>> = workoutDao.getAllSessionsWithDetails()
 
     fun getAllSessions(): Flow<List<WorkoutSessionEntity>> = workoutDao.getAllSessions()
+
+    fun getCardioSessionCountSince(sinceTimestamp: Long): Flow<Int> = workoutDao.getCardioSessionCountSince(sinceTimestamp)
     
     fun getRecentSessions(limit: Int = 10): Flow<List<WorkoutSessionEntity>> = workoutDao.getRecentSessions(limit)
 

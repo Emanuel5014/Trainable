@@ -127,6 +127,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_sessions WHERE is_finished = 1 ORDER BY timestamp DESC")
     fun getAllSessions(): Flow<List<WorkoutSessionEntity>>
 
+    @Query("SELECT COUNT(DISTINCT ws.id) FROM workout_sessions ws INNER JOIN cardio_logs cl ON ws.id = cl.session_id WHERE ws.is_finished = 1 AND ws.timestamp >= :sinceTimestamp")
+    fun getCardioSessionCountSince(sinceTimestamp: Long): Flow<Int>
+
     @Query("SELECT * FROM workout_sessions WHERE is_finished = 1 ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentSessions(limit: Int): Flow<List<WorkoutSessionEntity>>
 

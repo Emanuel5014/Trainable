@@ -28,6 +28,7 @@ data class DashboardUiState(
     val weeklyVolumeTons: Float = 0f,
     val weeklyGoal: Int = 3,
     val workoutsThisWeek: Int = 0,
+    val cardioWorkoutsThisWeek: Int = 0,
     val unfinishedSessions: List<SessionWithPlanName> = emptyList(),
     val prSnapshots: List<PrSnapshot> = emptyList(),
     val gymMembershipExpiryDate: Long? = null,
@@ -109,13 +110,14 @@ class DashboardViewModel @Inject constructor(
         },
         combine(
             workoutRepository.getAllSessions(),
-            workoutRepository.getUnfinishedSessionsWithPlanName()
-        ) { all, unf -> all to unf },
+            workoutRepository.getUnfinishedSessionsWithPlanName(),
+            workoutRepository.getCardioSessionCountSince(weekStartMillis)
+        ) { all, unf, cardioCount -> Triple(all, unf, cardioCount) },
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
         val (goal, membershipExpiry, dynamic, palette, swipe, floating) = prefs
-        val (allSessions, unfinished) = sessionData
+        val (allSessions, unfinished, cardioCount) = sessionData
         val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
         val numWorkoutsThisWeek = workoutsThisWeek.size
         
@@ -169,6 +171,7 @@ class DashboardViewModel @Inject constructor(
             weeklyVolumeTons = (volume ?: 0f) / 1000f,
             weeklyGoal = goal,
             workoutsThisWeek = numWorkoutsThisWeek,
+            cardioWorkoutsThisWeek = cardioCount,
             unfinishedSessions = unfinished,
             isLoading = false,
             gymMembershipExpiryDate = membershipExpiry,

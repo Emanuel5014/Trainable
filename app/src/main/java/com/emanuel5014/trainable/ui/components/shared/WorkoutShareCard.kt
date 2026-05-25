@@ -393,6 +393,16 @@ fun WorkoutShareCard(
                                         color = textPrimary
                                     )
                                 }
+
+                                if (!set.note.isNullOrBlank()) {
+                                    Text(
+                                        text = set.note,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = textSecondary,
+                                        fontStyle = FontStyle.Italic,
+                                        modifier = Modifier.padding(start = 46.dp, top = 2.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -452,6 +462,16 @@ fun WorkoutShareCard(
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = textPrimary
+                                    )
+                                }
+
+                                if (!set.note.isNullOrBlank()) {
+                                    Text(
+                                        text = set.note,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = textSecondary,
+                                        fontStyle = FontStyle.Italic,
+                                        modifier = Modifier.padding(start = 46.dp, top = 2.dp)
                                     )
                                 }
                             }
