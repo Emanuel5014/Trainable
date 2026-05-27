@@ -460,5 +460,6 @@
     <!-- Errors -->
     <string name="error_unknown">Errore sconosciuto</string>
     <string name="routine_not_found">Scheda non trovata</string>
+    <string name="reps_hint">es. 8 o 8-6-4-2</string>
 
 </resources>

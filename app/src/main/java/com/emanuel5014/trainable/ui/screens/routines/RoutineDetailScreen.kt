@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.routines
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -167,6 +168,12 @@ fun RoutineDetailScreen(
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
     var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
+
+    val trainedMuscleGroups = remember(localExercises.size, localExercises.map { it.exercise.categoria }) {
+        localExercises.map { it.exercise.categoria }
+            .distinct()
+            .filter { it.isNotBlank() }
+    }
 
     var editingExerciseId by remember { mutableStateOf<Int?>(null) }
     val editingExercise = remember(editingExerciseId, localExercises.size, localExercises.map { it.planExercise.supersetId }) {
@@ -359,6 +366,33 @@ fun RoutineDetailScreen(
                                 color = OnSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
+                        }
+
+                        if (trainedMuscleGroups.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState())
+                                    .padding(top = 10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                trainedMuscleGroups.forEach { category ->
+                                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
+                                    androidx.compose.material3.Surface(
+                                        color = SurfaceContainerHigh,
+                                        contentColor = OnSurfaceVariant,
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = translatedCategory,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -682,6 +716,7 @@ fun RoutineDetailScreen(
                             value = repsText,
                             onValueChange = { repsText = it },
                             label = stringResource(R.string.reps),
+                            supportingText = stringResource(R.string.reps_hint),
                             modifier = Modifier.weight(1f)
                         )
                     }

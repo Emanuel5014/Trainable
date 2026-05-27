@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,6 +64,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.rememberDatePickerState
@@ -96,6 +98,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -131,6 +134,7 @@ fun RoutineListScreen(
     viewModel: RoutinesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -394,7 +398,8 @@ fun RoutineListScreen(
                             isSelectionMode = uiState.isSelectionMode,
                             swipeActionsEnabled = swipeActionsEnabled,
                             selectedPlanIds = uiState.selectedPlanIds,
-                            onToggleSelection = { viewModel.togglePlanSelection(it) }
+                            onToggleSelection = { viewModel.togglePlanSelection(it) },
+                            languageCode = languageCode
                         )
                     }
                 }
@@ -854,7 +859,8 @@ private fun RoutineListPage(
     selectedPlanIds: Set<Int> = emptySet(),
     onToggleSelection: (Int) -> Unit = {},
     isFirst: Boolean = false,
-    isLast: Boolean = false
+    isLast: Boolean = false,
+    languageCode: String = "en"
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -966,6 +972,7 @@ private fun RoutineListPage(
                 ) {
                     RoutineCard(
                         planWithDetails = planWithDetails,
+                        languageCode = languageCode,
                         onClick = { 
                             if (isSelectionMode) {
                                 onToggleSelection(plan.id)
@@ -1004,13 +1011,20 @@ private fun RoutineCard(
     swipeActionsEnabled: Boolean = true,
     isArchived: Boolean = false,
     onMoveUp: (() -> Unit)? = null,
-    onMoveDown: (() -> Unit)? = null
+    onMoveDown: (() -> Unit)? = null,
+    languageCode: String = "en"
 ) {
     val context = LocalContext.current
     val plan = planWithDetails.plan
     val firstImageUri = planWithDetails.images.firstOrNull()?.imageUri ?: plan.imageUri
     val fixedImageUri = remember(firstImageUri) {
         firstImageUri?.let { uri -> UriMigrationHelper.fixPath(uri, context) }
+    }
+
+    val trainedMuscleGroups = remember(planWithDetails.exercises) {
+        planWithDetails.exercises.map { it.exercise.categoria }
+            .distinct()
+            .filter { it.isNotBlank() }
     }
 
     GymCard(
@@ -1119,6 +1133,38 @@ private fun RoutineCard(
                                         color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    if (trainedMuscleGroups.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.padding(top = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            trainedMuscleGroups.take(3).forEach { category ->
+                                val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
+                                androidx.compose.material3.Surface(
+                                    color = Surface,
+                                    contentColor = OnSurfaceVariant,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = translatedCategory,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            if (trainedMuscleGroups.size > 3) {
+                                Text(
+                                    text = "+${trainedMuscleGroups.size - 3}",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = OnSurfaceVariant
+                                )
                             }
                         }
                     }

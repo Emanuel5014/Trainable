@@ -460,5 +460,6 @@
     <!-- Errors -->
     <string name="error_unknown">Unknown error</string>
     <string name="routine_not_found">Routine not found</string>
+    <string name="reps_hint">e.g. 8 or 8-6-4-2</string>
 
 </resources>

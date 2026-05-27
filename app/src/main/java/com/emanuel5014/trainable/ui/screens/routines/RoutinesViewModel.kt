@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.ShareUtils
+import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +21,23 @@ import javax.inject.Inject
 @HiltViewModel
 class RoutinesViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
-    private val userPrefsRepository: UserPreferencesRepository
+    private val userPrefsRepository: UserPreferencesRepository,
+    private val localeManager: AppLocaleManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoutinesUiState(isLoading = true))
     val uiState: StateFlow<RoutinesUiState> = _uiState.asStateFlow()
 
+    private val _languageCode = MutableStateFlow("en")
+    val languageCode: StateFlow<String> = _languageCode.asStateFlow()
+
     init {
         loadPlans()
+        viewModelScope.launch {
+            localeManager.userSelectedLanguage.collect { _ ->
+                _languageCode.value = localeManager.getResolvedLanguage()
+            }
+        }
     }
 
     private fun loadPlans() {
