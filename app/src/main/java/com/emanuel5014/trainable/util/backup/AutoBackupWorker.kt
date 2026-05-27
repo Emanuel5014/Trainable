@@ -117,7 +117,11 @@ class AutoBackupWorker @AssistedInject constructor(
     companion object {
         const val WORK_NAME = "auto_backup_work"
 
-        fun schedule(context: Context, frequencyDays: Int = 1) {
+        fun schedule(
+            context: Context, 
+            frequencyDays: Int = 1, 
+            policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.UPDATE
+        ) {
             val constraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .build()
@@ -131,7 +135,7 @@ class AutoBackupWorker @AssistedInject constructor(
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                policy,
                 backupRequest
             )
         }
