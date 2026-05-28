@@ -21,13 +21,17 @@ class AppLocaleManager @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) {
     companion object {
-        val SUPPORTED_LANGUAGES = listOf("en", "it")
+        val SUPPORTED_LANGUAGES = listOf("en", "it", "es", "fr", "de", "pt")
         const val LANGUAGE_SYSTEM = "system"
-        
+
         fun getLanguageDisplayName(code: String): String {
             return when (code) {
                 "en" -> "English"
                 "it" -> "Italiano"
+                "es" -> "Español"
+                "fr" -> "Français"
+                "de" -> "Deutsch"
+                "pt" -> "Português"
                 else -> code
             }
         }

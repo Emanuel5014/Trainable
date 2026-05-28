@@ -159,6 +159,164 @@ object ExerciseTranslations {
         "Multipurpose" to "Multipurpose"
     )
 
+    val es = mapOf(
+        // Chest
+        "Flat Bench Press" to "Press de Banca Plano",
+        "45-Degree Incline Dumbbell Press" to "Press Inclinado 45° con Mancuernas",
+        "Floor Flyes" to "Aperturas en el Suelo",
+        "Incline Multipower/Smith Machine Press" to "Press Inclinado en Multipower/Smith",
+        "Flat Bench Flyes" to "Aperturas en Banca Plana",
+        "Low Cable Flyes" to "Aperturas en Cable Bajo",
+        "Pec Deck Fly" to "Aperturas en Pec Deck",
+
+        // Back
+        "Pull-ups" to "Dominadas",
+        "Reverse Grip Seated Cable Row" to "Remo en Polea con Agarre Inverso",
+        "Machine Row" to "Remo en Máquina",
+        "Dumbbell Pullover" to "Pullover con Mancuerna",
+        "Cable Pullover" to "Pullover en Cable",
+        "Max Stretch Pullover" to "Pullover Max Stretch",
+        "Back Extensions" to "Extensiones de Espalda",
+        "Reverse Hyperextensions" to "Hiperextensiones Inversas",
+        "Seal Row" to "Remo Seal",
+        "Reverse Grip Lat Pulldown" to "Jalón al Pecho con Agarre Inverso",
+
+        // Legs
+        "Barbell Squat" to "Sentadilla con Barra",
+        "Traditional Deadlift" to "Peso Muerto Tradicional",
+        "Vertical Leg Press" to "Prensa Vertical",
+        "Leg Press" to "Prensa de Piernas",
+        "Leg Extension" to "Extensión de Piernas",
+        "Walking Lunges" to "Zancadas Caminando",
+        "Leg Curl" to "Curl de Piernas",
+        "Single-Leg Curl" to "Curl de Piernas Unilateral",
+        "Belt Squat" to "Sentadilla con Cinturón",
+        "Romanian Deadlift (RDL)" to "Peso Muerto Rumano",
+        "Sissy Squat" to "Sissy Squat",
+        "Calf Raises" to "Elevaciones de Gemelos",
+        "Pendulum Squat" to "Sentadilla Pendulum",
+
+        // Shoulders
+        "Military Press" to "Press Militar",
+        "Seated/Standing Lateral Raises" to "Elevaciones Laterales Sentado/De Pie",
+        "Upright Rows" to "Remo al Mentón",
+        "Face Pulls" to "Face Pulls",
+
+        // Arms
+        "Barbell Bicep Curl" to "Curl de Bíceps con Barra",
+        "45-Degree Incline Dumbbell Curl" to "Curl Inclinado 45° con Mancuernas",
+        "Incline Bench Dumbbell Curl" to "Curl en Banca Inclinada",
+        "Single-Arm Cable Curl" to "Curl Unilateral en Cable",
+        "Dips" to "Fondos",
+        "Close-Grip Bench Press" to "Press de Banca con Agarre Cerrado",
+        "Cable Triceps Extensions" to "Extensiones de Tríceps en Cable",
+        "Triceps Rope Pushdown" to "Pushdown de Tríceps con Cuerda",
+
+        // Core
+        "Crunch" to "Crunch",
+        "Reverse Crunch" to "Crunch Inverso",
+        "Plank" to "Plancha",
+        "Hanging Leg Raises" to "Elevaciones de Piernas Colgado",
+        "Woodchopper" to "Leñador en Cable",
+        "Leg Raise on Parallel Bars" to "Elevaciones de Piernas en Paralelas",
+        "Cable Crunch" to "Crunch en Cable",
+        "Ab Wheel Rollout" to "Rueda Abdominal",
+        "Bird Dog" to "Bird Dog",
+        "Dead Bug" to "Dead Bug",
+        "Mountain Climbers" to "Mountain Climber",
+        "Side Plank" to "Plancha Lateral",
+        "Toes to Bar" to "Toes to Bar",
+        "L-Sit" to "L-Sit",
+        "V-Ups" to "V-Up",
+        "Bicycle Crunch" to "Crunch de Bicicleta",
+        "Flutter Kicks" to "Tijeras",
+        "Dragon Flag" to "Dragon Flag",
+        "Pallof Press" to "Pallof Press",
+        "Hollow Body Hold" to "Hollow Body",
+        "Russian Twist" to "Russian Twist",
+        "Russian Twist with Weight" to "Russian Twist con Peso",
+
+        // Shoulders
+        "Arnold Press" to "Press Arnold",
+        "Bent Over Lateral Raises" to "Elevaciones Laterales Inclinado",
+        "Rear Delt Fly (Machine/Dumbbell)" to "Aperturas Posteriores (Máquina/Mancuernas)",
+        "Smith Machine Shrugs" to "Encogimientos en Multipower",
+        "Dumbbell Front Raise" to "Elevaciones Frontales con Mancuernas",
+        "Bus Driver" to "Bus Driver",
+        "Landmine Press" to "Press Landmine",
+        "Reverse Cable Flyes" to "Aperturas Inversas en Cable",
+        "Dumbbell Shoulder Press" to "Press de Hombros con Mancuernas",
+        "Single-Arm Landmine Press" to "Press Landmine Unilateral",
+        "Bradford Press" to "Press Bradford",
+        "High Pull" to "Tirones al Mentón",
+        "Lu Raises" to "Lu Raises",
+        "Y-Raises" to "Elevaciones en Y",
+        "Cuban Press" to "Press Cubano",
+        "Single-Arm Dumbbell Lateral Raise" to "Elevación Lateral Unilateral con Mancuerna",
+
+        // Arms
+        "Hammer Curls" to "Curl Martillo",
+        "Skull Crushers" to "French Press",
+        "Preacher Curls" to "Curl en Banco Scott",
+        "Concentration Curl" to "Curl Concentrado",
+        "Zottman Curl" to "Curl Zottman",
+        "Triceps Dip Machine" to "Máquina de Fondos",
+        "Overhead Cable Triceps Extension" to "Extensión de Tríceps por Detrás en Cable",
+        "Spider Curl" to "Curl Araña",
+        "Diamond Push-ups" to "Flexiones en Diamante",
+        "EZ-Bar Curl" to "Curl con Barra EZ",
+        "Reverse Barbell Curl" to "Curl Inverso con Barra",
+        "JM Press" to "Press JM",
+
+        // Legs
+        "Bulgarian Split Squat" to "Sentadilla Búlgara",
+        "Hack Squat" to "Hack Squat",
+        "Seated Calf Raise" to "Elevación de Gemelos Sentado",
+        "Donkey Calf Raise" to "Elevación de Gemelos Burro",
+        "Leg Press Calf Press" to "Gemelos en Prensa",
+        "Smith Machine Calf Raise" to "Gemelos en Multipower",
+        "Tibialis Raise" to "Elevaciones Tibiales",
+        "Nordic Leg Curl" to "Curl Nórdico",
+        "Hip Thrust" to "Hip Thrust",
+        "Standing Smith Machine Calf Raise" to "Gemelos de Pie en Multipower",
+        "Seated Calf Raise Machine" to "Gemelo Sentado (Máquina)",
+        "Step-ups" to "Step-Up",
+        "Goblet Squat" to "Sentadilla Goblet",
+        "Cable Pull-Through" to "Pull-Through en Cable",
+        "Good Mornings" to "Good Morning",
+
+        // Back
+        "T-Bar Row" to "Remo en T",
+        "Lat Pulldown (Wide Grip)" to "Jalón al Pecho (Agarre Amplio)",
+        "Straight Arm Pulldown" to "Jalón a Brazo Recto",
+        "Single-Arm Dumbbell Row" to "Remo Unilateral con Mancuerna",
+        "Meadows Row" to "Remo Meadows",
+        "Pendlay Row" to "Remo Pendlay",
+        "Chest Supported Row" to "Remo con Pecho Apoyado",
+        "Rack Pulls" to "Medio Peso Muerto (Rack Pull)",
+        "Yates Row" to "Remo Yates",
+        "Inverted Row" to "Remo Australiano",
+        "Neutral Grip Pull-ups" to "Dominadas con Agarre Neutro",
+
+        // Chest
+        "Chest Press Machine" to "Press de Pecho en Máquina",
+        "Cable Crossover" to "Cruces en Cable",
+        "Incline Pec Deck Fly" to "Pec Deck Inclinado",
+        "Decline Bench Press" to "Press de Banca Declinado",
+        "Dumbbell Pullover (Chest Focus)" to "Pullover con Mancuerna (Enfoque Pecho)",
+        "Weighted Push-ups" to "Flexiones Lastradas",
+        "Dumbbell Bench Press" to "Press con Mancuernas en Banca Plana",
+        "Incline Dumbbell Bench Press" to "Press con Mancuernas en Banca Inclinada",
+        "Decline Dumbbell Press" to "Press con Mancuernas en Banca Declinada",
+        "Machine Chest Fly" to "Pectoral Machine",
+        "Floor Press" to "Floor Press",
+        "Svend Press" to "Press Svend",
+        "Landmine Chest Press" to "Press de Pecho en Landmine",
+        "Wide Grip Push-ups" to "Flexiones con Agarre Amplio",
+        "Guillotine Press" to "Press Guillotina",
+        "Multipurpose" to "Multipropósito"
+    )
+
     val itCategories = mapOf(
         "Chest" to "Petto",
         "Back" to "Schiena",
@@ -168,9 +326,523 @@ object ExerciseTranslations {
         "Core" to "Addome"
     )
 
+    val esCategories = mapOf(
+        "Chest" to "Pecho",
+        "Back" to "Espalda",
+        "Legs" to "Piernas",
+        "Shoulders" to "Hombros",
+        "Arms" to "Brazos",
+        "Core" to "Abdomen"
+    )
+
+    val fr = mapOf(
+        // Chest
+        "Flat Bench Press" to "Développé Couché",
+        "45-Degree Incline Dumbbell Press" to "Développé Incliné 45° avec Haltères",
+        "Floor Flyes" to "Écartés au Sol",
+        "Incline Multipower/Smith Machine Press" to "Développé Incliné Multipower/Smith",
+        "Flat Bench Flyes" to "Écartés Couché",
+        "Low Cable Flyes" to "Écartés à la Poulie Basse",
+        "Pec Deck Fly" to "Écartés à la Pec Deck",
+
+        // Back
+        "Pull-ups" to "Tractions",
+        "Reverse Grip Seated Cable Row" to "Rowing à la Poulie Prise Inverse",
+        "Machine Row" to "Rowing Machine",
+        "Dumbbell Pullover" to "Pullover avec Haltère",
+        "Cable Pullover" to "Pullover au Câble",
+        "Max Stretch Pullover" to "Pullover Max Stretch",
+        "Back Extensions" to "Extensions du Dos",
+        "Reverse Hyperextensions" to "Hyperextensions Inverses",
+        "Seal Row" to "Rowing Seal",
+        "Reverse Grip Lat Pulldown" to "Tirage Poitrine Prise Inverse",
+
+        // Legs
+        "Barbell Squat" to "Squat avec Barre",
+        "Traditional Deadlift" to "Soulevé de Terre Traditionnel",
+        "Vertical Leg Press" to "Presse Verticale",
+        "Leg Press" to "Presse à Cuisses",
+        "Leg Extension" to "Extension des Jambes",
+        "Walking Lunges" to "Fentes Marchées",
+        "Leg Curl" to "Curl des Jambes",
+        "Single-Leg Curl" to "Curl Jambe Unilatéral",
+        "Belt Squat" to "Squat avec Ceinture",
+        "Romanian Deadlift (RDL)" to "Soulevé de Terre Roumain",
+        "Sissy Squat" to "Sissy Squat",
+        "Calf Raises" to "Élévations de Mollets",
+        "Pendulum Squat" to "Squat Pendulum",
+
+        // Shoulders
+        "Military Press" to "Développé Militaire",
+        "Seated/Standing Lateral Raises" to "Élévations Latérales Assis/Debout",
+        "Upright Rows" to "Rowing Menton",
+        "Face Pulls" to "Face Pulls",
+
+        // Arms
+        "Barbell Bicep Curl" to "Curl Biceps avec Barre",
+        "45-Degree Incline Dumbbell Curl" to "Curl Incliné 45° avec Haltères",
+        "Incline Bench Dumbbell Curl" to "Curl sur Banc Incliné",
+        "Single-Arm Cable Curl" to "Curl Unilatéral au Câble",
+        "Dips" to "Dips",
+        "Close-Grip Bench Press" to "Développé Couché Prise Serrée",
+        "Cable Triceps Extensions" to "Extensions Triceps au Câble",
+        "Triceps Rope Pushdown" to "Pushdown Triceps à la Corde",
+
+        // Core
+        "Crunch" to "Crunch",
+        "Reverse Crunch" to "Crunch Inversé",
+        "Plank" to "Planche",
+        "Hanging Leg Raises" to "Relevés de Jambes Suspendu",
+        "Woodchopper" to "Bûcheron au Câble",
+        "Leg Raise on Parallel Bars" to "Relevés de Jambes aux Barres Parallèles",
+        "Cable Crunch" to "Crunch au Câble",
+        "Ab Wheel Rollout" to "Roue Abdominale",
+        "Bird Dog" to "Bird Dog",
+        "Dead Bug" to "Dead Bug",
+        "Mountain Climbers" to "Mountain Climber",
+        "Side Plank" to "Planche Latérale",
+        "Toes to Bar" to "Toes to Bar",
+        "L-Sit" to "L-Sit",
+        "V-Ups" to "V-Up",
+        "Bicycle Crunch" to "Crunch Bicyclette",
+        "Flutter Kicks" to "Ciseaux",
+        "Dragon Flag" to "Dragon Flag",
+        "Pallof Press" to "Pallof Press",
+        "Hollow Body Hold" to "Hollow Body",
+        "Russian Twist" to "Russian Twist",
+        "Russian Twist with Weight" to "Russian Twist avec Poids",
+
+        // Shoulders
+        "Arnold Press" to "Développé Arnold",
+        "Bent Over Lateral Raises" to "Élévations Latérales Penché",
+        "Rear Delt Fly (Machine/Dumbbell)" to "Écartés Postérieurs (Machine/Haltères)",
+        "Smith Machine Shrugs" to "Haussements d'Épaules Multipower",
+        "Dumbbell Front Raise" to "Élévations Frontales avec Haltères",
+        "Bus Driver" to "Bus Driver",
+        "Landmine Press" to "Développé Landmine",
+        "Reverse Cable Flyes" to "Écartés Inverses aux Câbles",
+        "Dumbbell Shoulder Press" to "Développé Épaules avec Haltères",
+        "Single-Arm Landmine Press" to "Développé Landmine Unilatéral",
+        "Bradford Press" to "Développé Bradford",
+        "High Pull" to "Tractions au Menton",
+        "Lu Raises" to "Lu Raises",
+        "Y-Raises" to "Élévations en Y",
+        "Cuban Press" to "Développé Cubain",
+        "Single-Arm Dumbbell Lateral Raise" to "Élévation Latérale Unilatérale avec Haltère",
+
+        // Arms
+        "Hammer Curls" to "Curl Marteau",
+        "Skull Crushers" to "French Press",
+        "Preacher Curls" to "Curl au Pupitre",
+        "Concentration Curl" to "Curl Concentré",
+        "Zottman Curl" to "Curl Zottman",
+        "Triceps Dip Machine" to "Machine à Dips",
+        "Overhead Cable Triceps Extension" to "Extension Triceps Nuque au Câble",
+        "Spider Curl" to "Curl Spider",
+        "Diamond Push-ups" to "Pompes en Diamant",
+        "EZ-Bar Curl" to "Curl avec Barre EZ",
+        "Reverse Barbell Curl" to "Curl Inversé avec Barre",
+        "JM Press" to "Développé JM",
+
+        // Legs
+        "Bulgarian Split Squat" to "Squat Bulgare",
+        "Hack Squat" to "Hack Squat",
+        "Seated Calf Raise" to "Élévation de Mollets Assis",
+        "Donkey Calf Raise" to "Élévation de Mollets Âne",
+        "Leg Press Calf Press" to "Mollets à la Presse",
+        "Smith Machine Calf Raise" to "Mollets à la Multipower",
+        "Tibialis Raise" to "Élévations Tibiales",
+        "Nordic Leg Curl" to "Curl Nordique",
+        "Hip Thrust" to "Hip Thrust",
+        "Standing Smith Machine Calf Raise" to "Mollets Debout à la Multipower",
+        "Seated Calf Raise Machine" to "Mollets Assis (Machine)",
+        "Step-ups" to "Step-Up",
+        "Goblet Squat" to "Goblet Squat",
+        "Cable Pull-Through" to "Pull-Through au Câble",
+        "Good Mornings" to "Good Morning",
+
+        // Back
+        "T-Bar Row" to "Rowing à la Barre en T",
+        "Lat Pulldown (Wide Grip)" to "Tirage Poitrine (Prise Large)",
+        "Straight Arm Pulldown" to "Pull-over à la Poulie",
+        "Single-Arm Dumbbell Row" to "Rowing Unilatéral avec Haltère",
+        "Meadows Row" to "Rowing Meadows",
+        "Pendlay Row" to "Rowing Pendlay",
+        "Chest Supported Row" to "Rowing avec Appui Thoracique",
+        "Rack Pulls" to "Demi Soulevé de Terre (Rack Pull)",
+        "Yates Row" to "Rowing Yates",
+        "Inverted Row" to "Rowing Australian",
+        "Neutral Grip Pull-ups" to "Tractions Prise Neutre",
+
+        // Chest
+        "Chest Press Machine" to "Développé Pecs Machine",
+        "Cable Crossover" to "Crossover aux Câbles",
+        "Incline Pec Deck Fly" to "Pec Deck Incliné",
+        "Decline Bench Press" to "Développé Couché Décliné",
+        "Dumbbell Pullover (Chest Focus)" to "Pullover avec Haltère (Focus Pecs)",
+        "Weighted Push-ups" to "Pompes Chargées",
+        "Dumbbell Bench Press" to "Développé avec Haltères sur Banc Plat",
+        "Incline Dumbbell Bench Press" to "Développé avec Haltères sur Banc Incliné",
+        "Decline Dumbbell Press" to "Développé avec Haltères sur Banc Décliné",
+        "Machine Chest Fly" to "Pectoral Machine",
+        "Floor Press" to "Floor Press",
+        "Svend Press" to "Développé Svend",
+        "Landmine Chest Press" to "Développé Pecs Landmine",
+        "Wide Grip Push-ups" to "Pompes Prise Large",
+        "Guillotine Press" to "Développé Guillotine",
+        "Multipurpose" to "Multifonction"
+    )
+
+    val frCategories = mapOf(
+        "Chest" to "Pectoraux",
+        "Back" to "Dos",
+        "Legs" to "Jambes",
+        "Shoulders" to "Épaules",
+        "Arms" to "Bras",
+        "Core" to "Abdominaux"
+    )
+
+    val de = mapOf(
+        // Chest
+        "Flat Bench Press" to "Bankdrücken",
+        "45-Degree Incline Dumbbell Press" to "Schrägbankdrücken 45° mit Kurzhanteln",
+        "Floor Flyes" to "Brustpresse am Boden",
+        "Incline Multipower/Smith Machine Press" to "Schrägbankdrücken an der Multipower/Smith",
+        "Flat Bench Flyes" to "Fliegende auf der Flachbank",
+        "Low Cable Flyes" to "Crossover am unteren Seilzug",
+        "Pec Deck Fly" to "Pec Deck Fliegende",
+
+        // Back
+        "Pull-ups" to "Klimmzüge",
+        "Reverse Grip Seated Cable Row" to "Rudern am Kabelzug mit Untergriff",
+        "Machine Row" to "Maschinenrudern",
+        "Dumbbell Pullover" to "Pullover mit Kurzhantel",
+        "Cable Pullover" to "Pullover am Seilzug",
+        "Max Stretch Pullover" to "Max Stretch Pullover",
+        "Back Extensions" to "Rückenstrecker",
+        "Reverse Hyperextensions" to "Reverse Hyperextensions",
+        "Seal Row" to "Seal Rudern",
+        "Reverse Grip Lat Pulldown" to "Latzug mit Untergriff",
+
+        // Legs
+        "Barbell Squat" to "Kniebeuge mit Langhantel",
+        "Traditional Deadlift" to "Konventionelles Kreuzheben",
+        "Vertical Leg Press" to "Vertikale Beinpresse",
+        "Leg Press" to "Beinpresse",
+        "Leg Extension" to "Beinstrecker",
+        "Walking Lunges" to "Ausfallschritte Gehend",
+        "Leg Curl" to "Beinbeuger",
+        "Single-Leg Curl" to "Einbeiniger Beinbeuger",
+        "Belt Squat" to "Kniebeuge mit Gürtel",
+        "Romanian Deadlift (RDL)" to "Rumänisches Kreuzheben",
+        "Sissy Squat" to "Sissy Squat",
+        "Calf Raises" to "Wadenheben",
+        "Pendulum Squat" to "Pendulum Kniebeuge",
+
+        // Shoulders
+        "Military Press" to "Militärpresse",
+        "Seated/Standing Lateral Raises" to "Seitheben Sitzend/Stehend",
+        "Upright Rows" to "Rudern zur Hüfte",
+        "Face Pulls" to "Face Pulls",
+
+        // Arms
+        "Barbell Bicep Curl" to "Bizepscurl mit Langhantel",
+        "45-Degree Incline Dumbbell Curl" to "Curl auf der Schrägbank 45° mit Kurzhanteln",
+        "Incline Bench Dumbbell Curl" to "Curl auf der Schrägbank",
+        "Single-Arm Cable Curl" to "Einarmiger Curl am Kabelzug",
+        "Dips" to "Dips",
+        "Close-Grip Bench Press" to "Bankdrücken mit engem Griff",
+        "Cable Triceps Extensions" to "Trizepsstrecken am Kabelzug",
+        "Triceps Rope Pushdown" to "Trizeps Pushdown am Seil",
+
+        // Core
+        "Crunch" to "Crunch",
+        "Reverse Crunch" to "Reverse Crunch",
+        "Plank" to "Plank",
+        "Hanging Leg Raises" to "Hängende Beinheben",
+        "Woodchopper" to "Woodchopper am Kabelzug",
+        "Leg Raise on Parallel Bars" to "Beinheben am Barren",
+        "Cable Crunch" to "Cable Crunch",
+        "Ab Wheel Rollout" to "Bauchrad",
+        "Bird Dog" to "Bird Dog",
+        "Dead Bug" to "Dead Bug",
+        "Mountain Climbers" to "Mountain Climber",
+        "Side Plank" to "Seitstütz",
+        "Toes to Bar" to "Toes to Bar",
+        "L-Sit" to "L-Sit",
+        "V-Ups" to "V-Up",
+        "Bicycle Crunch" to "Bicycle Crunch",
+        "Flutter Kicks" to "Scherentritte",
+        "Dragon Flag" to "Dragon Flag",
+        "Pallof Press" to "Pallof Press",
+        "Hollow Body Hold" to "Hollow Body",
+        "Russian Twist" to "Russian Twist",
+        "Russian Twist with Weight" to "Russian Twist mit Gewicht",
+
+        // Shoulders
+        "Arnold Press" to "Arnold Press",
+        "Bent Over Lateral Raises" to "Seitheben vorgebeugt",
+        "Rear Delt Fly (Machine/Dumbbell)" to "Reverse Flys (Maschine/Kurzhanteln)",
+        "Smith Machine Shrugs" to "Schulterzucken an der Multipower",
+        "Dumbbell Front Raise" to "Frontheben mit Kurzhanteln",
+        "Bus Driver" to "Bus Driver",
+        "Landmine Press" to "Landmine Press",
+        "Reverse Cable Flyes" to "Reverse Flys am Kabelzug",
+        "Dumbbell Shoulder Press" to "Schulterdrücken mit Kurzhanteln",
+        "Single-Arm Landmine Press" to "Einarmige Landmine Press",
+        "Bradford Press" to "Bradford Press",
+        "High Pull" to "High Pull",
+        "Lu Raises" to "Lu Raises",
+        "Y-Raises" to "Y-Heber",
+        "Cuban Press" to "Cuban Press",
+        "Single-Arm Dumbbell Lateral Raise" to "Einarmiges Seitheben mit Kurzhantel",
+
+        // Arms
+        "Hammer Curls" to "Hammer Curls",
+        "Skull Crushers" to "Skull Crushers",
+        "Preacher Curls" to "Preacher Curls",
+        "Concentration Curl" to "Konzentrationscurl",
+        "Zottman Curl" to "Zottman Curl",
+        "Triceps Dip Machine" to "Dip Maschine",
+        "Overhead Cable Triceps Extension" to "Trizepsdrücken über Kopf am Kabelzug",
+        "Spider Curl" to "Spider Curl",
+        "Diamond Push-ups" to "Diamond Push-ups",
+        "EZ-Bar Curl" to "Curl mit EZ-Stange",
+        "Reverse Barbell Curl" to "Reverse Curl mit Langhantel",
+        "JM Press" to "JM Press",
+
+        // Legs
+        "Bulgarian Split Squat" to "Bulgarische Ausfallschritte",
+        "Hack Squat" to "Hack Squat",
+        "Seated Calf Raise" to "Wadenheben im Sitzen",
+        "Donkey Calf Raise" to "Donkey Calf Raise",
+        "Leg Press Calf Press" to "Wadenpresse an der Beinpresse",
+        "Smith Machine Calf Raise" to "Wadenheben an der Multipower",
+        "Tibialis Raise" to "Tibialis Anheben",
+        "Nordic Leg Curl" to "Nordic Curl",
+        "Hip Thrust" to "Hip Thrust",
+        "Standing Smith Machine Calf Raise" to "Wadenheben im Stehen an der Multipower",
+        "Seated Calf Raise Machine" to "Wadenheben im Sitzen (Maschine)",
+        "Step-ups" to "Step-Ups",
+        "Goblet Squat" to "Goblet Squat",
+        "Cable Pull-Through" to "Pull-Through am Kabelzug",
+        "Good Mornings" to "Good Mornings",
+
+        // Back
+        "T-Bar Row" to "T-Bar Rudern",
+        "Lat Pulldown (Wide Grip)" to "Latzug (Breiter Griff)",
+        "Straight Arm Pulldown" to "Pullover am Kabelzug",
+        "Single-Arm Dumbbell Row" to "Einarmiges Rudern mit Kurzhantel",
+        "Meadows Row" to "Meadows Rudern",
+        "Pendlay Row" to "Pendlay Rudern",
+        "Chest Supported Row" to "Rudern mit Brustauflage",
+        "Rack Pulls" to "Rack Pulls",
+        "Yates Row" to "Yates Rudern",
+        "Inverted Row" to "Inverted Row",
+        "Neutral Grip Pull-ups" to "Klimmzüge mit Neutralgriff",
+
+        // Chest
+        "Chest Press Machine" to "Brustpresse Maschine",
+        "Cable Crossover" to "Crossover am Kabelzug",
+        "Incline Pec Deck Fly" to "Pec Deck Fly Schrägbank",
+        "Decline Bench Press" to "Schrägbankdrücken negativ",
+        "Dumbbell Pullover (Chest Focus)" to "Pullover mit Kurzhantel (Fokus Brust)",
+        "Weighted Push-ups" to "Gewichtete Liegestütze",
+        "Dumbbell Bench Press" to "Kurzhantel Bankdrücken",
+        "Incline Dumbbell Bench Press" to "Kurzhantel Schrägbankdrücken",
+        "Decline Dumbbell Press" to "Kurzhantel Negativbankdrücken",
+        "Machine Chest Fly" to "Brustmaschine Fliegende",
+        "Floor Press" to "Floor Press",
+        "Svend Press" to "Svend Press",
+        "Landmine Chest Press" to "Brustpresse an der Landmine",
+        "Wide Grip Push-ups" to "Liegestütze mit breitem Griff",
+        "Guillotine Press" to "Guillotine Press",
+        "Multipurpose" to "Mehrzweck"
+    )
+
+    val deCategories = mapOf(
+        "Chest" to "Brust",
+        "Back" to "Rücken",
+        "Legs" to "Beine",
+        "Shoulders" to "Schultern",
+        "Arms" to "Arme",
+        "Core" to "Bauch"
+    )
+
+    val pt = mapOf(
+        // Chest
+        "Flat Bench Press" to "Supino Reto",
+        "45-Degree Incline Dumbbell Press" to "Supino Inclinado 45° com Halteres",
+        "Floor Flyes" to "Crucifixo no Chão",
+        "Incline Multipower/Smith Machine Press" to "Supino Inclinado no Multipower/Smith",
+        "Flat Bench Flyes" to "Crucifixo Reto",
+        "Low Cable Flyes" to "Crucifixo no Cabo Baixo",
+        "Pec Deck Fly" to "Crucifixo no Pec Deck",
+
+        // Back
+        "Pull-ups" to "Barra Fixa",
+        "Reverse Grip Seated Cable Row" to "Remada na Polia com Pegada Inversa",
+        "Machine Row" to "Remada Máquina",
+        "Dumbbell Pullover" to "Pullover com Haltere",
+        "Cable Pullover" to "Pullover no Cabo",
+        "Max Stretch Pullover" to "Pullover Max Stretch",
+        "Back Extensions" to "Extensões Lombares",
+        "Reverse Hyperextensions" to "Hiperextensões Inversas",
+        "Seal Row" to "Remada Seal",
+        "Reverse Grip Lat Pulldown" to "Puxada Alta com Pegada Inversa",
+
+        // Legs
+        "Barbell Squat" to "Agachamento com Barra",
+        "Traditional Deadlift" to "Levantamento Terra Tradicional",
+        "Vertical Leg Press" to "Leg Press Vertical",
+        "Leg Press" to "Leg Press",
+        "Leg Extension" to "Cadeira Extensora",
+        "Walking Lunges" to "Afundos Caminhando",
+        "Leg Curl" to "Cadeira Flexora",
+        "Single-Leg Curl" to "Flexora Unilateral",
+        "Belt Squat" to "Agachamento com Cinto",
+        "Romanian Deadlift (RDL)" to "Levantamento Terra Romeno",
+        "Sissy Squat" to "Sissy Squat",
+        "Calf Raises" to "Elevação de Panturrilhas",
+        "Pendulum Squat" to "Agachamento Pêndulo",
+
+        // Shoulders
+        "Military Press" to "Desenvolvimento Militar",
+        "Seated/Standing Lateral Raises" to "Elevação Lateral Sentado/Em Pé",
+        "Upright Rows" to "Remada Alta",
+        "Face Pulls" to "Face Pulls",
+
+        // Arms
+        "Barbell Bicep Curl" to "Rosca Direta com Barra",
+        "45-Degree Incline Dumbbell Curl" to "Rosca Inclinada 45° com Halteres",
+        "Incline Bench Dumbbell Curl" to "Rosca no Banco Inclinado",
+        "Single-Arm Cable Curl" to "Rosca Unilateral no Cabo",
+        "Dips" to "Mergulho",
+        "Close-Grip Bench Press" to "Supino Reto com Pegada Fechada",
+        "Cable Triceps Extensions" to "Extensão de Tríceps no Cabo",
+        "Triceps Rope Pushdown" to "Pushdown Tríceps na Corda",
+
+        // Core
+        "Crunch" to "Crunch",
+        "Reverse Crunch" to "Crunch Inverso",
+        "Plank" to "Prancha",
+        "Hanging Leg Raises" to "Elevação de Pernas Suspenso",
+        "Woodchopper" to "Lenhador no Cabo",
+        "Leg Raise on Parallel Bars" to "Elevação de Pernas nas Paralelas",
+        "Cable Crunch" to "Crunch no Cabo",
+        "Ab Wheel Rollout" to "Roda Abdominal",
+        "Bird Dog" to "Bird Dog",
+        "Dead Bug" to "Dead Bug",
+        "Mountain Climbers" to "Mountain Climber",
+        "Side Plank" to "Prancha Lateral",
+        "Toes to Bar" to "Toes to Bar",
+        "L-Sit" to "L-Sit",
+        "V-Ups" to "V-Up",
+        "Bicycle Crunch" to "Crunch Bicicleta",
+        "Flutter Kicks" to "Tesouras",
+        "Dragon Flag" to "Dragon Flag",
+        "Pallof Press" to "Pallof Press",
+        "Hollow Body Hold" to "Hollow Body",
+        "Russian Twist" to "Russian Twist",
+        "Russian Twist with Weight" to "Russian Twist com Peso",
+
+        // Shoulders
+        "Arnold Press" to "Desenvolvimento Arnold",
+        "Bent Over Lateral Raises" to "Elevação Lateral Curvado",
+        "Rear Delt Fly (Machine/Dumbbell)" to "Crucifixo Invertido (Máquina/Halteres)",
+        "Smith Machine Shrugs" to "Encolhimento no Multipower",
+        "Dumbbell Front Raise" to "Elevação Frontal com Halteres",
+        "Bus Driver" to "Bus Driver",
+        "Landmine Press" to "Desenvolvimento Landmine",
+        "Reverse Cable Flyes" to "Crucifixo Invertido nos Cabos",
+        "Dumbbell Shoulder Press" to "Desenvolvimento de Ombros com Halteres",
+        "Single-Arm Landmine Press" to "Landmine Press Unilateral",
+        "Bradford Press" to "Desenvolvimento Bradford",
+        "High Pull" to "Puxada Alta",
+        "Lu Raises" to "Lu Raises",
+        "Y-Raises" to "Elevação em Y",
+        "Cuban Press" to "Desenvolvimento Cubano",
+        "Single-Arm Dumbbell Lateral Raise" to "Elevação Lateral Unilateral com Haltere",
+
+        // Arms
+        "Hammer Curls" to "Rosca Martelo",
+        "Skull Crushers" to "French Press",
+        "Preacher Curls" to "Rosca Scott",
+        "Concentration Curl" to "Rosca Concentrada",
+        "Zottman Curl" to "Rosca Zottman",
+        "Triceps Dip Machine" to "Máquina de Mergulho",
+        "Overhead Cable Triceps Extension" to "Extensão de Tríceps Atrás da Cabeça no Cabo",
+        "Spider Curl" to "Rosca Aranha",
+        "Diamond Push-ups" to "Flexões em Diamante",
+        "EZ-Bar Curl" to "Rosca com Barra EZ",
+        "Reverse Barbell Curl" to "Rosca Inversa com Barra",
+        "JM Press" to "JM Press",
+
+        // Legs
+        "Bulgarian Split Squat" to "Agachamento Búlgaro",
+        "Hack Squat" to "Hack Squat",
+        "Seated Calf Raise" to "Panturrilha Sentado",
+        "Donkey Calf Raise" to "Panturrilha Burro",
+        "Leg Press Calf Press" to "Panturrilha no Leg Press",
+        "Smith Machine Calf Raise" to "Panturrilha no Multipower",
+        "Tibialis Raise" to "Elevação Tibial",
+        "Nordic Leg Curl" to "Flexão Nórdica",
+        "Hip Thrust" to "Hip Thrust",
+        "Standing Smith Machine Calf Raise" to "Panturrilha em Pé no Multipower",
+        "Seated Calf Raise Machine" to "Panturrilha Sentado (Máquina)",
+        "Step-ups" to "Step-Up",
+        "Goblet Squat" to "Agachamento Goblet",
+        "Cable Pull-Through" to "Pull-Through no Cabo",
+        "Good Mornings" to "Good Morning",
+
+        // Back
+        "T-Bar Row" to "Remada T",
+        "Lat Pulldown (Wide Grip)" to "Puxada Alta (Pegada Larga)",
+        "Straight Arm Pulldown" to "Pullover na Polia",
+        "Single-Arm Dumbbell Row" to "Remada Unilateral com Haltere",
+        "Meadows Row" to "Remada Meadows",
+        "Pendlay Row" to "Remada Pendlay",
+        "Chest Supported Row" to "Remada com Apoio de Peito",
+        "Rack Pulls" to "Meio Levantamento Terra (Rack Pull)",
+        "Yates Row" to "Remada Yates",
+        "Inverted Row" to "Remada Invertida",
+        "Neutral Grip Pull-ups" to "Barra Fixa com Pegada Neutra",
+
+        // Chest
+        "Chest Press Machine" to "Supino na Máquina",
+        "Cable Crossover" to "Crossover nos Cabos",
+        "Incline Pec Deck Fly" to "Pec Deck Inclinado",
+        "Decline Bench Press" to "Supino Declinado",
+        "Dumbbell Pullover (Chest Focus)" to "Pullover com Haltere (Foco Peito)",
+        "Weighted Push-ups" to "Flexões com Peso",
+        "Dumbbell Bench Press" to "Supino com Halteres Reto",
+        "Incline Dumbbell Bench Press" to "Supino com Halteres Inclinado",
+        "Decline Dumbbell Press" to "Supino com Halteres Declinado",
+        "Machine Chest Fly" to "Peitoral Máquina",
+        "Floor Press" to "Floor Press",
+        "Svend Press" to "Svend Press",
+        "Landmine Chest Press" to "Supino no Landmine",
+        "Wide Grip Push-ups" to "Flexões com Pegada Larga",
+        "Guillotine Press" to "Supino Guilhotina",
+        "Multipurpose" to "Multiuso"
+    )
+
+    val ptCategories = mapOf(
+        "Chest" to "Peito",
+        "Back" to "Costas",
+        "Legs" to "Pernas",
+        "Shoulders" to "Ombros",
+        "Arms" to "Braços",
+        "Core" to "Abdômen"
+    )
+
     fun translate(name: String, targetLang: String): String {
         return when (targetLang) {
             "it" -> it[name] ?: name
+            "es" -> es[name] ?: name
+            "fr" -> fr[name] ?: name
+            "de" -> de[name] ?: name
+            "pt" -> pt[name] ?: name
             else -> name
         }
     }
@@ -178,6 +850,10 @@ object ExerciseTranslations {
     fun translateCategory(category: String, targetLang: String): String {
         return when (targetLang) {
             "it" -> itCategories[category] ?: category
+            "es" -> esCategories[category] ?: category
+            "fr" -> frCategories[category] ?: category
+            "de" -> deCategories[category] ?: category
+            "pt" -> ptCategories[category] ?: category
             else -> category
         }
     }

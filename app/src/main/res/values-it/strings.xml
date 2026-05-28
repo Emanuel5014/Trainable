@@ -321,6 +321,10 @@
     <string name="current_language">Attuale: %s</string>
     <string name="language_english">English</string>
     <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
 
     <!-- Backup & Data -->
     <string name="auto_backup">Backup Automatico</string>
