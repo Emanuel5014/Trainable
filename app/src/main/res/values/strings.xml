@@ -278,6 +278,12 @@
     <string name="structural_balance">Structural Balance</string>
     <string name="workouts_per_week">Workouts/Week</string>
     <string name="avg_volume">Avg Tonnage</string>
+    <string name="analytics_category_volume">VOLUME BY MUSCLE GROUP</string>
+    <string name="analytics_category_volume_widget">Volume by Muscle Group</string>
+    <string name="analytics_time_range_1w">1W</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_6m">6M</string>
+    <string name="analytics_time_range_all">ALL</string>
 
     <!-- Settings -->
     <string name="settings_title">SETTINGS</string>

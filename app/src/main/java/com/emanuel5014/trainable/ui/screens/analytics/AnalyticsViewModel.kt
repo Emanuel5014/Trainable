@@ -52,6 +52,7 @@ class AnalyticsViewModel @Inject constructor(
     private val bodyWeightInput = MutableStateFlow("")
     private val selectedExerciseIds = MutableStateFlow<Set<Int>>(loadSavedExerciseIds())
     private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
+    private val categoryVolumeTimeRange = MutableStateFlow(loadCategoryVolumeTimeRange())
 
     private fun loadSavedExerciseIds(): Set<Int> {
         val saved = prefs.getStringSet("selected_exercise_ids", emptySet()) ?: emptySet()
@@ -71,6 +72,16 @@ class AnalyticsViewModel @Inject constructor(
         prefs.edit().putString("widget_order", order.joinToString(",")).apply()
     }
 
+    private fun loadCategoryVolumeTimeRange(): AnalyticsTimeRange {
+        val name = prefs.getString("category_volume_time_range", AnalyticsTimeRange.OneWeek.name)
+            ?: AnalyticsTimeRange.OneWeek.name
+        return try { AnalyticsTimeRange.valueOf(name) } catch (_: IllegalArgumentException) { AnalyticsTimeRange.OneWeek }
+    }
+
+    private fun saveCategoryVolumeTimeRange(timeRange: AnalyticsTimeRange) {
+        prefs.edit().putString("category_volume_time_range", timeRange.name).apply()
+    }
+
     private val activePlanFlow = workoutRepository.getActivePlans()
         .map { plans -> plans.firstOrNull() }
 
@@ -83,7 +94,8 @@ class AnalyticsViewModel @Inject constructor(
         selectedExerciseIds,
         widgetOrder,
         userPreferencesRepository.weightUnit,
-        localeManager.currentLanguage
+        localeManager.currentLanguage,
+        categoryVolumeTimeRange
     ) { args ->
         val activePlan = args[0] as WorkoutPlanEntity?
         @Suppress("UNCHECKED_CAST")
@@ -95,6 +107,7 @@ class AnalyticsViewModel @Inject constructor(
         val order = args[4] as List<String>
         val weightUnit = args[5] as String
         val userLang = args[6] as String
+        val catVolumeTimeRange = args[7] as AnalyticsTimeRange
         
         val languageCode = localeManager.resolveLanguageForCompose(userLang)
         AnalyticsQueryContext(
@@ -105,7 +118,9 @@ class AnalyticsViewModel @Inject constructor(
             selectedExerciseIds = selectedIds,
             widgetOrder = order,
             weightUnit = weightUnit,
-            languageCode = languageCode
+            languageCode = languageCode,
+            categoryVolumeStartDate = catVolumeTimeRange.startDate(),
+            categoryVolumeTimeRange = catVolumeTimeRange
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -155,7 +170,7 @@ class AnalyticsViewModel @Inject constructor(
 
         val strengthFlow = combine(
             analyticsRepository.getStrengthIndex(context.startDate),
-            analyticsRepository.getVolumeByCategory(context.startDate)
+            analyticsRepository.getVolumeByCategory(context.categoryVolumeStartDate)
         ) { values: Array<Any?> ->
             @Suppress("UNCHECKED_CAST")
             val strengthIndex = values[0] as Float?
@@ -225,6 +240,7 @@ class AnalyticsViewModel @Inject constructor(
                     consistency = core.consistency,
                     strengthIndex = strengthCategory.strengthIndex,
                     categoryVolumes = strengthCategory.categoryVolumes,
+                    categoryVolumeTimeRange = context.categoryVolumeTimeRange,
                     weightHistory = weightHistory,
                     sessions = sessions,
                     exerciseHistories = exerciseHistories,
@@ -308,6 +324,22 @@ class AnalyticsViewModel @Inject constructor(
             saveWidgetOrder(newList)
             newList
         }
+    }
+
+    fun addCategoryVolumeChart(timeRange: AnalyticsTimeRange) {
+        saveCategoryVolumeTimeRange(timeRange)
+        categoryVolumeTimeRange.value = timeRange
+        widgetOrder.update { current ->
+            if (current.contains("category_volume")) return@update current
+            val newList = current + "category_volume"
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun updateCategoryVolumeChart(timeRange: AnalyticsTimeRange) {
+        saveCategoryVolumeTimeRange(timeRange)
+        categoryVolumeTimeRange.value = timeRange
     }
 
     fun addVolumeChart(planId: Int, timeRange: AnalyticsTimeRange) {
@@ -394,6 +426,7 @@ class AnalyticsViewModel @Inject constructor(
         consistency: ConsistencyRow?,
         strengthIndex: Float?,
         categoryVolumes: List<CategoryVolumeRow>,
+        categoryVolumeTimeRange: AnalyticsTimeRange,
         weightHistory: List<com.emanuel5014.trainable.data.local.entity.WeightLogEntity>,
         sessions: List<WorkoutSessionEntity>,
         exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
@@ -479,6 +512,17 @@ class AnalyticsViewModel @Inject constructor(
                         history = history
                     )
                 }
+                id == "category_volume" -> {
+                    AnalyticsWidget.CategoryVolume(
+                        history = categoryVolumes.map { row ->
+                            CategoryVolumeRow(
+                                category = ExerciseTranslations.translateCategory(row.category, languageCode),
+                                volume = row.volume
+                            )
+                        },
+                        timeRange = categoryVolumeTimeRange
+                    )
+                }
                 else -> null
             }
         }
@@ -549,7 +593,9 @@ class AnalyticsViewModel @Inject constructor(
         val selectedExerciseIds: Set<Int>,
         val widgetOrder: List<String>,
         val weightUnit: String,
-        val languageCode: String
+        val languageCode: String,
+        val categoryVolumeStartDate: Long,
+        val categoryVolumeTimeRange: AnalyticsTimeRange
     )
 
     private data class CoreAnalyticsSnapshot(

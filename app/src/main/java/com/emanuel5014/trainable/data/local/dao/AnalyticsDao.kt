@@ -111,11 +111,13 @@ interface AnalyticsDao {
         """
         SELECT
             e.categoria AS category,
-            COALESCE(SUM(s.peso_sollevato * s.reps_effettive), 0) AS volume
+            CAST(COUNT(s.id) AS REAL) AS volume
         FROM set_logs s
         INNER JOIN exercises e ON e.id = s.exercise_id
         INNER JOIN workout_sessions w ON w.id = s.session_id
         WHERE w.timestamp >= :startDate
+            AND s.is_completed = 1
+            AND s.is_warmup = 0
         GROUP BY e.categoria
         ORDER BY volume DESC
         """

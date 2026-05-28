@@ -1,13 +1,15 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import java.util.concurrent.TimeUnit
 
-enum class AnalyticsTimeRange(val label: String, private val durationDays: Long?) {
-    OneWeek("1W", 7),
-    OneMonth("1M", 30),
-    SixMonths("6M", 180),
-    All("ALL", null);
+enum class AnalyticsTimeRange(val labelResId: Int, private val durationDays: Long?) {
+    OneWeek(R.string.analytics_time_range_1w, 7),
+    OneMonth(R.string.analytics_time_range_1m, 30),
+    SixMonths(R.string.analytics_time_range_6m, 180),
+    All(R.string.analytics_time_range_all, null);
 
     fun startDate(now: Long = System.currentTimeMillis()): Long {
         return durationDays?.let { now - TimeUnit.DAYS.toMillis(it) } ?: 0L
@@ -39,6 +41,7 @@ data class StrengthIndexUiModel(
     val summary: String
 )
 
+
 sealed class AnalyticsWidget(val id: String) {
     data class BodyWeight(val history: List<AnalyticsChartPoint>) : AnalyticsWidget("weight")
     data class Calendar(val workoutDates: List<Long>) : AnalyticsWidget("calendar")
@@ -55,6 +58,11 @@ sealed class AnalyticsWidget(val id: String) {
         val timeRange: AnalyticsTimeRange,
         val history: List<AnalyticsChartPoint>
     ) : AnalyticsWidget(widgetId)
+
+    data class CategoryVolume(
+        val history: List<CategoryVolumeRow>,
+        val timeRange: AnalyticsTimeRange
+    ) : AnalyticsWidget("category_volume")
 }
 
 data class AnalyticsUiState(

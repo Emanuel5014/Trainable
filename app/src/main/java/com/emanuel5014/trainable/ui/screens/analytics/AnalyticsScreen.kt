@@ -18,10 +18,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.rounded.BarChart
+import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -137,9 +140,12 @@ fun AnalyticsScreen(
     )
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
     val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
+    val hasCategoryVolumeWidget = uiState.widgets.any { it is AnalyticsWidget.CategoryVolume }
     val weightUnit = uiState.weightUnit
     var showVolumeSettings by remember { mutableStateOf<String?>(null) }
     var showAddVolumeDialog by remember { mutableStateOf(false) }
+    var showCategoryVolumeSettings by remember { mutableStateOf(false) }
+    var showAddCategoryVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
     val autoScrollThreshold = with(LocalDensity.current) { 80.dp.toPx() }
@@ -211,6 +217,7 @@ fun AnalyticsScreen(
                         expanded = fabMenuExpanded,
                         hasBodyWeightWidget = hasBodyWeightWidget,
                         hasCalendarWidget = hasCalendarWidget,
+                        hasCategoryVolumeWidget = hasCategoryVolumeWidget,
                         onExpandedChange = { fabMenuExpanded = it },
                         onAddBodyWeight = {
                             viewModel.addBodyWeightChart()
@@ -226,6 +233,10 @@ fun AnalyticsScreen(
                         },
                         onAddExercise = {
                             showChartPicker = true
+                            fabMenuExpanded = false
+                        },
+                        onAddCategoryVolume = {
+                            showAddCategoryVolumeDialog = true
                             fabMenuExpanded = false
                         },
                         modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
@@ -356,6 +367,18 @@ fun AnalyticsScreen(
                                         onEdit = { showVolumeSettings = widget.id }
                                     )
                                 }
+                                is AnalyticsWidget.CategoryVolume -> {
+                                    CategoryVolumeChartSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        history = widget.history,
+                                        timeRange = widget.timeRange,
+                                        weightUnit = weightUnit,
+                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onEdit = { showCategoryVolumeSettings = true }
+                                    )
+                                }
                             }
                         }
                     }
@@ -433,6 +456,29 @@ fun AnalyticsScreen(
                 onConfirm = { selectedPlanId, selectedTimeRange ->
                     viewModel.addVolumeChart(selectedPlanId, selectedTimeRange)
                     showAddVolumeDialog = false
+                }
+            )
+        }
+
+        if (showAddCategoryVolumeDialog) {
+            CategoryVolumeSettingsBottomSheet(
+                currentTimeRange = AnalyticsTimeRange.OneWeek,
+                onDismiss = { showAddCategoryVolumeDialog = false },
+                onConfirm = { timeRange ->
+                    viewModel.addCategoryVolumeChart(timeRange)
+                    showAddCategoryVolumeDialog = false
+                }
+            )
+        }
+
+        if (showCategoryVolumeSettings) {
+            val currentWidget = uiState.widgets.find { it is AnalyticsWidget.CategoryVolume } as? AnalyticsWidget.CategoryVolume
+            CategoryVolumeSettingsBottomSheet(
+                currentTimeRange = currentWidget?.timeRange ?: AnalyticsTimeRange.OneWeek,
+                onDismiss = { showCategoryVolumeSettings = false },
+                onConfirm = { timeRange ->
+                    viewModel.updateCategoryVolumeChart(timeRange)
+                    showCategoryVolumeSettings = false
                 }
             )
         }
@@ -574,11 +620,13 @@ private fun AnalyticsHeaderFabMenu(
     expanded: Boolean,
     hasBodyWeightWidget: Boolean,
     hasCalendarWidget: Boolean,
+    hasCategoryVolumeWidget: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onAddBodyWeight: () -> Unit,
     onAddCalendar: () -> Unit,
     onAddVolume: () -> Unit,
     onAddExercise: () -> Unit,
+    onAddCategoryVolume: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -619,6 +667,17 @@ private fun AnalyticsHeaderFabMenu(
                 onClick = {
                     if (!hasBodyWeightWidget) {
                         onAddBodyWeight()
+                    }
+                    onExpandedChange(false)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.analytics_category_volume_widget)) },
+                leadingIcon = { Icon(Icons.Rounded.BarChart, contentDescription = null) },
+                enabled = !hasCategoryVolumeWidget,
+                onClick = {
+                    if (!hasCategoryVolumeWidget) {
+                        onAddCategoryVolume()
                     }
                     onExpandedChange(false)
                 }
@@ -1278,7 +1337,7 @@ fun VolumeChartSection(
                             color = Primary
                         )
                         Text(
-                            text = timeRange.label,
+                            text = stringResource(timeRange.labelResId),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -1413,7 +1472,7 @@ fun VolumeSettingsBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = range.label,
+                            text = stringResource(range.labelResId),
                             color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -1429,6 +1488,87 @@ fun VolumeSettingsBottomSheet(
                     .clip(RoundedCornerShape(16.dp))
                     .background(Primary)
                     .clickable { onConfirm(selectedPlanId, selectedTimeRange) }
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    color = OnPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryVolumeSettingsBottomSheet(
+    currentTimeRange: AnalyticsTimeRange,
+    onDismiss: () -> Unit,
+    onConfirm: (AnalyticsTimeRange) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.analytics_category_volume),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(bottom = Spacing.medium)
+            )
+
+            Text(
+                text = stringResource(R.string.analytics_time_range),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            ) {
+                AnalyticsTimeRange.values().forEach { range ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedTimeRange == range) Primary else SurfaceContainerHigh)
+                            .clickable { selectedTimeRange = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(range.labelResId),
+                            color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.large))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary)
+                    .clickable { onConfirm(selectedTimeRange) }
                     .padding(vertical = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -1656,6 +1796,145 @@ fun WorkoutCalendarSection(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryVolumeChartSection(
+    modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
+    isRecentlyMoved: Boolean = false,
+    history: List<CategoryVolumeRow>,
+    timeRange: AnalyticsTimeRange,
+    weightUnit: String,
+    onRemove: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null
+) {
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
+        label = "category_volume_card_elevation"
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
+            .border(
+                width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
+                color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.analytics_category_volume),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = stringResource(timeRange.labelResId),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                WidgetControls(onRemove, onEdit)
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            if (history.isNotEmpty()) {
+                val maxVolume = history.maxOfOrNull { it.volume } ?: 1f
+                
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+                ) {
+                    history.forEach { row ->
+                        val progress = if (maxVolume > 0f) row.volume / maxVolume else 0f
+                        
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = progress,
+                            animationSpec = spring(stiffness = Spring.StiffnessLow),
+                            label = "category_volume_progress"
+                        )
+
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = row.category,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${row.volume.toInt()} ${stringResource(R.string.sets).lowercase()}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Primary
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(6.dp))
+                            
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(animatedProgress)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    Primary.copy(alpha = 0.7f),
+                                                    Primary
+                                                )
+                                            )
+                                        )
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.analytics_no_data_range),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant.copy(alpha = 0.6f)
+                    )
                 }
             }
         }
