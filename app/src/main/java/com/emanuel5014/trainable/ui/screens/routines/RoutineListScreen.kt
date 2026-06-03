@@ -37,6 +37,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
@@ -1139,11 +1141,13 @@ private fun RoutineCard(
 
                     if (trainedMuscleGroups.isNotEmpty()) {
                         Row(
-                            modifier = Modifier.padding(top = 6.dp),
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            trainedMuscleGroups.take(3).forEach { category ->
+                            trainedMuscleGroups.forEach { category ->
                                 val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
                                 androidx.compose.material3.Surface(
                                     color = Surface,
@@ -1157,14 +1161,6 @@ private fun RoutineCard(
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                     )
                                 }
-                            }
-                            if (trainedMuscleGroups.size > 3) {
-                                Text(
-                                    text = "+${trainedMuscleGroups.size - 3}",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = OnSurfaceVariant
-                                )
                             }
                         }
                     }

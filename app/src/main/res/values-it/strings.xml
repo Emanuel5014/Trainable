@@ -285,6 +285,27 @@
     <string name="analytics_time_range_6m">6M</string>
     <string name="analytics_time_range_all">TUTTO</string>
 
+    <!-- Confronto -->
+    <string name="compare_sessions_title">Confronta Sessioni</string>
+    <string name="compare_sessions">Sessioni</string>
+    <string name="compare_session_a">SESSIONE A</string>
+    <string name="compare_session_b">SESSIONE B</string>
+    <string name="compare_vs">VS</string>
+    <string name="compare_volume">Volume</string>
+    <string name="compare_sets">Serie</string>
+    <string name="compare_exercises">Esercizi</string>
+    <string name="compare_max_weight">Peso Max</string>
+    <string name="compare_avg_weight">Peso Medio</string>
+    <string name="compare_cardio">Cardio</string>
+    <string name="compare_no_cardio_session_a">Nessun cardio nella Sessione A</string>
+    <string name="compare_no_cardio_session_b">Nessun cardio nella Sessione B</string>
+    <string name="compare_exercises_detail">Dettaglio Esercizi</string>
+    <string name="compare_not_performed">Non eseguito</string>
+    <string name="analytics_time_period_comparison">CONFRONTO PERIODI TEMPORALI</string>
+    <string name="analytics_time_period_comparison_desc">Confronta le tue prestazioni tra due periodi temporali diversi</string>
+    <string name="analytics_training_days">Giorni di Allenamento</string>
+    <string name="error">Errore</string>
+
     <!-- Settings -->
     <string name="settings_title">IMPOSTAZIONI</string>
     <string name="profile">PROFILO</string>

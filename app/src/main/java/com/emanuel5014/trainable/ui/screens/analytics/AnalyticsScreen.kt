@@ -9,6 +9,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,12 +40,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.automirrored.rounded.CompareArrows
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -92,21 +98,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import kotlin.math.abs
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.ui.components.BottomBarManager
+import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
+import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.delay
 import java.time.Instant
@@ -145,6 +156,7 @@ fun AnalyticsScreen(
     var showVolumeSettings by remember { mutableStateOf<String?>(null) }
     var showAddVolumeDialog by remember { mutableStateOf(false) }
     var showCategoryVolumeSettings by remember { mutableStateOf(false) }
+    var showTimePeriodComparisonSettings by remember { mutableStateOf(false) }
     var showAddCategoryVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
@@ -237,6 +249,13 @@ fun AnalyticsScreen(
                         },
                         onAddCategoryVolume = {
                             showAddCategoryVolumeDialog = true
+                            fabMenuExpanded = false
+                        },
+                        onAddTimePeriodComparison = {
+                            viewModel.addTimePeriodComparison(
+                                AnalyticsTimeRange.OneMonth,
+                                AnalyticsTimeRange.OneMonth
+                            )
                             fabMenuExpanded = false
                         },
                         modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
@@ -379,6 +398,25 @@ fun AnalyticsScreen(
                                         onEdit = { showCategoryVolumeSettings = true }
                                     )
                                 }
+                                is AnalyticsWidget.TimePeriodComparison -> {
+                                    TimePeriodComparisonSection(
+                                        modifier = dragModifier,
+                                        isDragging = isDragging,
+                                        isRecentlyMoved = isRecentlyDropped,
+                                        period1Name = widget.period1Name,
+                                        period2Name = widget.period2Name,
+                                        period1DateRange = widget.period1DateRange,
+                                        period2DateRange = widget.period2DateRange,
+                                        period1Metrics = widget.period1Metrics,
+                                        period2Metrics = widget.period2Metrics,
+                                        period1Exercises = widget.period1Exercises,
+                                        period2Exercises = widget.period2Exercises,
+                                        weightUnit = weightUnit,
+                                        summaryParts = widget.summaryParts,
+                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onEdit = { showTimePeriodComparisonSettings = true }
+                                    )
+                                }
                             }
                         }
                     }
@@ -479,6 +517,16 @@ fun AnalyticsScreen(
                 onConfirm = { timeRange ->
                     viewModel.updateCategoryVolumeChart(timeRange)
                     showCategoryVolumeSettings = false
+                }
+            )
+        }
+
+        if (showTimePeriodComparisonSettings) {
+            TimePeriodComparisonSettingsBottomSheet(
+                onDismiss = { showTimePeriodComparisonSettings = false },
+                onConfirm = { period1, period2 ->
+                    viewModel.updateTimePeriodComparison(period1, period2)
+                    showTimePeriodComparisonSettings = false
                 }
             )
         }
@@ -627,6 +675,7 @@ private fun AnalyticsHeaderFabMenu(
     onAddVolume: () -> Unit,
     onAddExercise: () -> Unit,
     onAddCategoryVolume: () -> Unit,
+    onAddTimePeriodComparison: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -695,6 +744,15 @@ private fun AnalyticsHeaderFabMenu(
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 onClick = {
                     onAddExercise()
+                    onExpandedChange(false)
+                }
+            )
+            HorizontalDivider(color = SurfaceContainerHighest)
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.analytics_time_period_comparison)) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Rounded.CompareArrows, contentDescription = null) },
+                onClick = {
+                    onAddTimePeriodComparison()
                     onExpandedChange(false)
                 }
             )
@@ -1848,12 +1906,26 @@ fun CategoryVolumeChartSection(
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.ExtraBold
                     )
-                    Text(
-                        text = stringResource(timeRange.labelResId),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant.copy(alpha = 0.7f),
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    val startDate = timeRange.startDate()
+                    val endDate = System.currentTimeMillis()
+                    val dateRangeText = if (timeRange == AnalyticsTimeRange.All) {
+                        stringResource(R.string.analytics_time_range_all)
+                    } else {
+                        "${DateFormatter.formatShort(startDate)} - ${DateFormatter.formatShort(endDate)}"
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Primary.copy(alpha = 0.12f))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = dateRangeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Primary,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
                 }
                 WidgetControls(onRemove, onEdit)
             }
@@ -1907,18 +1979,18 @@ fun CategoryVolumeChartSection(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth(animatedProgress)
-                                        .fillMaxHeight()
-                                        .clip(RoundedCornerShape(5.dp))
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    Primary.copy(alpha = 0.7f),
-                                                    Primary
-                                                )
-                                            )
-                                        )
-                                )
+                                         .fillMaxWidth(animatedProgress)
+                                         .fillMaxHeight()
+                                         .clip(RoundedCornerShape(5.dp))
+                                         .background(
+                                             Brush.horizontalGradient(
+                                                 colors = listOf(
+                                                     Primary.copy(alpha = 0.7f),
+                                                     Primary
+                                                 )
+                                             )
+                                         )
+                                 )
                             }
                         }
                     }
@@ -1936,6 +2008,603 @@ fun CategoryVolumeChartSection(
                         color = OnSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TimePeriodComparisonSection(
+    modifier: Modifier = Modifier,
+    isDragging: Boolean = false,
+    isRecentlyMoved: Boolean = false,
+    period1Name: String,
+    period2Name: String,
+    period1DateRange: String,
+    period2DateRange: String,
+    period1Metrics: PeriodComparisonMetrics,
+    period2Metrics: PeriodComparisonMetrics,
+    period1Exercises: List<PeriodExerciseComparison>,
+    period2Exercises: List<PeriodExerciseComparison>,
+    weightUnit: String,
+    summaryParts: List<SummaryPart> = emptyList(),
+    onRemove: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null
+) {
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
+        label = "comparison_card_elevation"
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ResponsiveSize.cardPadding, vertical = Spacing.medium)
+            .border(
+                width = if (isDragging || isRecentlyMoved) 1.dp else 0.dp,
+                color = Primary.copy(alpha = if (isDragging) 0.5f else 0.22f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.analytics_time_period_comparison),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                WidgetControls(onRemove, onEdit)
+            }
+
+            // Summary row
+            if (summaryParts.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(Spacing.small))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    summaryParts.forEach { part ->
+                        val isPositive = part.deltaPercent > 0.01f
+                        val isNegative = part.deltaPercent < -0.01f
+                        val badgeBgColor = when {
+                            isPositive -> Primary.copy(alpha = 0.12f)
+                            isNegative -> Error.copy(alpha = 0.12f)
+                            else -> OnSurfaceVariant.copy(alpha = 0.08f)
+                        }
+                        val badgeContentColor = when {
+                            isPositive -> Primary
+                            isNegative -> Error
+                            else -> OnSurfaceVariant
+                        }
+                        val icon = when {
+                            isPositive -> Icons.Rounded.ArrowUpward
+                            isNegative -> Icons.Rounded.ArrowDownward
+                            else -> Icons.Rounded.Remove
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(badgeBgColor)
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = badgeContentColor,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "${String.format("%+.0f", part.deltaPercent)}% ${part.label}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = badgeContentColor,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            // Period headers with date ranges
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = period1Name,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = period1DateRange,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+                Text(
+                    text = "VS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = period2Name,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tertiary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = period2DateRange,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.medium))
+
+            // Metrics with visual bars
+            ComparisonMetricBar(
+                label = stringResource(R.string.compare_volume),
+                value1 = period1Metrics.volume,
+                value2 = period2Metrics.volume,
+                format = { WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) }
+            )
+            ComparisonMetricBar(
+                label = stringResource(R.string.compare_sessions),
+                value1 = period1Metrics.sessionCount.toFloat(),
+                value2 = period2Metrics.sessionCount.toFloat(),
+                format = { String.format("%.0f", it) }
+            )
+            ComparisonMetricBar(
+                label = stringResource(R.string.compare_sets),
+                value1 = period1Metrics.setCount.toFloat(),
+                value2 = period2Metrics.setCount.toFloat(),
+                format = { String.format("%.0f", it) }
+            )
+            ComparisonMetricBar(
+                label = stringResource(R.string.analytics_training_days),
+                value1 = period1Metrics.trainingDays.toFloat(),
+                value2 = period2Metrics.trainingDays.toFloat(),
+                format = { String.format("%.0f", it) }
+            )
+            ComparisonMetricBar(
+                label = stringResource(R.string.compare_avg_weight),
+                value1 = period1Metrics.avgWeight,
+                value2 = period2Metrics.avgWeight,
+                format = { WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) }
+            )
+
+            if (period1Exercises.isNotEmpty() || period2Exercises.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                HorizontalDivider(color = SurfaceContainerHighest)
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                Text(
+                    text = stringResource(R.string.compare_exercises_detail),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Spacer(modifier = Modifier.height(Spacing.small))
+
+                val allExercises = (period1Exercises.map { it.exerciseName } + period2Exercises.map { it.exerciseName }).distinct().take(5)
+                allExercises.forEach { exerciseName ->
+                    val p1 = period1Exercises.find { it.exerciseName == exerciseName }
+                    val p2 = period2Exercises.find { it.exerciseName == exerciseName }
+                    ComparisonExerciseRow(
+                        exerciseName = exerciseName,
+                        volume1 = p1?.volume ?: 0f,
+                        volume2 = p2?.volume ?: 0f,
+                        weightUnit = weightUnit
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComparisonMetricBar(
+    label: String,
+    value1: Float,
+    value2: Float,
+    format: (Float) -> String
+) {
+    val diff = value1 - value2
+    val diffPercent = if (value2 != 0f) (diff / value2) * 100f else 0f
+
+    val maxValue = maxOf(value1, value2, 0.01f)
+    val progress1 = (value1 / maxValue).coerceIn(0f, 1f)
+    val progress2 = (value2 / maxValue).coerceIn(0f, 1f)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        // Label + Badge
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurface,
+                fontWeight = FontWeight.Bold
+            )
+            
+            val isNeutral = abs(diffPercent) < 0.1f
+            val isPositive = diffPercent >= 0.1f
+            val badgeBgColor = when {
+                isPositive -> Primary.copy(alpha = 0.12f)
+                isNeutral -> OnSurfaceVariant.copy(alpha = 0.08f)
+                else -> Error.copy(alpha = 0.12f)
+            }
+            val badgeContentColor = when {
+                isPositive -> Primary
+                isNeutral -> OnSurfaceVariant
+                else -> Error
+            }
+            val icon = when {
+                isPositive -> Icons.Rounded.ArrowUpward
+                isNeutral -> Icons.Rounded.Remove
+                else -> Icons.Rounded.ArrowDownward
+            }
+            
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(badgeBgColor)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = badgeContentColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = String.format("%+.1f%%", diffPercent),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = badgeContentColor
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(Spacing.small))
+        
+        // Side-by-side formatted values
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = format(value1),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = Primary
+            )
+            Text(
+                text = stringResource(R.string.compare_vs),
+                style = MaterialTheme.typography.labelSmall,
+                color = OnSurfaceVariant,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = format(value2),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = Tertiary
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(Spacing.small))
+        
+        // Stacked progress bars with gradients
+        // Bar 1: Primary
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(SurfaceContainerHighest)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress1)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Primary.copy(alpha = 0.7f), Primary)
+                        )
+                    )
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        // Bar 2: Tertiary
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(SurfaceContainerHighest)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress2)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Tertiary.copy(alpha = 0.7f), Tertiary)
+                        )
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun ComparisonMetricRow(
+    label: String,
+    value1: String,
+    value2: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = value1,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = Primary,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Start
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = OnSurfaceVariant,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center
+        )
+        Text(
+            text = value2,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = Tertiary,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+@Composable
+private fun ComparisonExerciseRow(
+    exerciseName: String,
+    volume1: Float,
+    volume2: Float,
+    weightUnit: String
+) {
+    val diff = volume1 - volume2
+    val diffPercent = if (volume2 != 0f) (diff / volume2) * 100f else 0f
+    
+    val isNeutral = abs(diffPercent) < 0.1f
+    val isPositive = diffPercent >= 0.1f
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = exerciseName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = OnSurface,
+            modifier = Modifier.weight(1f)
+        )
+        
+        val badgeBgColor = when {
+            isPositive -> Primary.copy(alpha = 0.12f)
+            isNeutral -> OnSurfaceVariant.copy(alpha = 0.08f)
+            else -> Error.copy(alpha = 0.12f)
+        }
+        val badgeContentColor = when {
+            isPositive -> Primary
+            isNeutral -> OnSurfaceVariant
+            else -> Error
+        }
+        val icon = when {
+            isPositive -> Icons.Rounded.ArrowUpward
+            isNeutral -> Icons.Rounded.Remove
+            else -> Icons.Rounded.ArrowDownward
+        }
+        
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(badgeBgColor)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = badgeContentColor,
+                    modifier = Modifier.size(12.dp)
+                )
+                Text(
+                    text = String.format("%+.1f%%", diffPercent),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = badgeContentColor
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePeriodComparisonSettingsBottomSheet(
+    onDismiss: () -> Unit,
+    onConfirm: (AnalyticsTimeRange, AnalyticsTimeRange) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    var selectedPeriod1 by remember { mutableStateOf(AnalyticsTimeRange.OneMonth) }
+    var selectedPeriod2 by remember { mutableStateOf(AnalyticsTimeRange.OneMonth) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface,
+        dragHandle = null
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 40.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.analytics_time_period_comparison),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = OnSurface
+            )
+            Text(
+                text = stringResource(R.string.analytics_time_period_comparison_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = stringResource(R.string.compare_session_a),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = Primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AnalyticsTimeRange.entries.forEach { range ->
+                    val isSelected = selectedPeriod1 == range
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) Primary else SurfaceContainerHigh)
+                            .clickable { selectedPeriod1 = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(range.labelResId),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isSelected) OnPrimary else OnSurfaceVariant,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(R.string.compare_session_b),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = Tertiary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AnalyticsTimeRange.entries.forEach { range ->
+                    val isSelected = selectedPeriod2 == range
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) Tertiary else SurfaceContainerHigh)
+                            .clickable { selectedPeriod2 = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(range.labelResId),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isSelected) OnPrimary else OnSurfaceVariant,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            GymButton(
+                onClick = { onConfirm(selectedPeriod1, selectedPeriod2) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    stringResource(R.string.confirm).uppercase(),
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
         }
     }

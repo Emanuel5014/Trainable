@@ -52,6 +52,9 @@ class HistoryViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<Int>()
     val navigationEvent = _navigationEvent.asSharedFlow()
 
+    private val _compareNavigationEvent = MutableSharedFlow<Pair<Int, Int>>()
+    val compareNavigationEvent = _compareNavigationEvent.asSharedFlow()
+
     init {
         loadHistory()
         loadPlans()
@@ -187,6 +190,15 @@ class HistoryViewModel @Inject constructor(
                 repository.deleteSession(it)
             }
             clearSelection()
+        }
+    }
+
+    fun compareSelectedSessions() {
+        viewModelScope.launch {
+            val selectedIds = _uiState.value.selectedSessionIds.toList()
+            if (selectedIds.size == 2) {
+                _compareNavigationEvent.emit(selectedIds[0] to selectedIds[1])
+            }
         }
     }
 }

@@ -7,6 +7,8 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import com.emanuel5014.trainable.data.local.dao.ConsistencyRow
+import com.emanuel5014.trainable.data.local.dao.PeriodExerciseRow
+import com.emanuel5014.trainable.data.local.dao.PeriodMetrics
 import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
@@ -53,6 +55,8 @@ class AnalyticsViewModel @Inject constructor(
     private val selectedExerciseIds = MutableStateFlow<Set<Int>>(loadSavedExerciseIds())
     private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
     private val categoryVolumeTimeRange = MutableStateFlow(loadCategoryVolumeTimeRange())
+    private val period1Range = MutableStateFlow(AnalyticsTimeRange.OneMonth)
+    private val period2Range = MutableStateFlow(AnalyticsTimeRange.OneMonth)
 
     private fun loadSavedExerciseIds(): Set<Int> {
         val saved = prefs.getStringSet("selected_exercise_ids", emptySet()) ?: emptySet()
@@ -95,7 +99,9 @@ class AnalyticsViewModel @Inject constructor(
         widgetOrder,
         userPreferencesRepository.weightUnit,
         localeManager.currentLanguage,
-        categoryVolumeTimeRange
+        categoryVolumeTimeRange,
+        period1Range,
+        period2Range
     ) { args ->
         val activePlan = args[0] as WorkoutPlanEntity?
         @Suppress("UNCHECKED_CAST")
@@ -108,6 +114,8 @@ class AnalyticsViewModel @Inject constructor(
         val weightUnit = args[5] as String
         val userLang = args[6] as String
         val catVolumeTimeRange = args[7] as AnalyticsTimeRange
+        val p1Range = args[8] as AnalyticsTimeRange
+        val p2Range = args[9] as AnalyticsTimeRange
         
         val languageCode = localeManager.resolveLanguageForCompose(userLang)
         AnalyticsQueryContext(
@@ -120,7 +128,9 @@ class AnalyticsViewModel @Inject constructor(
             weightUnit = weightUnit,
             languageCode = languageCode,
             categoryVolumeStartDate = catVolumeTimeRange.startDate(),
-            categoryVolumeTimeRange = catVolumeTimeRange
+            categoryVolumeTimeRange = catVolumeTimeRange,
+            period1Range = p1Range,
+            period2Range = p2Range
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -219,14 +229,55 @@ class AnalyticsViewModel @Inject constructor(
             }
         }
 
+        val period1StartDate = context.period1Range.startDate()
+        val period1EndDate = System.currentTimeMillis()
+        val period2StartDate = context.period2Range.startDate(period1StartDate)
+        val period2EndDate = period1StartDate
+
+        val period1MetricsFlow = analyticsRepository.getPeriodMetrics(period1StartDate, period1EndDate)
+        val period2MetricsFlow = analyticsRepository.getPeriodMetrics(period2StartDate, period2EndDate)
+        val period1ExercisesFlow = analyticsRepository.getPeriodExerciseBreakdown(period1StartDate, period1EndDate)
+        val period2ExercisesFlow = analyticsRepository.getPeriodExerciseBreakdown(period2StartDate, period2EndDate)
+        val period1TrainingDaysFlow = analyticsRepository.getTrainingDays(period1StartDate, period1EndDate)
+        val period2TrainingDaysFlow = analyticsRepository.getTrainingDays(period2StartDate, period2EndDate)
+
+        val timePeriodComparisonFlow = combine(
+            combine(period1MetricsFlow, period2MetricsFlow) { p1, p2 -> p1 to p2 },
+            combine(period1ExercisesFlow, period2ExercisesFlow) { p1, p2 -> p1 to p2 },
+            combine(period1TrainingDaysFlow, period2TrainingDaysFlow) { p1, p2 -> p1 to p2 }
+        ) { metricsPair, exercisesPair, daysPair ->
+            val (p1Metrics, p2Metrics) = metricsPair
+            val (p1Exercises, p2Exercises) = exercisesPair
+            val (p1Days, p2Days) = daysPair
+            TimePeriodComparisonSnapshot(
+                period1Metrics = PeriodComparisonMetrics(
+                    volume = p1Metrics.volume,
+                    sessionCount = p1Metrics.sessionCount,
+                    setCount = p1Metrics.setCount,
+                    avgWeight = p1Metrics.avgWeight,
+                    trainingDays = p1Days
+                ),
+                period2Metrics = PeriodComparisonMetrics(
+                    volume = p2Metrics.volume,
+                    sessionCount = p2Metrics.sessionCount,
+                    setCount = p2Metrics.setCount,
+                    avgWeight = p2Metrics.avgWeight,
+                    trainingDays = p2Days
+                ),
+                period1Exercises = p1Exercises.map { PeriodExerciseComparison(ExerciseTranslations.translate(it.exerciseName, context.languageCode), it.volume, it.setCount, it.maxWeight) },
+                period2Exercises = p2Exercises.map { PeriodExerciseComparison(ExerciseTranslations.translate(it.exerciseName, context.languageCode), it.volume, it.setCount, it.maxWeight) }
+            )
+        }
+
         coreFlow.flatMapLatest { core ->
             combine(
-                strengthFlow,
-                weightFlow,
-                sessionsFlow,
-                exerciseHistoriesFlow,
-                volumeHistoriesFlow
-            ) { strengthCategory, weightHistory, sessions, exerciseHistories, volumeHistories ->
+                combine(strengthFlow, weightFlow) { s, w -> s to w },
+                combine(sessionsFlow, exerciseHistoriesFlow) { s, e -> s to e },
+                combine(volumeHistoriesFlow, timePeriodComparisonFlow) { v, t -> v to t }
+            ) { pair1, pair2, pair3 ->
+                val (strengthCategory, weightHistory) = pair1
+                val (sessions, exerciseHistories) = pair2
+                val (volumeHistories, timePeriodComparison) = pair3
                 buildAnalyticsState(
                     activePlanName = context.activePlan?.nome ?: "No Active Plan",
                     allPlans = context.allPlans,
@@ -246,7 +297,10 @@ class AnalyticsViewModel @Inject constructor(
                     exerciseHistories = exerciseHistories,
                     volumeHistories = volumeHistories,
                     weightUnit = context.weightUnit,
-                    languageCode = context.languageCode
+                    languageCode = context.languageCode,
+                    timePeriodComparison = timePeriodComparison,
+                    period1Range = context.period1Range,
+                    period2Range = context.period2Range
                 )
             }
         }
@@ -394,6 +448,22 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
+    fun addTimePeriodComparison(period1: AnalyticsTimeRange, period2: AnalyticsTimeRange) {
+        period1Range.value = period1
+        period2Range.value = period2
+        widgetOrder.update { current ->
+            if (current.contains("time_period_comparison")) return@update current
+            val newList = current + "time_period_comparison"
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun updateTimePeriodComparison(period1: AnalyticsTimeRange, period2: AnalyticsTimeRange) {
+        period1Range.value = period1
+        period2Range.value = period2
+    }
+
     fun clearExerciseSelection() {
         selectedExerciseIds.value = emptySet()
         saveExerciseIds(emptySet())
@@ -432,7 +502,10 @@ class AnalyticsViewModel @Inject constructor(
         exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
         volumeHistories: Map<String, List<com.emanuel5014.trainable.data.local.dao.DailyVolume>>,
         weightUnit: String,
-        languageCode: String
+        languageCode: String,
+        timePeriodComparison: TimePeriodComparisonSnapshot,
+        period1Range: AnalyticsTimeRange,
+        period2Range: AnalyticsTimeRange
     ): AnalyticsUiState {
         val completedSessions = consistency?.completedSessions ?: 0
         val targetSessionsPerWeek = consistency?.targetSessionsPerWeek ?: 0
@@ -523,6 +596,46 @@ class AnalyticsViewModel @Inject constructor(
                         timeRange = categoryVolumeTimeRange
                     )
                 }
+                id == "time_period_comparison" -> {
+                    val period1StartDate = period1Range.startDate()
+                    val period1EndDate = System.currentTimeMillis()
+                    val period2StartDate = period2Range.startDate(period1StartDate)
+                    val period2EndDate = period1StartDate
+
+                    val dateFormat = java.text.SimpleDateFormat("dd/MM", java.util.Locale.getDefault())
+                    val p1RangeLabel = "${dateFormat.format(java.util.Date(period1StartDate))} - ${dateFormat.format(java.util.Date(period1EndDate))}"
+                    val p2RangeLabel = "${dateFormat.format(java.util.Date(period2StartDate))} - ${dateFormat.format(java.util.Date(period2EndDate))}"
+
+                    val p1 = timePeriodComparison.period1Metrics
+                    val p2 = timePeriodComparison.period2Metrics
+
+                    fun deltaPercent(current: Float, previous: Float): Float =
+                        if (previous != 0f) ((current - previous) / previous) * 100f else 0f
+
+                    val volumeDelta = deltaPercent(p1.volume, p2.volume)
+                    val sessionsDelta = deltaPercent(p1.sessionCount.toFloat(), p2.sessionCount.toFloat())
+                    val setsDelta = deltaPercent(p1.setCount.toFloat(), p2.setCount.toFloat())
+                    val trainingDaysDelta = deltaPercent(p1.trainingDays.toFloat(), p2.trainingDays.toFloat())
+                    val avgWeightDelta = deltaPercent(p1.avgWeight, p2.avgWeight)
+
+                    val summaryParts = listOf(
+                        SummaryPart(context.getString(R.string.compare_volume), volumeDelta, volumeDelta >= 0),
+                        SummaryPart(context.getString(R.string.compare_sessions), sessionsDelta, sessionsDelta >= 0),
+                        SummaryPart(context.getString(R.string.analytics_training_days), trainingDaysDelta, trainingDaysDelta >= 0)
+                    )
+
+                    AnalyticsWidget.TimePeriodComparison(
+                        period1Name = context.getString(period1Range.labelResId),
+                        period2Name = context.getString(period2Range.labelResId),
+                        period1DateRange = p1RangeLabel,
+                        period2DateRange = p2RangeLabel,
+                        period1Metrics = p1,
+                        period2Metrics = p2,
+                        period1Exercises = timePeriodComparison.period1Exercises,
+                        period2Exercises = timePeriodComparison.period2Exercises,
+                        summaryParts = summaryParts
+                    )
+                }
                 else -> null
             }
         }
@@ -595,7 +708,9 @@ class AnalyticsViewModel @Inject constructor(
         val weightUnit: String,
         val languageCode: String,
         val categoryVolumeStartDate: Long,
-        val categoryVolumeTimeRange: AnalyticsTimeRange
+        val categoryVolumeTimeRange: AnalyticsTimeRange,
+        val period1Range: AnalyticsTimeRange,
+        val period2Range: AnalyticsTimeRange
     )
 
     private data class CoreAnalyticsSnapshot(
@@ -618,6 +733,13 @@ class AnalyticsViewModel @Inject constructor(
     private data class StrengthCategorySnapshot(
         val strengthIndex: Float?,
         val categoryVolumes: List<CategoryVolumeRow>
+    )
+
+    private data class TimePeriodComparisonSnapshot(
+        val period1Metrics: PeriodComparisonMetrics,
+        val period2Metrics: PeriodComparisonMetrics,
+        val period1Exercises: List<PeriodExerciseComparison>,
+        val period2Exercises: List<PeriodExerciseComparison>
     )
 
     private companion object {

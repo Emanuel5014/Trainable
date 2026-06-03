@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.emanuel5014.trainable.ui.screens.MainPagerScreen
+import com.emanuel5014.trainable.ui.screens.compare.CompareSessionsScreen
 import com.emanuel5014.trainable.ui.screens.history.EditWorkoutScreen
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
@@ -58,6 +59,14 @@ fun MainNavGraph(
         }
         composable<EditWorkoutSession> {
             EditWorkoutScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<CompareSessions> { backStackEntry ->
+            val route = backStackEntry.toRoute<CompareSessions>()
+            CompareSessionsScreen(
+                sessionId1 = route.sessionId1,
+                sessionId2 = route.sessionId2,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

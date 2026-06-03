@@ -63,7 +63,40 @@ sealed class AnalyticsWidget(val id: String) {
         val history: List<CategoryVolumeRow>,
         val timeRange: AnalyticsTimeRange
     ) : AnalyticsWidget("category_volume")
+
+    data class TimePeriodComparison(
+        val period1Name: String,
+        val period2Name: String,
+        val period1DateRange: String,
+        val period2DateRange: String,
+        val period1Metrics: PeriodComparisonMetrics,
+        val period2Metrics: PeriodComparisonMetrics,
+        val period1Exercises: List<PeriodExerciseComparison>,
+        val period2Exercises: List<PeriodExerciseComparison>,
+        val summaryParts: List<SummaryPart> = emptyList()
+    ) : AnalyticsWidget("time_period_comparison")
 }
+
+data class SummaryPart(
+    val label: String,
+    val deltaPercent: Float,
+    val isPositive: Boolean
+)
+
+data class PeriodComparisonMetrics(
+    val volume: Float,
+    val sessionCount: Int,
+    val setCount: Int,
+    val avgWeight: Float,
+    val trainingDays: Int
+)
+
+data class PeriodExerciseComparison(
+    val exerciseName: String,
+    val volume: Float,
+    val setCount: Int,
+    val maxWeight: Float
+)
 
 data class AnalyticsUiState(
     val activePlanName: String = "No Active Plan",
