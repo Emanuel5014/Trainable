@@ -373,16 +373,17 @@ fun RoutineListScreen(
                     
                     // M3 Expressive: Page transformation based on scroll progress
                     val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
+                    val progress = kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
                     
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
+                            .zIndex(1f - progress)
                             .graphicsLayer {
                                 // Dynamic parallax glide effect
                                 translationX = pageOffset * (size.width * 0.3f)
                                 
                                 // Premium scale and alpha transitions
-                                val progress = kotlin.math.abs(pageOffset).coerceIn(0f, 1f)
                                 val scale = 1f - (progress * 0.08f)
                                 scaleX = scale
                                 scaleY = scale

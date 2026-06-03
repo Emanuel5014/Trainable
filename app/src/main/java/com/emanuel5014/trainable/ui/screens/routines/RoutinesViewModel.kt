@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -218,13 +219,34 @@ class RoutinesViewModel @Inject constructor(
 
     fun movePlan(fromIndex: Int, toIndex: Int, isArchivedList: Boolean) {
         viewModelScope.launch {
-            val list = (if (isArchivedList) _uiState.value.archivedPlans else _uiState.value.plans).toMutableList()
-            if (fromIndex in list.indices && toIndex in list.indices) {
-                val item = list.removeAt(fromIndex)
-                list.add(toIndex, item)
+            val allPlans: List<PlanWithDetails> = workoutRepository.getAllPlansWithDetails().first()
+            val filteredPlans = allPlans.filter { it.plan.note != "SYSTEM_PLAN" }
+            
+            val active = mutableListOf<WorkoutPlanEntity>()
+            val archived = mutableListOf<WorkoutPlanEntity>()
+            
+            for (pWithDetails in filteredPlans) {
+                if (pWithDetails.plan.isActive) {
+                    active.add(pWithDetails.plan)
+                } else {
+                    archived.add(pWithDetails.plan)
+                }
+            }
+            
+            val targetList = if (isArchivedList) archived else active
+            
+            if (fromIndex in targetList.indices && toIndex in targetList.indices) {
+                val item = targetList.removeAt(fromIndex)
+                targetList.add(toIndex, item)
                 
-                val updates = list.mapIndexed { index, it ->
-                    it.plan.copy(ordine = index)
+                val combinedList = mutableListOf<WorkoutPlanEntity>()
+                combinedList.addAll(active)
+                combinedList.addAll(archived)
+                
+                val updates = mutableListOf<WorkoutPlanEntity>()
+                for (i in combinedList.indices) {
+                    val plan = combinedList[i]
+                    updates.add(plan.copy(ordine = i))
                 }
                 workoutRepository.savePlans(updates)
             }
