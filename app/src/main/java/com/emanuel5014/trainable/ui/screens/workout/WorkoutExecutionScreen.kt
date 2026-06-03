@@ -353,28 +353,33 @@ fun WorkoutExecutionScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .graphicsLayer { translationX = swipeOffset.value }
-                                .pointerInput(state.currentExerciseIndex) {
-                                    detectHorizontalDragGestures(
-                                        onDragStart = { coroutineScope.launch { swipeOffset.snapTo(0f) } },
-                                        onDragEnd = {
-                                            val threshold = with(density) { 50.dp.toPx() }
-                                            if (swipeOffset.value > threshold && targetIndex > 0) {
-                                                coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
-                                                viewModel.previousExercise()
-                                            } else if (swipeOffset.value < -threshold && targetIndex < state.exercises.size - 1) {
-                                                coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
-                                                viewModel.nextExercise()
-                                            } else {
-                                                coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
+                                .then(
+                                    if (state.swipeActionsEnabled) {
+                                        Modifier
+                                            .graphicsLayer { translationX = swipeOffset.value }
+                                            .pointerInput(state.currentExerciseIndex) {
+                                                detectHorizontalDragGestures(
+                                                    onDragStart = { coroutineScope.launch { swipeOffset.snapTo(0f) } },
+                                                    onDragEnd = {
+                                                        val threshold = with(density) { 50.dp.toPx() }
+                                                        if (swipeOffset.value > threshold && targetIndex > 0) {
+                                                            coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
+                                                            viewModel.previousExercise()
+                                                        } else if (swipeOffset.value < -threshold && targetIndex < state.exercises.size - 1) {
+                                                            coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
+                                                            viewModel.nextExercise()
+                                                        } else {
+                                                            coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
+                                                        }
+                                                    },
+                                                    onHorizontalDrag = { change, dragAmount ->
+                                                        change.consume()
+                                                        coroutineScope.launch { swipeOffset.snapTo(swipeOffset.value + dragAmount) }
+                                                    }
+                                                )
                                             }
-                                        },
-                                        onHorizontalDrag = { change, dragAmount ->
-                                            change.consume()
-                                            coroutineScope.launch { swipeOffset.snapTo(swipeOffset.value + dragAmount) }
-                                        }
-                                    )
-                                }
+                                    } else Modifier
+                                )
                         ) {
                             // Exercise Header
                             Column(

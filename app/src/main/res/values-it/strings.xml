@@ -134,7 +134,7 @@
     <string name="no_exercises_in_routine">Nessun esercizio in questa scheda</string>
     <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
     <string name="swipe_actions">Azioni Rapide Swipe</string>
-    <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi</string>
+    <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi e navigare tra gli esercizi</string>
 
     <!-- Exercises -->
     <string name="exercise">Esercizio</string>

@@ -46,7 +46,8 @@ data class WorkoutState(
     val exerciseSwaps: Map<Int, Int> = emptyMap(),
     val weightUnit: String = "kg",
     val timerNotificationsEnabled: Boolean = true,
-    val isQuickWorkout: Boolean = false
+    val isQuickWorkout: Boolean = false,
+    val swipeActionsEnabled: Boolean = true
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -139,6 +140,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _state.update { it.copy(weightUnit = unit) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.swipeActionsEnabled.collect { enabled ->
+                _state.update { it.copy(swipeActionsEnabled = enabled) }
             }
         }
         

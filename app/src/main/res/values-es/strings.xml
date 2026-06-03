@@ -134,7 +134,7 @@
     <string name="no_exercises_in_routine">Sin ejercicios en esta rutina</string>
     <string name="tap_plus_to_add">Toca el botón + para añadir ejercicios y empezar a construir tu entrenamiento.</string>
     <string name="swipe_actions">Acciones Swipe</string>
-    <string name="swipe_actions_desc">Activa deslizar para editar/archivar/eliminar elementos</string>
+    <string name="swipe_actions_desc">Activa deslizar para editar/archivar/eliminar elementos y navegar entre ejercicios</string>
 
     <!-- Exercises -->
     <string name="exercise">Ejercicio</string>
