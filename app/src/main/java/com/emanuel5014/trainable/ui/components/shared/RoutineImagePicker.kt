@@ -74,6 +74,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.util.UriMigrationHelper
+import com.emanuel5014.trainable.util.ImageStorageUtils
 import java.io.File
 import java.io.FileOutputStream
 
@@ -129,8 +130,8 @@ private fun ImagePickerContent(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            val savedPath = saveImageToAppStorage(context, it)
-            onImageAdd(savedPath)
+            val savedPath = ImageStorageUtils.compressAndSaveImage(context, it)
+            if (savedPath != null) onImageAdd(savedPath)
         }
         showOptions = false
     }
@@ -140,7 +141,16 @@ private fun ImagePickerContent(
     ) { success ->
         if (success) {
             tempImageUri?.let { uri ->
-                onImageAdd(uri.toString())
+                val compressedPath = ImageStorageUtils.compressAndSaveImage(context, uri)
+                if (compressedPath != null) {
+                    onImageAdd(compressedPath)
+                    // Delete the uncompressed temp file from cache
+                    try {
+                        context.contentResolver.delete(uri, null, null)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             }
         }
         showOptions = false
@@ -324,7 +334,7 @@ private fun OptionItem(
 }
 
 private fun createTempImageUri(context: Context): Uri {
-    val tempFile = File(context.filesDir, "routine_${System.currentTimeMillis()}.jpg")
+    val tempFile = File(context.cacheDir, "routine_temp_${System.currentTimeMillis()}.jpg")
     return FileProvider.getUriForFile(
         context,
         "${context.packageName}.fileprovider",
@@ -457,35 +467,5 @@ private fun ZoomableImage(
                 ),
             contentScale = ContentScale.Fit
         )
-    }
-}
-
-
-private fun saveImageToAppStorage(context: Context, uri: Uri): String {
-    return try {
-        val inputStream = context.contentResolver.openInputStream(uri) ?: return uri.toString()
-        val fileName = getFileName(context, uri) ?: "routine_${System.currentTimeMillis()}.jpg"
-        val file = File(context.filesDir, fileName)
-        
-        FileOutputStream(file).use { output ->
-            inputStream.copyTo(output)
-        }
-        inputStream.close()
-        
-        file.absolutePath
-    } catch (e: Exception) {
-        uri.toString()
-    }
-}
-
-private fun getFileName(context: Context, uri: Uri): String? {
-    return try {
-        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            cursor.moveToFirst()
-            cursor.getString(nameIndex)
-        }
-    } catch (e: Exception) {
-        null
     }
 }

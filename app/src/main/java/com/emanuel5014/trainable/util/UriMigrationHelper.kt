@@ -18,19 +18,25 @@ object UriMigrationHelper {
         
         // Handle images stored in the app's internal files directory or its subdirectories
         if (rawPath.contains("/files/")) {
-            // First check if it's in a subdirectory like /files/routine_images/
+            val fileName = rawPath.substringAfterLast("/")
+            
+            // 1. Try exact subpath
             val subPath = rawPath.substringAfter("/files/")
-            val correctFile = File(context.filesDir, subPath)
-            if (correctFile.exists()) {
-                return if (isFileUri) "file://${correctFile.absolutePath}" else correctFile.absolutePath
+            val exactFile = File(context.filesDir, subPath)
+            if (exactFile.exists()) {
+                return if (isFileUri) "file://${exactFile.absolutePath}" else exactFile.absolutePath
             }
             
-            // Fallback: check just the file name directly in filesDir
-            // (BackupManager restores all images directly to filesDir, stripping subdirectories)
-            val fileName = rawPath.substringAfterLast("/")
-            val fallbackFile = File(context.filesDir, fileName)
-            if (fallbackFile.exists()) {
-                return if (isFileUri) "file://${fallbackFile.absolutePath}" else fallbackFile.absolutePath
+            // 2. Try in routine_images (where compression moves them)
+            val compressedFile = File(File(context.filesDir, "routine_images"), fileName)
+            if (compressedFile.exists()) {
+                return if (isFileUri) "file://${compressedFile.absolutePath}" else compressedFile.absolutePath
+            }
+            
+            // 3. Try in root filesDir (fallback for backup restores)
+            val rootFile = File(context.filesDir, fileName)
+            if (rootFile.exists()) {
+                return if (isFileUri) "file://${rootFile.absolutePath}" else rootFile.absolutePath
             }
         }
         

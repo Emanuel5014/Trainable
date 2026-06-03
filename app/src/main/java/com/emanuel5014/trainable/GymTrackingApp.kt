@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
+import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.HiltAndroidApp
@@ -35,6 +36,11 @@ class GymTrackingApp : Application(), Configuration.Provider {
         applicationScope.launch {
             localeManager.applyStoredLanguage()
             GymMembershipWorker.schedule(this@GymTrackingApp)
+            
+            // Optimize existing images to save space
+            launch(Dispatchers.IO) {
+                ImageStorageUtils.compressExistingImages(this@GymTrackingApp)
+            }
             
             // Reschedule AutoBackupWorker on startup if it was enabled (e.g. after an app update)
             val isAutoBackupEnabled = userPrefsRepository.autoBackupEnabled.first()
