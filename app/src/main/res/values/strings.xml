@@ -154,6 +154,11 @@
     <string name="search_exercises">Search exercises</string>
     <string name="all_categories">All</string>
     <string name="no_exercises_found">No exercises found</string>
+    <string name="choose_from_library">Choose from library</string>
+    <string name="filter_custom">Custom</string>
+    <string name="new_exercise">New Exercise</string>
+    <string name="delete_exercise_title">Delete Exercise?</string>
+    <string name="delete_exercise_message">Delete \"%1$s\"? This cannot be undone.</string>
     <string name="add_custom_exercise">Add Custom Exercise</string>
     <string name="exercise_name">Exercise Name</string>
     <string name="category">Category</string>

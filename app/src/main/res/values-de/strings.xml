@@ -154,6 +154,11 @@
     <string name="search_exercises">Übungen suchen</string>
     <string name="all_categories">Alle</string>
     <string name="no_exercises_found">Keine Übungen gefunden</string>
+    <string name="choose_from_library">Aus der Bibliothek wählen</string>
+    <string name="filter_custom">Benutzerdefiniert</string>
+    <string name="new_exercise">Neue Übung</string>
+    <string name="delete_exercise_title">Übung löschen?</string>
+    <string name="delete_exercise_message">\"%1$s\" löschen? Dies kann nicht rückgängig gemacht werden.</string>
     <string name="add_custom_exercise">Benutzerdefinierte Übung hinzufügen</string>
     <string name="exercise_name">Übungsname</string>
     <string name="category">Kategorie</string>

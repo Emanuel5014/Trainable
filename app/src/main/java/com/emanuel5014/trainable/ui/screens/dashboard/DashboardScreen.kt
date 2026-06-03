@@ -28,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Bolt
-import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CreditCard
@@ -262,23 +261,11 @@ fun DashboardScreen(
                             .fillMaxWidth()
                             .height(48.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.CalendarMonth,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = Primary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.choose_custom_date).uppercase(),
-                                fontWeight = FontWeight.ExtraBold,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.choose_custom_date).uppercase(),
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                     
                     if (currentExpiry != null) {

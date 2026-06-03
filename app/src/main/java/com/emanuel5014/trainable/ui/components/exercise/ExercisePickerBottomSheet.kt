@@ -52,8 +52,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.theme.Error
@@ -126,7 +128,7 @@ fun ExercisePickerBottomSheet(
                 .padding(bottom = ResponsiveSize.cardPadding)
         ) {
             Text(
-                text = "SELECT EXERCISE",
+                text = stringResource(R.string.select_exercise).uppercase(),
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize = ResponsiveSize.labelLargeSize
                 ),
@@ -135,7 +137,7 @@ fun ExercisePickerBottomSheet(
             )
             Spacer(modifier = Modifier.height(Spacing.xtraSmall))
             Text(
-                text = "Choose from library",
+                text = stringResource(R.string.choose_from_library),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontSize = ResponsiveSize.headlineMediumSize
                 ),
@@ -148,7 +150,7 @@ fun ExercisePickerBottomSheet(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search exercises...") },
+                placeholder = { Text(stringResource(R.string.search_exercises)) },
                 leadingIcon = {
                     Icon(
                         Icons.Rounded.Search,
@@ -184,7 +186,7 @@ fun ExercisePickerBottomSheet(
                         selectedCategory = null
                         showOnlyCustom = false
                     },
-                    label = { Text("All") },
+                    label = { Text(stringResource(R.string.all_categories)) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Primary,
                         selectedLabelColor = OnPrimary
@@ -193,7 +195,7 @@ fun ExercisePickerBottomSheet(
                 FilterChip(
                     selected = showOnlyCustom,
                     onClick = { showOnlyCustom = !showOnlyCustom },
-                    label = { Text("Custom") },
+                    label = { Text(stringResource(R.string.filter_custom)) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Primary,
                         selectedLabelColor = OnPrimary
@@ -255,7 +257,7 @@ fun ExercisePickerBottomSheet(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(Spacing.small))
-                Text("Add Custom Exercise", fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
             }
         }
     }
@@ -288,10 +290,10 @@ fun ExercisePickerBottomSheet(
             onDismissRequest = { exerciseToDelete = null },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text("Delete Exercise?", fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                Text(stringResource(R.string.delete_exercise_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
-                Text("Delete \"${exerciseToDelete!!.nome}\"? This cannot be undone.", color = OnSurfaceVariant)
+                Text(stringResource(R.string.delete_exercise_message, exerciseToDelete!!.nome), color = OnSurfaceVariant)
             },
             confirmButton = {
                 TextButton(
@@ -300,12 +302,12 @@ fun ExercisePickerBottomSheet(
                         exerciseToDelete = null
                     }
                 ) {
-                    Text("DELETE", color = Error)
+                    Text(stringResource(R.string.delete).uppercase(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { exerciseToDelete = null }) {
-                    Text("CANCEL", color = Primary)
+                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
             }
         )
@@ -410,7 +412,7 @@ private fun AddCustomExerciseDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "New Exercise",
+                text = stringResource(R.string.new_exercise),
                 color = OnSurface,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -420,7 +422,7 @@ private fun AddCustomExerciseDialog(
                 OutlinedTextField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
-                    label = { Text("Exercise Name") },
+                    label = { Text(stringResource(R.string.exercise_name)) },
                     singleLine = true,
                     shape = Shapes.large,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -446,7 +448,7 @@ private fun AddCustomExerciseDialog(
                             onValueChange = {},
                             readOnly = true,
                             enabled = true,
-                            label = { Text("Category") },
+                            label = { Text(stringResource(R.string.category)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                             modifier = Modifier
                                 .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -484,12 +486,12 @@ private fun AddCustomExerciseDialog(
                 },
                 enabled = exerciseName.isNotBlank()
             ) {
-                Text("ADD", color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
+                Text(stringResource(R.string.add).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("CANCEL", color = OnSurfaceVariant)
+                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainer
@@ -512,7 +514,7 @@ private fun EditCustomExerciseDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Edit Exercise",
+                text = stringResource(R.string.edit_exercise_title),
                 color = OnSurface,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -522,7 +524,7 @@ private fun EditCustomExerciseDialog(
                 OutlinedTextField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
-                    label = { Text("Exercise Name") },
+                    label = { Text(stringResource(R.string.exercise_name)) },
                     singleLine = true,
                     shape = Shapes.large,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -548,7 +550,7 @@ private fun EditCustomExerciseDialog(
                             onValueChange = {},
                             readOnly = true,
                             enabled = true,
-                            label = { Text("Category") },
+                            label = { Text(stringResource(R.string.category)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                             modifier = Modifier
                                 .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -591,12 +593,12 @@ private fun EditCustomExerciseDialog(
                 },
                 enabled = exerciseName.isNotBlank()
             ) {
-                Text("SAVE", color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
+                Text(stringResource(R.string.save).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("CANCEL", color = OnSurfaceVariant)
+                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainer

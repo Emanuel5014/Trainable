@@ -154,6 +154,11 @@
     <string name="search_exercises">Buscar ejercicios</string>
     <string name="all_categories">Todos</string>
     <string name="no_exercises_found">No se encontraron ejercicios</string>
+    <string name="choose_from_library">Elige de la biblioteca</string>
+    <string name="filter_custom">Personalizados</string>
+    <string name="new_exercise">Nuevo Ejercicio</string>
+    <string name="delete_exercise_title">¿Eliminar ejercicio?</string>
+    <string name="delete_exercise_message">¿Eliminar \"%1$s\"? Esta acción no se puede deshacer.</string>
     <string name="add_custom_exercise">Añadir Ejercicio Personalizado</string>
     <string name="exercise_name">Nombre del Ejercicio</string>
     <string name="category">Categoría</string>
