@@ -291,7 +291,9 @@ class WorkoutViewModel @Inject constructor(
 
         val exerciseStates = planExerciseStates + extraExerciseStates
 
-        val activeIndex = 0
+        val activeIndex = exerciseStates.indexOfFirst { exState ->
+            exState.sets.any { !it.isCompleted }
+        }.coerceAtLeast(0)
         val isQuick = planWithDetails.plan.note == "SYSTEM_PLAN" && (planWithDetails.plan.nome == "Quick Workout" || planWithDetails.plan.nome == "Allenamento Veloce")
 
         _state.update {
