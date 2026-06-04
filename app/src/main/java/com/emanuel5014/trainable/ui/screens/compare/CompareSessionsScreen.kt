@@ -49,7 +49,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,7 +57,6 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.theme.Error
-import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -290,20 +288,14 @@ private fun CompareHeaderSection(
                 )
             }
 
-            Box(
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.CompareArrows,
+                contentDescription = null,
+                tint = OnSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Primary.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.CompareArrows,
-                    contentDescription = null,
-                    tint = Primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                    .padding(horizontal = Spacing.small)
+                    .size(20.dp)
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -342,9 +334,25 @@ private fun CompareMetricCard(
 ) {
     val diff = value1 - value2
     val diffPercent = if (value2 != 0f) (diff / abs(value2)) * 100f else 0f
-    val isPositive = diff > 0.01f
-    val isNegative = diff < -0.01f
-    val isNeutral = abs(diff) <= 0.01f
+
+    val isNeutral = abs(diffPercent) < 0.1f
+    val isPositive = !isNeutral && diff > 0
+
+    val badgeBgColor = when {
+        isPositive -> Primary.copy(alpha = 0.12f)
+        isNeutral -> OnSurfaceVariant.copy(alpha = 0.08f)
+        else -> Error.copy(alpha = 0.12f)
+    }
+    val badgeContentColor = when {
+        isPositive -> Primary
+        isNeutral -> OnSurfaceVariant
+        else -> Error
+    }
+    val icon = when {
+        isPositive -> Icons.Rounded.ArrowUpward
+        isNeutral -> Icons.Rounded.Remove
+        else -> Icons.Rounded.ArrowDownward
+    }
 
     val maxValue = maxOf(value1, value2, 0.01f)
     val progress1 = (value1 / maxValue).coerceIn(0f, 1f)
@@ -371,31 +379,29 @@ private fun CompareMetricCard(
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold
                 )
-                if (!isNeutral) {
-                    val badgeBgColor = if (isPositive) Primary.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f)
-                    val badgeContentColor = if (isPositive) Primary else Error
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(badgeBgColor)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        contentAlignment = Alignment.Center
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(badgeBgColor)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = if (isPositive) Icons.Rounded.ArrowUpward else Icons.Rounded.ArrowDownward,
-                                contentDescription = null,
-                                tint = badgeContentColor,
-                                modifier = Modifier.size(12.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = String.format("%+.1f%%", diffPercent),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = badgeContentColor
-                            )
-                        }
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = badgeContentColor,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = if (isNeutral) "0.0%" else String.format("%+.1f%%", diffPercent),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = badgeContentColor
+                        )
                     }
                 }
             }
@@ -621,12 +627,79 @@ private fun CompareExercisesDetailSection(
                         .fillMaxWidth()
                         .padding(Spacing.medium)
                 ) {
-                    Text(
-                        text = ExerciseTranslations.translate(exerciseName, languageCode),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = OnSurface
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = ExerciseTranslations.translate(exerciseName, languageCode),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = OnSurface,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (ex1 != null && ex2 != null) {
+                            fun calculate1RM(sets: List<com.emanuel5014.trainable.data.local.relation.SetWithExercise>): Float {
+                                return sets.maxOfOrNull { setWithEx ->
+                                    val set = setWithEx.setLog
+                                    if (set.repsEffettive > 0) {
+                                        if (set.repsEffettive == 1) set.pesoSollevato
+                                        else set.pesoSollevato * (1f + set.repsEffettive / 30f)
+                                    } else 0f
+                                } ?: 0f
+                            }
+                            val value1 = calculate1RM(ex1)
+                            val value2 = calculate1RM(ex2)
+                            val diff = value1 - value2
+                            val diffPercent = if (value2 != 0f) (diff / abs(value2)) * 100f else 0f
+
+                            val isNeutral = abs(diffPercent) < 0.1f
+                            val isPositive = !isNeutral && diff > 0
+
+                            val badgeBgColor = when {
+                                isPositive -> Primary.copy(alpha = 0.12f)
+                                isNeutral -> OnSurfaceVariant.copy(alpha = 0.08f)
+                                else -> Error.copy(alpha = 0.12f)
+                            }
+                            val badgeContentColor = when {
+                                isPositive -> Primary
+                                isNeutral -> OnSurfaceVariant
+                                else -> Error
+                            }
+                            val icon = when {
+                                isPositive -> Icons.Rounded.ArrowUpward
+                                isNeutral -> Icons.Rounded.Remove
+                                else -> Icons.Rounded.ArrowDownward
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(badgeBgColor)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        tint = badgeContentColor,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Text(
+                                        text = if (isNeutral) "0.0%" else String.format("%+.1f%%", diffPercent),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = badgeContentColor
+                                    )
+                                }
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(Spacing.medium))
 
                     Row(

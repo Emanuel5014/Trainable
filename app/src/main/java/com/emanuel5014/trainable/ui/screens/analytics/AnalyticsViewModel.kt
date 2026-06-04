@@ -55,8 +55,7 @@ class AnalyticsViewModel @Inject constructor(
     private val selectedExerciseIds = MutableStateFlow<Set<Int>>(loadSavedExerciseIds())
     private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
     private val categoryVolumeTimeRange = MutableStateFlow(loadCategoryVolumeTimeRange())
-    private val period1Range = MutableStateFlow(AnalyticsTimeRange.OneMonth)
-    private val period2Range = MutableStateFlow(AnalyticsTimeRange.OneMonth)
+    private val periodComparisonRange = MutableStateFlow(AnalyticsTimeRange.OneMonth)
 
     private fun loadSavedExerciseIds(): Set<Int> {
         val saved = prefs.getStringSet("selected_exercise_ids", emptySet()) ?: emptySet()
@@ -100,8 +99,7 @@ class AnalyticsViewModel @Inject constructor(
         userPreferencesRepository.weightUnit,
         localeManager.currentLanguage,
         categoryVolumeTimeRange,
-        period1Range,
-        period2Range
+        periodComparisonRange
     ) { args ->
         val activePlan = args[0] as WorkoutPlanEntity?
         @Suppress("UNCHECKED_CAST")
@@ -114,10 +112,44 @@ class AnalyticsViewModel @Inject constructor(
         val weightUnit = args[5] as String
         val userLang = args[6] as String
         val catVolumeTimeRange = args[7] as AnalyticsTimeRange
-        val p1Range = args[8] as AnalyticsTimeRange
-        val p2Range = args[9] as AnalyticsTimeRange
+        val pRange = args[8] as AnalyticsTimeRange
         
         val languageCode = localeManager.resolveLanguageForCompose(userLang)
+        
+        val categoryVolumeStartDate = when (catVolumeTimeRange) {
+            AnalyticsTimeRange.OneWeek -> {
+                val calendar = java.util.Calendar.getInstance()
+                val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+                val daysSinceMonday = if (dayOfWeek == java.util.Calendar.SUNDAY) 6 else dayOfWeek - java.util.Calendar.MONDAY
+                calendar.add(java.util.Calendar.DAY_OF_YEAR, -daysSinceMonday)
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                calendar.set(java.util.Calendar.MINUTE, 0)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                calendar.timeInMillis
+            }
+            AnalyticsTimeRange.OneMonth -> {
+                val calendar = java.util.Calendar.getInstance()
+                calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                calendar.set(java.util.Calendar.MINUTE, 0)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                calendar.timeInMillis
+            }
+            AnalyticsTimeRange.SixMonths -> {
+                val calendar = java.util.Calendar.getInstance()
+                calendar.add(java.util.Calendar.MONTH, -5)
+                calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                calendar.set(java.util.Calendar.MINUTE, 0)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                calendar.timeInMillis
+            }
+            AnalyticsTimeRange.All -> 0L
+        }
+
         AnalyticsQueryContext(
             activePlan = activePlan,
             allPlans = allPlans,
@@ -127,10 +159,10 @@ class AnalyticsViewModel @Inject constructor(
             widgetOrder = order,
             weightUnit = weightUnit,
             languageCode = languageCode,
-            categoryVolumeStartDate = catVolumeTimeRange.startDate(),
+            categoryVolumeStartDate = categoryVolumeStartDate,
             categoryVolumeTimeRange = catVolumeTimeRange,
-            period1Range = p1Range,
-            period2Range = p2Range
+            period1Range = pRange,
+            period2Range = pRange
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -264,8 +296,8 @@ class AnalyticsViewModel @Inject constructor(
                     avgWeight = p2Metrics.avgWeight,
                     trainingDays = p2Days
                 ),
-                period1Exercises = p1Exercises.map { PeriodExerciseComparison(ExerciseTranslations.translate(it.exerciseName, context.languageCode), it.volume, it.setCount, it.maxWeight) },
-                period2Exercises = p2Exercises.map { PeriodExerciseComparison(ExerciseTranslations.translate(it.exerciseName, context.languageCode), it.volume, it.setCount, it.maxWeight) }
+                period1Exercises = p1Exercises.map { PeriodExerciseComparison(ExerciseTranslations.translate(it.exerciseName, context.languageCode), it.volume, it.setCount, it.maxWeight, it.max1rm) },
+                period2Exercises = p2Exercises.map { PeriodExerciseComparison(ExerciseTranslations.translate(it.exerciseName, context.languageCode), it.volume, it.setCount, it.maxWeight, it.max1rm) }
             )
         }
 
@@ -292,6 +324,7 @@ class AnalyticsViewModel @Inject constructor(
                     strengthIndex = strengthCategory.strengthIndex,
                     categoryVolumes = strengthCategory.categoryVolumes,
                     categoryVolumeTimeRange = context.categoryVolumeTimeRange,
+                    categoryVolumeStartDate = context.categoryVolumeStartDate,
                     weightHistory = weightHistory,
                     sessions = sessions,
                     exerciseHistories = exerciseHistories,
@@ -448,9 +481,8 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
-    fun addTimePeriodComparison(period1: AnalyticsTimeRange, period2: AnalyticsTimeRange) {
-        period1Range.value = period1
-        period2Range.value = period2
+    fun addTimePeriodComparison(range: AnalyticsTimeRange) {
+        periodComparisonRange.value = range
         widgetOrder.update { current ->
             if (current.contains("time_period_comparison")) return@update current
             val newList = current + "time_period_comparison"
@@ -459,9 +491,8 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
-    fun updateTimePeriodComparison(period1: AnalyticsTimeRange, period2: AnalyticsTimeRange) {
-        period1Range.value = period1
-        period2Range.value = period2
+    fun updateTimePeriodComparison(range: AnalyticsTimeRange) {
+        periodComparisonRange.value = range
     }
 
     fun clearExerciseSelection() {
@@ -497,6 +528,7 @@ class AnalyticsViewModel @Inject constructor(
         strengthIndex: Float?,
         categoryVolumes: List<CategoryVolumeRow>,
         categoryVolumeTimeRange: AnalyticsTimeRange,
+        categoryVolumeStartDate: Long,
         weightHistory: List<com.emanuel5014.trainable.data.local.entity.WeightLogEntity>,
         sessions: List<WorkoutSessionEntity>,
         exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
@@ -593,7 +625,8 @@ class AnalyticsViewModel @Inject constructor(
                                 volume = row.volume
                             )
                         },
-                        timeRange = categoryVolumeTimeRange
+                        timeRange = categoryVolumeTimeRange,
+                        startDate = categoryVolumeStartDate
                     )
                 }
                 id == "time_period_comparison" -> {
@@ -625,15 +658,20 @@ class AnalyticsViewModel @Inject constructor(
                     )
 
                     AnalyticsWidget.TimePeriodComparison(
-                        period1Name = context.getString(period1Range.labelResId),
-                        period2Name = context.getString(period2Range.labelResId),
+                        period1Name = when (period1Range) {
+                            AnalyticsTimeRange.OneWeek -> context.getString(R.string.this_week)
+                            AnalyticsTimeRange.OneMonth -> context.getString(R.string.this_month)
+                            else -> context.getString(period1Range.labelResId)
+                        },
+                        period2Name = "${context.getString(R.string.previous_exercise)} (${context.getString(period2Range.labelResId)})",
                         period1DateRange = p1RangeLabel,
                         period2DateRange = p2RangeLabel,
                         period1Metrics = p1,
                         period2Metrics = p2,
                         period1Exercises = timePeriodComparison.period1Exercises,
                         period2Exercises = timePeriodComparison.period2Exercises,
-                        summaryParts = summaryParts
+                        summaryParts = summaryParts,
+                        timeRange = period1Range
                     )
                 }
                 else -> null

@@ -61,7 +61,8 @@ sealed class AnalyticsWidget(val id: String) {
 
     data class CategoryVolume(
         val history: List<CategoryVolumeRow>,
-        val timeRange: AnalyticsTimeRange
+        val timeRange: AnalyticsTimeRange,
+        val startDate: Long
     ) : AnalyticsWidget("category_volume")
 
     data class TimePeriodComparison(
@@ -73,7 +74,8 @@ sealed class AnalyticsWidget(val id: String) {
         val period2Metrics: PeriodComparisonMetrics,
         val period1Exercises: List<PeriodExerciseComparison>,
         val period2Exercises: List<PeriodExerciseComparison>,
-        val summaryParts: List<SummaryPart> = emptyList()
+        val summaryParts: List<SummaryPart> = emptyList(),
+        val timeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth
     ) : AnalyticsWidget("time_period_comparison")
 }
 
@@ -95,7 +97,8 @@ data class PeriodExerciseComparison(
     val exerciseName: String,
     val volume: Float,
     val setCount: Int,
-    val maxWeight: Float
+    val maxWeight: Float,
+    val max1rm: Float
 )
 
 data class AnalyticsUiState(

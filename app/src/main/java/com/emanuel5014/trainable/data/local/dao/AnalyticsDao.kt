@@ -158,7 +158,13 @@ interface AnalyticsDao {
             e.nome AS exerciseName,
             COALESCE(SUM(s.peso_sollevato * s.reps_effettive), 0) AS volume,
             COUNT(s.id) AS setCount,
-            COALESCE(MAX(s.peso_sollevato), 0) AS maxWeight
+            COALESCE(MAX(s.peso_sollevato), 0) AS maxWeight,
+            COALESCE(MAX(
+                CASE 
+                    WHEN s.reps_effettive = 1 THEN s.peso_sollevato
+                    ELSE s.peso_sollevato * (1.0 + CAST(s.reps_effettive AS REAL) / 30.0)
+                END
+            ), 0) AS max1rm
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
         INNER JOIN exercises e ON e.id = s.exercise_id
@@ -216,5 +222,6 @@ data class PeriodExerciseRow(
     val exerciseName: String,
     val volume: Float,
     val setCount: Int,
-    val maxWeight: Float
+    val maxWeight: Float,
+    val max1rm: Float
 )

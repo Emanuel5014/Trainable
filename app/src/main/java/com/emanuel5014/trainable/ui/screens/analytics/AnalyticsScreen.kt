@@ -252,10 +252,7 @@ fun AnalyticsScreen(
                             fabMenuExpanded = false
                         },
                         onAddTimePeriodComparison = {
-                            viewModel.addTimePeriodComparison(
-                                AnalyticsTimeRange.OneMonth,
-                                AnalyticsTimeRange.OneMonth
-                            )
+                            viewModel.addTimePeriodComparison(AnalyticsTimeRange.OneMonth)
                             fabMenuExpanded = false
                         },
                         modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
@@ -393,6 +390,7 @@ fun AnalyticsScreen(
                                         isRecentlyMoved = isRecentlyDropped,
                                         history = widget.history,
                                         timeRange = widget.timeRange,
+                                        startDate = widget.startDate,
                                         weightUnit = weightUnit,
                                         onRemove = { viewModel.removeWidget(widget.id) },
                                         onEdit = { showCategoryVolumeSettings = true }
@@ -522,10 +520,12 @@ fun AnalyticsScreen(
         }
 
         if (showTimePeriodComparisonSettings) {
+            val currentWidget = uiState.widgets.find { it is AnalyticsWidget.TimePeriodComparison } as? AnalyticsWidget.TimePeriodComparison
             TimePeriodComparisonSettingsBottomSheet(
+                currentTimeRange = currentWidget?.timeRange ?: AnalyticsTimeRange.OneMonth,
                 onDismiss = { showTimePeriodComparisonSettings = false },
-                onConfirm = { period1, period2 ->
-                    viewModel.updateTimePeriodComparison(period1, period2)
+                onConfirm = { range ->
+                    viewModel.updateTimePeriodComparison(range)
                     showTimePeriodComparisonSettings = false
                 }
             )
@@ -1867,6 +1867,7 @@ fun CategoryVolumeChartSection(
     isRecentlyMoved: Boolean = false,
     history: List<CategoryVolumeRow>,
     timeRange: AnalyticsTimeRange,
+    startDate: Long,
     weightUnit: String,
     onRemove: (() -> Unit)? = null,
     onEdit: (() -> Unit)? = null
@@ -1906,7 +1907,6 @@ fun CategoryVolumeChartSection(
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.ExtraBold
                     )
-                    val startDate = timeRange.startDate()
                     val endDate = System.currentTimeMillis()
                     val dateRangeText = if (timeRange == AnalyticsTimeRange.All) {
                         stringResource(R.string.analytics_time_range_all)
@@ -2205,22 +2205,42 @@ fun TimePeriodComparisonSection(
                 HorizontalDivider(color = SurfaceContainerHighest)
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
-                Text(
-                    text = stringResource(R.string.compare_exercises_detail),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.compare_exercises_detail),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = "1RM",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
                 Spacer(modifier = Modifier.height(Spacing.small))
 
-                val allExercises = (period1Exercises.map { it.exerciseName } + period2Exercises.map { it.exerciseName }).distinct().take(5)
-                allExercises.forEach { exerciseName ->
-                    val p1 = period1Exercises.find { it.exerciseName == exerciseName }
-                    val p2 = period2Exercises.find { it.exerciseName == exerciseName }
+                val allExerciseNames = (period1Exercises.map { it.exerciseName } + period2Exercises.map { it.exerciseName }).distinct()
+                val sortedExercises = allExerciseNames
+                    .map { name ->
+                        val p1 = period1Exercises.find { it.exerciseName == name }?.max1rm ?: 0f
+                        val p2 = period2Exercises.find { it.exerciseName == name }?.max1rm ?: 0f
+                        val diffPercent = if (p2 != 0f) ((p1 - p2) / p2) * 100f else 0f
+                        Triple(name, p1, diffPercent)
+                    }
+                    .sortedByDescending { it.third }
+                    .take(5)
+                sortedExercises.forEach { (name, value1, _) ->
+                    val p2 = period2Exercises.find { it.exerciseName == name }?.max1rm ?: 0f
                     ComparisonExerciseRow(
-                        exerciseName = exerciseName,
-                        volume1 = p1?.volume ?: 0f,
-                        volume2 = p2?.volume ?: 0f,
+                        exerciseName = name,
+                        value1 = value1,
+                        value2 = p2,
                         weightUnit = weightUnit
                     )
                 }
@@ -2425,15 +2445,15 @@ private fun ComparisonMetricRow(
 @Composable
 private fun ComparisonExerciseRow(
     exerciseName: String,
-    volume1: Float,
-    volume2: Float,
+    value1: Float,
+    value2: Float,
     weightUnit: String
 ) {
-    val diff = volume1 - volume2
-    val diffPercent = if (volume2 != 0f) (diff / volume2) * 100f else 0f
-    
+    val diff = value1 - value2
+    val diffPercent = if (value2 != 0f) (diff / value2) * 100f else 0f
+
     val isNeutral = abs(diffPercent) < 0.1f
-    val isPositive = diffPercent >= 0.1f
+    val isPositive = !isNeutral && diff > 0
 
     Row(
         modifier = Modifier
@@ -2448,46 +2468,58 @@ private fun ComparisonExerciseRow(
             color = OnSurface,
             modifier = Modifier.weight(1f)
         )
-        
-        val badgeBgColor = when {
-            isPositive -> Primary.copy(alpha = 0.12f)
-            isNeutral -> OnSurfaceVariant.copy(alpha = 0.08f)
-            else -> Error.copy(alpha = 0.12f)
-        }
-        val badgeContentColor = when {
-            isPositive -> Primary
-            isNeutral -> OnSurfaceVariant
-            else -> Error
-        }
-        val icon = when {
-            isPositive -> Icons.Rounded.ArrowUpward
-            isNeutral -> Icons.Rounded.Remove
-            else -> Icons.Rounded.ArrowDownward
-        }
-        
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(badgeBgColor)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            Text(
+                text = "${WeightUnitConverter.format(WeightUnitConverter.convertDisplay(value1, weightUnit))}${weightUnit}",
+                style = MaterialTheme.typography.labelSmall,
+                color = OnSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+
+            val badgeBgColor = when {
+                isPositive -> Primary.copy(alpha = 0.12f)
+                isNeutral -> OnSurfaceVariant.copy(alpha = 0.08f)
+                else -> Error.copy(alpha = 0.12f)
+            }
+            val badgeContentColor = when {
+                isPositive -> Primary
+                isNeutral -> OnSurfaceVariant
+                else -> Error
+            }
+            val icon = when {
+                isPositive -> Icons.Rounded.ArrowUpward
+                isNeutral -> Icons.Rounded.Remove
+                else -> Icons.Rounded.ArrowDownward
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(badgeBgColor)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = badgeContentColor,
-                    modifier = Modifier.size(12.dp)
-                )
-                Text(
-                    text = String.format("%+.1f%%", diffPercent),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = badgeContentColor
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = badgeContentColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = if (isNeutral) "0.0%" else String.format("%+.1f%%", diffPercent),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = badgeContentColor
+                    )
+                }
             }
         }
     }
@@ -2496,114 +2528,78 @@ private fun ComparisonExerciseRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePeriodComparisonSettingsBottomSheet(
+    currentTimeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth,
     onDismiss: () -> Unit,
-    onConfirm: (AnalyticsTimeRange, AnalyticsTimeRange) -> Unit
+    onConfirm: (AnalyticsTimeRange) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
-    var selectedPeriod1 by remember { mutableStateOf(AnalyticsTimeRange.OneMonth) }
-    var selectedPeriod2 by remember { mutableStateOf(AnalyticsTimeRange.OneMonth) }
+    var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Surface,
-        dragHandle = null
+        containerColor = Surface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 40.dp)
+                .padding(Spacing.medium)
+                .padding(bottom = 32.dp)
         ) {
             Text(
                 text = stringResource(R.string.analytics_time_period_comparison),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
-                color = OnSurface
-            )
-            Text(
-                text = stringResource(R.string.analytics_time_period_comparison_desc),
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnSurfaceVariant
+                modifier = Modifier.padding(bottom = Spacing.medium)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
-
             Text(
-                text = stringResource(R.string.compare_session_a),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = Primary
+                text = stringResource(R.string.analytics_time_range),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
-                AnalyticsTimeRange.entries.forEach { range ->
-                    val isSelected = selectedPeriod1 == range
+                AnalyticsTimeRange.values().forEach { range ->
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) Primary else SurfaceContainerHigh)
-                            .clickable { selectedPeriod1 = range }
+                            .background(if (selectedTimeRange == range) Primary else SurfaceContainerHigh)
+                            .clickable { selectedTimeRange = range }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = stringResource(range.labelResId),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) OnPrimary else OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold
+                            color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.large))
 
-            Text(
-                text = stringResource(R.string.compare_session_b),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = Tertiary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                AnalyticsTimeRange.entries.forEach { range ->
-                    val isSelected = selectedPeriod2 == range
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) Tertiary else SurfaceContainerHigh)
-                            .clickable { selectedPeriod2 = range }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(range.labelResId),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) OnPrimary else OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            GymButton(
-                onClick = { onConfirm(selectedPeriod1, selectedPeriod2) },
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary)
+                    .clickable { onConfirm(selectedTimeRange) }
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    stringResource(R.string.confirm).uppercase(),
-                    fontWeight = FontWeight.ExtraBold
+                    text = stringResource(R.string.confirm),
+                    color = OnPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
