@@ -75,6 +75,7 @@ data class WorkoutSetState(
     val weight: Float,
     val reps: Int,
     val note: String? = null,
+    val previousNote: String? = null,
     val isCompleted: Boolean = false,
     val isWarmup: Boolean = false
 )
@@ -240,7 +241,8 @@ class WorkoutViewModel @Inject constructor(
                     WorkoutSetState(
                         setNumber = num,
                         weight = prevSet?.pesoSollevato ?: lastLoggedWeight,
-                        reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
+                        reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
+                        previousNote = prevSet?.note
                     )
                 }
             }
@@ -352,7 +354,8 @@ class WorkoutViewModel @Inject constructor(
                 WorkoutSetState(
                     setNumber = num,
                     weight = prevSet?.pesoSollevato ?: defaultWeight,
-                    reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
+                    reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
+                    previousNote = prevSet?.note
                 )
             }
 

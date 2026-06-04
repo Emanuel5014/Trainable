@@ -516,7 +516,8 @@ fun WorkoutExecutionScreen(
                                         },
                                         onEditValues = { isEditingValues = !isEditingValues },
                                         isActive = isActive,
-                                        weightUnit = state.weightUnit
+                                        weightUnit = state.weightUnit,
+                                        previousNote = set.previousNote
                                     )
                                 }
 
