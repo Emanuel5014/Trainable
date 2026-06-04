@@ -1128,7 +1128,7 @@ fun ExercisePickerBottomSheet(
     onClearAll: () -> Unit,
     onConfirmAdd: (() -> Unit)? = null
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var searchQuery by remember { mutableStateOf("") }
     
     val filteredExercises = remember(searchQuery, allExercises) {
@@ -1442,7 +1442,7 @@ fun VolumeSettingsBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (Int, AnalyticsTimeRange) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedPlanId by remember { mutableStateOf(currentPlanId) }
     var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
 
@@ -1567,7 +1567,7 @@ fun CategoryVolumeSettingsBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (AnalyticsTimeRange) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
 
     ModalBottomSheet(
@@ -2532,7 +2532,7 @@ fun TimePeriodComparisonSettingsBottomSheet(
     onDismiss: () -> Unit,
     onConfirm: (AnalyticsTimeRange) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
 
     ModalBottomSheet(
