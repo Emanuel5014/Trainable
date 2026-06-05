@@ -42,7 +42,8 @@
     <string name="failed_save_image">Échec de l\'enregistrement de l\'image.</string>
     <string name="share_exercises">Exercices</string>
     <string name="share_sets">Séries</string>
-    <string name="share_volume">Volume</string>
+    <string name="share_volume">Tonnage</string>
+
     <string name="share_built_for_strength">CONÇU POUR LA FORCE</string>
     <string name="share_footer_message">SUIS TES PROGRÈS AVEC TRAINABLE</string>
     <string name="later">Plus tard</string>
@@ -284,7 +285,7 @@
     <string name="workouts_per_week">Entraînements/Semaine</string>
     <string name="avg_volume">Tonnage Moyen</string>
     <string name="analytics_category_volume">VOLUME PAR GROUPE MUSCULAIRE</string>
-    <string name="analytics_category_volume_widget">Volume par Groupe Musculaire</string>
+    <string name="analytics_category_volume_widget">VOLUME PAR GROUPE MUSCULAIRE</string>
     <string name="analytics_time_range_1w">1S</string>
     <string name="analytics_time_range_1m">1M</string>
     <string name="analytics_time_range_6m">6M</string>

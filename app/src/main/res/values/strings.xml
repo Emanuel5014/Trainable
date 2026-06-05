@@ -42,7 +42,8 @@
     <string name="failed_save_image">Failed to save image.</string>
     <string name="share_exercises">Exercises</string>
     <string name="share_sets">Sets</string>
-    <string name="share_volume">Volume</string>
+    <string name="share_volume">Tonnage</string>
+
     <string name="share_built_for_strength">BUILT FOR STRENGTH</string>
     <string name="share_footer_message">TRACK YOUR PROGRESS WITH TRAINABLE</string>
     <string name="later">Later</string>
@@ -284,7 +285,7 @@
     <string name="workouts_per_week">Workouts/Week</string>
     <string name="avg_volume">Avg Tonnage</string>
     <string name="analytics_category_volume">VOLUME BY MUSCLE GROUP</string>
-    <string name="analytics_category_volume_widget">Volume by Muscle Group</string>
+    <string name="analytics_category_volume_widget">VOLUME BY MUSCLE GROUP</string>
     <string name="analytics_time_range_1w">1W</string>
     <string name="analytics_time_range_1m">1M</string>
     <string name="analytics_time_range_6m">6M</string>

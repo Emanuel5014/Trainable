@@ -747,7 +747,6 @@ private fun AnalyticsHeaderFabMenu(
                     onExpandedChange(false)
                 }
             )
-            HorizontalDivider(color = SurfaceContainerHighest)
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.analytics_time_period_comparison)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.CompareArrows, contentDescription = null) },
