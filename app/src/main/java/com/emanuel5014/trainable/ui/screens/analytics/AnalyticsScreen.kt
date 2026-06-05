@@ -152,6 +152,7 @@ fun AnalyticsScreen(
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
     val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
     val hasCategoryVolumeWidget = uiState.widgets.any { it is AnalyticsWidget.CategoryVolume }
+    val hasTimePeriodComparisonWidget = uiState.widgets.any { it is AnalyticsWidget.TimePeriodComparison }
     val weightUnit = uiState.weightUnit
     var showVolumeSettings by remember { mutableStateOf<String?>(null) }
     var showAddVolumeDialog by remember { mutableStateOf(false) }
@@ -230,6 +231,7 @@ fun AnalyticsScreen(
                         hasBodyWeightWidget = hasBodyWeightWidget,
                         hasCalendarWidget = hasCalendarWidget,
                         hasCategoryVolumeWidget = hasCategoryVolumeWidget,
+                        hasTimePeriodComparisonWidget = hasTimePeriodComparisonWidget,
                         onExpandedChange = { fabMenuExpanded = it },
                         onAddBodyWeight = {
                             viewModel.addBodyWeightChart()
@@ -669,6 +671,7 @@ private fun AnalyticsHeaderFabMenu(
     hasBodyWeightWidget: Boolean,
     hasCalendarWidget: Boolean,
     hasCategoryVolumeWidget: Boolean,
+    hasTimePeriodComparisonWidget: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onAddBodyWeight: () -> Unit,
     onAddCalendar: () -> Unit,
@@ -750,8 +753,11 @@ private fun AnalyticsHeaderFabMenu(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.analytics_time_period_comparison)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.CompareArrows, contentDescription = null) },
+                enabled = !hasTimePeriodComparisonWidget,
                 onClick = {
-                    onAddTimePeriodComparison()
+                    if (!hasTimePeriodComparisonWidget) {
+                        onAddTimePeriodComparison()
+                    }
                     onExpandedChange(false)
                 }
             )
