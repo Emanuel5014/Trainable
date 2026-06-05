@@ -100,13 +100,18 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 ---
 
 ## 🛠️ Tech Stack
-*   **Language**: Kotlin (1.9.x)
-*   **UI**: Jetpack Compose (1.6.x)
-*   **Dependency Injection**: Dagger Hilt
-*   **Database**: Room (with KSP)
-*   **Charts**: Vico
-*   **Serialization**: Kotlinx Serialization
+*   **Language**: Kotlin (2.3.x)
+*   **UI**: Jetpack Compose (2026.x) with Material3 (1.5.x)
+*   **Dependency Injection**: Dagger Hilt (2.59.x)
+*   **Database**: Room (2.8.x) with KSP
+*   **Charts**: Vico (2.1.x)
+*   **Serialization**: Kotlinx Serialization (1.11.x)
+*   **Navigation**: Navigation Compose (2.9.x)
 *   **Concurrency**: Kotlin Coroutines & Flow
+*   **Preferences**: DataStore Preferences (1.2.x)
+*   **Background Tasks**: WorkManager (2.11.x)
+*   **Image Loading**: Coil (2.7.x)
+*   **Build**: Gradle (9.4.x) + AGP (9.2.x)
 
 ---
 
