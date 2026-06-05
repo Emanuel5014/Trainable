@@ -687,6 +687,58 @@ fun SettingsScreen(
                                                 }
                                             }
                                         )
+                                        LanguageOption(
+                                            title = stringResource(R.string.language_spanish),
+                                            isSelected = currentLanguage == "es",
+                                            onClick = {
+                                                viewModel.setLanguage("es") {
+                                                    showLanguageDialog = false
+                                                    val intent = Intent(context, MainActivity::class.java)
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                                    context.startActivity(intent)
+                                                    exitProcess(0)
+                                                }
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.language_french),
+                                            isSelected = currentLanguage == "fr",
+                                            onClick = {
+                                                viewModel.setLanguage("fr") {
+                                                    showLanguageDialog = false
+                                                    val intent = Intent(context, MainActivity::class.java)
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                                    context.startActivity(intent)
+                                                    exitProcess(0)
+                                                }
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.language_german),
+                                            isSelected = currentLanguage == "de",
+                                            onClick = {
+                                                viewModel.setLanguage("de") {
+                                                    showLanguageDialog = false
+                                                    val intent = Intent(context, MainActivity::class.java)
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                                    context.startActivity(intent)
+                                                    exitProcess(0)
+                                                }
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.language_portuguese),
+                                            isSelected = currentLanguage == "pt",
+                                            onClick = {
+                                                viewModel.setLanguage("pt") {
+                                                    showLanguageDialog = false
+                                                    val intent = Intent(context, MainActivity::class.java)
+                                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                                    context.startActivity(intent)
+                                                    exitProcess(0)
+                                                }
+                                            }
+                                        )
                                     }
                                 },
                                 confirmButton = {
@@ -713,6 +765,10 @@ fun SettingsScreen(
                                         when (currentLanguage) {
                                             "en" -> stringResource(R.string.language_english)
                                             "it" -> stringResource(R.string.language_italian)
+                                            "es" -> stringResource(R.string.language_spanish)
+                                            "fr" -> stringResource(R.string.language_french)
+                                            "de" -> stringResource(R.string.language_german)
+                                            "pt" -> stringResource(R.string.language_portuguese)
                                             else -> stringResource(R.string.language_system_default)
                                         },
                                         style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -1134,7 +1190,7 @@ fun SettingsScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Trainable v1.4.1",
+                                    text = "Trainable v1.5.0",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.ExtraBold

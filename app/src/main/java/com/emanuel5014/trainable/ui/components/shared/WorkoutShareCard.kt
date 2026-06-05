@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -270,7 +271,7 @@ fun WorkoutShareCard(
                     .background(Color.White.copy(alpha = 0.08f))
             )
 
-            // Total Volume Segment
+            // Total Tonnage Segment
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -292,6 +293,37 @@ fun WorkoutShareCard(
                     color = textSecondary.copy(alpha = 0.7f),
                     letterSpacing = 1.sp
                 )
+            }
+        }
+
+        // Muscle Groups Section
+        val trainedCategories = exercisesWithSets.map { it.exercise.categoria }.distinct().sorted()
+
+        if (trainedCategories.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                trainedCategories.forEach { category ->
+                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(primaryColor.copy(alpha = 0.12f))
+                            .border(BorderStroke(1.dp, primaryColor.copy(alpha = 0.25f)), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = translatedCategory.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = primaryColor,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
             }
         }
 

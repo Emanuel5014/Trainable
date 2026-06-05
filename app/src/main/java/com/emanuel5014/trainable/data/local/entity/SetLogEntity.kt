@@ -47,6 +47,8 @@ data class SetLogEntity(
     val ordineEsercizio: Int = 0,
     @ColumnInfo(name = "superset_id")
     val supersetId: String? = null,
+    @ColumnInfo(name = "rest_timer_seconds")
+    val restTimerSeconds: Int? = null,
     @ColumnInfo(name = "is_completed")
     val isCompleted: Boolean = true
 )

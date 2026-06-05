@@ -111,11 +111,13 @@ interface AnalyticsDao {
         """
         SELECT
             e.categoria AS category,
-            COALESCE(SUM(s.peso_sollevato * s.reps_effettive), 0) AS volume
+            CAST(COUNT(s.id) AS REAL) AS volume
         FROM set_logs s
         INNER JOIN exercises e ON e.id = s.exercise_id
         INNER JOIN workout_sessions w ON w.id = s.session_id
         WHERE w.timestamp >= :startDate
+            AND s.is_completed = 1
+            AND s.is_warmup = 0
         GROUP BY e.categoria
         ORDER BY volume DESC
         """
@@ -138,6 +140,47 @@ interface AnalyticsDao {
         ORDER BY MIN(w.timestamp) ASC
     """)
     fun getExerciseProgressHistory(exerciseId: Int, startDate: Long): Flow<List<DailyExerciseMax>>
+
+    @Query("""
+        SELECT 
+            COALESCE(SUM(s.peso_sollevato * s.reps_effettive), 0) AS volume,
+            COUNT(DISTINCT w.id) AS sessionCount,
+            COUNT(s.id) AS setCount,
+            COALESCE(AVG(s.peso_sollevato), 0) AS avgWeight
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON s.session_id = w.id
+        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate
+    """)
+    fun getPeriodMetrics(startDate: Long, endDate: Long): Flow<PeriodMetrics>
+
+    @Query("""
+        SELECT 
+            e.nome AS exerciseName,
+            COALESCE(SUM(s.peso_sollevato * s.reps_effettive), 0) AS volume,
+            COUNT(s.id) AS setCount,
+            COALESCE(MAX(s.peso_sollevato), 0) AS maxWeight,
+            COALESCE(MAX(
+                CASE 
+                    WHEN s.reps_effettive = 1 THEN s.peso_sollevato
+                    ELSE s.peso_sollevato * (1.0 + CAST(s.reps_effettive AS REAL) / 30.0)
+                END
+            ), 0) AS max1rm
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON s.session_id = w.id
+        INNER JOIN exercises e ON e.id = s.exercise_id
+        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate
+        GROUP BY e.id
+        ORDER BY volume DESC
+    """)
+    fun getPeriodExerciseBreakdown(startDate: Long, endDate: Long): Flow<List<PeriodExerciseRow>>
+
+    @Query("""
+        SELECT 
+            COUNT(DISTINCT date(w.timestamp / 1000, 'unixepoch')) AS trainingDays
+        FROM workout_sessions w
+        WHERE w.timestamp >= :startDate AND w.timestamp <= :endDate AND w.is_finished = 1
+    """)
+    fun getTrainingDays(startDate: Long, endDate: Long): Flow<Int>
 }
 
 data class DailyExerciseMax(
@@ -166,4 +209,19 @@ data class ConsistencyRow(
 data class CategoryVolumeRow(
     val category: String,
     val volume: Float
+)
+
+data class PeriodMetrics(
+    val volume: Float,
+    val sessionCount: Int,
+    val setCount: Int,
+    val avgWeight: Float
+)
+
+data class PeriodExerciseRow(
+    val exerciseName: String,
+    val volume: Float,
+    val setCount: Int,
+    val maxWeight: Float,
+    val max1rm: Float
 )

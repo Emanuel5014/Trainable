@@ -17,6 +17,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
+import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
@@ -445,26 +446,28 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun removeExerciseSwap(sessionId: Int, originalExerciseId: Int) = workoutDao.removeSwapForExercise(sessionId, originalExerciseId)
 
-    suspend fun exportAllWorkoutsToCsv(): String {
+    suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg"): String {
         val sessions = workoutDao.getAllSessionsWithDetails().first()
-        
+
         val sb = StringBuilder()
-        sb.appendLine("Date,Session ID,Exercise,Category,Set,Weight (kg),Reps,Note,Warmup")
-        
+        sb.appendLine("Date,Session ID,Plan,Exercise,Category,Set,Weight ($weightUnit),Reps,Note")
+
         sessions.forEach { session ->
             val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(session.session.timestamp))
-            
+            val planName = session.plan.nome.replace(",", ";")
+
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
                 val exercise = setWithExercise.exercise
                 val exerciseName = exercise.nome
                 val category = exercise.categoria
                 val note = setLog.note?.replace(",", ";")?.replace("\n", " ") ?: ""
-                
-                sb.appendLine("$date,${session.session.id},$exerciseName,$category,${setLog.numeroSerie},${setLog.pesoSollevato},${setLog.repsEffettive},$note,${setLog.isWarmup}")
+                val weight = WeightUnitConverter.convertDisplay(setLog.pesoSollevato, weightUnit)
+
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,${setLog.numeroSerie},$weight,${setLog.repsEffettive},$note")
             }
         }
-        
+
         return sb.toString()
     }
 }

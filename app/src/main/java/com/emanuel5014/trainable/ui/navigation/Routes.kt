@@ -39,3 +39,6 @@ data class WorkoutDetail(val sessionId: Int)
 
 @Serializable
 data class EditWorkoutSession(val sessionId: Int)
+
+@Serializable
+data class CompareSessions(val sessionId1: Int, val sessionId2: Int)

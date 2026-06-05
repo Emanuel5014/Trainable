@@ -8,11 +8,13 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.ShareUtils
+import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,14 +22,23 @@ import javax.inject.Inject
 @HiltViewModel
 class RoutinesViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
-    private val userPrefsRepository: UserPreferencesRepository
+    private val userPrefsRepository: UserPreferencesRepository,
+    private val localeManager: AppLocaleManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoutinesUiState(isLoading = true))
     val uiState: StateFlow<RoutinesUiState> = _uiState.asStateFlow()
 
+    private val _languageCode = MutableStateFlow("en")
+    val languageCode: StateFlow<String> = _languageCode.asStateFlow()
+
     init {
         loadPlans()
+        viewModelScope.launch {
+            localeManager.userSelectedLanguage.collect { _ ->
+                _languageCode.value = localeManager.getResolvedLanguage()
+            }
+        }
     }
 
     private fun loadPlans() {
@@ -208,13 +219,34 @@ class RoutinesViewModel @Inject constructor(
 
     fun movePlan(fromIndex: Int, toIndex: Int, isArchivedList: Boolean) {
         viewModelScope.launch {
-            val list = (if (isArchivedList) _uiState.value.archivedPlans else _uiState.value.plans).toMutableList()
-            if (fromIndex in list.indices && toIndex in list.indices) {
-                val item = list.removeAt(fromIndex)
-                list.add(toIndex, item)
+            val allPlans: List<PlanWithDetails> = workoutRepository.getAllPlansWithDetails().first()
+            val filteredPlans = allPlans.filter { it.plan.note != "SYSTEM_PLAN" }
+            
+            val active = mutableListOf<WorkoutPlanEntity>()
+            val archived = mutableListOf<WorkoutPlanEntity>()
+            
+            for (pWithDetails in filteredPlans) {
+                if (pWithDetails.plan.isActive) {
+                    active.add(pWithDetails.plan)
+                } else {
+                    archived.add(pWithDetails.plan)
+                }
+            }
+            
+            val targetList = if (isArchivedList) archived else active
+            
+            if (fromIndex in targetList.indices && toIndex in targetList.indices) {
+                val item = targetList.removeAt(fromIndex)
+                targetList.add(toIndex, item)
                 
-                val updates = list.mapIndexed { index, it ->
-                    it.plan.copy(ordine = index)
+                val combinedList = mutableListOf<WorkoutPlanEntity>()
+                combinedList.addAll(active)
+                combinedList.addAll(archived)
+                
+                val updates = mutableListOf<WorkoutPlanEntity>()
+                for (i in combinedList.indices) {
+                    val plan = combinedList[i]
+                    updates.add(plan.copy(ordine = i))
                 }
                 workoutRepository.savePlans(updates)
             }

@@ -11,6 +11,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint
@@ -50,7 +51,7 @@ fun BodyCompositionCard(
                     FilterChip(
                         selected = selectedTimeRange == timeRange,
                         onClick = { onTimeRangeSelected(timeRange) },
-                        label = { Text(timeRange.label) }
+                        label = { Text(stringResource(timeRange.labelResId)) }
                     )
                 }
             }

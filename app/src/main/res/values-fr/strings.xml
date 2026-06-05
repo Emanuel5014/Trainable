@@ -1,0 +1,502 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+
+    <!-- App -->
+    <string name="app_name">Trainable</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Tableau de Bord</string>
+    <string name="nav_routines">Routines</string>
+    <string name="nav_history">Historique</string>
+    <string name="nav_analytics">Statistiques</string>
+    <string name="nav_settings">Paramètres</string>
+    <string name="floating_nav_bar">Navigation Classique</string>
+    <string name="floating_nav_bar_desc">Barre de navigation inférieure Material 3</string>
+
+    <!-- Common Actions -->
+    <string name="save">Enregistrer</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="edit">Modifier</string>
+    <string name="add">Ajouter</string>
+    <string name="create">Créer</string>
+    <string name="close">Fermer</string>
+    <string name="confirm">Confirmer</string>
+    <string name="back">Retour</string>
+    <string name="done">Terminé</string>
+    <string name="finish">Terminer</string>
+    <string name="continue_text">Continuer</string>
+    <string name="reset">Réinitialiser</string>
+    <string name="retry">Réessayer</string>
+    <string name="dismiss">Ignorer</string>
+    <string name="collapse">Réduire</string>
+    <string name="yes">OUI</string>
+    <string name="no">NON</string>
+    <string name="selected">Sélectionné</string>
+    <string name="clear_all">Tout Effacer</string>
+    <string name="all">Tous</string>
+    <string name="total">Total</string>
+    <string name="share">Partager</string>
+    <string name="share_preview">Aperçu du Partage</string>
+    <string name="image_saved_gallery">Image enregistrée dans la Galerie !</string>
+    <string name="failed_save_image">Échec de l\'enregistrement de l\'image.</string>
+    <string name="share_exercises">Exercices</string>
+    <string name="share_sets">Séries</string>
+    <string name="share_volume">Tonnage</string>
+
+    <string name="share_built_for_strength">CONÇU POUR LA FORCE</string>
+    <string name="share_footer_message">SUIS TES PROGRÈS AVEC TRAINABLE</string>
+    <string name="later">Plus tard</string>
+    <string name="start">COMMENCER</string>
+
+    <!-- General -->
+    <string name="today">aujourd\'hui</string>
+    <string name="daily">Quotidien</string>
+    <string name="weekly">Hebdomadaire</string>
+    <string name="this_week">Cette Semaine</string>
+    <string name="current_week">Semaine en Cours</string>
+    <string name="this_month">Ce Mois</string>
+    <string name="last_month">Mois Dernier</string>
+    <string name="date_range">Plage de Dates</string>
+    <string name="select_date_range">Choisir une Plage</string>
+    <string name="kg">kg</string>
+    <string name="kg_short">kg</string>
+    <string name="selected_count">Sélectionnés : %d</string>
+    <string name="more_options">Plus d\'Options</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">TABLEAU DE BORD</string>
+    <string name="active_plan">Plan Actif</string>
+    <string name="weekly_load">Charge Hebdomadaire</string>
+    <string name="personal_bests">Records Personnels</string>
+    <string name="quick_start">Démarrage Rapide</string>
+    <string name="start_workout">COMMENCER L\'ENTRAÎNEMENT</string>
+    <string name="start_workout_detail">COMMENCER</string>
+    <string name="no_active_plan">Aucun plan actif</string>
+    <string name="select_routine">Sélectionne une routine pour commencer</string>
+    <string name="welcome_back">Bon retour</string>
+    <string name="today_workout">ENTRAÎNEMENT DU JOUR</string>
+    <string name="no_workout_today">Aucun entraînement prévu pour aujourd\'hui</string>
+    <string name="resume_workout">REPRENDRE L\'ENTRAÎNEMENT</string>
+    <string name="days_this_week">jours cette semaine</string>
+    <string name="workout_in_progress">Entraînement en cours</string>
+    <string name="started">Commencé : %s</string>
+    <string name="goal_met">Objectif atteint</string>
+    <string name="workouts_this_week" formatted="false">%d / %d entraînements</string>
+    <string name="ready_to_train">Prêt à t\'entraîner ?</string>
+    <string name="lets_go">Allons-y !</string>
+    <string name="no_active_routines">Aucune routine active</string>
+    <string name="no_active_routines_message">Aucune routine active. Va dans Routines pour en créer une.</string>
+    <string name="create_first_routine">Crée ta première routine</string>
+    <string name="no_exercises_today">Aucun exercice pour aujourd\'hui</string>
+    <string name="suggested_plan">PLAN SUGGÉRÉ</string>
+
+    <!-- Routines -->
+    <string name="routines">Routines</string>
+    <string name="your_routines">TES ROUTINES</string>
+    <string name="archived_routines">ARCHIVÉES</string>
+    <string name="archived_routines_header">Archivées</string>
+    <string name="active_routines_tab">Actives</string>
+    <string name="active_routines">Actives</string>
+    <string name="archived_routines_tab">Archivées</string>
+    <string name="create_routine">CRÉER UNE ROUTINE</string>
+    <string name="edit_routine">MODIFIER LA ROUTINE</string>
+    <string name="add_photo">AJOUTER UNE PHOTO</string>
+    <string name="change_photo">CHANGER LA PHOTO</string>
+    <string name="remove_photo">SUPPRIMER LA PHOTO</string>
+    <string name="new_routine">Nouveau Plan</string>
+    <string name="update_plan">Mettre à Jour le Plan</string>
+    <string name="no_routines">Pas encore de routines</string>
+    <string name="tap_to_create">Tape sur le bouton + pour créer ton premier plan d\'entraînement.</string>
+    <string name="no_archived">Aucune routine archivée</string>
+    <string name="archived_appear_here">Les routines archivées apparaîtront ici.</string>
+    <string name="swipe_for_archived">Balaye vers le bas pour les archivées</string>
+    <string name="swipe_for_active">Balaye vers le bas pour les actives</string>
+    <string name="routine_name">Nom de la Routine</string>
+    <string name="routine_details">Détails</string>
+    <string name="routine_notes">Notes (optionnel)</string>
+    <string name="schedule_days">JOURS PROGRAMMÉS</string>
+    <string name="delete_routine">Supprimer la Routine ?</string>
+    <string name="delete_routine_message">Cela supprimera définitivement cette routine et tous ses exercices.</string>
+    <string name="archive_routine">Archiver la Routine ?</string>
+    <string name="archive_routine_message">Cette routine sera déplacée dans la section archivée.</string>
+    <string name="unarchive_routine">Restaurer la Routine ?</string>
+    <string name="unarchive_routine_message">Cette routine sera restaurée dans tes routines actives.</string>
+    <string name="archive">Archiver</string>
+    <string name="unarchive">Restaurer</string>
+    <string name="start_date">DATE DE DÉBUT :</string>
+    <string name="end_date">DATE D\'EXPIRATION :</string>
+    <string name="expires">Expire le :</string>
+    <string name="created_on">Créée le :</string>
+    <string name="expiration_date">Date d\'Expiration</string>
+    <string name="swap_exercise">CHANGER D\'EXERCICE</string>
+    <string name="swap_exercise_message">Remplace cet exercice uniquement pour cette session</string>
+    <string name="training_plans">PLANS D\'ENTRAÎNEMENT</string>
+    <string name="no_exercises_in_routine">Aucun exercice dans cette routine</string>
+    <string name="tap_plus_to_add">Tape sur le bouton + pour ajouter des exercices et construire ton entraînement.</string>
+    <string name="swipe_actions">Actions Swipe</string>
+    <string name="swipe_actions_desc">Active le balayage pour modifier/archiver/supprimer des éléments et naviguer entre les exercices</string>
+
+    <!-- Exercises -->
+    <string name="exercise">Exercice</string>
+    <string name="exercises_completed">exercices terminés</string>
+    <string name="add_exercise">AJOUTER UN EXERCICE</string>
+    <string name="add_exercise_to_workout">AJOUTER UN EXERCICE</string>
+    <string name="edit_exercise">MODIFIER L\'EXERCICE</string>
+    <string name="edit_exercise_title">Modifier l\'Exercice</string>
+    <string name="exercise_details">Détails de l\'Exercice</string>
+    <string name="update_exercise">Mettre à Jour l\'Exercice</string>
+    <string name="sets">Séries</string>
+    <string name="reps">Répétitions</string>
+    <string name="weight_kg">Poids</string>
+    <string name="rest_seconds">Repos (Secondes)</string>
+    <string name="select_exercise">Sélectionner un Exercice</string>
+    <string name="tap_to_change_exercise">Tape pour changer d\'exercice</string>
+    <string name="search_exercises">Rechercher des exercices</string>
+    <string name="all_categories">Tous</string>
+    <string name="no_exercises_found">Aucun exercice trouvé</string>
+    <string name="choose_from_library">Choisir dans la bibliothèque</string>
+    <string name="filter_custom">Personnalisés</string>
+    <string name="new_exercise">Nouvel Exercice</string>
+    <string name="delete_exercise_title">Supprimer l\'exercice?</string>
+    <string name="delete_exercise_message">Supprimer \"%1$s\" ? Cette action est irréversible.</string>
+    <string name="add_custom_exercise">Ajouter un Exercice Personnalisé</string>
+    <string name="exercise_name">Nom de l\'Exercice</string>
+    <string name="category">Catégorie</string>
+    <string name="superset">SUPERSÉRIE</string>
+    <string name="link_with_next">LIER À LA SUIVANTE (SUPERSÉRIE)</string>
+    <string name="unlink_superset">DÉLIER LA SUPERSÉRIE</string>
+    <string name="set_number">Série %d</string>
+    <string name="add_set">AJOUTER UNE SÉRIE</string>
+    <string name="remove_set">SUPPRIMER LA SÉRIE</string>
+    <string name="adjust_set_number">RÉGLER LA SÉRIE %d</string>
+
+    <!-- Categories -->
+    <string name="category_chest">Pectoraux</string>
+    <string name="category_back">Dos</string>
+    <string name="category_legs">Jambes</string>
+    <string name="category_shoulders">Épaules</string>
+    <string name="category_arms">Bras</string>
+    <string name="category_core">Abdominaux</string>
+
+    <!-- Workout Execution -->
+    <string name="workout_execution">Exécution de l\'Entraînement</string>
+    <string name="workout_execution_title">Exécution de l\'Entraînement</string>
+    <string name="session_in_progress">SESSION EN COURS</string>
+    <string name="session_in_progress_title">SESSION EN COURS</string>
+    <string name="log_set">ENREGISTRER LA SÉRIE</string>
+    <string name="active_set">SÉRIE ACTIVE</string>
+    <string name="exercise_completed">EXERCICE TERMINÉ</string>
+    <string name="exercise_completed_title">EXERCICE TERMINÉ</string>
+    <string name="rest_end">REPOS TERMINÉ</string>
+    <string name="previous_exercise">Précédent</string>
+    <string name="previous_exercise_btn">Précédent</string>
+    <string name="next_exercise">Suivant</string>
+    <string name="next_exercise_btn">Suivant</string>
+    <string name="next_exercise_wrk">Exercice Suivant</string>
+    <string name="skip_rest">Passer</string>
+    <string name="add_time">+30s</string>
+    <string name="rest_timer">Minuteur de Repos</string>
+    <string name="rest_timer_remaining">%s restantes</string>
+    <string name="close_workout">Fermer l\'Entraînement</string>
+
+    <!-- Workout Session -->
+    <string name="cancel_workout">Annuler l\'Entraînement</string>
+    <string name="cancel_workout_title">Annuler l\'Entraînement ?</string>
+    <string name="cancel_workout_message">Cela supprimera définitivement cette session d\'entraînement. Cette action est irréversible.</string>
+    <string name="finish_workout">Terminer</string>
+    <string name="finish_workout_title">Terminer l\'Entraînement ?</string>
+    <string name="finish_workout_message">Es-tu sûr de vouloir terminer cet entraînement ? Tous les exercices ont été complétés.</string>
+    <string name="finish_confirm">Terminer</string>
+    <string name="quick_workout">ENTRAÎNEMENT RAPIDE</string>
+    <string name="quick_workout_name_hint">Nom de l\'Entraînement (optionnel)</string>
+    <string name="rename_workout">Renommer l\'Entraînement</string>
+    <string name="no_exercises_in_session">Aucun exercice enregistré dans cette session.</string>
+    <string name="no_exercises_in_session_detail">Aucun exercice enregistré dans cette session.</string>
+    <string name="add_cardio">Ajouter du Cardio</string>
+    <string name="add_workout">Ajouter un Entraînement</string>
+    <string name="add_empty_workout">Ajouter un Entraînement Vide</string>
+    <string name="custom_workout">Entraînement Personnalisé</string>
+    <string name="select_plan_to_add">Sélectionne un plan à ajouter à l\'historique</string>
+    <string name="workout_logs">REGISTRE DES ENTRAÎNEMENTS</string>
+    <string name="total_workouts">Total des Entraînements</string>
+
+    <!-- History -->
+    <string name="history_title">HISTORIQUE</string>
+    <string name="no_history">Aucun historique d\'entraînement</string>
+    <string name="no_history_yet">Pas encore d\'historique</string>
+    <string name="no_history_description">Tes entraînements terminés apparaîtront ici.</string>
+    <string name="no_history_description_screen">Termine ton premier entraînement pour le voir ici.</string>
+    <string name="delete_session">Supprimer la Session ?</string>
+    <string name="delete_session_message">Cela supprimera définitivement cette session d\'entraînement.</string>
+    <string name="edit_session">Modifier la Session ?</string>
+    <string name="edit_session_message">Modifie cette session d\'entraînement pour changer les exercices, séries et poids.</string>
+    <string name="session_details">Détails de la Session</string>
+    <string name="total_volume">Volume Total</string>
+    <string name="duration">Durée</string>
+    <string name="edit_date">Modifier la Date</string>
+    <string name="best_performance">Meilleure Performance</string>
+
+    <!-- Analytics -->
+    <string name="analytics_title">STATISTIQUES</string>
+    <string name="analytics_subtitle">TON PROGRÈS</string>
+    <string name="analytics_max_progress">PROGRÈS MAXIMUM</string>
+    <string name="analytics_select_exercises_desc">Sélectionne des exercices pour suivre tes records</string>
+    <string name="analytics_choose_exercises">Choisir des Exercices</string>
+    <string name="analytics_add_1rm_graphic">GRAPHIQUE 1RM</string>
+    <string name="analytics_estimated_1rm">1RM ESTIMÉ</string>
+    <string name="analytics_estimated_1rm_short">Est. 1RM</string>
+    <string name="analytics_selected_count">Sélectionnés : %d</string>
+    <string name="analytics_record_reps">Record : %d répétitions</string>
+    <string name="analytics_no_data_range">Aucune donnée pour la plage sélectionnée</string>
+    <string name="analytics_clear">Effacer</string>
+    <string name="analytics_remove">Retirer</string>
+    <string name="analytics_edit_selection">Modifier la Sélection</string>
+    <string name="analytics_clear_search">Effacer la recherche</string>
+    <string name="analytics_consistency_summary">%1$d/%2$d sessions programmées terminées.</string>
+    <string name="analytics_consistency_no_sessions">Pas encore de sessions programmées.</string>
+    <string name="analytics_strength_summary_positive">+%s%% vs 30 derniers jours</string>
+    <string name="analytics_strength_summary_negative">-%s%% vs 30 derniers jours</string>
+    <string name="analytics_strength_no_data">Pas assez d\'historique de RP.</string>
+    <string name="analytics_body_weight">POIDS CORPOREL</string>
+    <string name="analytics_workout_calendar">CALENDRIER D\'ENTRAÎNEMENT</string>
+    <string name="analytics_workouts_this_month">%d entraînements ce mois</string>
+    <string name="analytics_total_volume">TONNAGE TOTAL</string>
+    <string name="analytics_volume_settings">Paramètres de Tonnage</string>
+    <string name="analytics_time_range">Période</string>
+    <string name="analytics_day_mon">Lun</string>
+    <string name="analytics_day_tue">Mar</string>
+    <string name="analytics_day_wed">Mer</string>
+    <string name="analytics_day_thu">Jeu</string>
+    <string name="analytics_day_fri">Ven</string>
+    <string name="analytics_day_sat">Sam</string>
+    <string name="analytics_day_sun">Dim</string>
+    <string name="analytics_no_weight_data">Aucune donnée de poids disponible</string>
+    <string name="analytics_todays_weight">Poids du jour</string>
+    <string name="total_volume_label">Tonnage Total</string>
+    <string name="consistency">Régularité</string>
+    <string name="strength_index">Indice de Force</string>
+    <string name="view_all">VOIR TOUT</string>
+    <string name="show_carousel">AFFICHER LE CARROUSEL</string>
+    <string name="personal_best">Record Personnel</string>
+    <string name="no_data">Aucune donnée disponible</string>
+    <string name="body_composition">Composition Corporelle</string>
+    <string name="structural_balance">Équilibre Structurel</string>
+    <string name="workouts_per_week">Entraînements/Semaine</string>
+    <string name="avg_volume">Tonnage Moyen</string>
+    <string name="analytics_category_volume">VOLUME PAR GROUPE MUSCULAIRE</string>
+    <string name="analytics_category_volume_widget">VOLUME PAR GROUPE MUSCULAIRE</string>
+    <string name="analytics_time_range_1w">1S</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_6m">6M</string>
+    <string name="analytics_time_range_all">TOUT</string>
+
+    <!-- Comparaison -->
+    <string name="compare_sessions_title">Comparer les Sessions</string>
+    <string name="compare_sessions">Sessions</string>
+    <string name="compare_session_a">SESSION A</string>
+    <string name="compare_session_b">SESSION B</string>
+    <string name="compare_vs">VS</string>
+    <string name="compare_volume">Tonnage</string>
+    <string name="compare_sets">Séries</string>
+    <string name="compare_exercises">Exercices</string>
+    <string name="compare_max_weight">Poids Max</string>
+    <string name="compare_avg_weight">Poids Moy</string>
+    <string name="compare_cardio">Cardio</string>
+    <string name="compare_no_cardio_session_a">Pas de cardio en Session A</string>
+    <string name="compare_no_cardio_session_b">Pas de cardio en Session B</string>
+    <string name="compare_exercises_detail">Détail des Exercices</string>
+    <string name="compare_not_performed">Non réalisé</string>
+    <string name="analytics_time_period_comparison">COMPARAISON DE PÉRIODES</string>
+    <string name="analytics_time_period_comparison_desc">Comparez vos performances entre deux périodes différentes</string>
+    <string name="analytics_training_days">Jours d\'Entraînement</string>
+    <string name="error">Erreur</string>
+
+    <!-- Settings -->
+    <string name="settings_title">PARAMÈTRES</string>
+    <string name="profile">PROFIL</string>
+    <string name="preferences">PRÉFÉRENCES</string>
+    <string name="personalization">PERSONNALISATION</string>
+    <string name="data_backup">DONNÉES &amp; SAUVEGARDE</string>
+    <string name="account">Compte</string>
+    <string name="member_since">Membre depuis %s</string>
+    <string name="username">Nom d\'utilisateur</string>
+    <string name="edit_username">Modifier le Nom d\'Utilisateur</string>
+    <string name="weekly_goal">OBJECTIF HEBDOMADAIRE</string>
+    <string name="target_workouts">Entraînements cibles par semaine</string>
+    <string name="tactile_feedback">Retour Haptique</string>
+    <string name="tactile_feedback_desc">Vibration lors des interactions</string>
+    <string name="vibration_on_interactions">Vibration lors des interactions</string>
+    <string name="dynamic_color">Couleur Dynamique</string>
+    <string name="dynamic_color_desc">Utilise les couleurs Material You du fond d\'écran</string>
+    <string name="dynamic_color_not_supported">Non supporté (Android 12+ requis)</string>
+    <string name="app_palette">Palette de l\'App</string>
+    <string name="app_palette_desc">Choisis une palette de couleurs personnalisée</string>
+    <string name="notifications">NOTIFICATIONS</string>
+    <string name="timer_notifications">Notifications du Minuteur</string>
+    <string name="timer_notifications_desc">Afficher le minuteur de repos dans les notifications</string>
+    <string name="gym_membership_notifications">Alertes d\'Abonnement</string>
+    <string name="gym_membership_notifications_desc">Notifier avant l\'expiration de l\'abonnement</string>
+    <string name="notify_days_before">Délai</string>
+    <string name="notify_days_before_desc">Jours avant l\'expiration pour recevoir l\'alerte</string>
+    <string name="gym_membership_expiring">Abonnement qui Expire</string>
+    <string name="gym_membership_expiring_desc">Ton abonnement à la salle expirera dans %d jours. N\'oublie pas de le renouveler !</string>
+    <string name="weight_unit">Unité de Poids</string>
+    <string name="weight_unit_desc">Choisis entre les Kilogrammes et les Livres</string>
+    <string name="language">Langue</string>
+    <string name="language_system_default">Par Défaut du Système</string>
+    <string name="current_language">Actuelle : %s</string>
+    <string name="language_english">English</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
+
+    <!-- Backup & Data -->
+    <string name="auto_backup">Sauvegarde Automatique</string>
+    <string name="auto_backup_setup">Configurer la Sauvegarde</string>
+    <string name="backup_enabled">Tous les %d jour(s)</string>
+    <string name="backup_disabled">Désactivée</string>
+    <string name="backup_settings">Paramètres de Sauvegarde</string>
+    <string name="storage_location">Emplacement</string>
+    <string name="custom_folder">Dossier personnalisé</string>
+    <string name="choose_folder">Choisir un dossier</string>
+    <string name="folder_selected">Dossier sélectionné</string>
+    <string name="folder_required_desc">La sélection d\'un dossier est requise pour activer les sauvegardes automatiques.</string>
+    <string name="configure_backup">Configure les paramètres de sauvegarde automatique</string>
+    <string name="frequency">Fréquence</string>
+    <string name="keep_last">Garder les derniers</string>
+    <string name="backup_s">%d sauvegarde(s)</string>
+    <string name="day_s">%d jour(s)</string>
+    <string name="export_database">EXPORTER LA BASE DE DONNÉES</string>
+    <string name="export_csv">EXPORTER CSV</string>
+    <string name="import_database">IMPORTER LA BASE DE DONNÉES</string>
+    <string name="export_successful">Exportation réussie</string>
+    <string name="export_failed">Échec de l\'exportation</string>
+    <string name="import_successful">Importation réussie</string>
+    <string name="import_failed">Échec de l\'importation</string>
+    <string name="importing_database">Importation en cours...</string>
+    <string name="exporting_csv">Exportation CSV...</string>
+    <string name="export_ready">Exportation prête</string>
+    <string name="csv_exported_successfully">CSV exporté avec succès !</string>
+    <string name="error_writing_file">Erreur lors de l\'écriture du fichier : %s</string>
+    <string name="database_imported">Base de données importée. Redémarrage de l\'app...</string>
+    <string name="include_images">Inclure les Images ?</string>
+    <string name="include_images_description">Souhaites-tu inclure les photos des routines dans ta sauvegarde ? Cela augmentera la taille du fichier.</string>
+    <string name="preparing_share">Préparation de ta carte d\'entraînement...</string>
+    <string name="edit_backup">MODIFIER</string>
+
+    <!-- Reset -->
+    <string name="reset_app_button">RÉINITIALISER L\'APP</string>
+    <string name="reset_app_dialog">Réinitialiser l\'App ?</string>
+    <string name="reset_app_message">Cela supprimera toutes tes données, y compris les entraînements, routines et paramètres. Cette action est irréversible.</string>
+    <string name="restarting_app">Redémarrage de l\'app...</string>
+    <string name="reset_complete">Réinitialisation terminée. Redémarrage...</string>
+    <string name="reset_failed">Échec de la réinitialisation : %s</string>
+
+    <!-- Welcome / Setup -->
+    <string name="welcome_title">Bienvenue sur Trainable</string>
+    <string name="welcome_subtitle">Ton compagnon d\'entraînement personnel</string>
+    <string name="lets_get_started">Commençons</string>
+    <string name="whats_your_name">Comment t\'appelles-tu ?</string>
+    <string name="enter_name">Entre ton nom</string>
+    <string name="your_weight">Ton Poids</string>
+    <string name="your_goal">Ton Objectif</string>
+    <string name="workouts_per_week_goal">Entraînements par semaine</string>
+    <string name="finish_setup">TERMINER LA CONFIGURATION</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">TRAINABLE</string>
+    <string name="onboarding_welcome_desc">Ton nouveau compagnon monolithique pour l\'entraînement de force. Propre, puissant et conçu pour la performance.</string>
+    <string name="onboarding_features_title">Élève ton\nentraînement.</string>
+    <string name="onboarding_feature_suggestions_title">Suggestions Intelligentes</string>
+    <string name="onboarding_feature_suggestions_desc">Trainable apprend ton emploi du temps et te suggère le prochain entraînement idéal.</string>
+    <string name="onboarding_feature_control_title">Contrôle Total</string>
+    <string name="onboarding_feature_control_desc">Glisse et personnalise tes routines avec une interface tactile.</string>
+    <string name="onboarding_feature_insights_title">Analyses Approfondies</string>
+    <string name="onboarding_feature_insights_desc">Visualise ton volume et tes records personnels avec des graphiques éditoriaux.</string>
+    <string name="onboarding_connectivity_title">Connecté &amp;\nSécurisé.</string>
+    <string name="onboarding_connectivity_backup_title">Sauvegardes Locales &amp; Automatiques</string>
+    <string name="onboarding_connectivity_backup_desc">Garde tes données en sécurité avec des sauvegardes programmées et une restauration facile.</string>
+    <string name="onboarding_connectivity_share_plans_title">Partager des Plans</string>
+    <string name="onboarding_connectivity_share_plans_desc">Exporte tes routines en fichiers .trainableplan et partage-les avec tes amis.</string>
+    <string name="onboarding_connectivity_share_workouts_title">Montre tes Progrès</string>
+    <string name="onboarding_connectivity_share_workouts_desc">Partage tes entraînements terminés et tes records personnels sous forme de belles cartes.</string>
+    <string name="onboarding_setup_title">Personnalise\nton expérience.</string>
+    <string name="onboarding_setup_username_label">Comment devrions-nous t\'appeler ?</string>
+    <string name="onboarding_setup_weight_label">Poids actuel (optionnel)</string>
+    <string name="onboarding_setup_goal_label">Objectif hebdomadaire</string>
+    <string name="onboarding_setup_footer">Tu pourras toujours modifier ces paramètres plus tard.</string>
+
+    <!-- Filters & Search -->
+    <string name="filters">Filtres</string>
+    <string name="clear_filters">Effacer les Filtres</string>
+    <string name="apply_filters">Appliquer les Filtres</string>
+    <string name="no_results_filters">Aucun résultat avec ces filtres</string>
+    <string name="try_adjust_filters">Essaie d\'ajuster ta sélection ou d\'effacer tous les filtres.</string>
+    <string name="search_routines">Rechercher des routines…</string>
+
+    <!-- Sharing -->
+    <string name="sharing_options">OPTIONS DE PARTAGE</string>
+    <string name="share_include_images_title">Inclure les Photos ?</string>
+    <string name="share_include_images_message">Cette routine a des photos jointes. Veux-tu les inclure dans le fichier .trainableplan ?</string>
+    <string name="share_with_images">PARTAGER AVEC PHOTOS</string>
+    <string name="share_without_images">DONNÉES SEULEMENT</string>
+    <string name="import_plans_title">Importer les Routines ?</string>
+    <string name="import_plans_message">Tu vas importer les routines suivantes :</string>
+    <string name="import_plan_summary">%1$s (%2$d exercices)</string>
+    <string name="import_confirm">IMPORTER</string>
+
+    <!-- Updates -->
+    <string name="check_for_updates">Vérifier les mises à jour</string>
+    <string name="update_available">Nouvelle mise à jour disponible !</string>
+    <string name="version">Version : %s</string>
+    <string name="changelog">Nouveautés :</string>
+    <string name="downloading">Téléchargement en cours...</string>
+    <string name="update_now">Mettre à jour maintenant</string>
+
+    <!-- Camera & Photos -->
+    <string name="select_photo_source">Choisir la source de la photo</string>
+    <string name="camera">Appareil photo</string>
+    <string name="gallery">Galerie</string>
+    <string name="camera_permission_denied">L\'autorisation de l\'appareil photo est requise pour prendre des photos</string>
+
+    <!-- Gym Membership -->
+    <string name="gym_membership">Abonnement à la Salle</string>
+    <string name="valid_thru">Valable jusqu\'au</string>
+    <string name="expired">Expiré</string>
+    <string name="expires_in_days">Expire dans %d jours</string>
+    <string name="set_expiry_date">Définir la Date d\'Expiration</string>
+    <string name="tap_to_set">Tape pour définir</string>
+    <string name="quick_renewal">Renouvellement Rapide</string>
+    <string name="month_1">1 Mois</string>
+    <string name="months_3">3 Mois</string>
+    <string name="months_6">6 Mois</string>
+    <string name="year_1">1 An</string>
+    <string name="choose_custom_date">CHOISIR UNE DATE PERSONNALISÉE</string>
+    <string name="remove_membership">SUPPRIMER L\'ABONNEMENT</string>
+
+    <!-- Cardio -->
+    <string name="distance">Distance</string>
+    <string name="cardio_run">Course</string>
+    <string name="cardio_bike">Vélo</string>
+    <string name="cardio_walk">Marche</string>
+    <string name="cardio_other">Autre</string>
+    <string name="activity_name">Nom de l\'Activité</string>
+    <string name="activity_name_placeholder">ex. Natation, Randonnée...</string>
+
+    <!-- About -->
+    <string name="about">À PROPOS</string>
+    <string name="star_on_github">Mettre une étoile sur GitHub</string>
+    <string name="buy_me_a_coffee">Offre-moi un café</string>
+
+    <!-- Double back to exit -->
+    <string name="press_back_again">Appuie à nouveau sur retour pour quitter</string>
+
+    <!-- Errors -->
+    <string name="error_unknown">Erreur inconnue</string>
+    <string name="routine_not_found">Routine introuvable</string>
+    <string name="reps_hint">ex. 8 ou 8-6-4-2</string>
+
+</resources>

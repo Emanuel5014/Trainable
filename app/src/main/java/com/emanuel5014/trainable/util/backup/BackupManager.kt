@@ -92,7 +92,12 @@ class BackupManager @Inject constructor(
                         .toSet()
 
                     val filesDir = context.filesDir
-                    filesDir.listFiles()?.forEach { file ->
+                    val routineImagesDir = File(context.filesDir, "routine_images")
+                    
+                    val allLocalFiles = (filesDir.listFiles()?.toList() ?: emptyList()) + 
+                                        (routineImagesDir.listFiles()?.toList() ?: emptyList())
+
+                    allLocalFiles.forEach { file ->
                         if (file.isFile && referencedFilenames.contains(file.name)) {
                             FileInputStream(file).use { fis ->
                                 zos.putNextEntry(ZipEntry("images/${file.name}"))
@@ -173,6 +178,8 @@ class BackupManager @Inject constructor(
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
             if (!dbDir.exists()) dbDir.mkdirs()
             val filesDir = context.filesDir
+            val routineImagesDir = File(context.filesDir, "routine_images")
+            if (!routineImagesDir.exists()) routineImagesDir.mkdirs()
 
             context.contentResolver.openInputStream(inputUri)?.use { fis ->
                 ZipInputStream(fis).use { zis ->
@@ -218,7 +225,7 @@ class BackupManager @Inject constructor(
                             entry.name.startsWith("images/") -> {
                                 val imageName = entry.name.removePrefix("images/")
                                 if (imageName.isNotEmpty()) {
-                                    val outFile = File(filesDir, imageName)
+                                    val outFile = File(routineImagesDir, imageName)
                                     FileOutputStream(outFile).use { fos ->
                                         zis.copyTo(fos)
                                     }

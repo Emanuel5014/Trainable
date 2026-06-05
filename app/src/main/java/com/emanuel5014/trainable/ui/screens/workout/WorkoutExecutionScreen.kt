@@ -1,7 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,6 +13,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,7 +70,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -343,7 +348,39 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
-                        Column(modifier = Modifier.fillMaxSize()) {
+                        val swipeOffset = remember { Animatable(0f) }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .then(
+                                    if (state.swipeActionsEnabled) {
+                                        Modifier
+                                            .graphicsLayer { translationX = swipeOffset.value }
+                                            .pointerInput(state.currentExerciseIndex) {
+                                                detectHorizontalDragGestures(
+                                                    onDragStart = { coroutineScope.launch { swipeOffset.snapTo(0f) } },
+                                                    onDragEnd = {
+                                                        val threshold = with(density) { 50.dp.toPx() }
+                                                        if (swipeOffset.value > threshold && targetIndex > 0) {
+                                                            coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
+                                                            viewModel.previousExercise()
+                                                        } else if (swipeOffset.value < -threshold && targetIndex < state.exercises.size - 1) {
+                                                            coroutineScope.launch { swipeOffset.animateTo(0f, tween(200)) }
+                                                            viewModel.nextExercise()
+                                                        } else {
+                                                            coroutineScope.launch { swipeOffset.animateTo(0f, spring()) }
+                                                        }
+                                                    },
+                                                    onHorizontalDrag = { change, dragAmount ->
+                                                        change.consume()
+                                                        coroutineScope.launch { swipeOffset.snapTo(swipeOffset.value + dragAmount) }
+                                                    }
+                                                )
+                                            }
+                                    } else Modifier
+                                )
+                        ) {
                             // Exercise Header
                             Column(
                                 modifier = Modifier
@@ -479,7 +516,8 @@ fun WorkoutExecutionScreen(
                                         },
                                         onEditValues = { isEditingValues = !isEditingValues },
                                         isActive = isActive,
-                                        weightUnit = state.weightUnit
+                                        weightUnit = state.weightUnit,
+                                        previousNote = set.previousNote
                                     )
                                 }
 

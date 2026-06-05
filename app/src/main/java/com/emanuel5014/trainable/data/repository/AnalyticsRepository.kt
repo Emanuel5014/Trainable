@@ -4,6 +4,8 @@ import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import com.emanuel5014.trainable.data.local.dao.ConsistencyRow
 import com.emanuel5014.trainable.data.local.dao.DailyVolume
+import com.emanuel5014.trainable.data.local.dao.PeriodExerciseRow
+import com.emanuel5014.trainable.data.local.dao.PeriodMetrics
 import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.entity.WeightLogEntity
@@ -45,6 +47,15 @@ class AnalyticsRepository @Inject constructor(
 
     fun getExerciseProgressHistory(exerciseId: Int, startDate: Long) =
         analyticsDao.getExerciseProgressHistory(exerciseId, startDate)
+
+    fun getPeriodMetrics(startDate: Long, endDate: Long): Flow<PeriodMetrics> =
+        analyticsDao.getPeriodMetrics(startDate, endDate)
+
+    fun getPeriodExerciseBreakdown(startDate: Long, endDate: Long): Flow<List<PeriodExerciseRow>> =
+        analyticsDao.getPeriodExerciseBreakdown(startDate, endDate)
+
+    fun getTrainingDays(startDate: Long, endDate: Long): Flow<Int> =
+        analyticsDao.getTrainingDays(startDate, endDate)
 
     fun getWeightHistory(startDate: Long): Flow<List<WeightLogEntity>> =
         weightLogDao.getWeightHistory(startDate)

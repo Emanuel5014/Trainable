@@ -53,6 +53,7 @@ import androidx.compose.material.icons.rounded.AddBox
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.automirrored.rounded.CompareArrows
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
@@ -152,6 +153,7 @@ import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.WorkoutShareCard
 import com.emanuel5014.trainable.ui.components.captureViewToBitmap
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
+import com.emanuel5014.trainable.ui.navigation.CompareSessions
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -224,6 +226,12 @@ fun HistoryScreen(
     LaunchedEffect(viewModel.navigationEvent) {
         viewModel.navigationEvent.collect { sessionId ->
             navController?.navigate(EditWorkoutSession(sessionId))
+        }
+    }
+
+    LaunchedEffect(viewModel.compareNavigationEvent) {
+        viewModel.compareNavigationEvent.collect { (sessionId1, sessionId2) ->
+            navController?.navigate(CompareSessions(sessionId1, sessionId2))
         }
     }
 
@@ -355,6 +363,14 @@ fun HistoryScreen(
                     icon = if (uiState.isSelectionMode) null else Icons.Rounded.History,
                     actions = if (uiState.isSelectionMode) {
                         {
+                            if (uiState.selectedSessionIds.size == 2) {
+                                GymIconButton(
+                                    icon = Icons.AutoMirrored.Rounded.CompareArrows,
+                                    onClick = { viewModel.compareSelectedSessions() },
+                                    containerColor = Primary.copy(alpha = 0.1f),
+                                    contentColor = Primary
+                                )
+                            }
                             if (!swipeActionsEnabled) {
                                 if (uiState.selectedSessionIds.size == 1) {
                                     GymIconButton(
@@ -516,7 +532,7 @@ fun HistoryScreen(
                                         }
                                     },
                                     onLongClick = {
-                                        if (!uiState.isSelectionMode && !swipeActionsEnabled) {
+                                        if (!uiState.isSelectionMode) {
                                             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             viewModel.toggleSessionSelection(session.id)
                                         }

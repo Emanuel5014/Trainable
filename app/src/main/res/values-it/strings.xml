@@ -42,7 +42,8 @@
     <string name="failed_save_image">Impossibile salvare l\'immagine.</string>
     <string name="share_exercises">Esercizi</string>
     <string name="share_sets">Serie</string>
-    <string name="share_volume">Volume</string>
+    <string name="share_volume">Tonnellaggio</string>
+
     <string name="share_built_for_strength">COSTRUITO PER LA FORZA</string>
     <string name="share_footer_message">TRACCIA I TUOI PROGRESSI CON TRAINABLE</string>
     <string name="later">Più tardi</string>
@@ -134,7 +135,7 @@
     <string name="no_exercises_in_routine">Nessun esercizio in questa scheda</string>
     <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
     <string name="swipe_actions">Azioni Rapide Swipe</string>
-    <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi</string>
+    <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi e navigare tra gli esercizi</string>
 
     <!-- Exercises -->
     <string name="exercise">Esercizio</string>
@@ -154,6 +155,11 @@
     <string name="search_exercises">Cerca esercizi</string>
     <string name="all_categories">Tutti</string>
     <string name="no_exercises_found">Nessun esercizio trovato</string>
+    <string name="choose_from_library">Scegli dalla libreria</string>
+    <string name="filter_custom">Personalizzati</string>
+    <string name="new_exercise">Nuovo Esercizio</string>
+    <string name="delete_exercise_title">Eliminare l\'esercizio?</string>
+    <string name="delete_exercise_message">Eliminare \"%1$s\"? Questa azione non può essere annullata.</string>
     <string name="add_custom_exercise">Aggiungi Esercizio Personalizzato</string>
     <string name="exercise_name">Nome Esercizio</string>
     <string name="category">Categoria</string>
@@ -278,6 +284,33 @@
     <string name="structural_balance">Bilanciamento Strutturale</string>
     <string name="workouts_per_week">Allenamenti/Settimana</string>
     <string name="avg_volume">Tonnellaggio Medio</string>
+    <string name="analytics_category_volume">VOLUME PER GRUPPO MUSCOLARE</string>
+    <string name="analytics_category_volume_widget">VOLUME PER GRUPPO MUSCOLARE</string>
+    <string name="analytics_time_range_1w">1S</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_6m">6M</string>
+    <string name="analytics_time_range_all">TUTTO</string>
+
+    <!-- Confronto -->
+    <string name="compare_sessions_title">Confronta Sessioni</string>
+    <string name="compare_sessions">Sessioni</string>
+    <string name="compare_session_a">SESSIONE A</string>
+    <string name="compare_session_b">SESSIONE B</string>
+    <string name="compare_vs">VS</string>
+    <string name="compare_volume">Tonnellaggio</string>
+    <string name="compare_sets">Serie</string>
+    <string name="compare_exercises">Esercizi</string>
+    <string name="compare_max_weight">Peso Max</string>
+    <string name="compare_avg_weight">Peso Medio</string>
+    <string name="compare_cardio">Cardio</string>
+    <string name="compare_no_cardio_session_a">Nessun cardio nella Sessione A</string>
+    <string name="compare_no_cardio_session_b">Nessun cardio nella Sessione B</string>
+    <string name="compare_exercises_detail">Dettaglio Esercizi</string>
+    <string name="compare_not_performed">Non eseguito</string>
+    <string name="analytics_time_period_comparison">CONFRONTO PERIODI TEMPORALI</string>
+    <string name="analytics_time_period_comparison_desc">Confronta le tue prestazioni tra due periodi temporali diversi</string>
+    <string name="analytics_training_days">Giorni di Allenamento</string>
+    <string name="error">Errore</string>
 
     <!-- Settings -->
     <string name="settings_title">IMPOSTAZIONI</string>
@@ -315,6 +348,10 @@
     <string name="current_language">Attuale: %s</string>
     <string name="language_english">English</string>
     <string name="language_italian">Italiano</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_portuguese">Português</string>
 
     <!-- Backup & Data -->
     <string name="auto_backup">Backup Automatico</string>
@@ -460,5 +497,6 @@
     <!-- Errors -->
     <string name="error_unknown">Errore sconosciuto</string>
     <string name="routine_not_found">Scheda non trovata</string>
+    <string name="reps_hint">es. 8 o 8-6-4-2</string>
 
 </resources>

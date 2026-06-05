@@ -69,7 +69,8 @@ fun SetLogRow(
     onLongClick: (() -> Unit)? = null,
     onEditValues: (() -> Unit)? = null,
     isActive: Boolean = false,
-    weightUnit: String = "kg"
+    weightUnit: String = "kg",
+    previousNote: String? = null
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -181,6 +182,7 @@ fun SetLogRow(
         }
 
         // Note Icon Button
+        val hasPreviousHint = !isCompleted && note.isNullOrBlank() && !previousNote.isNullOrBlank()
         IconButton(onClick = { isNoteEditing = !isNoteEditing }) {
             Icon(
                 imageVector = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote,
@@ -188,6 +190,7 @@ fun SetLogRow(
                 tint = when {
                     isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
                     !note.isNullOrBlank() -> Primary
+                    hasPreviousHint -> OnSurfaceVariant.copy(alpha = 0.4f)
                     else -> OnSurfaceVariant.copy(alpha = 0.6f)
                 }
             )
@@ -216,7 +219,8 @@ fun SetLogRow(
         }
 
         // Note Input Area (Expandable)
-        if (isNoteEditing || !note.isNullOrBlank()) {
+        val showPreviousHint = !isCompleted && note.isNullOrBlank() && !previousNote.isNullOrBlank()
+        if (isNoteEditing || !note.isNullOrBlank() || showPreviousHint) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,7 +243,7 @@ fun SetLogRow(
                         ),
                         singleLine = false
                     )
-                } else {
+                } else if (!note.isNullOrBlank()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -247,12 +251,30 @@ fun SetLogRow(
                             .padding(8.dp)
                     ) {
                         Text(
-                            text = note ?: "",
+                            text = note,
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurface,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { isNoteEditing = true }
+                        )
+                    }
+                } else if (showPreviousHint) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Surface.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                            .clickable {
+                                onNoteChange(previousNote)
+                                isNoteEditing = true
+                            }
+                    ) {
+                        Text(
+                            text = previousNote,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }

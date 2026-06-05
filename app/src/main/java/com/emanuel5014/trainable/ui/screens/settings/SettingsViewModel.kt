@@ -361,7 +361,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _backupStatus.value = "Exporting CSV..."
             try {
-                _csvCache = workoutRepository.exportAllWorkoutsToCsv()
+                _csvCache = workoutRepository.exportAllWorkoutsToCsv(weightUnit.value)
                 _backupStatus.value = "Export ready"
             } catch (e: Exception) {
                 _backupStatus.value = "Export failed: ${e.message}"

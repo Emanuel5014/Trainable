@@ -1,13 +1,15 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
+import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
 import java.util.concurrent.TimeUnit
 
-enum class AnalyticsTimeRange(val label: String, private val durationDays: Long?) {
-    OneWeek("1W", 7),
-    OneMonth("1M", 30),
-    SixMonths("6M", 180),
-    All("ALL", null);
+enum class AnalyticsTimeRange(val labelResId: Int, private val durationDays: Long?) {
+    OneWeek(R.string.analytics_time_range_1w, 7),
+    OneMonth(R.string.analytics_time_range_1m, 30),
+    SixMonths(R.string.analytics_time_range_6m, 180),
+    All(R.string.analytics_time_range_all, null);
 
     fun startDate(now: Long = System.currentTimeMillis()): Long {
         return durationDays?.let { now - TimeUnit.DAYS.toMillis(it) } ?: 0L
@@ -39,6 +41,7 @@ data class StrengthIndexUiModel(
     val summary: String
 )
 
+
 sealed class AnalyticsWidget(val id: String) {
     data class BodyWeight(val history: List<AnalyticsChartPoint>) : AnalyticsWidget("weight")
     data class Calendar(val workoutDates: List<Long>) : AnalyticsWidget("calendar")
@@ -55,7 +58,48 @@ sealed class AnalyticsWidget(val id: String) {
         val timeRange: AnalyticsTimeRange,
         val history: List<AnalyticsChartPoint>
     ) : AnalyticsWidget(widgetId)
+
+    data class CategoryVolume(
+        val history: List<CategoryVolumeRow>,
+        val timeRange: AnalyticsTimeRange,
+        val startDate: Long
+    ) : AnalyticsWidget("category_volume")
+
+    data class TimePeriodComparison(
+        val period1Name: String,
+        val period2Name: String,
+        val period1DateRange: String,
+        val period2DateRange: String,
+        val period1Metrics: PeriodComparisonMetrics,
+        val period2Metrics: PeriodComparisonMetrics,
+        val period1Exercises: List<PeriodExerciseComparison>,
+        val period2Exercises: List<PeriodExerciseComparison>,
+        val summaryParts: List<SummaryPart> = emptyList(),
+        val timeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth
+    ) : AnalyticsWidget("time_period_comparison")
 }
+
+data class SummaryPart(
+    val label: String,
+    val deltaPercent: Float,
+    val isPositive: Boolean
+)
+
+data class PeriodComparisonMetrics(
+    val volume: Float,
+    val sessionCount: Int,
+    val setCount: Int,
+    val avgWeight: Float,
+    val trainingDays: Int
+)
+
+data class PeriodExerciseComparison(
+    val exerciseName: String,
+    val volume: Float,
+    val setCount: Int,
+    val maxWeight: Float,
+    val max1rm: Float
+)
 
 data class AnalyticsUiState(
     val activePlanName: String = "No Active Plan",
