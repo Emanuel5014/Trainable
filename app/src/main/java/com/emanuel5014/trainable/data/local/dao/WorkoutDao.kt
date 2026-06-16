@@ -187,7 +187,7 @@ interface WorkoutDao {
         WHERE ws.plan_id = :planId
         AND sl.exercise_id = :exerciseId
         AND ws.is_finished = 1
-        ORDER BY sl.session_id DESC
+        ORDER BY sl.session_id DESC, sl.numero_serie ASC
         LIMIT :limitSets
     """)
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>>

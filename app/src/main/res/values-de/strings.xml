@@ -259,6 +259,8 @@
     <string name="analytics_strength_summary_negative">-%s%% vs. letzte 30 Tage</string>
     <string name="analytics_strength_no_data">Nicht genügend PR-Verlauf.</string>
     <string name="analytics_body_weight">KÖRPERGEWICHT</string>
+    <string name="analytics_body_weight_history">Verlauf</string>
+    <string name="analytics_select_date">Datum auswählen</string>
     <string name="analytics_workout_calendar">TRAININGS KALENDER</string>
     <string name="analytics_workouts_this_month">%d Trainingseinheiten diesen Monat</string>
     <string name="analytics_total_volume">GESAMTTONNAGE</string>

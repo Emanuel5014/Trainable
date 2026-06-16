@@ -259,6 +259,8 @@
     <string name="analytics_strength_summary_negative">-%s%% rispetto ai precedenti 30 giorni</string>
     <string name="analytics_strength_no_data">Dati PR insufficienti.</string>
     <string name="analytics_body_weight">PESO CORPOREO</string>
+    <string name="analytics_body_weight_history">Cronologia</string>
+    <string name="analytics_select_date">Seleziona data</string>
     <string name="analytics_workout_calendar">CALENDARIO ATTIVITÀ</string>
     <string name="analytics_workouts_this_month">%d allenamenti questo mese</string>
     <string name="analytics_total_volume">TONNELLAGGIO TOTALE</string>

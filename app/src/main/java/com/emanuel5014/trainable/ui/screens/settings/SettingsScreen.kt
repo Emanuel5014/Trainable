@@ -84,6 +84,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -1190,7 +1191,7 @@ fun SettingsScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Trainable v1.5.0",
+                                    text = "Trainable v${BuildConfig.VERSION_NAME}",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.ExtraBold

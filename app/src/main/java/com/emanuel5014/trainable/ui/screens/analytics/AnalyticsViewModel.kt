@@ -500,7 +500,7 @@ class AnalyticsViewModel @Inject constructor(
         saveExerciseIds(emptySet())
     }
 
-    fun submitWeight() {
+    fun submitWeight(timestamp: Long = System.currentTimeMillis()) {
         val parsedWeight = bodyWeightInput.value.replace(',', '.').toFloatOrNull() ?: return
         val weightUnit = uiState.value.weightUnit
 
@@ -508,9 +508,15 @@ class AnalyticsViewModel @Inject constructor(
             analyticsRepository.addWeightLog(
                 userId = 1,
                 peso = WeightUnitConverter.convertStorage(parsedWeight, weightUnit),
-                timestamp = System.currentTimeMillis()
+                timestamp = timestamp
             )
             bodyWeightInput.value = ""
+        }
+    }
+
+    fun deleteWeightLog(id: Int) {
+        viewModelScope.launch {
+            analyticsRepository.deleteWeightLog(id)
         }
     }
 
@@ -575,7 +581,8 @@ class AnalyticsViewModel @Inject constructor(
                         history = weightHistory.map { entry ->
                             AnalyticsChartPoint(
                                 timestamp = entry.timestamp,
-                                value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit)
+                                value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit),
+                                id = entry.id
                             )
                         }
                     )
@@ -711,7 +718,8 @@ class AnalyticsViewModel @Inject constructor(
             bodyWeightHistory = weightHistory.map { entry ->
                 AnalyticsChartPoint(
                     timestamp = entry.timestamp,
-                    value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit)
+                    value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit),
+                    id = entry.id
                 )
             },
             weightUnit = weightUnit,

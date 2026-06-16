@@ -259,6 +259,8 @@
     <string name="analytics_strength_summary_negative">-%s%% vs últimos 30 dias</string>
     <string name="analytics_strength_no_data">Histórico de RP insuficiente.</string>
     <string name="analytics_body_weight">PESO CORPORAL</string>
+    <string name="analytics_body_weight_history">Histórico</string>
+    <string name="analytics_select_date">Selecionar data</string>
     <string name="analytics_workout_calendar">CALENDÁRIO DE TREINOS</string>
     <string name="analytics_workouts_this_month">%d treinos este mês</string>
     <string name="analytics_total_volume">TONELAGEM TOTAL</string>

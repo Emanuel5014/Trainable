@@ -47,17 +47,23 @@ import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.automirrored.rounded.CompareArrows
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -349,7 +355,8 @@ fun AnalyticsScreen(
                                         weightUnit = weightUnit,
                                         onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
                                         onSubmitWeight = viewModel::submitWeight,
-                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onDeleteWeight = viewModel::deleteWeightLog
                                     )
                                 }
                                 is AnalyticsWidget.Calendar -> {
@@ -774,8 +781,9 @@ fun BodyWeightChartSection(
     bodyWeightInput: String,
     weightUnit: String,
     onBodyWeightInputChanged: (String) -> Unit,
-    onSubmitWeight: () -> Unit,
-    onRemove: (() -> Unit)? = null
+    onSubmitWeight: (Long) -> Unit,
+    onRemove: (() -> Unit)? = null,
+    onDeleteWeight: ((Int) -> Unit)? = null
 ) {
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
@@ -855,24 +863,117 @@ fun BodyWeightChartSection(
                 )
                 
                 Spacer(modifier = Modifier.height(Spacing.medium))
+                
+                var showHistory by remember { mutableStateOf(false) }
+                val recentEntries = bodyWeightHistory.takeLast(5).reversed()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showHistory = !showHistory }
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.analytics_body_weight_history),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        imageVector = if (showHistory) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                androidx.compose.animation.AnimatedVisibility(visible = showHistory) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        recentEntries.forEachIndexed { index, entry ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SurfaceContainerHighest.copy(alpha = 0.5f))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = DateFormatter.formatShort(entry.timestamp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = WeightUnitConverter.formatWithUnit(entry.value, weightUnit),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = OnSurface
+                                    )
+                                    if (onDeleteWeight != null && entry.id > 0) {
+                                        IconButton(
+                                            onClick = { onDeleteWeight(entry.id) },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Rounded.Clear,
+                                                contentDescription = stringResource(R.string.analytics_remove),
+                                                tint = Error.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(Spacing.small))
             }
             
+            var showDatePicker by remember { mutableStateOf(false) }
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = System.currentTimeMillis()
+            )
+            val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(
+                    onClick = { showDatePicker = true },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = SurfaceContainerHighest,
+                        contentColor = Primary
+                    ),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.DateRange,
+                        contentDescription = stringResource(R.string.analytics_select_date),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
                 OutlinedTextField(
                     value = bodyWeightInput,
                     onValueChange = onBodyWeightInputChanged,
-                    label = { Text(stringResource(R.string.analytics_todays_weight)) },
+                    label = { Text(DateFormatter.formatShort(selectedDate)) },
                     suffix = { Text(weightUnit) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
                 )
                 IconButton(
-                    onClick = onSubmitWeight,
+                    onClick = { onSubmitWeight(selectedDate) },
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = Primary,
                         contentColor = OnPrimary
@@ -880,6 +981,41 @@ fun BodyWeightChartSection(
                     modifier = Modifier.size(56.dp)
                 ) {
                     Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.save))
+                }
+            }
+
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    },
+                    colors = DatePickerDefaults.colors(
+                        containerColor = Surface,
+                        titleContentColor = OnSurface,
+                        headlineContentColor = OnSurface,
+                        weekdayContentColor = OnSurfaceVariant,
+                        subheadContentColor = OnSurfaceVariant,
+                        yearContentColor = OnSurface,
+                        currentYearContentColor = Primary,
+                        selectedYearContentColor = OnPrimary,
+                        selectedDayContentColor = OnPrimary,
+                        selectedDayContainerColor = Primary,
+                        todayContentColor = Primary,
+                        todayDateBorderColor = Primary,
+                        dayContentColor = OnSurface,
+                        dayInSelectionRangeContentColor = OnSurface,
+                        dayInSelectionRangeContainerColor = Primary.copy(alpha = 0.12f)
+                    )
+                ) {
+                    DatePicker(state = datePickerState)
                 }
             }
         }
