@@ -501,4 +501,7 @@
     <string name="routine_not_found">Rutina no encontrada</string>
     <string name="reps_hint">ej. 8 o 8-6-4-2</string>
 
+    <!-- Notifications -->
+    <string name="notification_next_set">Siguiente: %1$s - Serie %2$d: %3$s × %4$d</string>
+
 </resources>

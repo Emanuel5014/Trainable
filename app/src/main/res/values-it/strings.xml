@@ -501,4 +501,7 @@
     <string name="routine_not_found">Scheda non trovata</string>
     <string name="reps_hint">es. 8 o 8-6-4-2</string>
 
+    <!-- Notifications -->
+    <string name="notification_next_set">Prossima: %1$s - %2$dª serie: %3$s × %4$d</string>
+
 </resources>

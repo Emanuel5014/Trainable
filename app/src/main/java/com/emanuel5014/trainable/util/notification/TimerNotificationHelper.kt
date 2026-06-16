@@ -11,6 +11,7 @@ import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.util.WeightUnitConverter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -74,7 +75,15 @@ class TimerNotificationHelper @Inject constructor(
      * Uses Android's internal Chronometer to update the countdown in the System UI
      * without requiring a notify() call every second.
      */
-    fun startOrUpdateTimerNotification(remainingSeconds: Int, sessionId: Int) {
+    fun startOrUpdateTimerNotification(
+        remainingSeconds: Int,
+        sessionId: Int,
+        exerciseName: String? = null,
+        nextSetNumber: Int? = null,
+        nextSetWeight: Float? = null,
+        nextSetReps: Int? = null,
+        weightUnit: String? = null
+    ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -97,6 +106,14 @@ class TimerNotificationHelper @Inject constructor(
         }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && nextSetReps != null && weightUnit != null) {
+            val formattedWeight = WeightUnitConverter.formatWithUnit(
+                WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
+                weightUnit
+            )
+            context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+        } else null
+
         val notification = NotificationCompat.Builder(context, runningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
@@ -110,6 +127,8 @@ class TimerNotificationHelper @Inject constructor(
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
+            .setContentText(nextSetLabel)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(nextSetLabel))
             .addAction(0, "+30s", addPendingIntent)
             .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
             .build()
