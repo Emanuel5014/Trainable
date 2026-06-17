@@ -57,6 +57,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -69,6 +71,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,7 +79,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -99,8 +104,10 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.fromHSV
 import com.emanuel5014.trainable.ui.theme.getPalettePreviewColors
 import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
+import com.emanuel5014.trainable.ui.theme.toHSV
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,6 +148,7 @@ fun SettingsScreen(
     var easterEggClicks by remember { mutableIntStateOf(0) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
+    var showCustomColorDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
     var pendingNotificationType by remember { mutableStateOf<String?>(null) }
 
@@ -411,6 +419,19 @@ fun SettingsScreen(
                 TextButton(onClick = { showResetDialog = false }) {
                     Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
+            }
+        )
+    }
+
+    if (showCustomColorDialog) {
+        CustomColorPickerDialog(
+            initialColor = dynamicColorSeed?.let { Color(it) },
+            initialStyle = themeStyle,
+            onDismiss = { showCustomColorDialog = false },
+            onApply = { colorSeed, style ->
+                viewModel.setDynamicColorSeed(colorSeed)
+                viewModel.setThemeStyle(style)
+                showCustomColorDialog = false
             }
         )
     }
@@ -873,56 +894,60 @@ fun SettingsScreen(
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Reset to system default option
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(SurfaceContainerHighest)
-                                            .clickable { 
-                                                viewModel.setDynamicColorSeed(null)
-                                                viewModel.setThemeStyle(0)
-                                            }
-                                            .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (dynamicColorSeed == null) {
-                                            Box(
-                                                modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
-                                                contentAlignment = Alignment.Center
-                                            ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(CircleShape)
+                                                .background(SurfaceContainerHighest)
+                                                .clickable { 
+                                                    viewModel.setDynamicColorSeed(null)
+                                                    viewModel.setThemeStyle(0)
+                                                }
+                                                .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (dynamicColorSeed == null) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        Icons.Rounded.RestartAlt,
+                                                        contentDescription = "System Default",
+                                                        tint = Primary,
+                                                        modifier = Modifier.size(28.dp)
+                                                    )
+                                                }
+                                            } else {
                                                 Icon(
                                                     Icons.Rounded.RestartAlt,
                                                     contentDescription = "System Default",
-                                                    tint = Primary,
+                                                    tint = OnSurfaceVariant,
                                                     modifier = Modifier.size(28.dp)
                                                 )
                                             }
-                                        } else {
-                                            Icon(
-                                                Icons.Rounded.RestartAlt,
-                                                contentDescription = "System Default",
-                                                tint = OnSurfaceVariant,
-                                                modifier = Modifier.size(28.dp)
-                                            )
                                         }
+                                        Text("Default", style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == null) Primary else OnSurfaceVariant, maxLines = 1)
                                     }
 
-                                    // Use primary wallpaper color as seed and show 5 different styles
                                     val primarySeed = wallpaperColors.first()
+                                    val styleNames = listOf("Tonal Spot", "Vibrant", "Expressive", "Neutral", "Fruit Salad")
                                     (0..4).forEach { styleIndex ->
-                                        val previewColors = getSeedPreviewColors(primarySeed, styleIndex)
-                                        PalettePreviewCircle(
-                                            colors = previewColors,
-                                            isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
-                                            onClick = { 
-                                                viewModel.setDynamicColorSeed(primarySeed)
-                                                viewModel.setThemeStyle(styleIndex)
-                                            }
-                                        )
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            PalettePreviewCircle(
+                                                colors = getSeedPreviewColors(primarySeed, styleIndex),
+                                                isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
+                                                onClick = { 
+                                                    viewModel.setDynamicColorSeed(primarySeed)
+                                                    viewModel.setThemeStyle(styleIndex)
+                                                }
+                                            )
+                                            Text(styleNames[styleIndex], style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == primarySeed && themeStyle == styleIndex) Primary else OnSurfaceVariant, maxLines = 1)
+                                        }
                                     }
                                 }
                             }
@@ -943,17 +968,85 @@ fun SettingsScreen(
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    val paletteNames = listOf("Default", "Blue", "Green", "Red", "Purple", "Orange", "Pink", "Teal")
                                     (0..7).forEach { index ->
-                                        val previewColors = getPalettePreviewColors(index)
-                                        PalettePreviewCircle(
-                                            colors = previewColors,
-                                            isSelected = themePalette == index,
-                                            onClick = { viewModel.setThemePalette(index) }
-                                        )
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            PalettePreviewCircle(
+                                                colors = getPalettePreviewColors(index),
+                                                isSelected = themePalette == index,
+                                                onClick = { viewModel.setThemePalette(index) }
+                                            )
+                                            Text(paletteNames[index], style = MaterialTheme.typography.labelSmall, color = if (themePalette == index) Primary else OnSurfaceVariant, maxLines = 1)
+                                        }
                                     }
                                 }
+                            }
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showCustomColorDialog = true },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Palette,
+                                    contentDescription = null,
+                                    tint = if (dynamicColorSeed != null) Primary else OnSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text("Custom Color", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    if (dynamicColorSeed != null) {
+                                        val styleName = when (themeStyle) {
+                                            1 -> "Vibrant"
+                                            2 -> "Expressive"
+                                            3 -> "Neutral"
+                                            4 -> "Fruit Salad"
+                                            else -> "Tonal Spot"
+                                        }
+                                        Text("Custom \u2022 $styleName", style = MaterialTheme.typography.bodySmall, color = Primary)
+                                    } else {
+                                        Text("Pick your own theme color", style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            if (dynamicColorSeed != null) {
+                                val previewColors = getSeedPreviewColors(dynamicColorSeed!!, themeStyle)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    previewColors.forEach { color ->
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(color)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.setDynamicColorSeed(null)
+                                            viewModel.setThemeStyle(0)
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                                    ) {
+                                        Text("Reset", color = OnSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            } else {
+                                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                             }
                         }
                     }
@@ -1422,6 +1515,166 @@ private fun PalettePreviewCircle(
                     modifier = Modifier.size(24.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CustomColorPickerDialog(
+    initialColor: Color?,
+    initialStyle: Int,
+    onDismiss: () -> Unit,
+    onApply: (colorSeed: Int, style: Int) -> Unit
+) {
+    val defaultHue = initialColor?.toHSV()?.get(0) ?: 220f
+    var hue by remember { mutableFloatStateOf(defaultHue) }
+    var selectedStyle by remember { mutableIntStateOf(initialStyle) }
+
+    val currentColor = remember(hue) { Color.fromHSV(hue, 0.8f, 0.9f) }
+    val seedArgb = remember(currentColor) { currentColor.toArgb() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceContainerHigh,
+        title = {
+            Text("Custom Color", fontWeight = FontWeight.ExtraBold, color = OnSurface)
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(currentColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "#${seedArgb.toString(16).padStart(8, '0').substring(2).uppercase()}",
+                        color = if (currentColor.let { c -> c.red * 0.299f + c.green * 0.587f + c.blue * 0.114f > 0.5f } ) Color.Black else Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                HueSlider(
+                    hue = hue,
+                    onHueChange = { hue = it },
+                    currentColor = currentColor
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Theme Preview", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val previewColors = getSeedPreviewColors(seedArgb, selectedStyle)
+                        previewColors.forEach { color ->
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(color)
+                            )
+                        }
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Style", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        (0..4).forEach { styleIndex ->
+                            PalettePreviewCircle(
+                                colors = getSeedPreviewColors(seedArgb, styleIndex),
+                                isSelected = selectedStyle == styleIndex,
+                                onClick = { selectedStyle = styleIndex }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(seedArgb, selectedStyle) }) {
+                Text("Apply".uppercase(), color = Primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel".uppercase(), color = OnSurfaceVariant)
+            }
+        }
+    )
+}
+
+@Composable
+private fun HueSlider(
+    hue: Float,
+    onHueChange: (Float) -> Unit,
+    currentColor: Color
+) {
+    Column {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Hue", style = MaterialTheme.typography.labelLarge, color = OnSurfaceVariant)
+            Text("${hue.toInt()}°", style = MaterialTheme.typography.labelLarge, color = OnSurface)
+        }
+
+        val rainbowColors = remember {
+            listOf(
+                Color(0xFFFF0000),
+                Color(0xFFFF8800),
+                Color(0xFFFFFF00),
+                Color(0xFF00FF00),
+                Color(0xFF00CBFF),
+                Color(0xFF0055FF),
+                Color(0xFF8800FF),
+                Color(0xFFFF00FF),
+                Color(0xFFFF0000),
+            )
+        }
+
+        val rainbowStops = remember {
+            listOf(0f, 30f / 360f, 60f / 360f, 120f / 360f, 180f / 360f, 240f / 360f, 280f / 360f, 300f / 360f, 1f)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = rainbowColors,
+                            startX = 0f,
+                            endX = Float.POSITIVE_INFINITY
+                        )
+                    )
+                    .align(Alignment.Center)
+            )
+
+            Slider(
+                value = hue,
+                onValueChange = onHueChange,
+                valueRange = 0f..360f,
+                modifier = Modifier.fillMaxSize(),
+                colors = SliderDefaults.colors(
+                    thumbColor = currentColor,
+                    activeTrackColor = Color.Transparent,
+                    inactiveTrackColor = Color.Transparent,
+                )
+            )
         }
     }
 }

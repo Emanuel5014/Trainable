@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
 val MonolithicSurface = Color(0xFF0E0E11)
 val MonolithicSurfaceContainerLow = Color(0xFF141317)
@@ -81,3 +82,14 @@ val Error: Color
 
 val OnError: Color
 	@Composable get() = MaterialTheme.colorScheme.onError
+
+fun Color.Companion.fromHSV(hue: Float, saturation: Float, value: Float): Color {
+	val hsv = floatArrayOf(hue, saturation, value)
+	return Color(android.graphics.Color.HSVToColor(hsv))
+}
+
+fun Color.toHSV(): FloatArray {
+	val hsv = floatArrayOf(0f, 0f, 0f)
+	android.graphics.Color.colorToHSV(this.toArgb(), hsv)
+	return hsv
+}

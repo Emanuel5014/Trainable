@@ -185,6 +185,71 @@ fun getSeedPreviewColors(seed: Int, style: Int = 0): List<Color> {
 }
 
 @SuppressLint("RestrictedApi")
+private fun generateColorSchemeFromSeed(seedColor: Int, themeStyle: Int = 0): androidx.compose.material3.ColorScheme {
+    val hct = Hct.fromInt(seedColor)
+    val isDark = true
+    val scheme = when (themeStyle) {
+        1 -> SchemeVibrant(hct, isDark, 0.0)
+        2 -> SchemeExpressive(hct, isDark, 0.0)
+        3 -> SchemeNeutral(hct, isDark, 0.0)
+        4 -> SchemeFruitSalad(hct, isDark, 0.0)
+        else -> SchemeTonalSpot(hct, isDark, 0.0)
+    }
+    
+    val dc = MaterialDynamicColors()
+    return androidx.compose.material3.ColorScheme(
+        primary = Color(dc.primary().getArgb(scheme)),
+        onPrimary = Color(dc.onPrimary().getArgb(scheme)),
+        primaryContainer = Color(dc.primaryContainer().getArgb(scheme)),
+        onPrimaryContainer = Color(dc.onPrimaryContainer().getArgb(scheme)),
+        inversePrimary = Color(dc.inversePrimary().getArgb(scheme)),
+        secondary = Color(dc.secondary().getArgb(scheme)),
+        onSecondary = Color(dc.onSecondary().getArgb(scheme)),
+        secondaryContainer = Color(dc.secondaryContainer().getArgb(scheme)),
+        onSecondaryContainer = Color(dc.onSecondaryContainer().getArgb(scheme)),
+        tertiary = Color(dc.tertiary().getArgb(scheme)),
+        onTertiary = Color(dc.onTertiary().getArgb(scheme)),
+        tertiaryContainer = Color(dc.tertiaryContainer().getArgb(scheme)),
+        onTertiaryContainer = Color(dc.onTertiaryContainer().getArgb(scheme)),
+        background = Color(dc.background().getArgb(scheme)),
+        onBackground = Color(dc.onBackground().getArgb(scheme)),
+        surface = Color(dc.surface().getArgb(scheme)),
+        onSurface = Color(dc.onSurface().getArgb(scheme)),
+        surfaceVariant = Color(dc.surfaceVariant().getArgb(scheme)),
+        onSurfaceVariant = Color(dc.onSurfaceVariant().getArgb(scheme)),
+        surfaceTint = Color(dc.primary().getArgb(scheme)),
+        inverseSurface = Color(dc.inverseSurface().getArgb(scheme)),
+        inverseOnSurface = Color(dc.inverseOnSurface().getArgb(scheme)),
+        error = Color(dc.error().getArgb(scheme)),
+        onError = Color(dc.onError().getArgb(scheme)),
+        errorContainer = Color(dc.errorContainer().getArgb(scheme)),
+        onErrorContainer = Color(dc.onErrorContainer().getArgb(scheme)),
+        outline = Color(dc.outline().getArgb(scheme)),
+        outlineVariant = Color(dc.outlineVariant().getArgb(scheme)),
+        scrim = Color(dc.scrim().getArgb(scheme)),
+        surfaceBright = Color(dc.surfaceBright().getArgb(scheme)),
+        surfaceDim = Color(dc.surfaceDim().getArgb(scheme)),
+        surfaceContainer = Color(dc.surfaceContainer().getArgb(scheme)),
+        surfaceContainerHigh = Color(dc.surfaceContainerHigh().getArgb(scheme)),
+        surfaceContainerHighest = Color(dc.surfaceContainerHighest().getArgb(scheme)),
+        surfaceContainerLow = Color(dc.surfaceContainerLow().getArgb(scheme)),
+        surfaceContainerLowest = Color(dc.surfaceContainerLowest().getArgb(scheme)),
+        primaryFixed = Color(dc.primaryFixed().getArgb(scheme)),
+        onPrimaryFixed = Color(dc.onPrimaryFixed().getArgb(scheme)),
+        primaryFixedDim = Color(dc.primaryFixedDim().getArgb(scheme)),
+        onPrimaryFixedVariant = Color(dc.onPrimaryFixedVariant().getArgb(scheme)),
+        secondaryFixed = Color(dc.secondaryFixed().getArgb(scheme)),
+        onSecondaryFixed = Color(dc.onSecondaryFixed().getArgb(scheme)),
+        secondaryFixedDim = Color(dc.secondaryFixedDim().getArgb(scheme)),
+        onSecondaryFixedVariant = Color(dc.onSecondaryFixedVariant().getArgb(scheme)),
+        tertiaryFixed = Color(dc.tertiaryFixed().getArgb(scheme)),
+        onTertiaryFixed = Color(dc.onTertiaryFixed().getArgb(scheme)),
+        tertiaryFixedDim = Color(dc.tertiaryFixedDim().getArgb(scheme)),
+        onTertiaryFixedVariant = Color(dc.onTertiaryFixedVariant().getArgb(scheme)),
+    )
+}
+
+@SuppressLint("RestrictedApi")
 @Composable
 fun GymTrackingTheme(
     dynamicColor: Boolean = true,
@@ -196,73 +261,8 @@ fun GymTrackingTheme(
     rememberResponsiveSize()
     val context = LocalContext.current
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (seedColor != null) {
-                val hct = Hct.fromInt(seedColor)
-                val isDark = true
-                val scheme = when (themeStyle) {
-                    1 -> SchemeVibrant(hct, isDark, 0.0)
-                    2 -> SchemeExpressive(hct, isDark, 0.0)
-                    3 -> SchemeNeutral(hct, isDark, 0.0)
-                    4 -> SchemeFruitSalad(hct, isDark, 0.0)
-                    else -> SchemeTonalSpot(hct, isDark, 0.0)
-                }
-                
-                val dc = MaterialDynamicColors()
-                androidx.compose.material3.ColorScheme(
-                    primary = Color(dc.primary().getArgb(scheme)),
-                    onPrimary = Color(dc.onPrimary().getArgb(scheme)),
-                    primaryContainer = Color(dc.primaryContainer().getArgb(scheme)),
-                    onPrimaryContainer = Color(dc.onPrimaryContainer().getArgb(scheme)),
-                    inversePrimary = Color(dc.inversePrimary().getArgb(scheme)),
-                    secondary = Color(dc.secondary().getArgb(scheme)),
-                    onSecondary = Color(dc.onSecondary().getArgb(scheme)),
-                    secondaryContainer = Color(dc.secondaryContainer().getArgb(scheme)),
-                    onSecondaryContainer = Color(dc.onSecondaryContainer().getArgb(scheme)),
-                    tertiary = Color(dc.tertiary().getArgb(scheme)),
-                    onTertiary = Color(dc.onTertiary().getArgb(scheme)),
-                    tertiaryContainer = Color(dc.tertiaryContainer().getArgb(scheme)),
-                    onTertiaryContainer = Color(dc.onTertiaryContainer().getArgb(scheme)),
-                    background = Color(dc.background().getArgb(scheme)),
-                    onBackground = Color(dc.onBackground().getArgb(scheme)),
-                    surface = Color(dc.surface().getArgb(scheme)),
-                    onSurface = Color(dc.onSurface().getArgb(scheme)),
-                    surfaceVariant = Color(dc.surfaceVariant().getArgb(scheme)),
-                    onSurfaceVariant = Color(dc.onSurfaceVariant().getArgb(scheme)),
-                    surfaceTint = Color(dc.primary().getArgb(scheme)),
-                    inverseSurface = Color(dc.inverseSurface().getArgb(scheme)),
-                    inverseOnSurface = Color(dc.inverseOnSurface().getArgb(scheme)),
-                    error = Color(dc.error().getArgb(scheme)),
-                    onError = Color(dc.onError().getArgb(scheme)),
-                    errorContainer = Color(dc.errorContainer().getArgb(scheme)),
-                    onErrorContainer = Color(dc.onErrorContainer().getArgb(scheme)),
-                    outline = Color(dc.outline().getArgb(scheme)),
-                    outlineVariant = Color(dc.outlineVariant().getArgb(scheme)),
-                    scrim = Color(dc.scrim().getArgb(scheme)),
-                    surfaceBright = Color(dc.surfaceBright().getArgb(scheme)),
-                    surfaceDim = Color(dc.surfaceDim().getArgb(scheme)),
-                    surfaceContainer = Color(dc.surfaceContainer().getArgb(scheme)),
-                    surfaceContainerHigh = Color(dc.surfaceContainerHigh().getArgb(scheme)),
-                    surfaceContainerHighest = Color(dc.surfaceContainerHighest().getArgb(scheme)),
-                    surfaceContainerLow = Color(dc.surfaceContainerLow().getArgb(scheme)),
-                    surfaceContainerLowest = Color(dc.surfaceContainerLowest().getArgb(scheme)),
-                    primaryFixed = Color(dc.primaryFixed().getArgb(scheme)),
-                    onPrimaryFixed = Color(dc.onPrimaryFixed().getArgb(scheme)),
-                    primaryFixedDim = Color(dc.primaryFixedDim().getArgb(scheme)),
-                    onPrimaryFixedVariant = Color(dc.onPrimaryFixedVariant().getArgb(scheme)),
-                    secondaryFixed = Color(dc.secondaryFixed().getArgb(scheme)),
-                    onSecondaryFixed = Color(dc.onSecondaryFixed().getArgb(scheme)),
-                    secondaryFixedDim = Color(dc.secondaryFixedDim().getArgb(scheme)),
-                    onSecondaryFixedVariant = Color(dc.onSecondaryFixedVariant().getArgb(scheme)),
-                    tertiaryFixed = Color(dc.tertiaryFixed().getArgb(scheme)),
-                    onTertiaryFixed = Color(dc.onTertiaryFixed().getArgb(scheme)),
-                    tertiaryFixedDim = Color(dc.tertiaryFixedDim().getArgb(scheme)),
-                    onTertiaryFixedVariant = Color(dc.onTertiaryFixedVariant().getArgb(scheme)),
-                )
-            } else {
-                dynamicDarkColorScheme(context)
-            }
-        }
+        seedColor != null -> generateColorSchemeFromSeed(seedColor, themeStyle)
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> dynamicDarkColorScheme(context)
         else -> when (paletteIndex) {
             1 -> BlueColorScheme
             2 -> GreenColorScheme
