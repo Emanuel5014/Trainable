@@ -430,6 +430,9 @@
     <string name="onboarding_setup_weight_label">Current weight (optional)</string>
     <string name="onboarding_setup_goal_label">Weekly workout goal</string>
     <string name="onboarding_setup_footer">You can always change these later in settings.</string>
+    <string name="onboarding_theme_title">Pick your\ntheme.</string>
+    <string name="onboarding_notifications_title">Stay in\nthe loop.</string>
+    <string name="onboarding_backup_title">Keep your\ndata safe.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filters</string>

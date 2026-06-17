@@ -430,6 +430,9 @@
     <string name="onboarding_setup_weight_label">Aktuelles Gewicht (optional)</string>
     <string name="onboarding_setup_goal_label">Wöchentliches Trainingsziel</string>
     <string name="onboarding_setup_footer">Du kannst dies jederzeit in den Einstellungen ändern.</string>
+    <string name="onboarding_theme_title">Wähle dein\nThema.</string>
+    <string name="onboarding_notifications_title">Bleib auf\ndem Laufenden.</string>
+    <string name="onboarding_backup_title">Schütze\ndeine Daten.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filter</string>

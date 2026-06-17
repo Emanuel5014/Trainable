@@ -430,6 +430,9 @@
     <string name="onboarding_setup_weight_label">Peso attuale (opzionale)</string>
     <string name="onboarding_setup_goal_label">Obiettivo settimanale</string>
     <string name="onboarding_setup_footer">Potrai sempre cambiare queste impostazioni in seguito.</string>
+    <string name="onboarding_theme_title">Scegli il\ntuo tema.</string>
+    <string name="onboarding_notifications_title">Resta\naggiornato.</string>
+    <string name="onboarding_backup_title">Proteggi i\ntuoi dati.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filtri</string>
