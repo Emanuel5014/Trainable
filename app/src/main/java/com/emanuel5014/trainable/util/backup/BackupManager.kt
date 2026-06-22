@@ -81,6 +81,12 @@ class BackupManager @Inject constructor(
                     zos.closeEntry()
                 }
 
+                // 2c. Export App Preferences (Theme, Weight Unit, Language, Swipe Actions, etc.)
+                val appPrefs = buildAppPreferencesJson()
+                zos.putNextEntry(ZipEntry("app_preferences.json"))
+                zos.write(appPrefs.toByteArray())
+                zos.closeEntry()
+
                 // 3. Export Images if requested - Only if referenced in database
                 if (includeImages) {
                     val planImages = workoutDao.getAllPlanImages()
@@ -173,6 +179,31 @@ class BackupManager @Inject constructor(
         }
     }
 
+    private fun buildAppPreferencesJson(): String {
+        return try {
+            runBlocking {
+                val prefs = context.dataStore.data.first()
+                val json = org.json.JSONObject()
+
+                json.put("weight_unit", prefs[UserPreferencesRepository.WEIGHT_UNIT] ?: "kg")
+                prefs[UserPreferencesRepository.USER_LANGUAGE]?.let { json.put("user_language", it) }
+                json.put("swipe_actions_enabled", prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true)
+                json.put("dynamic_color", prefs[UserPreferencesRepository.DYNAMIC_COLOR] ?: true)
+                prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED]?.let { json.put("dynamic_color_seed", it) }
+                json.put("theme_palette", prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0)
+                json.put("theme_style", prefs[UserPreferencesRepository.THEME_STYLE] ?: 0)
+                json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
+                json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
+                json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
+
+                json.toString()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "{}"
+        }
+    }
+
     suspend fun importDatabaseZip(inputUri: Uri): Boolean = withContext(Dispatchers.IO) {
         try {
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
@@ -218,6 +249,38 @@ class BackupManager @Inject constructor(
                                     }
                                     
                                     editor.apply()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                            entry.name == "app_preferences.json" -> {
+                                try {
+                                    val jsonContent = zis.bufferedReader().readText()
+                                    val jsonObject = org.json.JSONObject(jsonContent)
+                                    runBlocking {
+                                        context.dataStore.edit { prefs ->
+                                            if (jsonObject.has("weight_unit"))
+                                                prefs[UserPreferencesRepository.WEIGHT_UNIT] = jsonObject.getString("weight_unit")
+                                            if (jsonObject.has("user_language") && !jsonObject.isNull("user_language"))
+                                                prefs[UserPreferencesRepository.USER_LANGUAGE] = jsonObject.getString("user_language")
+                                            if (jsonObject.has("swipe_actions_enabled"))
+                                                prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] = jsonObject.getBoolean("swipe_actions_enabled")
+                                            if (jsonObject.has("dynamic_color"))
+                                                prefs[UserPreferencesRepository.DYNAMIC_COLOR] = jsonObject.getBoolean("dynamic_color")
+                                            if (jsonObject.has("dynamic_color_seed") && !jsonObject.isNull("dynamic_color_seed"))
+                                                prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED] = jsonObject.getInt("dynamic_color_seed")
+                                            if (jsonObject.has("theme_palette"))
+                                                prefs[UserPreferencesRepository.THEME_PALETTE] = jsonObject.getInt("theme_palette")
+                                            if (jsonObject.has("theme_style"))
+                                                prefs[UserPreferencesRepository.THEME_STYLE] = jsonObject.getInt("theme_style")
+                                            if (jsonObject.has("haptic_enabled"))
+                                                prefs[UserPreferencesRepository.HAPTIC_ENABLED] = jsonObject.getBoolean("haptic_enabled")
+                                            if (jsonObject.has("weekly_goal"))
+                                                prefs[UserPreferencesRepository.WEEKLY_GOAL] = jsonObject.getInt("weekly_goal")
+                                            if (jsonObject.has("floating_nav_bar"))
+                                                prefs[UserPreferencesRepository.FLOATING_NAV_BAR] = jsonObject.getBoolean("floating_nav_bar")
+                                        }
+                                    }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
