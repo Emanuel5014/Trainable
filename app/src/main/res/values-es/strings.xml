@@ -506,5 +506,6 @@
 
     <!-- Notifications -->
     <string name="notification_next_set">Siguiente: %1$s - Serie %2$d: %3$s × %4$d</string>
+    <string name="notification_last_reps">(última: %1$d)</string>
 
 </resources>

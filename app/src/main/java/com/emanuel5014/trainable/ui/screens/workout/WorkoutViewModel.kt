@@ -77,6 +77,8 @@ data class WorkoutSetState(
     val reps: Int,
     val note: String? = null,
     val previousNote: String? = null,
+    val previousReps: Int? = null,
+    val previousWeight: Float? = null,
     val isCompleted: Boolean = false,
     val isWarmup: Boolean = false
 )
@@ -86,7 +88,8 @@ data class NextSetInfo(
     val setNumber: Int,
     val weight: Float,
     val reps: Int,
-    val weightUnit: String
+    val weightUnit: String,
+    val previousReps: Int? = null
 )
 
 @HiltViewModel
@@ -251,7 +254,9 @@ class WorkoutViewModel @Inject constructor(
                         setNumber = num,
                         weight = prevSet?.pesoSollevato ?: lastLoggedWeight,
                         reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
-                        previousNote = prevSet?.note
+                        previousNote = prevSet?.note,
+                        previousReps = prevSet?.repsEffettive,
+                        previousWeight = prevSet?.pesoSollevato
                     )
                 }
             }
@@ -364,7 +369,9 @@ class WorkoutViewModel @Inject constructor(
                     setNumber = num,
                     weight = prevSet?.pesoSollevato ?: defaultWeight,
                     reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
-                    previousNote = prevSet?.note
+                    previousNote = prevSet?.note,
+                    previousReps = prevSet?.repsEffettive,
+                    previousWeight = prevSet?.pesoSollevato
                 )
             }
 
@@ -609,13 +616,15 @@ class WorkoutViewModel @Inject constructor(
                         val nextSet = exState.sets.drop(setIndex + 1).firstOrNull { !it.isCompleted }
                         if (nextSet != null) {
                             val translatedName = ExerciseTranslations.translate(exState.exercise.nome, _languageCode.value)
-                            startRestTimer(restTime, translatedName, nextSet.setNumber, nextSet.weight, nextSet.reps, currentState.weightUnit)
+                            val plannedReps = getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+                            startRestTimer(restTime, translatedName, nextSet.setNumber, nextSet.weight, plannedReps, nextSet.previousReps, currentState.weightUnit)
                         } else if (!isLastExercise) {
                             val nextExState = currentState.exercises.getOrNull(exerciseIndex + 1)
                             val firstSet = nextExState?.sets?.firstOrNull()
                             if (firstSet != null) {
                                 val translatedName = ExerciseTranslations.translate(nextExState.exercise.nome, _languageCode.value)
-                                startRestTimer(restTime, translatedName, firstSet.setNumber, firstSet.weight, firstSet.reps, currentState.weightUnit)
+                                val plannedReps = getPlannedRepsForSet(nextExState, firstSet.setNumber) ?: firstSet.reps
+                                startRestTimer(restTime, translatedName, firstSet.setNumber, firstSet.weight, plannedReps, firstSet.previousReps, currentState.weightUnit)
                             } else {
                                 startRestTimer(restTime)
                             }
@@ -758,6 +767,7 @@ class WorkoutViewModel @Inject constructor(
         nextSetNumber: Int? = null,
         nextSetWeight: Float? = null,
         nextSetReps: Int? = null,
+        previousReps: Int? = null,
         weightUnit: String? = null
     ) {
         if (seconds <= 0) return
@@ -766,11 +776,17 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
             _state.value.sessionId?.let { sessionId ->
-                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, weightUnit)
+                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit)
             }
         }
         saveTimerToSession(endTime, seconds)
         startTimerJob()
+    }
+
+    private fun getPlannedRepsForSet(exState: WorkoutExerciseState?, setNumber: Int): Int? {
+        val plan = exState?.planDetails ?: return null
+        val repsList = parseReps(plan.repsTarget, plan.serieTarget)
+        return repsList.getOrElse(setNumber - 1) { repsList.lastOrNull() }
     }
 
     private fun buildNextSetLabel(): NextSetInfo? {
@@ -778,12 +794,14 @@ class WorkoutViewModel @Inject constructor(
         val currentState = _state.value
         val nextSet = currentEx.sets.firstOrNull { !it.isCompleted }
         if (nextSet != null) {
+            val plannedReps = getPlannedRepsForSet(currentEx, nextSet.setNumber) ?: nextSet.reps
             return NextSetInfo(
                 exerciseName = ExerciseTranslations.translate(currentEx.exercise.nome, _languageCode.value),
                 setNumber = nextSet.setNumber,
                 weight = nextSet.weight,
-                reps = nextSet.reps,
-                weightUnit = currentState.weightUnit
+                reps = plannedReps,
+                weightUnit = currentState.weightUnit,
+                previousReps = nextSet.previousReps
             )
         }
         return null
@@ -800,7 +818,7 @@ class WorkoutViewModel @Inject constructor(
                     val info = buildNextSetLabel()
                     timerNotificationHelper.startOrUpdateTimerNotification(
                         remaining, sessionId,
-                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.weightUnit
+                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit
                     )
                 }
             }
@@ -867,7 +885,7 @@ class WorkoutViewModel @Inject constructor(
                     val info = buildNextSetLabel()
                     timerNotificationHelper.startOrUpdateTimerNotification(
                         newRemaining, sessionId,
-                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.weightUnit
+                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit
                     )
                 }
             }

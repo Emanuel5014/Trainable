@@ -82,6 +82,7 @@ class TimerNotificationHelper @Inject constructor(
         nextSetNumber: Int? = null,
         nextSetWeight: Float? = null,
         nextSetReps: Int? = null,
+        previousReps: Int? = null,
         weightUnit: String? = null
     ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
@@ -111,7 +112,10 @@ class TimerNotificationHelper @Inject constructor(
                 WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
                 weightUnit
             )
-            context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+            val base = context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+            if (previousReps != null && previousReps != nextSetReps) {
+                "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
+            } else base
         } else null
 
         val notification = NotificationCompat.Builder(context, runningChannelId)
