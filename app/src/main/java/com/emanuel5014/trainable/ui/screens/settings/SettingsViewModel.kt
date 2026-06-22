@@ -385,6 +385,9 @@ class SettingsViewModel @Inject constructor(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setDynamicColor(enabled)
+            if (!enabled) {
+                userPrefsRepository.setDynamicColorSeed(null)
+            }
         }
     }
 

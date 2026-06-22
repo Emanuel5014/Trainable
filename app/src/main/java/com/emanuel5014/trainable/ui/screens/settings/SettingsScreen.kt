@@ -149,6 +149,8 @@ fun SettingsScreen(
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var showCustomColorDialog by remember { mutableStateOf(false) }
+    var savedSeedForRestore by remember { mutableStateOf<Int?>(null) }
+    var savedStyleForRestore by remember { mutableIntStateOf(0) }
     var includeImagesChoice by remember { mutableStateOf(false) }
     var pendingNotificationType by remember { mutableStateOf<String?>(null) }
 
@@ -425,9 +427,15 @@ fun SettingsScreen(
 
     if (showCustomColorDialog) {
         CustomColorPickerDialog(
-            initialColor = dynamicColorSeed?.let { Color(it) },
-            initialStyle = themeStyle,
-            onDismiss = { showCustomColorDialog = false },
+            initialColor = savedSeedForRestore?.let { Color(it) },
+            initialStyle = savedStyleForRestore,
+            onDismiss = {
+                if (savedSeedForRestore != null) {
+                    viewModel.setDynamicColorSeed(savedSeedForRestore)
+                    viewModel.setThemeStyle(savedStyleForRestore)
+                }
+                showCustomColorDialog = false
+            },
             onApply = { colorSeed, style ->
                 viewModel.setDynamicColorSeed(colorSeed)
                 viewModel.setThemeStyle(style)
@@ -991,7 +999,13 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { showCustomColorDialog = true },
+                                .clickable {
+                                    savedSeedForRestore = dynamicColorSeed
+                                    savedStyleForRestore = themeStyle
+                                    viewModel.setDynamicColorSeed(null)
+                                    viewModel.setThemeStyle(0)
+                                    showCustomColorDialog = true
+                                },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -999,7 +1013,7 @@ fun SettingsScreen(
                                 Icon(
                                     imageVector = Icons.Rounded.Palette,
                                     contentDescription = null,
-                                    tint = if (dynamicColorSeed != null) Primary else OnSurfaceVariant,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
