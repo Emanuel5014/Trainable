@@ -35,6 +35,7 @@ class OnboardingViewModel @Inject constructor(
     val dynamicColorSeed = userPrefsRepository.dynamicColorSeed
     val themePalette = userPrefsRepository.themePalette
     val themeStyle = userPrefsRepository.themeStyle
+    val themeMode = userPrefsRepository.themeMode
 
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
@@ -57,6 +58,12 @@ class OnboardingViewModel @Inject constructor(
     fun setThemeStyle(index: Int) {
         viewModelScope.launch {
             userPrefsRepository.setThemeStyle(index)
+        }
+    }
+
+    fun setThemeMode(mode: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setThemeMode(mode)
         }
     }
 
@@ -111,7 +118,8 @@ class OnboardingViewModel @Inject constructor(
         dynamicColor: Boolean = true,
         dynamicColorSeed: Int? = null,
         themePalette: Int = 0,
-        themeStyle: Int = 0
+        themeStyle: Int = 0,
+        themeMode: Int = 0
     ) {
         val existingUser = userRepository.currentUser.firstOrNull()
 
@@ -153,6 +161,7 @@ class OnboardingViewModel @Inject constructor(
             userPrefsRepository.setDynamicColorSeed(dynamicColorSeed)
         }
         userPrefsRepository.setThemeStyle(themeStyle)
+        userPrefsRepository.setThemeMode(themeMode)
         userPrefsRepository.setOnboardingCompleted(true)
 
         if (autoBackupEnabled) {

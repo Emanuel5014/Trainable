@@ -87,6 +87,7 @@ class MainActivity : ComponentActivity() {
             val dynamicColorSeed by userPreferencesRepository.dynamicColorSeed.collectAsState(initial = null)
             val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
             val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
+            val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = 0)
 
             val context = androidx.compose.ui.platform.LocalContext.current
             val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -144,11 +145,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val isDark = when (themeMode) {
+                1 -> false
+                2 -> true
+                else -> androidx.compose.foundation.isSystemInDarkTheme()
+            }
+
             GymTrackingTheme(
                 dynamicColor = dynamicColor,
                 paletteIndex = themePalette,
                 seedColor = dynamicColorSeed,
-                themeStyle = themeStyle
+                themeStyle = themeStyle,
+                darkTheme = isDark
             ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
@@ -199,7 +207,8 @@ class MainActivity : ComponentActivity() {
                                 BottomNavBarFlo(
                                     navController = navController,
                                     pagerState = pagerState,
-                                    hazeState = hazeState
+                                    hazeState = hazeState,
+                                    isDark = isDark
                                 )
                             } else {
                                 BottomNavBar(

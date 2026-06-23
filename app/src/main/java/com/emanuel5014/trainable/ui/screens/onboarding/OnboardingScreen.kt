@@ -136,6 +136,7 @@ fun OnboardingScreen(
     val dynamicColorSeed by viewModel.dynamicColorSeed.collectAsState(initial = null)
     val themePalette by viewModel.themePalette.collectAsState(initial = 0)
     val themeStyle by viewModel.themeStyle.collectAsState(initial = 0)
+    val themeMode by viewModel.themeMode.collectAsState(initial = 0)
 
     val backupStatus by viewModel.backupStatus.collectAsState()
 
@@ -206,7 +207,9 @@ fun OnboardingScreen(
                         themePalette = themePalette,
                         onThemePaletteChange = { viewModel.setThemePalette(it) },
                         themeStyle = themeStyle,
-                        onThemeStyleChange = { viewModel.setThemeStyle(it) }
+                        onThemeStyleChange = { viewModel.setThemeStyle(it) },
+                        themeMode = themeMode,
+                        onThemeModeChange = { viewModel.setThemeMode(it) }
                     )
                     4 -> NotificationsSlide(
                         timerNotificationsEnabled = timerNotificationsEnabled,
@@ -300,7 +303,8 @@ fun OnboardingScreen(
                                 dynamicColor = dynamicColorEnabled,
                                 dynamicColorSeed = dynamicColorSeed,
                                 themePalette = themePalette,
-                                themeStyle = themeStyle
+                                themeStyle = themeStyle,
+                                themeMode = themeMode
                             )
                             onFinished()
                         } else {
@@ -457,7 +461,9 @@ private fun ThemeSlide(
     themePalette: Int,
     onThemePaletteChange: (Int) -> Unit,
     themeStyle: Int,
-    onThemeStyleChange: (Int) -> Unit
+    onThemeStyleChange: (Int) -> Unit,
+    themeMode: Int,
+    onThemeModeChange: (Int) -> Unit
 ) {
     var showCustomColorDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -479,6 +485,111 @@ private fun ThemeSlide(
         )
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            var showThemeModeDialog by remember { mutableStateOf(false) }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable { showThemeModeDialog = true },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(SurfaceContainerHigh),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Palette,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                        Text(
+                            when (themeMode) {
+                                0 -> stringResource(R.string.theme_mode_system)
+                                1 -> stringResource(R.string.theme_mode_light)
+                                else -> stringResource(R.string.theme_mode_dark)
+                            },
+                            style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                        )
+                    }
+                }
+                if (showThemeModeDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showThemeModeDialog = false },
+                        containerColor = SurfaceContainerHigh,
+                        title = { Text(stringResource(R.string.theme_mode), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+                        text = {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onThemeModeChange(0)
+                                            showThemeModeDialog = false
+                                        }
+                                        .padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(stringResource(R.string.theme_mode_system), style = MaterialTheme.typography.bodyLarge, color = OnSurface)
+                                    if (themeMode == 0) {
+                                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
+                                    }
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onThemeModeChange(1)
+                                            showThemeModeDialog = false
+                                        }
+                                        .padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(stringResource(R.string.theme_mode_light), style = MaterialTheme.typography.bodyLarge, color = OnSurface)
+                                    if (themeMode == 1) {
+                                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
+                                    }
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onThemeModeChange(2)
+                                            showThemeModeDialog = false
+                                        }
+                                        .padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(stringResource(R.string.theme_mode_dark), style = MaterialTheme.typography.bodyLarge, color = OnSurface)
+                                    if (themeMode == 2) {
+                                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showThemeModeDialog = false }) {
+                                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                            }
+                        }
+                    )
+                }
+
+                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+            }
+
+            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
             // Dynamic Color Toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -522,7 +633,15 @@ private fun ThemeSlide(
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(SurfaceContainerHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                        }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
@@ -555,7 +674,15 @@ private fun ThemeSlide(
                 // Palette selector (when dynamic color is off)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(SurfaceContainerHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                        }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
@@ -568,8 +695,8 @@ private fun ThemeSlide(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val paletteNames = listOf("Default", "Blue", "Green", "Red", "Purple", "Orange", "Pink", "Teal")
-                        (0..7).forEach { index ->
+                        val paletteNames = listOf("Default", "Blue", "Green", "Red", "Purple", "Orange", "Pink", "Teal", "Monochrome")
+                        (0..8).forEach { index ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 PalettePreviewCircle(
                                     colors = getPalettePreviewColors(index),
@@ -594,12 +721,20 @@ private fun ThemeSlide(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Icon(
-                        Icons.Rounded.Palette,
-                        contentDescription = null,
-                        tint = if (dynamicColorSeed != null) Primary else OnSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(SurfaceContainerHigh),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Rounded.Palette,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text("Custom Color", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
@@ -869,12 +1004,12 @@ private fun BackupSlide(
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                 // Include Images
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.include_images), style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                     }
                     Switch(
@@ -1105,13 +1240,13 @@ private fun CustomizeToggleItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Box(
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(18.dp))

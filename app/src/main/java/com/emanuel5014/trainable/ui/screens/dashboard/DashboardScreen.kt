@@ -657,11 +657,20 @@ fun GymMembershipCard(
     val isExpired = daysLeft != null && daysLeft < 0
     val isExpiringSoon = daysLeft != null && daysLeft in 0..7
     
-    // Dynamic styling based on status
-    val cardGradient = when {
-        isExpired -> listOf(Error.copy(alpha = 0.8f), Error.copy(alpha = 0.5f))
-        isExpiringSoon -> listOf(Tertiary.copy(alpha = 0.9f), Tertiary.copy(alpha = 0.6f))
-        else -> listOf(Primary.copy(alpha = 0.9f), Primary.copy(alpha = 0.6f))
+    val isDark = with(MaterialTheme.colorScheme.surface) { red + green + blue < 1.5f }
+
+    val cardGradient = if (isDark) {
+        when {
+            isExpired -> listOf(Error.copy(alpha = 0.8f), Error.copy(alpha = 0.5f))
+            isExpiringSoon -> listOf(Tertiary.copy(alpha = 0.9f), Tertiary.copy(alpha = 0.6f))
+            else -> listOf(Primary.copy(alpha = 0.9f), Primary.copy(alpha = 0.6f))
+        }
+    } else {
+        when {
+            isExpired -> listOf(Error.copy(alpha = 0.25f), Error.copy(alpha = 0.12f))
+            isExpiringSoon -> listOf(Tertiary.copy(alpha = 0.25f), Tertiary.copy(alpha = 0.12f))
+            else -> listOf(Primary.copy(alpha = 0.22f), Primary.copy(alpha = 0.1f))
+        }
     }
     
     val textColor = Color(0xFF1A1A1A)

@@ -183,6 +183,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = 3
     )
 
+    val themeMode = userPrefsRepository.themeMode.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -434,6 +440,12 @@ class SettingsViewModel @Inject constructor(
     fun setSwipeActionsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setSwipeActionsEnabled(enabled)
+        }
+    }
+
+    fun setThemeMode(mode: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setThemeMode(mode)
         }
     }
 

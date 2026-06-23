@@ -44,6 +44,7 @@ class UserPreferencesRepository @Inject constructor(
         val GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("gym_membership_expiry_notifications_enabled")
         val GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE = intPreferencesKey("gym_membership_expiry_notification_days_before")
         val LAST_NOTIFIED_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("last_notified_expiry_date")
+        val THEME_MODE = intPreferencesKey("theme_mode")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -149,6 +150,11 @@ class UserPreferencesRepository @Inject constructor(
     val swipeActionsEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] ?: true
+        }
+
+    val themeMode: Flow<Int> = dataStore.data
+        .map { preferences ->
+            preferences[THEME_MODE] ?: 0
         }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -268,6 +274,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setSwipeActionsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setThemeMode(mode: Int) {
+        dataStore.edit { preferences ->
+            preferences[THEME_MODE] = mode
         }
     }
 

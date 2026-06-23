@@ -334,6 +334,12 @@
     <string name="dynamic_color_not_supported">Non supportato (richiesto Android 12+)</string>
     <string name="app_palette">Palette App</string>
     <string name="app_palette_desc">Scegli una combinazione di colori personalizzata per l\'app</string>
+    <string name="theme_mode">Tema</string>
+    <string name="theme_mode_system">Predefinito sistema</string>
+    <string name="theme_mode_light">Chiaro</string>
+    <string name="theme_mode_dark">Scuro</string>
+    <string name="theme_mode_light_short">C</string>
+    <string name="theme_mode_dark_short">S</string>
     <string name="notifications">NOTIFICHE</string>
     <string name="timer_notifications">Notifiche Timer</string>
     <string name="timer_notifications_desc">Mostra il timer di riposo nelle notifiche di sistema</string>

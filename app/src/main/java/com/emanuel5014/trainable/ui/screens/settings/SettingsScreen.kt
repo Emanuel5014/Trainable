@@ -131,6 +131,7 @@ fun SettingsScreen(
     val wallpaperColors by viewModel.wallpaperColors.collectAsState()
     val themePalette by viewModel.themePalette.collectAsState()
     val themeStyle by viewModel.themeStyle.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
     val gymMembershipExpiryNotificationsEnabled by viewModel.gymMembershipExpiryNotificationsEnabled.collectAsState()
     val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
@@ -862,6 +863,81 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.personalization)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        var showThemeModeDialog by remember { mutableStateOf(false) }
+
+                        if (showThemeModeDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showThemeModeDialog = false },
+                                containerColor = SurfaceContainerHigh,
+                                title = { Text(stringResource(R.string.theme_mode), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+                                text = {
+                                    Column {
+                                        LanguageOption(
+                                            title = stringResource(R.string.theme_mode_system),
+                                            isSelected = themeMode == 0,
+                                            onClick = {
+                                                viewModel.setThemeMode(0)
+                                                showThemeModeDialog = false
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.theme_mode_light),
+                                            isSelected = themeMode == 1,
+                                            onClick = {
+                                                viewModel.setThemeMode(1)
+                                                showThemeModeDialog = false
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.theme_mode_dark),
+                                            isSelected = themeMode == 2,
+                                            onClick = {
+                                                viewModel.setThemeMode(2)
+                                                showThemeModeDialog = false
+                                            }
+                                        )
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = { showThemeModeDialog = false }) {
+                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                                    }
+                                }
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showThemeModeDialog = true },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Palette,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        when (themeMode) {
+                                            0 -> stringResource(R.string.theme_mode_system)
+                                            1 -> stringResource(R.string.theme_mode_light)
+                                            else -> stringResource(R.string.theme_mode_dark)
+                                        },
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -979,8 +1055,8 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    val paletteNames = listOf("Default", "Blue", "Green", "Red", "Purple", "Orange", "Pink", "Teal")
-                                    (0..7).forEach { index ->
+                                    val paletteNames = listOf("Default", "Blue", "Green", "Red", "Purple", "Orange", "Pink", "Teal", "Monochrome")
+                                    (0..8).forEach { index ->
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             PalettePreviewCircle(
                                                 colors = getPalettePreviewColors(index),
@@ -1063,6 +1139,7 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                             }
                         }
+
                     }
                 }
             }
