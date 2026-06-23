@@ -25,6 +25,7 @@ class TimerNotificationHelper @Inject constructor(
     private val runningChannelId = "rest_timer_running_channel_v1"
     private val finishedChannelId = "rest_timer_finished_channel_v1"
     private val notificationId = 1001
+    private var lastNextSetLabel: String? = null
 
     init {
         createNotificationChannels()
@@ -117,6 +118,7 @@ class TimerNotificationHelper @Inject constructor(
                 "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
             } else base
         } else null
+        lastNextSetLabel = nextSetLabel
 
         val notification = NotificationCompat.Builder(context, runningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
@@ -166,10 +168,17 @@ class TimerNotificationHelper @Inject constructor(
         val dismissIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_DISMISS }
         val dismissPendingIntent = PendingIntent.getBroadcast(context, 3, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        val contentText = if (lastNextSetLabel != null) {
+            context.getString(R.string.rest_end) + " — $lastNextSetLabel"
+        } else {
+            context.getString(R.string.rest_end)
+        }
+
         val notification = NotificationCompat.Builder(context, finishedChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
-            .setContentText(context.getString(R.string.rest_end))
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -185,6 +194,10 @@ class TimerNotificationHelper @Inject constructor(
 
     fun cancelTimer() {
         notificationManager.cancel(notificationId)
+        cancelFinishAlarm()
+    }
+
+    fun cancelFinishAlarm() {
         val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_TIMER_FINISHED }
         val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         alarmManager.cancel(finishPendingIntent)

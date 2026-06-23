@@ -831,6 +831,7 @@ class WorkoutViewModel @Inject constructor(
     private fun handleTimerFinished() {
         if (_state.value.restTimerEndTime != null) {
             _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
+            timerNotificationHelper.cancelFinishAlarm()
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
                 timerNotificationHelper.showRestFinished()
             }
