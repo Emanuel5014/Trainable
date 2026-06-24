@@ -258,6 +258,8 @@
     <string name="analytics_strength_summary_positive">+%s%% rispetto ai precedenti 30 giorni</string>
     <string name="analytics_strength_summary_negative">-%s%% rispetto ai precedenti 30 giorni</string>
     <string name="analytics_strength_no_data">Dati PR insufficienti.</string>
+    <string name="analytics_empty_hint">Premi + per aggiungere widget e tracciare i tuoi progressi</string>
+    <string name="analytics_progress_cards">PROGRESSI 1RM</string>
     <string name="analytics_body_weight">PESO CORPOREO</string>
     <string name="analytics_body_weight_history">Cronologia</string>
     <string name="analytics_select_date">Seleziona data</string>

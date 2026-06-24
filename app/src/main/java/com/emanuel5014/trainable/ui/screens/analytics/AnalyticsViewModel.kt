@@ -56,6 +56,15 @@ class AnalyticsViewModel @Inject constructor(
     private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
     private val categoryVolumeTimeRange = MutableStateFlow(loadCategoryVolumeTimeRange())
     private val periodComparisonRange = MutableStateFlow(AnalyticsTimeRange.OneMonth)
+    private val showProgressCards = MutableStateFlow(loadShowProgressCards())
+
+    private fun loadShowProgressCards(): Boolean {
+        return prefs.getBoolean("show_progress_cards", false)
+    }
+
+    private fun saveShowProgressCards(value: Boolean) {
+        prefs.edit().putBoolean("show_progress_cards", value).apply()
+    }
 
     private fun loadSavedExerciseIds(): Set<Int> {
         val saved = prefs.getStringSet("selected_exercise_ids", emptySet()) ?: emptySet()
@@ -348,9 +357,10 @@ class AnalyticsViewModel @Inject constructor(
 
     val uiState: StateFlow<AnalyticsUiState> = combine(
         analyticsSnapshotFlow,
-        bodyWeightInput
-    ) { snapshot, input ->
-        snapshot.copy(bodyWeightInput = input)
+        bodyWeightInput,
+        showProgressCards
+    ) { snapshot, input, showCards ->
+        snapshot.copy(bodyWeightInput = input, showProgressCards = showCards)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -478,6 +488,14 @@ class AnalyticsViewModel @Inject constructor(
             newList.add(newIndex, item)
             saveWidgetOrder(newList)
             newList
+        }
+    }
+
+    fun toggleProgressCards() {
+        showProgressCards.update { current ->
+            val new = !current
+            saveShowProgressCards(new)
+            new
         }
     }
 

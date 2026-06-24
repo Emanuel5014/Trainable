@@ -174,6 +174,7 @@ fun AnalyticsScreen(
     val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
     val hasCategoryVolumeWidget = uiState.widgets.any { it is AnalyticsWidget.CategoryVolume }
     val hasTimePeriodComparisonWidget = uiState.widgets.any { it is AnalyticsWidget.TimePeriodComparison }
+    val hasProgressCardsWidget = uiState.showProgressCards
     val weightUnit = uiState.weightUnit
     var showVolumeSettings by remember { mutableStateOf<String?>(null) }
     var showAddVolumeDialog by remember { mutableStateOf(false) }
@@ -226,63 +227,106 @@ fun AnalyticsScreen(
                 GymLoadingIndicator()
             }
         } else {
-            Column(
+            val isAnalyticsEmpty = uiState.widgets.isEmpty() && !uiState.showProgressCards
+
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { focusManager.clearFocus() }
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        ScreenHeader(
-                            title = stringResource(R.string.analytics_title),
-                            subtitle = stringResource(R.string.analytics_subtitle),
-                            icon = Icons.Rounded.Insights
-                        )
+                if (isAnalyticsEmpty) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { focusManager.clearFocus() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Rounded.Insights,
+                                contentDescription = null,
+                                modifier = Modifier.size(80.dp),
+                                tint = OnSurfaceVariant.copy(alpha = 0.4f)
+                            )
+                            Spacer(modifier = Modifier.height(Spacing.medium))
+                            Text(
+                                text = stringResource(R.string.analytics_empty_hint),
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                color = OnSurfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.padding(horizontal = Spacing.extraLarge)
+                            )
+                        }
                     }
-                    AnalyticsHeaderFabMenu(
-                        expanded = fabMenuExpanded,
-                        hasBodyWeightWidget = hasBodyWeightWidget,
-                        hasCalendarWidget = hasCalendarWidget,
-                        hasCategoryVolumeWidget = hasCategoryVolumeWidget,
-                        hasTimePeriodComparisonWidget = hasTimePeriodComparisonWidget,
-                        onExpandedChange = { fabMenuExpanded = it },
-                        onAddBodyWeight = {
-                            viewModel.addBodyWeightChart()
-                            fabMenuExpanded = false
-                        },
-                        onAddCalendar = {
-                            viewModel.addCalendarChart()
-                            fabMenuExpanded = false
-                        },
-                        onAddVolume = {
-                            showAddVolumeDialog = true
-                            fabMenuExpanded = false
-                        },
-                        onAddExercise = {
-                            showChartPicker = true
-                            fabMenuExpanded = false
-                        },
-                        onAddCategoryVolume = {
-                            showAddCategoryVolumeDialog = true
-                            fabMenuExpanded = false
-                        },
-                        onAddTimePeriodComparison = {
-                            viewModel.addTimePeriodComparison(AnalyticsTimeRange.OneMonth)
-                            fabMenuExpanded = false
-                        },
-                        modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
-                    )
                 }
 
-                Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (!isAnalyticsEmpty) Modifier.clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { focusManager.clearFocus() } else Modifier
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            ScreenHeader(
+                                title = stringResource(R.string.analytics_title),
+                                subtitle = stringResource(R.string.analytics_subtitle),
+                                icon = Icons.Rounded.Insights
+                            )
+                        }
+                        AnalyticsHeaderFabMenu(
+                            expanded = fabMenuExpanded,
+                            hasBodyWeightWidget = hasBodyWeightWidget,
+                            hasCalendarWidget = hasCalendarWidget,
+                            hasCategoryVolumeWidget = hasCategoryVolumeWidget,
+                            hasTimePeriodComparisonWidget = hasTimePeriodComparisonWidget,
+                            hasProgressCardsWidget = hasProgressCardsWidget,
+                            onExpandedChange = { fabMenuExpanded = it },
+                            onAddBodyWeight = {
+                                viewModel.addBodyWeightChart()
+                                fabMenuExpanded = false
+                            },
+                            onAddCalendar = {
+                                viewModel.addCalendarChart()
+                                fabMenuExpanded = false
+                            },
+                            onAddVolume = {
+                                showAddVolumeDialog = true
+                                fabMenuExpanded = false
+                            },
+                            onAddExercise = {
+                                showChartPicker = true
+                                fabMenuExpanded = false
+                            },
+                            onAddCategoryVolume = {
+                                showAddCategoryVolumeDialog = true
+                                fabMenuExpanded = false
+                            },
+                            onAddTimePeriodComparison = {
+                                viewModel.addTimePeriodComparison(AnalyticsTimeRange.OneMonth)
+                                fabMenuExpanded = false
+                            },
+                            onAddProgressCards = {
+                                viewModel.toggleProgressCards()
+                                fabMenuExpanded = false
+                            },
+                            modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
+                        )
+                    }
+
+                    if (!isAnalyticsEmpty) {
+                    Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier
@@ -317,12 +361,15 @@ fun AnalyticsScreen(
                             },
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
-                        item {
-                            ExerciseCarouselSection(
-                                selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
-                                weightUnit = weightUnit,
-                                onEditClick = { showExercisePicker = true }
-                            )
+                        if (uiState.showProgressCards) {
+                            item {
+                                ExerciseCarouselSection(
+                                    selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
+                                    weightUnit = weightUnit,
+                                    onEditClick = { showExercisePicker = true },
+                                    onRemove = { viewModel.toggleProgressCards() }
+                                )
+                            }
                         }
                         
                         items(uiState.widgets, key = { it.id }) { widget ->
@@ -455,6 +502,8 @@ fun AnalyticsScreen(
                             )
                     )
                 }
+                }
+            }
             }
         }
 
@@ -561,7 +610,8 @@ fun AnalyticsScreen(
 fun ExerciseCarouselSection(
     selectedExercises: List<PersonalBestUiModel>,
     weightUnit: String,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onRemove: (() -> Unit)? = null
 ) {
     Column(
         modifier = Modifier
@@ -581,11 +631,31 @@ fun ExerciseCarouselSection(
                 color = OnSurfaceVariant,
                 fontWeight = FontWeight.ExtraBold
             )
-            IconButton(
-                onClick = onEditClick,
-                colors = IconButtonDefaults.iconButtonColors(contentColor = Primary)
-            ) {
-                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.analytics_edit_selection))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Edit,
+                        contentDescription = stringResource(R.string.analytics_edit_selection),
+                        tint = Primary.copy(alpha = 0.8f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                if (onRemove != null) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = onRemove,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Clear,
+                            contentDescription = stringResource(R.string.analytics_remove),
+                            tint = Error.copy(alpha = 0.8f)
+                        )
+                    }
+                }
             }
         }
 
@@ -694,6 +764,7 @@ private fun AnalyticsHeaderFabMenu(
     hasCalendarWidget: Boolean,
     hasCategoryVolumeWidget: Boolean,
     hasTimePeriodComparisonWidget: Boolean,
+    hasProgressCardsWidget: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onAddBodyWeight: () -> Unit,
     onAddCalendar: () -> Unit,
@@ -701,6 +772,7 @@ private fun AnalyticsHeaderFabMenu(
     onAddExercise: () -> Unit,
     onAddCategoryVolume: () -> Unit,
     onAddTimePeriodComparison: () -> Unit,
+    onAddProgressCards: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -761,6 +833,17 @@ private fun AnalyticsHeaderFabMenu(
                 leadingIcon = { Icon(Icons.Rounded.FitnessCenter, contentDescription = null) },
                 onClick = {
                     onAddVolume()
+                    onExpandedChange(false)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.analytics_progress_cards)) },
+                leadingIcon = { Icon(Icons.Rounded.FitnessCenter, contentDescription = null) },
+                enabled = !hasProgressCardsWidget,
+                onClick = {
+                    if (!hasProgressCardsWidget) {
+                        onAddProgressCards()
+                    }
                     onExpandedChange(false)
                 }
             )

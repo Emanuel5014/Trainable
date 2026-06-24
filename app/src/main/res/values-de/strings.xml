@@ -258,6 +258,8 @@
     <string name="analytics_strength_summary_positive">+%s%% vs. letzte 30 Tage</string>
     <string name="analytics_strength_summary_negative">-%s%% vs. letzte 30 Tage</string>
     <string name="analytics_strength_no_data">Nicht genügend PR-Verlauf.</string>
+    <string name="analytics_empty_hint">Tippe + um Widgets hinzuzufügen und deine Fortschritte zu verfolgen</string>
+    <string name="analytics_progress_cards">1RM FORTSCHRITT</string>
     <string name="analytics_body_weight">KÖRPERGEWICHT</string>
     <string name="analytics_body_weight_history">Verlauf</string>
     <string name="analytics_select_date">Datum auswählen</string>

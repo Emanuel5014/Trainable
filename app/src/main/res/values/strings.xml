@@ -258,6 +258,8 @@
     <string name="analytics_strength_summary_positive">+%s%% vs previous 30 days</string>
     <string name="analytics_strength_summary_negative">-%s%% vs previous 30 days</string>
     <string name="analytics_strength_no_data">Not enough PR history yet.</string>
+    <string name="analytics_empty_hint">Tap + to add widgets and track your progress</string>
+    <string name="analytics_progress_cards">1RM PROGRESS</string>
     <string name="analytics_body_weight">BODY WEIGHT</string>
     <string name="analytics_body_weight_history">History</string>
     <string name="analytics_select_date">Select date</string>

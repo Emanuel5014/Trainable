@@ -258,6 +258,8 @@
     <string name="analytics_strength_summary_positive">+%s%% vs últimos 30 días</string>
     <string name="analytics_strength_summary_negative">-%s%% vs últimos 30 días</string>
     <string name="analytics_strength_no_data">No hay suficientes datos de RP.</string>
+    <string name="analytics_empty_hint">Toca + para añadir widgets y seguir tu progreso</string>
+    <string name="analytics_progress_cards">PROGRESO 1RM</string>
     <string name="analytics_body_weight">PESO CORPORAL</string>
     <string name="analytics_body_weight_history">Historial</string>
     <string name="analytics_select_date">Seleccionar fecha</string>

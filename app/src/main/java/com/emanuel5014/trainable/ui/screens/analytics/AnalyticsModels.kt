@@ -118,5 +118,6 @@ data class AnalyticsUiState(
     val workoutDates: List<Long> = emptyList(),
     val allPlans: List<WorkoutPlanEntity> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val showProgressCards: Boolean = false
 )

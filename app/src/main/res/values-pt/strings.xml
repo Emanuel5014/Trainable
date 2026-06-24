@@ -258,6 +258,8 @@
     <string name="analytics_strength_summary_positive">+%s%% vs últimos 30 dias</string>
     <string name="analytics_strength_summary_negative">-%s%% vs últimos 30 dias</string>
     <string name="analytics_strength_no_data">Histórico de RP insuficiente.</string>
+    <string name="analytics_empty_hint">Toque em + para adicionar widgets e acompanhar seu progresso</string>
+    <string name="analytics_progress_cards">PROGRESSO 1RM</string>
     <string name="analytics_body_weight">PESO CORPORAL</string>
     <string name="analytics_body_weight_history">Histórico</string>
     <string name="analytics_select_date">Selecionar data</string>
