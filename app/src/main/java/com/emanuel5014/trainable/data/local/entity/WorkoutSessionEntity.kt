@@ -32,5 +32,9 @@ data class WorkoutSessionEntity(
     @ColumnInfo(name = "rest_timer_end_time")
     val restTimerEndTime: Long? = null,
     @ColumnInfo(name = "total_rest_seconds")
-    val totalRestSeconds: Int? = null
+    val totalRestSeconds: Int? = null,
+    @ColumnInfo(name = "warmup_timer_end_time")
+    val warmupTimerEndTime: Long? = null,
+    @ColumnInfo(name = "total_warmup_seconds")
+    val totalWarmupSeconds: Int? = null
 )

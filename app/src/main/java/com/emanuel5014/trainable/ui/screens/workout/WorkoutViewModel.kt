@@ -48,7 +48,11 @@ data class WorkoutState(
     val weightUnit: String = "kg",
     val timerNotificationsEnabled: Boolean = true,
     val isQuickWorkout: Boolean = false,
-    val swipeActionsEnabled: Boolean = true
+    val swipeActionsEnabled: Boolean = true,
+    val warmupTimerEnabled: Boolean = false,
+    val warmupTimerRemaining: Int = 0,
+    val warmupTimerEndTime: Long? = null,
+    val warmupTimerTotalSeconds: Int = 0
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -122,6 +126,7 @@ class WorkoutViewModel @Inject constructor(
     val availableExercises: StateFlow<List<ExerciseEntity>> = _availableExercises.asStateFlow()
 
     private var timerJob: Job? = null
+    private var warmupTimerJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -135,6 +140,7 @@ class WorkoutViewModel @Inject constructor(
                 _state.update { it.copy(timerNotificationsEnabled = enabled) }
                 if (!enabled) {
                     timerNotificationHelper.cancelTimer()
+                    timerNotificationHelper.cancelWarmupTimer()
                 }
             }
         }
@@ -151,6 +157,17 @@ class WorkoutViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            TimerNotificationReceiver.warmupTimerEvents.collect { action ->
+                when (action) {
+                    TimerNotificationReceiver.WarmupTimerAction.SKIP -> skipWarmupTimer()
+                    TimerNotificationReceiver.WarmupTimerAction.ADD_30S -> addWarmupTime(30)
+                    TimerNotificationReceiver.WarmupTimerAction.DISMISS -> timerNotificationHelper.cancelWarmupTimer()
+                    TimerNotificationReceiver.WarmupTimerAction.FINISHED -> handleWarmupTimerFinished()
+                }
+            }
+        }
+
+        viewModelScope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _state.update { it.copy(weightUnit = unit) }
             }
@@ -159,6 +176,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.swipeActionsEnabled.collect { enabled ->
                 _state.update { it.copy(swipeActionsEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.warmupTimerEnabled.collect { enabled ->
+                _state.update { it.copy(warmupTimerEnabled = enabled) }
             }
         }
         
@@ -199,6 +222,13 @@ class WorkoutViewModel @Inject constructor(
         val savedEndTime = sessionWithSets.session.restTimerEndTime
         val savedTotalSeconds = sessionWithSets.session.totalRestSeconds
         val savedRemainingSeconds = savedEndTime?.let { 
+            ((it - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+        } ?: 0
+
+        // Load saved warmup timer from session
+        val savedWarmupEndTime = sessionWithSets.session.warmupTimerEndTime
+        val savedWarmupTotalSeconds = sessionWithSets.session.totalWarmupSeconds
+        val savedWarmupRemainingSeconds = savedWarmupEndTime?.let {
             ((it - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
         } ?: 0
 
@@ -331,13 +361,19 @@ class WorkoutViewModel @Inject constructor(
                 remainingRestSeconds = savedRemainingSeconds,
                 totalRestSeconds = savedTotalSeconds ?: 90,
                 restTimerEndTime = if (savedRemainingSeconds > 0) savedEndTime else null,
-                isQuickWorkout = isQuick
+                isQuickWorkout = isQuick,
+                warmupTimerRemaining = savedWarmupRemainingSeconds,
+                warmupTimerEndTime = if (savedWarmupRemainingSeconds > 0) savedWarmupEndTime else null,
+                warmupTimerTotalSeconds = savedWarmupTotalSeconds ?: 0
             )
         }
 
-        // Resume timer if still valid
+        // Resume timers if still valid
         if (savedRemainingSeconds > 0 && savedEndTime != null) {
             resumeRestTimer(savedEndTime)
+        }
+        if (savedWarmupRemainingSeconds > 0 && savedWarmupEndTime != null) {
+            resumeWarmupTimer(savedWarmupEndTime)
         }
     }
 
@@ -749,6 +785,7 @@ class WorkoutViewModel @Inject constructor(
                         workoutRepository.setSessionFinished(id)
                     }
                     stopRestTimer()
+                    stopWarmupTimer()
                     _state.update { it.copy(isFinished = true, isFinishing = false) }
                     _navigationEvent.emit(WorkoutNavEvent.NavigateBack)
                 } ?: run {
@@ -897,6 +934,105 @@ class WorkoutViewModel @Inject constructor(
     fun skipRestTimer() {
         stopRestTimer()
         clearTimerInSession()
+    }
+
+    // ---- Warmup / General Timer ----
+
+    fun startWarmupTimer(seconds: Int) {
+        if (seconds <= 0) return
+        stopWarmupTimer()
+        val endTime = System.currentTimeMillis() + (seconds * 1000L)
+        _state.update { it.copy(warmupTimerRemaining = seconds, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = seconds) }
+        if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+            timerNotificationHelper.startOrUpdateWarmupTimerNotification(seconds)
+        }
+        saveWarmupTimerToSession(endTime, seconds)
+        startWarmupTimerJob()
+    }
+
+    fun skipWarmupTimer() {
+        stopWarmupTimer()
+        clearWarmupTimerInSession()
+    }
+
+    fun addWarmupTime(seconds: Int) {
+        val currentEnd = _state.value.warmupTimerEndTime
+        if (currentEnd != null) {
+            val newEnd = currentEnd + (seconds * 1000L)
+            val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+            val newTotal = _state.value.warmupTimerTotalSeconds + seconds
+            _state.update { it.copy(warmupTimerEndTime = newEnd, warmupTimerRemaining = newRemaining, warmupTimerTotalSeconds = newTotal) }
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                timerNotificationHelper.startOrUpdateWarmupTimerNotification(newRemaining)
+            }
+            saveWarmupTimerToSession(newEnd, newTotal)
+        }
+    }
+
+    private fun stopWarmupTimer() {
+        warmupTimerJob?.cancel()
+        warmupTimerJob = null
+        timerNotificationHelper.cancelWarmupTimer()
+        _state.update { it.copy(warmupTimerRemaining = 0, warmupTimerEndTime = null, warmupTimerTotalSeconds = 0) }
+    }
+
+    private fun handleWarmupTimerFinished() {
+        if (_state.value.warmupTimerEndTime != null) {
+            _state.update { it.copy(warmupTimerRemaining = 0, warmupTimerEndTime = null, warmupTimerTotalSeconds = 0) }
+            timerNotificationHelper.cancelWarmupFinishAlarm()
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                timerNotificationHelper.showWarmupTimerFinished()
+            }
+            warmupTimerJob?.cancel()
+            warmupTimerJob = null
+            clearWarmupTimerInSession()
+        }
+    }
+
+    private fun startWarmupTimerJob() {
+        warmupTimerJob = viewModelScope.launch {
+            while (true) {
+                delay(100L)
+                val end = _state.value.warmupTimerEndTime ?: break
+                val remaining = ((end - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+
+                if (remaining == 0) {
+                    handleWarmupTimerFinished()
+                    break
+                }
+
+                if (remaining != _state.value.warmupTimerRemaining) {
+                    _state.update { it.copy(warmupTimerRemaining = remaining) }
+                }
+            }
+        }
+    }
+
+    private fun saveWarmupTimerToSession(endTime: Long?, totalSeconds: Int?) {
+        viewModelScope.launch {
+            _state.value.sessionId?.let { sessionId ->
+                workoutRepository.updateWarmupTimer(sessionId, endTime, totalSeconds)
+            }
+        }
+    }
+
+    private fun clearWarmupTimerInSession() {
+        saveWarmupTimerToSession(null, null)
+    }
+
+    private fun resumeWarmupTimer(endTime: Long) {
+        stopWarmupTimer()
+        val remaining = ((endTime - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
+        val totalSeconds = _state.value.warmupTimerTotalSeconds
+        _state.update { it.copy(warmupTimerRemaining = remaining, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = totalSeconds) }
+        if (remaining > 0) {
+            if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                timerNotificationHelper.startOrUpdateWarmupTimerNotification(remaining)
+            }
+            startWarmupTimerJob()
+        } else {
+            clearWarmupTimerInSession()
+        }
     }
 
     fun swapExercise(exerciseIndex: Int, newExerciseId: Int, targetSets: Int, repsTarget: String, restTimer: Int? = null) {
@@ -1076,6 +1212,7 @@ class WorkoutViewModel @Inject constructor(
                 workoutRepository.deleteSession(sessionId)
             }
             stopRestTimer()
+            stopWarmupTimer()
             onComplete()
         }
     }

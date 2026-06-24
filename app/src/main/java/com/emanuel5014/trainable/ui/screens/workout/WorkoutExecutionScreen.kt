@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -48,9 +49,13 @@ import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -58,6 +63,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -90,10 +96,13 @@ import com.emanuel5014.trainable.ui.components.RestTimerSection
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
+import com.emanuel5014.trainable.ui.components.RestSlider
+import com.emanuel5014.trainable.ui.components.formatRestTime
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -101,7 +110,7 @@ import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun WorkoutExecutionScreen(
     onNavigateBack: () -> Unit,
@@ -118,6 +127,8 @@ fun WorkoutExecutionScreen(
     var showFinishDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var newSessionName by remember { mutableStateOf(state.planName) }
+    var showWarmupTimerDialog by remember { mutableStateOf(false) }
+    var warmupTimerDuration by remember { mutableStateOf(120) }
 
     if (showRenameDialog) {
         AlertDialog(
@@ -253,6 +264,23 @@ fun WorkoutExecutionScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
+
+                        if (state.warmupTimerEnabled) {
+                            IconButton(
+                                onClick = {
+                                    warmupTimerDuration = 120
+                                    showWarmupTimerDialog = true
+                                },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = stringResource(R.string.warmup_timer),
+                                    tint = if (state.warmupTimerRemaining > 0) Primary else OnSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
                     }
 
                     Surface(
@@ -586,6 +614,91 @@ fun WorkoutExecutionScreen(
                     ) {
                         val isResting = state.remainingRestSeconds > 0
 
+                        AnimatedVisibility(
+                            visible = state.warmupTimerEnabled && state.warmupTimerRemaining > 0,
+                            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+                            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+                        ) {
+                            val warmupProgress = if (state.warmupTimerTotalSeconds > 0)
+                                1f - (state.warmupTimerRemaining.toFloat() / state.warmupTimerTotalSeconds.toFloat()) else 0f
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(Tertiary)
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            CircularWavyProgressIndicator(
+                                                progress = { warmupProgress },
+                                                modifier = Modifier.size(48.dp),
+                                                color = OnTertiary,
+                                                trackColor = OnTertiary.copy(alpha = 0.2f),
+                                                stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
+                                                trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
+                                            )
+                                            Icon(
+                                                imageVector = Icons.Rounded.Timer,
+                                                contentDescription = null,
+                                                tint = OnTertiary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(14.dp))
+                                        Column {
+                                            Text(
+                                                text = stringResource(R.string.warmup_timer).uppercase(),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = OnTertiary.copy(alpha = 0.7f),
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                            val wMinutes = state.warmupTimerRemaining / 60
+                                            val wSeconds = state.warmupTimerRemaining % 60
+                                            Text(
+                                                text = String.format("%d:%02d", wMinutes, wSeconds),
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = OnTertiary,
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        }
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        FilledIconButton(
+                                            onClick = { viewModel.addWarmupTime(30) },
+                                            colors = IconButtonDefaults.filledIconButtonColors(
+                                                containerColor = OnTertiary.copy(alpha = 0.1f),
+                                                contentColor = OnTertiary
+                                            )
+                                        ) {
+                                            Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
+                                        }
+                                        FilledIconButton(
+                                            onClick = { viewModel.skipWarmupTimer() },
+                                            colors = IconButtonDefaults.filledIconButtonColors(
+                                                containerColor = OnTertiary,
+                                                contentColor = Tertiary
+                                            )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Close,
+                                                contentDescription = stringResource(R.string.cancel)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         AnimatedContent(
                             targetState = when {
                                 isResting -> HubMode.Resting
@@ -885,6 +998,48 @@ fun WorkoutExecutionScreen(
             }
         }
         
+        if (showWarmupTimerDialog) {
+            AlertDialog(
+                onDismissRequest = { showWarmupTimerDialog = false },
+                title = {
+                    Text(stringResource(R.string.warmup_timer), fontWeight = FontWeight.Black)
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.warmup_timer_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        val haptic = LocalHapticFeedback.current
+                        RestSlider(
+                            value = warmupTimerDuration,
+                            onValueChange = { warmupTimerDuration = it },
+                            hapticEnabled = true,
+                            haptic = haptic
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.startWarmupTimer(warmupTimerDuration)
+                        showWarmupTimerDialog = false
+                    }) {
+                        Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showWarmupTimerDialog = false }) {
+                        Text(stringResource(R.string.cancel).uppercase())
+                    }
+                },
+                containerColor = SurfaceContainerHigh,
+                titleContentColor = OnSurface,
+                textContentColor = OnSurfaceVariant
+            )
+        }
+
         if (showSwapExerciseSheet) {
             currentExState?.let { exState ->
                 SwapExerciseBottomSheet(

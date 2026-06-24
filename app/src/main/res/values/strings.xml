@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Rest Timer</string>
     <string name="rest_timer_remaining">%s remaining</string>
+    <string name="warmup_timer">Warmup Timer</string>
+    <string name="warmup_timer_finished">Warmup timer finished!</string>
+    <string name="warmup_timer_description">Set a timer for warmup, stretching, or anything else</string>
+    <string name="warmup_timer_notifications_desc">Show warmup timer in system notifications</string>
+    <string name="warmup_timer_settings_desc">Show warmup timer button during workout</string>
     <string name="close_workout">Close Workout</string>
 
     <!-- Workout Session -->

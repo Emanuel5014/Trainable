@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Temporizador</string>
     <string name="rest_timer_remaining">%s restantes</string>
+    <string name="warmup_timer">Temporizador de Calentamiento</string>
+    <string name="warmup_timer_finished">¡Calentamiento terminado!</string>
+    <string name="warmup_timer_description">Configure un temporizador para calentamiento, estiramientos u otros</string>
+    <string name="warmup_timer_notifications_desc">Mostrar temporizador de calentamiento en notificaciones</string>
+    <string name="warmup_timer_settings_desc">Mostrar botón de temporizador de calentamiento durante el entrenamiento</string>
     <string name="close_workout">Cerrar Entrenamiento</string>
 
     <!-- Workout Session -->

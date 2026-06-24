@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Timer Recupero</string>
     <string name="rest_timer_remaining">%s rimanenti</string>
+    <string name="warmup_timer">Timer Riscaldamento</string>
+    <string name="warmup_timer_finished">Timer riscaldamento finito!</string>
+    <string name="warmup_timer_description">Imposta un timer per riscaldamento, stretching o altro</string>
+    <string name="warmup_timer_notifications_desc">Mostra il timer di riscaldamento nelle notifiche</string>
+    <string name="warmup_timer_settings_desc">Mostra il pulsante timer riscaldamento durante l\'allenamento</string>
     <string name="close_workout">Chiudi Allenamento</string>
 
     <!-- Workout Session -->

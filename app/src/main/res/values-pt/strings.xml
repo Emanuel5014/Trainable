@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Temporizador de Descanso</string>
     <string name="rest_timer_remaining">%s restantes</string>
+    <string name="warmup_timer">Temporizador de Aquecimento</string>
+    <string name="warmup_timer_finished">Aquecimento finalizado!</string>
+    <string name="warmup_timer_description">Defina um timer para aquecimento, alongamento ou outros</string>
+    <string name="warmup_timer_notifications_desc">Mostrar temporizador de aquecimento nas notificações do sistema</string>
+    <string name="warmup_timer_settings_desc">Mostrar botão do temporizador de aquecimento durante o treino</string>
     <string name="close_workout">Fechar Treino</string>
 
     <!-- Workout Session -->

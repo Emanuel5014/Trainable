@@ -40,6 +40,7 @@ class UserPreferencesRepository @Inject constructor(
         val THEME_STYLE = intPreferencesKey("theme_style")
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
+        val WARMUP_TIMER_ENABLED = booleanPreferencesKey("warmup_timer_enabled")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
         val GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("gym_membership_expiry_notifications_enabled")
         val GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE = intPreferencesKey("gym_membership_expiry_notification_days_before")
@@ -150,6 +151,11 @@ class UserPreferencesRepository @Inject constructor(
     val swipeActionsEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] ?: true
+        }
+
+    val warmupTimerEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[WARMUP_TIMER_ENABLED] ?: false
         }
 
     val themeMode: Flow<Int> = dataStore.data
@@ -274,6 +280,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setSwipeActionsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setWarmupTimerEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[WARMUP_TIMER_ENABLED] = enabled
         }
     }
 

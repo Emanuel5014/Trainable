@@ -195,6 +195,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val warmupTimerEnabled = userPrefsRepository.warmupTimerEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     private val _backupStatus = MutableStateFlow<String?>(null)
     val backupStatus: StateFlow<String?> = _backupStatus
 
@@ -440,6 +446,12 @@ class SettingsViewModel @Inject constructor(
     fun setSwipeActionsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setSwipeActionsEnabled(enabled)
+        }
+    }
+
+    fun setWarmupTimerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setWarmupTimerEnabled(enabled)
         }
     }
 

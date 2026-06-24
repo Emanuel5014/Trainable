@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Minuteur de Repos</string>
     <string name="rest_timer_remaining">%s restantes</string>
+    <string name="warmup_timer">Minuteur d\'Échauffement</string>
+    <string name="warmup_timer_finished">Échauffement terminé !</string>
+    <string name="warmup_timer_description">Réglez un minuteur pour l\'échauffement, les étirements ou autre</string>
+    <string name="warmup_timer_notifications_desc">Afficher le minuteur d\'échauffement dans les notifications</string>
+    <string name="warmup_timer_settings_desc">Afficher le bouton du minuteur d\'échauffement pendant l\'entraînement</string>
     <string name="close_workout">Fermer l\'Entraînement</string>
 
     <!-- Workout Session -->
