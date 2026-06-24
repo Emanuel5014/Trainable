@@ -334,6 +334,34 @@
     <string name="dynamic_color_not_supported">Nicht unterstützt (Android 12+ erforderlich)</string>
     <string name="app_palette">App Palette</string>
     <string name="app_palette_desc">Wähle ein benutzerdefiniertes Farbschema für die App</string>
+    <string name="theme_mode">Thema</string>
+    <string name="theme_mode_system">Systemstandard</string>
+    <string name="theme_mode_light">Hell</string>
+    <string name="theme_mode_dark">Dunkel</string>
+    <string name="theme_mode_light_short">H</string>
+    <string name="theme_mode_dark_short">D</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Lebhaft</string>
+    <string name="style_expressive">Ausdrucksstark</string>
+    <string name="style_neutral">Neutral</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Standard</string>
+    <string name="palette_blue">Blau</string>
+    <string name="palette_green">Grün</string>
+    <string name="palette_red">Rot</string>
+    <string name="palette_purple">Lila</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_pink">Pink</string>
+    <string name="palette_teal">Blaugrün</string>
+    <string name="palette_monochrome">Monochrom</string>
+    <string name="custom_color">Benutzerdefinierte Farbe</string>
+    <string name="pick_theme_color">Wähle deine eigene Themenfarbe</string>
+    <string name="style">Stil</string>
+    <string name="apply">Übernehmen</string>
+    <string name="hue">Farbton</string>
+    <string name="system_default">Systemstandard</string>
     <string name="notifications">MITTEILUNGEN</string>
     <string name="timer_notifications">Timer-Benachrichtigungen</string>
     <string name="timer_notifications_desc">Pausentimer in Systembenachrichtigungen anzeigen</string>

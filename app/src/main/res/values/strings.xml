@@ -340,6 +340,28 @@
     <string name="theme_mode_dark">Dark</string>
     <string name="theme_mode_light_short">A</string>
     <string name="theme_mode_dark_short">D</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrant</string>
+    <string name="style_expressive">Expressive</string>
+    <string name="style_neutral">Neutral</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Default</string>
+    <string name="palette_blue">Blue</string>
+    <string name="palette_green">Green</string>
+    <string name="palette_red">Red</string>
+    <string name="palette_purple">Purple</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_pink">Pink</string>
+    <string name="palette_teal">Teal</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="custom_color">Custom Color</string>
+    <string name="pick_theme_color">Pick your own theme color</string>
+    <string name="style">Style</string>
+    <string name="apply">Apply</string>
+    <string name="hue">Hue</string>
+    <string name="system_default">System Default</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show rest timer in system notifications</string>

@@ -340,6 +340,28 @@
     <string name="theme_mode_dark">Scuro</string>
     <string name="theme_mode_light_short">C</string>
     <string name="theme_mode_dark_short">S</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrante</string>
+    <string name="style_expressive">Espressivo</string>
+    <string name="style_neutral">Neutro</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Predefinita</string>
+    <string name="palette_blue">Blu</string>
+    <string name="palette_green">Verde</string>
+    <string name="palette_red">Rosso</string>
+    <string name="palette_purple">Viola</string>
+    <string name="palette_orange">Arancione</string>
+    <string name="palette_pink">Rosa</string>
+    <string name="palette_teal">Verde Acqua</string>
+    <string name="palette_monochrome">Monocromatica</string>
+    <string name="custom_color">Colore Personalizzato</string>
+    <string name="pick_theme_color">Scegli il tuo colore del tema</string>
+    <string name="style">Stile</string>
+    <string name="apply">Applica</string>
+    <string name="hue">Tonalità</string>
+    <string name="system_default">Predefinito sistema</string>
     <string name="notifications">NOTIFICHE</string>
     <string name="timer_notifications">Notifiche Timer</string>
     <string name="timer_notifications_desc">Mostra il timer di riposo nelle notifiche di sistema</string>

@@ -334,6 +334,34 @@
     <string name="dynamic_color_not_supported">Non supporté (Android 12+ requis)</string>
     <string name="app_palette">Palette de l\'App</string>
     <string name="app_palette_desc">Choisis une palette de couleurs personnalisée</string>
+    <string name="theme_mode">Thème</string>
+    <string name="theme_mode_system">Par défaut</string>
+    <string name="theme_mode_light">Clair</string>
+    <string name="theme_mode_dark">Sombre</string>
+    <string name="theme_mode_light_short">C</string>
+    <string name="theme_mode_dark_short">S</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrant</string>
+    <string name="style_expressive">Expressif</string>
+    <string name="style_neutral">Neutre</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Par défaut</string>
+    <string name="palette_blue">Bleu</string>
+    <string name="palette_green">Vert</string>
+    <string name="palette_red">Rouge</string>
+    <string name="palette_purple">Violet</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_pink">Rose</string>
+    <string name="palette_teal">Sarcelle</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="custom_color">Couleur Personnalisée</string>
+    <string name="pick_theme_color">Choisis ta propre couleur de thème</string>
+    <string name="style">Style</string>
+    <string name="apply">Appliquer</string>
+    <string name="hue">Teinte</string>
+    <string name="system_default">Par défaut</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Notifications du Minuteur</string>
     <string name="timer_notifications_desc">Afficher le minuteur de repos dans les notifications</string>

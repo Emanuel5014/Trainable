@@ -334,6 +334,34 @@
     <string name="dynamic_color_not_supported">No compatible (requiere Android 12+)</string>
     <string name="app_palette">Paleta de App</string>
     <string name="app_palette_desc">Elige una combinación de colores personalizada</string>
+    <string name="theme_mode">Tema</string>
+    <string name="theme_mode_system">Predeterminado del sistema</string>
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_dark">Oscuro</string>
+    <string name="theme_mode_light_short">C</string>
+    <string name="theme_mode_dark_short">O</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrante</string>
+    <string name="style_expressive">Expresivo</string>
+    <string name="style_neutral">Neutro</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Predeterminada</string>
+    <string name="palette_blue">Azul</string>
+    <string name="palette_green">Verde</string>
+    <string name="palette_red">Rojo</string>
+    <string name="palette_purple">Púrpura</string>
+    <string name="palette_orange">Naranja</string>
+    <string name="palette_pink">Rosa</string>
+    <string name="palette_teal">Verde Azulado</string>
+    <string name="palette_monochrome">Monocromática</string>
+    <string name="custom_color">Color Personalizado</string>
+    <string name="pick_theme_color">Elige tu propio color de tema</string>
+    <string name="style">Estilo</string>
+    <string name="apply">Aplicar</string>
+    <string name="hue">Tono</string>
+    <string name="system_default">Predeterminado del sistema</string>
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
     <string name="timer_notifications_desc">Mostrar temporizador de descanso en notificaciones</string>

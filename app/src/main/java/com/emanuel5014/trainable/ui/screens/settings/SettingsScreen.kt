@@ -137,6 +137,8 @@ fun SettingsScreen(
     val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
+
+    val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
     
     val latestRelease by viewModel.latestRelease.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
@@ -1001,7 +1003,7 @@ fun SettingsScreen(
                                                 ) {
                                                     Icon(
                                                         Icons.Rounded.RestartAlt,
-                                                        contentDescription = "System Default",
+                                                        contentDescription = stringResource(R.string.system_default),
                                                         tint = Primary,
                                                         modifier = Modifier.size(28.dp)
                                                     )
@@ -1009,17 +1011,23 @@ fun SettingsScreen(
                                             } else {
                                                 Icon(
                                                     Icons.Rounded.RestartAlt,
-                                                    contentDescription = "System Default",
+                                                    contentDescription = stringResource(R.string.system_default),
                                                     tint = OnSurfaceVariant,
                                                     modifier = Modifier.size(28.dp)
                                                 )
                                             }
                                         }
-                                        Text("Default", style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == null) Primary else OnSurfaceVariant, maxLines = 1)
+                                        Text(stringResource(R.string.palette_default), style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == null) Primary else OnSurfaceVariant, maxLines = 1)
                                     }
 
                                     val primarySeed = wallpaperColors.first()
-                                    val styleNames = listOf("Tonal Spot", "Vibrant", "Expressive", "Neutral", "Fruit Salad")
+                                    val styleNames = listOf(
+                                        stringResource(R.string.style_tonal_spot),
+                                        stringResource(R.string.style_vibrant),
+                                        stringResource(R.string.style_expressive),
+                                        stringResource(R.string.style_neutral),
+                                        stringResource(R.string.style_fruit_salad)
+                                    )
                                     (0..4).forEach { styleIndex ->
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             PalettePreviewCircle(
@@ -1055,7 +1063,17 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    val paletteNames = listOf("Default", "Blue", "Green", "Red", "Purple", "Orange", "Pink", "Teal", "Monochrome")
+                                    val paletteNames = listOf(
+                                        stringResource(R.string.palette_default),
+                                        stringResource(R.string.palette_blue),
+                                        stringResource(R.string.palette_green),
+                                        stringResource(R.string.palette_red),
+                                        stringResource(R.string.palette_purple),
+                                        stringResource(R.string.palette_orange),
+                                        stringResource(R.string.palette_pink),
+                                        stringResource(R.string.palette_teal),
+                                        stringResource(R.string.palette_monochrome)
+                                    )
                                     (0..8).forEach { index ->
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             PalettePreviewCircle(
@@ -1094,37 +1112,33 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text("Custom Color", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    if (dynamicColorSeed != null) {
+                                    Text(stringResource(R.string.custom_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                                    if (hasCustomColor) {
                                         val styleName = when (themeStyle) {
-                                            1 -> "Vibrant"
-                                            2 -> "Expressive"
-                                            3 -> "Neutral"
-                                            4 -> "Fruit Salad"
-                                            else -> "Tonal Spot"
+                                            1 -> stringResource(R.string.style_vibrant)
+                                            2 -> stringResource(R.string.style_expressive)
+                                            3 -> stringResource(R.string.style_neutral)
+                                            4 -> stringResource(R.string.style_fruit_salad)
+                                            else -> stringResource(R.string.style_tonal_spot)
                                         }
-                                        Text("Custom \u2022 $styleName", style = MaterialTheme.typography.bodySmall, color = Primary)
+                                        Text(styleName, style = MaterialTheme.typography.bodySmall, color = Primary, maxLines = 1)
                                     } else {
-                                        Text("Pick your own theme color", style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                        Text(stringResource(R.string.pick_theme_color), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant, maxLines = 2)
                                     }
                                 }
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            if (dynamicColorSeed != null) {
+                            if (hasCustomColor) {
                                 val previewColors = getSeedPreviewColors(dynamicColorSeed!!, themeStyle)
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    previewColors.forEach { color ->
-                                        Box(
-                                            modifier = Modifier
-                                                .size(16.dp)
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .background(color)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    PalettePreviewCircle(
+                                        colors = previewColors,
+                                        isSelected = false,
+                                        onClick = {}
+                                    )
                                     TextButton(
                                         onClick = {
                                             viewModel.setDynamicColorSeed(null)
@@ -1132,7 +1146,7 @@ fun SettingsScreen(
                                         },
                                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                                     ) {
-                                        Text("Reset", color = OnSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                        Text(stringResource(R.string.reset), color = OnSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                                     }
                                 }
                             } else {
@@ -1628,7 +1642,7 @@ private fun CustomColorPickerDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceContainerHigh,
         title = {
-            Text("Custom Color", fontWeight = FontWeight.ExtraBold, color = OnSurface)
+            Text(stringResource(R.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
         },
         text = {
             Column(
@@ -1656,27 +1670,8 @@ private fun CustomColorPickerDialog(
                     currentColor = currentColor
                 )
 
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Theme Preview", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val previewColors = getSeedPreviewColors(seedArgb, selectedStyle)
-                        previewColors.forEach { color ->
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(color)
-                            )
-                        }
-                    }
-                }
-
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Style", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                     Row(
                         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -1694,12 +1689,12 @@ private fun CustomColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onApply(seedArgb, selectedStyle) }) {
-                Text("Apply".uppercase(), color = Primary)
+                Text(stringResource(R.string.apply).uppercase(), color = Primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel".uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         }
     )
@@ -1713,7 +1708,7 @@ private fun HueSlider(
 ) {
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Hue", style = MaterialTheme.typography.labelLarge, color = OnSurfaceVariant)
+            Text(stringResource(R.string.hue), style = MaterialTheme.typography.labelLarge, color = OnSurfaceVariant)
             Text("${hue.toInt()}°", style = MaterialTheme.typography.labelLarge, color = OnSurface)
         }
 
