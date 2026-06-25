@@ -195,6 +195,11 @@ class BackupManager @Inject constructor(
                 json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
                 json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
                 json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
+                json.put("theme_mode", prefs[UserPreferencesRepository.THEME_MODE] ?: 0)
+                json.put("timer_notifications_enabled", prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] ?: true)
+                json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
+                json.put("gym_membership_expiry_notifications_enabled", prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] ?: true)
+                json.put("gym_membership_expiry_notification_days_before", prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] ?: 14)
 
                 json.toString()
             }
@@ -279,6 +284,16 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.WEEKLY_GOAL] = jsonObject.getInt("weekly_goal")
                                             if (jsonObject.has("floating_nav_bar"))
                                                 prefs[UserPreferencesRepository.FLOATING_NAV_BAR] = jsonObject.getBoolean("floating_nav_bar")
+                                            if (jsonObject.has("theme_mode"))
+                                                prefs[UserPreferencesRepository.THEME_MODE] = jsonObject.getInt("theme_mode")
+                                            if (jsonObject.has("timer_notifications_enabled"))
+                                                prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] = jsonObject.getBoolean("timer_notifications_enabled")
+                                            if (jsonObject.has("warmup_timer_enabled"))
+                                                prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] = jsonObject.getBoolean("warmup_timer_enabled")
+                                            if (jsonObject.has("gym_membership_expiry_notifications_enabled"))
+                                                prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] = jsonObject.getBoolean("gym_membership_expiry_notifications_enabled")
+                                            if (jsonObject.has("gym_membership_expiry_notification_days_before"))
+                                                prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] = jsonObject.getInt("gym_membership_expiry_notification_days_before")
                                         }
                                     }
                                 } catch (e: Exception) {
