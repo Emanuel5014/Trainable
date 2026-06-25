@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.edit
+import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -66,8 +67,10 @@ class BackupManager @Inject constructor(
                 val prefs = context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE)
                 val selectedExerciseIds = prefs.getStringSet("selected_exercise_ids", null)
                 val widgetOrder = prefs.getString("widget_order", null)
+                val showProgressCards = if (prefs.contains("show_progress_cards")) prefs.getBoolean("show_progress_cards", false) else null
+                val categoryVolumeTimeRange = prefs.getString("category_volume_time_range", null)
                 
-                if (selectedExerciseIds != null || widgetOrder != null) {
+                if (selectedExerciseIds != null || widgetOrder != null || showProgressCards != null || categoryVolumeTimeRange != null) {
                     val jsonObject = org.json.JSONObject()
                     selectedExerciseIds?.let { ids ->
                         val jsonArray = org.json.JSONArray()
@@ -75,6 +78,8 @@ class BackupManager @Inject constructor(
                         jsonObject.put("selected_exercise_ids", jsonArray)
                     }
                     widgetOrder?.let { jsonObject.put("widget_order", it) }
+                    showProgressCards?.let { jsonObject.put("show_progress_cards", it) }
+                    categoryVolumeTimeRange?.let { jsonObject.put("category_volume_time_range", it) }
                     
                     zos.putNextEntry(ZipEntry("analytics_settings.json"))
                     zos.write(jsonObject.toString().toByteArray())
@@ -211,6 +216,7 @@ class BackupManager @Inject constructor(
 
     suspend fun importDatabaseZip(inputUri: Uri): Boolean = withContext(Dispatchers.IO) {
         try {
+            GymDatabase.closeDatabase()
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
             if (!dbDir.exists()) dbDir.mkdirs()
             val filesDir = context.filesDir
@@ -252,8 +258,16 @@ class BackupManager @Inject constructor(
                                     if (jsonObject.has("widget_order")) {
                                         editor.putString("widget_order", jsonObject.getString("widget_order"))
                                     }
+
+                                    if (jsonObject.has("show_progress_cards")) {
+                                        editor.putBoolean("show_progress_cards", jsonObject.getBoolean("show_progress_cards"))
+                                    }
+
+                                    if (jsonObject.has("category_volume_time_range")) {
+                                        editor.putString("category_volume_time_range", jsonObject.getString("category_volume_time_range"))
+                                    }
                                     
-                                    editor.apply()
+                                    editor.commit()
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }

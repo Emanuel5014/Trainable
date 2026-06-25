@@ -219,9 +219,13 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
-        suspend fun resetDatabase(context: Context) {
+        fun closeDatabase() {
             INSTANCE?.close()
             INSTANCE = null
+        }
+
+        suspend fun resetDatabase(context: Context) {
+            closeDatabase()
             
             val dbFile = context.getDatabasePath(DATABASE_NAME)
             val walFile = context.getDatabasePath("$DATABASE_NAME-wal")
