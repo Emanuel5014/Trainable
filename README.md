@@ -82,6 +82,47 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 
 ---
 
+## 📁 Project Structure
+
+```
+com/emanuel5014/trainable/
+├── data/
+│   ├── local/
+│   │   ├── dao/            # Room DAOs (WorkoutDao, ExerciseDao, etc.)
+│   │   ├── entity/         # Room entities (SetLogEntity, WorkoutPlanEntity, etc.)
+│   │   └── relation/       # Relation classes (PlanWithDetails, SessionWithSets, etc.)
+│   ├── remote/
+│   │   └── dto/            # DTOs for export/import (WorkoutPlanExportDto)
+│   └── repository/         # Repositories (WorkoutRepository, AnalyticsRepository, etc.)
+├── di/                     # Hilt modules (DatabaseModule, NetworkModule)
+├── ui/
+│   ├── components/
+│   │   ├── analytics/      # Charts, stat cards, consistency, body comp, etc.
+│   │   ├── base/           # Design system primitives (GymCard, GymButton, etc.)
+│   │   ├── dialogs/        # Reusable dialogs (UpdateDialog, ImportConfirmation)
+│   │   ├── exercise/       # Exercise cards, picker, rest timer, set log input
+│   │   ├── navbar/         # Bottom navigation bar and items
+│   │   └── shared/         # Shared utilities (EmptyState, SwipeableCard, etc.)
+│   ├── navigation/         # NavGraph, Routes
+│   ├── screens/
+│   │   ├── analytics/      # Analytics dashboard, drag-drop state
+│   │   ├── compare/        # Session comparison
+│   │   ├── dashboard/      # Main dashboard
+│   │   ├── history/        # Session history, edit, filter
+│   │   ├── onboarding/     # Onboarding flow
+│   │   ├── routines/       # Routine list, detail, builder
+│   │   ├── settings/       # App settings
+│   │   └── workout/        # Workout execution
+│   ├── theme/              # Color, Shape, Type, Spacing, Theme
+│   └── util/               # DateFormatter
+├── util/
+│   ├── backup/             # AutoBackupWorker, BackupManager
+│   └── notification/       # TimerNotification, GymMembershipWorker
+├── MainActivity.kt
+└── GymTrackingApp.kt
+```
+
+
 ## 🚀 Getting Started
 
 ### Prerequisites

@@ -153,6 +153,9 @@ interface WorkoutDao {
 
     @Query("UPDATE workout_sessions SET rest_timer_end_time = :endTime, total_rest_seconds = :totalSeconds WHERE id = :sessionId")
     suspend fun updateRestTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?)
+
+    @Query("UPDATE workout_sessions SET warmup_timer_end_time = :endTime, total_warmup_seconds = :totalSeconds WHERE id = :sessionId")
+    suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?)
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSet(set: SetLogEntity): Long
@@ -187,7 +190,7 @@ interface WorkoutDao {
         WHERE ws.plan_id = :planId
         AND sl.exercise_id = :exerciseId
         AND ws.is_finished = 1
-        ORDER BY sl.session_id DESC
+        ORDER BY sl.session_id DESC, sl.numero_serie ASC
         LIMIT :limitSets
     """)
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>>

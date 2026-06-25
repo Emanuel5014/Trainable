@@ -142,6 +142,14 @@ fun RoutineDetailScreen(
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
+    val themeMode by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.THEME_MODE] ?: 0 }
+    }.collectAsState(initial = 0)
+    val isDark = when (themeMode) {
+        1 -> false
+        2 -> true
+        else -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
     val listState = rememberLazyListState()
 
     val scope = rememberCoroutineScope()
@@ -470,7 +478,7 @@ fun RoutineDetailScreen(
                                         translationY = if (isDragging) dragOffsetY else 0f
                                         scaleX = if (isDragging) 1.02f else 1f
                                         scaleY = if (isDragging) 1.02f else 1f
-                                        shadowElevation = elevation.toPx()
+                                        shadowElevation = if (isDark) elevation.toPx() else 0f
                                         shape = RoundedCornerShape(28.dp)
                                         clip = isDragging
                                     }

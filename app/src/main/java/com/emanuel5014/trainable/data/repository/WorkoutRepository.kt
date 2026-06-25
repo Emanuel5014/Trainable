@@ -289,6 +289,8 @@ class WorkoutRepository @Inject constructor(
     suspend fun setSessionFinished(sessionId: Int) = workoutDao.setSessionFinished(sessionId)
 
     suspend fun updateRestTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateRestTimer(sessionId, endTime, totalSeconds)
+
+    suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateWarmupTimer(sessionId, endTime, totalSeconds)
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     

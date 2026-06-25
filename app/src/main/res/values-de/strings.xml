@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Pausentimer</string>
     <string name="rest_timer_remaining">%s verbleibend</string>
+    <string name="warmup_timer">Aufwärmtimer</string>
+    <string name="warmup_timer_finished">Aufwärmen beendet!</string>
+    <string name="warmup_timer_description">Timer für Aufwärmen, Dehnen oder Sonstiges einstellen</string>
+    <string name="warmup_timer_notifications_desc">Aufwärmtimer in Systembenachrichtigungen anzeigen</string>
+    <string name="warmup_timer_settings_desc">Aufwärmtimer-Button während des Trainings anzeigen</string>
     <string name="close_workout">Training schließen</string>
 
     <!-- Workout Session -->
@@ -258,7 +263,11 @@
     <string name="analytics_strength_summary_positive">+%s%% vs. letzte 30 Tage</string>
     <string name="analytics_strength_summary_negative">-%s%% vs. letzte 30 Tage</string>
     <string name="analytics_strength_no_data">Nicht genügend PR-Verlauf.</string>
+    <string name="analytics_empty_hint">Tippe + um Widgets hinzuzufügen und deine Fortschritte zu verfolgen</string>
+    <string name="analytics_progress_cards">1RM FORTSCHRITT</string>
     <string name="analytics_body_weight">KÖRPERGEWICHT</string>
+    <string name="analytics_body_weight_history">Verlauf</string>
+    <string name="analytics_select_date">Datum auswählen</string>
     <string name="analytics_workout_calendar">TRAININGS KALENDER</string>
     <string name="analytics_workouts_this_month">%d Trainingseinheiten diesen Monat</string>
     <string name="analytics_total_volume">GESAMTTONNAGE</string>
@@ -332,6 +341,34 @@
     <string name="dynamic_color_not_supported">Nicht unterstützt (Android 12+ erforderlich)</string>
     <string name="app_palette">App Palette</string>
     <string name="app_palette_desc">Wähle ein benutzerdefiniertes Farbschema für die App</string>
+    <string name="theme_mode">Thema</string>
+    <string name="theme_mode_system">Systemstandard</string>
+    <string name="theme_mode_light">Hell</string>
+    <string name="theme_mode_dark">Dunkel</string>
+    <string name="theme_mode_light_short">H</string>
+    <string name="theme_mode_dark_short">D</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Lebhaft</string>
+    <string name="style_expressive">Ausdrucksstark</string>
+    <string name="style_neutral">Neutral</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Standard</string>
+    <string name="palette_blue">Blau</string>
+    <string name="palette_green">Grün</string>
+    <string name="palette_red">Rot</string>
+    <string name="palette_purple">Lila</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_pink">Pink</string>
+    <string name="palette_teal">Blaugrün</string>
+    <string name="palette_monochrome">Monochrom</string>
+    <string name="custom_color">Benutzerdefinierte Farbe</string>
+    <string name="pick_theme_color">Wähle deine eigene Themenfarbe</string>
+    <string name="style">Stil</string>
+    <string name="apply">Übernehmen</string>
+    <string name="hue">Farbton</string>
+    <string name="system_default">Systemstandard</string>
     <string name="notifications">MITTEILUNGEN</string>
     <string name="timer_notifications">Timer-Benachrichtigungen</string>
     <string name="timer_notifications_desc">Pausentimer in Systembenachrichtigungen anzeigen</string>
@@ -428,6 +465,9 @@
     <string name="onboarding_setup_weight_label">Aktuelles Gewicht (optional)</string>
     <string name="onboarding_setup_goal_label">Wöchentliches Trainingsziel</string>
     <string name="onboarding_setup_footer">Du kannst dies jederzeit in den Einstellungen ändern.</string>
+    <string name="onboarding_theme_title">Wähle dein\nThema.</string>
+    <string name="onboarding_notifications_title">Bleib auf\ndem Laufenden.</string>
+    <string name="onboarding_backup_title">Schütze\ndeine Daten.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filter</string>
@@ -498,5 +538,9 @@
     <string name="error_unknown">Unbekannter Fehler</string>
     <string name="routine_not_found">Routine nicht gefunden</string>
     <string name="reps_hint">z.B. 8 oder 8-6-4-2</string>
+
+    <!-- Notifications -->
+    <string name="notification_next_set">Nächste: %1$s - Satz %2$d: %3$s × %4$d</string>
+    <string name="notification_last_reps">(letzte: %1$d)</string>
 
 </resources>

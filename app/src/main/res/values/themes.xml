@@ -1,8 +1,9 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Theme.GymTracking" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.GymTracking" parent="android:Theme.Material.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/monolithic_surface</item>
     </style>
 
     <!-- Splash Screen theme. -->

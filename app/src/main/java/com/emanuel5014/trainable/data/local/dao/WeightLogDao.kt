@@ -21,4 +21,7 @@ interface WeightLogDao {
         """
     )
     fun getWeightHistory(startDate: Long): Flow<List<WeightLogEntity>>
+
+    @Query("DELETE FROM weight_logs WHERE id = :id")
+    suspend fun deleteWeightLog(id: Int)
 }

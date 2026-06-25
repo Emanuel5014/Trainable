@@ -47,6 +47,7 @@ import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.TableChart
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +58,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -69,6 +72,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,7 +80,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -84,6 +90,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -98,8 +105,10 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.fromHSV
 import com.emanuel5014.trainable.ui.theme.getPalettePreviewColors
 import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
+import com.emanuel5014.trainable.ui.theme.toHSV
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,11 +132,15 @@ fun SettingsScreen(
     val wallpaperColors by viewModel.wallpaperColors.collectAsState()
     val themePalette by viewModel.themePalette.collectAsState()
     val themeStyle by viewModel.themeStyle.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
     val gymMembershipExpiryNotificationsEnabled by viewModel.gymMembershipExpiryNotificationsEnabled.collectAsState()
     val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
+    val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
+
+    val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
     
     val latestRelease by viewModel.latestRelease.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
@@ -140,6 +153,9 @@ fun SettingsScreen(
     var easterEggClicks by remember { mutableIntStateOf(0) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
+    var showCustomColorDialog by remember { mutableStateOf(false) }
+    var savedSeedForRestore by remember { mutableStateOf<Int?>(null) }
+    var savedStyleForRestore by remember { mutableIntStateOf(0) }
     var includeImagesChoice by remember { mutableStateOf(false) }
     var pendingNotificationType by remember { mutableStateOf<String?>(null) }
 
@@ -410,6 +426,25 @@ fun SettingsScreen(
                 TextButton(onClick = { showResetDialog = false }) {
                     Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
+            }
+        )
+    }
+
+    if (showCustomColorDialog) {
+        CustomColorPickerDialog(
+            initialColor = savedSeedForRestore?.let { Color(it) },
+            initialStyle = savedStyleForRestore,
+            onDismiss = {
+                if (savedSeedForRestore != null) {
+                    viewModel.setDynamicColorSeed(savedSeedForRestore)
+                    viewModel.setThemeStyle(savedStyleForRestore)
+                }
+                showCustomColorDialog = false
+            },
+            onApply = { colorSeed, style ->
+                viewModel.setDynamicColorSeed(colorSeed)
+                viewModel.setThemeStyle(style)
+                showCustomColorDialog = false
             }
         )
     }
@@ -832,6 +867,81 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.personalization)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        var showThemeModeDialog by remember { mutableStateOf(false) }
+
+                        if (showThemeModeDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showThemeModeDialog = false },
+                                containerColor = SurfaceContainerHigh,
+                                title = { Text(stringResource(R.string.theme_mode), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+                                text = {
+                                    Column {
+                                        LanguageOption(
+                                            title = stringResource(R.string.theme_mode_system),
+                                            isSelected = themeMode == 0,
+                                            onClick = {
+                                                viewModel.setThemeMode(0)
+                                                showThemeModeDialog = false
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.theme_mode_light),
+                                            isSelected = themeMode == 1,
+                                            onClick = {
+                                                viewModel.setThemeMode(1)
+                                                showThemeModeDialog = false
+                                            }
+                                        )
+                                        LanguageOption(
+                                            title = stringResource(R.string.theme_mode_dark),
+                                            isSelected = themeMode == 2,
+                                            onClick = {
+                                                viewModel.setThemeMode(2)
+                                                showThemeModeDialog = false
+                                            }
+                                        )
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = { showThemeModeDialog = false }) {
+                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                                    }
+                                }
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showThemeModeDialog = true },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Palette,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        when (themeMode) {
+                                            0 -> stringResource(R.string.theme_mode_system)
+                                            1 -> stringResource(R.string.theme_mode_light)
+                                            else -> stringResource(R.string.theme_mode_dark)
+                                        },
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -872,56 +982,66 @@ fun SettingsScreen(
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Reset to system default option
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(SurfaceContainerHighest)
-                                            .clickable { 
-                                                viewModel.setDynamicColorSeed(null)
-                                                viewModel.setThemeStyle(0)
-                                            }
-                                            .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (dynamicColorSeed == null) {
-                                            Box(
-                                                modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
-                                                contentAlignment = Alignment.Center
-                                            ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(CircleShape)
+                                                .background(SurfaceContainerHighest)
+                                                .clickable { 
+                                                    viewModel.setDynamicColorSeed(null)
+                                                    viewModel.setThemeStyle(0)
+                                                }
+                                                .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (dynamicColorSeed == null) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        Icons.Rounded.RestartAlt,
+                                                        contentDescription = stringResource(R.string.system_default),
+                                                        tint = Primary,
+                                                        modifier = Modifier.size(28.dp)
+                                                    )
+                                                }
+                                            } else {
                                                 Icon(
                                                     Icons.Rounded.RestartAlt,
-                                                    contentDescription = "System Default",
-                                                    tint = Primary,
+                                                    contentDescription = stringResource(R.string.system_default),
+                                                    tint = OnSurfaceVariant,
                                                     modifier = Modifier.size(28.dp)
                                                 )
                                             }
-                                        } else {
-                                            Icon(
-                                                Icons.Rounded.RestartAlt,
-                                                contentDescription = "System Default",
-                                                tint = OnSurfaceVariant,
-                                                modifier = Modifier.size(28.dp)
-                                            )
                                         }
+                                        Text(stringResource(R.string.palette_default), style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == null) Primary else OnSurfaceVariant, maxLines = 1)
                                     }
 
-                                    // Use primary wallpaper color as seed and show 5 different styles
                                     val primarySeed = wallpaperColors.first()
+                                    val styleNames = listOf(
+                                        stringResource(R.string.style_tonal_spot),
+                                        stringResource(R.string.style_vibrant),
+                                        stringResource(R.string.style_expressive),
+                                        stringResource(R.string.style_neutral),
+                                        stringResource(R.string.style_fruit_salad)
+                                    )
                                     (0..4).forEach { styleIndex ->
-                                        val previewColors = getSeedPreviewColors(primarySeed, styleIndex)
-                                        PalettePreviewCircle(
-                                            colors = previewColors,
-                                            isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
-                                            onClick = { 
-                                                viewModel.setDynamicColorSeed(primarySeed)
-                                                viewModel.setThemeStyle(styleIndex)
-                                            }
-                                        )
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            PalettePreviewCircle(
+                                                colors = getSeedPreviewColors(primarySeed, styleIndex),
+                                                isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
+                                                onClick = { 
+                                                    viewModel.setDynamicColorSeed(primarySeed)
+                                                    viewModel.setThemeStyle(styleIndex)
+                                                }
+                                            )
+                                            Text(styleNames[styleIndex], style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == primarySeed && themeStyle == styleIndex) Primary else OnSurfaceVariant, maxLines = 1)
+                                        }
                                     }
                                 }
                             }
@@ -942,19 +1062,100 @@ fun SettingsScreen(
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    (0..7).forEach { index ->
-                                        val previewColors = getPalettePreviewColors(index)
-                                        PalettePreviewCircle(
-                                            colors = previewColors,
-                                            isSelected = themePalette == index,
-                                            onClick = { viewModel.setThemePalette(index) }
-                                        )
+                                    val paletteNames = listOf(
+                                        stringResource(R.string.palette_default),
+                                        stringResource(R.string.palette_blue),
+                                        stringResource(R.string.palette_green),
+                                        stringResource(R.string.palette_red),
+                                        stringResource(R.string.palette_purple),
+                                        stringResource(R.string.palette_orange),
+                                        stringResource(R.string.palette_pink),
+                                        stringResource(R.string.palette_teal),
+                                        stringResource(R.string.palette_monochrome)
+                                    )
+                                    (0..8).forEach { index ->
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            PalettePreviewCircle(
+                                                colors = getPalettePreviewColors(index),
+                                                isSelected = themePalette == index,
+                                                onClick = { viewModel.setThemePalette(index) }
+                                            )
+                                            Text(paletteNames[index], style = MaterialTheme.typography.labelSmall, color = if (themePalette == index) Primary else OnSurfaceVariant, maxLines = 1)
+                                        }
                                     }
                                 }
                             }
                         }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    savedSeedForRestore = dynamicColorSeed
+                                    savedStyleForRestore = themeStyle
+                                    viewModel.setDynamicColorSeed(null)
+                                    viewModel.setThemeStyle(0)
+                                    showCustomColorDialog = true
+                                },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Palette,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.custom_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+                                    if (hasCustomColor) {
+                                        val styleName = when (themeStyle) {
+                                            1 -> stringResource(R.string.style_vibrant)
+                                            2 -> stringResource(R.string.style_expressive)
+                                            3 -> stringResource(R.string.style_neutral)
+                                            4 -> stringResource(R.string.style_fruit_salad)
+                                            else -> stringResource(R.string.style_tonal_spot)
+                                        }
+                                        Text(styleName, style = MaterialTheme.typography.bodySmall, color = Primary, maxLines = 1)
+                                    } else {
+                                        Text(stringResource(R.string.pick_theme_color), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant, maxLines = 2)
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            if (hasCustomColor) {
+                                val previewColors = getSeedPreviewColors(dynamicColorSeed!!, themeStyle)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    PalettePreviewCircle(
+                                        colors = previewColors,
+                                        isSelected = false,
+                                        onClick = {}
+                                    )
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.setDynamicColorSeed(null)
+                                            viewModel.setThemeStyle(0)
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(stringResource(R.string.reset), color = OnSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            } else {
+                                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                            }
+                        }
+
                     }
                 }
             }
@@ -991,6 +1192,33 @@ fun SettingsScreen(
                                         viewModel.setTimerNotificationsEnabled(enabled)
                                     }
                                 }
+                            )
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.warmup_timer), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.warmup_timer_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = warmupTimerEnabled,
+                                onCheckedChange = { viewModel.setWarmupTimerEnabled(it) }
                             )
                         }
 
@@ -1190,7 +1418,7 @@ fun SettingsScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Trainable v1.5.0",
+                                    text = "Trainable v${BuildConfig.VERSION_NAME}",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.ExtraBold
@@ -1421,6 +1649,147 @@ private fun PalettePreviewCircle(
                     modifier = Modifier.size(24.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CustomColorPickerDialog(
+    initialColor: Color?,
+    initialStyle: Int,
+    onDismiss: () -> Unit,
+    onApply: (colorSeed: Int, style: Int) -> Unit
+) {
+    val defaultHue = initialColor?.toHSV()?.get(0) ?: 220f
+    var hue by remember { mutableFloatStateOf(defaultHue) }
+    var selectedStyle by remember { mutableIntStateOf(initialStyle) }
+
+    val currentColor = remember(hue) { Color.fromHSV(hue, 0.8f, 0.9f) }
+    val seedArgb = remember(currentColor) { currentColor.toArgb() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceContainerHigh,
+        title = {
+            Text(stringResource(R.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(currentColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "#${seedArgb.toString(16).padStart(8, '0').substring(2).uppercase()}",
+                        color = if (currentColor.let { c -> c.red * 0.299f + c.green * 0.587f + c.blue * 0.114f > 0.5f } ) Color.Black else Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                HueSlider(
+                    hue = hue,
+                    onHueChange = { hue = it },
+                    currentColor = currentColor
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        (0..4).forEach { styleIndex ->
+                            PalettePreviewCircle(
+                                colors = getSeedPreviewColors(seedArgb, styleIndex),
+                                isSelected = selectedStyle == styleIndex,
+                                onClick = { selectedStyle = styleIndex }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(seedArgb, selectedStyle) }) {
+                Text(stringResource(R.string.apply).uppercase(), color = Primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+            }
+        }
+    )
+}
+
+@Composable
+private fun HueSlider(
+    hue: Float,
+    onHueChange: (Float) -> Unit,
+    currentColor: Color
+) {
+    Column {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(stringResource(R.string.hue), style = MaterialTheme.typography.labelLarge, color = OnSurfaceVariant)
+            Text("${hue.toInt()}°", style = MaterialTheme.typography.labelLarge, color = OnSurface)
+        }
+
+        val rainbowColors = remember {
+            listOf(
+                Color(0xFFFF0000),
+                Color(0xFFFF8800),
+                Color(0xFFFFFF00),
+                Color(0xFF00FF00),
+                Color(0xFF00CBFF),
+                Color(0xFF0055FF),
+                Color(0xFF8800FF),
+                Color(0xFFFF00FF),
+                Color(0xFFFF0000),
+            )
+        }
+
+        val rainbowStops = remember {
+            listOf(0f, 30f / 360f, 60f / 360f, 120f / 360f, 180f / 360f, 240f / 360f, 280f / 360f, 300f / 360f, 1f)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = rainbowColors,
+                            startX = 0f,
+                            endX = Float.POSITIVE_INFINITY
+                        )
+                    )
+                    .align(Alignment.Center)
+            )
+
+            Slider(
+                value = hue,
+                onValueChange = onHueChange,
+                valueRange = 0f..360f,
+                modifier = Modifier.fillMaxSize(),
+                colors = SliderDefaults.colors(
+                    thumbColor = currentColor,
+                    activeTrackColor = Color.Transparent,
+                    inactiveTrackColor = Color.Transparent,
+                )
+            )
         }
     }
 }

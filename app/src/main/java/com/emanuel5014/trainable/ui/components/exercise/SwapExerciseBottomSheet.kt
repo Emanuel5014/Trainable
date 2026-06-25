@@ -726,7 +726,7 @@ private fun SwapExerciseConfigDialog(
 }
 
 @Composable
-private fun RestSlider(
+fun RestSlider(
     value: Int,
     onValueChange: (Int) -> Unit,
     hapticEnabled: Boolean,
@@ -784,7 +784,7 @@ private fun RestSlider(
 }
 
 @Composable
-private fun formatRestTime(seconds: Int): String {
+fun formatRestTime(seconds: Int): String {
     val minutes = seconds / 60
     val secs = seconds % 60
     return when {

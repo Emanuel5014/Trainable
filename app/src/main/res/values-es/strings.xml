@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Temporizador</string>
     <string name="rest_timer_remaining">%s restantes</string>
+    <string name="warmup_timer">Temporizador de Calentamiento</string>
+    <string name="warmup_timer_finished">¡Calentamiento terminado!</string>
+    <string name="warmup_timer_description">Configure un temporizador para calentamiento, estiramientos u otros</string>
+    <string name="warmup_timer_notifications_desc">Mostrar temporizador de calentamiento en notificaciones</string>
+    <string name="warmup_timer_settings_desc">Mostrar botón de temporizador de calentamiento durante el entrenamiento</string>
     <string name="close_workout">Cerrar Entrenamiento</string>
 
     <!-- Workout Session -->
@@ -258,7 +263,11 @@
     <string name="analytics_strength_summary_positive">+%s%% vs últimos 30 días</string>
     <string name="analytics_strength_summary_negative">-%s%% vs últimos 30 días</string>
     <string name="analytics_strength_no_data">No hay suficientes datos de RP.</string>
+    <string name="analytics_empty_hint">Toca + para añadir widgets y seguir tu progreso</string>
+    <string name="analytics_progress_cards">PROGRESO 1RM</string>
     <string name="analytics_body_weight">PESO CORPORAL</string>
+    <string name="analytics_body_weight_history">Historial</string>
+    <string name="analytics_select_date">Seleccionar fecha</string>
     <string name="analytics_workout_calendar">CALENDARIO DE ENTRENOS</string>
     <string name="analytics_workouts_this_month">%d entrenos este mes</string>
     <string name="analytics_total_volume">TONELAJE TOTAL</string>
@@ -332,6 +341,34 @@
     <string name="dynamic_color_not_supported">No compatible (requiere Android 12+)</string>
     <string name="app_palette">Paleta de App</string>
     <string name="app_palette_desc">Elige una combinación de colores personalizada</string>
+    <string name="theme_mode">Tema</string>
+    <string name="theme_mode_system">Predeterminado del sistema</string>
+    <string name="theme_mode_light">Claro</string>
+    <string name="theme_mode_dark">Oscuro</string>
+    <string name="theme_mode_light_short">C</string>
+    <string name="theme_mode_dark_short">O</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrante</string>
+    <string name="style_expressive">Expresivo</string>
+    <string name="style_neutral">Neutro</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Predeterminada</string>
+    <string name="palette_blue">Azul</string>
+    <string name="palette_green">Verde</string>
+    <string name="palette_red">Rojo</string>
+    <string name="palette_purple">Púrpura</string>
+    <string name="palette_orange">Naranja</string>
+    <string name="palette_pink">Rosa</string>
+    <string name="palette_teal">Verde Azulado</string>
+    <string name="palette_monochrome">Monocromática</string>
+    <string name="custom_color">Color Personalizado</string>
+    <string name="pick_theme_color">Elige tu propio color de tema</string>
+    <string name="style">Estilo</string>
+    <string name="apply">Aplicar</string>
+    <string name="hue">Tono</string>
+    <string name="system_default">Predeterminado del sistema</string>
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
     <string name="timer_notifications_desc">Mostrar temporizador de descanso en notificaciones</string>
@@ -428,6 +465,9 @@
     <string name="onboarding_setup_weight_label">Peso actual (opcional)</string>
     <string name="onboarding_setup_goal_label">Objetivo semanal</string>
     <string name="onboarding_setup_footer">Siempre podrás cambiar esto después en ajustes.</string>
+    <string name="onboarding_theme_title">Elige tu\ntema.</string>
+    <string name="onboarding_notifications_title">Mantente\ninformado.</string>
+    <string name="onboarding_backup_title">Protege tus\ndatos.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filtros</string>
@@ -498,5 +538,9 @@
     <string name="error_unknown">Error desconocido</string>
     <string name="routine_not_found">Rutina no encontrada</string>
     <string name="reps_hint">ej. 8 o 8-6-4-2</string>
+
+    <!-- Notifications -->
+    <string name="notification_next_set">Siguiente: %1$s - Serie %2$d: %3$s × %4$d</string>
+    <string name="notification_last_reps">(última: %1$d)</string>
 
 </resources>

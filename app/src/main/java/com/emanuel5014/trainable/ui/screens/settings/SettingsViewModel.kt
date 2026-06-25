@@ -183,10 +183,22 @@ class SettingsViewModel @Inject constructor(
         initialValue = 3
     )
 
+    val themeMode = userPrefsRepository.themeMode.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     val swipeActionsEnabled = userPrefsRepository.swipeActionsEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = true
+    )
+
+    val warmupTimerEnabled = userPrefsRepository.warmupTimerEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
     )
 
     private val _backupStatus = MutableStateFlow<String?>(null)
@@ -385,6 +397,9 @@ class SettingsViewModel @Inject constructor(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setDynamicColor(enabled)
+            if (!enabled) {
+                userPrefsRepository.setDynamicColorSeed(null)
+            }
         }
     }
 
@@ -431,6 +446,18 @@ class SettingsViewModel @Inject constructor(
     fun setSwipeActionsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setSwipeActionsEnabled(enabled)
+        }
+    }
+
+    fun setWarmupTimerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setWarmupTimerEnabled(enabled)
+        }
+    }
+
+    fun setThemeMode(mode: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setThemeMode(mode)
         }
     }
 

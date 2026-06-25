@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Minuteur de Repos</string>
     <string name="rest_timer_remaining">%s restantes</string>
+    <string name="warmup_timer">Minuteur d\'Échauffement</string>
+    <string name="warmup_timer_finished">Échauffement terminé !</string>
+    <string name="warmup_timer_description">Réglez un minuteur pour l\'échauffement, les étirements ou autre</string>
+    <string name="warmup_timer_notifications_desc">Afficher le minuteur d\'échauffement dans les notifications</string>
+    <string name="warmup_timer_settings_desc">Afficher le bouton du minuteur d\'échauffement pendant l\'entraînement</string>
     <string name="close_workout">Fermer l\'Entraînement</string>
 
     <!-- Workout Session -->
@@ -258,7 +263,11 @@
     <string name="analytics_strength_summary_positive">+%s%% vs 30 derniers jours</string>
     <string name="analytics_strength_summary_negative">-%s%% vs 30 derniers jours</string>
     <string name="analytics_strength_no_data">Pas assez d\'historique de RP.</string>
+    <string name="analytics_empty_hint">Appuyez sur + pour ajouter des widgets et suivre votre progression</string>
+    <string name="analytics_progress_cards">PROGRÈS 1RM</string>
     <string name="analytics_body_weight">POIDS CORPOREL</string>
+    <string name="analytics_body_weight_history">Historique</string>
+    <string name="analytics_select_date">Sélectionner une date</string>
     <string name="analytics_workout_calendar">CALENDRIER D\'ENTRAÎNEMENT</string>
     <string name="analytics_workouts_this_month">%d entraînements ce mois</string>
     <string name="analytics_total_volume">TONNAGE TOTAL</string>
@@ -332,6 +341,34 @@
     <string name="dynamic_color_not_supported">Non supporté (Android 12+ requis)</string>
     <string name="app_palette">Palette de l\'App</string>
     <string name="app_palette_desc">Choisis une palette de couleurs personnalisée</string>
+    <string name="theme_mode">Thème</string>
+    <string name="theme_mode_system">Par défaut</string>
+    <string name="theme_mode_light">Clair</string>
+    <string name="theme_mode_dark">Sombre</string>
+    <string name="theme_mode_light_short">C</string>
+    <string name="theme_mode_dark_short">S</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrant</string>
+    <string name="style_expressive">Expressif</string>
+    <string name="style_neutral">Neutre</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Par défaut</string>
+    <string name="palette_blue">Bleu</string>
+    <string name="palette_green">Vert</string>
+    <string name="palette_red">Rouge</string>
+    <string name="palette_purple">Violet</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_pink">Rose</string>
+    <string name="palette_teal">Sarcelle</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="custom_color">Couleur Personnalisée</string>
+    <string name="pick_theme_color">Choisis ta propre couleur de thème</string>
+    <string name="style">Style</string>
+    <string name="apply">Appliquer</string>
+    <string name="hue">Teinte</string>
+    <string name="system_default">Par défaut</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Notifications du Minuteur</string>
     <string name="timer_notifications_desc">Afficher le minuteur de repos dans les notifications</string>
@@ -428,6 +465,9 @@
     <string name="onboarding_setup_weight_label">Poids actuel (optionnel)</string>
     <string name="onboarding_setup_goal_label">Objectif hebdomadaire</string>
     <string name="onboarding_setup_footer">Tu pourras toujours modifier ces paramètres plus tard.</string>
+    <string name="onboarding_theme_title">Choisis ton\nthème.</string>
+    <string name="onboarding_notifications_title">Reste\ninformé.</string>
+    <string name="onboarding_backup_title">Protège tes\ndonnées.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filtres</string>
@@ -498,5 +538,9 @@
     <string name="error_unknown">Erreur inconnue</string>
     <string name="routine_not_found">Routine introuvable</string>
     <string name="reps_hint">ex. 8 ou 8-6-4-2</string>
+
+    <!-- Notifications -->
+    <string name="notification_next_set">Prochaine: %1$s - Série %2$d: %3$s × %4$d</string>
+    <string name="notification_last_reps">(dernière: %1$d)</string>
 
 </resources>

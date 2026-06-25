@@ -69,4 +69,8 @@ class AnalyticsRepository @Inject constructor(
             )
         )
     }
+
+    suspend fun deleteWeightLog(id: Int) {
+        weightLogDao.deleteWeightLog(id)
+    }
 }

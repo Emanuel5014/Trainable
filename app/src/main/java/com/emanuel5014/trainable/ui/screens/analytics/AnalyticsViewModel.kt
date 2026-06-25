@@ -56,6 +56,15 @@ class AnalyticsViewModel @Inject constructor(
     private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
     private val categoryVolumeTimeRange = MutableStateFlow(loadCategoryVolumeTimeRange())
     private val periodComparisonRange = MutableStateFlow(AnalyticsTimeRange.OneMonth)
+    private val showProgressCards = MutableStateFlow(loadShowProgressCards())
+
+    private fun loadShowProgressCards(): Boolean {
+        return prefs.getBoolean("show_progress_cards", false)
+    }
+
+    private fun saveShowProgressCards(value: Boolean) {
+        prefs.edit().putBoolean("show_progress_cards", value).apply()
+    }
 
     private fun loadSavedExerciseIds(): Set<Int> {
         val saved = prefs.getStringSet("selected_exercise_ids", emptySet()) ?: emptySet()
@@ -348,9 +357,10 @@ class AnalyticsViewModel @Inject constructor(
 
     val uiState: StateFlow<AnalyticsUiState> = combine(
         analyticsSnapshotFlow,
-        bodyWeightInput
-    ) { snapshot, input ->
-        snapshot.copy(bodyWeightInput = input)
+        bodyWeightInput,
+        showProgressCards
+    ) { snapshot, input, showCards ->
+        snapshot.copy(bodyWeightInput = input, showProgressCards = showCards)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -481,6 +491,14 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
+    fun toggleProgressCards() {
+        showProgressCards.update { current ->
+            val new = !current
+            saveShowProgressCards(new)
+            new
+        }
+    }
+
     fun addTimePeriodComparison(range: AnalyticsTimeRange) {
         periodComparisonRange.value = range
         widgetOrder.update { current ->
@@ -500,7 +518,7 @@ class AnalyticsViewModel @Inject constructor(
         saveExerciseIds(emptySet())
     }
 
-    fun submitWeight() {
+    fun submitWeight(timestamp: Long = System.currentTimeMillis()) {
         val parsedWeight = bodyWeightInput.value.replace(',', '.').toFloatOrNull() ?: return
         val weightUnit = uiState.value.weightUnit
 
@@ -508,9 +526,15 @@ class AnalyticsViewModel @Inject constructor(
             analyticsRepository.addWeightLog(
                 userId = 1,
                 peso = WeightUnitConverter.convertStorage(parsedWeight, weightUnit),
-                timestamp = System.currentTimeMillis()
+                timestamp = timestamp
             )
             bodyWeightInput.value = ""
+        }
+    }
+
+    fun deleteWeightLog(id: Int) {
+        viewModelScope.launch {
+            analyticsRepository.deleteWeightLog(id)
         }
     }
 
@@ -575,7 +599,8 @@ class AnalyticsViewModel @Inject constructor(
                         history = weightHistory.map { entry ->
                             AnalyticsChartPoint(
                                 timestamp = entry.timestamp,
-                                value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit)
+                                value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit),
+                                id = entry.id
                             )
                         }
                     )
@@ -711,7 +736,8 @@ class AnalyticsViewModel @Inject constructor(
             bodyWeightHistory = weightHistory.map { entry ->
                 AnalyticsChartPoint(
                     timestamp = entry.timestamp,
-                    value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit)
+                    value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit),
+                    id = entry.id
                 )
             },
             weightUnit = weightUnit,

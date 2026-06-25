@@ -198,6 +198,11 @@
     <string name="add_time">+30s</string>
     <string name="rest_timer">Rest Timer</string>
     <string name="rest_timer_remaining">%s remaining</string>
+    <string name="warmup_timer">Warmup Timer</string>
+    <string name="warmup_timer_finished">Warmup timer finished!</string>
+    <string name="warmup_timer_description">Set a timer for warmup, stretching, or anything else</string>
+    <string name="warmup_timer_notifications_desc">Show warmup timer in system notifications</string>
+    <string name="warmup_timer_settings_desc">Show warmup timer button during workout</string>
     <string name="close_workout">Close Workout</string>
 
     <!-- Workout Session -->
@@ -258,7 +263,11 @@
     <string name="analytics_strength_summary_positive">+%s%% vs previous 30 days</string>
     <string name="analytics_strength_summary_negative">-%s%% vs previous 30 days</string>
     <string name="analytics_strength_no_data">Not enough PR history yet.</string>
+    <string name="analytics_empty_hint">Tap + to add widgets and track your progress</string>
+    <string name="analytics_progress_cards">1RM PROGRESS</string>
     <string name="analytics_body_weight">BODY WEIGHT</string>
+    <string name="analytics_body_weight_history">History</string>
+    <string name="analytics_select_date">Select date</string>
     <string name="analytics_workout_calendar">WORKOUT CALENDAR</string>
     <string name="analytics_workouts_this_month">%d workouts this month</string>
     <string name="analytics_total_volume">TOTAL TONNAGE</string>
@@ -332,6 +341,34 @@
     <string name="dynamic_color_not_supported">Not supported (Android 12+ required)</string>
     <string name="app_palette">App Palette</string>
     <string name="app_palette_desc">Choose a custom color scheme for the app</string>
+    <string name="theme_mode">Theme</string>
+    <string name="theme_mode_system">System default</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="theme_mode_light_short">A</string>
+    <string name="theme_mode_dark_short">D</string>
+
+    <!-- Personalization - Palettes & Styles -->
+    <string name="style_tonal_spot">Tonal Spot</string>
+    <string name="style_vibrant">Vibrant</string>
+    <string name="style_expressive">Expressive</string>
+    <string name="style_neutral">Neutral</string>
+    <string name="style_fruit_salad">Fruit Salad</string>
+    <string name="palette_default">Default</string>
+    <string name="palette_blue">Blue</string>
+    <string name="palette_green">Green</string>
+    <string name="palette_red">Red</string>
+    <string name="palette_purple">Purple</string>
+    <string name="palette_orange">Orange</string>
+    <string name="palette_pink">Pink</string>
+    <string name="palette_teal">Teal</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="custom_color">Custom Color</string>
+    <string name="pick_theme_color">Pick your own theme color</string>
+    <string name="style">Style</string>
+    <string name="apply">Apply</string>
+    <string name="hue">Hue</string>
+    <string name="system_default">System Default</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show rest timer in system notifications</string>
@@ -428,6 +465,9 @@
     <string name="onboarding_setup_weight_label">Current weight (optional)</string>
     <string name="onboarding_setup_goal_label">Weekly workout goal</string>
     <string name="onboarding_setup_footer">You can always change these later in settings.</string>
+    <string name="onboarding_theme_title">Pick your\ntheme.</string>
+    <string name="onboarding_notifications_title">Stay in\nthe loop.</string>
+    <string name="onboarding_backup_title">Keep your\ndata safe.</string>
 
     <!-- Filters & Search -->
     <string name="filters">Filters</string>
@@ -498,5 +538,9 @@
     <string name="error_unknown">Unknown error</string>
     <string name="routine_not_found">Routine not found</string>
     <string name="reps_hint">e.g. 8 or 8-6-4-2</string>
+
+    <!-- Notifications -->
+    <string name="notification_next_set">Next: %1$s - Set %2$d: %3$s × %4$d</string>
+    <string name="notification_last_reps">(last: %1$d)</string>
 
 </resources>

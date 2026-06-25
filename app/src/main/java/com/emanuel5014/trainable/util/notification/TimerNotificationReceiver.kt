@@ -29,13 +29,20 @@ class TimerNotificationReceiver : BroadcastReceiver() {
         const val ACTION_ADD_30S = "com.emanuel5014.trainable.ACTION_ADD_30S"
         const val ACTION_DISMISS = "com.emanuel5014.trainable.ACTION_DISMISS"
         const val ACTION_TIMER_FINISHED = "com.emanuel5014.trainable.ACTION_TIMER_FINISHED"
-        
+
+        const val ACTION_WARMUP_SKIP = "com.emanuel5014.trainable.ACTION_WARMUP_SKIP"
+        const val ACTION_WARMUP_ADD_30S = "com.emanuel5014.trainable.ACTION_WARMUP_ADD_30S"
+        const val ACTION_WARMUP_DISMISS = "com.emanuel5014.trainable.ACTION_WARMUP_DISMISS"
+        const val ACTION_WARMUP_FINISHED = "com.emanuel5014.trainable.ACTION_WARMUP_FINISHED"
+
         const val EXTRA_SESSION_ID = "extra_session_id"
 
         val timerEvents = MutableSharedFlow<TimerAction>(extraBufferCapacity = 1)
+        val warmupTimerEvents = MutableSharedFlow<WarmupTimerAction>(extraBufferCapacity = 1)
     }
 
     enum class TimerAction { SKIP, ADD_30S, DISMISS, FINISHED }
+    enum class WarmupTimerAction { SKIP, ADD_30S, DISMISS, FINISHED }
 
     override fun onReceive(context: Context, intent: Intent) {
         val sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1)
@@ -98,6 +105,22 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                         }
                     }
                 }
+            }
+
+            ACTION_WARMUP_SKIP -> {
+                warmupTimerEvents.tryEmit(WarmupTimerAction.SKIP)
+                timerNotificationHelper.cancelWarmupTimer()
+            }
+            ACTION_WARMUP_ADD_30S -> {
+                warmupTimerEvents.tryEmit(WarmupTimerAction.ADD_30S)
+            }
+            ACTION_WARMUP_DISMISS -> {
+                warmupTimerEvents.tryEmit(WarmupTimerAction.DISMISS)
+                timerNotificationHelper.cancelWarmupTimer()
+            }
+            ACTION_WARMUP_FINISHED -> {
+                warmupTimerEvents.tryEmit(WarmupTimerAction.FINISHED)
+                timerNotificationHelper.showWarmupTimerFinished()
             }
         }
     }

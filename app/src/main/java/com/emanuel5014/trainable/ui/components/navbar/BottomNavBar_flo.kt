@@ -60,6 +60,7 @@ fun BottomNavBarFlo(
     navController: NavHostController,
     pagerState: androidx.compose.foundation.pager.PagerState,
     hazeState: HazeState,
+    isDark: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -74,7 +75,7 @@ fun BottomNavBarFlo(
     val isOnMainTabs = currentRoute?.contains("MainTabs") == true || currentRoute == null
     val selectedIndex = if (isOnMainTabs) pagerState.currentPage else 0
     val items = localizedNavItems()
-    val hazeTintColor = SurfaceContainerHigh.copy(alpha = 0.65f)
+    val hazeTintColor = SurfaceContainerHigh.copy(alpha = if (isDark) 0.65f else 0.95f)
 
     Surface(
         modifier = modifier
@@ -83,7 +84,7 @@ fun BottomNavBarFlo(
         shape = RoundedCornerShape(32.dp),
         color = SurfaceContainerHigh,
         tonalElevation = 0.dp,
-        shadowElevation = 12.dp
+        shadowElevation = if (isDark) 12.dp else 0.dp
     ) {
         Box(
             modifier = Modifier

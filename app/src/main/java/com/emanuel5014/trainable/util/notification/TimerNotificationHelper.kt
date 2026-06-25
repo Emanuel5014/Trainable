@@ -11,6 +11,7 @@ import androidx.core.app.AlarmManagerCompat
 import androidx.core.app.NotificationCompat
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.util.WeightUnitConverter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,6 +25,11 @@ class TimerNotificationHelper @Inject constructor(
     private val runningChannelId = "rest_timer_running_channel_v1"
     private val finishedChannelId = "rest_timer_finished_channel_v1"
     private val notificationId = 1001
+    private var lastNextSetLabel: String? = null
+
+    private val warmupRunningChannelId = "warmup_timer_running_channel_v1"
+    private val warmupFinishedChannelId = "warmup_timer_finished_channel_v1"
+    private val warmupNotificationId = 1002
 
     init {
         createNotificationChannels()
@@ -66,6 +72,30 @@ class TimerNotificationHelper @Inject constructor(
 
             notificationManager.createNotificationChannel(runningChannel)
             notificationManager.createNotificationChannel(finishedChannel)
+
+            // Warmup timer channels
+            val warmupName = context.getString(R.string.warmup_timer)
+            val warmupRunningChannel = NotificationChannel(
+                warmupRunningChannelId,
+                warmupName,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = context.getString(R.string.warmup_timer_notifications_desc)
+                setShowBadge(false)
+                setSound(null, null)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            val warmupFinishedChannel = NotificationChannel(
+                warmupFinishedChannelId,
+                warmupName,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(R.string.warmup_timer_notifications_desc)
+                setShowBadge(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            notificationManager.createNotificationChannel(warmupRunningChannel)
+            notificationManager.createNotificationChannel(warmupFinishedChannel)
         }
     }
 
@@ -74,7 +104,16 @@ class TimerNotificationHelper @Inject constructor(
      * Uses Android's internal Chronometer to update the countdown in the System UI
      * without requiring a notify() call every second.
      */
-    fun startOrUpdateTimerNotification(remainingSeconds: Int, sessionId: Int) {
+    fun startOrUpdateTimerNotification(
+        remainingSeconds: Int,
+        sessionId: Int,
+        exerciseName: String? = null,
+        nextSetNumber: Int? = null,
+        nextSetWeight: Float? = null,
+        nextSetReps: Int? = null,
+        previousReps: Int? = null,
+        weightUnit: String? = null
+    ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -97,6 +136,18 @@ class TimerNotificationHelper @Inject constructor(
         }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && nextSetReps != null && weightUnit != null) {
+            val formattedWeight = WeightUnitConverter.formatWithUnit(
+                WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
+                weightUnit
+            )
+            val base = context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+            if (previousReps != null && previousReps != nextSetReps) {
+                "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
+            } else base
+        } else null
+        lastNextSetLabel = nextSetLabel
+
         val notification = NotificationCompat.Builder(context, runningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
@@ -110,6 +161,8 @@ class TimerNotificationHelper @Inject constructor(
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
+            .setContentText(nextSetLabel)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(nextSetLabel))
             .addAction(0, "+30s", addPendingIntent)
             .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
             .build()
@@ -143,10 +196,17 @@ class TimerNotificationHelper @Inject constructor(
         val dismissIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_DISMISS }
         val dismissPendingIntent = PendingIntent.getBroadcast(context, 3, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        val contentText = if (lastNextSetLabel != null) {
+            context.getString(R.string.rest_end) + " — $lastNextSetLabel"
+        } else {
+            context.getString(R.string.rest_end)
+        }
+
         val notification = NotificationCompat.Builder(context, finishedChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
-            .setContentText(context.getString(R.string.rest_end))
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -162,8 +222,113 @@ class TimerNotificationHelper @Inject constructor(
 
     fun cancelTimer() {
         notificationManager.cancel(notificationId)
+        cancelFinishAlarm()
+    }
+
+    fun cancelFinishAlarm() {
         val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_TIMER_FINISHED }
         val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        alarmManager.cancel(finishPendingIntent)
+    }
+
+    // ---- Warmup / General Timer ----
+
+    fun startOrUpdateWarmupTimerNotification(remainingSeconds: Int) {
+        val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 10, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val skipIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_SKIP
+        }
+        val skipPendingIntent = PendingIntent.getBroadcast(
+            context, 11, skipIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val addIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_ADD_30S
+        }
+        val addPendingIntent = PendingIntent.getBroadcast(
+            context, 12, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, warmupRunningChannelId)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(context.getString(R.string.warmup_timer))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(pendingIntent)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setWhen(triggerTime)
+            .addAction(0, "+30s", addPendingIntent)
+            .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .build()
+
+        notificationManager.notify(warmupNotificationId, notification)
+
+        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED
+        }
+        val finishPendingIntent = PendingIntent.getBroadcast(
+            context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        AlarmManagerCompat.setExactAndAllowWhileIdle(
+            alarmManager, AlarmManager.RTC_WAKEUP, triggerTime, finishPendingIntent
+        )
+    }
+
+    fun showWarmupTimerFinished() {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 10, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val dismissIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_DISMISS
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context, 13, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, warmupFinishedChannelId)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(context.getString(R.string.warmup_timer))
+            .setContentText(context.getString(R.string.warmup_timer_finished))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.warmup_timer_finished)))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setOngoing(false)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .addAction(0, context.getString(R.string.dismiss), dismissPendingIntent)
+            .build()
+
+        notificationManager.notify(warmupNotificationId, notification)
+    }
+
+    fun cancelWarmupTimer() {
+        notificationManager.cancel(warmupNotificationId)
+        cancelWarmupFinishAlarm()
+    }
+
+    fun cancelWarmupFinishAlarm() {
+        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED }
+        val finishPendingIntent = PendingIntent.getBroadcast(context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         alarmManager.cancel(finishPendingIntent)
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.edit
+import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -66,8 +67,10 @@ class BackupManager @Inject constructor(
                 val prefs = context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE)
                 val selectedExerciseIds = prefs.getStringSet("selected_exercise_ids", null)
                 val widgetOrder = prefs.getString("widget_order", null)
+                val showProgressCards = if (prefs.contains("show_progress_cards")) prefs.getBoolean("show_progress_cards", false) else null
+                val categoryVolumeTimeRange = prefs.getString("category_volume_time_range", null)
                 
-                if (selectedExerciseIds != null || widgetOrder != null) {
+                if (selectedExerciseIds != null || widgetOrder != null || showProgressCards != null || categoryVolumeTimeRange != null) {
                     val jsonObject = org.json.JSONObject()
                     selectedExerciseIds?.let { ids ->
                         val jsonArray = org.json.JSONArray()
@@ -75,11 +78,19 @@ class BackupManager @Inject constructor(
                         jsonObject.put("selected_exercise_ids", jsonArray)
                     }
                     widgetOrder?.let { jsonObject.put("widget_order", it) }
+                    showProgressCards?.let { jsonObject.put("show_progress_cards", it) }
+                    categoryVolumeTimeRange?.let { jsonObject.put("category_volume_time_range", it) }
                     
                     zos.putNextEntry(ZipEntry("analytics_settings.json"))
                     zos.write(jsonObject.toString().toByteArray())
                     zos.closeEntry()
                 }
+
+                // 2c. Export App Preferences (Theme, Weight Unit, Language, Swipe Actions, etc.)
+                val appPrefs = buildAppPreferencesJson()
+                zos.putNextEntry(ZipEntry("app_preferences.json"))
+                zos.write(appPrefs.toByteArray())
+                zos.closeEntry()
 
                 // 3. Export Images if requested - Only if referenced in database
                 if (includeImages) {
@@ -173,8 +184,39 @@ class BackupManager @Inject constructor(
         }
     }
 
+    private fun buildAppPreferencesJson(): String {
+        return try {
+            runBlocking {
+                val prefs = context.dataStore.data.first()
+                val json = org.json.JSONObject()
+
+                json.put("weight_unit", prefs[UserPreferencesRepository.WEIGHT_UNIT] ?: "kg")
+                prefs[UserPreferencesRepository.USER_LANGUAGE]?.let { json.put("user_language", it) }
+                json.put("swipe_actions_enabled", prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true)
+                json.put("dynamic_color", prefs[UserPreferencesRepository.DYNAMIC_COLOR] ?: true)
+                prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED]?.let { json.put("dynamic_color_seed", it) }
+                json.put("theme_palette", prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0)
+                json.put("theme_style", prefs[UserPreferencesRepository.THEME_STYLE] ?: 0)
+                json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
+                json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
+                json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
+                json.put("theme_mode", prefs[UserPreferencesRepository.THEME_MODE] ?: 0)
+                json.put("timer_notifications_enabled", prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] ?: true)
+                json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
+                json.put("gym_membership_expiry_notifications_enabled", prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] ?: true)
+                json.put("gym_membership_expiry_notification_days_before", prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] ?: 14)
+
+                json.toString()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "{}"
+        }
+    }
+
     suspend fun importDatabaseZip(inputUri: Uri): Boolean = withContext(Dispatchers.IO) {
         try {
+            GymDatabase.closeDatabase()
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
             if (!dbDir.exists()) dbDir.mkdirs()
             val filesDir = context.filesDir
@@ -216,8 +258,58 @@ class BackupManager @Inject constructor(
                                     if (jsonObject.has("widget_order")) {
                                         editor.putString("widget_order", jsonObject.getString("widget_order"))
                                     }
+
+                                    if (jsonObject.has("show_progress_cards")) {
+                                        editor.putBoolean("show_progress_cards", jsonObject.getBoolean("show_progress_cards"))
+                                    }
+
+                                    if (jsonObject.has("category_volume_time_range")) {
+                                        editor.putString("category_volume_time_range", jsonObject.getString("category_volume_time_range"))
+                                    }
                                     
-                                    editor.apply()
+                                    editor.commit()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                            entry.name == "app_preferences.json" -> {
+                                try {
+                                    val jsonContent = zis.bufferedReader().readText()
+                                    val jsonObject = org.json.JSONObject(jsonContent)
+                                    runBlocking {
+                                        context.dataStore.edit { prefs ->
+                                            if (jsonObject.has("weight_unit"))
+                                                prefs[UserPreferencesRepository.WEIGHT_UNIT] = jsonObject.getString("weight_unit")
+                                            if (jsonObject.has("user_language") && !jsonObject.isNull("user_language"))
+                                                prefs[UserPreferencesRepository.USER_LANGUAGE] = jsonObject.getString("user_language")
+                                            if (jsonObject.has("swipe_actions_enabled"))
+                                                prefs[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] = jsonObject.getBoolean("swipe_actions_enabled")
+                                            if (jsonObject.has("dynamic_color"))
+                                                prefs[UserPreferencesRepository.DYNAMIC_COLOR] = jsonObject.getBoolean("dynamic_color")
+                                            if (jsonObject.has("dynamic_color_seed") && !jsonObject.isNull("dynamic_color_seed"))
+                                                prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED] = jsonObject.getInt("dynamic_color_seed")
+                                            if (jsonObject.has("theme_palette"))
+                                                prefs[UserPreferencesRepository.THEME_PALETTE] = jsonObject.getInt("theme_palette")
+                                            if (jsonObject.has("theme_style"))
+                                                prefs[UserPreferencesRepository.THEME_STYLE] = jsonObject.getInt("theme_style")
+                                            if (jsonObject.has("haptic_enabled"))
+                                                prefs[UserPreferencesRepository.HAPTIC_ENABLED] = jsonObject.getBoolean("haptic_enabled")
+                                            if (jsonObject.has("weekly_goal"))
+                                                prefs[UserPreferencesRepository.WEEKLY_GOAL] = jsonObject.getInt("weekly_goal")
+                                            if (jsonObject.has("floating_nav_bar"))
+                                                prefs[UserPreferencesRepository.FLOATING_NAV_BAR] = jsonObject.getBoolean("floating_nav_bar")
+                                            if (jsonObject.has("theme_mode"))
+                                                prefs[UserPreferencesRepository.THEME_MODE] = jsonObject.getInt("theme_mode")
+                                            if (jsonObject.has("timer_notifications_enabled"))
+                                                prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] = jsonObject.getBoolean("timer_notifications_enabled")
+                                            if (jsonObject.has("warmup_timer_enabled"))
+                                                prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] = jsonObject.getBoolean("warmup_timer_enabled")
+                                            if (jsonObject.has("gym_membership_expiry_notifications_enabled"))
+                                                prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] = jsonObject.getBoolean("gym_membership_expiry_notifications_enabled")
+                                            if (jsonObject.has("gym_membership_expiry_notification_days_before"))
+                                                prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] = jsonObject.getInt("gym_membership_expiry_notification_days_before")
+                                        }
+                                    }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }

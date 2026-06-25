@@ -18,7 +18,8 @@ enum class AnalyticsTimeRange(val labelResId: Int, private val durationDays: Lon
 
 data class AnalyticsChartPoint(
     val timestamp: Long,
-    val value: Float
+    val value: Float,
+    val id: Int = -1
 )
 
 data class PersonalBestUiModel(
@@ -117,5 +118,6 @@ data class AnalyticsUiState(
     val workoutDates: List<Long> = emptyList(),
     val allPlans: List<WorkoutPlanEntity> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val showProgressCards: Boolean = false
 )
