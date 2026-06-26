@@ -1033,6 +1033,7 @@ private fun RoutineCard(
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick

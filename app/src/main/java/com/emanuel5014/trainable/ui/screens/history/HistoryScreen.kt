@@ -1247,6 +1247,7 @@ fun SessionHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick

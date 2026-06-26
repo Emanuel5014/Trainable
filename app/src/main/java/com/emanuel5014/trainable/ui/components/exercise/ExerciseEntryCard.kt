@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
@@ -26,6 +27,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
+import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
 @Composable
@@ -40,6 +42,7 @@ fun ExerciseEntryCard(
     com.emanuel5014.trainable.ui.components.GymCard(
         modifier = modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .clickable { onClick() },
         containerColor = if (isSuperset) com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.08f) else SurfaceContainer,
         border = if (isSuperset) androidx.compose.foundation.BorderStroke(1.5.dp, com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.3f)) else null

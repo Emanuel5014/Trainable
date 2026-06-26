@@ -564,7 +564,9 @@ fun DashboardScreen(
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
-                                modifier = Modifier.clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
+                                modifier = Modifier
+                                    .clip(Shapes.extraLarge)
+                                    .clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -600,7 +602,9 @@ fun DashboardScreen(
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
-                                modifier = Modifier.clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
+                                modifier = Modifier
+                                    .clip(Shapes.extraLarge)
+                                    .clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -950,6 +954,7 @@ private fun UnfinishedSessionCard(
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
