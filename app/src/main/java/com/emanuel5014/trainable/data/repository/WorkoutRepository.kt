@@ -241,8 +241,18 @@ class WorkoutRepository @Inject constructor(
         workoutDao.deletePlan(plan)
     }
     
+    private fun triggerWidgetUpdate() {
+        try {
+            com.emanuel5014.trainable.widget.TrainableWidget.update(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false, note: String? = null): Long {
-        return workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished, noteSessione = note))
+        val sessionId = workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished, noteSessione = note))
+        triggerWidgetUpdate()
+        return sessionId
     }
 
     suspend fun startQuickWorkoutSession(name: String? = null): Long {
@@ -286,7 +296,10 @@ class WorkoutRepository @Inject constructor(
 
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>> = workoutDao.getUnfinishedSessionsWithPlanName()
 
-    suspend fun setSessionFinished(sessionId: Int) = workoutDao.setSessionFinished(sessionId)
+    suspend fun setSessionFinished(sessionId: Int) {
+        workoutDao.setSessionFinished(sessionId)
+        triggerWidgetUpdate()
+    }
 
     suspend fun updateRestTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateRestTimer(sessionId, endTime, totalSeconds)
 
@@ -417,6 +430,7 @@ class WorkoutRepository @Inject constructor(
                 )
             }
         }
+        triggerWidgetUpdate()
         return sessionId
     }
 
@@ -431,9 +445,15 @@ class WorkoutRepository @Inject constructor(
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>> = 
         workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
 
-    suspend fun deleteSession(sessionId: Int) = workoutDao.deleteSession(sessionId)
+    suspend fun deleteSession(sessionId: Int) {
+        workoutDao.deleteSession(sessionId)
+        triggerWidgetUpdate()
+    }
 
-    suspend fun updateSession(session: WorkoutSessionEntity) = workoutDao.updateSession(session)
+    suspend fun updateSession(session: WorkoutSessionEntity) {
+        workoutDao.updateSession(session)
+        triggerWidgetUpdate()
+    }
 
     suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int) = 
         workoutDao.deleteExerciseFromSession(sessionId, exerciseId)

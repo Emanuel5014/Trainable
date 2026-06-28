@@ -82,6 +82,17 @@
                 <action android:name="com.emanuel5014.trainable.ACTION_DISMISS" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".widget.TrainableWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/trainable_widget_info" />
+        </receiver>
     </application>
 
 </manifest>

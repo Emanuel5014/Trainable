@@ -65,6 +65,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Jetpack Glance AppWidgets
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
+
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

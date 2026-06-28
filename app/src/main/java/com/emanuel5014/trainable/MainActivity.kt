@@ -48,14 +48,19 @@ import com.emanuel5014.trainable.util.UpdateManager
 import dagger.hilt.android.AndroidEntryPoint
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private var workoutIntentState by mutableStateOf<android.content.Intent?>(null)
 
     @Inject
     lateinit var userPreferencesRepository: UserPreferencesRepository
@@ -72,6 +77,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        workoutIntentState = intent
 
         // For Android < 13, apply the stored language before setContent
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -128,19 +134,21 @@ class MainActivity : ComponentActivity() {
             // Handle Import Intent
             LaunchedEffect(intent?.data) {
                 intent?.data?.let { uri ->
-                    scope.launch {
-                        try {
+                    try {
+                        val jsonData = withContext(Dispatchers.IO) {
                             contentResolver.openInputStream(uri)?.use { inputStream ->
-                                val jsonData = inputStream.bufferedReader().use { it.readText() }
-                                val json = Json { ignoreUnknownKeys = true }
-                                val plans = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
-                                plansToImport = plans
-                                jsonDataToImport = jsonData
+                                inputStream.bufferedReader().use { it.readText() }
                             }
-                        } catch (e: Exception) {
-                            Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
-                            e.printStackTrace()
-                        }
+                        } ?: return@let
+                        val json = Json { ignoreUnknownKeys = true }
+                        val plans = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
+                        plansToImport = plans
+                        jsonDataToImport = jsonData
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                        e.printStackTrace()
                     }
                 }
             }
@@ -162,7 +170,35 @@ class MainActivity : ComponentActivity() {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()
+
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentWorkoutIntent = workoutIntentState
+                LaunchedEffect(currentWorkoutIntent, navBackStackEntry) {
+                    if (currentWorkoutIntent != null && navBackStackEntry != null) {
+                        val intent = currentWorkoutIntent
+                        if (intent.hasExtra("workout_plan_id") || intent.hasExtra("workout_session_id") || intent.getBooleanExtra("quick_start", false)) {
+                            val planId = intent.getIntExtra("workout_plan_id", -1).takeIf { id -> id != -1 }
+                            val sessionId = intent.getIntExtra("workout_session_id", -1).takeIf { id -> id != -1 }
+                            val quickStart = intent.getBooleanExtra("quick_start", false)
+                            val workoutName = intent.getStringExtra("workout_name")
+
+                            // Clear intent extras to prevent multiple navigation triggers
+                            intent.removeExtra("workout_plan_id")
+                            intent.removeExtra("workout_session_id")
+                            intent.removeExtra("quick_start")
+                            intent.removeExtra("workout_name")
+                            workoutIntentState = null
+
+                            navController.navigate(WorkoutExecution(
+                                planId = planId,
+                                sessionId = sessionId,
+                                quickStart = quickStart,
+                                workoutName = workoutName
+                            ))
+                        }
+                    }
+                }
+
                 val currentDestination = navBackStackEntry?.destination
 
                 val resolvedOnboardingState = onboardingCompletedOverride.value ?: hasCompletedOnboarding
@@ -278,5 +314,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        workoutIntentState = intent
+    }
+
+    override fun onResume() {
+        super.onResume()
+        com.emanuel5014.trainable.widget.TrainableWidget.update(this)
     }
 }

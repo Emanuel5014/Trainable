@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.theme
 import android.annotation.SuppressLint
+import android.content.Context
 import android.app.Activity
 import android.os.Build
 import androidx.compose.material3.ColorScheme
@@ -381,6 +382,35 @@ private fun generateColorSchemeFromSeed(seedColor: Int, themeStyle: Int = 0, isD
 }
 
 @SuppressLint("RestrictedApi")
+fun getAppColorScheme(
+    context: Context,
+    dynamicColor: Boolean,
+    paletteIndex: Int,
+    seedColor: Int?,
+    themeStyle: Int,
+    isDark: Boolean
+): ColorScheme {
+    return when {
+        seedColor != null -> generateColorSchemeFromSeed(seedColor, themeStyle, isDark)
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val baseScheme = if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (themeStyle == 0) baseScheme else generateColorSchemeFromSeed(baseScheme.primary.toArgb(), themeStyle, isDark)
+        }
+        else -> when (paletteIndex) {
+            1 -> blueColorScheme(isDark)
+            2 -> greenColorScheme(isDark)
+            3 -> redColorScheme(isDark)
+            4 -> purpleColorScheme(isDark)
+            5 -> orangeColorScheme(isDark)
+            6 -> pinkColorScheme(isDark)
+            7 -> tealColorScheme(isDark)
+            8 -> if (isDark) MonochromeDarkColorScheme else MonochromeLightColorScheme
+            else -> if (isDark) MonolithicDarkColorScheme else MonolithicLightColorScheme
+        }
+    }
+}
+
+@SuppressLint("RestrictedApi")
 @Composable
 fun GymTrackingTheme(
     dynamicColor: Boolean = true,
@@ -392,24 +422,14 @@ fun GymTrackingTheme(
 ) {
     rememberResponsiveSize()
     val context = LocalContext.current
-    val colorScheme = when {
-        seedColor != null -> generateColorSchemeFromSeed(seedColor, themeStyle, darkTheme)
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val baseScheme = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            if (themeStyle == 0) baseScheme else generateColorSchemeFromSeed(baseScheme.primary.toArgb(), themeStyle, darkTheme)
-        }
-        else -> when (paletteIndex) {
-            1 -> blueColorScheme(darkTheme)
-            2 -> greenColorScheme(darkTheme)
-            3 -> redColorScheme(darkTheme)
-            4 -> purpleColorScheme(darkTheme)
-            5 -> orangeColorScheme(darkTheme)
-            6 -> pinkColorScheme(darkTheme)
-            7 -> tealColorScheme(darkTheme)
-            8 -> if (darkTheme) MonochromeDarkColorScheme else MonochromeLightColorScheme
-            else -> if (darkTheme) MonolithicDarkColorScheme else MonolithicLightColorScheme
-        }
-    }
+    val colorScheme = getAppColorScheme(
+        context = context,
+        dynamicColor = dynamicColor,
+        paletteIndex = paletteIndex,
+        seedColor = seedColor,
+        themeStyle = themeStyle,
+        isDark = darkTheme
+    )
 
     val view = LocalView.current
     if (!view.isInEditMode) {
