@@ -21,8 +21,12 @@
 </div>
 
 
-**Trainable** is a premium, native Android workout tracker designed for lifters. It focuses on a "Monolithic" dark-only aesthetic, perfectly aligned with Google's **Material 3 Expressive** guidelines, offering a seamless experience specifically optimized for Pixel devices.
+**Trainable** is a premium, native Android workout tracker designed for lifters. It features a monolithic design aligned with Google's **Material 3 Expressive** guidelines, with both **Dark** and **Light Mode** support, offering a seamless experience optimized for Pixel devices.
+
+Available in **6 languages**: English, Italian, Portuguese, German, French, Spanish.
+
 ---
+
 ## 📱 Screenshots
 
 <div align="center">
@@ -39,31 +43,68 @@
 
 ### 📊 Intelligent Dashboard
 *   **Active Plan Hub**: Quick access to your current routine and next scheduled session.
+*   **Smart Recommendations**: Assign routines to specific weekdays for intelligent "Today's Workout" suggestions.
 *   **Resume Workout**: Smart hub to quickly resume interrupted sessions without data loss.
+*   **Quick Start**: Start an empty workout directly from the dashboard without a plan.
 
 ### 📋 Advanced Routine Builder
-*   **Exercise Library**: 130+ pre-populated exercises with categorized filters.
+*   **Exercise Library**: 134 pre-populated exercises with categorized filters.
 *   **Drag & Drop Reordering**: Fluid, haptic-powered reordering of exercises within routines.
 *   **Custom Exercises**: Add and manage your own exercises with persistent categorization.
+*   **Superset Support**: Group exercises into supersets within routines.
+*   **Plan Scheduling**: Set Start and Expire dates when creating or editing routines.
+*   **Routine Sharing**: Export and import routines via `.trainableplan` file format.
+*   **Routine Photos**: Capture multiple photos in-app and include them in exports.
 
 ### 💪 High-Performance Workout Execution
 *   **Expressive UI**: Massive, touch-friendly inputs designed for use during heavy sets.
 *   **Wheel Pickers**: Haptic-boosted weight and rep selection for precise control.
 *   **Smart Hub**: Dynamic navigation between exercises with "Finish" and "Next" logic.
-*   **Rest Timer**: Integrated countdown cards that respect your focus.
+*   **Superset Flow**: Execute grouped superset exercises seamlessly.
+*   **Rest Timer**: Integrated countdown cards with enhanced notifications showing next-set details and planned reps.
+*   **Warmup Timer**: Configurable warmup timer in settings.
 *   **Session Notes**: Persistence of notes for every single set for granular tracking.
+*   **Swipe Navigation**: Swipe between exercises during workout execution.
+*   **Exercise Note Pre-fill**: Auto-fill exercise notes from session history.
+*   **On-the-fly Edits**: Add custom exercises mid-workout; tap plan title to view/edit plan details.
 
 ### 📈 Deep Analytics
 *   **Vico Charts**: Professional-grade visualizations for total volume and strength trends.
+*   **1RM Tracking**: Algorithmic strength assessment using the Epley formula, with optional 1RM cards.
+*   **Volume by Muscle Group**: Track volume distributed across muscle groups.
+*   **Session Comparison**: Compare workouts across time periods or specific sessions.
+*   **Workout Calendar**: Visual calendar widget for workout frequency.
 *   **Consistency Tracking**: Visual heatmaps and progress cards.
 *   **Strength Index**: Algorithmic assessment of your structural balance and performance.
-*   **Body Composition**: Integrated weight logging and body fat tracking.
+*   **Body Weight**: Integrated weight logging and history tracking.
+*   **Body Weight History**: Dedicated module with date picker, delete functionality, and collapsible UI.
+*   **Cardio Tracking**: Cardio counter in weekly goal overview.
+
+### 🌍 Localization
+*   **6 Languages**: English, Italian, Portuguese, German, French, Spanish.
+*   **Dynamic Switching**: Change language directly from Settings.
+
+### 🏟️ Gym Membership
+*   **Expiration Tracking**: Monitor your gym subscription end date.
+*   **Smart Alerts**: Expiration notifications with "Renew" quick action buttons.
+
+### 📸 Social Sharing
+*   **Workout Share Cards**: Generate and share full-length workout summary images.
+*   **Live Preview**: Preview your share card before sharing.
+*   **Muscle Group Details**: Muscle group breakdown included in share cards.
+*   **Session Notes**: Workout notes included in shared summaries.
 
 ### ⚙️ Premium UX & Tools
 *   **Dynamic Color**: Full support for Android 12+ wallpaper-based color extraction.
+*   **Light Mode & Custom Themes**: Switch between Dark/Light mode and customize themes.
+*   **Google Sans Font**: Clean, modern typography throughout the app.
 *   **Horizontal Pager Navigation**: Fluid swipe-based transitions between main tabs.
-*   **Backup & Restore**: Secure ZIP-based local backup system for your database.
+*   **Backup & Restore**: Secure ZIP-based local backup system with photo compression and expanded preference sync (Theme, Units, Language).
+*   **Auto-Backup**: Reliable WorkManager-based automated background backups.
 *   **Tactile Feedback**: Enhanced haptic responses for all critical UI interactions.
+*   **Interaction Choice**: Configure Swipe or Long-press interaction style in Settings.
+*   **Auto-Updates**: Built-in automatic update support for future releases.
+*   **Unit System**: Choose between Metric (kg) and Imperial (lbs).
 
 ---
 

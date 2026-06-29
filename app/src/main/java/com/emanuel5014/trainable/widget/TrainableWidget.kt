@@ -199,16 +199,16 @@ private fun WidgetContent(
     }
 
     val stateLabel = when {
-        isResume -> "IN CORSO"
-        todayPlan != null -> "CONSIGLIATO OGGI"
-        suggestedPlan != null -> "CONSIGLIATO"
-        else -> "BENVENUTO"
+        isResume -> context.getString(R.string.widget_state_in_progress)
+        todayPlan != null -> context.getString(R.string.widget_state_suggested_today)
+        suggestedPlan != null -> context.getString(R.string.widget_state_suggested)
+        else -> context.getString(R.string.widget_state_welcome)
     }
 
     val buttonText = when {
-        isResume -> "RIPRENDI"
-        todayPlan != null || suggestedPlan != null -> "INIZIA"
-        else -> "APRI APP"
+        isResume -> context.getString(R.string.widget_action_resume)
+        todayPlan != null || suggestedPlan != null -> context.getString(R.string.widget_action_start)
+        else -> context.getString(R.string.widget_action_open_app)
     }
 
     val intent = Intent(context, MainActivity::class.java).apply {
@@ -279,7 +279,7 @@ private fun WidgetContent(
 
                 // Plan/Routine Name
                 Text(
-                    text = displayPlanName ?: "Inizia una routine",
+                    text = displayPlanName ?: context.getString(R.string.widget_start_routine),
                     maxLines = 1,
                     style = TextStyle(
                         color = GlanceTheme.colors.onSurface,

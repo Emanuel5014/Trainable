@@ -543,4 +543,14 @@
     <string name="notification_next_set">Next: %1$s - Set %2$d: %3$s × %4$d</string>
     <string name="notification_last_reps">(last: %1$d)</string>
 
+    <!-- Widget -->
+    <string name="widget_state_in_progress">IN PROGRESS</string>
+    <string name="widget_state_suggested_today">RECOMMENDED TODAY</string>
+    <string name="widget_state_suggested">RECOMMENDED</string>
+    <string name="widget_state_welcome">WELCOME</string>
+    <string name="widget_action_resume">RESUME</string>
+    <string name="widget_action_start">START</string>
+    <string name="widget_action_open_app">OPEN APP</string>
+    <string name="widget_start_routine">Start a routine</string>
+
 </resources>
