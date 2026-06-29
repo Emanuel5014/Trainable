@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
@@ -53,6 +54,7 @@ fun MainPagerScreen(
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = !BottomBarManager.swipeLocked,
         beyondViewportPageCount = 3
     ) { page ->
         when (page) {

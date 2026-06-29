@@ -257,9 +257,11 @@ fun HistoryScreen(
     DisposableEffect(capturedBitmapToPreview) {
         if (capturedBitmapToPreview != null) {
             BottomBarManager.isVisibleOverride = false
+            BottomBarManager.swipeLocked = true
         }
         onDispose {
             BottomBarManager.isVisibleOverride = true
+            BottomBarManager.swipeLocked = false
         }
     }
 
