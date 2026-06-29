@@ -138,6 +138,7 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -170,6 +171,7 @@ import com.emanuel5014.trainable.util.ShareUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 private data class ExerciseWithSets(
     val exercise: com.emanuel5014.trainable.data.local.entity.ExerciseEntity,
@@ -238,7 +240,7 @@ fun HistoryScreen(
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-    var sessionToShare by remember { mutableStateOf<Pair<SessionWithDetails, String>?>(null) }
+    var sessionToShare by remember { mutableStateOf<Triple<SessionWithDetails, String, List<PlanExerciseWithDetails>?>?>(null) }
 
     LaunchedEffect(Unit) {
         isNavigating = false
@@ -516,7 +518,10 @@ fun HistoryScreen(
                                     languageCode = languageCode,
                                     weightUnit = uiState.weightUnit,
                                     onShareClick = { details ->
-                                        sessionToShare = details to planName
+                                        scope.launch {
+                                            val planExercises = viewModel.loadPlanExercises(details.session.planId)
+                                            sessionToShare = Triple(details, planName, planExercises)
+                                        }
                                     },
                                     swipeActionsEnabled = swipeActionsEnabled,
                                     isSelectionMode = uiState.isSelectionMode,
@@ -593,7 +598,8 @@ fun HistoryScreen(
                                             sessionDetails = sessionToShare!!.first,
                                             planName = sessionToShare!!.second,
                                             languageCode = languageCode,
-                                            weightUnit = uiState.weightUnit
+                                            weightUnit = uiState.weightUnit,
+                                            planExercises = sessionToShare!!.third
                                         )
                                     }
                                 }

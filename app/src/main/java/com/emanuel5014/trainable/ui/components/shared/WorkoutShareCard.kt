@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.drawToBitmap
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SetWithExercise
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -54,10 +55,13 @@ fun WorkoutShareCard(
     planName: String,
     languageCode: String,
     weightUnit: String,
+    planExercises: List<PlanExerciseWithDetails>? = null,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = Primary
     
+    val planExerciseMap = planExercises?.associateBy { it.planExercise.exerciseId }
+
     // Curated dark obsidian brand palette
     val obsidianBackground = Brush.verticalGradient(
         colors = listOf(Color(0xFF0C0C0E), Color(0xFF18181C))
@@ -379,13 +383,28 @@ fun WorkoutShareCard(
                             }
 
                             val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-                            Text(
-                                text = exerciseName.uppercase(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Black,
-                                color = primaryColor,
-                                letterSpacing = 0.5.sp
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = exerciseName.uppercase(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = primaryColor,
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                val planExercise = planExerciseMap?.get(item.exercise.id)
+                                if (planExercise != null) {
+                                    Text(
+                                        text = "${planExercise.planExercise.serieTarget}×${planExercise.planExercise.repsTarget}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textSecondary
+                                    )
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
@@ -450,13 +469,28 @@ fun WorkoutShareCard(
                                 .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
                                 .padding(14.dp)
                         ) {
-                            Text(
-                                text = exerciseName.uppercase(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Black,
-                                color = primaryColor,
-                                letterSpacing = 0.5.sp
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = exerciseName.uppercase(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = primaryColor,
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                val planExercise = planExerciseMap?.get(item.exercise.id)
+                                if (planExercise != null) {
+                                    Text(
+                                        text = "${planExercise.planExercise.serieTarget}×${planExercise.planExercise.repsTarget}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textSecondary
+                                    )
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(10.dp))
 
