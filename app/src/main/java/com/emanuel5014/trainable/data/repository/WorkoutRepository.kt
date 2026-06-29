@@ -450,10 +450,7 @@ class WorkoutRepository @Inject constructor(
         triggerWidgetUpdate()
     }
 
-    suspend fun updateSession(session: WorkoutSessionEntity) {
-        workoutDao.updateSession(session)
-        triggerWidgetUpdate()
-    }
+    suspend fun updateSession(session: WorkoutSessionEntity) = workoutDao.updateSession(session)
 
     suspend fun deleteExerciseFromSession(sessionId: Int, exerciseId: Int) = 
         workoutDao.deleteExerciseFromSession(sessionId, exerciseId)

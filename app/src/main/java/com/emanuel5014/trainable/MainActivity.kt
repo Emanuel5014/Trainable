@@ -48,11 +48,8 @@ import com.emanuel5014.trainable.util.UpdateManager
 import dagger.hilt.android.AndroidEntryPoint
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import javax.inject.Inject
@@ -134,21 +131,21 @@ class MainActivity : ComponentActivity() {
             // Handle Import Intent
             LaunchedEffect(intent?.data) {
                 intent?.data?.let { uri ->
-                    try {
-                        val jsonData = withContext(Dispatchers.IO) {
-                            contentResolver.openInputStream(uri)?.use { inputStream ->
-                                inputStream.bufferedReader().use { it.readText() }
+                    if (uri.scheme == "content" || uri.scheme == "file") {
+                        scope.launch {
+                            try {
+                                contentResolver.openInputStream(uri)?.use { inputStream ->
+                                    val jsonData = inputStream.bufferedReader().use { it.readText() }
+                                    val json = Json { ignoreUnknownKeys = true }
+                                    val plans = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
+                                    plansToImport = plans
+                                    jsonDataToImport = jsonData
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                                e.printStackTrace()
                             }
-                        } ?: return@let
-                        val json = Json { ignoreUnknownKeys = true }
-                        val plans = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
-                        plansToImport = plans
-                        jsonDataToImport = jsonData
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
-                        e.printStackTrace()
+                        }
                     }
                 }
             }
