@@ -12,6 +12,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/Emanuel5014/Trainable?logo=github)](https://github.com/Emanuel5014/Trainable/releases/latest)
 [![Stars](https://img.shields.io/github/stars/Emanuel5014/Trainable?style=flat&logo=github&color=gold)](https://github.com/Emanuel5014/Trainable/stargazers)
 [![Support](https://img.shields.io/badge/Support-Ko--fi-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/emanuel5014)
+[![Website](https://img.shields.io/badge/Website-trainableapp.vercel.app-8B5CF6?logo=vercel&logoColor=white)](https://trainableapp.vercel.app)
 
 <div align="center">
   <br>
@@ -48,7 +49,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Quick Start**: Start an empty workout directly from the dashboard without a plan.
 
 ### 📋 Advanced Routine Builder
-*   **Exercise Library**: 134 pre-populated exercises with categorized filters.
+*   **Exercise Library**: 130+ pre-populated exercises with categorized filters.
 *   **Drag & Drop Reordering**: Fluid, haptic-powered reordering of exercises within routines.
 *   **Custom Exercises**: Add and manage your own exercises with persistent categorization.
 *   **Superset Support**: Group exercises into supersets within routines.
