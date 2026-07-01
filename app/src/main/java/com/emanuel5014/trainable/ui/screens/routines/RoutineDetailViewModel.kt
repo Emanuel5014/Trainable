@@ -274,7 +274,7 @@ class RoutineDetailViewModel @Inject constructor(
                         note = note,
                         giorniSettimana = giorniSettimana,
                         dataInizio = dataInizio ?: plan.dataInizio,
-                        dataFine = dataFine ?: plan.dataFine
+                        dataFine = dataFine
                     )
                 )
             }
