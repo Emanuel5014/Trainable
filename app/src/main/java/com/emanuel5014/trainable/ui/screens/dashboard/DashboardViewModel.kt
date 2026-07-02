@@ -191,6 +191,9 @@ class DashboardViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = DashboardUiState(isLoading = true)
     )
+    
+    val physicalCheckBiometricEnabled = userPrefsRepository.physicalCheckBiometricEnabled
+
 
     fun setGymMembershipExpiryDate(timestampMillis: Long?) {
         viewModelScope.launch {

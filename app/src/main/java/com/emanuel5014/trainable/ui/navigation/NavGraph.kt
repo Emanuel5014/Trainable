@@ -21,6 +21,9 @@ import com.emanuel5014.trainable.ui.screens.history.EditWorkoutScreen
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.workout.WorkoutExecutionScreen
+import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckScreen
+import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckSettingsScreen
+import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckCompareScreen
 
 @Composable
 fun MainNavGraph(
@@ -77,6 +80,28 @@ fun MainNavGraph(
                 onStartWorkout = { planId ->
                     navController.navigate(WorkoutExecution(planId = planId))
                 }
+            )
+        }
+        composable<PhysicalCheck> {
+            PhysicalCheckScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSettings = { navController.navigate(PhysicalCheckSettings) },
+                onNavigateToCompare = { id1, id2 ->
+                    navController.navigate(PhysicalCheckCompare(id1 = id1, id2 = id2))
+                }
+            )
+        }
+        composable<PhysicalCheckSettings> {
+            PhysicalCheckSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<PhysicalCheckCompare> { backStackEntry ->
+            val route = backStackEntry.toRoute<PhysicalCheckCompare>()
+            PhysicalCheckCompareScreen(
+                checkId1 = route.id1,
+                checkId2 = route.id2,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

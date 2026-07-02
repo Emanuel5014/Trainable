@@ -55,6 +55,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.fragment.app.FragmentActivity
+import com.emanuel5014.trainable.util.BiometricHelper
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -105,8 +109,27 @@ fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToWorkout: (planId: Int?, sessionId: Int?) -> Unit,
     onNavigateToQuickWorkout: (name: String?) -> Unit,
+    onNavigateToPhysicalChecks: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val biometricEnabled by viewModel.physicalCheckBiometricEnabled.collectAsState(initial = false)
+
+    val handleNavigateToPhysicalChecks = {
+        if (biometricEnabled) {
+            val activity = context as? FragmentActivity
+            if (activity != null) {
+                BiometricHelper.checkAndShowBiometricPrompt(
+                    activity = activity,
+                    onSuccess = { onNavigateToPhysicalChecks() }
+                )
+            } else {
+                onNavigateToPhysicalChecks()
+            }
+        } else {
+            onNavigateToPhysicalChecks()
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
     var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -445,6 +468,7 @@ fun DashboardScreen(
                 item {
                     DashboardSimpleHeader(
                         onSettingsClick = onNavigateToSettings,
+                        onLogoTripleClick = handleNavigateToPhysicalChecks,
                         dynamicColor = uiState.dynamicColor,
                         themePalette = uiState.themePalette,
                         isSelectionMode = uiState.isSelectionMode,
@@ -817,6 +841,7 @@ fun GymMembershipCard(
 @Composable
 private fun DashboardSimpleHeader(
     onSettingsClick: () -> Unit,
+    onLogoTripleClick: () -> Unit,
     dynamicColor: Boolean,
     themePalette: Int = 0,
     isSelectionMode: Boolean = false,
@@ -865,12 +890,31 @@ private fun DashboardSimpleHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val useCustomTint = dynamicColor || themePalette != 0
+                var clickCount by remember { mutableStateOf(0) }
+                var lastClickTime by remember { mutableStateOf(0L) }
+                
                 Icon(
                     painter = painterResource(id = if (useCustomTint) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
                     contentDescription = "Trainable Logo",
                     tint = if (useCustomTint) Primary else Color.Unspecified,
                     modifier = Modifier
                         .size(56.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastClickTime < 500L) {
+                                clickCount++
+                            } else {
+                                clickCount = 1
+                            }
+                            lastClickTime = currentTime
+                            if (clickCount >= 3) {
+                                clickCount = 0
+                                onLogoTripleClick()
+                            }
+                        }
                 )
             }
             GymIconButton(

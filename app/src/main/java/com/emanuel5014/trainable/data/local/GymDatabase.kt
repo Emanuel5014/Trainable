@@ -11,6 +11,8 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
+import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
@@ -36,9 +38,10 @@ import kotlinx.coroutines.launch
         WorkoutSessionEntity::class,
         SetLogEntity::class,
         SessionExerciseSwapEntity::class,
-        CardioLogEntity::class
+        CardioLogEntity::class,
+        PhysicalCheckEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -48,6 +51,7 @@ abstract class GymDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
     abstract fun analyticsDao(): AnalyticsDao
     abstract fun weightLogDao(): WeightLogDao
+    abstract fun physicalCheckDao(): PhysicalCheckDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -179,6 +183,20 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS physical_checks (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        timestamp INTEGER NOT NULL,
+                        peso REAL,
+                        note TEXT,
+                        fotoFilenames TEXT NOT NULL
+                    )
+                """)
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -191,7 +209,7 @@ abstract class GymDatabase : RoomDatabase() {
                     GymDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

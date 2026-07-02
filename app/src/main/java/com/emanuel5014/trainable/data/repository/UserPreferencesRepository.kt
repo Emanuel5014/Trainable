@@ -46,11 +46,53 @@ class UserPreferencesRepository @Inject constructor(
         val GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE = intPreferencesKey("gym_membership_expiry_notification_days_before")
         val LAST_NOTIFIED_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("last_notified_expiry_date")
         val THEME_MODE = intPreferencesKey("theme_mode")
+        val PHYSICAL_CHECK_BIOMETRIC_ENABLED = booleanPreferencesKey("physical_check_biometric_enabled")
+        val PHYSICAL_CHECK_ENCRYPTION_ENABLED = booleanPreferencesKey("physical_check_encryption_enabled")
+        val PHYSICAL_CHECK_ENCRYPTION_SALT = stringPreferencesKey("physical_check_encryption_salt")
+        val PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE = stringPreferencesKey("physical_check_wrapped_key_keystore")
+        val PHYSICAL_CHECK_WRAPPED_KEY_IV = stringPreferencesKey("physical_check_wrapped_key_iv")
+        val PHYSICAL_CHECK_VALIDATION_BLOCK = stringPreferencesKey("physical_check_validation_block")
+        val PHYSICAL_CHECK_VALIDATION_IV = stringPreferencesKey("physical_check_validation_iv")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[HAS_COMPLETED_ONBOARDING] ?: false
+        }
+
+    val physicalCheckBiometricEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_BIOMETRIC_ENABLED] ?: false
+        }
+
+    val physicalCheckEncryptionEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_ENCRYPTION_ENABLED] ?: false
+        }
+
+    val physicalCheckEncryptionSalt: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_ENCRYPTION_SALT]
+        }
+
+    val physicalCheckWrappedKeyKeystore: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE]
+        }
+
+    val physicalCheckWrappedKeyIv: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_WRAPPED_KEY_IV]
+        }
+
+    val physicalCheckValidationBlock: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_VALIDATION_BLOCK]
+        }
+
+    val physicalCheckValidationIv: Flow<String?> = dataStore.data
+        .map { preferences ->
+            preferences[PHYSICAL_CHECK_VALIDATION_IV]
         }
 
     val gymMembershipExpiryDate: Flow<Long?> = dataStore.data
@@ -320,6 +362,68 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setLastNotifiedExpiryDate(timestampMillis: Long) {
         dataStore.edit { preferences ->
             preferences[LAST_NOTIFIED_EXPIRY_DATE] = timestampMillis
+        }
+    }
+
+    suspend fun setPhysicalCheckBiometricEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PHYSICAL_CHECK_BIOMETRIC_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setPhysicalCheckEncryptionEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PHYSICAL_CHECK_ENCRYPTION_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setPhysicalCheckEncryptionSalt(salt: String?) {
+        dataStore.edit { preferences ->
+            if (salt != null) {
+                preferences[PHYSICAL_CHECK_ENCRYPTION_SALT] = salt
+            } else {
+                preferences.remove(PHYSICAL_CHECK_ENCRYPTION_SALT)
+            }
+        }
+    }
+
+    suspend fun setPhysicalCheckWrappedKeyKeystore(key: String?) {
+        dataStore.edit { preferences ->
+            if (key != null) {
+                preferences[PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE] = key
+            } else {
+                preferences.remove(PHYSICAL_CHECK_WRAPPED_KEY_KEYSTORE)
+            }
+        }
+    }
+
+    suspend fun setPhysicalCheckWrappedKeyIv(iv: String?) {
+        dataStore.edit { preferences ->
+            if (iv != null) {
+                preferences[PHYSICAL_CHECK_WRAPPED_KEY_IV] = iv
+            } else {
+                preferences.remove(PHYSICAL_CHECK_WRAPPED_KEY_IV)
+            }
+        }
+    }
+
+    suspend fun setPhysicalCheckValidationBlock(block: String?) {
+        dataStore.edit { preferences ->
+            if (block != null) {
+                preferences[PHYSICAL_CHECK_VALIDATION_BLOCK] = block
+            } else {
+                preferences.remove(PHYSICAL_CHECK_VALIDATION_BLOCK)
+            }
+        }
+    }
+
+    suspend fun setPhysicalCheckValidationIv(iv: String?) {
+        dataStore.edit { preferences ->
+            if (iv != null) {
+                preferences[PHYSICAL_CHECK_VALIDATION_IV] = iv
+            } else {
+                preferences.remove(PHYSICAL_CHECK_VALIDATION_IV)
+            }
         }
     }
 }

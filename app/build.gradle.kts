@@ -109,9 +109,15 @@ dependencies {
 implementation(libs.google.fonts)
 
 // Haze - Frosted Glass Blur
-implementation(libs.haze)
+    implementation(libs.haze)
+
+// Biometric & Fragment support
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.fragment)
+
 
     testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

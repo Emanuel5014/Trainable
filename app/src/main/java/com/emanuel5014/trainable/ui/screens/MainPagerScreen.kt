@@ -20,6 +20,7 @@ import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
+import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsScreen
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardScreen
 import com.emanuel5014.trainable.ui.screens.history.HistoryScreen
@@ -65,7 +66,8 @@ fun MainPagerScreen(
                 },
                 onNavigateToQuickWorkout = { name ->
                     navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
-                }
+                },
+                onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
             )
             1 -> RoutineListScreen(
                 onNavigateToDetail = { planId ->

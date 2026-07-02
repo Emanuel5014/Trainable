@@ -146,6 +146,59 @@ object ImageStorageUtils {
         }
     }
 
+    fun readAndCompressImage(context: Context, uri: Uri): ByteArray? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val originalBitmap = BitmapFactory.decodeStream(inputStream) ?: return null
+            inputStream.close()
+            val rotatedBitmap = getRotatedBitmap(originalBitmap, uri, context)
+
+            val maxDimension = 1280
+            val width = rotatedBitmap.width
+            val height = rotatedBitmap.height
+            val bitmap = if (width > maxDimension || height > maxDimension) {
+                val ratio = width.toFloat() / height.toFloat()
+                val newWidth = if (width > height) maxDimension else (maxDimension * ratio).toInt()
+                val newHeight = if (height > width) maxDimension else (maxDimension / ratio).toInt()
+                Bitmap.createScaledBitmap(rotatedBitmap, newWidth, newHeight, true)
+            } else {
+                rotatedBitmap
+            }
+
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            outputStream.toByteArray()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun compressImageBytes(imageBytes: ByteArray): ByteArray {
+        return try {
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size) ?: return imageBytes
+
+            val maxDimension = 1280
+            val width = bitmap.width
+            val height = bitmap.height
+            val resized = if (width > maxDimension || height > maxDimension) {
+                val ratio = width.toFloat() / height.toFloat()
+                val newWidth = if (width > height) maxDimension else (maxDimension * ratio).toInt()
+                val newHeight = if (height > width) maxDimension else (maxDimension / ratio).toInt()
+                Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+            } else {
+                bitmap
+            }
+
+            val outputStream = ByteArrayOutputStream()
+            resized.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            outputStream.toByteArray()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            imageBytes
+        }
+    }
+
     fun compressExistingImages(context: Context) {
         val rootFiles = context.filesDir.listFiles() ?: return
         val routineImagesDir = File(context.filesDir, "routine_images")
