@@ -254,6 +254,10 @@ class PhysicalCheckRepository @Inject constructor(
         )
     }
 
+    suspend fun updatePhysicalCheck(check: PhysicalCheckEntity) = withContext(Dispatchers.IO) {
+        physicalCheckDao.updatePhysicalCheck(check)
+    }
+
     suspend fun addPhotosToCheck(checkId: Int, newPhotoBytes: List<ByteArray>): List<String> = withContext(Dispatchers.IO) {
         val newFilenames = newPhotoBytes.map { savePhoto(it) }
         val existing = physicalCheckDao.getPhysicalCheckById(checkId) ?: return@withContext newFilenames

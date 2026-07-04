@@ -7,9 +7,11 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
@@ -24,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,9 +38,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntSize
@@ -45,13 +50,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -72,12 +82,21 @@ fun PhysicalCheckScreen(
 
     var selectedForCompare by remember { mutableStateOf(setOf<Int>()) }
     var isSelectionMode by remember { mutableStateOf(false) }
+    var checkToDelete by remember { mutableStateOf<PhysicalCheckEntity?>(null) }
+
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    val swipeActionsEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.SWIPE_ACTIONS_ENABLED] ?: true }
+    }.collectAsState(initial = true)
 
     data class FullscreenState(val checkId: Int, val filenames: List<String>, val initialIndex: Int)
     var fullscreenState by remember { mutableStateOf<FullscreenState?>(null) }
 
     var addingPhotosForCheckId by remember { mutableStateOf<Int?>(null) }
     var showAddPhotoOptions by remember { mutableStateOf(false) }
+    var checkToEdit by remember { mutableStateOf<PhysicalCheckEntity?>(null) }
     val photoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -223,10 +242,32 @@ fun PhysicalCheckScreen(
                     title = { Text("Check Fisici", fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
                     actions = {
+                        if (isSelectionMode && !swipeActionsEnabled) {
+                            if (selectedForCompare.size == 1) {
+                                IconButton(onClick = {
+                                    val checkId = selectedForCompare.first()
+                                    checkToEdit = checks.find { it.id == checkId }
+                                }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Modifica")
+                                }
+                            }
+                            if (selectedForCompare.size == 1) {
+                                IconButton(onClick = {
+                                    val checkId = selectedForCompare.first()
+                                    checkToDelete = checks.find { it.id == checkId }
+                                }) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Elimina",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
                         if (checks.isNotEmpty()) {
                             IconButton(onClick = {
                                 isSelectionMode = !isSelectionMode
@@ -312,31 +353,101 @@ fun PhysicalCheckScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(checks) { check ->
-                        PhysicalCheckCard(
-                            check = check,
-                            viewModel = viewModel,
-                            isSelected = selectedForCompare.contains(check.id),
-                            isSelectionMode = isSelectionMode,
-                            onToggleSelection = {
-                                if (selectedForCompare.contains(check.id)) {
-                                    selectedForCompare = selectedForCompare - check.id
-                                } else {
-                                    if (selectedForCompare.size < 2) {
-                                        selectedForCompare = selectedForCompare + check.id
-                                    } else {
-                                        Toast.makeText(context, "Puoi selezionare massimo 2 check", Toast.LENGTH_SHORT).show()
+                        val dismissState = rememberSwipeToDismissBoxState()
+
+                        LaunchedEffect(dismissState.targetValue) {
+                            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                                if (swipeActionsEnabled && !isSelectionMode) {
+                                    when (dismissState.targetValue) {
+                                        SwipeToDismissBoxValue.EndToStart -> {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            checkToDelete = check
+                                        }
+                                        SwipeToDismissBoxValue.StartToEnd -> {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            checkToEdit = check
+                                        }
+                                        else -> {}
                                     }
                                 }
-                            },
-                            onDelete = { viewModel.deleteCheck(check) },
-                            onPhotoClick = { filenames, index ->
-                                fullscreenState = FullscreenState(check.id, filenames, index)
-                            },
-                            onAddPhotoClick = {
-                                addingPhotosForCheckId = check.id
-                                showAddPhotoOptions = true
+                                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                             }
-                        )
+                        }
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = swipeActionsEnabled && !isSelectionMode,
+                            enableDismissFromEndToStart = swipeActionsEnabled && !isSelectionMode,
+                            backgroundContent = {
+                                val direction = dismissState.dismissDirection
+
+                                val color by animateColorAsState(
+                                    when (direction) {
+                                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                        else -> Color.Transparent
+                                    },
+                                    label = "bg_color"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(color)
+                                        .padding(horizontal = 28.dp),
+                                    contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                ) {
+                                    if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete",
+                                            tint = MaterialTheme.colorScheme.onError,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit",
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            PhysicalCheckCard(
+                                check = check,
+                                viewModel = viewModel,
+                                isSelected = selectedForCompare.contains(check.id),
+                                isSelectionMode = isSelectionMode,
+                                onToggleSelection = {
+                                    if (selectedForCompare.contains(check.id)) {
+                                        selectedForCompare = selectedForCompare - check.id
+                                    } else {
+                                        if (selectedForCompare.size < 2) {
+                                            selectedForCompare = selectedForCompare + check.id
+                                        } else {
+                                            Toast.makeText(context, "Puoi selezionare massimo 2 check", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                },
+                                onLongClick = {
+                                    if (!isSelectionMode && !swipeActionsEnabled) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        isSelectionMode = true
+                                        selectedForCompare = setOf(check.id)
+                                    }
+                                },
+                                onPhotoClick = { filenames, index ->
+                                    fullscreenState = FullscreenState(check.id, filenames, index)
+                                },
+                                onAddPhotoClick = {
+                                    addingPhotosForCheckId = check.id
+                                    showAddPhotoOptions = true
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -349,6 +460,55 @@ fun PhysicalCheckScreen(
             onConfirm = { timestamp, peso, note, photos ->
                 viewModel.addCheck(timestamp, peso, note, photos) {
                     showAddDialog = false
+                }
+            }
+        )
+    }
+
+    checkToDelete?.let { check ->
+        AlertDialog(
+            onDismissRequest = {
+                checkToDelete = null
+                isSelectionMode = false
+                selectedForCompare = emptySet()
+            },
+            title = { Text("Elimina Check") },
+            text = { Text("Sei sicuro di voler eliminare questo check fisico? Le foto collegate verranno rimosse permanentemente.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteCheck(check)
+                    checkToDelete = null
+                    isSelectionMode = false
+                    selectedForCompare = emptySet()
+                }) {
+                    Text("Elimina", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    checkToDelete = null
+                    isSelectionMode = false
+                    selectedForCompare = emptySet()
+                }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
+
+    checkToEdit?.let { check ->
+        EditPhysicalCheckDialog(
+            check = check,
+            onDismiss = {
+                checkToEdit = null
+                isSelectionMode = false
+                selectedForCompare = emptySet()
+            },
+            onConfirm = { timestamp, peso, note ->
+                viewModel.updateCheck(check.id, timestamp, peso, note) {
+                    checkToEdit = null
+                    isSelectionMode = false
+                    selectedForCompare = emptySet()
                 }
             }
         )
@@ -584,17 +744,22 @@ fun PhysicalCheckCard(
     isSelected: Boolean,
     isSelectionMode: Boolean,
     onToggleSelection: () -> Unit,
-    onDelete: () -> Unit,
+    onLongClick: () -> Unit,
     onPhotoClick: (List<String>, Int) -> Unit,
     onAddPhotoClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = isSelectionMode) { onToggleSelection() },
+            .combinedClickable(
+                onClick = {
+                    if (isSelectionMode) onToggleSelection()
+                },
+                onLongClick = onLongClick
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
@@ -635,38 +800,6 @@ fun PhysicalCheckCard(
                         }
                     }
                 }
-
-                if (!isSelectionMode) {
-                    var showDeleteConfirm by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showDeleteConfirm = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete",
-                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                        )
-                    }
-
-                    if (showDeleteConfirm) {
-                        AlertDialog(
-                            onDismissRequest = { showDeleteConfirm = false },
-                            title = { Text("Elimina Check") },
-                            text = { Text("Sei sicuro di voler eliminare questo check fisico? Le foto collegate verranno rimosse permanentemente.") },
-                            confirmButton = {
-                                TextButton(onClick = {
-                                    onDelete()
-                                    showDeleteConfirm = false
-                                }) {
-                                    Text("Elimina", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showDeleteConfirm = false }) {
-                                    Text("Annulla")
-                                }
-                            }
-                        )
-                    }
-                }
             }
 
             if (!check.note.isNullOrBlank()) {
@@ -682,47 +815,55 @@ fun PhysicalCheckCard(
             }
 
             if (filenames.isNotEmpty() || !isSelectionMode) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                val displayList = remember(filenames, isSelectionMode) {
+                    buildList<String?> {
+                        addAll(filenames)
+                        if (!isSelectionMode) add(null)
+                    }
+                }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filenames.withIndex().toList()) { (index, filename) ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { onPhotoClick(filenames, index) }
+                    val rows = displayList.chunked(3)
+                    for (row in rows) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start)
                         ) {
-                            DecryptedImage(
-                                filename = filename,
-                                viewModel = viewModel,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-                    if (!isSelectionMode) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { onAddPhotoClick() },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Aggiungi foto",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                            for (name in row) {
+                                if (name != null) {
+                                    val index = filenames.indexOf(name)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { onPhotoClick(filenames, index) }
+                                    ) {
+                                        DecryptedImage(
+                                            filename = name,
+                                            viewModel = viewModel,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .clickable { onAddPhotoClick() },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "Aggiungi foto",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -781,6 +922,8 @@ fun AddPhysicalCheckDialog(
     var weightInput by remember { mutableStateOf("") }
     var notesInput by remember { mutableStateOf("") }
     val photoBytesList = remember { mutableStateListOf<ByteArray>() }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
 
     var showPhotoOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -852,6 +995,36 @@ fun AddPhysicalCheckDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .clickable { showDatePicker = true }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Column {
+                        Text(
+                            text = "Data",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = DateFormatter.format(datePickerState.selectedDateMillis ?: System.currentTimeMillis()),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
                 OutlinedTextField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
@@ -942,7 +1115,7 @@ fun AddPhysicalCheckDialog(
                     }
                     val peso = weightInput.replace(",", ".").toFloatOrNull()
                     onConfirm(
-                        System.currentTimeMillis(),
+                        datePickerState.selectedDateMillis ?: System.currentTimeMillis(),
                         peso,
                         notesInput.takeIf { it.isNotBlank() },
                         photoBytesList.toList()
@@ -958,6 +1131,24 @@ fun AddPhysicalCheckDialog(
             }
         }
     )
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Annulla")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     if (showPhotoOptions) {
         ModalBottomSheet(
@@ -1051,6 +1242,112 @@ private fun OptionItem(
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.ExtraBold
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditPhysicalCheckDialog(
+    check: PhysicalCheckEntity,
+    onDismiss: () -> Unit,
+    onConfirm: (Long, Float?, String?) -> Unit
+) {
+    var weightInput by remember { mutableStateOf(check.peso?.toString() ?: "") }
+    var notesInput by remember { mutableStateOf(check.note ?: "") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = check.timestamp)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Modifica Check", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .clickable { showDatePicker = true }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Column {
+                        Text(
+                            text = "Data",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = DateFormatter.format(datePickerState.selectedDateMillis ?: check.timestamp),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = weightInput,
+                    onValueChange = { weightInput = it },
+                    label = { Text("Peso corporeo (kg)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = notesInput,
+                    onValueChange = { notesInput = it },
+                    label = { Text("Note / Sensazioni") },
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val peso = weightInput.replace(",", ".").toFloatOrNull()
+                onConfirm(
+                    datePickerState.selectedDateMillis ?: check.timestamp,
+                    peso,
+                    notesInput.takeIf { it.isNotBlank() }
+                )
+            }) {
+                Text("Salva")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annulla")
+            }
+        }
+    )
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Annulla")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }
 

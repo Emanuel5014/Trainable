@@ -1047,7 +1047,7 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkout
                         text = "/ $weeklyGoal",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = OnSurfaceVariant,
+                        color = OnSurface,
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     if (goalMet) {

@@ -90,6 +90,16 @@ class PhysicalCheckViewModel @Inject constructor(
         }
     }
 
+    fun updateCheck(checkId: Int, timestamp: Long, peso: Float?, note: String?, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val existing = repository.getPhysicalCheckById(checkId) ?: return@launch
+            repository.updatePhysicalCheck(
+                existing.copy(timestamp = timestamp, peso = peso, note = note)
+            )
+            onComplete()
+        }
+    }
+
     fun addPhotosToCheck(checkId: Int, photosBytes: List<ByteArray>) {
         viewModelScope.launch {
             repository.addPhotosToCheck(checkId, photosBytes)
