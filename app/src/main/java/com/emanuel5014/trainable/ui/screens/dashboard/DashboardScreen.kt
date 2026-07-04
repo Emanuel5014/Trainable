@@ -69,11 +69,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -926,62 +930,160 @@ private fun DashboardSimpleHeader(
     }
 }
 
+private fun DrawScope.drawWavyPattern(
+    color: Color,
+    percent: Float,
+    shift: Float,
+    periodPx: Float = 60f,
+    amplitudePx: Float = 8f,
+) {
+    if (size.height <= 0f || size.width <= 0f) return
+
+    val clampedPercent = percent.coerceIn(0f, 1f)
+    val edgeX = size.width * clampedPercent
+    val height = size.height
+
+    if (clampedPercent <= 0f) return
+
+    if (clampedPercent >= 1f || edgeX >= size.width) {
+        drawRect(color = color, size = size)
+        return
+    }
+
+    val halfPeriod = periodPx / 2
+
+    val wavyPath = Path().apply {
+        moveTo(x = 0f, y = 0f)
+        lineTo(x = edgeX, y = 0f)
+
+        val phaseOffset = shift * halfPeriod
+        val wavesNeeded = kotlin.math.ceil(height / halfPeriod + 2).toInt()
+
+        for (i in 0 until wavesNeeded) {
+            val baseY = i * halfPeriod - phaseOffset
+            if (baseY > height + halfPeriod) break
+            if (baseY < -halfPeriod) continue
+
+            val direction = if (i % 2 == 0) 1 else -1
+            val waveX = edgeX + amplitudePx * direction
+
+            val startY = baseY.coerceAtLeast(0f)
+            val endY = (baseY + halfPeriod).coerceAtMost(height)
+
+            if (startY < height && endY > startY) {
+                val midY = (startY + endY) / 2
+                quadraticTo(
+                    x1 = waveX,
+                    y1 = midY,
+                    x2 = edgeX,
+                    y2 = endY
+                )
+            }
+        }
+
+        lineTo(x = 0f, y = height)
+        close()
+    }
+
+    drawPath(path = wavyPath, color = color)
+}
+
 @Composable
 private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int) {
     val progress = if (weeklyGoal > 0) (workoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f) else 0f
-    
-    GymCard(containerColor = SurfaceContainerHigh) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    val density = LocalDensity.current
+    val periodPx = remember { with(density) { 42.dp.toPx() } }
+    val amplitudePx = remember { with(density) { 6.dp.toPx() } }
+    val remaining = weeklyGoal - workoutsThisWeek
+    val goalMet = progress >= 1f
+    val primaryColor = Primary
+    val tertiaryColor = Tertiary
+    val progressColor = if (goalMet) tertiaryColor else primaryColor
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = SurfaceContainerHigh,
+            contentColor = OnSurface,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawWavyPattern(
+                        color = primaryColor.copy(alpha = 0.15f),
+                        percent = progress,
+                        shift = 0f,
+                        periodPx = periodPx,
+                        amplitudePx = amplitudePx,
+                    )
+                }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp, horizontal = 20.dp)
             ) {
-                Column {
+                Text(
+                    text = stringResource(R.string.weekly_goal),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = stringResource(R.string.weekly_goal),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Primary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.workouts_this_week, workoutsThisWeek, weeklyGoal),
+                        text = "$workoutsThisWeek",
                         style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
                     )
-                    if (cardioWorkoutsThisWeek > 0) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "$cardioWorkoutsThisWeek CARDIO",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "/ $weeklyGoal",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (goalMet) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = stringResource(R.string.goal_met),
+                            tint = tertiaryColor,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
-                if (workoutsThisWeek >= weeklyGoal) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = stringResource(R.string.goal_met),
-                        tint = Tertiary,
-                        modifier = Modifier.size(32.dp)
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = when {
+                            goalMet -> stringResource(R.string.goal_met)
+                            remaining == 1 -> stringResource(R.string.workout_remaining, remaining)
+                            else -> stringResource(R.string.workouts_remaining, remaining)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = progressColor,
+                        fontWeight = FontWeight.Bold,
                     )
+                    if (cardioWorkoutsThisWeek > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "\u2022 $cardioWorkoutsThisWeek CARDIO",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = if (workoutsThisWeek >= weeklyGoal) Tertiary else Primary,
-                trackColor = Surface
-            )
         }
     }
 }

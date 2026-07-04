@@ -83,6 +83,8 @@
     <string name="started">Iniciado: %s</string>
     <string name="goal_met">Meta alcançada</string>
     <string name="workouts_this_week" formatted="false">%d / %d treinos</string>
+    <string name="workout_remaining" formatted="false">%d treino restante</string>
+    <string name="workouts_remaining" formatted="false">%d treinos restantes</string>
     <string name="ready_to_train">Pronto para treinar?</string>
     <string name="lets_go">Vamos!</string>
     <string name="no_active_routines">Nenhuma rotina ativa</string>
