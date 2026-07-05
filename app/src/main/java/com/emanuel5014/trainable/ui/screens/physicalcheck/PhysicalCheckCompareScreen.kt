@@ -1,7 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -14,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,7 +48,6 @@ fun PhysicalCheckCompareScreen(
         return
     }
 
-    // Ordina i check cronologicamente (il più vecchio a sinistra/sopra, il più recente a destra/sotto)
     val (olderCheck, newerCheck) = remember(check1, check2) {
         if (check1.timestamp <= check2.timestamp) Pair(check1, check2) else Pair(check2, check1)
     }
@@ -57,6 +62,9 @@ fun PhysicalCheckCompareScreen(
     var selectedOlderPhoto by remember { mutableStateOf(olderPhotos.firstOrNull()) }
     var selectedNewerPhoto by remember { mutableStateOf(newerPhotos.firstOrNull()) }
 
+    var showPhotoSelectors by remember { mutableStateOf(false) }
+    val hasMultiplePhotos = olderPhotos.size > 1 || newerPhotos.size > 1
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,161 +77,224 @@ fun PhysicalCheckCompareScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.Black),
-            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Split screen delle foto
-            Box(
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
-                // Layout in base all'orientamento o proporzione di default verticale split (sopra prima, sotto dopo)
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Foto precedente (Older)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .background(Color.DarkGray.copy(alpha = 0.3f))
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
                     ) {
-                        if (selectedOlderPhoto != null) {
-                            DecryptedImage(
-                                filename = selectedOlderPhoto!!,
-                                viewModel = viewModel,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        // Badge data
-                        Surface(
-                            color = Color.Black.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp),
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(top = 16.dp)
-                        ) {
-                            Text(
-                                text = "Prima: ${DateFormatter.format(olderCheck.timestamp)}" + 
-                                       (olderCheck.peso?.let { " - $it kg" } ?: ""),
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
-                        }
+                        if (showPhotoSelectors) showPhotoSelectors = false
                     }
-
-                    Spacer(modifier = Modifier.height(2.dp).background(Color.White.copy(alpha = 0.2f)))
-
-                    // Foto successiva (Newer)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .background(Color.DarkGray.copy(alpha = 0.3f))
-                    ) {
-                        if (selectedNewerPhoto != null) {
-                            DecryptedImage(
-                                filename = selectedNewerPhoto!!,
-                                viewModel = viewModel,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        // Badge data
-                        Surface(
-                            color = Color.Black.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp),
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onVerticalDrag = { change, dragAmount ->
+                                change.consume()
+                                if (dragAmount < -100f) {
+                                    showPhotoSelectors = true
+                                }
+                            }
+                        )
+                    },
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(top = 16.dp)
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .background(Color.DarkGray.copy(alpha = 0.3f))
                         ) {
-                            Text(
-                                text = "Dopo: ${DateFormatter.format(newerCheck.timestamp)}" + 
-                                       (newerCheck.peso?.let { " - $it kg" } ?: ""),
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
+                            if (selectedOlderPhoto != null) {
+                                DecryptedImage(
+                                    filename = selectedOlderPhoto!!,
+                                    viewModel = viewModel,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                            Surface(
+                                color = Color.Black.copy(alpha = 0.6f),
+                                shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp),
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(top = 16.dp)
+                            ) {
+                                Text(
+                                    text = "Prima: ${DateFormatter.format(olderCheck.timestamp)}" + 
+                                           (olderCheck.peso?.let { " - $it kg" } ?: ""),
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(2.dp).background(Color.White.copy(alpha = 0.2f)))
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .background(Color.DarkGray.copy(alpha = 0.3f))
+                        ) {
+                            if (selectedNewerPhoto != null) {
+                                DecryptedImage(
+                                    filename = selectedNewerPhoto!!,
+                                    viewModel = viewModel,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                            Surface(
+                                color = Color.Black.copy(alpha = 0.6f),
+                                shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp),
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(top = 16.dp)
+                            ) {
+                                Text(
+                                    text = "Dopo: ${DateFormatter.format(newerCheck.timestamp)}" + 
+                                           (newerCheck.peso?.let { " - $it kg" } ?: ""),
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Selettori delle foto in basso
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            if (hasMultiplePhotos && !showPhotoSelectors) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .clickable { showPhotoSelectors = true }
+                        .background(Color.Black.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(32.dp)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.White.copy(alpha = 0.4f))
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = showPhotoSelectors && hasMultiplePhotos,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
-                // Selettore Foto Prima
-                if (olderPhotos.size > 1) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            text = "Seleziona Foto Prima:",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(bottom = 16.dp)
+                        .pointerInput(Unit) {
+                            detectVerticalDragGestures(
+                                onVerticalDrag = { change, dragAmount ->
+                                    change.consume()
+                                    if (dragAmount > 100f) {
+                                        showPhotoSelectors = false
+                                    }
+                                }
+                            )
+                        },
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(32.dp)
+                                .height(3.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(olderPhotos) { photo ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(60.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { selectedOlderPhoto = photo }
-                                        .background(if (selectedOlderPhoto == photo) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                        .padding(if (selectedOlderPhoto == photo) 3.dp else 0.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                ) {
-                                    DecryptedImage(
-                                        filename = photo,
-                                        viewModel = viewModel,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
+                    }
+                    if (olderPhotos.size > 1) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Text(
+                                text = "Seleziona Foto Prima:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(olderPhotos) { photo ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(60.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { selectedOlderPhoto = photo }
+                                            .background(if (selectedOlderPhoto == photo) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                            .padding(if (selectedOlderPhoto == photo) 3.dp else 0.dp)
+                                            .clip(RoundedCornerShape(6.dp))
+                                    ) {
+                                        DecryptedImage(
+                                            filename = photo,
+                                            viewModel = viewModel,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                // Selettore Foto Dopo
-                if (newerPhotos.size > 1) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            text = "Seleziona Foto Dopo:",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(newerPhotos) { photo ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(60.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { selectedNewerPhoto = photo }
-                                        .background(if (selectedNewerPhoto == photo) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                        .padding(if (selectedNewerPhoto == photo) 3.dp else 0.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                ) {
-                                    DecryptedImage(
-                                        filename = photo,
-                                        viewModel = viewModel,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
+                    if (newerPhotos.size > 1) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Text(
+                                text = "Seleziona Foto Dopo:",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(newerPhotos) { photo ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(60.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { selectedNewerPhoto = photo }
+                                            .background(if (selectedNewerPhoto == photo) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                            .padding(if (selectedNewerPhoto == photo) 3.dp else 0.dp)
+                                            .clip(RoundedCornerShape(6.dp))
+                                    ) {
+                                        DecryptedImage(
+                                            filename = photo,
+                                            viewModel = viewModel,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
                                 }
                             }
                         }

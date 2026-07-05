@@ -100,9 +100,16 @@ class PhysicalCheckViewModel @Inject constructor(
         }
     }
 
-    fun addPhotosToCheck(checkId: Int, photosBytes: List<ByteArray>) {
+    fun addPhotosToCheck(checkId: Int, photosBytes: List<ByteArray>, onComplete: (List<String>) -> Unit = {}) {
         viewModelScope.launch {
-            repository.addPhotosToCheck(checkId, photosBytes)
+            val newFilenames = repository.addPhotosToCheck(checkId, photosBytes)
+            onComplete(newFilenames)
+        }
+    }
+
+    fun deletePhotoFromCheck(checkId: Int, filename: String) {
+        viewModelScope.launch {
+            repository.deletePhotoFromCheck(checkId, filename)
         }
     }
 

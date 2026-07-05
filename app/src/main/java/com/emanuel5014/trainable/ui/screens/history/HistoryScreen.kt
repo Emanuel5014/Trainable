@@ -50,6 +50,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddBox
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
@@ -70,8 +71,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -1318,14 +1317,30 @@ fun SessionHistoryCard(
                 
                 if (isSelectionMode) {
                     Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                        Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = { onClick() },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = Primary,
-                                uncheckedColor = OnSurfaceVariant
-                            )
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) Primary else Color.Transparent,
+                                    CircleShape
+                                )
+                                .border(
+                                    width = 2.dp,
+                                    color = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = 0.6f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
                 } else {
                     Icon(

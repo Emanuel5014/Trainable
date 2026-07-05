@@ -270,6 +270,14 @@ class PhysicalCheckRepository @Inject constructor(
         newFilenames
     }
 
+    suspend fun deletePhotoFromCheck(checkId: Int, filenameToDelete: String) = withContext(Dispatchers.IO) {
+        File(filesDirectory, filenameToDelete).delete()
+        File(filesDirectory, "$filenameToDelete.enc").delete()
+        val existing = physicalCheckDao.getPhysicalCheckById(checkId) ?: return@withContext
+        val remainingFilenames = existing.fotoFilenames.split(",").filter { it != filenameToDelete }
+        physicalCheckDao.updatePhysicalCheck(existing.copy(fotoFilenames = remainingFilenames.joinToString(",")))
+    }
+
     suspend fun deletePhysicalCheck(check: PhysicalCheckEntity) = withContext(Dispatchers.IO) {
         // Elimina i file delle foto associati
         if (check.fotoFilenames.isNotEmpty()) {

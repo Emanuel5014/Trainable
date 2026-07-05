@@ -499,6 +499,7 @@ fun PhysicalCheckScreen(
     checkToEdit?.let { check ->
         EditPhysicalCheckDialog(
             check = check,
+            viewModel = viewModel,
             onDismiss = {
                 checkToEdit = null
                 isSelectionMode = false
@@ -523,7 +524,17 @@ fun PhysicalCheckScreen(
                 filenames = state.filenames,
                 initialIndex = state.initialIndex,
                 viewModel = viewModel,
-                onDismiss = { fullscreenState = null }
+                onDismiss = { fullscreenState = null },
+                onDeletePhoto = { index ->
+                    val filename = state.filenames[index]
+                    viewModel.deletePhotoFromCheck(state.checkId, filename)
+                    val remaining = state.filenames.toMutableList().apply { removeAt(index) }
+                    if (remaining.isEmpty()) {
+                        fullscreenState = null
+                    } else {
+                        fullscreenState = state.copy(filenames = remaining, initialIndex = index.coerceAtMost(remaining.size - 1))
+                    }
+                }
             )
         }
     }
@@ -606,10 +617,12 @@ fun PhysicalCheckFullscreenViewer(
     filenames: List<String>,
     initialIndex: Int,
     viewModel: PhysicalCheckViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onDeletePhoto: ((Int) -> Unit)? = null
 ) {
     val pagerState = rememberPagerState(initialPage = initialIndex) { filenames.size }
     var isZoomed by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -659,18 +672,55 @@ fun PhysicalCheckFullscreenViewer(
             } else {
                 Spacer(modifier = Modifier)
             }
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Close",
-                    tint = Color.White
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onDeletePhoto != null) {
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color.White
+                    )
+                }
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Elimina Foto") },
+            text = { Text("Sei sicuro di voler eliminare questa foto?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val currentIndex = pagerState.currentPage
+                    showDeleteConfirm = false
+                    onDeletePhoto?.invoke(currentIndex)
+                }) {
+                    Text("ELIMINA", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("ANNULLA")
+                }
+            }
+        )
     }
 }
 
@@ -925,6 +975,8 @@ fun AddPhysicalCheckDialog(
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
 
+    var fullscreenPhotoIndex by remember { mutableStateOf<Int?>(null) }
+    var photoToDeleteIndex by remember { mutableStateOf<Int?>(null) }
     var showPhotoOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -1064,11 +1116,12 @@ fun AddPhysicalCheckDialog(
                         columns = GridCells.Fixed(3),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp),
+                            .height(100.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         items(photoBytesList) { bytes ->
+                            val itemIndex = photoBytesList.indexOf(bytes)
                             val bitmap = remember(bytes) {
                                 android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                             }
@@ -1078,6 +1131,7 @@ fun AddPhysicalCheckDialog(
                                         .fillMaxSize()
                                         .aspectRatio(1f)
                                         .clip(RoundedCornerShape(4.dp))
+                                        .clickable { fullscreenPhotoIndex = itemIndex }
                                 ) {
                                     androidx.compose.foundation.Image(
                                         bitmap = bitmap.asImageBitmap(),
@@ -1085,18 +1139,19 @@ fun AddPhysicalCheckDialog(
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
-                                    IconButton(
-                                        onClick = { photoBytesList.remove(bytes) },
+                                    Box(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
-                                            .size(24.dp)
+                                            .size(18.dp)
                                             .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                            .clickable { photoToDeleteIndex = itemIndex },
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = "Remove",
                                             tint = Color.White,
-                                            modifier = Modifier.size(14.dp)
+                                            modifier = Modifier.size(10.dp)
                                         )
                                     }
                                 }
@@ -1210,6 +1265,117 @@ fun AddPhysicalCheckDialog(
             }
         }
     }
+
+    fullscreenPhotoIndex?.let { index ->
+        val bytes = photoBytesList.getOrNull(index)
+        if (bytes != null) {
+            val bitmap = remember(bytes) {
+                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            }
+            Dialog(
+                onDismissRequest = { fullscreenPhotoIndex = null },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ) {
+                    if (bitmap != null) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            androidx.compose.foundation.Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(0.75f),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .align(Alignment.TopCenter),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (photoBytesList.size > 1) {
+                            Text(
+                                text = "${index + 1} / ${photoBytesList.size}",
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier
+                                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        } else {
+                            Spacer(modifier = Modifier)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            IconButton(
+                                onClick = { photoToDeleteIndex = index },
+                                modifier = Modifier
+                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                            IconButton(
+                                onClick = { fullscreenPhotoIndex = null },
+                                modifier = Modifier
+                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    photoToDeleteIndex?.let { index ->
+        AlertDialog(
+            onDismissRequest = { photoToDeleteIndex = null },
+            title = { Text("Elimina Foto") },
+            text = { Text("Sei sicuro di voler eliminare questa foto?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    photoBytesList.removeAt(index)
+                    val wasViewingFullscreen = fullscreenPhotoIndex != null
+                    if (wasViewingFullscreen) {
+                        if (photoBytesList.isEmpty()) {
+                            fullscreenPhotoIndex = null
+                        } else {
+                            fullscreenPhotoIndex = index.coerceAtMost(photoBytesList.lastIndex)
+                        }
+                    }
+                    photoToDeleteIndex = null
+                }) {
+                    Text("ELIMINA", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { photoToDeleteIndex = null }) {
+                    Text("ANNULLA")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -1249,13 +1415,94 @@ private fun OptionItem(
 @Composable
 private fun EditPhysicalCheckDialog(
     check: PhysicalCheckEntity,
+    viewModel: PhysicalCheckViewModel,
     onDismiss: () -> Unit,
     onConfirm: (Long, Float?, String?) -> Unit
 ) {
+    val context = LocalContext.current
     var weightInput by remember { mutableStateOf(check.peso?.toString() ?: "") }
     var notesInput by remember { mutableStateOf(check.note ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = check.timestamp)
+
+    val existingFilenames = remember(check.id) {
+        mutableStateListOf<String>().apply {
+            if (check.fotoFilenames.isNotEmpty()) {
+                addAll(check.fotoFilenames.split(","))
+            }
+        }
+    }
+
+    var fullscreenPhotoIndex by remember { mutableStateOf<Int?>(null) }
+    var photoToDelete by remember { mutableStateOf<String?>(null) }
+    var showPhotoOptions by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val pickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia()
+    ) { uris ->
+        val contentResolver = context.contentResolver
+        val bytesList = mutableListOf<ByteArray>()
+        uris.forEach { uri ->
+            try {
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    bytesList.add(inputStream.readBytes())
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        if (bytesList.isNotEmpty()) {
+            viewModel.addPhotosToCheck(check.id, bytesList) { newFilenames ->
+                existingFilenames.addAll(newFilenames)
+            }
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempImageUri?.let { uri ->
+                val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
+                if (bytes != null) {
+                    viewModel.addPhotosToCheck(check.id, listOf(bytes)) { newFilenames ->
+                        existingFilenames.addAll(newFilenames)
+                    }
+                }
+                try {
+                    context.contentResolver.delete(uri, null, null)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        showPhotoOptions = false
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val uri = createCheckTempImageUri(context)
+            tempImageUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permesso fotocamera negato", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun handleCameraClick() {
+        val permission = Manifest.permission.CAMERA
+        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+            val uri = createCheckTempImageUri(context)
+            tempImageUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            cameraPermissionLauncher.launch(permission)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1311,6 +1558,67 @@ private fun EditPhysicalCheckDialog(
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (existingFilenames.isNotEmpty()) {
+                    Text(
+                        text = "Foto (${existingFilenames.size})",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(existingFilenames) { filename ->
+                            val itemIndex = existingFilenames.indexOf(filename)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .clickable { fullscreenPhotoIndex = itemIndex }
+                            ) {
+                                DecryptedImage(
+                                    filename = filename,
+                                    viewModel = viewModel,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(18.dp)
+                                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                        .clickable { photoToDelete = filename },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Remove",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = { showPhotoOptions = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Aggiungi Foto")
+                }
             }
         },
         confirmButton = {
@@ -1348,6 +1656,113 @@ private fun EditPhysicalCheckDialog(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showPhotoOptions) {
+        ModalBottomSheet(
+            onDismissRequest = { showPhotoOptions = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .size(width = 32.dp, height = 4.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 48.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Text(
+                    text = "Seleziona origine",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    OptionItem(
+                        icon = Icons.Default.PhotoCamera,
+                        label = "Fotocamera",
+                        onClick = {
+                            showPhotoOptions = false
+                            handleCameraClick()
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OptionItem(
+                        icon = Icons.Default.PhotoLibrary,
+                        label = "Galleria",
+                        onClick = {
+                            showPhotoOptions = false
+                            pickerLauncher.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+
+    fullscreenPhotoIndex?.let { index ->
+        Dialog(
+            onDismissRequest = { fullscreenPhotoIndex = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            PhysicalCheckFullscreenViewer(
+                filenames = existingFilenames,
+                initialIndex = index,
+                viewModel = viewModel,
+                onDismiss = { fullscreenPhotoIndex = null },
+                onDeletePhoto = { deletedIndex ->
+                    val filenameToRemove = existingFilenames[deletedIndex]
+                    existingFilenames.removeAt(deletedIndex)
+                    viewModel.deletePhotoFromCheck(check.id, filenameToRemove)
+                    if (existingFilenames.isEmpty()) {
+                        fullscreenPhotoIndex = null
+                    } else {
+                        fullscreenPhotoIndex = deletedIndex.coerceAtMost(existingFilenames.lastIndex)
+                    }
+                }
+            )
+        }
+    }
+
+    photoToDelete?.let { filename ->
+        AlertDialog(
+            onDismissRequest = { photoToDelete = null },
+            title = { Text("Elimina Foto") },
+            text = { Text("Sei sicuro di voler eliminare questa foto?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    existingFilenames.remove(filename)
+                    viewModel.deletePhotoFromCheck(check.id, filename)
+                    photoToDelete = null
+                }) {
+                    Text("ELIMINA", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { photoToDelete = null }) {
+                    Text("ANNULLA")
+                }
+            }
+        )
     }
 }
 
