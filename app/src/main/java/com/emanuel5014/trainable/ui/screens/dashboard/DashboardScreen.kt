@@ -1,7 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -41,6 +46,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toPath
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -73,6 +81,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
@@ -675,12 +684,26 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun GymMembershipCard(
     expiryDateMillis: Long?,
     username: String,
     onClick: () -> Unit
 ) {
+    val gemPath = MaterialShapes.Gem.toPath()
+    val sunnyPath = MaterialShapes.Sunny.toPath()
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val gemRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(15000, easing = LinearEasing), RepeatMode.Restart)
+    )
+    val sunnyRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart)
+    )
+
     val daysLeft = expiryDateMillis?.let {
         val expiryDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
         ChronoUnit.DAYS.between(java.time.LocalDate.now(), expiryDate).toInt()
@@ -739,16 +762,34 @@ fun GymMembershipCard(
         ) {
             // Background expressive pattern
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.1f),
-                    radius = size.width / 2,
-                    center = Offset(size.width, 0f)
-                )
-                drawCircle(
-                    color = Color.Black.copy(alpha = 0.05f),
-                    radius = size.width / 3,
-                    center = Offset(0f, size.height)
-                )
+                val gemScale = size.width * 0.6f
+                val scaledGem = Path().apply {
+                    addPath(gemPath)
+                    transform(Matrix().apply { scale(gemScale, gemScale) })
+                    val c = getBounds().center
+                    transform(Matrix().apply {
+                        translate(c.x, c.y)
+                        rotateZ(gemRotation)
+                        translate(-c.x, -c.y)
+                    })
+                    translate(Offset(size.width - c.x, -c.y))
+                }
+                drawPath(scaledGem, color = Color.White.copy(alpha = 0.1f))
+
+                val sunnyScale = size.width * 0.5f
+                val scaledSunny = Path().apply {
+                    addPath(sunnyPath)
+                    transform(Matrix().apply { scale(sunnyScale, sunnyScale) })
+                    val c = getBounds().center
+                    transform(Matrix().apply {
+                        translate(c.x, c.y)
+                        rotateZ(sunnyRotation)
+                        translate(-c.x, -c.y)
+                    })
+                    val fc = getBounds().center
+                    translate(Offset(size.width * 0.06f - fc.x, size.height * 0.88f - fc.y))
+                }
+                drawPath(scaledSunny, color = Color.Black.copy(alpha = 0.05f))
             }
 
             Column(
@@ -1000,6 +1041,17 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkout
     val tertiaryColor = Tertiary
     val progressColor = if (goalMet) tertiaryColor else primaryColor
 
+    val infiniteTransition = rememberInfiniteTransition(label = "waveShift")
+    val shift by infiniteTransition.animateFloat(
+        initialValue = 2f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "waveShiftValue",
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = Shapes.large,
@@ -1015,7 +1067,7 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkout
                     drawWavyPattern(
                         color = primaryColor.copy(alpha = 0.15f),
                         percent = progress,
-                        shift = 0f,
+                        shift = shift,
                         periodPx = periodPx,
                         amplitudePx = amplitudePx,
                     )
