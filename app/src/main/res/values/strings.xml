@@ -554,5 +554,9 @@
     <string name="widget_action_start">START</string>
     <string name="widget_action_open_app">OPEN APP</string>
     <string name="widget_start_routine">Start a routine</string>
+    <string name="widget_trainable_label">Workout</string>
+    <string name="widget_trainable_description">Suggested workout and quick start</string>
+    <string name="widget_weekly_goal_label">Weekly Goal</string>
+    <string name="widget_weekly_goal_description">Weekly workout progress tracker</string>
 
 </resources>

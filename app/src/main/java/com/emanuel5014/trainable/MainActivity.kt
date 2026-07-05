@@ -322,5 +322,6 @@ class MainActivity : FragmentActivity() {
     override fun onResume() {
         super.onResume()
         com.emanuel5014.trainable.widget.TrainableWidget.update(this)
+        com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(this)
     }
 }

@@ -244,6 +244,7 @@ class WorkoutRepository @Inject constructor(
     private fun triggerWidgetUpdate() {
         try {
             com.emanuel5014.trainable.widget.TrainableWidget.update(context)
+            com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(context)
         } catch (e: Exception) {
             e.printStackTrace()
         }

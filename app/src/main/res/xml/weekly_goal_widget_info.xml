@@ -3,9 +3,9 @@
     android:initialLayout="@layout/glance_default_layout"
     android:minWidth="180dp"
     android:minHeight="40dp"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:targetCellWidth="3"
     android:targetCellHeight="1"
     android:updatePeriodMillis="0"
-    android:label="@string/widget_trainable_label"
-    android:description="@string/widget_trainable_description" />
+    android:label="@string/widget_weekly_goal_label"
+    android:description="@string/widget_weekly_goal_description" />

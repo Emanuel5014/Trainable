@@ -554,5 +554,9 @@
     <string name="widget_action_start">COMMENCER</string>
     <string name="widget_action_open_app">OUVRIR L\'APP</string>
     <string name="widget_start_routine">Commencer une routine</string>
+    <string name="widget_trainable_label">Entraînement</string>
+    <string name="widget_trainable_description">Entraînement suggéré et démarrage rapide</string>
+    <string name="widget_weekly_goal_label">Objectif Hebdomadaire</string>
+    <string name="widget_weekly_goal_description">Suivi des objectifs hebdomadaires</string>
 
 </resources>
