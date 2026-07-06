@@ -559,4 +559,72 @@
     <string name="widget_weekly_goal_label">Wochenziel</string>
     <string name="widget_weekly_goal_description">Wöchentliche Fortschrittsverfolgung</string>
 
+    <!-- Common -->
+    <string name="ok">OK</string>
+
+    <!-- Physical Check -->
+    <string name="physical_check_title">Checks</string>
+    <string name="physical_check_protected_access">Geschützter Zugriff</string>
+    <string name="physical_check_fingerprint_desc">Verwende Fingerabdruck oder Geräte-PIN für den Zugriff auf Checks.</string>
+    <string name="physical_check_auth_button">Authentifizieren</string>
+    <string name="physical_check_encrypted_vault">Verschlüsselter Tresor</string>
+    <string name="physical_check_enter_password_desc">Gib dein Passwort ein, um deine Checks zu entschlüsseln.</string>
+    <string name="physical_check_unlock">Entsperren</string>
+    <string name="physical_check_no_checks">Keine Checks registriert</string>
+    <string name="physical_check_no_checks_desc">Tippe auf den Button unten, um deine ersten Check-Fotos hinzuzufügen.</string>
+    <string name="physical_check_max_2">Du kannst maximal 2 Checks auswählen</string>
+    <string name="physical_check_delete_title">Check löschen</string>
+    <string name="physical_check_delete_message">Bist du sicher, dass du diesen Check löschen willst? Die Fotos werden dauerhaft entfernt.</string>
+    <string name="physical_check_add_photos">Fotos hinzufügen</string>
+    <string name="physical_check_delete_photo_title">Foto löschen</string>
+    <string name="physical_check_delete_photo_message">Bist du sicher, dass du dieses Foto löschen willst?</string>
+    <string name="physical_check_new_check">Neuer Check</string>
+    <string name="physical_check_weight_label">Körpergewicht (kg)</string>
+    <string name="physical_check_notes_label">Notizen / Gefühle</string>
+    <string name="physical_check_select_photo_toast">Wähle mindestens ein Foto aus</string>
+    <string name="physical_check_photos_selected">Ausgewählte Fotos: %d</string>
+    <string name="physical_check_edit_check">Check bearbeiten</string>
+    <string name="physical_check_photos_count">Fotos (%d)</string>
+    <string name="physical_check_compare_count">Vergleichen (2)</string>
+    <string name="physical_check_compare_title">Check-Vergleich</string>
+    <string name="physical_check_before">Vorher</string>
+    <string name="physical_check_after">Nachher</string>
+    <string name="physical_check_select_photo_before">Vorher-Foto auswählen:</string>
+    <string name="physical_check_select_photo_after">Nachher-Foto auswählen:</string>
+    <string name="physical_check_biometric_lock">Biometrie-/PIN-Sperre</string>
+    <string name="physical_check_biometric_desc">Erfordert Fingerabdruck oder PIN für den Zugriff auf diesen Bereich.</string>
+    <string name="physical_check_encryption">Daten- und Fotoverschlüsselung</string>
+    <string name="physical_check_encryption_desc">Verschlüssele alle Fotos lokal mit einem portablen Passwort. Sicher in Backups.</string>
+    <string name="physical_check_enable_encryption">Verschlüsselung aktivieren</string>
+    <string name="physical_check_enable_encryption_desc">Lege ein Passwort fest. Du brauchst es, um auf Daten zuzugreifen, wenn du das Backup auf einem anderen Gerät wiederherstellst.</string>
+    <string name="physical_check_new_password">Neues Passwort</string>
+    <string name="physical_check_confirm_password">Passwort bestätigen</string>
+    <string name="physical_check_password_min_length">Das Passwort muss mindestens 4 Zeichen lang sein</string>
+    <string name="physical_check_passwords_dont_match">Passwörter stimmen nicht überein</string>
+    <string name="physical_check_encryption_enabled">Verschlüsselung erfolgreich aktiviert</string>
+    <string name="physical_check_encryption_error">Fehler beim Aktivieren der Verschlüsselung</string>
+    <string name="physical_check_disable_encryption">Verschlüsselung deaktivieren</string>
+    <string name="physical_check_disable_encryption_desc">Gib dein Passwort ein, um alle aktuellen Bilder zu entschlüsseln und unverschlüsselt zu speichern.</string>
+    <string name="physical_check_encryption_disabled">Verschlüsselung deaktiviert</string>
+    <string name="physical_check_settings_title">Check-Sicherheit</string>
+    <string name="physical_check_camera_denied">Kameraberechtigung verweigert</string>
+    <string name="physical_check_health_section">Gesundheit &amp; Datenschutz</string>
+    <string name="physical_check_enable">Aktivieren</string>
+    <string name="physical_check_disable">Deaktivieren</string>
+    <string name="physical_check_date">Datum</string>
+    <string name="physical_check_select_source">Quelle wählen</string>
+    <string name="physical_check_password_error">Falsches Passwort. Versuchen Sie es erneut.</string>
+    <string name="physical_check_password_label">Passwort</string>
+    <string name="physical_check_fingerprint_cd">Fingerabdruck</string>
+    <string name="physical_check_lock_cd">Sperre</string>
+    <string name="physical_check_remove_cd">Entfernen</string>
+    <string name="physical_check_settings_cd">Einstellungen</string>
+    <string name="physical_check_compare_cd">Vergleichen</string>
+    <string name="physical_check_add_check_cd">Check hinzufügen</string>
+    <string name="physical_check_view_toggle_cd">Ansicht wechseln</string>
+    <string name="physical_check_forgot_password">Passwort vergessen?</string>
+    <string name="physical_check_reset_title">Alle Daten zurücksetzen?</string>
+    <string name="physical_check_reset_message">Du hast dein Passwort vergessen. Alle Check-Daten (Aufzeichnungen und Fotos) werden endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
+    <string name="physical_check_reset_confirm">Alles Löschen</string>
+
 </resources>

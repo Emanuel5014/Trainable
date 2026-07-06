@@ -71,7 +71,19 @@ class PhysicalCheckViewModel @Inject constructor(
         _lastActivityTime.value = System.currentTimeMillis()
     }
 
+    @Volatile
+    private var photoCaptureInProgress = false
+
+    fun setPhotoCaptureStarted() {
+        photoCaptureInProgress = true
+    }
+
+    fun setPhotoCaptureCompleted() {
+        photoCaptureInProgress = false
+    }
+
     fun lockSession() {
+        if (photoCaptureInProgress) return
         _sessionActive.value = false
     }
 
@@ -110,6 +122,14 @@ class PhysicalCheckViewModel @Inject constructor(
             } else {
                 onError()
             }
+        }
+    }
+
+    fun resetAllData(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            repository.resetAllAndDisableEncryption()
+            _isUnlocked.value = false
+            onComplete()
         }
     }
 

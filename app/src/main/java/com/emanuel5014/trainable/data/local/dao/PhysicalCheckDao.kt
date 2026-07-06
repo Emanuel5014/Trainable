@@ -25,4 +25,7 @@ interface PhysicalCheckDao {
 
     @Delete
     suspend fun deletePhysicalCheck(check: PhysicalCheckEntity)
+
+    @Query("DELETE FROM physical_checks")
+    suspend fun deleteAll()
 }

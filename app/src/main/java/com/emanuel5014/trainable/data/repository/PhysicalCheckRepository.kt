@@ -278,6 +278,21 @@ class PhysicalCheckRepository @Inject constructor(
         physicalCheckDao.updatePhysicalCheck(existing.copy(fotoFilenames = remainingFilenames.joinToString(",")))
     }
 
+    suspend fun resetAllAndDisableEncryption() = withContext(Dispatchers.IO) {
+        // Elimina tutte le foto dal disco
+        filesDirectory.listFiles()?.forEach { it.delete() }
+        // Elimina tutti i record dal database
+        physicalCheckDao.deleteAll()
+        // Pulisci tutte le preferenze di crittografia
+        preferencesRepository.setPhysicalCheckEncryptionEnabled(false)
+        preferencesRepository.setPhysicalCheckEncryptionSalt(null)
+        preferencesRepository.setPhysicalCheckValidationBlock(null)
+        preferencesRepository.setPhysicalCheckValidationIv(null)
+        preferencesRepository.setPhysicalCheckWrappedKeyKeystore(null)
+        preferencesRepository.setPhysicalCheckWrappedKeyIv(null)
+        activeSecretKey = null
+    }
+
     suspend fun deletePhysicalCheck(check: PhysicalCheckEntity) = withContext(Dispatchers.IO) {
         // Elimina i file delle foto associati
         if (check.fotoFilenames.isNotEmpty()) {
