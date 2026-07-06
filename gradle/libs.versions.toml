@@ -69,6 +69,7 @@ haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-fragment = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
+lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-runtime-ktx" }
 
 
 [plugins]

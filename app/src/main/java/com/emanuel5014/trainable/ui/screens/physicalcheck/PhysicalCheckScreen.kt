@@ -50,13 +50,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.util.BiometricHelper
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
@@ -75,6 +78,8 @@ fun PhysicalCheckScreen(
     val checks by viewModel.checks.collectAsState()
     val isUnlocked by viewModel.isUnlocked.collectAsState()
     val encryptionEnabled by viewModel.encryptionEnabled.collectAsState(initial = false)
+    val biometricEnabled by viewModel.biometricEnabled.collectAsState(initial = false)
+    val sessionActive by viewModel.sessionActive.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var passwordInput by remember { mutableStateOf("") }
@@ -83,6 +88,8 @@ fun PhysicalCheckScreen(
     var selectedForCompare by remember { mutableStateOf(setOf<Int>()) }
     var isSelectionMode by remember { mutableStateOf(false) }
     var checkToDelete by remember { mutableStateOf<PhysicalCheckEntity?>(null) }
+
+    var biometricRetry by remember { mutableIntStateOf(0) }
 
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -154,299 +161,392 @@ fun PhysicalCheckScreen(
         }
     }
 
-    if (encryptionEnabled && !isUnlocked) {
-        // Schermata di blocco / Inserimento password
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = "Lock",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Text(
-                        text = "Cassaforte Cifrata",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Inserisci la password per decifrare i tuoi check fisici.",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = passwordInput,
-                        onValueChange = {
-                            passwordInput = it
-                            passwordError = false
-                        },
-                        label = { Text("Password") },
-                        isError = passwordError,
-                        singleLine = true,
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    if (passwordError) {
-                        Text(
-                            text = "Password errata. Riprova.",
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            modifier = Modifier.align(Alignment.Start)
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            viewModel.unlock(
-                                password = passwordInput,
-                                onSuccess = {
-                                    passwordInput = ""
-                                },
-                                onError = {
-                                    passwordError = true
-                                }
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Sblocca")
-                    }
-                }
+    LaunchedEffect(biometricEnabled, sessionActive, biometricRetry) {
+        if (biometricEnabled && !sessionActive) {
+            val activity = context as? FragmentActivity
+            if (activity != null) {
+                BiometricHelper.checkAndShowBiometricPrompt(
+                    activity = activity,
+                    onSuccess = {
+                        viewModel.setSessionActive(true)
+                        viewModel.touch()
+                    },
+                    onError = { biometricRetry++ }
+                )
+            } else {
+                viewModel.setSessionActive(true)
             }
         }
-    } else {
-        // Schermata principale timeline check fisici
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Check Fisici", fontWeight = FontWeight.Bold) },
-                    navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                    actions = {
-                        if (isSelectionMode && !swipeActionsEnabled) {
-                            if (selectedForCompare.size == 1) {
-                                IconButton(onClick = {
-                                    val checkId = selectedForCompare.first()
-                                    checkToEdit = checks.find { it.id == checkId }
-                                }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Modifica")
-                                }
-                            }
-                            if (selectedForCompare.size == 1) {
-                                IconButton(onClick = {
-                                    val checkId = selectedForCompare.first()
-                                    checkToDelete = checks.find { it.id == checkId }
-                                }) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Elimina",
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-                        }
-                        if (checks.isNotEmpty()) {
-                            IconButton(onClick = {
-                                isSelectionMode = !isSelectionMode
-                                if (!isSelectionMode) selectedForCompare = emptySet()
-                            }) {
-                                Icon(
-                                    imageVector = if (isSelectionMode) Icons.Default.Close else Icons.Default.Compare,
-                                    contentDescription = "Compare"
-                                )
-                            }
-                        }
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(Icons.Default.Security, contentDescription = "Settings")
-                        }
-                    }
-                )
-            },
-            floatingActionButton = {
-                if (isSelectionMode && selectedForCompare.size == 2) {
-                    ExtendedFloatingActionButton(
-                        onClick = {
-                            val list = selectedForCompare.toList()
-                            onNavigateToCompare(list[0], list[1])
-                            isSelectionMode = false
-                            selectedForCompare = emptySet()
-                        },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Default.Compare, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Confronta (2)")
-                    }
-                } else if (!isSelectionMode) {
-                    FloatingActionButton(
-                        onClick = { showAddDialog = true },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Default.AddAPhoto, contentDescription = "Aggiungi Check")
-                    }
-                }
-            }
-        ) { paddingValues ->
-            if (checks.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
+    }
+
+    val isAutoUnlocking by viewModel.isAutoUnlocking.collectAsState()
+
+    val showBiometricGate = biometricEnabled && !sessionActive
+    val showPreparing = isAutoUnlocking && encryptionEnabled && !showBiometricGate
+    val showPasswordGate = encryptionEnabled && !isUnlocked && !isAutoUnlocking
+
+    when {
+        showBiometricGate -> {
+            // Schermata di blocco biometrico
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(24.dp)
+                    .clickable { biometricRetry++ },
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
                     Column(
+                        modifier = Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(32.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.PhotoLibrary,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                            modifier = Modifier.size(96.dp)
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = "Fingerprint",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(64.dp)
                         )
                         Text(
-                            text = "Nessun check registrato",
-                            fontSize = 18.sp,
+                            text = "Accesso Protetto",
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Premi il pulsante in basso per aggiungere le tue prime foto di check fisici.",
+                            text = "Usa l'impronta digitale o il PIN del dispositivo per accedere ai check fisici.",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         )
+                        Button(
+                            onClick = { biometricRetry++ },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Autenticati")
+                        }
                     }
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            }
+        }
+        showPreparing -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                GymLoadingIndicator()
+            }
+        }
+        showPasswordGate -> {
+            // Schermata di blocco / Inserimento password
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
-                    items(checks) { check ->
-                        val dismissState = rememberSwipeToDismissBoxState()
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Lock",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Text(
+                            text = "Cassaforte Cifrata",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Inserisci la password per decifrare i tuoi check fisici.",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
 
-                        LaunchedEffect(dismissState.targetValue) {
-                            if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
-                                if (swipeActionsEnabled && !isSelectionMode) {
-                                    when (dismissState.targetValue) {
-                                        SwipeToDismissBoxValue.EndToStart -> {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            checkToDelete = check
-                                        }
-                                        SwipeToDismissBoxValue.StartToEnd -> {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            checkToEdit = check
-                                        }
-                                        else -> {}
-                                    }
-                                }
-                                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                            }
+                        OutlinedTextField(
+                            value = passwordInput,
+                            onValueChange = {
+                                passwordInput = it
+                                passwordError = false
+                            },
+                            label = { Text("Password") },
+                            isError = passwordError,
+                            singleLine = true,
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        if (passwordError) {
+                            Text(
+                                text = "Password errata. Riprova.",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
                         }
 
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            enableDismissFromStartToEnd = swipeActionsEnabled && !isSelectionMode,
-                            enableDismissFromEndToStart = swipeActionsEnabled && !isSelectionMode,
-                            backgroundContent = {
-                                val direction = dismissState.dismissDirection
-
-                                val color by animateColorAsState(
-                                    when (direction) {
-                                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
-                                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                                        else -> Color.Transparent
+                        Button(
+                            onClick = {
+                                viewModel.unlock(
+                                    password = passwordInput,
+                                    onSuccess = {
+                                        passwordInput = ""
+                                        viewModel.touch()
                                     },
-                                    label = "bg_color"
+                                    onError = {
+                                        passwordError = true
+                                    }
                                 )
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(color)
-                                        .padding(horizontal = 28.dp),
-                                    contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-                                ) {
-                                    if (direction == SwipeToDismissBoxValue.EndToStart) {
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Sblocca")
+                        }
+                    }
+                }
+            }
+        }
+        else -> {
+            // Schermata principale timeline check fisici
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Check Fisici", fontWeight = FontWeight.Bold) },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            }
+                        },
+                        actions = {
+                            if (isSelectionMode && !swipeActionsEnabled) {
+                                if (selectedForCompare.size == 1) {
+                                    IconButton(onClick = {
+                                        val checkId = selectedForCompare.first()
+                                        checkToEdit = checks.find { it.id == checkId }
+                                    }) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Modifica")
+                                    }
+                                }
+                                if (selectedForCompare.size == 1) {
+                                    IconButton(onClick = {
+                                        val checkId = selectedForCompare.first()
+                                        checkToDelete = checks.find { it.id == checkId }
+                                    }) {
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription = "Delete",
-                                            tint = MaterialTheme.colorScheme.onError,
-                                            modifier = Modifier.size(28.dp)
-                                        )
-                                    } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                                        Icon(
-                                            Icons.Default.Edit,
-                                            contentDescription = "Edit",
-                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(28.dp)
+                                            contentDescription = "Elimina",
+                                            tint = MaterialTheme.colorScheme.error
                                         )
                                     }
                                 }
                             }
+                            if (checks.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    isSelectionMode = !isSelectionMode
+                                    if (!isSelectionMode) selectedForCompare = emptySet()
+                                }) {
+                                    Icon(
+                                        imageVector = if (isSelectionMode) Icons.Default.Close else Icons.Default.Compare,
+                                        contentDescription = "Compare"
+                                    )
+                                }
+                            }
+                            IconButton(onClick = {
+                                viewModel.touch()
+                                onNavigateToSettings()
+                            }) {
+                                Icon(Icons.Default.Security, contentDescription = "Settings")
+                            }
+                        }
+                    )
+                },
+                floatingActionButton = {
+                    if (isSelectionMode && selectedForCompare.size == 2) {
+                        ExtendedFloatingActionButton(
+                            onClick = {
+                                val list = selectedForCompare.toList()
+                                onNavigateToCompare(list[0], list[1])
+                                isSelectionMode = false
+                                selectedForCompare = emptySet()
+                            },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
-                            PhysicalCheckCard(
-                                check = check,
-                                viewModel = viewModel,
-                                isSelected = selectedForCompare.contains(check.id),
-                                isSelectionMode = isSelectionMode,
-                                onToggleSelection = {
-                                    if (selectedForCompare.contains(check.id)) {
-                                        selectedForCompare = selectedForCompare - check.id
-                                    } else {
-                                        if (selectedForCompare.size < 2) {
-                                            selectedForCompare = selectedForCompare + check.id
-                                        } else {
-                                            Toast.makeText(context, "Puoi selezionare massimo 2 check", Toast.LENGTH_SHORT).show()
+                            Icon(Icons.Default.Compare, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Confronta (2)")
+                        }
+                    } else if (!isSelectionMode) {
+                        FloatingActionButton(
+                            onClick = {
+                                viewModel.touch()
+                                showAddDialog = true
+                            },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Icon(Icons.Default.AddAPhoto, contentDescription = "Aggiungi Check")
+                        }
+                    }
+                }
+            ) { paddingValues ->
+                if (checks.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.padding(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PhotoLibrary,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                modifier = Modifier.size(96.dp)
+                            )
+                            Text(
+                                text = "Nessun check registrato",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Premi il pulsante in basso per aggiungere le tue prime foto di check fisici.",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(checks) { check ->
+                            val dismissState = rememberSwipeToDismissBoxState()
+
+                            LaunchedEffect(dismissState.targetValue) {
+                                if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
+                                    if (swipeActionsEnabled && !isSelectionMode) {
+                                        when (dismissState.targetValue) {
+                                            SwipeToDismissBoxValue.EndToStart -> {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                checkToDelete = check
+                                            }
+                                            SwipeToDismissBoxValue.StartToEnd -> {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                checkToEdit = check
+                                            }
+                                            else -> {}
                                         }
                                     }
-                                },
-                                onLongClick = {
-                                    if (!isSelectionMode && !swipeActionsEnabled) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        isSelectionMode = true
-                                        selectedForCompare = setOf(check.id)
-                                    }
-                                },
-                                onPhotoClick = { filenames, index ->
-                                    fullscreenState = FullscreenState(check.id, filenames, index)
-                                },
-                                onAddPhotoClick = {
-                                    addingPhotosForCheckId = check.id
-                                    showAddPhotoOptions = true
+                                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                                 }
-                            )
+                            }
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = swipeActionsEnabled && !isSelectionMode,
+                                enableDismissFromEndToStart = swipeActionsEnabled && !isSelectionMode,
+                                backgroundContent = {
+                                    val direction = dismissState.dismissDirection
+
+                                    val color by animateColorAsState(
+                                        when (direction) {
+                                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                                            SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                            else -> Color.Transparent
+                                        },
+                                        label = "bg_color"
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(color)
+                                            .padding(horizontal = 28.dp),
+                                        contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
+                                    ) {
+                                        if (direction == SwipeToDismissBoxValue.EndToStart) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = MaterialTheme.colorScheme.onError,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        } else if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                                            Icon(
+                                                Icons.Default.Edit,
+                                                contentDescription = "Edit",
+                                                tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            ) {
+                                PhysicalCheckCard(
+                                    check = check,
+                                    viewModel = viewModel,
+                                    isSelected = selectedForCompare.contains(check.id),
+                                    isSelectionMode = isSelectionMode,
+                                    onToggleSelection = {
+                                        if (selectedForCompare.contains(check.id)) {
+                                            selectedForCompare = selectedForCompare - check.id
+                                        } else {
+                                            if (selectedForCompare.size < 2) {
+                                                selectedForCompare = selectedForCompare + check.id
+                                            } else {
+                                                Toast.makeText(context, "Puoi selezionare massimo 2 check", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (!isSelectionMode && !swipeActionsEnabled) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            isSelectionMode = true
+                                            selectedForCompare = setOf(check.id)
+                                        }
+                                    },
+                                    onPhotoClick = { filenames, index ->
+                                        fullscreenState = FullscreenState(check.id, filenames, index)
+                                    },
+                                    onAddPhotoClick = {
+                                        addingPhotosForCheckId = check.id
+                                        showAddPhotoOptions = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }

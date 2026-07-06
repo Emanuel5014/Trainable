@@ -111,9 +111,12 @@ implementation(libs.google.fonts)
 // Haze - Frosted Glass Blur
     implementation(libs.haze)
 
-// Biometric & Fragment support
+    // Biometric & Fragment support
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment)
+
+    // ProcessLifecycleOwner for background detection
+    implementation(libs.lifecycle.process)
 
 
     testImplementation(libs.junit)

@@ -1,15 +1,18 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.repository.PhysicalCheckRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,12 +33,46 @@ class PhysicalCheckViewModel @Inject constructor(
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked: StateFlow<Boolean> = _isUnlocked
 
+    private val _sessionActive = MutableStateFlow(true)
+    val sessionActive: StateFlow<Boolean> = _sessionActive
+
+    private val _isAutoUnlocking = MutableStateFlow(true)
+    val isAutoUnlocking: StateFlow<Boolean> = _isAutoUnlocking
+
+    private val _lastActivityTime = MutableStateFlow(System.currentTimeMillis())
+
+    companion object {
+        private const val SESSION_TIMEOUT_MS = 5 * 60 * 1000L
+        private const val INACTIVITY_CHECK_INTERVAL_MS = 60_000L
+    }
+
     init {
+        autoUnlock()
+        observeAppLifecycle()
+        startInactivityMonitor()
+    }
+
+    private fun autoUnlock() {
+        if (_isUnlocked.value) return
+        _isAutoUnlocking.value = true
         viewModelScope.launch {
-            // Tenta l'autologin all'avvio
-            val autoUnlocked = repository.tryAutoUnlock()
-            _isUnlocked.value = autoUnlocked
+            val unlocked = repository.tryAutoUnlock()
+            _isUnlocked.value = unlocked
+            _isAutoUnlocking.value = false
         }
+    }
+
+    fun setSessionActive(active: Boolean) {
+        _sessionActive.value = active
+        if (active) _lastActivityTime.value = System.currentTimeMillis()
+    }
+
+    fun touch() {
+        _lastActivityTime.value = System.currentTimeMillis()
+    }
+
+    fun lockSession() {
+        _sessionActive.value = false
     }
 
     fun unlock(password: String, onSuccess: () -> Unit, onError: () -> Unit) {
@@ -43,6 +80,7 @@ class PhysicalCheckViewModel @Inject constructor(
             val success = repository.unlock(password)
             if (success) {
                 _isUnlocked.value = true
+                _lastActivityTime.value = System.currentTimeMillis()
                 onSuccess()
             } else {
                 onError()
@@ -55,6 +93,7 @@ class PhysicalCheckViewModel @Inject constructor(
             val success = repository.enableEncryption(password)
             if (success) {
                 _isUnlocked.value = true
+                _lastActivityTime.value = System.currentTimeMillis()
                 onSuccess()
             } else {
                 onError()
@@ -121,5 +160,29 @@ class PhysicalCheckViewModel @Inject constructor(
 
     suspend fun getPhotoBytes(filename: String): ByteArray? {
         return repository.getPhotoBytes(filename)
+    }
+
+    private fun observeAppLifecycle() {
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStop(owner: LifecycleOwner) {
+                lockSession()
+            }
+
+            override fun onStart(owner: LifecycleOwner) {
+                autoUnlock()
+            }
+        })
+    }
+
+    private fun startInactivityMonitor() {
+        viewModelScope.launch {
+            while (true) {
+                delay(INACTIVITY_CHECK_INTERVAL_MS)
+                val elapsed = System.currentTimeMillis() - _lastActivityTime.value
+                if (elapsed >= SESSION_TIMEOUT_MS && _sessionActive.value) {
+                    lockSession()
+                }
+            }
+        }
     }
 }

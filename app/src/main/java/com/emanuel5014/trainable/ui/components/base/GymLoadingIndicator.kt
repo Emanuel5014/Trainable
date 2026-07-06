@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun GymLoadingIndicator(
     modifier: Modifier = Modifier,
-    size: Dp = 48.dp,
+    size: Dp = 72.dp,
 ) {
     LoadingIndicator(
         modifier = modifier.size(size),

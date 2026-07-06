@@ -26,7 +26,7 @@ class PhysicalCheckCryptoManager @Inject constructor() {
     private val GCM_IV_LENGTH = 12
     private val GCM_TAG_LENGTH = 128
     private val DERIVED_KEY_LENGTH = 256
-    private val ITERATIONS = 10000
+    private val ITERATIONS = 600000
 
     private fun getOrCreateKeystoreKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
