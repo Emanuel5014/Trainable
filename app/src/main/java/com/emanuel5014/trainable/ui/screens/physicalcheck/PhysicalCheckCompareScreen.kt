@@ -30,6 +30,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.ui.util.DateFormatter
+import com.emanuel5014.trainable.util.WeightUnitConverter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +41,8 @@ fun PhysicalCheckCompareScreen(
     viewModel: PhysicalCheckViewModel = hiltViewModel()
 ) {
     val checks by viewModel.checks.collectAsState()
-    
+    val weightUnit by viewModel.weightUnit.collectAsState()
+
     val check1 = remember(checks, checkId1) { checks.find { it.id == checkId1 } }
     val check2 = remember(checks, checkId2) { checks.find { it.id == checkId2 } }
 
@@ -145,7 +147,7 @@ fun PhysicalCheckCompareScreen(
                                 Text(
                                 text = stringResource(R.string.physical_check_before) + ": " +
                                        DateFormatter.format(olderCheck.timestamp) +
-                                       (olderCheck.peso?.let { " - ${it} " + stringResource(R.string.kg_short) } ?: ""),
+                                       (olderCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                     color = Color.White,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
@@ -161,7 +163,7 @@ fun PhysicalCheckCompareScreen(
                                 Text(
                                 text = stringResource(R.string.physical_check_after) + ": " +
                                        DateFormatter.format(newerCheck.timestamp) +
-                                       (newerCheck.peso?.let { " - ${it} " + stringResource(R.string.kg_short) } ?: ""),
+                                       (newerCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                     color = Color.White,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
@@ -207,7 +209,7 @@ fun PhysicalCheckCompareScreen(
                                         Text(
                                         text = stringResource(R.string.physical_check_before) + ": " +
                                                DateFormatter.format(olderCheck.timestamp) +
-                                               (olderCheck.peso?.let { " - ${it} " + stringResource(R.string.kg_short) } ?: ""),
+                                               (olderCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                             color = Color.White,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
@@ -242,7 +244,7 @@ fun PhysicalCheckCompareScreen(
                                         Text(
                                         text = stringResource(R.string.physical_check_after) + ": " +
                                                DateFormatter.format(newerCheck.timestamp) +
-                                               (newerCheck.peso?.let { " - ${it} " + stringResource(R.string.kg_short) } ?: ""),
+                                               (newerCheck.peso?.let { " - " + WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(it, weightUnit), weightUnit) } ?: ""),
                                             color = Color.White,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,

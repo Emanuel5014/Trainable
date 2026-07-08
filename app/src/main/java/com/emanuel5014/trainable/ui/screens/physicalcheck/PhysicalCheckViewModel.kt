@@ -29,6 +29,8 @@ class PhysicalCheckViewModel @Inject constructor(
 
     val biometricEnabled = preferencesRepository.physicalCheckBiometricEnabled
     val encryptionEnabled = preferencesRepository.physicalCheckEncryptionEnabled
+    val weightUnit = preferencesRepository.weightUnit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "kg")
 
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked: StateFlow<Boolean> = _isUnlocked

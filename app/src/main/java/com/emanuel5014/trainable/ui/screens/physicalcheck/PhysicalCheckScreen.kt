@@ -64,6 +64,7 @@ import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.BiometricHelper
+import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.File
@@ -963,6 +964,8 @@ fun PhysicalCheckCard(
     onPhotoClick: (List<String>, Int) -> Unit,
     onAddPhotoClick: () -> Unit
 ) {
+    val weightUnit by viewModel.weightUnit.collectAsState()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1003,7 +1006,10 @@ fun PhysicalCheckCard(
                             modifier = Modifier.padding(start = 4.dp)
                         ) {
                             Text(
-                                text = "${check.peso} kg",
+                                text = WeightUnitConverter.formatWithUnit(
+                                    WeightUnitConverter.convertDisplay(check.peso, weightUnit),
+                                    weightUnit
+                                ),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -1165,6 +1171,7 @@ fun AddPhysicalCheckDialog(
     viewModel: PhysicalCheckViewModel
 ) {
     val context = LocalContext.current
+    val weightUnit by viewModel.weightUnit.collectAsState()
     var weightInput by remember { mutableStateOf("") }
     var notesInput by remember { mutableStateOf("") }
     val photoBytesList = remember { mutableStateListOf<ByteArray>() }
@@ -1280,7 +1287,7 @@ fun AddPhysicalCheckDialog(
                 OutlinedTextField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
-                    label = { Text(stringResource(R.string.physical_check_weight_label)) },
+                    label = { Text(stringResource(R.string.physical_check_weight_label).replace(" (kg)", " ($weightUnit)")) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -1368,7 +1375,10 @@ fun AddPhysicalCheckDialog(
                         Toast.makeText(context, context.getString(R.string.physical_check_select_photo_toast), Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    val peso = weightInput.replace(",", ".").toFloatOrNull()
+                    var peso = weightInput.replace(",", ".").toFloatOrNull()
+                    if (peso != null) {
+                        peso = WeightUnitConverter.convertStorage(peso, weightUnit)
+                    }
                     onConfirm(
                         datePickerState.selectedDateMillis ?: System.currentTimeMillis(),
                         peso,
@@ -1621,7 +1631,14 @@ private fun EditPhysicalCheckDialog(
     onConfirm: (Long, Float?, String?) -> Unit
 ) {
     val context = LocalContext.current
-    var weightInput by remember { mutableStateOf(check.peso?.toString() ?: "") }
+    val weightUnit by viewModel.weightUnit.collectAsState()
+    var weightInput by remember {
+        mutableStateOf(
+            check.peso?.let {
+                WeightUnitConverter.format(WeightUnitConverter.convertDisplay(it, weightUnit))
+            } ?: ""
+        )
+    }
     var notesInput by remember { mutableStateOf(check.note ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = check.timestamp)
@@ -1750,7 +1767,7 @@ private fun EditPhysicalCheckDialog(
                 OutlinedTextField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
-                    label = { Text(stringResource(R.string.physical_check_weight_label)) },
+                    label = { Text(stringResource(R.string.physical_check_weight_label).replace(" (kg)", " ($weightUnit)")) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -1828,7 +1845,10 @@ private fun EditPhysicalCheckDialog(
         },
         confirmButton = {
             Button(onClick = {
-                val peso = weightInput.replace(",", ".").toFloatOrNull()
+                var peso = weightInput.replace(",", ".").toFloatOrNull()
+                if (peso != null) {
+                    peso = WeightUnitConverter.convertStorage(peso, weightUnit)
+                }
                 onConfirm(
                     datePickerState.selectedDateMillis ?: check.timestamp,
                     peso,
