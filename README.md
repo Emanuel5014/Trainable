@@ -147,12 +147,12 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 com/emanuel5014/trainable/
 ├── data/
 │   ├── local/
-│   │   ├── dao/            # Room DAOs (WorkoutDao, ExerciseDao, etc.)
-│   │   ├── entity/         # Room entities (SetLogEntity, WorkoutPlanEntity, etc.)
+│   │   ├── dao/            # Room DAOs (WorkoutDao, ExerciseDao, PhysicalCheckDao)
+│   │   ├── entity/         # Room entities (SetLogEntity, WorkoutPlanEntity, PhysicalCheckEntity)
 │   │   └── relation/       # Relation classes (PlanWithDetails, SessionWithSets, etc.)
 │   ├── remote/
 │   │   └── dto/            # DTOs for export/import (WorkoutPlanExportDto)
-│   └── repository/         # Repositories (WorkoutRepository, AnalyticsRepository, etc.)
+│   └── repository/         # Repositories (WorkoutRepository, AnalyticsRepository, PhysicalCheckRepository)
 ├── di/                     # Hilt modules (DatabaseModule, NetworkModule)
 ├── ui/
 │   ├── components/
@@ -169,6 +169,7 @@ com/emanuel5014/trainable/
 │   │   ├── dashboard/      # Main dashboard
 │   │   ├── history/        # Session history, edit, filter
 │   │   ├── onboarding/     # Onboarding flow
+│   │   ├── physicalcheck/  # Physical checks (body progression with photos & encryption)
 │   │   ├── routines/       # Routine list, detail, builder
 │   │   ├── settings/       # App settings
 │   │   └── workout/        # Workout execution
@@ -177,6 +178,7 @@ com/emanuel5014/trainable/
 ├── util/
 │   ├── backup/             # AutoBackupWorker, BackupManager
 │   └── notification/       # TimerNotification, GymMembershipWorker
+├── widget/                 # Glance widgets (TrainableWidget, WeeklyGoalWidget)
 ├── MainActivity.kt
 └── GymTrackingApp.kt
 ```
