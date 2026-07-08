@@ -101,6 +101,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Weekly Goal Widget**: Track weekly workout goal progress directly from your home screen.
 
 ### 🔒 Physical Checks
+*   **Hidden Entry Point**: Tap the Trainable logo 3 times from the Dashboard to access Physical Checks.
 *   **Body Progression Tracking**: Log body measurements with weight, notes, and timestamp.
 *   **Photo Gallery**: Capture or import multiple photos per check with fullscreen pinch-to-zoom viewer.
 *   **Before/After Comparison**: Interactive slider overlay to compare any two check entries.
