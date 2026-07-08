@@ -117,6 +117,21 @@ class BackupManager @Inject constructor(
                             }
                         }
                     }
+
+
+                    // Export physical check images
+                    val physicalChecksDir = File(context.filesDir, "physical_checks")
+                    if (physicalChecksDir.exists()) {
+                        physicalChecksDir.listFiles()?.forEach { file ->
+                            if (file.isFile) {
+                                FileInputStream(file).use { fis ->
+                                    zos.putNextEntry(ZipEntry("physical_checks/${file.name}"))
+                                    fis.copyTo(zos)
+                                    zos.closeEntry()
+                                }
+                            }
+                        }
+                    }
                 }
             }
             true
@@ -205,6 +220,11 @@ class BackupManager @Inject constructor(
                 json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
                 json.put("gym_membership_expiry_notifications_enabled", prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] ?: true)
                 json.put("gym_membership_expiry_notification_days_before", prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] ?: 14)
+
+                json.put("physical_check_encryption_enabled", prefs[UserPreferencesRepository.PHYSICAL_CHECK_ENCRYPTION_ENABLED] ?: false)
+                prefs[UserPreferencesRepository.PHYSICAL_CHECK_ENCRYPTION_SALT]?.let { json.put("physical_check_encryption_salt", it) }
+                prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_BLOCK]?.let { json.put("physical_check_validation_block", it) }
+                prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_IV]?.let { json.put("physical_check_validation_iv", it) }
 
                 json.toString()
             }
@@ -308,10 +328,29 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED] = jsonObject.getBoolean("gym_membership_expiry_notifications_enabled")
                                             if (jsonObject.has("gym_membership_expiry_notification_days_before"))
                                                 prefs[UserPreferencesRepository.GYM_MEMBERSHIP_EXPIRY_NOTIFICATION_DAYS_BEFORE] = jsonObject.getInt("gym_membership_expiry_notification_days_before")
+                                            if (jsonObject.has("physical_check_encryption_enabled"))
+                                                prefs[UserPreferencesRepository.PHYSICAL_CHECK_ENCRYPTION_ENABLED] = jsonObject.getBoolean("physical_check_encryption_enabled")
+                                            if (jsonObject.has("physical_check_encryption_salt") && !jsonObject.isNull("physical_check_encryption_salt"))
+                                                prefs[UserPreferencesRepository.PHYSICAL_CHECK_ENCRYPTION_SALT] = jsonObject.getString("physical_check_encryption_salt")
+                                            if (jsonObject.has("physical_check_validation_block") && !jsonObject.isNull("physical_check_validation_block"))
+                                                prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_BLOCK] = jsonObject.getString("physical_check_validation_block")
+                                            if (jsonObject.has("physical_check_validation_iv") && !jsonObject.isNull("physical_check_validation_iv"))
+                                                prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_IV] = jsonObject.getString("physical_check_validation_iv")
                                         }
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
+                                }
+                            }
+                            entry.name.startsWith("physical_checks/") -> {
+                                val imageName = entry.name.removePrefix("physical_checks/")
+                                if (imageName.isNotEmpty()) {
+                                    val physicalChecksDir = File(context.filesDir, "physical_checks")
+                                    if (!physicalChecksDir.exists()) physicalChecksDir.mkdirs()
+                                    val outFile = File(physicalChecksDir, imageName)
+                                    FileOutputStream(outFile).use { fos ->
+                                        zis.copyTo(fos)
+                                    }
                                 }
                             }
                             entry.name.startsWith("images/") -> {

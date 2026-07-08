@@ -83,6 +83,8 @@
     <string name="started">Started: %s</string>
     <string name="goal_met">Goal met</string>
     <string name="workouts_this_week" formatted="false">%d / %d workouts</string>
+    <string name="workout_remaining" formatted="false">%d workout remaining</string>
+    <string name="workouts_remaining" formatted="false">%d workouts remaining</string>
     <string name="ready_to_train">Ready to train?</string>
     <string name="lets_go">Let\'s go!</string>
     <string name="no_active_routines">No active routines</string>
@@ -542,5 +544,87 @@
     <!-- Notifications -->
     <string name="notification_next_set">Next: %1$s - Set %2$d: %3$s × %4$d</string>
     <string name="notification_last_reps">(last: %1$d)</string>
+
+    <!-- Widget -->
+    <string name="widget_state_in_progress">IN PROGRESS</string>
+    <string name="widget_state_suggested_today">RECOMMENDED TODAY</string>
+    <string name="widget_state_suggested">RECOMMENDED</string>
+    <string name="widget_state_welcome">WELCOME</string>
+    <string name="widget_action_resume">RESUME</string>
+    <string name="widget_action_start">START</string>
+    <string name="widget_action_open_app">OPEN APP</string>
+    <string name="widget_start_routine">Start a routine</string>
+    <string name="widget_trainable_label">Workout</string>
+    <string name="widget_trainable_description">Suggested workout and quick start</string>
+    <string name="widget_weekly_goal_label">Weekly Goal</string>
+    <string name="widget_weekly_goal_description">Weekly workout progress tracker</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+
+    <!-- Physical Check -->
+    <string name="physical_check_title">Physical Checks</string>
+    <string name="physical_check_protected_access">Protected Access</string>
+    <string name="physical_check_fingerprint_desc">Use fingerprint or device PIN to access physical checks.</string>
+    <string name="physical_check_auth_button">Authenticate</string>
+    <string name="physical_check_encrypted_vault">Encrypted Vault</string>
+    <string name="physical_check_enter_password_desc">Enter your password to decrypt your physical checks.</string>
+    <string name="physical_check_unlock">Unlock</string>
+    <string name="physical_check_no_checks">No checks registered</string>
+    <string name="physical_check_no_checks_desc">Tap the button below to add your first physical check photos.</string>
+    <string name="physical_check_max_2">You can select up to 2 checks</string>
+    <string name="physical_check_delete_title">Delete Check</string>
+    <string name="physical_check_delete_message">Are you sure you want to delete this physical check? Photos will be permanently removed.</string>
+    <string name="physical_check_add_photos">Add photos</string>
+    <string name="physical_check_delete_photo_title">Delete Photo</string>
+    <string name="physical_check_delete_photo_message">Are you sure you want to delete this photo?</string>
+    <string name="physical_check_new_check">New Physical Check</string>
+    <string name="physical_check_weight_label">Body weight (kg)</string>
+    <string name="physical_check_notes_label">Notes / Feelings</string>
+    <string name="physical_check_select_photo_toast">Select at least one photo</string>
+    <string name="physical_check_photos_selected">Photos selected: %d</string>
+    <string name="physical_check_edit_check">Edit Check</string>
+    <string name="physical_check_photos_count">Photos (%d)</string>
+    <string name="physical_check_compare_count">Compare (2)</string>
+    <string name="physical_check_compare_title">Physical Check Comparison</string>
+    <string name="physical_check_before">Before</string>
+    <string name="physical_check_after">After</string>
+    <string name="physical_check_select_photo_before">Select Before Photo:</string>
+    <string name="physical_check_select_photo_after">Select After Photo:</string>
+    <string name="physical_check_biometric_lock">Biometric / PIN Lock</string>
+    <string name="physical_check_biometric_desc">Require fingerprint or PIN to access this section.</string>
+    <string name="physical_check_encryption">Data &amp; Photo Encryption</string>
+    <string name="physical_check_encryption_desc">Encrypt all photos locally using a portable password. Safe in backups.</string>
+    <string name="physical_check_enable_encryption">Enable Encryption</string>
+    <string name="physical_check_enable_encryption_desc">Set a password. You\'ll need it to access data if you restore the backup on another device.</string>
+    <string name="physical_check_new_password">New Password</string>
+    <string name="physical_check_confirm_password">Confirm Password</string>
+    <string name="physical_check_password_min_length">Password must be at least 4 characters</string>
+    <string name="physical_check_passwords_dont_match">Passwords don\'t match</string>
+    <string name="physical_check_encryption_enabled">Encryption enabled successfully</string>
+    <string name="physical_check_encryption_error">Error enabling encryption</string>
+    <string name="physical_check_disable_encryption">Disable Encryption</string>
+    <string name="physical_check_disable_encryption_desc">Enter your password to decrypt all current images and save them in clear.</string>
+    <string name="physical_check_encryption_disabled">Encryption disabled</string>
+    <string name="physical_check_settings_title">Physical Check Security</string>
+    <string name="physical_check_camera_denied">Camera permission denied</string>
+    <string name="physical_check_health_section">Health &amp; Privacy</string>
+    <string name="physical_check_enable">Enable</string>
+    <string name="physical_check_disable">Disable</string>
+    <string name="physical_check_date">Date</string>
+    <string name="physical_check_select_source">Select source</string>
+    <string name="physical_check_password_error">Wrong password. Try again.</string>
+    <string name="physical_check_password_label">Password</string>
+    <string name="physical_check_fingerprint_cd">Fingerprint</string>
+    <string name="physical_check_lock_cd">Lock</string>
+    <string name="physical_check_remove_cd">Remove</string>
+    <string name="physical_check_settings_cd">Settings</string>
+    <string name="physical_check_compare_cd">Compare</string>
+    <string name="physical_check_add_check_cd">Add Check</string>
+    <string name="physical_check_view_toggle_cd">Toggle view</string>
+    <string name="physical_check_forgot_password">Forgot password?</string>
+    <string name="physical_check_reset_title">Reset all data?</string>
+    <string name="physical_check_reset_message">You forgot your password. All physical check data (records and photos) will be permanently deleted. This action cannot be undone.</string>
+    <string name="physical_check_reset_confirm">Delete Everything</string>
 
 </resources>

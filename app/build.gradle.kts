@@ -17,7 +17,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 1
-        versionName = "1.6.0"
+        versionName = "1.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -65,6 +65,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Jetpack Glance AppWidgets
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
+
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
@@ -104,9 +109,18 @@ dependencies {
 implementation(libs.google.fonts)
 
 // Haze - Frosted Glass Blur
-implementation(libs.haze)
+    implementation(libs.haze)
+
+    // Biometric & Fragment support
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.fragment)
+
+    // ProcessLifecycleOwner for background detection
+    implementation(libs.lifecycle.process)
+
 
     testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

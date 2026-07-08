@@ -15,6 +15,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -1033,6 +1034,7 @@ private fun RoutineCard(
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -1117,23 +1119,36 @@ private fun RoutineCard(
                         }
                         
                         Row(
-                            modifier = Modifier.padding(top = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                         ) {
-                            DayOfWeek.entries.forEach { day ->
+                            DayOfWeek.entries.forEachIndexed { index, day ->
                                 val isScheduled = scheduledDays.contains(day)
+                                val dayShape = if (isScheduled) RoundedCornerShape(50)
+                                else when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes().shape
+                                    DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes().shape
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes().shape
+                                }
                                 Box(
                                     modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isScheduled) Primary else OnSurfaceVariant.copy(alpha = 0.1f)),
+                                        .weight(1f)
+                                        .clip(dayShape)
+                                        .background(if (isScheduled) Primary else SurfaceContainerHigh)
+                                        .then(
+                                            if (!isScheduled) Modifier.border(
+                                                BorderStroke(1.dp, OnSurfaceVariant.copy(alpha = 0.2f)),
+                                                dayShape
+                                            ) else Modifier
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                        style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = if (isScheduled) OnPrimary else OnSurfaceVariant.copy(alpha = 0.5f)
+                                        color = if (isScheduled) OnPrimary else OnSurfaceVariant,
+                                        modifier = Modifier.padding(vertical = 4.dp)
                                     )
                                 }
                             }

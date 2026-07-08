@@ -15,10 +15,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
+import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsScreen
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardScreen
 import com.emanuel5014.trainable.ui.screens.history.HistoryScreen
@@ -53,6 +55,7 @@ fun MainPagerScreen(
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = !BottomBarManager.swipeLocked,
         beyondViewportPageCount = 3
     ) { page ->
         when (page) {
@@ -63,7 +66,8 @@ fun MainPagerScreen(
                 },
                 onNavigateToQuickWorkout = { name ->
                     navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
-                }
+                },
+                onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
             )
             1 -> RoutineListScreen(
                 onNavigateToDetail = { planId ->

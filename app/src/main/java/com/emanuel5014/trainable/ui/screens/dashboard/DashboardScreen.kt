@@ -1,7 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -41,6 +46,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toPath
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -55,6 +63,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.fragment.app.FragmentActivity
+import com.emanuel5014.trainable.util.BiometricHelper
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,11 +77,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -105,8 +122,27 @@ fun DashboardScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToWorkout: (planId: Int?, sessionId: Int?) -> Unit,
     onNavigateToQuickWorkout: (name: String?) -> Unit,
+    onNavigateToPhysicalChecks: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val biometricEnabled by viewModel.physicalCheckBiometricEnabled.collectAsState(initial = false)
+
+    val handleNavigateToPhysicalChecks = {
+        if (biometricEnabled) {
+            val activity = context as? FragmentActivity
+            if (activity != null) {
+                BiometricHelper.checkAndShowBiometricPrompt(
+                    activity = activity,
+                    onSuccess = { onNavigateToPhysicalChecks() }
+                )
+            } else {
+                onNavigateToPhysicalChecks()
+            }
+        } else {
+            onNavigateToPhysicalChecks()
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
     var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -445,6 +481,7 @@ fun DashboardScreen(
                 item {
                     DashboardSimpleHeader(
                         onSettingsClick = onNavigateToSettings,
+                        onLogoTripleClick = handleNavigateToPhysicalChecks,
                         dynamicColor = uiState.dynamicColor,
                         themePalette = uiState.themePalette,
                         isSelectionMode = uiState.isSelectionMode,
@@ -564,7 +601,9 @@ fun DashboardScreen(
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
-                                modifier = Modifier.clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
+                                modifier = Modifier
+                                    .clip(Shapes.extraLarge)
+                                    .clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -600,7 +639,9 @@ fun DashboardScreen(
                                 modifier = Modifier.padding(bottom = Spacing.medium)
                             )
                             GymCard(
-                                modifier = Modifier.clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
+                                modifier = Modifier
+                                    .clip(Shapes.extraLarge)
+                                    .clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -643,12 +684,26 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun GymMembershipCard(
     expiryDateMillis: Long?,
     username: String,
     onClick: () -> Unit
 ) {
+    val gemPath = MaterialShapes.Gem.toPath()
+    val sunnyPath = MaterialShapes.Sunny.toPath()
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val gemRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(15000, easing = LinearEasing), RepeatMode.Restart)
+    )
+    val sunnyRotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart)
+    )
+
     val daysLeft = expiryDateMillis?.let {
         val expiryDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
         ChronoUnit.DAYS.between(java.time.LocalDate.now(), expiryDate).toInt()
@@ -707,16 +762,34 @@ fun GymMembershipCard(
         ) {
             // Background expressive pattern
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.1f),
-                    radius = size.width / 2,
-                    center = Offset(size.width, 0f)
-                )
-                drawCircle(
-                    color = Color.Black.copy(alpha = 0.05f),
-                    radius = size.width / 3,
-                    center = Offset(0f, size.height)
-                )
+                val gemScale = size.width * 0.6f
+                val scaledGem = Path().apply {
+                    addPath(gemPath)
+                    transform(Matrix().apply { scale(gemScale, gemScale) })
+                    val c = getBounds().center
+                    transform(Matrix().apply {
+                        translate(c.x, c.y)
+                        rotateZ(gemRotation)
+                        translate(-c.x, -c.y)
+                    })
+                    translate(Offset(size.width - c.x, -c.y))
+                }
+                drawPath(scaledGem, color = Color.White.copy(alpha = 0.1f))
+
+                val sunnyScale = size.width * 0.5f
+                val scaledSunny = Path().apply {
+                    addPath(sunnyPath)
+                    transform(Matrix().apply { scale(sunnyScale, sunnyScale) })
+                    val c = getBounds().center
+                    transform(Matrix().apply {
+                        translate(c.x, c.y)
+                        rotateZ(sunnyRotation)
+                        translate(-c.x, -c.y)
+                    })
+                    val fc = getBounds().center
+                    translate(Offset(size.width * 0.06f - fc.x, size.height * 0.88f - fc.y))
+                }
+                drawPath(scaledSunny, color = Color.Black.copy(alpha = 0.05f))
             }
 
             Column(
@@ -813,6 +886,7 @@ fun GymMembershipCard(
 @Composable
 private fun DashboardSimpleHeader(
     onSettingsClick: () -> Unit,
+    onLogoTripleClick: () -> Unit,
     dynamicColor: Boolean,
     themePalette: Int = 0,
     isSelectionMode: Boolean = false,
@@ -861,12 +935,31 @@ private fun DashboardSimpleHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val useCustomTint = dynamicColor || themePalette != 0
+                var clickCount by remember { mutableStateOf(0) }
+                var lastClickTime by remember { mutableStateOf(0L) }
+                
                 Icon(
                     painter = painterResource(id = if (useCustomTint) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
                     contentDescription = "Trainable Logo",
                     tint = if (useCustomTint) Primary else Color.Unspecified,
                     modifier = Modifier
                         .size(56.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastClickTime < 500L) {
+                                clickCount++
+                            } else {
+                                clickCount = 1
+                            }
+                            lastClickTime = currentTime
+                            if (clickCount >= 3) {
+                                clickCount = 0
+                                onLogoTripleClick()
+                            }
+                        }
                 )
             }
             GymIconButton(
@@ -878,62 +971,171 @@ private fun DashboardSimpleHeader(
     }
 }
 
+private fun DrawScope.drawWavyPattern(
+    color: Color,
+    percent: Float,
+    shift: Float,
+    periodPx: Float = 60f,
+    amplitudePx: Float = 8f,
+) {
+    if (size.height <= 0f || size.width <= 0f) return
+
+    val clampedPercent = percent.coerceIn(0f, 1f)
+    val edgeX = size.width * clampedPercent
+    val height = size.height
+
+    if (clampedPercent <= 0f) return
+
+    if (clampedPercent >= 1f || edgeX >= size.width) {
+        drawRect(color = color, size = size)
+        return
+    }
+
+    val halfPeriod = periodPx / 2
+
+    val wavyPath = Path().apply {
+        moveTo(x = 0f, y = 0f)
+        lineTo(x = edgeX, y = 0f)
+
+        val phaseOffset = shift * halfPeriod
+        val wavesNeeded = kotlin.math.ceil(height / halfPeriod + 2).toInt()
+
+        for (i in 0 until wavesNeeded) {
+            val baseY = i * halfPeriod - phaseOffset
+            if (baseY > height + halfPeriod) break
+            if (baseY < -halfPeriod) continue
+
+            val direction = if (i % 2 == 0) 1 else -1
+            val waveX = edgeX + amplitudePx * direction
+
+            val startY = baseY.coerceAtLeast(0f)
+            val endY = (baseY + halfPeriod).coerceAtMost(height)
+
+            if (startY < height && endY > startY) {
+                val midY = (startY + endY) / 2
+                quadraticTo(
+                    x1 = waveX,
+                    y1 = midY,
+                    x2 = edgeX,
+                    y2 = endY
+                )
+            }
+        }
+
+        lineTo(x = 0f, y = height)
+        close()
+    }
+
+    drawPath(path = wavyPath, color = color)
+}
+
 @Composable
 private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int) {
     val progress = if (weeklyGoal > 0) (workoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f) else 0f
-    
-    GymCard(containerColor = SurfaceContainerHigh) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    val density = LocalDensity.current
+    val periodPx = remember { with(density) { 42.dp.toPx() } }
+    val amplitudePx = remember { with(density) { 6.dp.toPx() } }
+    val remaining = weeklyGoal - workoutsThisWeek
+    val goalMet = progress >= 1f
+    val primaryColor = Primary
+    val tertiaryColor = Tertiary
+    val progressColor = if (goalMet) tertiaryColor else primaryColor
+
+    val infiniteTransition = rememberInfiniteTransition(label = "waveShift")
+    val shift by infiniteTransition.animateFloat(
+        initialValue = 2f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "waveShiftValue",
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = Shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = SurfaceContainerHigh,
+            contentColor = OnSurface,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawWavyPattern(
+                        color = primaryColor.copy(alpha = 0.15f),
+                        percent = progress,
+                        shift = shift,
+                        periodPx = periodPx,
+                        amplitudePx = amplitudePx,
+                    )
+                }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp, horizontal = 20.dp)
             ) {
-                Column {
+                Text(
+                    text = stringResource(R.string.weekly_goal),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = stringResource(R.string.weekly_goal),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Primary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.workouts_this_week, workoutsThisWeek, weeklyGoal),
+                        text = "$workoutsThisWeek",
                         style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
                         color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
                     )
-                    if (cardioWorkoutsThisWeek > 0) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "$cardioWorkoutsThisWeek CARDIO",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.SemiBold
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "/ $weeklyGoal",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (goalMet) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = stringResource(R.string.goal_met),
+                            tint = tertiaryColor,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
-                if (workoutsThisWeek >= weeklyGoal) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = stringResource(R.string.goal_met),
-                        tint = Tertiary,
-                        modifier = Modifier.size(32.dp)
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = when {
+                            goalMet -> stringResource(R.string.goal_met)
+                            remaining == 1 -> stringResource(R.string.workout_remaining, remaining)
+                            else -> stringResource(R.string.workouts_remaining, remaining)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = progressColor,
+                        fontWeight = FontWeight.Bold,
                     )
+                    if (cardioWorkoutsThisWeek > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "\u2022 $cardioWorkoutsThisWeek CARDIO",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = if (workoutsThisWeek >= weeklyGoal) Tertiary else Primary,
-                trackColor = Surface
-            )
         }
     }
 }
@@ -950,6 +1152,7 @@ private fun UnfinishedSessionCard(
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick

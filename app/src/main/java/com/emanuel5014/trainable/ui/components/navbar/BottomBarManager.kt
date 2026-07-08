@@ -6,4 +6,5 @@ import androidx.compose.runtime.setValue
 
 object BottomBarManager {
     var isVisibleOverride by mutableStateOf(true)
+    var swipeLocked by mutableStateOf(false)
 }

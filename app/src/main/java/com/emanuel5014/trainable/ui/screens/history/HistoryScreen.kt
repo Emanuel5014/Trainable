@@ -50,6 +50,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddBox
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
@@ -70,8 +71,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -138,6 +137,7 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -170,6 +170,7 @@ import com.emanuel5014.trainable.util.ShareUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 private data class ExerciseWithSets(
     val exercise: com.emanuel5014.trainable.data.local.entity.ExerciseEntity,
@@ -238,7 +239,7 @@ fun HistoryScreen(
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-    var sessionToShare by remember { mutableStateOf<Pair<SessionWithDetails, String>?>(null) }
+    var sessionToShare by remember { mutableStateOf<Triple<SessionWithDetails, String, List<PlanExerciseWithDetails>?>?>(null) }
 
     LaunchedEffect(Unit) {
         isNavigating = false
@@ -255,9 +256,11 @@ fun HistoryScreen(
     DisposableEffect(capturedBitmapToPreview) {
         if (capturedBitmapToPreview != null) {
             BottomBarManager.isVisibleOverride = false
+            BottomBarManager.swipeLocked = true
         }
         onDispose {
             BottomBarManager.isVisibleOverride = true
+            BottomBarManager.swipeLocked = false
         }
     }
 
@@ -516,7 +519,10 @@ fun HistoryScreen(
                                     languageCode = languageCode,
                                     weightUnit = uiState.weightUnit,
                                     onShareClick = { details ->
-                                        sessionToShare = details to planName
+                                        scope.launch {
+                                            val planExercises = viewModel.loadPlanExercises(details.session.planId)
+                                            sessionToShare = Triple(details, planName, planExercises)
+                                        }
                                     },
                                     swipeActionsEnabled = swipeActionsEnabled,
                                     isSelectionMode = uiState.isSelectionMode,
@@ -593,7 +599,8 @@ fun HistoryScreen(
                                             sessionDetails = sessionToShare!!.first,
                                             planName = sessionToShare!!.second,
                                             languageCode = languageCode,
-                                            weightUnit = uiState.weightUnit
+                                            weightUnit = uiState.weightUnit,
+                                            planExercises = sessionToShare!!.third
                                         )
                                     }
                                 }
@@ -1247,6 +1254,7 @@ fun SessionHistoryCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(Shapes.extraLarge)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -1309,14 +1317,30 @@ fun SessionHistoryCard(
                 
                 if (isSelectionMode) {
                     Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                        Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = { onClick() },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = Primary,
-                                uncheckedColor = OnSurfaceVariant
-                            )
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) Primary else Color.Transparent,
+                                    CircleShape
+                                )
+                                .border(
+                                    width = 2.dp,
+                                    color = if (isSelected) Primary else OnSurfaceVariant.copy(alpha = 0.6f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
                 } else {
                     Icon(

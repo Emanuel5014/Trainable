@@ -66,27 +66,6 @@ class TimerNotificationReceiver : BroadcastReceiver() {
             }
             ACTION_ADD_30S -> {
                 timerEvents.tryEmit(TimerAction.ADD_30S)
-                if (sessionId != -1) {
-                    val pendingResult = goAsync()
-                    scope.launch {
-                        try {
-                            val sessionWithSets = workoutRepository.getSessionWithSets(sessionId).firstOrNull()
-                            val currentEndTime = sessionWithSets?.session?.restTimerEndTime
-                            if (currentEndTime != null) {
-                                val newEndTime = currentEndTime + (30 * 1000L)
-                                val newTotal = (sessionWithSets.session.totalRestSeconds ?: 90) + 30
-                                workoutRepository.updateRestTimer(sessionId, newEndTime, newTotal)
-                                
-                                val remaining = ((newEndTime - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
-                                if (remaining > 0) {
-                                    timerNotificationHelper.startOrUpdateTimerNotification(remaining, sessionId)
-                                }
-                            }
-                        } finally {
-                            pendingResult.finish()
-                        }
-                    }
-                }
             }
             ACTION_DISMISS -> {
                 timerEvents.tryEmit(TimerAction.DISMISS)

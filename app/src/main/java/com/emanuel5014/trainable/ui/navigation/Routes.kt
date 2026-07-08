@@ -42,3 +42,13 @@ data class EditWorkoutSession(val sessionId: Int)
 
 @Serializable
 data class CompareSessions(val sessionId1: Int, val sessionId2: Int)
+
+@Serializable
+object PhysicalCheck
+
+@Serializable
+object PhysicalCheckSettings
+
+@Serializable
+data class PhysicalCheckCompare(val id1: Int, val id2: Int)
+

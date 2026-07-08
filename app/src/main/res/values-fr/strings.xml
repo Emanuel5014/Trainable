@@ -83,6 +83,8 @@
     <string name="started">Commencé : %s</string>
     <string name="goal_met">Objectif atteint</string>
     <string name="workouts_this_week" formatted="false">%d / %d entraînements</string>
+    <string name="workout_remaining" formatted="false">%d entraînement restant</string>
+    <string name="workouts_remaining" formatted="false">%d entraînements restants</string>
     <string name="ready_to_train">Prêt à t\'entraîner ?</string>
     <string name="lets_go">Allons-y !</string>
     <string name="no_active_routines">Aucune routine active</string>
@@ -542,5 +544,87 @@
     <!-- Notifications -->
     <string name="notification_next_set">Prochaine: %1$s - Série %2$d: %3$s × %4$d</string>
     <string name="notification_last_reps">(dernière: %1$d)</string>
+
+    <!-- Widget -->
+    <string name="widget_state_in_progress">EN COURS</string>
+    <string name="widget_state_suggested_today">RECOMMANDÉ AUJOURD\'HUI</string>
+    <string name="widget_state_suggested">RECOMMANDÉ</string>
+    <string name="widget_state_welcome">BIENVENUE</string>
+    <string name="widget_action_resume">REPRENDRE</string>
+    <string name="widget_action_start">COMMENCER</string>
+    <string name="widget_action_open_app">OUVRIR L\'APP</string>
+    <string name="widget_start_routine">Commencer une routine</string>
+    <string name="widget_trainable_label">Entraînement</string>
+    <string name="widget_trainable_description">Entraînement suggéré et démarrage rapide</string>
+    <string name="widget_weekly_goal_label">Objectif Hebdomadaire</string>
+    <string name="widget_weekly_goal_description">Suivi des objectifs hebdomadaires</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+
+    <!-- Physical Check -->
+    <string name="physical_check_title">Check Physiques</string>
+    <string name="physical_check_protected_access">Accès Protégé</string>
+    <string name="physical_check_fingerprint_desc">Utilisez l\'empreinte digitale ou le code PIN de l\'appareil pour accéder aux check physiques.</string>
+    <string name="physical_check_auth_button">S\'authentifier</string>
+    <string name="physical_check_encrypted_vault">Coffre-fort Crypté</string>
+    <string name="physical_check_enter_password_desc">Entrez votre mot de passe pour déchiffrer vos check physiques.</string>
+    <string name="physical_check_unlock">Déverrouiller</string>
+    <string name="physical_check_no_checks">Aucun check enregistré</string>
+    <string name="physical_check_no_checks_desc">Appuyez sur le bouton ci-dessous pour ajouter vos premières photos de check physiques.</string>
+    <string name="physical_check_max_2">Vous pouvez sélectionner max 2 checks</string>
+    <string name="physical_check_delete_title">Supprimer le Check</string>
+    <string name="physical_check_delete_message">Êtes-vous sûr de vouloir supprimer ce check physique ? Les photos seront définitivement supprimées.</string>
+    <string name="physical_check_add_photos">Ajouter des photos</string>
+    <string name="physical_check_delete_photo_title">Supprimer la Photo</string>
+    <string name="physical_check_delete_photo_message">Êtes-vous sûr de vouloir supprimer cette photo ?</string>
+    <string name="physical_check_new_check">Nouveau Check Physique</string>
+    <string name="physical_check_weight_label">Poids corporel (kg)</string>
+    <string name="physical_check_notes_label">Notes / Sensations</string>
+    <string name="physical_check_select_photo_toast">Sélectionnez au moins une photo</string>
+    <string name="physical_check_photos_selected">Photos sélectionnées : %d</string>
+    <string name="physical_check_edit_check">Modifier le Check</string>
+    <string name="physical_check_photos_count">Photos (%d)</string>
+    <string name="physical_check_compare_count">Comparer (2)</string>
+    <string name="physical_check_compare_title">Comparaison des Checks Physiques</string>
+    <string name="physical_check_before">Avant</string>
+    <string name="physical_check_after">Après</string>
+    <string name="physical_check_select_photo_before">Sélectionnez Photo Avant :</string>
+    <string name="physical_check_select_photo_after">Sélectionnez Photo Après :</string>
+    <string name="physical_check_biometric_lock">Verrou Biométrique / PIN</string>
+    <string name="physical_check_biometric_desc">Exigez l\'empreinte digitale ou le PIN pour accéder à cette section.</string>
+    <string name="physical_check_encryption">Chiffrement des Données et Photos</string>
+    <string name="physical_check_encryption_desc">Chiffrez toutes les photos localement avec un mot de passe portable. Sûr dans les sauvegardes.</string>
+    <string name="physical_check_enable_encryption">Activer le Chiffrement</string>
+    <string name="physical_check_enable_encryption_desc">Définissez un mot de passe. Il vous servira à accéder aux données si vous restaurez la sauvegarde sur un autre appareil.</string>
+    <string name="physical_check_new_password">Nouveau Mot de Passe</string>
+    <string name="physical_check_confirm_password">Confirmer le Mot de Passe</string>
+    <string name="physical_check_password_min_length">Le mot de passe doit comporter au moins 4 caractères</string>
+    <string name="physical_check_passwords_dont_match">Les mots de passe ne correspondent pas</string>
+    <string name="physical_check_encryption_enabled">Chiffrement activé avec succès</string>
+    <string name="physical_check_encryption_error">Erreur lors de l\'activation du chiffrement</string>
+    <string name="physical_check_disable_encryption">Désactiver le Chiffrement</string>
+    <string name="physical_check_disable_encryption_desc">Entrez votre mot de passe pour déchiffrer toutes les images actuelles et les enregistrer en clair.</string>
+    <string name="physical_check_encryption_disabled">Chiffrement désactivé</string>
+    <string name="physical_check_settings_title">Sécurité des Checks Physiques</string>
+    <string name="physical_check_camera_denied">Autorisation de la caméra refusée</string>
+    <string name="physical_check_health_section">Santé et Confidentialité</string>
+    <string name="physical_check_enable">Activer</string>
+    <string name="physical_check_disable">Désactiver</string>
+    <string name="physical_check_date">Date</string>
+    <string name="physical_check_select_source">Choisir la source</string>
+    <string name="physical_check_password_error">Mot de passe incorrect. Réessayez.</string>
+    <string name="physical_check_password_label">Mot de passe</string>
+    <string name="physical_check_fingerprint_cd">Empreinte digitale</string>
+    <string name="physical_check_lock_cd">Verrouillage</string>
+    <string name="physical_check_remove_cd">Supprimer</string>
+    <string name="physical_check_settings_cd">Paramètres</string>
+    <string name="physical_check_compare_cd">Comparer</string>
+    <string name="physical_check_add_check_cd">Ajouter un Check</string>
+    <string name="physical_check_view_toggle_cd">Changer de vue</string>
+    <string name="physical_check_forgot_password">Mot de passe oublié ?</string>
+    <string name="physical_check_reset_title">Réinitialiser toutes les données ?</string>
+    <string name="physical_check_reset_message">Vous avez oublié votre mot de passe. Toutes les données des checks physiques (enregistrements et photos) seront définitivement supprimées. Cette action est irréversible.</string>
+    <string name="physical_check_reset_confirm">Tout Supprimer</string>
 
 </resources>

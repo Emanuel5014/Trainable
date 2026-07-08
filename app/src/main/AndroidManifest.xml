@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -81,6 +82,28 @@
                 <action android:name="com.emanuel5014.trainable.ACTION_ADD_30S" />
                 <action android:name="com.emanuel5014.trainable.ACTION_DISMISS" />
             </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".widget.TrainableWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/trainable_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.WeeklyGoalWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/weekly_goal_widget_info" />
         </receiver>
     </application>
 

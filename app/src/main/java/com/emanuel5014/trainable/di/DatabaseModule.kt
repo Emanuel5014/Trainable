@@ -7,6 +7,7 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,4 +39,8 @@ object DatabaseModule {
 
     @Provides
     fun provideWeightLogDao(database: GymDatabase): WeightLogDao = database.weightLogDao()
+
+    @Provides
+    fun providePhysicalCheckDao(database: GymDatabase): PhysicalCheckDao = database.physicalCheckDao()
 }
+
