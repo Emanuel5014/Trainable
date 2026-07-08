@@ -94,10 +94,26 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Live Preview**: Preview your share card before sharing.
 *   **Muscle Group Details**: Muscle group breakdown included in share cards.
 *   **Session Notes**: Workout notes included in shared summaries.
+*   **Planned Set/Rep Scheme**: Planned set and rep structure included in share cards.
+
+### 📱 Widgets
+*   **Quick Start/Resume Widget**: Home Screen and Lock Screen widget for instant workout start or resume.
+*   **Weekly Goal Widget**: Track weekly workout goal progress directly from your home screen.
+
+### 🔒 Physical Checks
+*   **Body Progression Tracking**: Log body measurements with weight, notes, and timestamp.
+*   **Photo Gallery**: Capture or import multiple photos per check with fullscreen pinch-to-zoom viewer.
+*   **Before/After Comparison**: Interactive slider overlay to compare any two check entries.
+*   **Biometric Lock**: Fingerprint or device PIN gate for quick access.
+*   **Password Encryption**: Optional AES-256-GCM password-based encryption for all check photos.
+*   **Forgot Password Reset**: Secure nuclear reset that deletes all check data if password is lost.
+*   **Auto-Lock**: Session auto-locks after inactivity or when app goes to background.
+*   **Unit Conversion**: Automatic kg/lb conversion for weight entries.
+*   **Swipe & Long-Press Actions**: Quick edit, delete, and manage checks via gestures.
 
 ### ⚙️ Premium UX & Tools
 *   **Dynamic Color**: Full support for Android 12+ wallpaper-based color extraction.
-*   **Light Mode & Custom Themes**: Switch between Dark/Light mode and customize themes.
+*   **Light Mode & Custom Themes**: Switch between Dark/Light mode, customize themes, and choose from an extensive color palette in Settings.
 *   **Google Sans Font**: Clean, modern typography throughout the app.
 *   **Horizontal Pager Navigation**: Fluid swipe-based transitions between main tabs.
 *   **Backup & Restore**: Secure ZIP-based local backup system with photo compression and expanded preference sync (Theme, Units, Language).
