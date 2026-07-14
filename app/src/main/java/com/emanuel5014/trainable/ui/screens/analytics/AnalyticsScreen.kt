@@ -180,6 +180,7 @@ fun AnalyticsScreen(
     var showAddVolumeDialog by remember { mutableStateOf(false) }
     var showCategoryVolumeSettings by remember { mutableStateOf(false) }
     var showTimePeriodComparisonSettings by remember { mutableStateOf(false) }
+    var showBodyWeightSettings by remember { mutableStateOf(false) }
     var showAddCategoryVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
@@ -413,12 +414,14 @@ fun AnalyticsScreen(
                                         isDragging = isDragging,
                                         isRecentlyMoved = isRecentlyDropped,
                                         bodyWeightHistory = widget.history,
+                                        timeRange = widget.timeRange,
                                         bodyWeightInput = uiState.bodyWeightInput,
                                         weightUnit = weightUnit,
                                         onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
                                         onSubmitWeight = viewModel::submitWeight,
                                         onRemove = { viewModel.removeWidget(widget.id) },
-                                        onDeleteWeight = viewModel::deleteWeightLog
+                                        onDeleteWeight = viewModel::deleteWeightLog,
+                                        onEdit = { showBodyWeightSettings = true }
                                     )
                                 }
                                 is AnalyticsWidget.Calendar -> {
@@ -600,6 +603,18 @@ fun AnalyticsScreen(
                 onConfirm = { range ->
                     viewModel.updateTimePeriodComparison(range)
                     showTimePeriodComparisonSettings = false
+                }
+            )
+        }
+
+        if (showBodyWeightSettings) {
+            val currentWidget = uiState.widgets.find { it is AnalyticsWidget.BodyWeight } as? AnalyticsWidget.BodyWeight
+            BodyWeightSettingsBottomSheet(
+                currentTimeRange = currentWidget?.timeRange ?: AnalyticsTimeRange.OneMonth,
+                onDismiss = { showBodyWeightSettings = false },
+                onConfirm = { range ->
+                    viewModel.updateBodyWeightChart(range)
+                    showBodyWeightSettings = false
                 }
             )
         }
@@ -876,12 +891,14 @@ fun BodyWeightChartSection(
     isDragging: Boolean = false,
     isRecentlyMoved: Boolean = false,
     bodyWeightHistory: List<AnalyticsChartPoint>,
+    timeRange: AnalyticsTimeRange,
     bodyWeightInput: String,
     weightUnit: String,
     onBodyWeightInputChanged: (String) -> Unit,
     onSubmitWeight: (Long) -> Unit,
     onRemove: (() -> Unit)? = null,
-    onDeleteWeight: ((Int) -> Unit)? = null
+    onDeleteWeight: ((Int) -> Unit)? = null,
+    onEdit: (() -> Unit)? = null
 ) {
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
@@ -911,13 +928,21 @@ fun BodyWeightChartSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(R.string.analytics_body_weight),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                WidgetControls(onRemove)
+                Column {
+                    Text(
+                        text = stringResource(R.string.analytics_body_weight),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = stringResource(timeRange.labelResId),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                WidgetControls(onRemove, onEdit)
             }
             
             Spacer(modifier = Modifier.height(Spacing.small))
@@ -1822,6 +1847,87 @@ fun CategoryVolumeSettingsBottomSheet(
         ) {
             Text(
                 text = stringResource(R.string.analytics_category_volume),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(bottom = Spacing.medium)
+            )
+
+            Text(
+                text = stringResource(R.string.analytics_time_range),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            ) {
+                AnalyticsTimeRange.values().forEach { range ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedTimeRange == range) Primary else SurfaceContainerHigh)
+                            .clickable { selectedTimeRange = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(range.labelResId),
+                            color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.large))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary)
+                    .clickable { onConfirm(selectedTimeRange) }
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    color = OnPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BodyWeightSettingsBottomSheet(
+    currentTimeRange: AnalyticsTimeRange,
+    onDismiss: () -> Unit,
+    onConfirm: (AnalyticsTimeRange) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.analytics_body_weight),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(bottom = Spacing.medium)

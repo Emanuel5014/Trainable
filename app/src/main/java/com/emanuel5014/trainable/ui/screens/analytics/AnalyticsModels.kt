@@ -44,7 +44,10 @@ data class StrengthIndexUiModel(
 
 
 sealed class AnalyticsWidget(val id: String) {
-    data class BodyWeight(val history: List<AnalyticsChartPoint>) : AnalyticsWidget("weight")
+    data class BodyWeight(
+        val history: List<AnalyticsChartPoint>,
+        val timeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth
+    ) : AnalyticsWidget("weight")
     data class Calendar(val workoutDates: List<Long>) : AnalyticsWidget("calendar")
     data class Exercise(
         val exerciseId: Int,

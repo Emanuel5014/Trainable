@@ -56,6 +56,7 @@ class AnalyticsViewModel @Inject constructor(
     private val widgetOrder = MutableStateFlow<List<String>>(loadWidgetOrder())
     private val categoryVolumeTimeRange = MutableStateFlow(loadCategoryVolumeTimeRange())
     private val periodComparisonRange = MutableStateFlow(AnalyticsTimeRange.OneMonth)
+    private val bodyWeightTimeRange = MutableStateFlow(loadBodyWeightTimeRange())
     private val showProgressCards = MutableStateFlow(loadShowProgressCards())
 
     private fun loadShowProgressCards(): Boolean {
@@ -94,6 +95,16 @@ class AnalyticsViewModel @Inject constructor(
         prefs.edit().putString("category_volume_time_range", timeRange.name).apply()
     }
 
+    private fun loadBodyWeightTimeRange(): AnalyticsTimeRange {
+        val name = prefs.getString("body_weight_time_range", AnalyticsTimeRange.OneMonth.name)
+            ?: AnalyticsTimeRange.OneMonth.name
+        return try { AnalyticsTimeRange.valueOf(name) } catch (_: IllegalArgumentException) { AnalyticsTimeRange.OneMonth }
+    }
+
+    private fun saveBodyWeightTimeRange(timeRange: AnalyticsTimeRange) {
+        prefs.edit().putString("body_weight_time_range", timeRange.name).apply()
+    }
+
     private val activePlanFlow = workoutRepository.getActivePlans()
         .map { plans -> plans.firstOrNull() }
 
@@ -108,7 +119,8 @@ class AnalyticsViewModel @Inject constructor(
         userPreferencesRepository.weightUnit,
         localeManager.currentLanguage,
         categoryVolumeTimeRange,
-        periodComparisonRange
+        periodComparisonRange,
+        bodyWeightTimeRange
     ) { args ->
         val activePlan = args[0] as WorkoutPlanEntity?
         @Suppress("UNCHECKED_CAST")
@@ -122,6 +134,7 @@ class AnalyticsViewModel @Inject constructor(
         val userLang = args[6] as String
         val catVolumeTimeRange = args[7] as AnalyticsTimeRange
         val pRange = args[8] as AnalyticsTimeRange
+        val bwTimeRange = args[9] as AnalyticsTimeRange
         
         val languageCode = localeManager.resolveLanguageForCompose(userLang)
         
@@ -159,6 +172,8 @@ class AnalyticsViewModel @Inject constructor(
             AnalyticsTimeRange.All -> 0L
         }
 
+        val bodyWeightStartDate = bwTimeRange.startDate()
+
         AnalyticsQueryContext(
             activePlan = activePlan,
             allPlans = allPlans,
@@ -170,6 +185,8 @@ class AnalyticsViewModel @Inject constructor(
             languageCode = languageCode,
             categoryVolumeStartDate = categoryVolumeStartDate,
             categoryVolumeTimeRange = catVolumeTimeRange,
+            bodyWeightTimeRange = bwTimeRange,
+            bodyWeightStartDate = bodyWeightStartDate,
             period1Range = pRange,
             period2Range = pRange
         )
@@ -233,7 +250,7 @@ class AnalyticsViewModel @Inject constructor(
             )
         }
 
-        val weightFlow = analyticsRepository.getWeightHistory(context.startDate)
+        val weightFlow = analyticsRepository.getWeightHistory(context.bodyWeightStartDate)
         val sessionsFlow = workoutRepository.getAllSessions()
         
         val exerciseChartFlows = context.widgetOrder
@@ -342,7 +359,8 @@ class AnalyticsViewModel @Inject constructor(
                     languageCode = context.languageCode,
                     timePeriodComparison = timePeriodComparison,
                     period1Range = context.period1Range,
-                    period2Range = context.period2Range
+                    period2Range = context.period2Range,
+                    bodyWeightTimeRange = context.bodyWeightTimeRange
                 )
             }
         }
@@ -406,12 +424,18 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun addBodyWeightChart() {
+        saveBodyWeightTimeRange(bodyWeightTimeRange.value)
         widgetOrder.update { current ->
             if (current.contains("weight")) return@update current
             val newList = current + "weight"
             saveWidgetOrder(newList)
             newList
         }
+    }
+
+    fun updateBodyWeightChart(timeRange: AnalyticsTimeRange) {
+        saveBodyWeightTimeRange(timeRange)
+        bodyWeightTimeRange.value = timeRange
     }
 
     fun addCalendarChart() {
@@ -561,7 +585,8 @@ class AnalyticsViewModel @Inject constructor(
         languageCode: String,
         timePeriodComparison: TimePeriodComparisonSnapshot,
         period1Range: AnalyticsTimeRange,
-        period2Range: AnalyticsTimeRange
+        period2Range: AnalyticsTimeRange,
+        bodyWeightTimeRange: AnalyticsTimeRange
     ): AnalyticsUiState {
         val completedSessions = consistency?.completedSessions ?: 0
         val targetSessionsPerWeek = consistency?.targetSessionsPerWeek ?: 0
@@ -602,7 +627,8 @@ class AnalyticsViewModel @Inject constructor(
                                 value = WeightUnitConverter.convertDisplay(entry.pesoCorporeo, weightUnit),
                                 id = entry.id
                             )
-                        }
+                        },
+                        timeRange = bodyWeightTimeRange
                     )
                 }
                 id == "calendar" -> {
@@ -773,6 +799,8 @@ class AnalyticsViewModel @Inject constructor(
         val languageCode: String,
         val categoryVolumeStartDate: Long,
         val categoryVolumeTimeRange: AnalyticsTimeRange,
+        val bodyWeightTimeRange: AnalyticsTimeRange,
+        val bodyWeightStartDate: Long,
         val period1Range: AnalyticsTimeRange,
         val period2Range: AnalyticsTimeRange
     )
