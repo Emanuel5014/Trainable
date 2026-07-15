@@ -49,6 +49,7 @@ import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -139,6 +140,7 @@ fun SettingsScreen(
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
+    val webServerState by viewModel.webServerState.collectAsState()
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
     
@@ -1404,6 +1406,57 @@ fun SettingsScreen(
                         Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Error)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.ExtraBold, color = Error)
+                    }
+                }
+            }
+
+            SettingsSection(title = "Local Server") {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Wifi, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text("Web Dashboard", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (webServerState.isRunning) "Server attivo" else "Server disattivato",
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = webServerState.isRunning,
+                                onCheckedChange = { viewModel.toggleWebServer() }
+                            )
+                        }
+
+                        if (webServerState.isRunning) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "Apri nel browser:",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                                Text(
+                                    webServerState.url,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "Collega il tuo PC alla stessa rete Wi-Fi e apri l'indirizzo sopra.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }

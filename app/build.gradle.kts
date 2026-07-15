@@ -17,7 +17,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 1
-        versionName = "1.7.0"
+        versionName = "1.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -42,6 +42,22 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "META-INF/native-image/**"
+        }
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
@@ -110,6 +126,14 @@ implementation(libs.google.fonts)
 
 // Haze - Frosted Glass Blur
     implementation(libs.haze)
+
+    // Ktor Server (Local Web Dashboard)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.cors)
 
     // Biometric & Fragment support
     implementation(libs.androidx.biometric)

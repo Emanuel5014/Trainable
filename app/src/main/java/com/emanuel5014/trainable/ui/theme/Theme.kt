@@ -24,6 +24,8 @@ import com.google.android.material.color.utilities.SchemeNeutral
 import com.google.android.material.color.utilities.SchemeTonalSpot
 import com.google.android.material.color.utilities.SchemeVibrant
 
+private const val TAG = "TrainableTheme"
+
 
 private val MonochromeDarkColorScheme = darkColorScheme(
     primary = Color(0xFFE0E0E0),
@@ -430,6 +432,77 @@ fun GymTrackingTheme(
         themeStyle = themeStyle,
         isDark = darkTheme
     )
+
+    // Save both dark and light color schemes for the web server
+    SideEffect {
+        val darkScheme = getAppColorScheme(context, dynamicColor, paletteIndex, seedColor, themeStyle, true)
+        val lightScheme = getAppColorScheme(context, dynamicColor, paletteIndex, seedColor, themeStyle, false)
+
+        fun Color.toHex(): String = "#${Integer.toHexString(toArgb()).padStart(8, '0').substring(2)}"
+
+        ThemeColorStore.setColors(
+            dark = mapOf(
+                "primary" to darkScheme.primary.toHex(),
+                "onPrimary" to darkScheme.onPrimary.toHex(),
+                "primaryContainer" to darkScheme.primaryContainer.toHex(),
+                "onPrimaryContainer" to darkScheme.onPrimaryContainer.toHex(),
+                "secondary" to darkScheme.secondary.toHex(),
+                "onSecondary" to darkScheme.onSecondary.toHex(),
+                "secondaryContainer" to darkScheme.secondaryContainer.toHex(),
+                "onSecondaryContainer" to darkScheme.onSecondaryContainer.toHex(),
+                "tertiary" to darkScheme.tertiary.toHex(),
+                "onTertiary" to darkScheme.onTertiary.toHex(),
+                "tertiaryContainer" to darkScheme.tertiaryContainer.toHex(),
+                "onTertiaryContainer" to darkScheme.onTertiaryContainer.toHex(),
+                "surface" to darkScheme.surface.toHex(),
+                "onSurface" to darkScheme.onSurface.toHex(),
+                "surfaceVariant" to darkScheme.surfaceVariant.toHex(),
+                "onSurfaceVariant" to darkScheme.onSurfaceVariant.toHex(),
+                "surfaceContainer" to darkScheme.surfaceContainer.toHex(),
+                "surfaceContainerHigh" to darkScheme.surfaceContainerHigh.toHex(),
+                "surfaceContainerHighest" to darkScheme.surfaceContainerHighest.toHex(),
+                "surfaceContainerLow" to darkScheme.surfaceContainerLow.toHex(),
+                "outline" to darkScheme.outline.toHex(),
+                "outlineVariant" to darkScheme.outlineVariant.toHex(),
+                "error" to darkScheme.error.toHex(),
+                "onError" to darkScheme.onError.toHex(),
+                "errorContainer" to darkScheme.errorContainer.toHex(),
+                "onErrorContainer" to darkScheme.onErrorContainer.toHex(),
+                "background" to darkScheme.background.toHex(),
+                "onBackground" to darkScheme.onBackground.toHex(),
+            ),
+            light = mapOf(
+                "primary" to lightScheme.primary.toHex(),
+                "onPrimary" to lightScheme.onPrimary.toHex(),
+                "primaryContainer" to lightScheme.primaryContainer.toHex(),
+                "onPrimaryContainer" to lightScheme.onPrimaryContainer.toHex(),
+                "secondary" to lightScheme.secondary.toHex(),
+                "onSecondary" to lightScheme.onSecondary.toHex(),
+                "secondaryContainer" to lightScheme.secondaryContainer.toHex(),
+                "onSecondaryContainer" to lightScheme.onSecondaryContainer.toHex(),
+                "tertiary" to lightScheme.tertiary.toHex(),
+                "onTertiary" to lightScheme.onTertiary.toHex(),
+                "tertiaryContainer" to lightScheme.tertiaryContainer.toHex(),
+                "onTertiaryContainer" to lightScheme.onTertiaryContainer.toHex(),
+                "surface" to lightScheme.surface.toHex(),
+                "onSurface" to lightScheme.onSurface.toHex(),
+                "surfaceVariant" to lightScheme.surfaceVariant.toHex(),
+                "onSurfaceVariant" to lightScheme.onSurfaceVariant.toHex(),
+                "surfaceContainer" to lightScheme.surfaceContainer.toHex(),
+                "surfaceContainerHigh" to lightScheme.surfaceContainerHigh.toHex(),
+                "surfaceContainerHighest" to lightScheme.surfaceContainerHighest.toHex(),
+                "surfaceContainerLow" to lightScheme.surfaceContainerLow.toHex(),
+                "outline" to lightScheme.outline.toHex(),
+                "outlineVariant" to lightScheme.outlineVariant.toHex(),
+                "error" to lightScheme.error.toHex(),
+                "onError" to lightScheme.onError.toHex(),
+                "errorContainer" to lightScheme.errorContainer.toHex(),
+                "onErrorContainer" to lightScheme.onErrorContainer.toHex(),
+                "background" to lightScheme.background.toHex(),
+                "onBackground" to lightScheme.onBackground.toHex(),
+            )
+        )
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {

@@ -18,6 +18,8 @@ import com.emanuel5014.trainable.util.UpdateManager
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
+import com.emanuel5014.trainable.webserver.WebServerManager
+import com.emanuel5014.trainable.webserver.WebServerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +38,7 @@ class SettingsViewModel @Inject constructor(
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val updateManager: UpdateManager,
+    private val webServerManager: WebServerManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -199,6 +202,12 @@ class SettingsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
+    )
+
+    val webServerState = webServerManager.state.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = WebServerState()
     )
 
     private val _backupStatus = MutableStateFlow<String?>(null)
@@ -482,6 +491,14 @@ class SettingsViewModel @Inject constructor(
             currentUser.value?.let { user ->
                 userRepository.updateUser(user.copy(username = newUsername))
             }
+        }
+    }
+
+    fun toggleWebServer() {
+        if (webServerState.value.isRunning) {
+            webServerManager.stopServer()
+        } else {
+            webServerManager.startServer()
         }
     }
 }
