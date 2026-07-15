@@ -6,6 +6,7 @@ import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.ui.theme.ThemeColorStore
 import io.ktor.http.ContentType
@@ -40,6 +41,10 @@ private const val TAG = "TrainableWebServer"
 
 private val json = Json { ignoreUnknownKeys = true; prettyPrint = true; encodeDefaults = true }
 
+private fun daysToStartDate(days: Int): Long {
+    return if (days <= 0) 0L else System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days.toLong())
+}
+
 private fun successJson(data: kotlinx.serialization.json.JsonElement) = buildJsonObject {
     put("success", true)
     put("data", data)
@@ -62,6 +67,7 @@ data class OverviewResponse(
 data class PlanResponse(
     val id: Int,
     val name: String,
+    val note: String?,
     val isActive: Boolean,
     val sessionsPerWeek: Int,
     val startDate: Long,
@@ -117,6 +123,7 @@ fun Application.configureServer(
     analyticsDao: AnalyticsDao,
     exerciseDao: ExerciseDao,
     userDao: UserDao,
+    weightLogDao: WeightLogDao,
     userPrefsRepo: UserPreferencesRepository
 ) {
     install(ContentNegotiation) {
@@ -323,7 +330,7 @@ fun Application.configureServer(
             get("/analytics/volume") {
                 try {
                     val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 90
-                    val startDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days.toLong())
+                    val startDate = daysToStartDate(days)
                     val volumeHistory = analyticsDao.getVolumeHistory(startDate).first()
 
                     val items = buildJsonArray {
@@ -363,7 +370,7 @@ fun Application.configureServer(
             get("/analytics/volume-by-category") {
                 try {
                     val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 30
-                    val startDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days.toLong())
+                    val startDate = daysToStartDate(days)
                     val categoryVolume = analyticsDao.getVolumeByCategory(startDate).first()
 
                     val items = buildJsonArray {
@@ -390,6 +397,53 @@ fun Application.configureServer(
                 }
             }
 
+            // Body weight history
+            get("/analytics/body-weight") {
+                try {
+                    val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 90
+                    val startDate = daysToStartDate(days)
+                    val weightLogs = weightLogDao.getWeightHistory(startDate).first()
+
+                    val items = buildJsonArray {
+                        weightLogs.forEach { wl ->
+                            add(buildJsonObject {
+                                put("weight", wl.pesoCorporeo)
+                                put("timestamp", wl.timestamp)
+                            })
+                        }
+                    }
+                    call.respondText(json.encodeToString(successJson(items)), ContentType.Application.Json)
+                } catch (e: Exception) {
+                    call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
+                }
+            }
+
+            // Plan volume history (tonnage chart for each plan)
+            get("/analytics/plan-volume-history/{planId}") {
+                try {
+                    val planId = call.parameters["planId"]?.toIntOrNull()
+                    if (planId == null) {
+                        call.respondText(json.encodeToString(errorJson("Invalid plan ID")), ContentType.Application.Json)
+                        return@get
+                    }
+                    val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 90
+                    val startDate = daysToStartDate(days)
+                    val volumeHistory = analyticsDao.getVolumeHistoryForPlan(planId, startDate).first()
+
+                    val items = buildJsonArray {
+                        volumeHistory.forEach { dv ->
+                            add(buildJsonObject {
+                                put("volume", dv.volume)
+                                put("timestamp", dv.timestamp)
+                            })
+                        }
+                    }
+                    call.respondText(json.encodeToString(successJson(items)), ContentType.Application.Json)
+                } catch (e: Exception) {
+                    call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
+                }
+            }
+
             get("/plans") {
                 try {
                     val plans = workoutDao.getAllPlansSorted().first()
@@ -400,6 +454,7 @@ fun Application.configureServer(
                             add(buildJsonObject {
                                 put("id", pwd.plan.id)
                                 put("name", pwd.plan.nome)
+                                if (pwd.plan.note != null) put("note", pwd.plan.note!!)
                                 put("isActive", pwd.plan.isActive)
                                 put("sessionsPerWeek", pwd.plan.sessioniTargetSettimana)
                                 put("startDate", pwd.plan.dataInizio)
@@ -426,7 +481,21 @@ fun Application.configureServer(
             get("/sessions") {
                 try {
                     val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
-                    val sessions = workoutDao.getAllSessionsWithDetails().first().take(limit)
+                    val dateParam = call.request.queryParameters["date"]
+                    var sessions = workoutDao.getAllSessionsWithDetails().first()
+
+                    if (dateParam != null) {
+                        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                        sdf.timeZone = java.util.TimeZone.getDefault()
+                        val date = sdf.parse(dateParam)
+                        if (date != null) {
+                            val dayStart = date.time
+                            val dayEnd = dayStart + TimeUnit.DAYS.toMillis(1)
+                            sessions = sessions.filter { it.session.timestamp in dayStart until dayEnd }
+                        }
+                    }
+
+                    sessions = sessions.take(limit)
 
                     val items = buildJsonArray {
                         sessions.forEach { swd ->

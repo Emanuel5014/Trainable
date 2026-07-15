@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
+import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,6 +34,7 @@ class LocalWebServerService : Service() {
     @Inject lateinit var analyticsDao: AnalyticsDao
     @Inject lateinit var exerciseDao: ExerciseDao
     @Inject lateinit var userDao: UserDao
+    @Inject lateinit var weightLogDao: WeightLogDao
     @Inject lateinit var userPrefsRepo: UserPreferencesRepository
 
     private var engine: EmbeddedServer<*, *>? = null
@@ -81,7 +83,7 @@ class LocalWebServerService : Service() {
     private fun startServer() {
         try {
             engine = embeddedServer(Netty, port = serverPort) {
-                configureServer(this@LocalWebServerService, workoutDao, analyticsDao, exerciseDao, userDao, userPrefsRepo)
+                configureServer(this@LocalWebServerService, workoutDao, analyticsDao, exerciseDao, userDao, weightLogDao, userPrefsRepo)
             }.start(wait = false)
             Log.i(TAG, "Ktor server started at $serverUrl")
         } catch (e: Exception) {

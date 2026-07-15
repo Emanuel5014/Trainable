@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trainable — Analytics</title>
   <meta name="theme-color" content="#3A59D1">
-  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/icon.png">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
 
-  <!-- Navigation -->
   <nav>
     <div class="nav-inner">
       <a href="/" class="nav-logo">
@@ -33,70 +33,71 @@
     </div>
   </nav>
 
-  <!-- Page Header -->
-  <div class="page-header">
+  <div class="page-header" style="min-height:160px;">
     <div>
       <h1 class="page-title">Analytics</h1>
-      <p class="page-subtitle">Analisi dettagliata dei tuoi progressi</p>
+      <p class="page-subtitle">Analisi dettagliate dei tuoi progressi</p>
     </div>
   </div>
 
   <main class="container">
-    <!-- Strength Index -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-card-icon">
-          <span class="material-symbols-outlined">trending_up</span>
-        </div>
-        <div class="stat-card-value" id="strength-index">-</div>
-        <div class="stat-card-label">Indice Forza (30gg)</div>
+
+    <!-- Body Weight Chart -->
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Peso Corporeo</h2>
+        <div class="section-subtitle"></div>
+      </div>
+      <div class="period-selector" data-target="body-weight">
+        <button class="period-btn" data-period="7">7g</button>
+        <button class="period-btn active" data-period="30">30g</button>
+        <button class="period-btn" data-period="90">90g</button>
+        <button class="period-btn" data-period="180">6m</button>
+        <button class="period-btn" data-period="365">1a</button>
+        <button class="period-btn" data-period="0">Tutto</button>
       </div>
     </div>
-
-    <!-- Volume Chart -->
-    <div class="section-header">
-      <h2 class="section-title">Volume (Ultimi 90gg)</h2>
+    <div class="chart-container" id="body-weight-chart">
+      <canvas id="body-weight-canvas" class="chart-canvas"></canvas>
     </div>
-    <div class="chart-container">
-      <div class="chart-header">
-        <span class="chart-title">Andamento Volume</span>
+
+    <!-- Volume by Muscle Group -->
+    <div class="section-header" style="margin-top:48px;">
+      <div>
+        <h2 class="section-title">Volume per Gruppo Muscolare</h2>
+        <div class="section-subtitle"></div>
       </div>
-      <canvas id="volume-chart" class="chart-canvas"></canvas>
-    </div>
-
-    <!-- Category Volume -->
-    <div class="section-header">
-      <h2 class="section-title">Volume per Gruppo Muscolare</h2>
-    </div>
-    <div class="chart-container">
-      <div class="chart-header">
-        <span class="chart-title">Ultimi 30 giorni</span>
+      <div class="period-selector" data-target="volume-category">
+        <button class="period-btn" data-period="7">7g</button>
+        <button class="period-btn active" data-period="30">30g</button>
+        <button class="period-btn" data-period="90">90g</button>
+        <button class="period-btn" data-period="180">6m</button>
+        <button class="period-btn" data-period="365">1a</button>
+        <button class="period-btn" data-period="0">Tutto</button>
       </div>
-      <canvas id="category-chart" class="chart-canvas"></canvas>
+    </div>
+    <div class="chart-container" id="volume-category-chart">
+      <canvas id="volume-category-canvas" class="chart-canvas"></canvas>
     </div>
 
-    <!-- Personal Bests -->
-    <div class="section-header">
-      <h2 class="section-title">Personal Bests</h2>
+    <!-- Per-Plan Tonnage Charts -->
+    <div class="section-header" style="margin-top:48px;">
+      <div>
+        <h2 class="section-title">Tonnellaggio per Scheda</h2>
+        <div class="section-subtitle"></div>
+      </div>
+      <div class="period-selector" data-target="plan-tonnage">
+        <button class="period-btn active" data-period="30">30g</button>
+        <button class="period-btn" data-period="90">90g</button>
+        <button class="period-btn" data-period="180">6m</button>
+        <button class="period-btn" data-period="365">1a</button>
+        <button class="period-btn" data-period="0">Tutto</button>
+      </div>
     </div>
-    <div class="data-table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Esercizio</th>
-            <th>Categoria</th>
-            <th>Peso Max</th>
-            <th>Reps</th>
-          </tr>
-        </thead>
-        <tbody id="personal-bests-table">
-          <tr><td colspan="4"><div class="loading"><div class="loading-spinner"></div></div></td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div id="plan-tonnage-charts"></div>
+
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="container">
       <p class="footer-copy">2026 Trainable App. Licensed under GPL v3.</p>

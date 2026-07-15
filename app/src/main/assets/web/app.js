@@ -59,6 +59,8 @@ async function applyThemeColors() {
   root.style.setProperty('--md-error', colors.error || '#FFB4AB');
   root.style.setProperty('--md-on-error', colors.onError || '#690005');
 
+  root.style.setProperty('--membership-text', isDark ? '#1A1A1A' : '#FFFFFF');
+
   // Nav blur uses the surface color
   root.style.setProperty('--nav-blur', `rgba(${hexToRgb(colors.surface || '#0E0E11')}, ${isDark ? '0.75' : '0.8'})`);
 }
@@ -113,6 +115,42 @@ function formatVolume(volume) {
   if (volume >= 1_000_000) return (volume / 1_000_000).toFixed(1) + 'M';
   if (volume >= 1_000) return (volume / 1_000).toFixed(1) + 'k';
   return Math.round(volume).toString();
+}
+
+function formatInteger(value) {
+  if (!value && value !== 0) return '0';
+  return Math.round(value).toLocaleString('it-IT');
+}
+
+function getPeriodLabel(days, startDate, endDate) {
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+  const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+  if (days <= 0) {
+    return `${s.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })} - ${e.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  }
+  return `${s.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} - ${e.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+}
+
+function getStartEndFromDays(days) {
+  const end = new Date();
+  let start;
+  if (days <= 0) {
+    start = new Date(2000, 0, 1);
+  } else {
+    start = new Date();
+    start.setDate(start.getDate() - days);
+  }
+  return { start: start.getTime(), end: end.getTime() };
+}
+
+function updatePeriodSubtitle(headerEl, data, timestampKey, days) {
+  if (!headerEl) return;
+  const subtitle = headerEl.querySelector('.section-subtitle');
+  if (!subtitle || !data || data.length === 0) return;
+  const firstTs = data[0][timestampKey];
+  const lastTs = data[data.length - 1][timestampKey];
+  subtitle.textContent = getPeriodLabel(days, firstTs, lastTs);
 }
 
 function formatDate(timestamp) {
@@ -286,7 +324,8 @@ async function loadConsistencyCalendar() {
     if (isToday) classes.push('today');
     if (isFuture) classes.push('future');
 
-    cellsHtml += `<div class="${classes.join(' ')}" data-tooltip="${tooltip}"></div>`;
+    const onClick = level > 0 && !isFuture ? ` onclick="window.location.href='/sessions?date=${dateStr}'"` : '';
+    cellsHtml += `<div class="${classes.join(' ')}" data-tooltip="${tooltip}"${onClick}></div>`;
   }
 
   // Build month labels
@@ -327,106 +366,412 @@ async function loadConsistencyCalendar() {
 // ANALYTICS
 // ============================================================
 async function loadAnalytics() {
-  const [volumeHistory, personalBests, categoryVolume, strengthIndex] = await Promise.all([
-    fetchApi('/api/analytics/volume?days=90'),
-    fetchApi('/api/analytics/personal-bests'),
-    fetchApi('/api/analytics/volume-by-category?days=30'),
-    fetchApi('/api/analytics/strength-index')
-  ]);
-
-  if (strengthIndex !== null) {
-    const el = document.getElementById('strength-index');
-    if (el) {
-      el.textContent = strengthIndex > 0 ? `+${strengthIndex.toFixed(1)}%` : `${strengthIndex.toFixed(1)}%`;
-    }
-  }
-
-  if (personalBests && personalBests.length > 0) {
-    const el = document.getElementById('personal-bests-table');
-    if (el) {
-      el.innerHTML = personalBests.slice(0, 20).map(pb => `
-        <tr>
-          <td>${pb.exerciseName}</td>
-          <td><span class="badge badge-neutral">${pb.category}</span></td>
-          <td><strong>${pb.maxWeight} kg</strong></td>
-          <td>${pb.reps} reps</td>
-        </tr>
-      `).join('');
-    }
-  }
-
-  if (categoryVolume && categoryVolume.length > 0) {
-    renderCategoryChart(categoryVolume);
-  }
-
-  if (volumeHistory && volumeHistory.length > 0) {
-    renderVolumeChart(volumeHistory);
-  }
+  setupPeriodSelectors();
+  loadBodyWeightChart(30);
+  loadCategoryVolumeChart(30);
+  loadPlanTonnageCharts(30);
 }
 
-function renderVolumeChart(data) {
-  const canvas = document.getElementById('volume-chart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = canvas.parentElement.clientWidth - 56;
-  const h = canvas.height = 300;
+function setupPeriodSelectors() {
+  document.querySelectorAll('.period-selector').forEach(group => {
+    const target = group.dataset.target;
+    group.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        let days = parseInt(btn.dataset.period);
 
-  const maxVol = Math.max(...data.map(d => d.volume));
-  const barWidth = Math.max(4, (w - data.length * 2) / data.length);
+        // For 7-day period, start from Monday of current week
+        if (days === 7) {
+          const now = new Date();
+          const dayOfWeek = now.getDay();
+          const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          days = diff + 1;
+        }
 
-  ctx.clearRect(0, 0, w, h);
-
-  data.forEach((d, i) => {
-    const barHeight = (d.volume / maxVol) * (h - 40);
-    const x = i * (barWidth + 2);
-    const y = h - barHeight - 20;
-
-    const gradient = ctx.createLinearGradient(x, y, x, h - 20);
-    gradient.addColorStop(0, '#3A59D1');
-    gradient.addColorStop(1, '#5AB1BF');
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.roundRect(x, y, barWidth, barHeight, 4);
-    ctx.fill();
+        if (target === 'body-weight') loadBodyWeightChart(days);
+        else if (target === 'volume-category') loadCategoryVolumeChart(days);
+        else if (target === 'plan-tonnage') loadPlanTonnageCharts(days);
+      });
+    });
   });
 }
 
-function renderCategoryChart(data) {
-  const canvas = document.getElementById('category-chart');
-  if (!canvas) return;
+function getCanvasColors() {
+  const style = getComputedStyle(document.documentElement);
+  return {
+    primary: style.getPropertyValue('--md-primary').trim() || '#3A59D1',
+    tertiary: style.getPropertyValue('--md-tertiary').trim() || '#7AC6D2',
+    onSurface: style.getPropertyValue('--md-on-surface').trim() || '#E7E1EC',
+    onSurfaceVariant: style.getPropertyValue('--md-on-surface-variant').trim() || '#ADA9B3',
+    surfaceContainerHigh: style.getPropertyValue('--md-surface-container-high').trim() || '#201F25',
+    surfaceContainer: style.getPropertyValue('--md-surface-container').trim() || '#1A191E',
+  };
+}
+
+function loadBodyWeightChart(days) {
+  const headerEl = document.getElementById('body-weight-chart')?.previousElementSibling;
+  fetchApi(`/api/analytics/body-weight?days=${days}`).then(data => {
+    updatePeriodSubtitle(headerEl, data, 'timestamp', days);
+    renderLineChart('body-weight-canvas', data, 'weight', 'kg', v => v.toFixed(1));
+  });
+}
+
+function loadCategoryVolumeChart(days) {
+  const headerEl = document.getElementById('volume-category-chart')?.previousElementSibling;
+  if (headerEl) {
+    const subtitle = headerEl.querySelector('.section-subtitle');
+    if (subtitle) subtitle.textContent = days <= 0 ? 'Tutto' : getPeriodLabel(days, Date.now() - days * 86400000, Date.now());
+  }
+  fetchApi(`/api/analytics/volume-by-category?days=${days}`).then(data => {
+    renderBarChart('volume-category-canvas', data, 'category', 'volume');
+  });
+}
+
+async function loadPlanTonnageCharts(days) {
+  const headerEl = document.getElementById('plan-tonnage-charts')?.previousElementSibling;
+
+  const plans = await fetchApi('/api/plans');
+  const container = document.getElementById('plan-tonnage-charts');
+  if (!container) return;
+
+  const activePlans = (plans || []).filter(p => p.isActive);
+
+  if (activePlans.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Nessuna scheda attiva trovata</div></div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  let allTimestamps = [];
+
+  for (const plan of activePlans) {
+    const chartDiv = document.createElement('div');
+    chartDiv.className = 'tonnage-chart';
+    chartDiv.innerHTML = `
+      <div class="tonnage-chart-title">${plan.name}</div>
+      <div class="tonnage-chart-badge">Attiva</div>
+      <div class="tonnage-chart-canvas-wrap"><canvas id="tonnage-canvas-${plan.id}" style="height:200px;"></canvas></div>
+    `;
+    container.appendChild(chartDiv);
+
+    const planData = await fetchApi(`/api/analytics/plan-volume-history/${plan.id}?days=${days}`);
+    if (planData && planData.length > 0) {
+      planData.forEach(d => allTimestamps.push(d.timestamp));
+      renderLineChart(`tonnage-canvas-${plan.id}`, planData, 'volume', 'kg', formatInteger);
+    } else {
+      const canvas = document.getElementById(`tonnage-canvas-${plan.id}`);
+      if (canvas) {
+        const wrap = canvas.parentElement;
+        const colors = getCanvasColors();
+        const dpr = window.devicePixelRatio || 1;
+        const wrapRect = wrap.getBoundingClientRect();
+        canvas.width = wrapRect.width * dpr;
+        canvas.height = 200 * dpr;
+        canvas.style.width = wrapRect.width + 'px';
+        canvas.style.height = '200px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.fillStyle = colors.onSurfaceVariant;
+        ctx.font = '14px Google Sans Flex, Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Nessun dato per questo periodo', wrapRect.width / 2, 110);
+      }
+    }
+  }
+
+  // Update subtitle with combined date range
+  if (allTimestamps.length > 0 && headerEl) {
+    const subtitle = headerEl.querySelector('.section-subtitle');
+    if (subtitle) {
+      const firstTs = Math.min(...allTimestamps);
+      const lastTs = Math.max(...allTimestamps);
+      subtitle.textContent = getPeriodLabel(days, firstTs, lastTs);
+    }
+  }
+}
+
+// ============================================================
+// LINE CHART (with HTML tooltip, smooth bezier curves)
+// ============================================================
+function renderLineChart(canvasId, data, valueKey, unit, formatFn) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data || data.length === 0) {
+    if (canvas) {
+      const parent = canvas.parentElement;
+      parent.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-state-text">Nessun dato</div></div>';
+    }
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    drawLineChart(canvas, data, valueKey, unit, formatFn);
+  });
+}
+
+function getContainerContentWidth(container) {
+  const style = getComputedStyle(container);
+  const rect = container.getBoundingClientRect();
+  return rect.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth);
+}
+
+function drawLineChart(canvas, data, valueKey, unit, formatFn) {
+  const colors = getCanvasColors();
   const ctx = canvas.getContext('2d');
-  const w = canvas.width = canvas.parentElement.clientWidth - 56;
-  const h = canvas.height = 300;
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
 
-  const maxVol = Math.max(...data.map(d => d.volume));
-  const barHeight = 32;
-  const gap = 12;
-  const labelWidth = 100;
+  const fmt = formatFn || formatVolume;
+  const canvasH = parseInt(canvas.style.height) || 200;
+  const canvasW = getContainerContentWidth(container);
 
-  ctx.clearRect(0, 0, w, h);
-  ctx.font = '14px Google Sans Flex, Outfit, sans-serif';
+  const padding = { top: 24, bottom: 32, left: 56, right: 56 };
+  const drawW = Math.max(10, canvasW - padding.left - padding.right);
+  const drawH = Math.max(10, canvasH - padding.top - padding.bottom);
+
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+  ctx.scale(dpr, dpr);
+
+  const values = data.map(d => d[valueKey]);
+  const maxVal = Math.max(...values);
+  const minVal = Math.min(...values);
+  const range = maxVal - minVal || 1;
+
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  // Grid lines
+  ctx.strokeStyle = colors.surfaceContainerHigh;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (drawH / 4) * i;
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + drawW, y);
+  }
+  ctx.stroke();
+
+  // Y-axis labels
+  ctx.font = '10px Google Sans Flex, Outfit, sans-serif';
+  ctx.fillStyle = colors.onSurfaceVariant;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (drawH / 4) * i;
+    const val = maxVal - (range / 4) * i;
+    ctx.fillText(fmt(val) + ' ' + unit, padding.left - 8, y);
+  }
+
+  // Compute points
+  const points = data.map((d, i) => ({
+    x: padding.left + (data.length > 1 ? (i / (data.length - 1)) * drawW : drawW / 2),
+    y: padding.top + drawH - ((d[valueKey] - minVal) / range) * drawH,
+    value: d[valueKey],
+    date: new Date(d.timestamp),
+  }));
+
+  // Gradient fill with bezier
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, padding.top + drawH);
+  ctx.lineTo(points[0].x, points[0].y);
+  drawSmoothCurve(ctx, points);
+  ctx.lineTo(points[points.length - 1].x, padding.top + drawH);
+  ctx.closePath();
+
+  const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + drawH);
+  gradient.addColorStop(0, hexToRgba(colors.primary, 0.15));
+  gradient.addColorStop(1, hexToRgba(colors.primary, 0.0));
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  drawSmoothCurve(ctx, points);
+  ctx.strokeStyle = colors.primary;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Dots
+  points.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = colors.primary;
+    ctx.fill();
+    ctx.strokeStyle = hexToRgba(colors.primary, 0.3);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // X-axis labels
+  ctx.font = '10px Google Sans Flex, Outfit, sans-serif';
+  ctx.fillStyle = colors.onSurfaceVariant;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  const maxLabels = Math.max(2, Math.floor(drawW / 70));
+  const labelStep = Math.max(1, Math.floor(data.length / maxLabels));
+  for (let i = 0; i < data.length; i += labelStep) {
+    const d = new Date(data[i].timestamp);
+    const label = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+    ctx.fillText(label, points[i].x, canvasH - padding.bottom + 6);
+  }
+
+  // === HTML Tooltip (no canvas redraw needed) ===
+  let tooltipEl = container.querySelector('.chart-tooltip');
+  if (!tooltipEl) {
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'chart-tooltip';
+    container.appendChild(tooltipEl);
+  }
+
+  canvas.onmousemove = function(e) {
+    const rect2 = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect2.left) * dpr;
+    const my = (e.clientY - rect2.top) * dpr;
+
+    let minDist = 40 * dpr;
+    let closest = -1;
+    points.forEach((p, i) => {
+      const dist = Math.sqrt((p.x * dpr - mx) ** 2 + (p.y * dpr - my) ** 2);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = i;
+      }
+    });
+
+    if (closest >= 0) {
+      const p = points[closest];
+      tooltipEl.style.display = 'block';
+      tooltipEl.innerHTML = `<strong>${fmt(p.value)} ${unit}</strong><br><span>${p.date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })}</span>`;
+
+      // Position tooltip - flip when near edges
+      const tooltipW = 160;
+      const tooltipH = 50;
+      let tx = p.x + 12;
+      let ty = p.y - tooltipH - 8;
+
+      if (tx + tooltipW > canvasW - 10) tx = p.x - tooltipW - 12;
+      if (tx < 10) tx = 10;
+      if (ty < 10) ty = p.y + 16;
+      if (ty + tooltipH > canvasH - 10) ty = canvasH - tooltipH - 10;
+
+      tooltipEl.style.left = tx + 'px';
+      tooltipEl.style.top = ty + 'px';
+      canvas.style.cursor = 'pointer';
+    } else {
+      tooltipEl.style.display = 'none';
+      canvas.style.cursor = 'default';
+    }
+  };
+
+  canvas.addEventListener('mouseleave', () => {
+    tooltipEl.style.display = 'none';
+    canvas.style.cursor = 'default';
+  });
+}
+
+function drawSmoothCurve(ctx, points) {
+  if (points.length < 2) return;
+  if (points.length === 2) {
+    ctx.lineTo(points[1].x, points[1].y);
+    return;
+  }
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const p0 = points[i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+
+    const cp1x = p0.x + (p1.x - p0.x) * 0.5;
+    const cp1y = p0.y + (p1.y - p0.y) * 0.5;
+    const cp2x = p1.x - (p2.x - p0.x) * 0.15;
+    const cp2y = p1.y - (p2.y - p0.y) * 0.15;
+
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p1.x, p1.y);
+  }
+
+  const last = points[points.length - 1];
+  ctx.lineTo(last.x, last.y);
+}
+
+// ============================================================
+// BAR CHART
+// ============================================================
+function renderBarChart(canvasId, data, labelKey, valueKey) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data || data.length === 0) {
+    if (canvas) {
+      const parent = canvas.parentElement;
+      parent.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-state-text">Nessun dato disponibile per questo periodo</div></div>';
+    }
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    drawBarChart(canvas, data, labelKey, valueKey);
+  });
+}
+
+function drawBarChart(canvas, data, labelKey, valueKey) {
+  const colors = getCanvasColors();
+  const ctx = canvas.getContext('2d');
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+
+  const barH = 28;
+  const gap = 8;
+  const padding = { top: 8, bottom: 8, left: 110, right: 70 };
+  const chartH = padding.top + padding.bottom + data.length * (barH + gap) - gap;
+  const canvasW = getContainerContentWidth(container);
+  const drawW = Math.max(10, canvasW - padding.left - padding.right);
+
+  canvas.width = canvasW * dpr;
+  canvas.height = chartH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = chartH + 'px';
+  ctx.scale(dpr, dpr);
+
+  const maxVal = Math.max(...data.map(d => d[valueKey]));
+
+  ctx.clearRect(0, 0, canvasW, chartH);
+  ctx.font = '13px Google Sans Flex, Outfit, sans-serif';
 
   data.forEach((d, i) => {
-    const y = i * (barHeight + gap) + 10;
-    const barW = ((w - labelWidth - 20) * d.volume) / maxVol;
+    const y = padding.top + i * (barH + gap);
+    const barW = maxVal > 0 ? (drawW * d[valueKey]) / maxVal : 0;
 
-    ctx.fillStyle = '#ADA9B3';
+    ctx.fillStyle = colors.onSurfaceVariant;
     ctx.textAlign = 'right';
-    ctx.fillText(d.category, labelWidth - 12, y + barHeight / 2 + 5);
+    ctx.textBaseline = 'middle';
+    const label = d[labelKey].length > 20 ? d[labelKey].substring(0, 18) + '\u2026' : d[labelKey];
+    ctx.fillText(label, padding.left - 10, y + barH / 2);
 
-    const gradient = ctx.createLinearGradient(labelWidth, y, labelWidth + barW, y);
-    gradient.addColorStop(0, '#3A59D1');
-    gradient.addColorStop(1, '#7AC6D2');
+    const gradient = ctx.createLinearGradient(padding.left, 0, padding.left + barW, 0);
+    gradient.addColorStop(0, colors.primary);
+    gradient.addColorStop(1, colors.tertiary);
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.roundRect(labelWidth, y, barW, barHeight, 6);
+    ctx.roundRect(padding.left, y, barW, barH, 6);
     ctx.fill();
 
-    ctx.fillStyle = '#E7E1EC';
+    ctx.fillStyle = colors.onSurface;
     ctx.textAlign = 'left';
-    ctx.fillText(Math.round(d.volume), labelWidth + barW + 8, y + barHeight / 2 + 5);
+    ctx.textBaseline = 'middle';
+    ctx.font = '12px Google Sans Flex, Outfit, sans-serif';
+    ctx.fillText(formatVolume(d[valueKey]), padding.left + barW + 8, y + barH / 2);
   });
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // ============================================================
@@ -434,53 +779,87 @@ function renderCategoryChart(data) {
 // ============================================================
 async function loadPlans() {
   const plans = await fetchApi('/api/plans');
+
+  // Setup tabs with animated slider
+  const tabsContainer = document.querySelector('.plans-tabs');
+  const bg = tabsContainer?.querySelector('.plans-tabs-bg');
+  const tabs = document.querySelectorAll('.plan-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      if (bg) {
+        bg.classList.toggle('right', tab.dataset.filter === 'archived');
+      }
+      renderPlans(plans, tab.dataset.filter);
+    });
+  });
+
+  renderPlans(plans, 'active');
+}
+
+function renderPlans(plans, filter) {
+  const el = document.getElementById('plans-container');
+  if (!el) return;
+
   if (!plans || plans.length === 0) {
-    const el = document.getElementById('plans-container');
-    if (el) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">Nessun piano trovato</div></div>';
-    }
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">Nessun piano trovato</div></div>';
     return;
   }
 
-  const el = document.getElementById('plans-container');
-  if (el) {
-    el.innerHTML = plans.map(plan => `
-      <div class="plan-card">
-        <div class="plan-card-header">
-          <div class="plan-card-name">${plan.name}</div>
-          ${plan.isActive
-            ? '<span class="badge badge-success">Attivo</span>'
-            : '<span class="badge badge-neutral">Scaduto</span>'}
-        </div>
-        <div class="plan-card-meta">
-          <span class="badge badge-neutral">${plan.sessionsPerWeek || 3}x / settimana</span>
-          <span class="badge badge-neutral">${(plan.exercises || []).length} esercizi</span>
-        </div>
-        <ul class="plan-card-exercises">
-          ${(plan.exercises || []).slice(0, 5).map(ex => `
-            <li class="plan-card-exercise">
-              <span class="plan-card-exercise-name">${ex.exerciseName}</span>
-              <span class="plan-card-exercise-detail">${ex.targetSets}x${ex.targetReps}</span>
-            </li>
-          `).join('')}
-          ${(plan.exercises || []).length > 5
-            ? `<li class="plan-card-exercise"><span class="plan-card-exercise-detail">+${plan.exercises.length - 5} altri</span></li>`
-            : ''}
-        </ul>
-      </div>
-    `).join('');
+  // Filter out system plans (SYSTEM_PLAN note = Cardio, Quick Workout, Custom Workout)
+  const userPlans = plans.filter(p => p.note !== 'SYSTEM_PLAN');
+
+  // Filter by active/archived
+  const filtered = filter === 'active'
+    ? userPlans.filter(p => p.isActive)
+    : userPlans.filter(p => !p.isActive);
+
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">Nessun piano ${filter === 'active' ? 'attivo' : 'archiviato'} trovato</div></div>`;
+    return;
   }
+
+  el.innerHTML = filtered.map(plan => `
+    <div class="plan-card">
+      <div class="plan-card-header">
+        <div class="plan-card-name">${plan.name}</div>
+        ${plan.isActive
+          ? '<span class="badge badge-success">Attivo</span>'
+          : '<span class="badge badge-neutral">Archiviato</span>'}
+      </div>
+      <div class="plan-card-meta">
+        <span class="badge badge-neutral">${plan.sessionsPerWeek || 3}x / settimana</span>
+        <span class="badge badge-neutral">${(plan.exercises || []).length} esercizi</span>
+      </div>
+      <ul class="plan-card-exercises">
+        ${(plan.exercises || []).slice(0, 5).map(ex => `
+          <li class="plan-card-exercise">
+            <span class="plan-card-exercise-name">${ex.exerciseName}</span>
+            <span class="plan-card-exercise-detail">${ex.targetSets}x${ex.targetReps}</span>
+          </li>
+        `).join('')}
+        ${(plan.exercises || []).length > 5
+          ? `<li class="plan-card-exercise"><span class="plan-card-exercise-detail">+${plan.exercises.length - 5} altri</span></li>`
+          : ''}
+      </ul>
+    </div>
+  `).join('');
 }
 
 // ============================================================
 // SESSIONS
 // ============================================================
 async function loadSessions() {
-  const sessions = await fetchApi('/api/sessions?limit=50');
+  const params = new URLSearchParams(window.location.search);
+  const dateParam = params.get('date');
+  const apiUrl = dateParam ? `/api/sessions?limit=50&date=${dateParam}` : '/api/sessions?limit=50';
+
+  const sessions = await fetchApi(apiUrl);
   if (!sessions || sessions.length === 0) {
     const el = document.getElementById('sessions-container');
     if (el) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">history</div><div class="empty-state-text">Nessuna sessione trovata</div></div>';
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">history</div><div class="empty-state-text">${dateParam ? 'Nessuna sessione trovata per questa data' : 'Nessuna sessione trovata'}</div></div>`;
     }
     return;
   }
@@ -492,6 +871,7 @@ async function loadSessions() {
 }
 
 function createSessionCard(session) {
+  const volume = session.totalVolume || 0;
   const setCount = session.totalSets || 0;
   return `
     <div class="session-card" onclick="window.location.href='/session/${session.id}'">
@@ -500,6 +880,10 @@ function createSessionCard(session) {
         <span class="badge badge-primary">${session.planName || 'Sessione'}</span>
       </div>
       <div class="session-card-stats">
+        <span class="session-card-stat">
+          <span class="material-symbols-outlined">fitness_center</span>
+          ${formatInteger(volume)} kg
+        </span>
         <span class="session-card-stat">
           <span class="material-symbols-outlined">replay</span>
           ${setCount} set

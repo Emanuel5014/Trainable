@@ -8,6 +8,7 @@
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
 
@@ -42,6 +43,11 @@
   </div>
 
   <main class="container">
+    <div class="plans-tabs">
+      <div class="plans-tabs-bg"></div>
+      <button class="plan-tab active" data-filter="active">Attive</button>
+      <button class="plan-tab" data-filter="archived">Archiviate</button>
+    </div>
     <div class="plans-grid" id="plans-container">
       <div class="loading"><div class="loading-spinner"></div></div>
     </div>
