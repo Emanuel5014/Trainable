@@ -8,7 +8,8 @@
   <link rel="icon" href="/icon.png">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script></head>
+  <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
 <body>
 
   <!-- Navigation -->
@@ -42,10 +43,53 @@
   </div>
 
   <main class="container">
+    <!-- Active filters indicator -->
+    <div class="sessions-filter-info" id="filter-info">
+      <span class="badge badge-success" id="filter-badge-plan" style="display:none;"></span>
+      <span class="badge badge-neutral" id="filter-badge-period" style="display:none;"></span>
+    </div>
+
     <div class="sessions-list" id="sessions-container">
       <div class="loading"><div class="loading-spinner"></div></div>
     </div>
+
+    <!-- Filter FAB -->
+    <button class="sessions-fab" id="filter-fab" onclick="openFilterModal()">
+      <span class="material-symbols-outlined">filter_list</span>
+    </button>
   </main>
+
+  <!-- Filter Modal -->
+  <div class="filter-modal-overlay" id="filter-modal-overlay" onclick="closeFilterModal()">
+    <div class="filter-modal" id="filter-modal" onclick="event.stopPropagation()">
+      <div class="filter-modal-header">
+        <h3>Filtri</h3>
+        <button class="filter-modal-close" onclick="closeFilterModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="filter-modal-body">
+        <div class="filter-modal-label">Scheda</div>
+        <select class="sessions-filter-select" id="filter-plan">
+          <option value="">Tutte le schede</option>
+        </select>
+
+        <div class="filter-modal-label" style="margin-top:24px;">Periodo</div>
+        <div class="period-selector" data-target="sessions">
+          <button class="period-btn" data-period="7">7g</button>
+          <button class="period-btn active" data-period="30">30g</button>
+          <button class="period-btn" data-period="90">90g</button>
+          <button class="period-btn" data-period="180">6m</button>
+          <button class="period-btn" data-period="365">1a</button>
+          <button class="period-btn" data-period="0">Tutto</button>
+        </div>
+      </div>
+      <div class="filter-modal-footer">
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+        <button class="btn btn-primary" onclick="applyFilters()">Applica</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="footer">

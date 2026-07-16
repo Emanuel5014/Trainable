@@ -539,6 +539,8 @@ fun Application.configureServer(
                 try {
                     val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
                     val dateParam = call.request.queryParameters["date"]
+                    val planIdParam = call.request.queryParameters["planId"]?.toIntOrNull()
+                    val daysParam = call.request.queryParameters["days"]?.toIntOrNull()
                     var sessions = workoutDao.getAllSessionsWithDetails().first()
 
                     if (dateParam != null) {
@@ -550,6 +552,15 @@ fun Application.configureServer(
                             val dayEnd = dayStart + TimeUnit.DAYS.toMillis(1)
                             sessions = sessions.filter { it.session.timestamp in dayStart until dayEnd }
                         }
+                    }
+
+                    if (planIdParam != null) {
+                        sessions = sessions.filter { it.session.planId == planIdParam }
+                    }
+
+                    if (daysParam != null && daysParam > 0) {
+                        val startDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(daysParam.toLong())
+                        sessions = sessions.filter { it.session.timestamp >= startDate }
                     }
 
                     sessions = sessions.take(limit)

@@ -925,7 +925,40 @@ document.addEventListener('keydown', (e) => {
 async function loadSessions() {
   const params = new URLSearchParams(window.location.search);
   const dateParam = params.get('date');
-  const apiUrl = dateParam ? `/api/sessions?limit=50&date=${dateParam}` : '/api/sessions?limit=50';
+  const planParam = params.get('planId');
+  const daysParam = params.get('days');
+
+  // Load plans for filter dropdown
+  const plans = await fetchApi('/api/plans');
+  const userPlans = (plans || []).filter(p => p.note !== 'SYSTEM_PLAN');
+  const planSelect = document.getElementById('filter-plan');
+  if (planSelect) {
+    planSelect.innerHTML = '<option value="">Tutte le schede</option>' +
+      userPlans.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    if (planParam) planSelect.value = planParam;
+  }
+
+  // Set active period in modal from URL
+  const periodGroup = document.querySelector('.period-selector[data-target="sessions"]');
+  if (periodGroup && daysParam) {
+    periodGroup.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    const match = periodGroup.querySelector(`.period-btn[data-period="${daysParam}"]`);
+    if (match) match.classList.add('active');
+  }
+
+  // Update filter info badges
+  updateFilterBadges(planParam, daysParam, dateParam);
+
+  // Build API URL
+  let apiUrl = '/api/sessions?limit=50';
+  if (dateParam) {
+    apiUrl += `&date=${dateParam}`;
+  } else {
+    const planId = planParam || '';
+    const days = daysParam || '30';
+    if (planId) apiUrl += `&planId=${planId}`;
+    if (days && days !== '0') apiUrl += `&days=${days}`;
+  }
 
   const sessions = await fetchApi(apiUrl);
   if (!sessions || sessions.length === 0) {
@@ -942,6 +975,79 @@ async function loadSessions() {
   }
 }
 
+function updateFilterBadges(planId, days, date) {
+  const badgePlan = document.getElementById('filter-badge-plan');
+  const badgePeriod = document.getElementById('filter-badge-period');
+  if (!badgePlan || !badgePeriod) return;
+
+  if (date) {
+    badgePlan.style.display = 'none';
+    badgePeriod.textContent = formatDate(parseInt(date));
+    badgePeriod.style.display = 'inline-flex';
+    return;
+  }
+
+  const plans = window._sessionPlans || [];
+  const selectedPlan = planId ? plans.find(p => p.id == planId) : null;
+  if (selectedPlan) {
+    badgePlan.textContent = selectedPlan.name;
+    badgePlan.style.display = 'inline-flex';
+  } else {
+    badgePlan.style.display = 'none';
+  }
+
+  if (days && days !== '0') {
+    badgePeriod.textContent = `Ultimi ${days} giorni`;
+    badgePeriod.style.display = 'inline-flex';
+  } else {
+    badgePeriod.textContent = 'Tutto';
+    badgePeriod.style.display = 'inline-flex';
+  }
+}
+
+function openFilterModal() {
+  // Store current plans for the badge
+  fetchApi('/api/plans').then(plans => {
+    window._sessionPlans = (plans || []).filter(p => p.note !== 'SYSTEM_PLAN');
+  });
+  document.getElementById('filter-modal-overlay')?.classList.add('open');
+}
+
+function closeFilterModal() {
+  document.getElementById('filter-modal-overlay')?.classList.remove('open');
+}
+
+function applyFilters() {
+  const planSelect = document.getElementById('filter-plan');
+  const periodGroup = document.querySelector('.period-selector[data-target="sessions"]');
+  const activePeriod = periodGroup?.querySelector('.period-btn.active');
+  const planId = planSelect ? planSelect.value : '';
+  const days = activePeriod ? activePeriod.dataset.period : '30';
+
+  const params = new URLSearchParams();
+  if (planId) params.set('planId', planId);
+  if (days && days !== '0') params.set('days', days);
+  const qs = params.toString();
+  const newUrl = '/sessions' + (qs ? '?' + qs : '');
+  window.history.replaceState(null, '', newUrl);
+  closeFilterModal();
+  loadSessions();
+}
+
+function resetFilters() {
+  const planSelect = document.getElementById('filter-plan');
+  if (planSelect) planSelect.value = '';
+  const periodGroup = document.querySelector('.period-selector[data-target="sessions"]');
+  if (periodGroup) {
+    periodGroup.querySelectorAll('.period-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === 1);
+    });
+  }
+  window.history.replaceState(null, '', '/sessions');
+  closeFilterModal();
+  loadSessions();
+}
+
 function createSessionCard(session) {
   const volume = session.totalVolume || 0;
   const setCount = session.totalSets || 0;
@@ -949,7 +1055,7 @@ function createSessionCard(session) {
     <div class="session-card" onclick="window.location.href='/session/${session.id}'">
       <div class="session-card-header">
         <span class="session-card-date">${formatDate(session.timestamp)}</span>
-        <span class="badge badge-primary">${session.planName || 'Sessione'}</span>
+        <span class="session-card-plan-name">${session.planName || 'Sessione'}</span>
       </div>
       <div class="session-card-stats">
         <span class="session-card-stat">
@@ -992,14 +1098,16 @@ async function loadSessionDetail() {
   const planEl = document.getElementById('session-plan');
   const volEl = document.getElementById('session-volume');
   const setsEl = document.getElementById('session-sets');
+  const planBadgeEl = document.getElementById('session-plan-badge');
 
   if (dateEl) dateEl.textContent = formatDateTime(session.timestamp);
   if (planEl) planEl.textContent = session.planName || 'Sessione';
 
   const volume = session.totalVolume || 0;
   const setCount = (session.sets || []).length;
-  if (volEl) volEl.textContent = formatVolume(volume) + ' kg';
+  if (volEl) volEl.textContent = formatInteger(volume) + ' kg';
   if (setsEl) setsEl.textContent = setCount + ' set';
+  if (planBadgeEl) planBadgeEl.textContent = session.planName || '';
 
   if (!session.sets || session.sets.length === 0) {
     const el = document.getElementById('exercises-container');
@@ -1028,14 +1136,12 @@ async function loadSessionDetail() {
             <div>Serie</div>
             <div>Peso</div>
             <div>Reps</div>
-            <div>RPE</div>
           </div>
           ${sets.map(set => `
             <div class="set-row">
               <div class="set-number">${set.numeroSerie}</div>
               <div>${set.pesoSollevato} kg</div>
               <div>${set.repsEffettive}</div>
-              <div>${set.rpe || '-'}</div>
             </div>
           `).join('')}
         </div>
