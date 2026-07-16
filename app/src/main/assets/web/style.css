@@ -169,6 +169,10 @@ nav {
   position: relative;
   overflow: hidden;
   color: var(--membership-text);
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .membership-card-header {
   display: flex;
@@ -217,6 +221,36 @@ nav {
   border: 1px solid var(--md-outline-variant);
   color: var(--md-on-surface-variant);
 }
+.membership-card-inner {
+  position: relative;
+  z-index: 1;
+}
+.membership-shape-gem {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 25%;
+  pointer-events: none;
+  z-index: 0;
+  animation: spin-gem 15s linear infinite;
+}
+.membership-shape-sunny {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 25%;
+  pointer-events: none;
+  z-index: 0;
+  animation: spin-sunny 20s linear infinite;
+}
+@keyframes spin-gem {
+  from { transform: translate(50%, -50%) rotate(0deg); }
+  to { transform: translate(50%, -50%) rotate(360deg); }
+}
+@keyframes spin-sunny {
+  from { transform: translate(-50%, 50%) rotate(0deg); }
+  to { transform: translate(-50%, 50%) rotate(360deg); }
+}
 
 /* ================================================================
    WEEKLY GOAL
@@ -225,10 +259,23 @@ nav {
   background: var(--md-surface-container);
   border-radius: 24px;
   border: 1px solid var(--md-outline-variant);
-  padding: 24px;
+  padding: 0;
   margin-top: 24px;
   position: relative;
   overflow: hidden;
+}
+.weekly-goal-canvas-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.weekly-progress-content {
+  position: relative;
+  z-index: 1;
+  padding: 24px;
 }
 .weekly-goal-label {
   font-size: 0.8rem;
@@ -257,6 +304,10 @@ nav {
   font-size: 0.85rem;
   color: var(--md-primary);
   font-weight: 600;
+  margin-top: 8px;
+}
+.weekly-remaining.goal-met {
+  color: var(--md-tertiary);
 }
 .weekly-goal-met {
   display: inline-flex;
@@ -265,19 +316,6 @@ nav {
   color: var(--md-tertiary);
   font-weight: 600;
   font-size: 0.9rem;
-}
-.weekly-progress-bar {
-  height: 6px;
-  background: var(--md-surface-container-high);
-  border-radius: 100px;
-  margin-top: 12px;
-  overflow: hidden;
-}
-.weekly-progress-fill {
-  height: 100%;
-  border-radius: 100px;
-  background: linear-gradient(90deg, var(--md-primary), var(--md-tertiary));
-  transition: width 0.6s ease;
 }
 
 /* ================================================================
@@ -568,6 +606,14 @@ nav {
   color: var(--md-on-surface-variant);
   text-align: center;
   margin-top: 12px;
+}
+#session-plan {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--md-primary);
+  text-align: center;
+  margin-top: 12px;
+  letter-spacing: 1px;
 }
 
 /* ================================================================
@@ -1106,21 +1152,15 @@ nav {
   color: var(--md-on-surface-variant);
 }
 .session-card-plan-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--md-on-surface);
-}
   font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-primary);
+  letter-spacing: 1px;
 }
 .session-card-plan {
   font-size: 0.9rem;
   color: var(--md-on-surface-variant);
   margin-bottom: 8px;
-}
-.session-card-plan-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--md-on-surface);
 }
 .session-card-stats {
   display: flex;

@@ -16,13 +16,25 @@ function initTheme() {
   applyThemeColors();
 
   if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
+    themeToggle.addEventListener('click', async () => {
       const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
-      applyThemeColors();
+      await applyThemeColors();
+      refreshCharts();
     });
   }
+}
+
+function refreshCharts() {
+  if (window.location.pathname !== '/analytics') return;
+  const getPeriod = target => {
+    const btn = document.querySelector(`.period-selector[data-target="${target}"] .period-btn.active`);
+    return btn ? parseInt(btn.dataset.period) : 30;
+  };
+  loadBodyWeightChart(getPeriod('body-weight'));
+  loadCategoryVolumeChart(getPeriod('volume-category'));
+  loadPlanTonnageCharts(getPeriod('plan-tonnage'));
 }
 
 async function applyThemeColors() {
@@ -70,6 +82,13 @@ function hexToRgb(hex) {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `${r}, ${g}, ${b}`;
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ============================================================
@@ -197,6 +216,8 @@ async function loadMembership() {
   const el = document.getElementById('membership-card');
   if (!el) return;
 
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
   if (!data || !data.expiryDate) {
     el.className = 'membership-card empty';
     el.innerHTML = `
@@ -225,20 +246,53 @@ async function loadMembership() {
 
   const badgeText = isExpired ? 'Scaduto' : (isExpiringSoon ? `Scade tra ${daysLeft}g` : `${daysLeft} giorni`);
 
+  // Build gradient matching Compose GymMembershipCard logic
+  const primary = getComputedStyle(document.documentElement).getPropertyValue('--md-primary').trim() || '#3A59D1';
+  const tertiary = getComputedStyle(document.documentElement).getPropertyValue('--md-tertiary').trim() || '#7AC6D2';
+  const error = getComputedStyle(document.documentElement).getPropertyValue('--md-error').trim() || '#FFB4AB';
+
+  let gradient;
+  if (isDark) {
+    if (isExpired) {
+      gradient = `linear-gradient(135deg, ${hexToRgba(error, 0.8)}, ${hexToRgba(error, 0.5)})`;
+    } else if (isExpiringSoon) {
+      gradient = `linear-gradient(135deg, ${hexToRgba(tertiary, 0.9)}, ${hexToRgba(tertiary, 0.6)})`;
+    } else {
+      gradient = `linear-gradient(135deg, ${hexToRgba(primary, 0.9)}, ${hexToRgba(primary, 0.6)})`;
+    }
+  } else {
+    if (isExpired) {
+      gradient = `linear-gradient(135deg, ${hexToRgba(error, 0.25)}, ${hexToRgba(error, 0.12)})`;
+    } else if (isExpiringSoon) {
+      gradient = `linear-gradient(135deg, ${hexToRgba(tertiary, 0.25)}, ${hexToRgba(tertiary, 0.12)})`;
+    } else {
+      gradient = `linear-gradient(135deg, ${hexToRgba(primary, 0.22)}, ${hexToRgba(primary, 0.1)})`;
+    }
+  }
+
   el.className = 'membership-card';
+  el.style.background = gradient;
   el.innerHTML = `
-    <div class="membership-card-header">
-      <span class="material-symbols-outlined">credit_card</span>
-      <span class="membership-card-title">Abbonamento Palestra</span>
-    </div>
-    <div class="membership-card-body">
-      <div>
-        <div class="membership-card-username">${data.username}</div>
-        <div class="membership-card-expiry">Valido fino al ${expiryText}</div>
+    <svg class="membership-shape-gem" viewBox="0 0 380 380" preserveAspectRatio="xMidYMid meet">
+      <path d="M133.415 65.7498C150.981 52.991 159.763 46.6116 169.124 43.4402C182.663 38.8533 197.337 38.8533 210.876 43.4402C220.237 46.6116 229.019 52.991 246.585 65.7498L286.083 94.4402C296.514 102.017 301.729 105.805 305.981 110.353C312.125 116.926 316.839 124.702 319.823 133.189C321.888 139.062 322.834 145.437 324.725 158.189L332.038 207.501C335.355 229.87 337.014 241.055 335.34 251.136C332.918 265.718 325.6 279.04 314.59 288.907C306.979 295.728 296.649 300.329 275.987 309.532L229.176 330.382C216.707 335.935 210.473 338.712 204.064 340.131C194.8 342.182 185.2 342.182 175.936 340.131C169.527 338.712 163.293 335.935 150.824 330.382L104.013 309.532C83.3515 300.329 73.0207 295.728 65.4097 288.907C54.4005 279.04 47.0819 265.718 44.6602 251.136C42.9859 241.055 44.6447 229.87 47.9621 207.501L55.2752 158.189C57.1662 145.437 58.1117 139.062 60.1768 133.189C63.1612 124.702 67.8747 116.926 74.0191 110.353C78.2706 105.805 83.4862 102.017 93.9172 94.4402L133.415 65.7498Z" fill="rgba(255,255,255,0.1)"/>
+    </svg>
+    <svg class="membership-shape-sunny" viewBox="0 0 380 380" preserveAspectRatio="xMidYMid meet">
+      <path d="M276.453 68.8118C286.405 69.4881 291.381 69.8263 295.404 71.5853C301.223 74.1305 305.87 78.7766 308.415 84.5965C310.174 88.6186 310.512 93.5948 311.188 103.547L312.732 126.259C313.005 130.284 313.142 132.296 313.579 134.219C314.212 136.997 315.31 139.648 316.827 142.059C317.877 143.728 319.203 145.248 321.856 148.288L336.824 165.438C343.384 172.954 346.663 176.712 348.263 180.8C350.579 186.715 350.579 193.285 348.263 199.2C346.663 203.288 343.384 207.046 336.824 214.562L321.856 231.712C319.203 234.752 317.877 236.272 316.827 237.941C315.31 240.352 314.212 243.003 313.579 245.781C313.142 247.704 313.005 249.716 312.732 253.741L311.188 276.453C310.512 286.405 310.174 291.381 308.415 295.404C305.87 301.223 301.223 305.87 295.404 308.415C291.381 310.174 286.405 310.512 276.453 311.188L253.741 312.732C249.716 313.005 247.704 313.142 245.781 313.579C243.003 314.212 240.352 315.31 237.941 316.827C236.272 317.877 234.752 319.203 231.712 321.856L214.562 336.824C207.046 343.384 203.288 346.663 199.2 348.263C193.285 350.579 186.715 350.579 180.8 348.263C176.712 346.663 172.954 343.384 165.438 336.824L148.288 321.856C145.248 319.203 143.728 317.877 142.059 316.827C139.648 315.31 136.997 314.212 134.219 313.579C132.296 313.142 130.284 313.005 126.259 312.732L103.547 311.188C93.5947 310.512 88.6186 310.174 84.5965 308.415C78.7766 305.87 74.1305 301.223 71.5853 295.404C69.8263 291.381 69.4881 286.405 68.8118 276.453L67.2684 253.741C66.9949 249.716 66.8581 247.704 66.4206 245.781C65.7883 243.003 64.6903 240.352 63.173 237.941C62.123 236.272 60.7965 234.752 58.1437 231.712L43.1756 214.562C36.6164 207.046 33.3369 203.288 31.7366 199.2C29.4211 193.285 29.4211 186.715 31.7366 180.8C33.3369 176.712 36.6164 172.954 43.1756 165.438L58.1437 148.288C60.7965 145.248 62.123 143.728 63.173 142.059C64.6903 139.648 65.7883 136.997 66.4206 134.219C66.8581 132.296 66.9949 130.284 67.2684 126.259L68.8118 103.547C69.4881 93.5948 69.8263 88.6186 71.5853 84.5965C74.1305 78.7766 78.7766 74.1305 84.5965 71.5853C88.6186 69.8263 93.5948 69.4881 103.547 68.8118L126.259 67.2684C130.284 66.9949 132.296 66.8581 134.219 66.4206C136.997 65.7883 139.648 64.6903 142.059 63.173C143.728 62.123 145.248 60.7966 148.288 58.1437L165.438 43.1756C172.954 36.6164 176.712 33.3369 180.8 31.7366C186.715 29.4211 193.285 29.4211 199.2 31.7366C203.288 33.3369 207.046 36.6164 214.562 43.1756L231.712 58.1437C234.752 60.7966 236.272 62.123 237.941 63.173C240.352 64.6903 243.003 65.7883 245.781 66.4206C247.704 66.8581 249.716 66.9949 253.741 67.2684L276.453 68.8118Z" fill="rgba(0,0,0,0.05)"/>
+    </svg>
+    <div class="membership-card-inner">
+      <div class="membership-card-header">
+        <span class="material-symbols-outlined">credit_card</span>
+        <span class="membership-card-title">Abbonamento Palestra</span>
       </div>
-      <span class="membership-card-badge">${badgeText}</span>
+      <div class="membership-card-body">
+        <div>
+          <div class="membership-card-username">${data.username}</div>
+          <div class="membership-card-expiry">Valido fino al ${expiryText}</div>
+        </div>
+        <span class="membership-card-badge">${badgeText}</span>
+      </div>
+      ${isExpired ? '<span class="material-symbols-outlined" style="position:absolute;top:24px;right:24px;font-size:24px;opacity:0.7;">warning</span>' : ''}
     </div>
-    ${isExpired ? '<span class="material-symbols-outlined" style="position:absolute;top:24px;right:24px;font-size:24px;opacity:0.7;">warning</span>' : ''}
   `;
 }
 
@@ -253,20 +307,110 @@ async function loadWeeklyGoal() {
   const progressPct = data.weeklyGoal > 0 ? Math.min(100, (total / data.weeklyGoal) * 100) : 0;
 
   el.innerHTML = `
-    <div class="weekly-goal-label">OBIETTIVO SETTIMANALE</div>
-    <div class="weekly-progress">
-      <span class="weekly-progress-value">${total}</span>
-      <span class="weekly-progress-target">/ ${data.weeklyGoal}</span>
-      <span style="flex:1"></span>
-      ${goalMet
-        ? '<span class="weekly-goal-met"><span class="material-symbols-outlined" style="font-size:20px;">check_circle</span> Obiettivo raggiunto!</span>'
-        : `<span class="weekly-remaining">${remaining} ${remaining === 1 ? 'allenamento rimasto' : 'allenamenti rimasti'}</span>`
-      }
-    </div>
-    <div class="weekly-progress-bar">
-      <div class="weekly-progress-fill" style="width:${progressPct}%"></div>
+    <canvas class="weekly-goal-canvas-bg"></canvas>
+    <div class="weekly-progress-content">
+      <div class="weekly-goal-label">OBIETTIVO SETTIMANALE</div>
+      <div class="weekly-progress">
+        <span class="weekly-progress-value">${total}</span>
+        <span class="weekly-progress-target">/ ${data.weeklyGoal}</span>
+        <span style="flex:1"></span>
+        ${goalMet
+          ? '<span class="weekly-goal-met"><span class="material-symbols-outlined" style="font-size:20px;">check_circle</span></span>'
+          : ''
+        }
+      </div>
+      ${!goalMet ? `<div class="weekly-remaining">${remaining} ${remaining === 1 ? 'allenamento rimasto' : 'allenamenti rimasti'}</div>` : ''}
+      ${goalMet ? '<div class="weekly-remaining goal-met">Obiettivo raggiunto!</div>' : ''}
     </div>
   `;
+
+  // Start wavy pattern animation
+  animateWeeklyWave(el, total, data.weeklyGoal);
+}
+
+function animateWeeklyWave(card, current, goal) {
+  const canvas = card.querySelector('.weekly-goal-canvas-bg');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const colors = getCanvasColors();
+  const progress = goal > 0 ? Math.min(1, current / goal) : 0;
+
+  let shift = 0;
+  let animId;
+
+  function draw(t) {
+    const rect = card.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.scale(dpr, dpr);
+
+    shift = (t / 3000) % 2;
+
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    if (progress <= 0) {
+      animId = requestAnimationFrame(draw);
+      return;
+    }
+
+    const clamped = Math.min(1, progress);
+    const height = rect.height;
+    const halfPeriod = 21;
+    const amp = 6;
+
+    if (clamped >= 1) {
+      ctx.fillStyle = colors.primary + '26';
+      ctx.fillRect(0, 0, rect.width, height);
+    } else {
+      // Wave at the RIGHT edge of the filled area, fill goes LEFT (completed portion)
+      const edgeX = rect.width * clamped;
+
+      ctx.beginPath();
+      ctx.moveTo(edgeX, 0);
+
+      // Wavy edge — ensure continuous waves from top to bottom
+      const phaseOffset = shift * halfPeriod;
+      const startI = Math.ceil(-phaseOffset / halfPeriod);
+      const firstBaseY = startI * halfPeriod + phaseOffset;
+
+      // Draw straight segment from y=0 to first wave position
+      if (firstBaseY > 0) {
+        ctx.lineTo(edgeX, firstBaseY);
+      }
+
+      const wavesNeeded = Math.ceil((height - firstBaseY) / halfPeriod) + 3;
+
+      for (let i = startI; i < startI + wavesNeeded; i++) {
+        const baseY = i * halfPeriod + phaseOffset;
+        if (baseY > height + halfPeriod) break;
+
+        const direction = Math.abs(i) % 2 === 0 ? 1 : -1;
+        const waveX = edgeX + amp * direction;
+        const startY = Math.max(0, baseY);
+        const endY = Math.min(height, baseY + halfPeriod);
+
+        if (startY < height && endY > startY) {
+          const midY = (startY + endY) / 2;
+          ctx.quadraticCurveTo(waveX, midY, edgeX, endY);
+        }
+      }
+
+      // Fill to the LEFT of the wave (completed portion)
+      ctx.lineTo(0, height);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = colors.primary + '26';
+      ctx.fill();
+    }
+
+    animId = requestAnimationFrame(draw);
+  }
+
+  animId = requestAnimationFrame(draw);
+  card._cancelAnim = () => cancelAnimationFrame(animId);
 }
 
 // ============================================================

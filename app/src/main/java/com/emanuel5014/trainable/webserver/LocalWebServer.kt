@@ -38,6 +38,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import java.util.concurrent.TimeUnit
+import java.io.InputStream
 
 private const val TAG = "TrainableWebServer"
 
@@ -179,6 +180,25 @@ fun Application.configureServer(
         }
         get("/icon.svg") {
             call.respondBytes(context.assets.open("web/icon.svg").readBytes(), ContentType.Image.SVG)
+        }
+
+        // Serve M3E library files from assets/web/lib/
+        get("/lib/{path...}") {
+            val filePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
+            try {
+                val stream: InputStream = context.assets.open("web/lib/$filePath")
+                val bytes = stream.readBytes()
+                stream.close()
+                val contentType = when {
+                    filePath.endsWith(".js", ignoreCase = true) -> ContentType.Application.JavaScript
+                    filePath.endsWith(".map", ignoreCase = true) -> ContentType.Application.Json
+                    filePath.endsWith(".css", ignoreCase = true) -> ContentType.Text.CSS
+                    else -> ContentType.Application.OctetStream
+                }
+                call.respondBytes(bytes, contentType)
+            } catch (e: Exception) {
+                call.respondText("Not Found", ContentType.Text.Plain, HttpStatusCode.NotFound)
+            }
         }
 
         route("/api") {
