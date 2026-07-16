@@ -783,13 +783,15 @@ async function loadPlans() {
   // Setup tabs with animated slider
   const tabsContainer = document.querySelector('.plans-tabs');
   const bg = tabsContainer?.querySelector('.plans-tabs-bg');
+  if (bg) bg.classList.add('left');
   const tabs = document.querySelectorAll('.plan-tab');
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       if (bg) {
-        bg.classList.toggle('right', tab.dataset.filter === 'archived');
+        bg.classList.remove('left', 'right');
+        bg.classList.add(tab.dataset.filter === 'archived' ? 'right' : 'left');
       }
       renderPlans(plans, tab.dataset.filter);
     });
@@ -807,10 +809,7 @@ function renderPlans(plans, filter) {
     return;
   }
 
-  // Filter out system plans (SYSTEM_PLAN note = Cardio, Quick Workout, Custom Workout)
   const userPlans = plans.filter(p => p.note !== 'SYSTEM_PLAN');
-
-  // Filter by active/archived
   const filtered = filter === 'active'
     ? userPlans.filter(p => p.isActive)
     : userPlans.filter(p => !p.isActive);
@@ -820,32 +819,105 @@ function renderPlans(plans, filter) {
     return;
   }
 
-  el.innerHTML = filtered.map(plan => `
-    <div class="plan-card">
+  // Store all plans data globally for modal access
+  window._planData = filtered;
+
+  el.innerHTML = filtered.map(plan => {
+    const startLabel = formatDate(plan.startDate);
+    const endLabel = plan.endDate ? formatDate(plan.endDate) : null;
+    const imageCount = (plan.images || []).length;
+    const allExercises = plan.exercises || [];
+
+    return `
+    <div class="plan-card" onclick="openPlanModal('${plan.id}')">
       <div class="plan-card-header">
         <div class="plan-card-name">${plan.name}</div>
         ${plan.isActive
           ? '<span class="badge badge-success">Attivo</span>'
           : '<span class="badge badge-neutral">Archiviato</span>'}
       </div>
-      <div class="plan-card-meta">
-        <span class="badge badge-neutral">${plan.sessionsPerWeek || 3}x / settimana</span>
-        <span class="badge badge-neutral">${(plan.exercises || []).length} esercizi</span>
+      <div class="plan-card-dates">
+        <span class="date-badge date-start">
+          <span class="material-symbols-outlined">calendar_today</span>
+          ${startLabel}
+        </span>
+        ${endLabel ? `
+        <span class="date-badge ${plan.endDate && plan.endDate < Date.now() ? 'date-expired' : 'date-end'}">
+          <span class="material-symbols-outlined">event</span>
+          ${endLabel}
+        </span>` : ''}
+        <span class="badge badge-neutral">${allExercises.length} esercizi${imageCount > 0 ? `, ${imageCount} foto` : ''}</span>
       </div>
-      <ul class="plan-card-exercises">
-        ${(plan.exercises || []).slice(0, 5).map(ex => `
-          <li class="plan-card-exercise">
-            <span class="plan-card-exercise-name">${ex.exerciseName}</span>
-            <span class="plan-card-exercise-detail">${ex.targetSets}x${ex.targetReps}</span>
-          </li>
+      <div class="plan-card-muscle-groups">
+        ${[...new Set(allExercises.map(e => e.category))].filter(Boolean).slice(0, 4).map(cat => `
+          <span class="badge badge-neutral">${cat}</span>
         `).join('')}
-        ${(plan.exercises || []).length > 5
-          ? `<li class="plan-card-exercise"><span class="plan-card-exercise-detail">+${plan.exercises.length - 5} altri</span></li>`
-          : ''}
-      </ul>
-    </div>
-  `).join('');
+      </div>
+    </div>`;
+  }).join('');
 }
+
+function openPlanModal(planId) {
+  const plan = window._planData?.find(p => String(p.id) === planId);
+  if (!plan) return;
+
+  const overlay = document.getElementById('plan-modal-overlay');
+  const content = document.getElementById('plan-modal-content');
+  if (!overlay || !content) return;
+
+  const startLabel = formatDate(plan.startDate);
+  const endLabel = plan.endDate ? formatDate(plan.endDate) : null;
+  const allExercises = plan.exercises || [];
+  const images = plan.images || [];
+
+  content.innerHTML = `
+    <div class="plan-modal-title">${plan.name}</div>
+    <div class="plan-modal-badge ${plan.isActive ? 'active' : 'inactive'}">${plan.isActive ? 'Attivo' : 'Archiviato'}</div>
+    <div class="plan-modal-dates">
+      <span class="date-badge date-start">
+        <span class="material-symbols-outlined">calendar_today</span>
+        Inizio: ${startLabel}
+      </span>
+      ${endLabel ? `
+      <span class="date-badge ${plan.endDate && plan.endDate < Date.now() ? 'date-expired' : 'date-end'}">
+        <span class="material-symbols-outlined">event</span>
+        Scadenza: ${endLabel}
+      </span>` : ''}
+      <span class="badge badge-neutral">${allExercises.length} esercizi</span>
+      ${images.length > 0 ? `<span class="badge badge-neutral">${images.length} foto</span>` : ''}
+    </div>
+
+    <div class="plan-modal-section-title">Esercizi</div>
+    ${allExercises.length === 0 ? '<div style="color:var(--md-on-surface-variant);font-size:0.85rem;">Nessun esercizio in questa scheda</div>' : ''}
+    ${allExercises.map(ex => `
+      <div class="plan-modal-exercise">
+        <span class="plan-modal-exercise-name">${ex.exerciseName}</span>
+        <span class="plan-modal-exercise-detail">${ex.targetSets}x${ex.targetReps}</span>
+      </div>
+    `).join('')}
+
+    ${images.length > 0 ? `
+    <div class="plan-modal-section-title">Foto</div>
+    <div class="plan-modal-images">
+      ${images.map(uri => {
+        const safeUri = encodeURIComponent(uri);
+        return `<img src="/api/plan-image?uri=${safeUri}" class="plan-modal-image" onclick="event.stopPropagation();window.open(this.src)">`;
+      }).join('')}
+    </div>` : ''}
+  `;
+
+  overlay.classList.add('open');
+}
+
+function closePlanModal() {
+  const overlay = document.getElementById('plan-modal-overlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closePlanModal();
+});
 
 // ============================================================
 // SESSIONS

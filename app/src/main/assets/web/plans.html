@@ -61,6 +61,15 @@
     </div>
   </footer>
 
+  <div class="plan-modal-overlay" id="plan-modal-overlay" onclick="closePlanModal()">
+    <div class="plan-modal" id="plan-modal" onclick="event.stopPropagation()">
+      <button class="plan-modal-close" onclick="closePlanModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <div class="plan-modal-content" id="plan-modal-content"></div>
+    </div>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>

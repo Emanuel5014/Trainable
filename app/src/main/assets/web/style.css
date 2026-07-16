@@ -351,29 +351,31 @@ nav {
   background: var(--md-surface-container);
   padding: 4px;
   border-radius: 100px;
-  width: fit-content;
   margin: 24px auto 0;
+  max-width: 400px;
   gap: 0;
 }
 .plans-tabs-bg {
   position: absolute;
   top: 4px;
-  left: 4px;
   width: calc(50% - 4px);
   height: calc(100% - 8px);
   background: var(--md-primary);
   border-radius: 100px;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: left 0.3s ease;
   z-index: 1;
 }
+.plans-tabs-bg.left {
+  left: 4px;
+}
 .plans-tabs-bg.right {
-  transform: translateX(calc(100% + 4px));
+  left: 50%;
 }
 .plan-tab {
   position: relative;
   z-index: 2;
   flex: 1;
-  padding: 12px 36px;
+  padding: 12px 20px;
   border: none;
   border-radius: 100px;
   background: transparent;
@@ -384,6 +386,7 @@ nav {
   transition: color 0.2s ease;
   font-family: inherit;
   white-space: nowrap;
+  text-align: center;
 }
 .plan-tab:hover { color: var(--md-on-surface); }
 .plan-tab.active { color: var(--md-on-primary); }
@@ -822,23 +825,58 @@ nav {
   border-radius: 24px;
   border: 1px solid var(--md-outline-variant);
   padding: 28px;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
-.plan-card:hover { transform: translateY(-4px); }
+.plan-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
 .plan-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  cursor: pointer;
 }
 .plan-card-name {
   font-size: 1.2rem;
   font-weight: 700;
 }
-.plan-card-meta {
+.plan-card-dates {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
+  font-size: 0.8rem;
+  color: var(--md-on-surface-variant);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.date-badge .material-symbols-outlined {
+  font-size: 16px;
+}
+.date-start {
+  background: color-mix(in srgb, var(--md-tertiary), transparent 80%);
+  color: var(--md-tertiary);
+}
+.date-end {
+  background: color-mix(in srgb, var(--md-primary), transparent 80%);
+  color: var(--md-primary);
+}
+.date-expired {
+  background: color-mix(in srgb, var(--md-error), transparent 80%);
+  color: var(--md-error);
+}
+.plan-card-muscle-groups {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .plan-card-exercises {
   list-style: none;
@@ -858,6 +896,182 @@ nav {
   font-size: 0.85rem;
   color: var(--md-on-surface-variant);
 }
+
+/* Expandable section */
+.plan-card-expand-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+.plan-card-expand-wrap.open {
+  max-height: 2000px;
+  opacity: 1;
+}
+.plan-card-expand-wrap.empty {
+  display: none;
+}
+.plan-card-expand-inner {
+  border-top: 1px solid var(--md-outline-variant);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.plan-card-expand-icon {
+  text-align: center;
+  padding: 8px 0 0;
+  color: var(--md-on-surface-variant);
+  transition: transform 0.3s ease;
+}
+.plan-card-expand-icon .material-symbols-outlined {
+  font-size: 24px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.plan-card-all-exercises .plan-card-exercise {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--md-outline-variant);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.plan-card-all-exercises .plan-card-exercise:last-child { border-bottom: none; }
+
+.plan-card-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.plan-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border: 1px solid var(--md-outline-variant);
+}
+.plan-image:hover { transform: scale(1.05); }
+
+/* ================================================================
+   PLAN MODAL
+   ================================================================ */
+.plan-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 24px;
+}
+.plan-modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.plan-modal {
+  background: var(--md-surface-container);
+  border-radius: 28px;
+  border: 1px solid var(--md-outline-variant);
+  max-width: 600px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+}
+.plan-modal-overlay.open .plan-modal {
+  transform: scale(1) translateY(0);
+}
+.plan-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.2s;
+}
+.plan-modal-close:hover { background: var(--md-surface-container-highest); }
+.plan-modal-close .material-symbols-outlined { font-size: 20px; }
+.plan-modal-content {
+  padding: 28px;
+  padding-top: 36px;
+}
+.plan-modal-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  padding-right: 40px;
+}
+.plan-modal-badge {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.plan-modal-badge.active { background: var(--md-primary); color: var(--md-on-primary); }
+.plan-modal-badge.inactive { background: var(--md-surface-container-high); color: var(--md-on-surface-variant); }
+.plan-modal-dates {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--md-on-surface-variant);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.plan-modal-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--md-on-surface-variant);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  margin-top: 20px;
+}
+.plan-modal-exercise {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+.plan-modal-exercise:last-child { border-bottom: none; }
+.plan-modal-exercise-name { font-weight: 500; font-size: 0.95rem; }
+.plan-modal-exercise-detail { font-size: 0.85rem; color: var(--md-on-surface-variant); }
+.plan-modal-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.plan-modal-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border: 1px solid var(--md-outline-variant);
+}
+.plan-modal-image:hover { transform: scale(1.08); }
 
 /* ================================================================
    SESSION CARDS

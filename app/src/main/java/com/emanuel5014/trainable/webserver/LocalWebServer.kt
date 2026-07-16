@@ -1,7 +1,9 @@
 package com.emanuel5014.trainable.webserver
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
+import java.io.File
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
@@ -456,8 +458,8 @@ fun Application.configureServer(
                                 put("name", pwd.plan.nome)
                                 if (pwd.plan.note != null) put("note", pwd.plan.note!!)
                                 put("isActive", pwd.plan.isActive)
-                                put("sessionsPerWeek", pwd.plan.sessioniTargetSettimana)
                                 put("startDate", pwd.plan.dataInizio)
+                                if (pwd.plan.dataFine != null) put("endDate", pwd.plan.dataFine!!)
                                 put("exercises", buildJsonArray {
                                     pwd.exercises.forEach { ex ->
                                         add(buildJsonObject {
@@ -469,10 +471,65 @@ fun Application.configureServer(
                                         })
                                     }
                                 })
+                                put("images", buildJsonArray {
+                                    pwd.images.forEach { img ->
+                                        add(JsonPrimitive(img.imageUri))
+                                    }
+                                })
                             })
                         }
                     }
                     call.respondText(json.encodeToString(successJson(items)), ContentType.Application.Json)
+                } catch (e: Exception) {
+                    call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
+                }
+            }
+
+            // Serve plan image by URI or file path
+            get("/plan-image") {
+                try {
+                    val uriStr = call.request.queryParameters["uri"]
+                    if (uriStr == null) {
+                        call.respondText(json.encodeToString(errorJson("No URI provided")), ContentType.Application.Json)
+                        return@get
+                    }
+                    val rawPath = java.net.URLDecoder.decode(uriStr, "UTF-8")
+                    val cleanPath = rawPath.removePrefix("file://")
+
+                    val inputStream = try {
+                        // Try direct path first
+                        val file = File(cleanPath)
+                        if (file.exists()) {
+                            java.io.FileInputStream(file)
+                        } else {
+                            // Fallback: try routine_images/ subdirectory
+                            val fileName = cleanPath.substringAfterLast("/")
+                            val fallback1 = File(context.filesDir, "routine_images/$fileName")
+                            if (fallback1.exists()) {
+                                java.io.FileInputStream(fallback1)
+                            } else {
+                                // Fallback: try root filesDir
+                                val fallback2 = File(context.filesDir, fileName)
+                                if (fallback2.exists()) {
+                                    java.io.FileInputStream(fallback2)
+                                } else {
+                                    null
+                                }
+                            }
+                        }
+                    } catch (_: Exception) { null }
+
+                    if (inputStream != null) {
+                        val bytes = inputStream.readBytes()
+                        inputStream.close()
+                        val contentType = when {
+                            rawPath.endsWith(".png", ignoreCase = true) -> ContentType.Image.PNG
+                            else -> ContentType.Image.JPEG
+                        }
+                        call.respondBytes(bytes, contentType)
+                    } else {
+                        call.respondText(json.encodeToString(errorJson("Image not found")), ContentType.Application.Json)
+                    }
                 } catch (e: Exception) {
                     call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
                 }
