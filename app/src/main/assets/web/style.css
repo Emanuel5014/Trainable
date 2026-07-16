@@ -380,6 +380,73 @@ nav {
   color: var(--md-on-primary);
 }
 
+.exercise-input {
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  min-width: 170px;
+  max-width: 240px;
+  transition: border-color 0.2s ease;
+}
+.exercise-input::placeholder {
+  color: var(--md-on-surface-variant);
+  font-weight: 400;
+}
+.exercise-input:focus {
+  border-color: var(--md-primary);
+}
+#exercise-autocomplete {
+  --m3e-option-color: var(--md-on-surface);
+  --m3e-option-selected-color: var(--md-on-primary);
+  --m3e-option-selected-container-color: var(--md-primary);
+  --m3e-option-container-hover-color: color-mix(in srgb, var(--md-on-surface) 8%, transparent);
+  --m3e-option-container-focus-color: color-mix(in srgb, var(--md-on-surface) 12%, transparent);
+  --m3e-option-label-text-font-size: 0.85rem;
+  --m3e-option-container-height: 40px;
+}
+.exercise-dropdown-panel {
+  --m3e-option-color: var(--md-on-surface);
+  --m3e-option-selected-color: var(--md-on-primary);
+  --m3e-option-selected-container-color: var(--md-primary);
+  --m3e-option-container-hover-color: color-mix(in srgb, var(--md-on-surface) 8%, transparent);
+  --m3e-option-container-focus-color: color-mix(in srgb, var(--md-on-surface) 12%, transparent);
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.exercise-progress-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+.exercise-progress-summary .current-1rm {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--md-primary);
+  letter-spacing: -0.03em;
+}
+.exercise-progress-summary .1rm-unit {
+  font-size: 0.9rem;
+  color: var(--md-primary);
+  font-weight: 600;
+}
+.exercise-progress-summary .1rm-change {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.exercise-progress-summary .1rm-change.positive { color: var(--md-tertiary); }
+.exercise-progress-summary .1rm-change.negative { color: var(--md-error); }
+
 /* ================================================================
    PLANS TABS
    ================================================================ */
@@ -1118,6 +1185,64 @@ nav {
   border: 1px solid var(--md-outline-variant);
 }
 .plan-modal-image:hover { transform: scale(1.08); }
+
+/* ================================================================
+   IMAGE VIEWER
+   ================================================================ */
+.image-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 32px;
+}
+.image-viewer-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.image-viewer-img {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  transform: scale(0.9);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.image-viewer-overlay.open .image-viewer-img {
+  transform: scale(1);
+}
+.image-viewer-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2001;
+  transition: background 0.2s;
+}
+.image-viewer-close:hover {
+  background: rgba(255,255,255,0.25);
+}
+.image-viewer-close .material-symbols-outlined {
+  font-size: 22px;
+}
 
 /* ================================================================
    SESSION CARDS

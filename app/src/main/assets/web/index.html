@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trainable — Dashboard</title>
+  <title data-i18n="titleDashboard">Trainable — Dashboard</title>
   <meta name="theme-color" content="#3A59D1">
   <link rel="icon" href="/icon.png">
   <link rel="stylesheet" href="/style.css">
@@ -12,17 +12,16 @@
 </head>
 <body>
 
-  <!-- Navigation -->
   <nav>
     <div class="nav-inner">
       <a href="/" class="nav-logo">
         <img src="/icon.png" alt="Trainable" width="32" height="32" style="border-radius: 6px;">
       </a>
       <div class="nav-links">
-        <a href="/" class="active">Dashboard</a>
-        <a href="/analytics">Analytics</a>
-        <a href="/plans">Piani</a>
-        <a href="/sessions">Sessioni</a>
+        <a href="/" class="active" data-i18n="navDashboard">Dashboard</a>
+        <a href="/analytics" data-i18n="navAnalytics">Analytics</a>
+        <a href="/plans" data-i18n="navPlans">Piani</a>
+        <a href="/sessions" data-i18n="navSessions">Sessioni</a>
       </div>
       <div class="nav-actions">
         <button class="theme-switch" id="themeToggle" aria-label="Toggle theme">
@@ -34,58 +33,53 @@
     </div>
   </nav>
 
-  <!-- Page Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Dashboard</h1>
-      <p class="page-subtitle">Panoramica dei tuoi allenamenti</p>
+      <h1 class="page-title" data-i18n="pageDashboard">Dashboard</h1>
+      <p class="page-subtitle" data-i18n="subDashboard">Panoramica dei tuoi allenamenti</p>
     </div>
   </div>
 
   <main class="container">
-    <!-- Gym Membership -->
     <div class="section-header" style="margin-top:0;">
-      <h2 class="section-title">Abbonamento Palestra</h2>
+      <h2 class="section-title" data-i18n="gymMembership">Abbonamento Palestra</h2>
     </div>
     <div class="membership-card" id="membership-card">
       <div class="loading"><div class="loading-spinner"></div></div>
     </div>
 
-    <!-- Weekly Goal -->
     <div class="section-header">
-      <h2 class="section-title">Obiettivo Settimanale</h2>
+      <h2 class="section-title" data-i18n="weeklyGoal">Obiettivo Settimanale</h2>
     </div>
     <div class="weekly-goal-card" id="weekly-goal-card">
       <div class="loading"><div class="loading-spinner"></div></div>
     </div>
 
-    <!-- Consistency Calendar -->
     <div class="section-header">
-      <h2 class="section-title">Calendario Allenamenti</h2>
+      <h2 class="section-title" data-i18n="consistencyCalendar">Calendario Allenamenti</h2>
     </div>
     <div class="chart-container" id="calendar-container">
       <div class="loading"><div class="loading-spinner"></div></div>
     </div>
 
-    <!-- Recent Sessions -->
     <div class="section-header">
-      <h2 class="section-title">Ultimi Allenamenti</h2>
-      <a href="/sessions" class="btn btn-secondary">Vedi tutti</a>
+      <h2 class="section-title" data-i18n="recentSessions">Ultimi Allenamenti</h2>
+      <a href="/sessions" class="btn btn-secondary" data-i18n="viewAll">Vedi tutti</a>
     </div>
     <div class="sessions-list" id="recent-sessions">
       <div class="loading"><div class="loading-spinner"></div></div>
     </div>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p class="footer-copy">2026 Trainable App. Licensed under GPL v3.</p>
-      <p class="footer-made">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
+      <p class="footer-copy" data-i18n="copyright">2026 Trainable App. Licensed under GPL v3.</p>
+      <p class="footer-made" data-i18n="madeWith">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
     </div>
   </footer>
 
   <script type="module" src="/lib/m3e/all.min.js"></script>
+  <script src="/i18n.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

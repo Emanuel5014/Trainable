@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trainable — Piani</title>
+  <title data-i18n="titlePlans">Trainable — Piani</title>
   <meta name="theme-color" content="#3A59D1">
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
@@ -19,10 +19,10 @@
         <img src="/icon.png" alt="Trainable" width="32" height="32" style="border-radius: 6px;">
       </a>
       <div class="nav-links">
-        <a href="/">Dashboard</a>
-        <a href="/analytics">Analytics</a>
-        <a href="/plans" class="active">Piani</a>
-        <a href="/sessions">Sessioni</a>
+        <a href="/" data-i18n="navDashboard">Dashboard</a>
+        <a href="/analytics" data-i18n="navAnalytics">Analytics</a>
+        <a href="/plans" class="active" data-i18n="navPlans">Piani</a>
+        <a href="/sessions" data-i18n="navSessions">Sessioni</a>
       </div>
       <div class="nav-actions">
         <button class="theme-switch" id="themeToggle" aria-label="Toggle theme">
@@ -37,16 +37,16 @@
   <!-- Page Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Piani di Allenamento</h1>
-      <p class="page-subtitle">I tuoi programmi e la loro composizione</p>
+      <h1 class="page-title" data-i18n="pagePlans">Piani di Allenamento</h1>
+      <p class="page-subtitle" data-i18n="subPlans">I tuoi programmi e la loro composizione</p>
     </div>
   </div>
 
   <main class="container">
     <div class="plans-tabs">
       <div class="plans-tabs-bg"></div>
-      <button class="plan-tab active" data-filter="active">Attive</button>
-      <button class="plan-tab" data-filter="archived">Archiviate</button>
+      <button class="plan-tab active" data-filter="active" data-i18n="activePlans">Attive</button>
+      <button class="plan-tab" data-filter="archived" data-i18n="archivedPlans">Archiviate</button>
     </div>
     <div class="plans-grid" id="plans-container">
       <div class="loading"><div class="loading-spinner"></div></div>
@@ -56,8 +56,8 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p class="footer-copy">2026 Trainable App. Licensed under GPL v3.</p>
-      <p class="footer-made">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
+      <p class="footer-copy" data-i18n="copyright">2026 Trainable App. Licensed under GPL v3.</p>
+      <p class="footer-made" data-i18n="madeWith">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
     </div>
   </footer>
 
@@ -70,7 +70,15 @@
     </div>
   </div>
 
+  <div class="image-viewer-overlay" id="image-viewer-overlay" onclick="closeImageViewer()">
+    <button class="image-viewer-close" onclick="closeImageViewer()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <img class="image-viewer-img" id="image-viewer-img" onclick="event.stopPropagation()" />
+  </div>
+
   <script type="module" src="/lib/m3e/all.min.js"></script>
+  <script src="/i18n.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

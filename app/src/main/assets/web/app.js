@@ -35,6 +35,7 @@ function refreshCharts() {
   loadBodyWeightChart(getPeriod('body-weight'));
   loadCategoryVolumeChart(getPeriod('volume-category'));
   loadPlanTonnageCharts(getPeriod('plan-tonnage'));
+  loadExerciseProgress(getPeriod('exercise-progress'));
 }
 
 async function applyThemeColors() {
@@ -206,7 +207,7 @@ async function loadDashboard() {
   } else {
     const el = document.getElementById('recent-sessions');
     if (el) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">Nessuna sessione trovata</div></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">' + t('noSessionsFound') + '</div></div>';
     }
   }
 }
@@ -223,12 +224,12 @@ async function loadMembership() {
     el.innerHTML = `
       <div class="membership-card-header">
         <span class="material-symbols-outlined">credit_card</span>
-        <span class="membership-card-title">Abbonamento Palestra</span>
+        <span class="membership-card-title">${t('gymMembership')}</span>
       </div>
       <div class="membership-card-body">
         <div>
           <div class="membership-card-username">${data?.username || 'Athlete'}</div>
-          <div class="membership-card-expiry">Nessuna scadenza impostata</div>
+          <div class="membership-card-expiry">${t('tapToSet')}</div>
         </div>
       </div>
     `;
@@ -244,7 +245,7 @@ async function loadMembership() {
     day: 'numeric', month: 'short', year: 'numeric'
   });
 
-  const badgeText = isExpired ? 'Scaduto' : (isExpiringSoon ? `Scade tra ${daysLeft}g` : `${daysLeft} giorni`);
+  const badgeText = isExpired ? t('expiredBadge') : (isExpiringSoon ? t('expiringSoon', {days: daysLeft}) : t('daysLeft', {days: daysLeft}));
 
   // Build gradient matching Compose GymMembershipCard logic
   const primary = getComputedStyle(document.documentElement).getPropertyValue('--md-primary').trim() || '#3A59D1';
@@ -282,12 +283,12 @@ async function loadMembership() {
     <div class="membership-card-inner">
       <div class="membership-card-header">
         <span class="material-symbols-outlined">credit_card</span>
-        <span class="membership-card-title">Abbonamento Palestra</span>
+        <span class="membership-card-title">${t('gymMembership')}</span>
       </div>
       <div class="membership-card-body">
         <div>
           <div class="membership-card-username">${data.username}</div>
-          <div class="membership-card-expiry">Valido fino al ${expiryText}</div>
+          <div class="membership-card-expiry">${t('validUntil')} ${expiryText}</div>
         </div>
         <span class="membership-card-badge">${badgeText}</span>
       </div>
@@ -309,7 +310,7 @@ async function loadWeeklyGoal() {
   el.innerHTML = `
     <canvas class="weekly-goal-canvas-bg"></canvas>
     <div class="weekly-progress-content">
-      <div class="weekly-goal-label">OBIETTIVO SETTIMANALE</div>
+      <div class="weekly-goal-label">${t('weeklyGoalLabel')}</div>
       <div class="weekly-progress">
         <span class="weekly-progress-value">${total}</span>
         <span class="weekly-progress-target">/ ${data.weeklyGoal}</span>
@@ -319,8 +320,8 @@ async function loadWeeklyGoal() {
           : ''
         }
       </div>
-      ${!goalMet ? `<div class="weekly-remaining">${remaining} ${remaining === 1 ? 'allenamento rimasto' : 'allenamenti rimasti'}</div>` : ''}
-      ${goalMet ? '<div class="weekly-remaining goal-met">Obiettivo raggiunto!</div>' : ''}
+      ${!goalMet ? `<div class="weekly-remaining">${remaining === 1 ? t('workoutRemaining', {n: remaining}) : t('workoutsRemaining', {n: remaining})}</div>` : ''}
+      ${goalMet ? '<div class="weekly-remaining goal-met">' + t('goalMet') + '</div>' : ''}
     </div>
   `;
 
@@ -420,7 +421,7 @@ async function loadConsistencyCalendar() {
   const data = await fetchApi('/api/analytics/consistency-calendar?weeks=14');
   const container = document.getElementById('calendar-container');
   if (!container || !data || !data.days) {
-    if (container) container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Nessun dato disponibile</div></div>';
+    if (container) container.innerHTML = '<div class="empty-state"><div class="empty-state-text">' + t('noData') + '</div></div>';
     return;
   }
 
@@ -438,8 +439,9 @@ async function loadConsistencyCalendar() {
   const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   startDate.setDate(startDate.getDate() - diff);
 
-  const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-  const dayLabels = ['', 'Lun', '', 'Mer', '', 'Ven', ''];
+  const monthNames = t('monthShort');
+  const dayShort = t('dayShort');
+  const dayLabels = ['', dayShort[0], '', dayShort[1], '', dayShort[2], ''];
 
   // Build cells
   let cellsHtml = '';
@@ -462,7 +464,7 @@ async function loadConsistencyCalendar() {
       lastMonth = date.getMonth();
     }
 
-    const tooltip = isFuture ? '' : `${dateStr}: ${count} ${count === 1 ? 'allenamento' : 'allenamenti'}`;
+    const tooltip = isFuture ? '' : `${dateStr}: ${count} ${count === 1 ? t('workout') : t('workouts')}`;
     const classes = ['calendar-cell'];
     if (level > 0) classes.push('l' + level);
     if (isToday) classes.push('today');
@@ -484,15 +486,15 @@ async function loadConsistencyCalendar() {
   container.innerHTML = `
     <div class="calendar-container">
       <div class="calendar-header">
-        <span class="chart-title">Ultimi ${data.weeks} settimane</span>
+        <span class="chart-title">${t('lastWeeks', {weeks: data.weeks})}</span>
         <div class="calendar-legend">
-          <span>Meno</span>
+          <span>${t('less')}</span>
           <div class="legend-box l0"></div>
           <div class="legend-box l1"></div>
           <div class="legend-box l2"></div>
           <div class="legend-box l3"></div>
           <div class="legend-box l4"></div>
-          <span>Più</span>
+          <span>${t('more')}</span>
         </div>
       </div>
       <div class="calendar-layout">
@@ -514,6 +516,7 @@ async function loadAnalytics() {
   loadBodyWeightChart(30);
   loadCategoryVolumeChart(30);
   loadPlanTonnageCharts(30);
+  loadExercisesDropdown();
 }
 
 function setupPeriodSelectors() {
@@ -536,6 +539,7 @@ function setupPeriodSelectors() {
         if (target === 'body-weight') loadBodyWeightChart(days);
         else if (target === 'volume-category') loadCategoryVolumeChart(days);
         else if (target === 'plan-tonnage') loadPlanTonnageCharts(days);
+        else if (target === 'exercise-progress') loadExerciseProgress(days);
       });
     });
   });
@@ -557,7 +561,7 @@ function loadBodyWeightChart(days) {
   const headerEl = document.getElementById('body-weight-chart')?.previousElementSibling;
   fetchApi(`/api/analytics/body-weight?days=${days}`).then(data => {
     updatePeriodSubtitle(headerEl, data, 'timestamp', days);
-    renderLineChart('body-weight-canvas', data, 'weight', 'kg', v => v.toFixed(1));
+    renderLineChart('body-weight-canvas', data, 'weight', t('weightUnit'), v => { const w = __weightUnit === 'lb' ? v * 2.20462 : v; return w >= 100 ? w.toFixed(0) : w.toFixed(1); });
   });
 }
 
@@ -565,11 +569,91 @@ function loadCategoryVolumeChart(days) {
   const headerEl = document.getElementById('volume-category-chart')?.previousElementSibling;
   if (headerEl) {
     const subtitle = headerEl.querySelector('.section-subtitle');
-    if (subtitle) subtitle.textContent = days <= 0 ? 'Tutto' : getPeriodLabel(days, Date.now() - days * 86400000, Date.now());
+    if (subtitle) subtitle.textContent = days <= 0 ? t('periodAll') : getPeriodLabel(days, Date.now() - days * 86400000, Date.now());
   }
   fetchApi(`/api/analytics/volume-by-category?days=${days}`).then(data => {
     renderBarChart('volume-category-canvas', data, 'category', 'volume');
   });
+}
+
+let _exercisesCache = [];
+
+async function loadExercisesDropdown() {
+  const autocomplete = document.getElementById('exercise-autocomplete');
+  if (!autocomplete) return;
+  const exercises = await fetchApi('/api/exercises');
+  if (!exercises) return;
+  _exercisesCache = exercises;
+  autocomplete.innerHTML = exercises.map(e =>
+    `<m3e-option value="${e.name}">${e.name}</m3e-option>`
+  ).join('');
+  autocomplete.addEventListener('change', () => {
+    if (autocomplete.value) {
+      loadExerciseProgress(getActivePeriod('exercise-progress'));
+    } else {
+      const canvas = document.getElementById('exercise-progress-canvas');
+      const summary = document.getElementById('exercise-progress-summary');
+      if (canvas) canvas.style.display = 'none';
+      if (summary) summary.innerHTML = '';
+    }
+  });
+}
+
+function loadExerciseProgress(days) {
+  const autocomplete = document.getElementById('exercise-autocomplete');
+  const exerciseName = autocomplete ? autocomplete.value : null;
+  if (!exerciseName) return;
+  const exercise = _exercisesCache.find(e => e.name === exerciseName);
+  if (!exercise) return;
+  loadExerciseProgressChart(exercise.id, days);
+}
+
+async function loadExerciseProgressChart(exerciseId, days) {
+  const headerEl = document.getElementById('exercise-progress-chart')?.previousElementSibling;
+  const loadingEl = document.getElementById('exercise-progress-loading');
+  const canvas = document.getElementById('exercise-progress-canvas');
+  const summaryEl = document.getElementById('exercise-progress-summary');
+  if (!canvas || !summaryEl) return;
+
+  if (loadingEl) loadingEl.style.display = 'flex';
+  canvas.style.display = 'none';
+
+  const data = await fetchApi(`/api/analytics/exercise-progress/${exerciseId}?days=${days}`);
+
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  if (!data || data.length === 0) {
+    canvas.style.display = 'none';
+    summaryEl.innerHTML = '<div class="empty-state-text">' + t('noDataPeriod') + '</div>';
+    return;
+  }
+
+  canvas.style.display = 'block';
+
+  const latest = data[data.length - 1].value;
+  const first = data[0].value;
+  const change = first > 0 ? ((latest - first) / first) * 100 : 0;
+
+  summaryEl.innerHTML = `
+    <span class="current-1rm">${formatInteger(latest)}</span>
+    <span class="1rm-unit">${t('kgShort')}</span>
+    ${change !== 0 ? `<span class="1rm-change ${change > 0 ? 'positive' : 'negative'}">${change > 0 ? '+' : ''}${change.toFixed(1)}%</span>` : ''}
+  `;
+
+  renderLineChart('exercise-progress-canvas', data, 'value', t('weightUnit'), v => { const w = __weightUnit === 'lb' ? v * 2.20462 : v; return w >= 100 ? w.toFixed(0) : w.toFixed(1); });
+  if (headerEl) {
+    const subtitle = headerEl.querySelector('.section-subtitle');
+    if (subtitle) {
+      const firstTs = data[0].timestamp;
+      const lastTs = data[data.length - 1].timestamp;
+      subtitle.textContent = days <= 0 ? t('periodAll') : getPeriodLabel(days, firstTs, lastTs);
+    }
+  }
+}
+
+function getActivePeriod(target) {
+  const btn = document.querySelector(`.period-selector[data-target="${target}"] .period-btn.active`);
+  return btn ? parseInt(btn.dataset.period) : 30;
 }
 
 async function loadPlanTonnageCharts(days) {
@@ -582,7 +666,7 @@ async function loadPlanTonnageCharts(days) {
   const activePlans = (plans || []).filter(p => p.isActive);
 
   if (activePlans.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Nessuna scheda attiva trovata</div></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">' + t('noActivePlans') + '</div></div>';
     return;
   }
 
@@ -594,7 +678,7 @@ async function loadPlanTonnageCharts(days) {
     chartDiv.className = 'tonnage-chart';
     chartDiv.innerHTML = `
       <div class="tonnage-chart-title">${plan.name}</div>
-      <div class="tonnage-chart-badge">Attiva</div>
+      <div class="tonnage-chart-badge">${t('active')}</div>
       <div class="tonnage-chart-canvas-wrap"><canvas id="tonnage-canvas-${plan.id}" style="height:200px;"></canvas></div>
     `;
     container.appendChild(chartDiv);
@@ -602,7 +686,7 @@ async function loadPlanTonnageCharts(days) {
     const planData = await fetchApi(`/api/analytics/plan-volume-history/${plan.id}?days=${days}`);
     if (planData && planData.length > 0) {
       planData.forEach(d => allTimestamps.push(d.timestamp));
-      renderLineChart(`tonnage-canvas-${plan.id}`, planData, 'volume', 'kg', formatInteger);
+      renderLineChart(`tonnage-canvas-${plan.id}`, planData, 'volume', t('weightUnit'), v => { const w = __weightUnit === 'lb' ? v * 2.20462 : v; return Math.round(w).toLocaleString('it-IT'); });
     } else {
       const canvas = document.getElementById(`tonnage-canvas-${plan.id}`);
       if (canvas) {
@@ -619,7 +703,7 @@ async function loadPlanTonnageCharts(days) {
         ctx.fillStyle = colors.onSurfaceVariant;
         ctx.font = '14px Google Sans Flex, Outfit, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Nessun dato per questo periodo', wrapRect.width / 2, 110);
+        ctx.fillText(t('noDataPeriod'), wrapRect.width / 2, 110);
       }
     }
   }
@@ -643,7 +727,7 @@ function renderLineChart(canvasId, data, valueKey, unit, formatFn) {
   if (!canvas || !data || data.length === 0) {
     if (canvas) {
       const parent = canvas.parentElement;
-      parent.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-state-text">Nessun dato</div></div>';
+      parent.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-state-text">' + t('noData') + '</div></div>';
     }
     return;
   }
@@ -851,7 +935,7 @@ function renderBarChart(canvasId, data, labelKey, valueKey) {
   if (!canvas || !data || data.length === 0) {
     if (canvas) {
       const parent = canvas.parentElement;
-      parent.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-state-text">Nessun dato disponibile per questo periodo</div></div>';
+      parent.innerHTML = '<div class="empty-state" style="padding:30px"><div class="empty-state-text">' + t('noDataPeriod') + '</div></div>';
     }
     return;
   }
@@ -949,7 +1033,7 @@ function renderPlans(plans, filter) {
   if (!el) return;
 
   if (!plans || plans.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">Nessun piano trovato</div></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">' + t('noPlansFound') + '</div></div>';
     return;
   }
 
@@ -959,7 +1043,7 @@ function renderPlans(plans, filter) {
     : userPlans.filter(p => !p.isActive);
 
   if (filtered.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">Nessun piano ${filter === 'active' ? 'attivo' : 'archiviato'} trovato</div></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">playlist_add_check</div><div class="empty-state-text">${filter === 'active' ? t('noActivePlans') : t('noArchivedPlans')}</div></div>`;
     return;
   }
 
@@ -977,8 +1061,8 @@ function renderPlans(plans, filter) {
       <div class="plan-card-header">
         <div class="plan-card-name">${plan.name}</div>
         ${plan.isActive
-          ? '<span class="badge badge-success">Attivo</span>'
-          : '<span class="badge badge-neutral">Archiviato</span>'}
+          ? '<span class="badge badge-success">' + t('active') + '</span>'
+          : '<span class="badge badge-neutral">' + t('archived') + '</span>'}
       </div>
       <div class="plan-card-dates">
         <span class="date-badge date-start">
@@ -990,7 +1074,7 @@ function renderPlans(plans, filter) {
           <span class="material-symbols-outlined">event</span>
           ${endLabel}
         </span>` : ''}
-        <span class="badge badge-neutral">${allExercises.length} esercizi${imageCount > 0 ? `, ${imageCount} foto` : ''}</span>
+        <span class="badge badge-neutral">${t('exercisesCount', {n: allExercises.length})}${imageCount > 0 ? ', ' + t('photosCount', {n: imageCount}) : ''}</span>
       </div>
       <div class="plan-card-muscle-groups">
         ${[...new Set(allExercises.map(e => e.category))].filter(Boolean).slice(0, 4).map(cat => `
@@ -1016,23 +1100,23 @@ function openPlanModal(planId) {
 
   content.innerHTML = `
     <div class="plan-modal-title">${plan.name}</div>
-    <div class="plan-modal-badge ${plan.isActive ? 'active' : 'inactive'}">${plan.isActive ? 'Attivo' : 'Archiviato'}</div>
+    <div class="plan-modal-badge ${plan.isActive ? 'active' : 'inactive'}">${plan.isActive ? t('active') : t('archived')}</div>
     <div class="plan-modal-dates">
       <span class="date-badge date-start">
         <span class="material-symbols-outlined">calendar_today</span>
-        Inizio: ${startLabel}
+        ${t('startDate')} ${startLabel}
       </span>
       ${endLabel ? `
       <span class="date-badge ${plan.endDate && plan.endDate < Date.now() ? 'date-expired' : 'date-end'}">
         <span class="material-symbols-outlined">event</span>
-        Scadenza: ${endLabel}
+        ${t('endDate')} ${endLabel}
       </span>` : ''}
-      <span class="badge badge-neutral">${allExercises.length} esercizi</span>
-      ${images.length > 0 ? `<span class="badge badge-neutral">${images.length} foto</span>` : ''}
+      <span class="badge badge-neutral">${t('exercisesCount', {n: allExercises.length})}</span>
+      ${images.length > 0 ? '<span class="badge badge-neutral">' + t('photosCount', {n: images.length}) + '</span>' : ''}
     </div>
 
-    <div class="plan-modal-section-title">Esercizi</div>
-    ${allExercises.length === 0 ? '<div style="color:var(--md-on-surface-variant);font-size:0.85rem;">Nessun esercizio in questa scheda</div>' : ''}
+    <div class="plan-modal-section-title">${t('exercise')}</div>
+    ${allExercises.length === 0 ? '<div style="color:var(--md-on-surface-variant);font-size:0.85rem;">' + t('noExercisesPlan') + '</div>' : ''}
     ${allExercises.map(ex => `
       <div class="plan-modal-exercise">
         <span class="plan-modal-exercise-name">${ex.exerciseName}</span>
@@ -1041,11 +1125,11 @@ function openPlanModal(planId) {
     `).join('')}
 
     ${images.length > 0 ? `
-    <div class="plan-modal-section-title">Foto</div>
+    <div class="plan-modal-section-title">${t('photos')}</div>
     <div class="plan-modal-images">
       ${images.map(uri => {
         const safeUri = encodeURIComponent(uri);
-        return `<img src="/api/plan-image?uri=${safeUri}" class="plan-modal-image" onclick="event.stopPropagation();window.open(this.src)">`;
+        return `<img src="/api/plan-image?uri=${safeUri}" class="plan-modal-image" onclick="event.stopPropagation();openImageViewer(this.src)">`;
       }).join('')}
     </div>` : ''}
   `;
@@ -1060,8 +1144,25 @@ function closePlanModal() {
 
 // Close modal on Escape key
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closePlanModal();
+  if (e.key === 'Escape') {
+    closePlanModal();
+    closeImageViewer();
+  }
 });
+
+// Image viewer
+function openImageViewer(src) {
+  const overlay = document.getElementById('image-viewer-overlay');
+  const img = document.getElementById('image-viewer-img');
+  if (!overlay || !img) return;
+  img.src = src;
+  overlay.classList.add('open');
+}
+
+function closeImageViewer() {
+  const overlay = document.getElementById('image-viewer-overlay');
+  if (overlay) overlay.classList.remove('open');
+}
 
 // ============================================================
 // SESSIONS
@@ -1077,7 +1178,7 @@ async function loadSessions() {
   const userPlans = (plans || []).filter(p => p.note !== 'SYSTEM_PLAN');
   const planSelect = document.getElementById('filter-plan');
   if (planSelect) {
-    planSelect.innerHTML = '<option value="">Tutte le schede</option>' +
+    planSelect.innerHTML = '<option value="">' + t('allPlans') + '</option>' +
       userPlans.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     if (planParam) planSelect.value = planParam;
   }
@@ -1108,7 +1209,7 @@ async function loadSessions() {
   if (!sessions || sessions.length === 0) {
     const el = document.getElementById('sessions-container');
     if (el) {
-      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">history</div><div class="empty-state-text">${dateParam ? 'Nessuna sessione trovata per questa data' : 'Nessuna sessione trovata'}</div></div>`;
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">history</div><div class="empty-state-text">${dateParam ? t('noSessionsDate') : t('noSessionsFound')}</div></div>`;
     }
     return;
   }
@@ -1141,10 +1242,10 @@ function updateFilterBadges(planId, days, date) {
   }
 
   if (days && days !== '0') {
-    badgePeriod.textContent = `Ultimi ${days} giorni`;
+    badgePeriod.textContent = t('lastDays', {days: days});
     badgePeriod.style.display = 'inline-flex';
   } else {
-    badgePeriod.textContent = 'Tutto';
+    badgePeriod.textContent = t('periodAll');
     badgePeriod.style.display = 'inline-flex';
   }
 }
@@ -1199,16 +1300,16 @@ function createSessionCard(session) {
     <div class="session-card" onclick="window.location.href='/session/${session.id}'">
       <div class="session-card-header">
         <span class="session-card-date">${formatDate(session.timestamp)}</span>
-        <span class="session-card-plan-name">${session.planName || 'Sessione'}</span>
+        <span class="session-card-plan-name">${session.planName || t('session')}</span>
       </div>
       <div class="session-card-stats">
         <span class="session-card-stat">
           <span class="material-symbols-outlined">fitness_center</span>
-          ${formatInteger(volume)} kg
+          ${weightText(volume)}
         </span>
         <span class="session-card-stat">
           <span class="material-symbols-outlined">replay</span>
-          ${setCount} set
+          ${setCount} ${t('setShort')}
         </span>
         ${session.noteSessione ? `
           <span class="session-card-stat">
@@ -1233,7 +1334,7 @@ async function loadSessionDetail() {
   if (!session) {
     const el = document.getElementById('session-detail');
     if (el) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">error</div><div class="empty-state-text">Sessione non trovata</div></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">error</div><div class="empty-state-text">' + t('sessionNotFound') + '</div></div>';
     }
     return;
   }
@@ -1245,18 +1346,18 @@ async function loadSessionDetail() {
   const planBadgeEl = document.getElementById('session-plan-badge');
 
   if (dateEl) dateEl.textContent = formatDateTime(session.timestamp);
-  if (planEl) planEl.textContent = session.planName || 'Sessione';
+  if (planEl) planEl.textContent = session.planName || t('session');
 
   const volume = session.totalVolume || 0;
   const setCount = (session.sets || []).length;
-  if (volEl) volEl.textContent = formatInteger(volume) + ' kg';
-  if (setsEl) setsEl.textContent = setCount + ' set';
+  if (volEl) volEl.textContent = weightText(volume);
+  if (setsEl) setsEl.textContent = setCount + ' ' + t('setShort');
   if (planBadgeEl) planBadgeEl.textContent = session.planName || '';
 
   if (!session.sets || session.sets.length === 0) {
     const el = document.getElementById('exercises-container');
     if (el) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">Nessun set registrato</div></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">' + t('noSetsRecorded') + '</div></div>';
     }
     return;
   }
@@ -1273,18 +1374,18 @@ async function loadSessionDetail() {
       <div class="exercise-block">
         <div class="exercise-block-header">
           <div class="exercise-block-name">${name}</div>
-          <span class="badge badge-neutral">${sets.length} set</span>
+          <span class="badge badge-neutral">${sets.length} ${t('setShort')}</span>
         </div>
         <div class="sets-list">
           <div class="set-row set-row-header">
-            <div>Serie</div>
-            <div>Peso</div>
-            <div>Reps</div>
+            <div>${t('series')}</div>
+            <div>${t('weight')}</div>
+            <div>${t('reps')}</div>
           </div>
           ${sets.map(set => `
             <div class="set-row">
               <div class="set-number">${set.numeroSerie}</div>
-              <div>${set.pesoSollevato} kg</div>
+              <div>${weightText(set.pesoSollevato)}</div>
               <div>${set.repsEffettive}</div>
             </div>
           `).join('')}
@@ -1297,9 +1398,16 @@ async function loadSessionDetail() {
 // ============================================================
 // INIT
 // ============================================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadPreferences();
+  translatePage();
   initTheme();
   initNav();
+
+  // Update period buttons with translated text
+  document.querySelectorAll('[data-i18n^="period"]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
 
   const path = window.location.pathname;
   if (path === '/') loadDashboard();
@@ -1308,3 +1416,4 @@ document.addEventListener('DOMContentLoaded', () => {
   else if (path === '/sessions') loadSessions();
   else if (path.startsWith('/session/')) loadSessionDetail();
 });
+

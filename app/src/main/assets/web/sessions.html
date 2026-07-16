@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trainable — Sessioni</title>
+  <title data-i18n="titleSessions">Trainable — Sessioni</title>
   <meta name="theme-color" content="#3A59D1">
   <link rel="icon" href="/icon.png">
   <link rel="stylesheet" href="/style.css">
@@ -19,10 +19,10 @@
         <img src="/icon.png" alt="Trainable" width="32" height="32" style="border-radius: 6px;">
       </a>
       <div class="nav-links">
-        <a href="/">Dashboard</a>
-        <a href="/analytics">Analytics</a>
-        <a href="/plans">Piani</a>
-        <a href="/sessions" class="active">Sessioni</a>
+        <a href="/" data-i18n="navDashboard">Dashboard</a>
+        <a href="/analytics" data-i18n="navAnalytics">Analytics</a>
+        <a href="/plans" data-i18n="navPlans">Piani</a>
+        <a href="/sessions" class="active" data-i18n="navSessions">Sessioni</a>
       </div>
       <div class="nav-actions">
         <button class="theme-switch" id="themeToggle" aria-label="Toggle theme">
@@ -37,8 +37,8 @@
   <!-- Page Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Storico Sessioni</h1>
-      <p class="page-subtitle">Tutti i tuoi allenamenti passati</p>
+      <h1 class="page-title" data-i18n="pageSessions">Storico Sessioni</h1>
+      <p class="page-subtitle" data-i18n="subSessions">Tutti i tuoi allenamenti passati</p>
     </div>
   </div>
 
@@ -63,30 +63,30 @@
   <div class="filter-modal-overlay" id="filter-modal-overlay" onclick="closeFilterModal()">
     <div class="filter-modal" id="filter-modal" onclick="event.stopPropagation()">
       <div class="filter-modal-header">
-        <h3>Filtri</h3>
+        <h3 data-i18n="filters">Filtri</h3>
         <button class="filter-modal-close" onclick="closeFilterModal()">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
       <div class="filter-modal-body">
-        <div class="filter-modal-label">Scheda</div>
+        <div class="filter-modal-label" data-i18n="plan">Scheda</div>
         <select class="sessions-filter-select" id="filter-plan">
-          <option value="">Tutte le schede</option>
+          <option value="" data-i18n="allPlans">Tutte le schede</option>
         </select>
 
-        <div class="filter-modal-label" style="margin-top:24px;">Periodo</div>
+        <div class="filter-modal-label" style="margin-top:24px;" data-i18n="period">Periodo</div>
         <div class="period-selector" data-target="sessions">
-          <button class="period-btn" data-period="7">7g</button>
-          <button class="period-btn active" data-period="30">30g</button>
-          <button class="period-btn" data-period="90">90g</button>
-          <button class="period-btn" data-period="180">6m</button>
-          <button class="period-btn" data-period="365">1a</button>
-          <button class="period-btn" data-period="0">Tutto</button>
+          <button class="period-btn" data-period="7" data-i18n="period7d">7g</button>
+          <button class="period-btn active" data-period="30" data-i18n="period30d">30g</button>
+          <button class="period-btn" data-period="90" data-i18n="period90d">90g</button>
+          <button class="period-btn" data-period="180" data-i18n="period6m">6m</button>
+          <button class="period-btn" data-period="365" data-i18n="period1y">1a</button>
+          <button class="period-btn" data-period="0" data-i18n="periodAll">Tutto</button>
         </div>
       </div>
       <div class="filter-modal-footer">
-        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
-        <button class="btn btn-primary" onclick="applyFilters()">Applica</button>
+        <button class="btn btn-secondary" onclick="resetFilters()" data-i18n="reset">Reset</button>
+        <button class="btn btn-primary" onclick="applyFilters()" data-i18n="apply">Applica</button>
       </div>
     </div>
   </div>
@@ -94,12 +94,13 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p class="footer-copy">2026 Trainable App. Licensed under GPL v3.</p>
-      <p class="footer-made">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
+      <p class="footer-copy" data-i18n="copyright">2026 Trainable App. Licensed under GPL v3.</p>
+      <p class="footer-made" data-i18n="madeWith">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
     </div>
   </footer>
 
   <script type="module" src="/lib/m3e/all.min.js"></script>
+  <script src="/i18n.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

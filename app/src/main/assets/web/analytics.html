@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trainable — Analytics</title>
+  <title data-i18n="titleAnalytics">Trainable — Analytics</title>
   <meta name="theme-color" content="#3A59D1">
   <link rel="icon" href="/icon.png">
   <link rel="stylesheet" href="/style.css">
@@ -18,10 +18,10 @@
         <img src="/icon.png" alt="Trainable" width="32" height="32" style="border-radius: 6px;">
       </a>
       <div class="nav-links">
-        <a href="/">Dashboard</a>
-        <a href="/analytics" class="active">Analytics</a>
-        <a href="/plans">Piani</a>
-        <a href="/sessions">Sessioni</a>
+        <a href="/" data-i18n="navDashboard">Dashboard</a>
+        <a href="/analytics" class="active" data-i18n="navAnalytics">Analytics</a>
+        <a href="/plans" data-i18n="navPlans">Piani</a>
+        <a href="/sessions" data-i18n="navSessions">Sessioni</a>
       </div>
       <div class="nav-actions">
         <button class="theme-switch" id="themeToggle" aria-label="Toggle theme">
@@ -35,8 +35,8 @@
 
   <div class="page-header" style="min-height:160px;">
     <div>
-      <h1 class="page-title">Analytics</h1>
-      <p class="page-subtitle">Analisi dettagliate dei tuoi progressi</p>
+      <h1 class="page-title" data-i18n="pageAnalytics">Analytics</h1>
+      <p class="page-subtitle" data-i18n="subAnalytics">Analisi dettagliate dei tuoi progressi</p>
     </div>
   </div>
 
@@ -45,16 +45,16 @@
     <!-- Body Weight Chart -->
     <div class="section-header">
       <div>
-        <h2 class="section-title">Peso Corporeo</h2>
+        <h2 class="section-title" data-i18n="bodyWeight">Peso Corporeo</h2>
         <div class="section-subtitle"></div>
       </div>
       <div class="period-selector" data-target="body-weight">
-        <button class="period-btn" data-period="7">7g</button>
-        <button class="period-btn active" data-period="30">30g</button>
-        <button class="period-btn" data-period="90">90g</button>
-        <button class="period-btn" data-period="180">6m</button>
-        <button class="period-btn" data-period="365">1a</button>
-        <button class="period-btn" data-period="0">Tutto</button>
+        <button class="period-btn" data-period="7" data-i18n="period7d">7g</button>
+        <button class="period-btn active" data-period="30" data-i18n="period30d">30g</button>
+        <button class="period-btn" data-period="90" data-i18n="period90d">90g</button>
+        <button class="period-btn" data-period="180" data-i18n="period6m">6m</button>
+        <button class="period-btn" data-period="365" data-i18n="period1y">1a</button>
+        <button class="period-btn" data-period="0" data-i18n="periodAll">Tutto</button>
       </div>
     </div>
     <div class="chart-container" id="body-weight-chart">
@@ -64,16 +64,16 @@
     <!-- Volume by Muscle Group -->
     <div class="section-header" style="margin-top:48px;">
       <div>
-        <h2 class="section-title">Volume per Gruppo Muscolare</h2>
+        <h2 class="section-title" data-i18n="volumeByCategory">Volume per Gruppo Muscolare</h2>
         <div class="section-subtitle"></div>
       </div>
       <div class="period-selector" data-target="volume-category">
-        <button class="period-btn" data-period="7">7g</button>
-        <button class="period-btn active" data-period="30">30g</button>
-        <button class="period-btn" data-period="90">90g</button>
-        <button class="period-btn" data-period="180">6m</button>
-        <button class="period-btn" data-period="365">1a</button>
-        <button class="period-btn" data-period="0">Tutto</button>
+        <button class="period-btn" data-period="7" data-i18n="period7d">7g</button>
+        <button class="period-btn active" data-period="30" data-i18n="period30d">30g</button>
+        <button class="period-btn" data-period="90" data-i18n="period90d">90g</button>
+        <button class="period-btn" data-period="180" data-i18n="period6m">6m</button>
+        <button class="period-btn" data-period="365" data-i18n="period1y">1a</button>
+        <button class="period-btn" data-period="0" data-i18n="periodAll">Tutto</button>
       </div>
     </div>
     <div class="chart-container" id="volume-category-chart">
@@ -83,29 +83,55 @@
     <!-- Per-Plan Tonnage Charts -->
     <div class="section-header" style="margin-top:48px;">
       <div>
-        <h2 class="section-title">Tonnellaggio per Scheda</h2>
+        <h2 class="section-title" data-i18n="tonnagePerPlan">Tonnellaggio per Scheda</h2>
         <div class="section-subtitle"></div>
       </div>
       <div class="period-selector" data-target="plan-tonnage">
-        <button class="period-btn active" data-period="30">30g</button>
-        <button class="period-btn" data-period="90">90g</button>
-        <button class="period-btn" data-period="180">6m</button>
-        <button class="period-btn" data-period="365">1a</button>
-        <button class="period-btn" data-period="0">Tutto</button>
+        <button class="period-btn active" data-period="30" data-i18n="period30d">30g</button>
+        <button class="period-btn" data-period="90" data-i18n="period90d">90g</button>
+        <button class="period-btn" data-period="180" data-i18n="period6m">6m</button>
+        <button class="period-btn" data-period="365" data-i18n="period1y">1a</button>
+        <button class="period-btn" data-period="0" data-i18n="periodAll">Tutto</button>
       </div>
     </div>
     <div id="plan-tonnage-charts"></div>
+
+    <!-- 1RM Progress -->
+    <div class="section-header" style="margin-top:48px;">
+      <div>
+        <h2 class="section-title" data-i18n="max1RM">Massimale 1RM</h2>
+        <div class="section-subtitle"></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input id="exercise-input" placeholder="Cerca esercizio..." autocomplete="off" class="exercise-input" data-i18n="searchExercise" />
+        <m3e-autocomplete for="exercise-input" filter="contains" id="exercise-autocomplete" panel-class="exercise-dropdown-panel">
+        </m3e-autocomplete>
+        <div class="period-selector" data-target="exercise-progress">
+          <button class="period-btn active" data-period="30" data-i18n="period30d">30g</button>
+          <button class="period-btn" data-period="90" data-i18n="period90d">90g</button>
+          <button class="period-btn" data-period="180" data-i18n="period6m">6m</button>
+          <button class="period-btn" data-period="365" data-i18n="period1y">1a</button>
+          <button class="period-btn" data-period="0" data-i18n="periodAll">Tutto</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-container" id="exercise-progress-chart">
+      <div class="exercise-progress-summary" id="exercise-progress-summary"></div>
+      <canvas id="exercise-progress-canvas" class="chart-canvas" style="display:none;"></canvas>
+      <div class="loading" id="exercise-progress-loading" style="display:none;"><div class="loading-spinner"></div></div>
+    </div>
 
   </main>
 
   <footer class="footer">
     <div class="container">
-      <p class="footer-copy">2026 Trainable App. Licensed under GPL v3.</p>
-      <p class="footer-made">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
+      <p class="footer-copy" data-i18n="copyright">2026 Trainable App. Licensed under GPL v3.</p>
+      <p class="footer-made" data-i18n="madeWith">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
     </div>
   </footer>
 
   <script type="module" src="/lib/m3e/all.min.js"></script>
+  <script src="/i18n.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

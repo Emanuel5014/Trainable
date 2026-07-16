@@ -10,6 +10,7 @@ import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.ui.theme.ThemeColorStore
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -39,6 +40,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import java.util.concurrent.TimeUnit
 import java.io.InputStream
+import java.util.Locale
 
 private const val TAG = "TrainableWebServer"
 
@@ -56,6 +58,15 @@ private fun successJson(data: kotlinx.serialization.json.JsonElement) = buildJso
 private fun errorJson(message: String) = buildJsonObject {
     put("success", false)
     put("error", message)
+}
+
+private val SUPPORTED_LANGS = listOf("en", "it", "es", "fr", "de", "pt")
+
+private suspend fun resolveLanguage(userPrefsRepo: UserPreferencesRepository): String {
+    val stored = userPrefsRepo.userLanguage.first()
+    if (!stored.isNullOrEmpty() && stored != "system") return stored
+    val sysLang = Locale.getDefault().language
+    return if (sysLang in SUPPORTED_LANGS) sysLang else "en"
 }
 
 @Serializable
@@ -181,6 +192,9 @@ fun Application.configureServer(
         get("/icon.svg") {
             call.respondBytes(context.assets.open("web/icon.svg").readBytes(), ContentType.Image.SVG)
         }
+        get("/i18n.js") {
+            call.respondText(context.assets.open("web/i18n.js").bufferedReader().readText(), ContentType.Application.JavaScript)
+        }
 
         // Serve M3E library files from assets/web/lib/
         get("/lib/{path...}") {
@@ -232,6 +246,40 @@ fun Application.configureServer(
                         put("light", buildJsonObject {
                             light.forEach { (k, v) -> put(k, JsonPrimitive(v)) }
                         })
+                    })), ContentType.Application.Json)
+                } catch (e: Exception) {
+                    call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
+                }
+            }
+
+            // All exercises for the exercise picker
+            get("/exercises") {
+                try {
+                    val exercises = exerciseDao.getAllExercises().first()
+                    val lang = resolveLanguage(userPrefsRepo)
+                    val items = buildJsonArray {
+                        exercises.forEach { ex ->
+                            add(buildJsonObject {
+                                put("id", JsonPrimitive(ex.id))
+                                put("name", JsonPrimitive(ExerciseTranslations.translate(ex.nome, lang)))
+                                put("category", JsonPrimitive(ExerciseTranslations.translateCategory(ex.categoria, lang)))
+                            })
+                        }
+                    }
+                    call.respondText(json.encodeToString(successJson(items)), ContentType.Application.Json)
+                } catch (e: Exception) {
+                    call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
+                }
+            }
+
+            // User preferences (language + weight unit)
+            get("/preferences") {
+                try {
+                    val lang = resolveLanguage(userPrefsRepo)
+                    val unit = userPrefsRepo.weightUnit.first()
+                    call.respondText(json.encodeToString(successJson(buildJsonObject {
+                        put("language", JsonPrimitive(lang))
+                        put("weightUnit", JsonPrimitive(unit))
                     })), ContentType.Application.Json)
                 } catch (e: Exception) {
                     call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
@@ -372,14 +420,40 @@ fun Application.configureServer(
             get("/analytics/personal-bests") {
                 try {
                     val pbs = analyticsDao.getAllPersonalBests().first()
+                    val lang = resolveLanguage(userPrefsRepo)
                     val items = buildJsonArray {
                         pbs.forEach { pb ->
                             add(buildJsonObject {
                                 put("exerciseId", pb.exerciseId)
-                                put("exerciseName", pb.exerciseName)
-                                put("category", pb.category)
+                                put("exerciseName", pb.exerciseName?.let { ExerciseTranslations.translate(it, lang) })
+                                put("category", pb.category?.let { ExerciseTranslations.translateCategory(it, lang) })
                                 put("maxWeight", pb.maxWeight)
                                 put("reps", pb.reps)
+                            })
+                        }
+                    }
+                    call.respondText(json.encodeToString(successJson(items)), ContentType.Application.Json)
+                } catch (e: Exception) {
+                    call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
+                }
+            }
+
+            // 1RM progress history for a specific exercise
+            get("/analytics/exercise-progress/{exerciseId}") {
+                try {
+                    val exerciseId = call.parameters["exerciseId"]?.toIntOrNull()
+                    if (exerciseId == null) {
+                        call.respondText(json.encodeToString(errorJson("Invalid exercise ID")), ContentType.Application.Json)
+                        return@get
+                    }
+                    val days = call.request.queryParameters["days"]?.toIntOrNull() ?: 90
+                    val startDate = daysToStartDate(days)
+                    val history = analyticsDao.getExerciseProgressHistory(exerciseId, startDate).first()
+                    val items = buildJsonArray {
+                        history.forEach { h ->
+                            add(buildJsonObject {
+                                put("value", JsonPrimitive(h.maxValue))
+                                put("timestamp", JsonPrimitive(h.timestamp))
                             })
                         }
                     }
@@ -470,6 +544,7 @@ fun Application.configureServer(
                 try {
                     val plans = workoutDao.getAllPlansSorted().first()
                     val plansWithDetails = workoutDao.getPlansWithDetails(plans.map { it.id })
+                    val lang = resolveLanguage(userPrefsRepo)
 
                     val items = buildJsonArray {
                         plansWithDetails.forEach { pwd ->
@@ -483,8 +558,8 @@ fun Application.configureServer(
                                 put("exercises", buildJsonArray {
                                     pwd.exercises.forEach { ex ->
                                         add(buildJsonObject {
-                                            put("exerciseName", ex.exercise.nome)
-                                            put("category", ex.exercise.categoria)
+                                            put("exerciseName", ExerciseTranslations.translate(ex.exercise.nome, lang))
+                                            put("category", ExerciseTranslations.translateCategory(ex.exercise.categoria, lang))
                                             put("targetSets", ex.planExercise.serieTarget)
                                             put("targetReps", ex.planExercise.repsTarget)
                                             put("targetRest", ex.planExercise.recuperoTarget)
@@ -618,12 +693,13 @@ fun Application.configureServer(
                         return@get
                     }
 
+                    val lang = resolveLanguage(userPrefsRepo)
                     val volume = session.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
                     val setsArray = buildJsonArray {
                         session.sets.forEach { swd ->
                             add(buildJsonObject {
-                                put("exerciseName", swd.exercise.nome)
-                                put("category", swd.exercise.categoria)
+                                put("exerciseName", ExerciseTranslations.translate(swd.exercise.nome, lang))
+                                put("category", ExerciseTranslations.translateCategory(swd.exercise.categoria, lang))
                                 put("pesoSollevato", swd.setLog.pesoSollevato)
                                 put("repsEffettive", swd.setLog.repsEffettive)
                                 put("numeroSerie", swd.setLog.numeroSerie)

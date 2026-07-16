@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trainable — Dettaglio Sessione</title>
+  <title data-i18n="titleSessionDetail">Trainable — Dettaglio Sessione</title>
   <meta name="theme-color" content="#3A59D1">
   <link rel="icon" href="/icon.png">
   <link rel="stylesheet" href="/style.css">
@@ -19,10 +19,10 @@
         <img src="/icon.png" alt="Trainable" width="32" height="32" style="border-radius: 6px;">
       </a>
       <div class="nav-links">
-        <a href="/">Dashboard</a>
-        <a href="/analytics">Analytics</a>
-        <a href="/plans">Piani</a>
-        <a href="/sessions">Sessioni</a>
+        <a href="/" data-i18n="navDashboard">Dashboard</a>
+        <a href="/analytics" data-i18n="navAnalytics">Analytics</a>
+        <a href="/plans" data-i18n="navPlans">Piani</a>
+        <a href="/sessions" data-i18n="navSessions">Sessioni</a>
       </div>
       <div class="nav-actions">
         <button class="theme-switch" id="themeToggle" aria-label="Toggle theme">
@@ -37,7 +37,7 @@
   <!-- Page Header -->
   <div class="page-header">
     <div>
-      <p class="page-subtitle" id="session-plan">Caricamento...</p>
+      <p class="page-subtitle" id="session-plan" data-i18n="loading">Caricamento...</p>
       <h1 class="page-title" id="session-date">-</h1>
       <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
         <span class="badge badge-primary" id="session-volume">- kg</span>
@@ -49,7 +49,7 @@
 
   <main class="container">
     <!-- Back button -->
-    <a href="/sessions" class="btn btn-secondary" style="margin-bottom: 24px;">
+    <a href="/sessions" class="btn btn-secondary" style="margin-bottom: 24px;" data-i18n="backToSessions">
       <span class="material-symbols-outlined" style="font-size: 20px;">arrow_back</span>
       Torna alle sessioni
     </a>
@@ -62,12 +62,13 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p class="footer-copy">2026 Trainable App. Licensed under GPL v3.</p>
-      <p class="footer-made">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
+      <p class="footer-copy" data-i18n="copyright">2026 Trainable App. Licensed under GPL v3.</p>
+      <p class="footer-made" data-i18n="madeWith">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
     </div>
   </footer>
 
   <script type="module" src="/lib/m3e/all.min.js"></script>
+  <script src="/i18n.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>
