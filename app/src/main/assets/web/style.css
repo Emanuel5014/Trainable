@@ -1561,6 +1561,21 @@ nav {
 .footer-copy { color: var(--md-on-surface-variant); font-size: 0.9rem; }
 .footer-made { color: var(--md-on-surface-variant); font-size: 0.85rem; margin-top: 8px; }
 .footer-heart { color: #FF5A16; }
+.footer-links { display: flex; gap: 24px; margin-top: 16px; justify-content: center; }
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--md-surface-container);
+  transition: background 0.2s;
+}
+.footer-links a:hover { background: var(--md-surface-container-high); }
+.footer-icon { width: 24px; height: 24px; display: block; }
+.footer-icon-github { transition: filter 0.2s; }
+[data-theme="dark"] .footer-icon-github { filter: brightness(0) invert(1); }
 
 /* ================================================================
    RESPONSIVE

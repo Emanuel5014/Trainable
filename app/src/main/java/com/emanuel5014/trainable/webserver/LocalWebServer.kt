@@ -192,6 +192,12 @@ fun Application.configureServer(
         get("/icon.svg") {
             call.respondBytes(context.assets.open("web/icon.svg").readBytes(), ContentType.Image.SVG)
         }
+        get("/github.svg") {
+            call.respondBytes(context.assets.open("web/github.svg").readBytes(), ContentType.Image.SVG)
+        }
+        get("/kofi_symbol.svg") {
+            call.respondBytes(context.assets.open("web/kofi_symbol.svg").readBytes(), ContentType.Image.SVG)
+        }
         get("/i18n.js") {
             call.respondText(context.assets.open("web/i18n.js").bufferedReader().readText(), ContentType.Application.JavaScript)
         }
