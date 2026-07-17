@@ -1410,7 +1410,7 @@ fun SettingsScreen(
                 }
             }
 
-            SettingsSection(title = "Local Server") {
+            SettingsSection(title = stringResource(R.string.web_server_section_title)) {
                 GymCard(containerColor = SurfaceContainerHigh) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(
@@ -1422,9 +1422,9 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Wifi, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text("Web Dashboard", style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.web_dashboard), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(
-                                        if (webServerState.isRunning) "Server attivo" else "Server disattivato",
+                                        if (webServerState.isRunning) stringResource(R.string.web_server_active) else stringResource(R.string.web_server_inactive),
                                         style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
                                     )
                                 }
@@ -1440,7 +1440,7 @@ fun SettingsScreen(
 
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
-                                    "Apri nel browser:",
+                                    stringResource(R.string.web_server_open_browser),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = OnSurfaceVariant
                                 )
@@ -1451,7 +1451,7 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    "Collega il tuo PC alla stessa rete Wi-Fi e apri l'indirizzo sopra.",
+                                    stringResource(R.string.web_server_instructions),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = OnSurfaceVariant
                                 )

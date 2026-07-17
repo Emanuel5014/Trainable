@@ -11,6 +11,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.emanuel5014.trainable.MainActivity
+import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
@@ -24,8 +25,8 @@ import io.ktor.server.netty.Netty
 import javax.inject.Inject
 
 private const val TAG = "LocalWebServerService"
-private const val CHANNEL_ID = "trainable_web_server"
-private const val NOTIFICATION_ID = 1001
+private const val CHANNEL_ID = "trainable_web_server_v2"
+private const val NOTIFICATION_ID = 1003
 
 @AndroidEntryPoint
 class LocalWebServerService : Service() {
@@ -36,6 +37,7 @@ class LocalWebServerService : Service() {
     @Inject lateinit var userDao: UserDao
     @Inject lateinit var weightLogDao: WeightLogDao
     @Inject lateinit var userPrefsRepo: UserPreferencesRepository
+    @Inject lateinit var webServerManager: WebServerManager
 
     private var engine: EmbeddedServer<*, *>? = null
     private var serverIp: String = "127.0.0.1"
@@ -53,6 +55,7 @@ class LocalWebServerService : Service() {
 
         if (intent?.action == "STOP_SERVER") {
             Log.i(TAG, "Stop requested from notification")
+            webServerManager.notifyServerStopped()
             stopSelf()
             return START_NOT_STICKY
         }
@@ -61,8 +64,14 @@ class LocalWebServerService : Service() {
         serverPort = intent?.getIntExtra("SERVER_PORT", 8080) ?: 8080
         serverUrl = intent?.getStringExtra("SERVER_URL") ?: "http://127.0.0.1:8080"
 
-        val notification = buildNotification()
-        startForeground(NOTIFICATION_ID, notification)
+        try {
+            val notification = buildNotification()
+            startForeground(NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show foreground notification", e)
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         if (engine == null) {
             startServer()
@@ -104,11 +113,13 @@ class LocalWebServerService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Trainable Web Server",
-            NotificationManager.IMPORTANCE_LOW
+            getString(R.string.web_server_notification_channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Notifica per il server web locale di Trainable"
-            setShowBadge(false)
+            description = getString(R.string.web_server_notification_channel_desc)
+            setSound(null, null)
+            setShowBadge(true)
+            lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
         }
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
@@ -132,13 +143,17 @@ class LocalWebServerService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Trainable Web Server")
-            .setContentText("Server attivo su $serverUrl")
-            .setSmallIcon(android.R.drawable.ic_menu_share)
+            .setContentTitle(getString(R.string.web_server_notification_title, serverIp))
+            .setContentText(getString(R.string.web_server_notification_text, serverUrl))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                getString(R.string.web_server_notification_text, serverUrl) + "\n\n" +
+                getString(R.string.web_server_notification_instructions)
+            ))
+            .setSmallIcon(R.drawable.ic_app_logo)
             .setContentIntent(openPendingIntent)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Spegni",
+                getString(R.string.web_server_notification_stop),
                 stopPendingIntent
             )
             .setOngoing(true)

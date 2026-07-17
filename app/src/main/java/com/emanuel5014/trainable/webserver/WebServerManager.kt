@@ -74,6 +74,12 @@ class WebServerManager @Inject constructor(
         unregisterStopReceiver()
     }
 
+    fun notifyServerStopped() {
+        Log.i(TAG, "Server stopped notification received")
+        _state.value = WebServerState()
+        unregisterStopReceiver()
+    }
+
     fun isRunning(): Boolean = _state.value.isRunning
 
     private fun registerStopReceiver() {
