@@ -644,4 +644,12 @@
     <string name="physical_check_reset_message">Vous avez oublié votre mot de passe. Toutes les données des checks physiques (enregistrements et photos) seront définitivement supprimées. Cette action est irréversible.</string>
     <string name="physical_check_reset_confirm">Tout Supprimer</string>
 
+    <!-- Image Editor -->
+    <string name="image_editor_title">Modifier la photo</string>
+    <string name="image_editor_rotate_cd">Pivoter</string>
+    <string name="crop_aspect_free">Libre</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
+
 </resources>

@@ -644,4 +644,12 @@
     <string name="physical_check_reset_message">You forgot your password. All physical check data (records and photos) will be permanently deleted. This action cannot be undone.</string>
     <string name="physical_check_reset_confirm">Delete Everything</string>
 
+    <!-- Image Editor -->
+    <string name="image_editor_title">Edit Photo</string>
+    <string name="image_editor_rotate_cd">Rotate</string>
+    <string name="crop_aspect_free">Free</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
+
 </resources>

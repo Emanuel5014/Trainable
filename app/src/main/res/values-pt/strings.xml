@@ -644,4 +644,12 @@
     <string name="physical_check_reset_message">Você esqueceu sua senha. Todos os dados dos checks físicos (registros e fotos) serão excluídos permanentemente. Esta ação não pode ser desfeita.</string>
     <string name="physical_check_reset_confirm">Excluir Tudo</string>
 
+    <!-- Image Editor -->
+    <string name="image_editor_title">Editar Foto</string>
+    <string name="image_editor_rotate_cd">Girar</string>
+    <string name="crop_aspect_free">Livre</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
+
 </resources>
