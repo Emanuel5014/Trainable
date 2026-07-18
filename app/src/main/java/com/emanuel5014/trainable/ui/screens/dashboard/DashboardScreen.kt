@@ -148,6 +148,43 @@ fun DashboardScreen(
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
     var showQuickWorkoutDialog by remember { mutableStateOf(false) }
     var quickWorkoutName by remember { mutableStateOf("") }
+    var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
+
+    if (existingSessionForPlan != null) {
+        AlertDialog(
+            onDismissRequest = { existingSessionForPlan = null },
+            title = { Text(stringResource(R.string.resume_workout)) },
+            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.planNome)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        existingSessionForPlan?.let { session ->
+                            onNavigateToWorkout(session.session.planId, session.session.id)
+                        }
+                        existingSessionForPlan = null
+                    },
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.resume_workout), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { existingSessionForPlan = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 
     if (showQuickWorkoutDialog) {
         AlertDialog(
@@ -603,7 +640,15 @@ fun DashboardScreen(
                             GymCard(
                                 modifier = Modifier
                                     .clip(Shapes.extraLarge)
-                                    .clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
+                                    .clickable {
+                                        val planId = uiState.todayPlan!!.id
+                                        val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
+                                        if (existing != null) {
+                                            existingSessionForPlan = existing
+                                        } else {
+                                            onNavigateToWorkout(planId, null)
+                                        }
+                                    }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -641,7 +686,15 @@ fun DashboardScreen(
                             GymCard(
                                 modifier = Modifier
                                     .clip(Shapes.extraLarge)
-                                    .clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
+                                    .clickable {
+                                        val planId = uiState.suggestedPlan!!.id
+                                        val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
+                                        if (existing != null) {
+                                            existingSessionForPlan = existing
+                                        } else {
+                                            onNavigateToWorkout(planId, null)
+                                        }
+                                    }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),

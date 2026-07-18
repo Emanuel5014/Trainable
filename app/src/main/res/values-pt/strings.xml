@@ -92,6 +92,7 @@
     <string name="create_first_routine">Crie sua primeira rotina</string>
     <string name="no_exercises_today">Nenhum exercício para hoje</string>
     <string name="suggested_plan">PLANO SUGERIDO</string>
+    <string name="existing_workout_message">Já existe um treino inacabado para "%1$s". Retomar?</string>
 
     <!-- Routines -->
     <string name="routines">Rotinas</string>

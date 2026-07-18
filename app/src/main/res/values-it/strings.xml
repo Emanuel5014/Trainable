@@ -92,6 +92,7 @@
     <string name="create_first_routine">Crea la tua prima scheda</string>
     <string name="no_exercises_today">Nessun esercizio per oggi</string>
     <string name="suggested_plan">SCHEDA CONSIGLIATA</string>
+    <string name="existing_workout_message">Un workout per "%1$s" è già in corso. Riprendere?</string>
 
     <!-- Routines -->
     <string name="routines">Schede</string>
