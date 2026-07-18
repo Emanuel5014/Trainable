@@ -7,6 +7,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
+import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
@@ -14,6 +15,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,7 +28,8 @@ data class RoutineDetailUiState(
     val categories: List<String> = emptyList(),
     val error: String? = null,
     val estimatedDurationMinutes: Int = 0,
-    val estimatedVolumeKg: Float = 0f
+    val estimatedVolumeKg: Float = 0f,
+    val unfinishedSessions: List<SessionWithPlanName> = emptyList()
 )
 
 @HiltViewModel
@@ -51,6 +56,11 @@ class RoutineDetailViewModel @Inject constructor(
         }
         loadPlanDetails()
         loadExercisesCatalog()
+        viewModelScope.launch {
+            workoutRepository.getUnfinishedSessionsWithPlanName().collect { sessions ->
+                _uiState.value = _uiState.value.copy(unfinishedSessions = sessions)
+            }
+        }
     }
 
     private fun loadPlanDetails() {
