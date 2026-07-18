@@ -12,13 +12,28 @@ import androidx.core.app.NotificationCompat
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import android.app.KeyguardManager
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.os.VibrationEffect
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
+import android.os.PowerManager
+import android.media.AudioAttributes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class TimerNotificationHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val userPrefsRepository: UserPreferencesRepository
 ) {
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -30,6 +45,51 @@ class TimerNotificationHelper @Inject constructor(
     private val warmupRunningChannelId = "warmup_timer_running_channel_v1"
     private val warmupFinishedChannelId = "warmup_timer_finished_channel_v1"
     private val warmupNotificationId = 1002
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var vibrationJob: kotlinx.coroutines.Job? = null
+    private var vibrator: Vibrator? = null
+
+    private fun getVibrator(): Vibrator? {
+        if (vibrator == null) {
+            vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                vibratorManager?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            }
+        }
+        return vibrator
+    }
+
+    private fun startCustomVibration(durationSeconds: Int) {
+        cancelCustomVibration()
+        val v = getVibrator() ?: return
+        val durationMillis = durationSeconds * 1000L
+        
+        vibrationJob = scope.launch {
+            val pattern = longArrayOf(0, 1000, 1000) // 1s vibrate, 1s pause
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
+            @Suppress("DEPRECATION")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createWaveform(pattern, 0), audioAttributes)
+            } else {
+                v.vibrate(pattern, 0, audioAttributes)
+            }
+            delay(durationMillis)
+            cancelCustomVibration()
+        }
+    }
+
+    fun cancelCustomVibration() {
+        vibrationJob?.cancel()
+        vibrationJob = null
+        getVibrator()?.cancel()
+    }
 
     init {
         createNotificationChannels()
@@ -168,6 +228,7 @@ class TimerNotificationHelper @Inject constructor(
             .build()
 
         notificationManager.notify(notificationId, notification)
+        cancelCustomVibration()
 
         // Schedule Alarm for exact finish
         val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
@@ -202,7 +263,23 @@ class TimerNotificationHelper @Inject constructor(
             context.getString(R.string.rest_end)
         }
 
-        val notification = NotificationCompat.Builder(context, finishedChannelId)
+        val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val isLockedOrScreenOff = keyguardManager?.isKeyguardLocked == true || powerManager?.isInteractive == false
+
+        var useCustomVibration = false
+        var durationSeconds = 0
+
+        if (isLockedOrScreenOff) {
+            durationSeconds = kotlinx.coroutines.runBlocking {
+                userPrefsRepository.timerFinishedLockscreenVibrationDuration.first()
+            }
+            if (durationSeconds > 0) {
+                useCustomVibration = true
+            }
+        }
+
+        val notificationBuilder = NotificationCompat.Builder(context, finishedChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
             .setContentText(contentText)
@@ -210,19 +287,27 @@ class TimerNotificationHelper @Inject constructor(
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setOngoing(false)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .addAction(0, context.getString(R.string.dismiss), dismissPendingIntent)
-            .build()
 
-        notificationManager.notify(notificationId, notification)
+        if (useCustomVibration) {
+            // Override defaults to play sound and lights, but disable standard vibration
+            notificationBuilder.setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_LIGHTS)
+            notificationBuilder.setVibrate(longArrayOf(0))
+            startCustomVibration(durationSeconds)
+        } else {
+            notificationBuilder.setDefaults(NotificationCompat.DEFAULT_ALL)
+        }
+
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
     fun cancelTimer() {
         notificationManager.cancel(notificationId)
         cancelFinishAlarm()
+        cancelCustomVibration()
     }
 
     fun cancelFinishAlarm() {

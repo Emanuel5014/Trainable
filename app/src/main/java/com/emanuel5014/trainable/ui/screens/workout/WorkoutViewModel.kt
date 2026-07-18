@@ -1209,6 +1209,10 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
     }
 
+    fun cancelCustomVibration() {
+        timerNotificationHelper.cancelCustomVibration()
+    }
+
     fun cancelWorkout(onComplete: () -> Unit) {
         viewModelScope.launch {
             _state.value.sessionId?.let { sessionId ->

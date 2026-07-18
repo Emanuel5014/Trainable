@@ -45,6 +45,7 @@ import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingScreen
 import com.emanuel5014.trainable.ui.theme.GymTrackingTheme
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
+import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
@@ -70,6 +71,9 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var localeManager: AppLocaleManager
+
+    @Inject
+    lateinit var timerNotificationHelper: TimerNotificationHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -321,6 +325,9 @@ class MainActivity : FragmentActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (::timerNotificationHelper.isInitialized) {
+            timerNotificationHelper.cancelCustomVibration()
+        }
         com.emanuel5014.trainable.widget.TrainableWidget.update(this)
         com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(this)
     }

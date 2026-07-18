@@ -375,6 +375,10 @@
     <string name="notifications">NOTIFICHE</string>
     <string name="timer_notifications">Notifiche Timer</string>
     <string name="timer_notifications_desc">Mostra il timer di riposo nelle notifiche di sistema</string>
+    <string name="lockscreen_vibration">Vibrazione Schermata di Blocco</string>
+    <string name="lockscreen_vibration_desc">Vibrazione continua per il fine riposo quando bloccato</string>
+    <string name="vibration_default">Predefinita</string>
+    <string name="vibration_seconds">%d secondi</string>
     <string name="gym_membership_notifications">Avvisi Scadenza</string>
     <string name="gym_membership_notifications_desc">Ricevi una notifica prima della scadenza dell\'abbonamento</string>
     <string name="notify_days_before">Preavviso</string>

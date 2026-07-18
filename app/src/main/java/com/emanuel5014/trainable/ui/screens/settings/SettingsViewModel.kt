@@ -174,6 +174,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val timerFinishedLockscreenVibrationDuration = userPrefsRepository.timerFinishedLockscreenVibrationDuration.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     val gymMembershipExpiryNotificationsEnabled = userPrefsRepository.gymMembershipExpiryNotificationsEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -433,6 +439,12 @@ class SettingsViewModel @Inject constructor(
     fun setTimerNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setTimerNotificationsEnabled(enabled)
+        }
+    }
+
+    fun setTimerFinishedLockscreenVibrationDuration(durationSeconds: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerFinishedLockscreenVibrationDuration(durationSeconds)
         }
     }
 

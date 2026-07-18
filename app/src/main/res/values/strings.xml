@@ -375,6 +375,10 @@
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show rest timer in system notifications</string>
+    <string name="lockscreen_vibration">Lock Screen Vibration</string>
+    <string name="lockscreen_vibration_desc">Continuous vibration for rest ended when locked</string>
+    <string name="vibration_default">Default</string>
+    <string name="vibration_seconds">%d seconds</string>
     <string name="gym_membership_notifications">Membership Alerts</string>
     <string name="gym_membership_notifications_desc">Notify before your membership expires</string>
     <string name="notify_days_before">Lead Time</string>

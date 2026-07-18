@@ -375,6 +375,10 @@
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Notifications du Minuteur</string>
     <string name="timer_notifications_desc">Afficher le minuteur de repos dans les notifications</string>
+    <string name="lockscreen_vibration">Vibration sur l\'écran de verrouillage</string>
+    <string name="lockscreen_vibration_desc">Vibration continue pour la fin du repos lorsque verrouillé</string>
+    <string name="vibration_default">Par défaut</string>
+    <string name="vibration_seconds">%d secondes</string>
     <string name="gym_membership_notifications">Alertes d\'Abonnement</string>
     <string name="gym_membership_notifications_desc">Notifier avant l\'expiration de l\'abonnement</string>
     <string name="notify_days_before">Délai</string>

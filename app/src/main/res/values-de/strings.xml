@@ -375,6 +375,10 @@
     <string name="notifications">MITTEILUNGEN</string>
     <string name="timer_notifications">Timer-Benachrichtigungen</string>
     <string name="timer_notifications_desc">Pausentimer in Systembenachrichtigungen anzeigen</string>
+    <string name="lockscreen_vibration">Sperrbildschirm-Vibration</string>
+    <string name="lockscreen_vibration_desc">Kontinuierliche Vibration für das Ende der Pause bei gesperrtem Bildschirm</string>
+    <string name="vibration_default">Standard</string>
+    <string name="vibration_seconds">%d Sekunden</string>
     <string name="gym_membership_notifications">Mitgliedschaftserinnerungen</string>
     <string name="gym_membership_notifications_desc">Benachrichtigen, bevor die Mitgliedschaft abläuft</string>
     <string name="notify_days_before">Vorlaufzeit</string>

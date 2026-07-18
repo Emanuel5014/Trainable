@@ -375,6 +375,10 @@
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
     <string name="timer_notifications_desc">Mostrar temporizador de descanso en notificaciones</string>
+    <string name="lockscreen_vibration">Vibración en pantalla de bloqueo</string>
+    <string name="lockscreen_vibration_desc">Vibración continua para el final del descanso cuando está bloqueado</string>
+    <string name="vibration_default">Predeterminada</string>
+    <string name="vibration_seconds">%d segundos</string>
     <string name="gym_membership_notifications">Alertas de Membresía</string>
     <string name="gym_membership_notifications_desc">Notificar antes de que venza la membresía</string>
     <string name="notify_days_before">Antelación</string>
