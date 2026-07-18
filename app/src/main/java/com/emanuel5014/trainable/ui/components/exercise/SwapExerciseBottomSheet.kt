@@ -691,7 +691,13 @@ private fun SwapExerciseConfigDialog(
                     )
                     GymInputField(
                         value = repsText,
-                        onValueChange = { repsText = it },
+                        onValueChange = {
+                            repsText = it
+                            val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                            if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                setsText = repCount.toString()
+                            }
+                        },
                         label = stringResource(R.string.reps),
                         modifier = Modifier.weight(1f)
                     )
