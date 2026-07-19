@@ -81,6 +81,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -127,6 +129,7 @@ fun OnboardingScreen(
     var timerNotificationsEnabled by remember { mutableStateOf(true) }
     var gymMembershipExpiryNotificationsEnabled by remember { mutableStateOf(false) }
     var gymMembershipExpiryNotificationDaysBefore by remember { mutableIntStateOf(3) }
+    var timerFinishedLockscreenVibrationDuration by remember { mutableIntStateOf(30) }
     var autoBackupEnabled by remember { mutableStateOf(false) }
     var autoBackupFrequency by remember { mutableIntStateOf(1) }
     var autoBackupFolderUri by remember { mutableStateOf<String?>(null) }
@@ -218,6 +221,8 @@ fun OnboardingScreen(
                         onGymMembershipExpiryNotificationsChange = { gymMembershipExpiryNotificationsEnabled = it },
                         gymMembershipExpiryNotificationDaysBefore = gymMembershipExpiryNotificationDaysBefore,
                         onGymMembershipExpiryNotificationDaysBeforeChange = { gymMembershipExpiryNotificationDaysBefore = it },
+                        timerFinishedLockscreenVibrationDuration = timerFinishedLockscreenVibrationDuration,
+                        onTimerFinishedLockscreenVibrationDurationChange = { timerFinishedLockscreenVibrationDuration = it },
                         hapticEnabled = hapticEnabled,
                         onHapticChange = { hapticEnabled = it },
                         swipeActionsEnabled = swipeActionsEnabled,
@@ -295,6 +300,7 @@ fun OnboardingScreen(
                                 timerNotificationsEnabled = timerNotificationsEnabled,
                                 gymMembershipExpiryNotificationsEnabled = gymMembershipExpiryNotificationsEnabled,
                                 gymMembershipExpiryNotificationDaysBefore = gymMembershipExpiryNotificationDaysBefore,
+                                timerFinishedLockscreenVibrationDuration = timerFinishedLockscreenVibrationDuration,
                                 autoBackupEnabled = autoBackupEnabled,
                                 autoBackupFrequency = autoBackupFrequency,
                                 autoBackupFolderUri = autoBackupFolderUri,
@@ -807,17 +813,20 @@ private fun NotificationsSlide(
     onGymMembershipExpiryNotificationsChange: (Boolean) -> Unit,
     gymMembershipExpiryNotificationDaysBefore: Int,
     onGymMembershipExpiryNotificationDaysBeforeChange: (Int) -> Unit,
+    timerFinishedLockscreenVibrationDuration: Int,
+    onTimerFinishedLockscreenVibrationDurationChange: (Int) -> Unit,
     hapticEnabled: Boolean,
     onHapticChange: (Boolean) -> Unit,
     swipeActionsEnabled: Boolean,
     onSwipeActionsChange: (Boolean) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(32.dp)
+            .padding(start = 32.dp, end = 32.dp, top = 32.dp, bottom = if (timerNotificationsEnabled) 140.dp else 0.dp)
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(32.dp)
@@ -831,14 +840,68 @@ private fun NotificationsSlide(
         )
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            // Timer Notifications
-            CustomizeToggleItem(
-                icon = Icons.Rounded.Notifications,
-                title = stringResource(R.string.timer_notifications),
-                desc = stringResource(R.string.timer_notifications_desc),
-                checked = timerNotificationsEnabled,
-                onCheckedChange = onTimerNotificationsChange
-            )
+            // Timer Notifications + Lockscreen Vibration Duration
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                CustomizeToggleItem(
+                    icon = Icons.Rounded.Notifications,
+                    title = stringResource(R.string.timer_notifications),
+                    desc = stringResource(R.string.timer_notifications_desc),
+                    checked = timerNotificationsEnabled,
+                    onCheckedChange = onTimerNotificationsChange
+                )
+
+                if (timerNotificationsEnabled) {
+                    Column(modifier = Modifier.padding(start = 64.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.lockscreen_vibration),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                text = if (timerFinishedLockscreenVibrationDuration == 0) {
+                                    stringResource(R.string.vibration_default)
+                                } else {
+                                    stringResource(R.string.vibration_seconds, timerFinishedLockscreenVibrationDuration)
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Primary,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        var lastHapticSliderValue by remember { mutableIntStateOf(-1) }
+
+                        Slider(
+                            value = timerFinishedLockscreenVibrationDuration.toFloat(),
+                            onValueChange = {
+                                val newValue = it.toInt()
+                                if (newValue != lastHapticSliderValue) {
+                                    lastHapticSliderValue = newValue
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                                onTimerFinishedLockscreenVibrationDurationChange(newValue)
+                            },
+                            valueRange = 0f..30f,
+                            steps = 29,
+                            colors = SliderDefaults.colors(
+                                thumbColor = Primary,
+                                activeTrackColor = Primary,
+                                inactiveTrackColor = SurfaceContainerHighest,
+                                activeTickColor = Color.Transparent,
+                                inactiveTickColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
 
             HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
