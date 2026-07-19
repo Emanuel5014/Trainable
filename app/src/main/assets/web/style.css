@@ -89,6 +89,29 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.5s ease, color 0.5s ease;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background:
+    radial-gradient(ellipse 40% 35% at 20% 15%, color-mix(in srgb, var(--md-primary), transparent 75%) 0%, transparent 100%),
+    radial-gradient(ellipse 35% 40% at 70% 30%, color-mix(in srgb, var(--md-primary), transparent 82%) 0%, transparent 100%),
+    radial-gradient(ellipse 45% 30% at 50% 10%, color-mix(in srgb, var(--md-tertiary), transparent 85%) 0%, transparent 100%),
+    radial-gradient(ellipse 30% 45% at 80% 40%, color-mix(in srgb, var(--md-primary), transparent 88%) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: -1;
+  animation: gradientBreathe 6s ease-in-out infinite;
+  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 80%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 80%);
+}
+@keyframes gradientBreathe {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
 }
 
 *, *::before, *::after {
@@ -641,26 +664,7 @@ nav {
   justify-content: center;
   padding-top: 100px;
   position: relative;
-  overflow: hidden;
-}
-.page-header::before {
-  content: '';
-  position: absolute;
-  width: 120%;
-  height: 120%;
-  top: -10%;
-  left: -10%;
-  background:
-    radial-gradient(ellipse 65% 50% at 20% 30%, color-mix(in srgb, var(--md-primary), transparent 80%) 0%, transparent 100%),
-    radial-gradient(ellipse 45% 55% at 80% 25%, color-mix(in srgb, var(--md-primary), transparent 88%) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: -1;
-  animation: heroGradientDrift 30s ease-in-out infinite alternate;
-}
-@keyframes heroGradientDrift {
-  0%   { transform: translate(0%, 0%); }
-  50%  { transform: translate(-4%, -3%); }
-  100% { transform: translate(3%, 4%); }
+  overflow: visible;
 }
 .page-title {
   font-size: clamp(2rem, 4vw, 3rem);

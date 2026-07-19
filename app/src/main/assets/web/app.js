@@ -76,6 +76,21 @@ async function applyThemeColors() {
 
   // Nav blur uses the surface color
   root.style.setProperty('--nav-blur', `rgba(${hexToRgb(colors.surface || '#0E0E11')}, ${isDark ? '0.75' : '0.8'})`);
+
+  // Force membership card gradient repaint (color-mix in CSS may not update)
+  const card = document.getElementById('membership-card');
+  if (card) {
+    card.style.background = `linear-gradient(135deg, ${colors.primary}, ${mixColors(colors.primary, colors.tertiary, 0.4)})`;
+  }
+}
+
+function mixColors(c1, c2, p) {
+  const r1 = parseInt(c1.slice(1,3), 16), g1 = parseInt(c1.slice(3,5), 16), b1 = parseInt(c1.slice(5,7), 16);
+  const r2 = parseInt(c2.slice(1,3), 16), g2 = parseInt(c2.slice(3,5), 16), b2 = parseInt(c2.slice(5,7), 16);
+  const r = Math.round(r1 + (r2 - r1) * p);
+  const g = Math.round(g1 + (g2 - g1) * p);
+  const b = Math.round(b1 + (b2 - b1) * p);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
 function hexToRgb(hex) {
