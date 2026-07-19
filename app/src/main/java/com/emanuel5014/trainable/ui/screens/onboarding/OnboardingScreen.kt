@@ -851,7 +851,7 @@ private fun NotificationsSlide(
                 )
 
                 if (timerNotificationsEnabled) {
-                    Column(modifier = Modifier.padding(start = 64.dp)) {
+                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
