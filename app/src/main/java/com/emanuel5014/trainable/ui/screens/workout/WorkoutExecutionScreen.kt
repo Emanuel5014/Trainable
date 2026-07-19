@@ -180,6 +180,19 @@ fun WorkoutExecutionScreen(
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.cancelCustomVibration()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     val coroutineScope = rememberCoroutineScope()
     
     // Prevent NavHost deadlocks by ensuring the screen has fully transitioned in before popping
@@ -421,7 +434,7 @@ fun WorkoutExecutionScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     val setsCount = targetExState.sets.size
-                                    val repsCount = targetExState.planDetails?.repsTarget ?: targetExState.sets.firstOrNull()?.reps?.toString() ?: "0"
+                                    val repsCount = targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: targetExState.sets.firstOrNull()?.reps?.toString() ?: "0"
                                     Text(
                                         text = "$setsCount × $repsCount",
                                         style = MaterialTheme.typography.titleMedium,
@@ -1044,7 +1057,7 @@ fun WorkoutExecutionScreen(
             currentExState?.let { exState ->
                 SwapExerciseBottomSheet(
                     currentSets = exState.sets.size,
-                    currentReps = exState.planDetails?.repsTarget ?: "8",
+                    currentReps = exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
                     availableExercises = availableExercises,
                     languageCode = languageCode,
                     onExerciseSelected = { newExercise, sets, reps, rest ->

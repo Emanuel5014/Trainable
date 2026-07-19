@@ -204,10 +204,11 @@ fun ExercisePickerBottomSheet(
                     )
                 )
                 categories.forEach { category ->
+                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
                     FilterChip(
                         selected = selectedCategory == category,
                         onClick = { selectedCategory = category },
-                        label = { Text(category) },
+                        label = { Text(translatedCategory) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Primary,
                             selectedLabelColor = OnPrimary
@@ -363,7 +364,7 @@ private fun ExercisePickerItem(
                     }
                 }
                 Text(
-                    text = exercise.categoria,
+                    text = ExerciseTranslations.translateCategory(exercise.categoria, languageCode),
                     style = MaterialTheme.typography.bodySmall,
                     color = OnSurfaceVariant
                 )

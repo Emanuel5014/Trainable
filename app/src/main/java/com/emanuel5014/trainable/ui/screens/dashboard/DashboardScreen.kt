@@ -2,11 +2,8 @@ package com.emanuel5014.trainable.ui.screens.dashboard
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -119,6 +116,7 @@ import java.time.temporal.ChronoUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
+    isActive: Boolean = true,
     onNavigateToSettings: () -> Unit,
     onNavigateToWorkout: (planId: Int?, sessionId: Int?) -> Unit,
     onNavigateToQuickWorkout: (name: String?) -> Unit,
@@ -150,6 +148,43 @@ fun DashboardScreen(
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
     var showQuickWorkoutDialog by remember { mutableStateOf(false) }
     var quickWorkoutName by remember { mutableStateOf("") }
+    var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
+
+    if (existingSessionForPlan != null) {
+        AlertDialog(
+            onDismissRequest = { existingSessionForPlan = null },
+            title = { Text(stringResource(R.string.resume_workout)) },
+            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.planNome)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        existingSessionForPlan?.let { session ->
+                            onNavigateToWorkout(session.session.planId, session.session.id)
+                        }
+                        existingSessionForPlan = null
+                    },
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.resume_workout), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { existingSessionForPlan = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 
     if (showQuickWorkoutDialog) {
         AlertDialog(
@@ -493,6 +528,7 @@ fun DashboardScreen(
 
                 item {
                     GymMembershipCard(
+                        isActive = isActive,
                         expiryDateMillis = uiState.gymMembershipExpiryDate,
                         username = uiState.username,
                         onClick = {
@@ -507,6 +543,7 @@ fun DashboardScreen(
 
                 item {
                     WeeklyGoalCard(
+                        isActive = isActive,
                         workoutsThisWeek = uiState.workoutsThisWeek,
                         weeklyGoal = uiState.weeklyGoal,
                         cardioWorkoutsThisWeek = uiState.cardioWorkoutsThisWeek
@@ -603,7 +640,15 @@ fun DashboardScreen(
                             GymCard(
                                 modifier = Modifier
                                     .clip(Shapes.extraLarge)
-                                    .clickable { onNavigateToWorkout(uiState.todayPlan!!.id, null) }
+                                    .clickable {
+                                        val planId = uiState.todayPlan!!.id
+                                        val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
+                                        if (existing != null) {
+                                            existingSessionForPlan = existing
+                                        } else {
+                                            onNavigateToWorkout(planId, null)
+                                        }
+                                    }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -641,7 +686,15 @@ fun DashboardScreen(
                             GymCard(
                                 modifier = Modifier
                                     .clip(Shapes.extraLarge)
-                                    .clickable { onNavigateToWorkout(uiState.suggestedPlan!!.id, null) }
+                                    .clickable {
+                                        val planId = uiState.suggestedPlan!!.id
+                                        val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
+                                        if (existing != null) {
+                                            existingSessionForPlan = existing
+                                        } else {
+                                            onNavigateToWorkout(planId, null)
+                                        }
+                                    }
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -689,20 +742,40 @@ fun DashboardScreen(
 fun GymMembershipCard(
     expiryDateMillis: Long?,
     username: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isActive: Boolean = true
 ) {
     val gemPath = MaterialShapes.Gem.toPath()
     val sunnyPath = MaterialShapes.Sunny.toPath()
 
-    val infiniteTransition = rememberInfiniteTransition()
-    val gemRotation by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(15000, easing = LinearEasing), RepeatMode.Restart)
-    )
-    val sunnyRotation by infiniteTransition.animateFloat(
-        initialValue = 0f, targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(20000, easing = LinearEasing), RepeatMode.Restart)
-    )
+    val gemRotation = remember { Animatable(0f) }
+    val sunnyRotation = remember { Animatable(0f) }
+
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            gemRotation.snapTo(0f)
+            while (true) {
+                gemRotation.animateTo(
+                    targetValue = 360f,
+                    animationSpec = tween(15000, easing = LinearEasing)
+                )
+                gemRotation.snapTo(0f)
+            }
+        }
+    }
+
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            sunnyRotation.snapTo(0f)
+            while (true) {
+                sunnyRotation.animateTo(
+                    targetValue = 360f,
+                    animationSpec = tween(20000, easing = LinearEasing)
+                )
+                sunnyRotation.snapTo(0f)
+            }
+        }
+    }
 
     val daysLeft = expiryDateMillis?.let {
         val expiryDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -769,7 +842,7 @@ fun GymMembershipCard(
                     val c = getBounds().center
                     transform(Matrix().apply {
                         translate(c.x, c.y)
-                        rotateZ(gemRotation)
+                        rotateZ(gemRotation.value)
                         translate(-c.x, -c.y)
                     })
                     translate(Offset(size.width - c.x, -c.y))
@@ -783,7 +856,7 @@ fun GymMembershipCard(
                     val c = getBounds().center
                     transform(Matrix().apply {
                         translate(c.x, c.y)
-                        rotateZ(sunnyRotation)
+                        rotateZ(sunnyRotation.value)
                         translate(-c.x, -c.y)
                     })
                     val fc = getBounds().center
@@ -1030,7 +1103,7 @@ private fun DrawScope.drawWavyPattern(
 }
 
 @Composable
-private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int) {
+private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int, isActive: Boolean = true) {
     val progress = if (weeklyGoal > 0) (workoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f) else 0f
     val density = LocalDensity.current
     val periodPx = remember { with(density) { 42.dp.toPx() } }
@@ -1041,16 +1114,20 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkout
     val tertiaryColor = Tertiary
     val progressColor = if (goalMet) tertiaryColor else primaryColor
 
-    val infiniteTransition = rememberInfiniteTransition(label = "waveShift")
-    val shift by infiniteTransition.animateFloat(
-        initialValue = 2f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "waveShiftValue",
-    )
+    val shift = remember { Animatable(2f) }
+
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            shift.snapTo(2f)
+            while (true) {
+                shift.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(3000, easing = LinearEasing)
+                )
+                shift.snapTo(2f)
+            }
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1067,7 +1144,7 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkout
                     drawWavyPattern(
                         color = primaryColor.copy(alpha = 0.15f),
                         percent = progress,
-                        shift = shift,
+                        shift = shift.value,
                         periodPx = periodPx,
                         amplitudePx = amplitudePx,
                     )

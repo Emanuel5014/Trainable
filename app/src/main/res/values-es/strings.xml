@@ -92,6 +92,7 @@
     <string name="create_first_routine">Crea tu primera rutina</string>
     <string name="no_exercises_today">Sin ejercicios para hoy</string>
     <string name="suggested_plan">PLAN SUGERIDO</string>
+    <string name="existing_workout_message">Ya existe un entrenamiento sin finalizar para "%1$s". ¿Reanudar?</string>
 
     <!-- Routines -->
     <string name="routines">Rutinas</string>
@@ -374,12 +375,28 @@
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
     <string name="timer_notifications_desc">Mostrar temporizador de descanso en notificaciones</string>
+    <string name="lockscreen_vibration">Vibración en pantalla de bloqueo</string>
+    <string name="lockscreen_vibration_desc">Vibración continua para el final del descanso cuando está bloqueado</string>
+    <string name="vibration_default">Predeterminada</string>
+    <string name="vibration_seconds">%d segundos</string>
     <string name="gym_membership_notifications">Alertas de Membresía</string>
     <string name="gym_membership_notifications_desc">Notificar antes de que venza la membresía</string>
     <string name="notify_days_before">Antelación</string>
     <string name="notify_days_before_desc">Días antes del vencimiento para recibir alerta</string>
     <string name="gym_membership_expiring">Membresía por Vencer</string>
     <string name="gym_membership_expiring_desc">Tu membresía del gym vencerá en %d días. ¡No olvides renovarla!</string>
+    <string name="web_server_notification_channel_name">Servidor Web</string>
+    <string name="web_server_notification_channel_desc">Notificación para el servidor web local de Trainable</string>
+    <string name="web_server_notification_title">Servidor Web — %s</string>
+    <string name="web_server_notification_text">Servidor activo en %s</string>
+    <string name="web_server_notification_instructions">Conecta tu PC a la misma red Wi-Fi y abre la dirección en tu navegador.</string>
+    <string name="web_server_notification_stop">Apagar</string>
+    <string name="web_server_section_title">Servidor Local</string>
+    <string name="web_dashboard">Web Dashboard</string>
+    <string name="web_server_active">Servidor activo</string>
+    <string name="web_server_inactive">Servidor inactivo</string>
+    <string name="web_server_open_browser">Abrir en el navegador:</string>
+    <string name="web_server_instructions">Conecta tu PC a la misma red Wi-Fi y abre la dirección de arriba.</string>
     <string name="weight_unit">Unidad de Peso</string>
     <string name="weight_unit_desc">Elige entre Kilogramos y Libras</string>
     <string name="language">Idioma</string>
@@ -622,5 +639,13 @@
     <string name="physical_check_reset_title">¿Restablecer todos los datos?</string>
     <string name="physical_check_reset_message">Has olvidado tu contraseña. Todos los datos de los checks físicos (registros y fotos) se eliminarán permanentemente. Esta acción no se puede deshacer.</string>
     <string name="physical_check_reset_confirm">Eliminar Todo</string>
+
+    <!-- Image Editor -->
+    <string name="image_editor_title">Editar Foto</string>
+    <string name="image_editor_rotate_cd">Girar</string>
+    <string name="crop_aspect_free">Libre</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
 
 </resources>

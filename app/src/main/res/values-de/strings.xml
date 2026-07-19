@@ -92,6 +92,7 @@
     <string name="create_first_routine">Erstelle deine erste Routine</string>
     <string name="no_exercises_today">Keine Übungen für heute</string>
     <string name="suggested_plan">VORGESCHLAGENER PLAN</string>
+    <string name="existing_workout_message">Ein unerledigtes Training für "%1$s" ist bereits vorhanden. Fortsetzen?</string>
 
     <!-- Routines -->
     <string name="routines">Routinen</string>
@@ -374,12 +375,28 @@
     <string name="notifications">MITTEILUNGEN</string>
     <string name="timer_notifications">Timer-Benachrichtigungen</string>
     <string name="timer_notifications_desc">Pausentimer in Systembenachrichtigungen anzeigen</string>
+    <string name="lockscreen_vibration">Sperrbildschirm-Vibration</string>
+    <string name="lockscreen_vibration_desc">Kontinuierliche Vibration für das Ende der Pause bei gesperrtem Bildschirm</string>
+    <string name="vibration_default">Standard</string>
+    <string name="vibration_seconds">%d Sekunden</string>
     <string name="gym_membership_notifications">Mitgliedschaftserinnerungen</string>
     <string name="gym_membership_notifications_desc">Benachrichtigen, bevor die Mitgliedschaft abläuft</string>
     <string name="notify_days_before">Vorlaufzeit</string>
     <string name="notify_days_before_desc">Tage vor Ablauf für die Erinnerung</string>
     <string name="gym_membership_expiring">Mitgliedschaft läuft ab</string>
     <string name="gym_membership_expiring_desc">Deine Fitnessstudio-Mitgliedschaft läuft in %d Tagen ab. Vergiss nicht zu verlängern!</string>
+    <string name="web_server_notification_channel_name">Webserver</string>
+    <string name="web_server_notification_channel_desc">Benachrichtigung für den lokalen Trainable-Webserver</string>
+    <string name="web_server_notification_title">Webserver — %s</string>
+    <string name="web_server_notification_text">Server aktiv unter %s</string>
+    <string name="web_server_notification_instructions">Verbinde deinen PC mit demselben Wi-Fi-Netzwerk und öffne die Adresse in deinem Browser.</string>
+    <string name="web_server_notification_stop">Stopp</string>
+    <string name="web_server_section_title">Lokaler Server</string>
+    <string name="web_dashboard">Web Dashboard</string>
+    <string name="web_server_active">Server aktiv</string>
+    <string name="web_server_inactive">Server inaktiv</string>
+    <string name="web_server_open_browser">Im Browser öffnen:</string>
+    <string name="web_server_instructions">Verbinde deinen PC mit demselben Wi-Fi-Netzwerk und öffne die Adresse oben.</string>
     <string name="weight_unit">Gewichtseinheit</string>
     <string name="weight_unit_desc">Wähle zwischen Kilogramm und Pfund</string>
     <string name="language">Sprache</string>
@@ -626,5 +643,13 @@
     <string name="physical_check_reset_title">Alle Daten zurücksetzen?</string>
     <string name="physical_check_reset_message">Du hast dein Passwort vergessen. Alle Check-Daten (Aufzeichnungen und Fotos) werden endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
     <string name="physical_check_reset_confirm">Alles Löschen</string>
+
+    <!-- Image Editor -->
+    <string name="image_editor_title">Foto bearbeiten</string>
+    <string name="image_editor_rotate_cd">Drehen</string>
+    <string name="crop_aspect_free">Frei</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
 
 </resources>

@@ -77,8 +77,8 @@ fun MainNavGraph(
             val detail = backStackEntry.toRoute<RoutineDetail>()
             RoutineDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onStartWorkout = { planId ->
-                    navController.navigate(WorkoutExecution(planId = planId))
+                onStartWorkout = { planId, sessionId ->
+                    navController.navigate(WorkoutExecution(planId = planId, sessionId = sessionId))
                 }
             )
         }

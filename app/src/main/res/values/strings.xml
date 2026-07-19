@@ -92,6 +92,7 @@
     <string name="create_first_routine">Create your first routine</string>
     <string name="no_exercises_today">No exercises for today</string>
     <string name="suggested_plan">SUGGESTED PLAN</string>
+    <string name="existing_workout_message">An unfinished workout for "%1$s" already exists. Resume it?</string>
 
     <!-- Routines -->
     <string name="routines">Routines</string>
@@ -374,12 +375,28 @@
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
     <string name="timer_notifications_desc">Show rest timer in system notifications</string>
+    <string name="lockscreen_vibration">Lock Screen Vibration</string>
+    <string name="lockscreen_vibration_desc">Continuous vibration for rest ended when locked</string>
+    <string name="vibration_default">Default</string>
+    <string name="vibration_seconds">%d seconds</string>
     <string name="gym_membership_notifications">Membership Alerts</string>
     <string name="gym_membership_notifications_desc">Notify before your membership expires</string>
     <string name="notify_days_before">Lead Time</string>
     <string name="notify_days_before_desc">Days before expiry to receive alert</string>
     <string name="gym_membership_expiring">Membership Expiring</string>
     <string name="gym_membership_expiring_desc">Your gym membership will expire in %d days. Don\'t forget to renew!</string>
+    <string name="web_server_notification_channel_name">Web Server</string>
+    <string name="web_server_notification_channel_desc">Notification for the local Trainable web server</string>
+    <string name="web_server_notification_title">Web Server — %s</string>
+    <string name="web_server_notification_text">Server active at %s</string>
+    <string name="web_server_notification_instructions">Connect your PC to the same Wi-Fi network and open the address in your browser.</string>
+    <string name="web_server_notification_stop">Stop</string>
+    <string name="web_server_section_title">Local Server</string>
+    <string name="web_dashboard">Web Dashboard</string>
+    <string name="web_server_active">Server active</string>
+    <string name="web_server_inactive">Server inactive</string>
+    <string name="web_server_open_browser">Open in browser:</string>
+    <string name="web_server_instructions">Connect your PC to the same Wi-Fi network and open the address above.</string>
     <string name="weight_unit">Weight Unit</string>
     <string name="weight_unit_desc">Choose between Kilograms and Pounds</string>
     <string name="language">Language</string>
@@ -626,5 +643,13 @@
     <string name="physical_check_reset_title">Reset all data?</string>
     <string name="physical_check_reset_message">You forgot your password. All physical check data (records and photos) will be permanently deleted. This action cannot be undone.</string>
     <string name="physical_check_reset_confirm">Delete Everything</string>
+
+    <!-- Image Editor -->
+    <string name="image_editor_title">Edit Photo</string>
+    <string name="image_editor_rotate_cd">Rotate</string>
+    <string name="crop_aspect_free">Free</string>
+    <string name="crop_aspect_1_1">1:1</string>
+    <string name="crop_aspect_4_3">4:3</string>
+    <string name="crop_aspect_16_9">16:9</string>
 
 </resources>

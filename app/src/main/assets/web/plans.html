@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="titlePlans">Trainable — Piani</title>
+  <meta name="theme-color" content="#3A59D1">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <img src="/icon.png" alt="Trainable" width="32" height="32" style="border-radius: 6px;">
+      </a>
+      <div class="nav-links">
+        <a href="/" data-i18n="navDashboard">Dashboard</a>
+        <a href="/analytics" data-i18n="navAnalytics">Analytics</a>
+        <a href="/plans" class="active" data-i18n="navPlans">Piani</a>
+        <a href="/sessions" data-i18n="navSessions">Sessioni</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-switch" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sw-icon sw-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="sw-icon sw-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span class="sw-thumb"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title" data-i18n="pagePlans">Piani di Allenamento</h1>
+      <p class="page-subtitle" data-i18n="subPlans">I tuoi programmi e la loro composizione</p>
+    </div>
+  </div>
+
+  <main class="container">
+    <div class="plans-tabs">
+      <div class="plans-tabs-bg"></div>
+      <button class="plan-tab active" data-filter="active" data-i18n="activePlans">Attive</button>
+      <button class="plan-tab" data-filter="archived" data-i18n="archivedPlans">Archiviate</button>
+    </div>
+    <div class="plans-grid" id="plans-container">
+      <div class="loading"><div class="loading-spinner"></div></div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer-copy" data-i18n="copyright">2026 Trainable App. Licensed under GPL v3.</p>
+      <p class="footer-made" data-i18n="madeWith">Made with <span class="footer-heart">&#9829;</span> by Emanuel5014</p>
+      <div class="footer-links">
+        <a href="https://github.com/Emanuel5014/Trainable" target="_blank" aria-label="GitHub" class="footer-link footer-link-github">
+          <img src="/github.svg" alt="GitHub" class="footer-icon footer-icon-github">
+        </a>
+        <a href="https://ko-fi.com/emanuel5014" target="_blank" aria-label="Support on Ko-fi" class="footer-link footer-link-kofi">
+          <img src="/kofi_symbol.svg" alt="Ko-fi" class="footer-icon footer-icon-kofi">
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="plan-modal-overlay" id="plan-modal-overlay" onclick="closePlanModal()">
+    <div class="plan-modal" id="plan-modal" onclick="event.stopPropagation()">
+      <button class="plan-modal-close" onclick="closePlanModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <div class="plan-modal-content" id="plan-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="image-viewer-overlay" id="image-viewer-overlay" onclick="closeImageViewer()">
+    <button class="image-viewer-close" onclick="closeImageViewer()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <img class="image-viewer-img" id="image-viewer-img" onclick="event.stopPropagation()" />
+  </div>
+
+  <script type="module" src="/lib/m3e/all.min.js"></script>
+  <script src="/i18n.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

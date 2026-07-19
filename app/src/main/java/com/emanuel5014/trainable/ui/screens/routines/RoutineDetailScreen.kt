@@ -43,6 +43,7 @@ import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
@@ -86,6 +87,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
+import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.ExerciseEntryCard
@@ -133,7 +135,7 @@ private fun getSupersetRange(index: Int, list: List<PlanExerciseWithDetails>): I
 @Composable
 fun RoutineDetailScreen(
     onNavigateBack: () -> Unit,
-    onStartWorkout: (Int) -> Unit,
+    onStartWorkout: (Int, Int?) -> Unit,
     viewModel: RoutineDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -160,6 +162,7 @@ fun RoutineDetailScreen(
     var showExerciseSheet by remember { mutableStateOf(false) }
     var showExercisePicker by remember { mutableStateOf(false) }
     var showRoutineEditSheet by remember { mutableStateOf(false) }
+    var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -230,6 +233,42 @@ fun RoutineDetailScreen(
         }
     }
 
+    if (existingSessionForPlan != null) {
+        AlertDialog(
+            onDismissRequest = { existingSessionForPlan = null },
+            title = { Text(stringResource(R.string.resume_workout)) },
+            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.planNome)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        existingSessionForPlan?.let { session ->
+                            onStartWorkout(session.session.planId, session.session.id)
+                        }
+                        existingSessionForPlan = null
+                    },
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.resume_workout), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { existingSessionForPlan = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
@@ -246,7 +285,15 @@ fun RoutineDetailScreen(
                 
                 if (localExercises.isNotEmpty()) {
                     FloatingActionButton(
-                        onClick = { uiState.planDetails?.plan?.id?.let(onStartWorkout) },
+                        onClick = {
+                            val planId = uiState.planDetails?.plan?.id ?: return@FloatingActionButton
+                            val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
+                            if (existing != null) {
+                                existingSessionForPlan = existing
+                            } else {
+                                onStartWorkout(planId, null)
+                            }
+                        },
                         containerColor = Primary,
                         contentColor = OnPrimary,
                         shape = CircleShape
@@ -739,7 +786,13 @@ fun RoutineDetailScreen(
                         )
                         GymInputField(
                             value = repsText,
-                            onValueChange = { repsText = it },
+                            onValueChange = {
+                                repsText = it
+                                val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                    setsText = repCount.toString()
+                                }
+                            },
                             label = stringResource(R.string.reps),
                             supportingText = stringResource(R.string.reps_hint),
                             modifier = Modifier.weight(1f)

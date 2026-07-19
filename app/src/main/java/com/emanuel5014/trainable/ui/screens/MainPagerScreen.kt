@@ -60,6 +60,7 @@ fun MainPagerScreen(
     ) { page ->
         when (page) {
             0 -> DashboardScreen(
+                isActive = pagerState.currentPage == 0,
                 onNavigateToSettings = { navController.navigate(Settings) },
                 onNavigateToWorkout = { planId, sessionId ->
                     navController.navigate(WorkoutExecution(planId = planId, sessionId = sessionId))

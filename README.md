@@ -46,6 +46,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Active Plan Hub**: Quick access to your current routine and next scheduled session.
 *   **Smart Recommendations**: Assign routines to specific weekdays for intelligent "Today's Workout" suggestions.
 *   **Resume Workout**: Smart hub to quickly resume interrupted sessions without data loss.
+*   **Unfinished Session Detection**: Smart alerts when starting a workout for a plan that already has an in-progress session, with one-tap resume.
 *   **Quick Start**: Start an empty workout directly from the dashboard without a plan.
 
 ### 📋 Advanced Routine Builder
@@ -53,6 +54,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Drag & Drop Reordering**: Fluid, haptic-powered reordering of exercises within routines.
 *   **Custom Exercises**: Add and manage your own exercises with persistent categorization.
 *   **Superset Support**: Group exercises into supersets within routines.
+*   **Auto-Adjust Sets**: Enter rep schemes like `10-8-6` and sets auto-update to match the number of segments.
 *   **Plan Scheduling**: Set Start and Expire dates when creating or editing routines.
 *   **Routine Sharing**: Export and import routines via `.trainableplan` file format.
 *   **Routine Photos**: Capture multiple photos in-app and include them in exports.
@@ -63,6 +65,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Smart Hub**: Dynamic navigation between exercises with "Finish" and "Next" logic.
 *   **Superset Flow**: Execute grouped superset exercises seamlessly.
 *   **Rest Timer**: Integrated countdown cards with enhanced notifications showing next-set details and planned reps.
+*   **Custom Vibration**: Configurable continuous vibration duration (0–30s) when the rest timer finishes while the device is locked.
 *   **Warmup Timer**: Configurable warmup timer in settings.
 *   **Session Notes**: Persistence of notes for every single set for granular tracking.
 *   **Swipe Navigation**: Swipe between exercises during workout execution.
@@ -78,7 +81,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Consistency Tracking**: Visual heatmaps and progress cards.
 *   **Strength Index**: Algorithmic assessment of your structural balance and performance.
 *   **Body Weight**: Integrated weight logging and history tracking.
-*   **Body Weight History**: Dedicated module with date picker, delete functionality, and collapsible UI.
+*   **Body Weight History**: Dedicated module with date picker, delete functionality, collapsible UI, and configurable time range (1w/1m/6m/All).
 *   **Cardio Tracking**: Cardio counter in weekly goal overview.
 
 ### 🌍 Localization
@@ -88,6 +91,12 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 ### 🏟️ Gym Membership
 *   **Expiration Tracking**: Monitor your gym subscription end date.
 *   **Smart Alerts**: Expiration notifications with "Renew" quick action buttons.
+
+### 🌐 Local WebServer
+*   **On-Device Dashboard**: Start a local HTTP server from Settings to view your training data (analytics, plans, session history) in any browser on the same Wi-Fi network.
+*   **REST API**: Built-in Ktor-powered API serving real-time data from the local Room database.
+*   **Foreground Service**: Persistent notification with server status, URL display, and one-tap stop.
+*   **Responsive Web UI**: Full-featured web pages with dark/light theme, i18n, and mobile-friendly layout.
 
 ### 📸 Social Sharing
 *   **Workout Share Cards**: Generate and share full-length workout summary images.
@@ -111,6 +120,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Auto-Lock**: Session auto-locks after inactivity or when app goes to background.
 *   **Unit Conversion**: Automatic kg/lb conversion for weight entries.
 *   **Swipe & Long-Press Actions**: Quick edit, delete, and manage checks via gestures.
+*   **Photo Editor**: Built-in crop, rotate, zoom, and pan tools with aspect ratio presets (Free, 1:1, 4:3, 16:9) before saving photos.
 
 ### ⚙️ Premium UX & Tools
 *   **Dynamic Color**: Full support for Android 12+ wallpaper-based color extraction.

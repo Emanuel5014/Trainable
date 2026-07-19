@@ -193,13 +193,14 @@ fun SwapExerciseBottomSheet(
                         FilterChip(
                             selected = showOnlyCustom,
                             onClick = { showOnlyCustom = !showOnlyCustom },
-                            label = { Text("Custom") }
+                            label = { Text(stringResource(R.string.filter_custom)) }
                         )
                         categories.forEach { category ->
+                            val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
                             FilterChip(
                                 selected = selectedCategory == category,
                                 onClick = { selectedCategory = category },
-                                label = { Text(category) }
+                                label = { Text(translatedCategory) }
                             )
                         }
                     }
@@ -250,7 +251,7 @@ fun SwapExerciseBottomSheet(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(Spacing.small))
-                        Text("Add Custom Exercise", fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -302,10 +303,10 @@ fun SwapExerciseBottomSheet(
             onDismissRequest = { exerciseToDelete = null },
             containerColor = SurfaceContainerHigh,
             title = {
-                Text("Delete Exercise?", fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                Text(stringResource(R.string.delete_exercise_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
-                Text("Delete \"${exerciseToDelete!!.nome}\"? This cannot be undone.", color = OnSurfaceVariant)
+                Text(stringResource(R.string.delete_exercise_message, exerciseToDelete!!.nome), color = OnSurfaceVariant)
             },
             confirmButton = {
                 TextButton(
@@ -314,12 +315,12 @@ fun SwapExerciseBottomSheet(
                         exerciseToDelete = null
                     }
                 ) {
-                    Text("DELETE", color = Error)
+                    Text(stringResource(R.string.delete).uppercase(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { exerciseToDelete = null }) {
-                    Text("CANCEL", color = Primary)
+                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
             }
         )
@@ -378,7 +379,7 @@ private fun ExerciseListItem(
                     }
                 }
                 Text(
-                    text = exercise.categoria.uppercase(),
+                    text = ExerciseTranslations.translateCategory(exercise.categoria, languageCode).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )
@@ -447,19 +448,19 @@ private fun AddCustomExerciseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "New Exercise",
-                color = OnSurface,
-                fontWeight = FontWeight.ExtraBold
-            )
-        },
+            title = {
+                Text(
+                    text = stringResource(R.string.new_exercise),
+                    color = OnSurface,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 GymInputField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
-                    label = "Exercise Name",
+                    label = stringResource(R.string.exercise_name),
                     modifier = Modifier.fillMaxWidth()
                 )
                 ExposedDropdownMenuBox(
@@ -479,7 +480,7 @@ private fun AddCustomExerciseDialog(
                             onValueChange = {},
                             readOnly = true,
                             enabled = true,
-                            label = { Text("Category") },
+                            label = { Text(stringResource(R.string.category)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                             modifier = Modifier
                                 .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -517,12 +518,12 @@ private fun AddCustomExerciseDialog(
                 },
                 enabled = exerciseName.isNotBlank()
             ) {
-                Text("ADD", color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
+                Text(stringResource(R.string.add).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("CANCEL", color = OnSurfaceVariant)
+                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainer
@@ -543,19 +544,19 @@ private fun EditCustomExerciseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Edit Exercise",
-                color = OnSurface,
-                fontWeight = FontWeight.ExtraBold
-            )
-        },
+            title = {
+                Text(
+                    text = stringResource(R.string.edit_exercise_title),
+                    color = OnSurface,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 GymInputField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
-                    label = "Exercise Name",
+                    label = stringResource(R.string.exercise_name),
                     modifier = Modifier.fillMaxWidth()
                 )
                 ExposedDropdownMenuBox(
@@ -575,7 +576,7 @@ private fun EditCustomExerciseDialog(
                             onValueChange = {},
                             readOnly = true,
                             enabled = true,
-                            label = { Text("Category") },
+                            label = { Text(stringResource(R.string.category)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                             modifier = Modifier
                                 .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -618,12 +619,12 @@ private fun EditCustomExerciseDialog(
                 },
                 enabled = exerciseName.isNotBlank()
             ) {
-                Text("SAVE", color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
+                Text(stringResource(R.string.save).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
             }
         },
-        dismissButton = {
+            dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("CANCEL", color = OnSurfaceVariant)
+                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainer
@@ -690,7 +691,13 @@ private fun SwapExerciseConfigDialog(
                     )
                     GymInputField(
                         value = repsText,
-                        onValueChange = { repsText = it },
+                        onValueChange = {
+                            repsText = it
+                            val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                            if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                setsText = repCount.toString()
+                            }
+                        },
                         label = stringResource(R.string.reps),
                         modifier = Modifier.weight(1f)
                     )

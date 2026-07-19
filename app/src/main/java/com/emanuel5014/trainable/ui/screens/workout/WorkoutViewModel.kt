@@ -71,6 +71,7 @@ data class WorkoutExerciseState(
     val previousPerformance: String? = null,
     val swappedExerciseId: Int? = null,
     val customRestSeconds: Int? = null,
+    val customRepsTarget: String? = null,
     val supersetId: String? = null
 )
 
@@ -1077,7 +1078,8 @@ class WorkoutViewModel @Inject constructor(
                         swappedExerciseId = newExerciseId,
                         sets = newSets,
                         previousPerformance = null,
-                        customRestSeconds = restTimer
+                        customRestSeconds = restTimer,
+                        customRepsTarget = repsTarget
                     )
                     curr.copy(exercises = mutableExercises, exerciseSwaps = mutableSwaps)
                 }
@@ -1114,7 +1116,8 @@ class WorkoutViewModel @Inject constructor(
                         swappedExerciseId = newExerciseId,
                         sets = initialSets,
                         previousPerformance = null,
-                        customRestSeconds = restTimer
+                        customRestSeconds = restTimer,
+                        customRepsTarget = repsTarget
                     )
                     curr.copy(exercises = mutableExercises)
                 }
@@ -1206,6 +1209,10 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
     }
 
+    fun cancelCustomVibration() {
+        timerNotificationHelper.cancelCustomVibration()
+    }
+
     fun cancelWorkout(onComplete: () -> Unit) {
         viewModelScope.launch {
             _state.value.sessionId?.let { sessionId ->
@@ -1294,7 +1301,8 @@ class WorkoutViewModel @Inject constructor(
                         exercise = exercise,
                         planDetails = null,
                         sets = initialSets,
-                        customRestSeconds = restTimer
+                        customRestSeconds = restTimer,
+                        customRepsTarget = repsTarget
                     )
                 )
                 curr.copy(

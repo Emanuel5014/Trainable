@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
 import java.util.TimeZone
+import com.emanuel5014.trainable.ui.components.shared.ImageEditorDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -114,6 +115,9 @@ fun PhysicalCheckScreen(
     val photoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
+    val topPhotoEditQueue = remember { mutableStateListOf<ByteArray>() }
+    var topOnEditFinished by remember { mutableStateOf<((ByteArray) -> Unit)?>(null) }
+
     val addPhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia()
     ) { uris ->
@@ -134,7 +138,16 @@ fun PhysicalCheckScreen(
             }
         }
         if (bytesList.isNotEmpty()) {
-            viewModel.addPhotosToCheck(checkId, bytesList)
+            val editedList = mutableListOf<ByteArray>()
+            topPhotoEditQueue.clear()
+            topPhotoEditQueue.addAll(bytesList)
+            topOnEditFinished = { editedBytes ->
+                editedList.add(editedBytes)
+                if (topPhotoEditQueue.isEmpty()) {
+                    viewModel.addPhotosToCheck(checkId, editedList)
+                    topOnEditFinished = null
+                }
+            }
         }
         addingPhotosForCheckId = null
         viewModel.setPhotoCaptureCompleted()
@@ -152,7 +165,16 @@ fun PhysicalCheckScreen(
             tempCameraUri?.let { uri ->
                 val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
                 if (bytes != null) {
-                    viewModel.addPhotosToCheck(checkId, listOf(bytes))
+                    val editedList = mutableListOf<ByteArray>()
+                    topPhotoEditQueue.clear()
+                    topPhotoEditQueue.add(bytes)
+                    topOnEditFinished = { editedBytes ->
+                        editedList.add(editedBytes)
+                        if (topPhotoEditQueue.isEmpty()) {
+                            viewModel.addPhotosToCheck(checkId, editedList)
+                            topOnEditFinished = null
+                        }
+                    }
                 }
                 try {
                     context.contentResolver.delete(uri, null, null)
@@ -775,6 +797,21 @@ fun PhysicalCheckScreen(
             }
         }
     }
+
+    if (topPhotoEditQueue.isNotEmpty() && topOnEditFinished != null) {
+        ImageEditorDialog(
+            imageBytes = topPhotoEditQueue.first(),
+            onDismiss = {
+                topPhotoEditQueue.clear()
+                topOnEditFinished = null
+            },
+            onConfirm = { editedBytes ->
+                val callback = topOnEditFinished
+                topPhotoEditQueue.removeAt(0)
+                callback?.invoke(editedBytes)
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1184,18 +1221,31 @@ fun AddPhysicalCheckDialog(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    val dialogPhotoEditQueue = remember { mutableStateListOf<ByteArray>() }
+    var dialogOnEditFinished by remember { mutableStateOf<((ByteArray) -> Unit)?>(null) }
+
     val pickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia()
     ) { uris ->
         val contentResolver = context.contentResolver
+        val bytesList = mutableListOf<ByteArray>()
         uris.forEach { uri ->
             try {
                 contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val bytes = inputStream.readBytes()
-                    photoBytesList.add(bytes)
+                    bytesList.add(inputStream.readBytes())
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+        if (bytesList.isNotEmpty()) {
+            dialogPhotoEditQueue.clear()
+            dialogPhotoEditQueue.addAll(bytesList)
+            dialogOnEditFinished = { editedBytes ->
+                photoBytesList.add(editedBytes)
+                if (dialogPhotoEditQueue.isEmpty()) {
+                    dialogOnEditFinished = null
+                }
             }
         }
         viewModel.setPhotoCaptureCompleted()
@@ -1208,7 +1258,14 @@ fun AddPhysicalCheckDialog(
             tempImageUri?.let { uri ->
                 val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
                 if (bytes != null) {
-                    photoBytesList.add(bytes)
+                    dialogPhotoEditQueue.clear()
+                    dialogPhotoEditQueue.add(bytes)
+                    dialogOnEditFinished = { editedBytes ->
+                        photoBytesList.add(editedBytes)
+                        if (dialogPhotoEditQueue.isEmpty()) {
+                            dialogOnEditFinished = null
+                        }
+                    }
                 }
                 try {
                     context.contentResolver.delete(uri, null, null)
@@ -1587,6 +1644,21 @@ fun AddPhysicalCheckDialog(
             }
         )
     }
+
+    if (dialogPhotoEditQueue.isNotEmpty() && dialogOnEditFinished != null) {
+        ImageEditorDialog(
+            imageBytes = dialogPhotoEditQueue.first(),
+            onDismiss = {
+                dialogPhotoEditQueue.clear()
+                dialogOnEditFinished = null
+            },
+            onConfirm = { editedBytes ->
+                val callback = dialogOnEditFinished
+                dialogPhotoEditQueue.removeAt(0)
+                callback?.invoke(editedBytes)
+            }
+        )
+    }
 }
 
 @Composable
@@ -1657,6 +1729,9 @@ private fun EditPhysicalCheckDialog(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    val editPhotoEditQueue = remember { mutableStateListOf<ByteArray>() }
+    var editOnEditFinished by remember { mutableStateOf<((ByteArray) -> Unit)?>(null) }
+
     val pickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia()
     ) { uris ->
@@ -1672,8 +1747,17 @@ private fun EditPhysicalCheckDialog(
             }
         }
         if (bytesList.isNotEmpty()) {
-            viewModel.addPhotosToCheck(check.id, bytesList) { newFilenames ->
-                existingFilenames.addAll(newFilenames)
+            val editedList = mutableListOf<ByteArray>()
+            editPhotoEditQueue.clear()
+            editPhotoEditQueue.addAll(bytesList)
+            editOnEditFinished = { editedBytes ->
+                editedList.add(editedBytes)
+                if (editPhotoEditQueue.isEmpty()) {
+                    viewModel.addPhotosToCheck(check.id, editedList) { newFilenames ->
+                        existingFilenames.addAll(newFilenames)
+                    }
+                    editOnEditFinished = null
+                }
             }
         }
         viewModel.setPhotoCaptureCompleted()
@@ -1686,8 +1770,17 @@ private fun EditPhysicalCheckDialog(
             tempImageUri?.let { uri ->
                 val bytes = com.emanuel5014.trainable.util.ImageStorageUtils.readAndCompressImage(context, uri)
                 if (bytes != null) {
-                    viewModel.addPhotosToCheck(check.id, listOf(bytes)) { newFilenames ->
-                        existingFilenames.addAll(newFilenames)
+                    val editedList = mutableListOf<ByteArray>()
+                    editPhotoEditQueue.clear()
+                    editPhotoEditQueue.add(bytes)
+                    editOnEditFinished = { editedBytes ->
+                        editedList.add(editedBytes)
+                        if (editPhotoEditQueue.isEmpty()) {
+                            viewModel.addPhotosToCheck(check.id, editedList) { newFilenames ->
+                                existingFilenames.addAll(newFilenames)
+                            }
+                            editOnEditFinished = null
+                        }
                     }
                 }
                 try {
@@ -1987,6 +2080,21 @@ private fun EditPhysicalCheckDialog(
                 TextButton(onClick = { photoToDelete = null }) {
                     Text(stringResource(R.string.cancel))
                 }
+            }
+        )
+    }
+
+    if (editPhotoEditQueue.isNotEmpty() && editOnEditFinished != null) {
+        ImageEditorDialog(
+            imageBytes = editPhotoEditQueue.first(),
+            onDismiss = {
+                editPhotoEditQueue.clear()
+                editOnEditFinished = null
+            },
+            onConfirm = { editedBytes ->
+                val callback = editOnEditFinished
+                editPhotoEditQueue.removeAt(0)
+                callback?.invoke(editedBytes)
             }
         )
     }

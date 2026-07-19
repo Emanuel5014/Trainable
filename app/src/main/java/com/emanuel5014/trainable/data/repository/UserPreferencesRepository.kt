@@ -40,6 +40,7 @@ class UserPreferencesRepository @Inject constructor(
         val THEME_STYLE = intPreferencesKey("theme_style")
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
+        val TIMER_FINISHED_LOCKSCREEN_VIBRATION_DURATION = intPreferencesKey("timer_finished_lockscreen_vibration_duration")
         val WARMUP_TIMER_ENABLED = booleanPreferencesKey("warmup_timer_enabled")
         val GYM_MEMBERSHIP_EXPIRY_DATE = androidx.datastore.preferences.core.longPreferencesKey("gym_membership_expiry_date")
         val GYM_MEMBERSHIP_EXPIRY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("gym_membership_expiry_notifications_enabled")
@@ -190,6 +191,11 @@ class UserPreferencesRepository @Inject constructor(
             preferences[TIMER_NOTIFICATIONS_ENABLED] ?: true
         }
 
+    val timerFinishedLockscreenVibrationDuration: Flow<Int> = dataStore.data
+        .map { preferences ->
+            preferences[TIMER_FINISHED_LOCKSCREEN_VIBRATION_DURATION] ?: 0
+        }
+
     val swipeActionsEnabled: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[SWIPE_ACTIONS_ENABLED] ?: true
@@ -316,6 +322,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setTimerNotificationsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_NOTIFICATIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setTimerFinishedLockscreenVibrationDuration(durationSeconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_FINISHED_LOCKSCREEN_VIBRATION_DURATION] = durationSeconds
         }
     }
 

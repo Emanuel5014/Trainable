@@ -49,6 +49,7 @@ import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -80,6 +81,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -120,6 +123,7 @@ fun SettingsScreen(
     val currentUser by viewModel.currentUser.collectAsState()
     val weeklyGoal by viewModel.weeklyGoal.collectAsState()
     val hapticEnabled by viewModel.hapticEnabled.collectAsState()
+    val haptic = LocalHapticFeedback.current
     val autoBackupEnabled by viewModel.autoBackupEnabled.collectAsState()
     val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
     val autoBackupFolderUri by viewModel.autoBackupFolderUri.collectAsState()
@@ -134,11 +138,13 @@ fun SettingsScreen(
     val themeStyle by viewModel.themeStyle.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
     val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
+    val timerFinishedLockscreenVibrationDuration by viewModel.timerFinishedLockscreenVibrationDuration.collectAsState()
     val gymMembershipExpiryNotificationsEnabled by viewModel.gymMembershipExpiryNotificationsEnabled.collectAsState()
     val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
+    val webServerState by viewModel.webServerState.collectAsState()
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
     
@@ -1195,6 +1201,67 @@ fun SettingsScreen(
                             )
                         }
 
+                        if (timerNotificationsEnabled) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Vibration,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            Text(stringResource(R.string.lockscreen_vibration), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                            Text(stringResource(R.string.lockscreen_vibration_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                        }
+                                    }
+                                    Text(
+                                        text = if (timerFinishedLockscreenVibrationDuration == 0) {
+                                            stringResource(R.string.vibration_default)
+                                        } else {
+                                            stringResource(R.string.vibration_seconds, timerFinishedLockscreenVibrationDuration)
+                                        },
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Primary,
+                                        fontWeight = FontWeight.Black,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                }
+
+                                var lastHapticSliderValue by remember { mutableIntStateOf(-1) }
+
+                                Slider(
+                                    value = timerFinishedLockscreenVibrationDuration.toFloat(),
+                                    onValueChange = {
+                                        val newValue = it.toInt()
+                                        if (newValue != lastHapticSliderValue) {
+                                            lastHapticSliderValue = newValue
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        }
+                                        viewModel.setTimerFinishedLockscreenVibrationDuration(newValue)
+                                    },
+                                    valueRange = 0f..30f,
+                                    steps = 29,
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = Primary,
+                                        activeTrackColor = Primary,
+                                        inactiveTrackColor = SurfaceContainerHighest,
+                                        activeTickColor = Color.Transparent,
+                                        inactiveTickColor = Color.Transparent
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
@@ -1404,6 +1471,57 @@ fun SettingsScreen(
                         Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Error)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(stringResource(R.string.reset_app_button), fontWeight = FontWeight.ExtraBold, color = Error)
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.web_server_section_title)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.Wifi, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.web_dashboard), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (webServerState.isRunning) stringResource(R.string.web_server_active) else stringResource(R.string.web_server_inactive),
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            SettingsSwitch(
+                                checked = webServerState.isRunning,
+                                onCheckedChange = { viewModel.toggleWebServer() }
+                            )
+                        }
+
+                        if (webServerState.isRunning) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    stringResource(R.string.web_server_open_browser),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                                Text(
+                                    webServerState.url,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    stringResource(R.string.web_server_instructions),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
