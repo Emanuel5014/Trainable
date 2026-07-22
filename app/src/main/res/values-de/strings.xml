@@ -652,4 +652,8 @@
     <string name="crop_aspect_4_3">4:3</string>
     <string name="crop_aspect_16_9">16:9</string>
 
+    <!-- Report -->
+    <string name="report">Bericht</string>
+    <string name="report_preview">VORSCHAU</string>
+
 </resources>

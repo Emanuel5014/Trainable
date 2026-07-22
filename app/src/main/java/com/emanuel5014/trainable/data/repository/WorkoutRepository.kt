@@ -466,6 +466,12 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun removeExerciseSwap(sessionId: Int, originalExerciseId: Int) = workoutDao.removeSwapForExercise(sessionId, originalExerciseId)
 
+    suspend fun getFinishedSessionsWithDetailsForPlans(planIds: List<Int>) =
+        workoutDao.getFinishedSessionsWithDetailsForPlans(planIds)
+
+    suspend fun getSwapsForSessions(sessionIds: List<Int>) =
+        workoutDao.getSwapsForSessions(sessionIds)
+
     suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg"): String {
         val sessions = workoutDao.getAllSessionsWithDetails().first()
 

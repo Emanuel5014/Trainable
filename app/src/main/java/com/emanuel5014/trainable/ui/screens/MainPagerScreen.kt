@@ -21,6 +21,7 @@ import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
 import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
+import com.emanuel5014.trainable.ui.navigation.Report
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsScreen
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardScreen
 import com.emanuel5014.trainable.ui.screens.history.HistoryScreen
@@ -73,6 +74,9 @@ fun MainPagerScreen(
             1 -> RoutineListScreen(
                 onNavigateToDetail = { planId ->
                     navController.navigate(RoutineDetail(planId))
+                },
+                onGenerateReport = { planIds ->
+                    navController.navigate(Report(planIds.joinToString(",")))
                 }
             )
             2 -> HistoryScreen(navController = navController)

@@ -19,6 +19,7 @@ import com.emanuel5014.trainable.ui.screens.MainPagerScreen
 import com.emanuel5014.trainable.ui.screens.compare.CompareSessionsScreen
 import com.emanuel5014.trainable.ui.screens.history.EditWorkoutScreen
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailScreen
+import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.workout.WorkoutExecutionScreen
 import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckScreen
@@ -101,6 +102,11 @@ fun MainNavGraph(
             PhysicalCheckCompareScreen(
                 checkId1 = route.id1,
                 checkId2 = route.id2,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<Report> {
+            ReportScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

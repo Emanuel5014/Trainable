@@ -219,6 +219,13 @@ interface WorkoutDao {
     @Query("SELECT * FROM session_exercise_swaps WHERE session_id = :sessionId")
     fun getSwapsForSession(sessionId: Int): Flow<List<SessionExerciseSwapEntity>>
 
+    @Query("SELECT * FROM session_exercise_swaps WHERE session_id IN (:sessionIds)")
+    suspend fun getSwapsForSessions(sessionIds: List<Int>): List<SessionExerciseSwapEntity>
+
+    @Transaction
+    @Query("SELECT * FROM workout_sessions WHERE plan_id IN (:planIds) AND is_finished = 1 ORDER BY timestamp ASC")
+    suspend fun getFinishedSessionsWithDetailsForPlans(planIds: List<Int>): List<SessionWithDetails>
+
     @Query("DELETE FROM session_exercise_swaps WHERE session_id = :sessionId AND original_exercise_id = :originalExerciseId")
     suspend fun removeSwapForExercise(sessionId: Int, originalExerciseId: Int)
 }
