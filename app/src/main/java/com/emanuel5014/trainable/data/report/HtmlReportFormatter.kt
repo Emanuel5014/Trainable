@@ -360,94 +360,96 @@ class HtmlReportFormatter @Inject constructor() {
         .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 32px 24px;
+            padding: 16px 12px;
         }
 
         .page-header {
             text-align: center;
-            padding: 48px 0 32px;
+            padding: 24px 0 16px;
         }
 
         .page-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--md-primary);
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .page-title {
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-size: clamp(1.4rem, 4vw, 2.5rem);
             font-weight: 800;
             letter-spacing: -0.03em;
             color: var(--md-on-surface);
         }
 
         .page-note {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--md-on-surface-variant);
-            margin-top: 12px;
+            margin-top: 8px;
             font-style: italic;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin: 32px 0;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin: 16px 0;
         }
 
         .stat-card {
             background: var(--md-surface-container);
-            padding: 24px;
-            border-radius: 24px;
+            padding: 14px 16px;
+            border-radius: 16px;
             border: 1px solid var(--md-outline-variant);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .stat-card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             background: var(--md-primary-container);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 12px;
+            flex-shrink: 0;
         }
 
         .stat-card-icon .material-symbols-outlined {
-            font-size: 22px;
+            font-size: 18px;
             color: var(--md-on-primary-container);
         }
 
         .stat-card-value {
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            margin-bottom: 2px;
         }
 
         .stat-card-label {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--md-on-surface-variant);
         }
 
         .section-header {
-            margin: 48px 0 20px;
+            margin: 28px 0 12px;
         }
 
         .section-title {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             letter-spacing: -0.02em;
         }
 
         .exercise-card {
             background: var(--md-surface-container);
-            border-radius: 24px;
+            border-radius: 16px;
             border: 1px solid var(--md-outline-variant);
-            padding: 24px;
-            margin-bottom: 20px;
+            padding: 14px;
+            margin-bottom: 14px;
         }
 
         .exercise-card[data-removed="true"] {
@@ -459,18 +461,18 @@ class HtmlReportFormatter @Inject constructor() {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .exercise-info {
             display: flex;
-            gap: 16px;
+            gap: 10px;
             align-items: center;
         }
 
         .exercise-number {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: var(--md-primary);
             color: var(--md-on-primary);
@@ -478,28 +480,28 @@ class HtmlReportFormatter @Inject constructor() {
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.85rem;
             flex-shrink: 0;
         }
 
         .exercise-name {
-            font-size: 1.15rem;
+            font-size: 1rem;
             font-weight: 700;
             margin-bottom: 4px;
         }
 
         .exercise-meta {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 100px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
         }
 
@@ -515,60 +517,65 @@ class HtmlReportFormatter @Inject constructor() {
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
         }
 
         .summary-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: var(--md-surface-container-high);
-            padding: 12px 16px;
-            border-radius: 16px;
+            padding: 10px 12px;
+            border-radius: 12px;
         }
 
         .summary-icon {
-            font-size: 20px;
+            font-size: 18px;
             color: var(--md-primary);
+            flex-shrink: 0;
         }
 
         .summary-value {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 700;
         }
 
         .summary-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--md-on-surface-variant);
         }
 
         .data-table-wrapper {
             background: var(--md-surface-container-high);
-            border-radius: 16px;
-            overflow: hidden;
+            border-radius: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .data-table {
             width: 100%;
+            min-width: 380px;
             border-collapse: collapse;
         }
 
         .data-table th {
-            padding: 12px 16px;
+            padding: 10px 12px;
             text-align: left;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--md-on-surface-variant);
             border-bottom: 1px solid var(--md-outline-variant);
             background: var(--md-surface-container-highest);
+            white-space: nowrap;
         }
 
         .data-table td {
-            padding: 10px 16px;
+            padding: 8px 12px;
             border-bottom: 1px solid var(--md-outline-variant);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
         }
 
         .data-table tr:last-child td { border-bottom: none; }
@@ -577,38 +584,38 @@ class HtmlReportFormatter @Inject constructor() {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             background: var(--md-primary-container);
             color: var(--md-on-primary-container);
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         .swap-section {
-            margin-top: 16px;
-            padding-top: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 1px solid var(--md-outline-variant);
         }
 
         .swap-title {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--md-on-surface-variant);
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .swap-event {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
+            gap: 10px;
+            padding: 8px 10px;
             background: color-mix(in srgb, var(--md-tertiary), transparent 90%);
-            border-radius: 12px;
+            border-radius: 10px;
             margin-bottom: 6px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         .swap-date {
@@ -623,14 +630,14 @@ class HtmlReportFormatter @Inject constructor() {
 
         .footer {
             text-align: center;
-            padding: 40px 0 20px;
+            padding: 24px 0 12px;
             border-top: 1px solid var(--md-outline-variant);
-            margin-top: 48px;
+            margin-top: 28px;
         }
 
         .footer-text {
             color: var(--md-on-surface-variant);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         @media print {
@@ -639,10 +646,168 @@ class HtmlReportFormatter @Inject constructor() {
             .exercise-card { break-inside: avoid; }
         }
 
-        @media (max-width: 600px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .summary-grid { grid-template-columns: 1fr 1fr; }
-            .data-table th, .data-table td { padding: 8px 10px; font-size: 0.8rem; }
+        @media (min-width: 768px) {
+            .container {
+                padding: 32px 24px;
+            }
+
+            .page-header {
+                padding: 48px 0 32px;
+            }
+
+            .page-label {
+                font-size: 0.8rem;
+                margin-bottom: 8px;
+            }
+
+            .page-title {
+                font-size: clamp(1.8rem, 4vw, 2.5rem);
+            }
+
+            .page-note {
+                font-size: 1rem;
+                margin-top: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+                margin: 32px 0;
+            }
+
+            .stat-card {
+                padding: 24px;
+                border-radius: 24px;
+                display: block;
+            }
+
+            .stat-card-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                margin-bottom: 12px;
+            }
+
+            .stat-card-icon .material-symbols-outlined {
+                font-size: 22px;
+            }
+
+            .stat-card-value {
+                font-size: 1.4rem;
+                margin-bottom: 2px;
+            }
+
+            .stat-card-label {
+                font-size: 0.85rem;
+            }
+
+            .section-header {
+                margin: 48px 0 20px;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .exercise-card {
+                padding: 24px;
+                border-radius: 24px;
+                margin-bottom: 20px;
+            }
+
+            .exercise-info {
+                gap: 16px;
+            }
+
+            .exercise-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .exercise-name {
+                font-size: 1.15rem;
+            }
+
+            .badge {
+                padding: 4px 12px;
+                font-size: 0.75rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .summary-item {
+                padding: 12px 16px;
+                border-radius: 16px;
+                gap: 10px;
+            }
+
+            .summary-icon {
+                font-size: 20px;
+            }
+
+            .summary-value {
+                font-size: 0.95rem;
+            }
+
+            .summary-label {
+                font-size: 0.7rem;
+            }
+
+            .data-table-wrapper {
+                border-radius: 16px;
+                overflow: hidden;
+            }
+
+            .data-table {
+                min-width: unset;
+            }
+
+            .data-table th {
+                padding: 12px 16px;
+                font-size: 0.8rem;
+            }
+
+            .data-table td {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .set-number {
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem;
+            }
+
+            .swap-section {
+                margin-top: 16px;
+                padding-top: 16px;
+            }
+
+            .swap-title {
+                font-size: 0.8rem;
+                margin-bottom: 8px;
+            }
+
+            .swap-event {
+                padding: 8px 12px;
+                border-radius: 12px;
+                font-size: 0.85rem;
+                gap: 12px;
+            }
+
+            .footer {
+                padding: 40px 0 20px;
+                margin-top: 48px;
+            }
+
+            .footer-text {
+                font-size: 0.85rem;
+            }
         }
     """.trimIndent()
 }
