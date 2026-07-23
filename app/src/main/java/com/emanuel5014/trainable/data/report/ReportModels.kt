@@ -9,7 +9,8 @@ data class PlanReport(
     val totalSessions: Int,
     val periodFirstSession: Long?,
     val periodLastSession: Long?,
-    val exercises: List<ExerciseReport>
+    val exercises: List<ExerciseReport>,
+    val weightUnit: String = "kg"
 )
 
 data class ExerciseReport(

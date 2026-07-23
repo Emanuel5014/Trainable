@@ -68,11 +68,11 @@ class HtmlReportFormatter @Inject constructor() {
                     append("</div>\n")
 
                     append("<div class=\"summary-grid\">\n")
-                    append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(exercise.summary.maxWeight)} kg", "fitness_center"))
-                    append(buildSummaryItem(strings["max_volume"] ?: "Max Volume", "${formatWeight(exercise.summary.maxVolume)} kg", "bar_chart"))
+                    append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(exercise.summary.maxWeight)} ${report.weightUnit}", "fitness_center"))
+                    append(buildSummaryItem(strings["max_volume"] ?: "Max Volume", "${formatWeight(exercise.summary.maxVolume)} ${report.weightUnit}", "bar_chart"))
                     append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", exercise.summary.totalSets.toString(), "format_list_numbered"))
                     if (exercise.summary.bestEstimatedOneRM != null) {
-                        append(buildSummaryItem(strings["estimated_1rm"] ?: "Est. 1RM", "${formatWeight(exercise.summary.bestEstimatedOneRM)} kg", "whatshot"))
+                        append(buildSummaryItem(strings["estimated_1rm"] ?: "Est. 1RM", "${formatWeight(exercise.summary.bestEstimatedOneRM)} ${report.weightUnit}", "whatshot"))
                     }
                     append("</div>\n")
 
@@ -106,14 +106,14 @@ class HtmlReportFormatter @Inject constructor() {
                                     }
                                 }
                                 append("<td><span class=\"set-number\">${set.setNumber}</span></td>\n")
-                                append("<td>${formatWeight(set.weight)} kg</td>\n")
+                                append("<td>${formatWeight(set.weight)} ${report.weightUnit}</td>\n")
                                 append("<td>${set.reps}</td>\n")
                                 if (setIndex == 0) {
                                     val rowSpan = session.sets.count { !it.isWarmup }
                                     if (rowSpan > 1) {
-                                        append("<td rowspan=\"$rowSpan\">${formatWeight(sessionVolume)} kg</td>\n")
+                                        append("<td rowspan=\"$rowSpan\">${formatWeight(sessionVolume)} ${report.weightUnit}</td>\n")
                                     } else {
-                                        append("<td>${formatWeight(sessionVolume)} kg</td>\n")
+                                        append("<td>${formatWeight(sessionVolume)} ${report.weightUnit}</td>\n")
                                     }
                                 }
                                 if (hasRpe) {

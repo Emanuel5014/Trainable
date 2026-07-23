@@ -4,12 +4,15 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class ReportGenerator @Inject constructor(
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) {
     suspend fun generateReport(planId: Int, languageCode: String = "en"): PlanReport {
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).first()
@@ -22,7 +25,8 @@ class ReportGenerator @Inject constructor(
                 totalSessions = 0,
                 periodFirstSession = null,
                 periodLastSession = null,
-                exercises = emptyList()
+                exercises = emptyList(),
+                weightUnit = userPreferencesRepository.weightUnit.first()
             )
 
         val sessions = workoutRepository.getFinishedSessionsWithDetailsForPlans(listOf(planId))
@@ -33,7 +37,9 @@ class ReportGenerator @Inject constructor(
             emptyList()
         }
 
-        return buildReport(planWithDetails, sessions, swaps, languageCode)
+        val weightUnit = userPreferencesRepository.weightUnit.first()
+
+        return buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit)
     }
 
     suspend fun generateReports(planIds: List<Int>, languageCode: String = "en"): List<PlanReport> {
@@ -48,7 +54,8 @@ class ReportGenerator @Inject constructor(
         planWithDetails: PlanWithDetails,
         sessions: List<SessionWithDetails>,
         swaps: List<SessionExerciseSwapEntity>,
-        languageCode: String
+        languageCode: String,
+        weightUnit: String
     ): PlanReport {
         val plan = planWithDetails.plan
         val currentExerciseIds = planWithDetails.exercises.map { it.exercise.id }.toSet()
@@ -95,9 +102,10 @@ class ReportGenerator @Inject constructor(
             val date = session.session.timestamp
             session.sets.forEach { setWithExercise ->
                 val exerciseId = setWithExercise.exercise.id
+                val convertedWeight = WeightUnitConverter.convertDisplay(setWithExercise.setLog.pesoSollevato, weightUnit)
                 val setEntry = SetEntry(
                     setNumber = setWithExercise.setLog.numeroSerie,
-                    weight = setWithExercise.setLog.pesoSollevato,
+                    weight = convertedWeight,
                     reps = setWithExercise.setLog.repsEffettive,
                     rpe = setWithExercise.setLog.rpe,
                     isWarmup = setWithExercise.setLog.isWarmup,
@@ -163,7 +171,8 @@ class ReportGenerator @Inject constructor(
             totalSessions = sessions.size,
             periodFirstSession = periodFirst,
             periodLastSession = periodLast,
-            exercises = exercises
+            exercises = exercises,
+            weightUnit = weightUnit
         )
     }
 
