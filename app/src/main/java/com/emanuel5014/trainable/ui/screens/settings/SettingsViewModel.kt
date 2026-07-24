@@ -506,7 +506,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private var lastWebServerToggleMs = 0L
+
     fun toggleWebServer() {
+        val now = System.currentTimeMillis()
+        if (now - lastWebServerToggleMs < 600) return
+        lastWebServerToggleMs = now
         if (webServerState.value.isRunning) {
             webServerManager.stopServer()
         } else {

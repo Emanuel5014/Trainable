@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,49 +35,72 @@ class WebServerManager @Inject constructor(
 
     private val serverPort = 8080
     private var receiverRegistered = false
+    private val pendingOperation = AtomicBoolean(false)
 
     private val stopReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.i(TAG, "Server stopped by notification action")
             _state.value = WebServerState()
+            pendingOperation.set(false)
         }
     }
 
     fun startServer() {
-        if (isRunning()) return
-
-        val ip = getLocalIpAddress()
-        val url = "http://$ip:$serverPort"
-
-        Log.i(TAG, "Starting server at $url")
-
-        _state.value = WebServerState(
-            isRunning = true,
-            port = serverPort,
-            localIp = ip,
-            url = url
-        )
-
-        registerStopReceiver()
-
-        val intent = Intent(context, LocalWebServerService::class.java).apply {
-            putExtra("SERVER_IP", ip)
-            putExtra("SERVER_PORT", serverPort)
-            putExtra("SERVER_URL", url)
+        synchronized(this) {
+            if (isRunning() || pendingOperation.get()) return
+            pendingOperation.set(true)
         }
-        ContextCompat.startForegroundService(context, intent)
+
+        try {
+            val ip = getLocalIpAddress()
+            val url = "http://$ip:$serverPort"
+
+            Log.i(TAG, "Starting server at $url")
+
+            _state.value = WebServerState(
+                isRunning = true,
+                port = serverPort,
+                localIp = ip,
+                url = url
+            )
+
+            registerStopReceiver()
+
+            val intent = Intent(context, LocalWebServerService::class.java).apply {
+                putExtra("SERVER_IP", ip)
+                putExtra("SERVER_PORT", serverPort)
+                putExtra("SERVER_URL", url)
+            }
+            ContextCompat.startForegroundService(context, intent)
+        } finally {
+            synchronized(this) {
+                pendingOperation.set(false)
+            }
+        }
     }
 
     fun stopServer() {
-        Log.i(TAG, "Stopping server")
-        context.stopService(Intent(context, LocalWebServerService::class.java))
-        _state.value = WebServerState()
-        unregisterStopReceiver()
+        synchronized(this) {
+            if (!isRunning() || pendingOperation.get()) return
+            pendingOperation.set(true)
+        }
+
+        try {
+            Log.i(TAG, "Stopping server")
+            context.stopService(Intent(context, LocalWebServerService::class.java))
+            _state.value = WebServerState()
+            unregisterStopReceiver()
+        } finally {
+            synchronized(this) {
+                pendingOperation.set(false)
+            }
+        }
     }
 
     fun notifyServerStopped() {
         Log.i(TAG, "Server stopped notification received")
         _state.value = WebServerState()
+        pendingOperation.set(false)
         unregisterStopReceiver()
     }
 
