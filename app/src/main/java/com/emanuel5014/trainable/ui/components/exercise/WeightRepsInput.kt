@@ -229,11 +229,17 @@ private fun <T> WheelPickerBox(
     }
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex }
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val viewportCenter = layoutInfo.viewportEndOffset / 2
+            layoutInfo.visibleItemsInfo.minByOrNull {
+                kotlin.math.abs(it.offset + it.size / 2 - viewportCenter)
+            }?.index
+        }
             .debounce(50L)
             .distinctUntilChanged()
             .collect { index ->
-                if (index in range.indices) {
+                if (index != null && index in range.indices) {
                     val newValue = range[index]
                     val isSame = if (newValue is Float && value is Float) {
                         kotlin.math.abs(newValue - value) < 0.001f
