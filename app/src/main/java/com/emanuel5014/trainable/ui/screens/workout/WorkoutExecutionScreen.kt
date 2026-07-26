@@ -1073,7 +1073,8 @@ fun WorkoutExecutionScreen(
                     onDeleteCustomExercise = { exercise ->
                         viewModel.deleteCustomExercise(exercise)
                     },
-                    onDismiss = { showSwapExerciseSheet = false }
+                    onDismiss = { showSwapExerciseSheet = false },
+                    editablePresetExercises = state.editablePresetExercises
                 )
             }
         }
@@ -1092,7 +1093,8 @@ fun WorkoutExecutionScreen(
                 onEditCustomExercise = viewModel::updateCustomExercise,
                 onDeleteCustomExercise = viewModel::deleteCustomExercise,
                 onDismiss = { showAddExerciseSheet = false },
-                isAdding = true
+                isAdding = true,
+                editablePresetExercises = state.editablePresetExercises
             )
         }
 

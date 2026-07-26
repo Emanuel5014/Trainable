@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -35,6 +36,7 @@ class SettingsViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userPrefsRepository: UserPreferencesRepository,
     private val workoutRepository: WorkoutRepository,
+    private val exerciseRepository: ExerciseRepository,
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val updateManager: UpdateManager,
@@ -205,6 +207,12 @@ class SettingsViewModel @Inject constructor(
     )
 
     val warmupTimerEnabled = userPrefsRepository.warmupTimerEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val editablePresetExercises = userPrefsRepository.editablePresetExercises.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
@@ -473,6 +481,19 @@ class SettingsViewModel @Inject constructor(
     fun setWarmupTimerEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setWarmupTimerEnabled(enabled)
+        }
+    }
+
+    fun setEditablePresetExercises(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setEditablePresetExercises(enabled)
+        }
+    }
+
+    fun resetPresetExerciseNames(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            exerciseRepository.resetPresetExerciseNames()
+            onComplete()
         }
     }
 

@@ -139,6 +139,13 @@
     <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
     <string name="swipe_actions">Azioni Rapide Swipe</string>
     <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi e navigare tra gli esercizi</string>
+    <string name="editable_preset_exercises">Esercizi Preimpostati Modificabili</string>
+    <string name="editable_preset_exercises_desc">Consenti di rinominare gli esercizi predefiniti forniti dall\'app</string>
+    <string name="reset_exercise_names">Reimposta Nomi Esercizi</string>
+    <string name="reset_exercise_names_confirm">Reimpostare i Nomi degli Esercizi?</string>
+    <string name="reset_exercise_names_message">Questo ripristinerà i nomi di tutti gli esercizi preimpostati ai valori predefiniti. I tuoi esercizi personalizzati non saranno modificati.</string>
+    <string name="exercise_customization">Personalizzazione Esercizi</string>
+    <string name="exercise_customization_desc">Gestisci le opzioni di personalizzazione dei nomi degli esercizi</string>
 
     <!-- Exercises -->
     <string name="exercise">Esercizio</string>

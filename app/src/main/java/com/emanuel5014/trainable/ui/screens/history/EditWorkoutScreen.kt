@@ -103,6 +103,7 @@ fun EditWorkoutScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
+    val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
     var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
     var editingCardio by remember { mutableStateOf<CardioLogEntity?>(null) }
     var showExercisePicker by remember { mutableStateOf(false) }
@@ -397,7 +398,8 @@ fun EditWorkoutScreen(
             onAddCustomExercise = { name, category ->
                 viewModel.addCustomExercise(name, category)
             },
-            languageCode = languageCode
+            languageCode = languageCode,
+            editablePresetExercises = editablePresetExercises
         )
     }
 

@@ -139,6 +139,13 @@
     <string name="tap_plus_to_add">Tippe auf die + Taste, um Übungen hinzuzufügen und dein Training zu gestalten.</string>
     <string name="swipe_actions">Wischaktionen</string>
     <string name="swipe_actions_desc">Wischen zum Bearbeiten/Archivieren/Löschen aktivieren und zwischen Übungen navigieren</string>
+    <string name="editable_preset_exercises">Voreingestellte Übungen Bearbeitbar</string>
+    <string name="editable_preset_exercises_desc">Umbenennung der von der App bereitgestellten Standardübungen erlauben</string>
+    <string name="reset_exercise_names">Übungsnamen Zurücksetzen</string>
+    <string name="reset_exercise_names_confirm">Übungsnamen zurücksetzen?</string>
+    <string name="reset_exercise_names_message">Dies stellt die Namen aller voreingestellten Übungen auf ihre Standardwerte wieder her. Deine benutzerdefinierten Übungen bleiben unverändert.</string>
+    <string name="exercise_customization">Übungsanpassung</string>
+    <string name="exercise_customization_desc">Verwalten Sie die Optionen zur Anpassung von Übungsnamen</string>
 
     <!-- Exercises -->
     <string name="exercise">Übung</string>

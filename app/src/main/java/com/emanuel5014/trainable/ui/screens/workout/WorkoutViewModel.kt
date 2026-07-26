@@ -54,7 +54,8 @@ data class WorkoutState(
     val warmupTimerEndTime: Long? = null,
     val warmupTimerTotalSeconds: Int = 0,
     val exerciseExecutionOrder: Map<Int, Int> = emptyMap(),
-    val nextExecutionOrder: Int = 0
+    val nextExecutionOrder: Int = 0,
+    val editablePresetExercises: Boolean = false
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -185,6 +186,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.warmupTimerEnabled.collect { enabled ->
                 _state.update { it.copy(warmupTimerEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.editablePresetExercises.collect { enabled ->
+                _state.update { it.copy(editablePresetExercises = enabled) }
             }
         }
         

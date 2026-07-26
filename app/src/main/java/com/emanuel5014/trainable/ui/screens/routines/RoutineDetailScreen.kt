@@ -140,6 +140,7 @@ fun RoutineDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
+    val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
@@ -953,7 +954,8 @@ fun RoutineDetailScreen(
                 viewModel.deleteCustomExercise(exercise)
             },
             onDismiss = { showExercisePicker = false },
-            languageCode = languageCode
+            languageCode = languageCode,
+            editablePresetExercises = editablePresetExercises
         )
     }
 

@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.data.repository
 
+import com.emanuel5014.trainable.data.local.ExerciseData
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +28,7 @@ class ExerciseRepository @Inject constructor(
     }
 
     suspend fun saveExercise(exercise: ExerciseEntity) {
-        exerciseDao.insertExercise(exercise)
+        exerciseDao.updateExercise(exercise)
     }
 
     suspend fun deleteExercise(exercise: ExerciseEntity) {
@@ -35,4 +36,10 @@ class ExerciseRepository @Inject constructor(
     }
 
     fun isCustomExercise(exercise: ExerciseEntity): Boolean = exercise.id >= 1000
+
+    suspend fun resetPresetExerciseNames() {
+        ExerciseData.initialExercises.forEach { presetExercise ->
+            exerciseDao.updateExerciseName(presetExercise.id, presetExercise.nome)
+        }
+    }
 }

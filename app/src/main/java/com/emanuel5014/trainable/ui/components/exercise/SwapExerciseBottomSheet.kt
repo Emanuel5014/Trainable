@@ -89,7 +89,8 @@ fun SwapExerciseBottomSheet(
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    isAdding: Boolean = false
+    isAdding: Boolean = false,
+    editablePresetExercises: Boolean = false
 ) {
     rememberResponsiveSize()
 
@@ -222,7 +223,7 @@ fun SwapExerciseBottomSheet(
                                     selectedExercise = exercise
                                     step = 2
                                 },
-                                onEditClick = if (onEditCustomExercise != null && exercise.id >= 1000) {
+                                onEditClick = if (onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
                                     { exerciseToEdit = exercise }
                                 } else null,
                                 onDeleteClick = if (onDeleteCustomExercise != null && exercise.id >= 1000) {

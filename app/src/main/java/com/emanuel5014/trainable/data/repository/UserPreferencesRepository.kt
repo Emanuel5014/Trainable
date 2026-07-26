@@ -54,6 +54,7 @@ class UserPreferencesRepository @Inject constructor(
         val PHYSICAL_CHECK_WRAPPED_KEY_IV = stringPreferencesKey("physical_check_wrapped_key_iv")
         val PHYSICAL_CHECK_VALIDATION_BLOCK = stringPreferencesKey("physical_check_validation_block")
         val PHYSICAL_CHECK_VALIDATION_IV = stringPreferencesKey("physical_check_validation_iv")
+        val EDITABLE_PRESET_EXERCISES = booleanPreferencesKey("editable_preset_exercises")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -206,6 +207,11 @@ class UserPreferencesRepository @Inject constructor(
             preferences[WARMUP_TIMER_ENABLED] ?: false
         }
 
+    val editablePresetExercises: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[EDITABLE_PRESET_EXERCISES] ?: false
+        }
+
     val themeMode: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[THEME_MODE] ?: 0
@@ -340,6 +346,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setWarmupTimerEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[WARMUP_TIMER_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setEditablePresetExercises(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[EDITABLE_PRESET_EXERCISES] = enabled
         }
     }
 

@@ -139,6 +139,13 @@
     <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
+    <string name="editable_preset_exercises">Editable Preset Exercises</string>
+    <string name="editable_preset_exercises_desc">Allow renaming the default exercises provided by the app</string>
+    <string name="reset_exercise_names">Reset Exercise Names</string>
+    <string name="reset_exercise_names_confirm">Reset Exercise Names?</string>
+    <string name="reset_exercise_names_message">This will restore all preset exercise names to their defaults. Your custom exercises will not be affected.</string>
+    <string name="exercise_customization">Exercise Customization</string>
+    <string name="exercise_customization_desc">Manage exercise name customization options</string>
 
     <!-- Exercises -->
     <string name="exercise">Exercise</string>

@@ -84,7 +84,8 @@ fun ExercisePickerBottomSheet(
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    languageCode: String = "en"
+    languageCode: String = "en",
+    editablePresetExercises: Boolean = false
 ) {
     rememberResponsiveSize()
 
@@ -232,7 +233,7 @@ fun ExercisePickerBottomSheet(
                             onExerciseSelected(exercise)
                             onDismiss()
                         },
-                        onEditClick = if (onEditCustomExercise != null && exercise.id >= 1000) {
+                        onEditClick = if (onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
                             { exerciseToEdit = exercise }
                         } else null,
                         onDeleteClick = if (onDeleteCustomExercise != null && exercise.id >= 1000) {

@@ -50,6 +50,9 @@ object PhysicalCheck
 object PhysicalCheckSettings
 
 @Serializable
+object ExerciseCustomization
+
+@Serializable
 data class PhysicalCheckCompare(val id1: Int, val id2: Int)
 
 @Serializable
