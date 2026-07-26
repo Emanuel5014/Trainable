@@ -52,7 +52,9 @@ data class WorkoutState(
     val warmupTimerEnabled: Boolean = false,
     val warmupTimerRemaining: Int = 0,
     val warmupTimerEndTime: Long? = null,
-    val warmupTimerTotalSeconds: Int = 0
+    val warmupTimerTotalSeconds: Int = 0,
+    val exerciseExecutionOrder: Map<Int, Int> = emptyMap(),
+    val nextExecutionOrder: Int = 0
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -350,6 +352,27 @@ class WorkoutViewModel @Inject constructor(
         }.coerceAtLeast(0)
         val isQuick = planWithDetails.plan.note == "SYSTEM_PLAN" && (planWithDetails.plan.nome == "Quick Workout" || planWithDetails.plan.nome == "Allenamento Veloce")
 
+        val executionOrderMap = mutableMapOf<Int, Int>()
+        var maxOrder = -1
+        
+        if (useOrdine) {
+            sessionWithSets.sets.filter { it.isCompleted && !it.isWarmup }.forEach { set ->
+                if (!executionOrderMap.containsKey(set.exerciseId)) {
+                    executionOrderMap[set.exerciseId] = set.ordineEsercizio
+                    if (set.ordineEsercizio > maxOrder) {
+                        maxOrder = set.ordineEsercizio
+                    }
+                }
+            }
+        } else {
+            exerciseStates.forEachIndexed { index, exState ->
+                executionOrderMap[exState.exercise.id] = index
+                if (index > maxOrder) {
+                    maxOrder = index
+                }
+            }
+        }
+
         _state.update {
             it.copy(
                 isLoading = false,
@@ -365,7 +388,9 @@ class WorkoutViewModel @Inject constructor(
                 isQuickWorkout = isQuick,
                 warmupTimerRemaining = savedWarmupRemainingSeconds,
                 warmupTimerEndTime = if (savedWarmupRemainingSeconds > 0) savedWarmupEndTime else null,
-                warmupTimerTotalSeconds = savedWarmupTotalSeconds ?: 0
+                warmupTimerTotalSeconds = savedWarmupTotalSeconds ?: 0,
+                exerciseExecutionOrder = executionOrderMap,
+                nextExecutionOrder = maxOrder + 1
             )
         }
 
@@ -421,6 +446,10 @@ class WorkoutViewModel @Inject constructor(
             )
         }
 
+        val initialExecutionOrder = exerciseStates.mapIndexed { index, exState ->
+            exState.exercise.id to index
+        }.toMap()
+
         _state.update {
             it.copy(
                 isLoading = false,
@@ -428,7 +457,9 @@ class WorkoutViewModel @Inject constructor(
                 planName = planName,
                 sessionId = sessionId,
                 exercises = exerciseStates,
-                currentExerciseIndex = 0
+                currentExerciseIndex = 0,
+                exerciseExecutionOrder = initialExecutionOrder,
+                nextExecutionOrder = exerciseStates.size
             )
         }
     }
@@ -479,6 +510,7 @@ class WorkoutViewModel @Inject constructor(
             mutableSets[setIndex] = updatedSet
             
             if (updatedSet.id != null && curr.sessionId != null) {
+                val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
                 viewModelScope.launch {
                     workoutRepository.updateSet(
                         SetLogEntity(
@@ -492,7 +524,7 @@ class WorkoutViewModel @Inject constructor(
                             note = updatedSet.note,
                             supersetId = exState.supersetId,
                             isCompleted = updatedSet.isCompleted,
-                            ordineEsercizio = exerciseIndex,
+                            ordineEsercizio = executionOrder,
                             restTimerSeconds = exState.customRestSeconds
                         )
                     )
@@ -507,6 +539,7 @@ class WorkoutViewModel @Inject constructor(
                         val propSet = mutableSets[i].copy(weight = weight)
                         mutableSets[i] = propSet
                         if (propSet.id != null && curr.sessionId != null) {
+                            val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
                             viewModelScope.launch {
                                 workoutRepository.updateSet(
                                     SetLogEntity(
@@ -520,7 +553,7 @@ class WorkoutViewModel @Inject constructor(
                                         note = propSet.note,
                                         supersetId = exState.supersetId,
                                         isCompleted = propSet.isCompleted,
-                                        ordineEsercizio = exerciseIndex,
+                                        ordineEsercizio = executionOrder,
                                         restTimerSeconds = exState.customRestSeconds
                                     )
                                 )
@@ -548,6 +581,7 @@ class WorkoutViewModel @Inject constructor(
             mutableSets[setIndex] = updatedSet
             
             if (updatedSet.id != null && curr.sessionId != null) {
+                val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
                 viewModelScope.launch {
                     workoutRepository.updateSet(
                         SetLogEntity(
@@ -561,7 +595,7 @@ class WorkoutViewModel @Inject constructor(
                             note = updatedSet.note,
                             supersetId = exState.supersetId,
                             isCompleted = updatedSet.isCompleted,
-                            ordineEsercizio = exerciseIndex,
+                            ordineEsercizio = executionOrder,
                             restTimerSeconds = exState.customRestSeconds
                         )
                     )
@@ -580,6 +614,7 @@ class WorkoutViewModel @Inject constructor(
         val setState = exState.sets[setIndex]
         
         if (setState.isCompleted && setState.id != null) {
+            val executionOrder = currentState.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
             viewModelScope.launch {
                 workoutRepository.updateSet(
                     SetLogEntity(
@@ -592,7 +627,7 @@ class WorkoutViewModel @Inject constructor(
                         isWarmup = setState.isWarmup,
                         note = note,
                         supersetId = exState.supersetId,
-                        ordineEsercizio = exerciseIndex,
+                        ordineEsercizio = executionOrder,
                         restTimerSeconds = exState.customRestSeconds
                     )
                 )
@@ -606,11 +641,20 @@ class WorkoutViewModel @Inject constructor(
         val setState = exState.sets.getOrNull(setIndex) ?: return
         
         val newIsCompleted = !setState.isCompleted
+        val isFirstCompletion = newIsCompleted && !exState.sets.any { it.isCompleted } && !setState.isWarmup
 
         viewModelScope.launch {
             var newSetId = setState.id
 
+            if (isFirstCompletion) {
+                _state.update { it.copy(
+                    exerciseExecutionOrder = it.exerciseExecutionOrder + (exState.exercise.id to it.nextExecutionOrder),
+                    nextExecutionOrder = it.nextExecutionOrder + 1
+                )}
+            }
+
             if (currentState.sessionId != null) {
+                val executionOrder = _state.value.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
                 val logId = workoutRepository.logSet(
                     SetLogEntity(
                         id = setState.id ?: 0,
@@ -623,7 +667,7 @@ class WorkoutViewModel @Inject constructor(
                         note = setState.note,
                         supersetId = exState.supersetId,
                         isCompleted = newIsCompleted,
-                        ordineEsercizio = exerciseIndex,
+                        ordineEsercizio = executionOrder,
                         restTimerSeconds = exState.customRestSeconds
                     )
                 )
@@ -716,6 +760,7 @@ class WorkoutViewModel @Inject constructor(
             mutableSets[setIndex] = updatedSet
             
             if (updatedSet.id != null && curr.sessionId != null) {
+                val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
                 viewModelScope.launch {
                     workoutRepository.updateSet(
                         SetLogEntity(
@@ -729,7 +774,7 @@ class WorkoutViewModel @Inject constructor(
                             note = updatedSet.note,
                             supersetId = exState.supersetId,
                             isCompleted = updatedSet.isCompleted,
-                            ordineEsercizio = exerciseIndex,
+                            ordineEsercizio = executionOrder,
                             restTimerSeconds = exState.customRestSeconds
                         )
                     )
@@ -1089,6 +1134,7 @@ class WorkoutViewModel @Inject constructor(
                 val defaultWeight = 0f
                 val initialSets = (1..targetSets).map { num ->
                     val reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
+                    val executionOrder = currentState.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
                     val setLog = SetLogEntity(
                         sessionId = sessionId,
                         exerciseId = newExerciseId,
@@ -1096,7 +1142,7 @@ class WorkoutViewModel @Inject constructor(
                         repsEffettive = reps,
                         numeroSerie = num,
                         isCompleted = false,
-                        ordineEsercizio = exerciseIndex,
+                        ordineEsercizio = executionOrder,
                         restTimerSeconds = restTimer
                     )
                     val logId = workoutRepository.logSet(setLog)
@@ -1148,6 +1194,9 @@ class WorkoutViewModel @Inject constructor(
             }
 
             viewModelScope.launch {
+                val currentOrder = currentState.exerciseExecutionOrder[currentEx.exercise.id] ?: exerciseIndex
+                val nextOrder = currentState.exerciseExecutionOrder[nextEx.exercise.id] ?: (exerciseIndex + 1)
+                
                 // Update current exercise sets in DB
                 currentEx.sets.forEach { s ->
                     if (s.id != null) {
@@ -1163,7 +1212,7 @@ class WorkoutViewModel @Inject constructor(
                                 note = s.note,
                                 supersetId = newSid,
                                 isCompleted = s.isCompleted,
-                                ordineEsercizio = exerciseIndex,
+                                ordineEsercizio = currentOrder,
                                 restTimerSeconds = currentEx.customRestSeconds
                             )
                         )
@@ -1185,7 +1234,7 @@ class WorkoutViewModel @Inject constructor(
                                 note = s.note,
                                 supersetId = newSid,
                                 isCompleted = s.isCompleted,
-                                ordineEsercizio = exerciseIndex + 1,
+                                ordineEsercizio = nextOrder,
                                 restTimerSeconds = nextEx.customRestSeconds
                             )
                         )
@@ -1246,7 +1295,8 @@ class WorkoutViewModel @Inject constructor(
         val sessionId = _state.value.sessionId ?: return
 
         viewModelScope.launch {
-            val newIndex = _state.value.exercises.size
+            val currentState = _state.value
+            val executionOrder = currentState.nextExecutionOrder
             val initialSets = (1..targetSets).map { num ->
                 val weight = 0f
                 val reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
@@ -1257,7 +1307,7 @@ class WorkoutViewModel @Inject constructor(
                     repsEffettive = reps,
                     numeroSerie = num,
                     isCompleted = false,
-                    ordineEsercizio = newIndex,
+                    ordineEsercizio = executionOrder,
                     restTimerSeconds = restTimer
                 )
                 val logId = workoutRepository.logSet(setLog)
@@ -1273,28 +1323,6 @@ class WorkoutViewModel @Inject constructor(
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
                 val actualIndex = mutableExercises.size
-                
-                if (actualIndex != newIndex) {
-                    viewModelScope.launch {
-                        initialSets.forEach { s ->
-                            if (s.id != null) {
-                                workoutRepository.updateSet(
-                            SetLogEntity(
-                                id = s.id,
-                                sessionId = sessionId,
-                                exerciseId = exercise.id,
-                                pesoSollevato = s.weight,
-                                repsEffettive = s.reps,
-                                numeroSerie = s.setNumber,
-                                isCompleted = s.isCompleted,
-                                ordineEsercizio = actualIndex,
-                                restTimerSeconds = restTimer
-                            )
-                                )
-                            }
-                        }
-                    }
-                }
 
                 mutableExercises.add(
                     WorkoutExerciseState(
@@ -1307,7 +1335,9 @@ class WorkoutViewModel @Inject constructor(
                 )
                 curr.copy(
                     exercises = mutableExercises,
-                    currentExerciseIndex = actualIndex
+                    currentExerciseIndex = actualIndex,
+                    exerciseExecutionOrder = curr.exerciseExecutionOrder + (exercise.id to executionOrder),
+                    nextExecutionOrder = executionOrder + 1
                 )
             }
         }
@@ -1325,6 +1355,7 @@ class WorkoutViewModel @Inject constructor(
         val reps = lastSet?.reps ?: 8
 
         viewModelScope.launch {
+            val executionOrder = currentState.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
             val setLog = SetLogEntity(
                 sessionId = sessionId,
                 exerciseId = exState.exercise.id,
@@ -1332,7 +1363,7 @@ class WorkoutViewModel @Inject constructor(
                 repsEffettive = reps,
                 numeroSerie = newSetNumber,
                 isCompleted = false,
-                ordineEsercizio = exerciseIndex,
+                ordineEsercizio = executionOrder,
                 restTimerSeconds = exState.customRestSeconds
             )
             val logId = workoutRepository.logSet(setLog)
@@ -1361,6 +1392,7 @@ class WorkoutViewModel @Inject constructor(
         val setState = exState.sets.getOrNull(setIndex) ?: return
 
         viewModelScope.launch {
+            val executionOrder = currentState.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
             if (setState.id != null) {
                 workoutRepository.deleteSet(
                     SetLogEntity(
@@ -1374,7 +1406,7 @@ class WorkoutViewModel @Inject constructor(
                         note = setState.note,
                         supersetId = exState.supersetId,
                         isCompleted = setState.isCompleted,
-                        ordineEsercizio = exerciseIndex
+                        ordineEsercizio = executionOrder
                     )
                 )
             }
@@ -1406,7 +1438,7 @@ class WorkoutViewModel @Inject constructor(
                                 note = s.note,
                                 supersetId = exState.supersetId,
                                 isCompleted = s.isCompleted,
-                                ordineEsercizio = exerciseIndex,
+                                ordineEsercizio = executionOrder,
                                 restTimerSeconds = exState.customRestSeconds
                             )
                         )
