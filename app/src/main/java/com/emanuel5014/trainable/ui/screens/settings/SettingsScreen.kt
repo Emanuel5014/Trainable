@@ -118,7 +118,7 @@ import kotlin.system.exitProcess
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToExerciseCustomization: () -> Unit,
+    onNavigateToWorkoutSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
@@ -144,7 +144,6 @@ fun SettingsScreen(
     val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
-    val workoutTimerEnabled by viewModel.workoutTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
 
@@ -872,7 +871,9 @@ fun SettingsScreen(
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToWorkoutSettings() },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -885,37 +886,8 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.workout_timer), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.workout_settings), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.workout_timer_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = workoutTimerEnabled,
-                                onCheckedChange = { viewModel.setWorkoutTimerEnabled(it) }
-                            )
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToExerciseCustomization() },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Edit,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.exercise_customization), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.exercise_customization_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)

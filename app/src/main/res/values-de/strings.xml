@@ -227,6 +227,9 @@
     <string name="warmup_timer_settings_desc">Aufwärmtimer-Button während des Trainings anzeigen</string>
     <string name="workout_timer">Trainingstimer</string>
     <string name="workout_timer_desc">Gesamte Trainingsdauer aufzeichnen</string>
+    <string name="inline_exercise_modifications">Inline-Änderungen</string>
+    <string name="inline_exercise_modifications_desc">Sätze und Übungen während normaler Workouts hinzufügen</string>
+    <string name="workout_settings">Training</string>
     <string name="workout_duration">Trainingsdauer</string>
     <string name="add_duration">Dauer hinzufügen</string>
     <string name="hours">Stunden</string>

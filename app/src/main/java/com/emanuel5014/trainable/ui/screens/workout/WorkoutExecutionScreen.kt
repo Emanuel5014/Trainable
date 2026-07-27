@@ -124,6 +124,7 @@ fun WorkoutExecutionScreen(
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }
+    var isAddingAfterCurrent by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
     var showFinishDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -232,7 +233,7 @@ fun WorkoutExecutionScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
                                 .clickable { 
-                                    if (state.isQuickWorkout) {
+                                if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
                                         showRenameDialog = true
                                     } else {
                                         state.planId?.let { onNavigateToRoutine(it) }
@@ -563,7 +564,7 @@ fun WorkoutExecutionScreen(
                                     )
                                 }
 
-                                if (state.isQuickWorkout) {
+                                if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
                                     item {
                                         Row(
                                             modifier = Modifier
@@ -573,7 +574,7 @@ fun WorkoutExecutionScreen(
                                         ) {
                                             GymButton(
                                                 onClick = { viewModel.addSetToExercise(targetIndex) },
-                                                modifier = if (targetIsExerciseCompleted) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                                                modifier = if (state.isQuickWorkout && targetIsExerciseCompleted) Modifier.fillMaxWidth() else Modifier.weight(1f),
                                                 containerColor = SurfaceContainerHigh,
                                                 contentColor = Primary
                                             ) {
@@ -581,10 +582,13 @@ fun WorkoutExecutionScreen(
                                                 Spacer(modifier = Modifier.width(8.dp))
                                                 Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
                                             }
-                                            if (!targetIsExerciseCompleted) {
+                                            if (!state.isQuickWorkout || !targetIsExerciseCompleted) {
                                                 val isLastExercise = targetIndex == state.exercises.size - 1
                                                 GymButton(
-                                                    onClick = { showAddExerciseSheet = true },
+                                                    onClick = {
+                                                        isAddingAfterCurrent = !state.isQuickWorkout
+                                                        showAddExerciseSheet = true
+                                                    },
                                                     modifier = Modifier.weight(1f),
                                                     containerColor = SurfaceContainerHigh,
                                                     contentColor = Primary
@@ -595,7 +599,13 @@ fun WorkoutExecutionScreen(
                                                     )
                                                     Spacer(modifier = Modifier.width(8.dp))
                                                     Text(
-                                                        text = stringResource(if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk).uppercase(),
+                                                        text = stringResource(
+                                                            if (state.isQuickWorkout) {
+                                                                if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk
+                                                            } else {
+                                                                R.string.add_exercise
+                                                            }
+                                                        ).uppercase(),
                                                         fontWeight = FontWeight.ExtraBold
                                                     )
                                                 }
@@ -855,7 +865,10 @@ fun WorkoutExecutionScreen(
 
                                                 // Add Exercise Button
                                                 GymButton(
-                                                    onClick = { showAddExerciseSheet = true },
+                                                    onClick = {
+                                                        isAddingAfterCurrent = false
+                                                        showAddExerciseSheet = true
+                                                    },
                                                     modifier = Modifier.weight(1f)
                                                 ) {
                                                     Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
@@ -1088,7 +1101,12 @@ fun WorkoutExecutionScreen(
                 availableExercises = availableExercises,
                 languageCode = languageCode,
                 onExerciseSelected = { exercise, sets, reps, rest ->
-                    viewModel.addExerciseToActiveSession(exercise, sets, reps, rest)
+                    if (isAddingAfterCurrent) {
+                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest)
+                    } else {
+                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest)
+                    }
+                    isAddingAfterCurrent = false
                     showAddExerciseSheet = false
                 },
                 onAddCustomExercise = { nome, categoria, onCreated ->
@@ -1096,7 +1114,10 @@ fun WorkoutExecutionScreen(
                 },
                 onEditCustomExercise = viewModel::updateCustomExercise,
                 onDeleteCustomExercise = viewModel::deleteCustomExercise,
-                onDismiss = { showAddExerciseSheet = false },
+                onDismiss = {
+                    isAddingAfterCurrent = false
+                    showAddExerciseSheet = false
+                },
                 isAdding = true,
                 editablePresetExercises = state.editablePresetExercises,
                 categories = categories

@@ -227,6 +227,9 @@
     <string name="warmup_timer_settings_desc">Mostrar botão do temporizador de aquecimento durante o treino</string>
     <string name="workout_timer">Temporizador de treino</string>
     <string name="workout_timer_desc">Rastrear duração total do treino</string>
+    <string name="inline_exercise_modifications">Modificações inline</string>
+    <string name="inline_exercise_modifications_desc">Adicionar séries e exercícios durante treinos normais</string>
+    <string name="workout_settings">Treino</string>
     <string name="workout_duration">Duração do treino</string>
     <string name="add_duration">Adicionar duração</string>
     <string name="hours">Horas</string>

@@ -227,6 +227,9 @@
     <string name="warmup_timer_settings_desc">Mostra il pulsante timer riscaldamento durante l\'allenamento</string>
     <string name="workout_timer">Timer Allenamento</string>
     <string name="workout_timer_desc">Traccia la durata totale dell\'allenamento</string>
+    <string name="inline_exercise_modifications">Modifiche Inline</string>
+    <string name="inline_exercise_modifications_desc">Aggiungi serie ed esercizi durante gli allenamenti normali</string>
+    <string name="workout_settings">Allenamento</string>
     <string name="workout_duration">Durata Allenamento</string>
     <string name="add_duration">Aggiungi durata</string>
     <string name="hours">Ore</string>

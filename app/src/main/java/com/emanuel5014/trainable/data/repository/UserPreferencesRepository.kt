@@ -56,6 +56,7 @@ class UserPreferencesRepository @Inject constructor(
         val PHYSICAL_CHECK_VALIDATION_IV = stringPreferencesKey("physical_check_validation_iv")
         val EDITABLE_PRESET_EXERCISES = booleanPreferencesKey("editable_preset_exercises")
         val WORKOUT_TIMER_ENABLED = booleanPreferencesKey("workout_timer_enabled")
+        val INLINE_EXERCISE_MODIFICATIONS_ENABLED = booleanPreferencesKey("inline_exercise_modifications_enabled")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -218,6 +219,11 @@ class UserPreferencesRepository @Inject constructor(
             preferences[WORKOUT_TIMER_ENABLED] ?: false
         }
 
+    val inlineExerciseModificationsEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[INLINE_EXERCISE_MODIFICATIONS_ENABLED] ?: false
+        }
+
     val themeMode: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[THEME_MODE] ?: 0
@@ -364,6 +370,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setWorkoutTimerEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[WORKOUT_TIMER_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setInlineExerciseModificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[INLINE_EXERCISE_MODIFICATIONS_ENABLED] = enabled
         }
     }
 

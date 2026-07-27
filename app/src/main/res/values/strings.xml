@@ -227,6 +227,9 @@
     <string name="warmup_timer_settings_desc">Show warmup timer button during workout</string>
     <string name="workout_timer">Workout Timer</string>
     <string name="workout_timer_desc">Track total workout duration</string>
+    <string name="inline_exercise_modifications">Inline Modifications</string>
+    <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
+    <string name="workout_settings">Workout</string>
     <string name="workout_duration">Workout Duration</string>
     <string name="add_duration">Add duration</string>
     <string name="hours">Hours</string>
