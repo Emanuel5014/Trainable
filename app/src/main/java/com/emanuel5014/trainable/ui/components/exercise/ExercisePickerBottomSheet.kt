@@ -79,7 +79,7 @@ fun ExercisePickerBottomSheet(
     exercises: List<ExerciseEntity>,
     categories: List<String>,
     onExerciseSelected: (ExerciseEntity) -> Unit,
-    onAddCustomExercise: (String, String) -> Unit,
+    onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
@@ -270,7 +270,10 @@ fun ExercisePickerBottomSheet(
         AddCustomExerciseDialog(
             categories = categories,
             onConfirm = { name, category ->
-                onAddCustomExercise(name, category)
+                onAddCustomExercise(name, category) { createdExercise ->
+                    onExerciseSelected(createdExercise)
+                    onDismiss()
+                }
                 showAddCustomDialog = false
             },
             onDismiss = { showAddCustomDialog = false }

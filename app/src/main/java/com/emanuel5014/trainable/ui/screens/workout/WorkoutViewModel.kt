@@ -1290,9 +1290,10 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addCustomExercise(nome: String, categoria: String) {
+    fun addCustomExercise(nome: String, categoria: String, onCreated: (ExerciseEntity) -> Unit = {}) {
         viewModelScope.launch {
-            exerciseRepository.addCustomExercise(nome, categoria)
+            val newId = exerciseRepository.addCustomExercise(nome, categoria)
+            onCreated(ExerciseEntity(id = newId, nome = nome, categoria = categoria))
         }
     }
 

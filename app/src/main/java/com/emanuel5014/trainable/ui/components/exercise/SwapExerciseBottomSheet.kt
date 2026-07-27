@@ -84,7 +84,7 @@ fun SwapExerciseBottomSheet(
     availableExercises: List<ExerciseEntity>,
     languageCode: String,
     onExerciseSelected: (ExerciseEntity, Int, String, Int?) -> Unit,
-    onAddCustomExercise: (String, String) -> Unit,
+    onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
@@ -281,7 +281,10 @@ fun SwapExerciseBottomSheet(
         AddCustomExerciseDialog(
             categories = allCategories,
             onConfirm = { name, category ->
-                onAddCustomExercise(name, category)
+                onAddCustomExercise(name, category) { createdExercise ->
+                    selectedExercise = createdExercise
+                    step = 2
+                }
                 showAddCustomDialog = false
             },
             onDismiss = { showAddCustomDialog = false }

@@ -391,8 +391,8 @@ fun EditWorkoutScreen(
                 }
                 showExercisePicker = false
             },
-            onAddCustomExercise = { name, category ->
-                viewModel.addCustomExercise(name, category)
+            onAddCustomExercise = { name, category, onCreated ->
+                viewModel.addCustomExercise(name, category, onCreated)
             },
             languageCode = languageCode,
             editablePresetExercises = editablePresetExercises

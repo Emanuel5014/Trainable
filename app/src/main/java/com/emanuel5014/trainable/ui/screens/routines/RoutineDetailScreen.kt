@@ -944,8 +944,8 @@ fun RoutineDetailScreen(
                 showExercisePicker = false
                 showExerciseSheet = true
             },
-            onAddCustomExercise = { nome, categoria ->
-                viewModel.addCustomExercise(nome, categoria)
+            onAddCustomExercise = { nome, categoria, onCreated ->
+                viewModel.addCustomExercise(nome, categoria, onCreated)
             },
             onEditCustomExercise = { exercise ->
                 viewModel.updateCustomExercise(exercise)

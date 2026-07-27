@@ -1065,8 +1065,8 @@ fun WorkoutExecutionScreen(
                         viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest)
                         showSwapExerciseSheet = false
                     },
-                    onAddCustomExercise = { nome, categoria ->
-                        viewModel.addCustomExercise(nome, categoria)
+                    onAddCustomExercise = { nome, categoria, onCreated ->
+                        viewModel.addCustomExercise(nome, categoria, onCreated)
                     },
                     onEditCustomExercise = { exercise ->
                         viewModel.updateCustomExercise(exercise)
@@ -1091,7 +1091,9 @@ fun WorkoutExecutionScreen(
                     viewModel.addExerciseToActiveSession(exercise, sets, reps, rest)
                     showAddExerciseSheet = false
                 },
-                onAddCustomExercise = viewModel::addCustomExercise,
+                onAddCustomExercise = { nome, categoria, onCreated ->
+                    viewModel.addCustomExercise(nome, categoria, onCreated)
+                },
                 onEditCustomExercise = viewModel::updateCustomExercise,
                 onDeleteCustomExercise = viewModel::deleteCustomExercise,
                 onDismiss = { showAddExerciseSheet = false },
