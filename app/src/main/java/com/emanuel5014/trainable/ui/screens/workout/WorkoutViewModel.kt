@@ -429,7 +429,7 @@ class WorkoutViewModel @Inject constructor(
 
         val isQuick = planWithDetails.plan.note == "SYSTEM_PLAN" && (planWithDetails.plan.nome == "Quick Workout" || planWithDetails.plan.nome == "Allenamento Veloce")
 
-        workoutStartTime = System.currentTimeMillis()
+        workoutStartTime = sessionWithSets.session.timestamp
 
         _state.update {
             it.copy(
