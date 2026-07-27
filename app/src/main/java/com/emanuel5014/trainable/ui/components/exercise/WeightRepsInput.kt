@@ -110,7 +110,7 @@ fun WeightRepsInput(
             )
             TextButton(
                 onClick = { 
-                    customWeightText = if (displayWeight > 0) WeightUnitConverter.format(displayWeight) else ""
+                    customWeightText = ""
                     showCustomWeightDialog = true 
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
@@ -149,6 +149,7 @@ fun WeightRepsInput(
                     value = customWeightText,
                     onValueChange = { customWeightText = it.replace(',', '.') },
                     label = { Text("Weight (${weightUnit})") },
+                    placeholder = { Text(WeightUnitConverter.format(displayWeight), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = Shapes.large,
