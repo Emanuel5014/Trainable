@@ -31,6 +31,7 @@ data class EditWorkoutState(
     val exercises: List<EditExerciseState> = emptyList(),
     val cardioLogs: List<CardioLogEntity> = emptyList(),
     val availableExercises: List<ExerciseEntity> = emptyList(),
+    val categories: List<String> = emptyList(),
     val sessionTimestamp: Long = 0L,
     val error: String? = null,
     val weightUnit: String = "kg"
@@ -67,6 +68,7 @@ class EditWorkoutViewModel @Inject constructor(
     init {
         loadSessionData()
         loadAvailableExercises()
+        loadCategories()
         viewModelScope.launch {
             userPreferencesRepository.userLanguage.collect { _ ->
                 _languageCode.value = localeManager.getResolvedLanguage()
@@ -138,6 +140,14 @@ class EditWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             exerciseRepository.getAllExercises().collect { exercises ->
                 _state.update { it.copy(availableExercises = exercises) }
+            }
+        }
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            exerciseRepository.getCategories().collect { categories ->
+                _state.update { it.copy(categories = categories) }
             }
         }
     }

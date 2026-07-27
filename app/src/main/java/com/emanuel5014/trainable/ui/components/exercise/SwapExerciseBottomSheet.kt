@@ -90,7 +90,8 @@ fun SwapExerciseBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     isAdding: Boolean = false,
-    editablePresetExercises: Boolean = false
+    editablePresetExercises: Boolean = false,
+    categories: List<String>? = null
 ) {
     rememberResponsiveSize()
 
@@ -120,7 +121,7 @@ fun SwapExerciseBottomSheet(
         }
     }
 
-    val categories = remember(availableExercises) {
+    val allCategories = categories ?: remember(availableExercises) {
         availableExercises.map { it.categoria }.distinct().sorted()
     }
 
@@ -196,7 +197,7 @@ fun SwapExerciseBottomSheet(
                             onClick = { showOnlyCustom = !showOnlyCustom },
                             label = { Text(stringResource(R.string.filter_custom)) }
                         )
-                        categories.forEach { category ->
+                        allCategories.forEach { category ->
                             val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
                             FilterChip(
                                 selected = selectedCategory == category,
@@ -278,7 +279,7 @@ fun SwapExerciseBottomSheet(
 
     if (showAddCustomDialog) {
         AddCustomExerciseDialog(
-            categories = categories,
+            categories = allCategories,
             onConfirm = { name, category ->
                 onAddCustomExercise(name, category)
                 showAddCustomDialog = false
@@ -290,7 +291,7 @@ fun SwapExerciseBottomSheet(
     if (exerciseToEdit != null) {
         EditCustomExerciseDialog(
             exercise = exerciseToEdit!!,
-            categories = categories,
+            categories = allCategories,
             onConfirm = { updatedExercise ->
                 onEditCustomExercise?.invoke(updatedExercise)
                 exerciseToEdit = null

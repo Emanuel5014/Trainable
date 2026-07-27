@@ -55,7 +55,8 @@ data class WorkoutState(
     val warmupTimerTotalSeconds: Int = 0,
     val exerciseExecutionOrder: Map<Int, Int> = emptyMap(),
     val nextExecutionOrder: Int = 0,
-    val editablePresetExercises: Boolean = false
+    val editablePresetExercises: Boolean = false,
+    val categories: List<String> = emptyList()
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -129,6 +130,9 @@ class WorkoutViewModel @Inject constructor(
     private val _availableExercises = MutableStateFlow<List<ExerciseEntity>>(emptyList())
     val availableExercises: StateFlow<List<ExerciseEntity>> = _availableExercises.asStateFlow()
 
+    private val _categories = MutableStateFlow<List<String>>(emptyList())
+    val categories: StateFlow<List<String>> = _categories.asStateFlow()
+
     private var timerJob: Job? = null
     private var warmupTimerJob: Job? = null
 
@@ -198,6 +202,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             exerciseRepository.getAllExercises().collect { exercises ->
                 _availableExercises.value = exercises
+            }
+        }
+
+        viewModelScope.launch {
+            exerciseRepository.getCategories().collect { categories ->
+                _categories.value = categories
             }
         }
 

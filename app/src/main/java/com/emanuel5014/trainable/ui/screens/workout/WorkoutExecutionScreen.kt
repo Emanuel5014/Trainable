@@ -120,6 +120,7 @@ fun WorkoutExecutionScreen(
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val availableExercises by viewModel.availableExercises.collectAsState()
+    val categories by viewModel.categories.collectAsState()
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }
@@ -1074,7 +1075,8 @@ fun WorkoutExecutionScreen(
                         viewModel.deleteCustomExercise(exercise)
                     },
                     onDismiss = { showSwapExerciseSheet = false },
-                    editablePresetExercises = state.editablePresetExercises
+                    editablePresetExercises = state.editablePresetExercises,
+                    categories = categories
                 )
             }
         }
@@ -1094,7 +1096,8 @@ fun WorkoutExecutionScreen(
                 onDeleteCustomExercise = viewModel::deleteCustomExercise,
                 onDismiss = { showAddExerciseSheet = false },
                 isAdding = true,
-                editablePresetExercises = state.editablePresetExercises
+                editablePresetExercises = state.editablePresetExercises,
+                categories = categories
             )
         }
 

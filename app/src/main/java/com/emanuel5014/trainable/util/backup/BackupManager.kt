@@ -226,6 +226,8 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_BLOCK]?.let { json.put("physical_check_validation_block", it) }
                 prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_IV]?.let { json.put("physical_check_validation_iv", it) }
 
+                json.put("editable_preset_exercises", prefs[UserPreferencesRepository.EDITABLE_PRESET_EXERCISES] ?: false)
+
                 json.toString()
             }
         } catch (e: Exception) {
@@ -336,6 +338,8 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_BLOCK] = jsonObject.getString("physical_check_validation_block")
                                             if (jsonObject.has("physical_check_validation_iv") && !jsonObject.isNull("physical_check_validation_iv"))
                                                 prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_IV] = jsonObject.getString("physical_check_validation_iv")
+                                            if (jsonObject.has("editable_preset_exercises"))
+                                                prefs[UserPreferencesRepository.EDITABLE_PRESET_EXERCISES] = jsonObject.getBoolean("editable_preset_exercises")
                                         }
                                     }
                                 } catch (e: Exception) {

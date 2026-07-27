@@ -378,13 +378,9 @@ fun EditWorkoutScreen(
     }
 
     if (showExercisePicker) {
-        val categories = remember(state.availableExercises) {
-            state.availableExercises.map { it.categoria }.distinct().sorted()
-        }
-
         ExercisePickerBottomSheet(
             exercises = state.availableExercises,
-            categories = categories,
+            categories = state.categories,
             onDismiss = { showExercisePicker = false },
             onExerciseSelected = { exercise ->
                 val currentSwapId = exerciseToSwap

@@ -146,6 +146,17 @@
     <string name="reset_exercise_names_message">Dies stellt die Namen aller voreingestellten Übungen auf ihre Standardwerte wieder her. Deine benutzerdefinierten Übungen bleiben unverändert.</string>
     <string name="exercise_customization">Übungsanpassung</string>
     <string name="exercise_customization_desc">Verwalten Sie die Optionen zur Anpassung von Übungsnamen</string>
+    <string name="custom_categories">Benutzerdefinierte Kategorien</string>
+    <string name="custom_categories_desc">Fügen Sie benutzerdefinierte Kategorien für Ihre Übungen hinzu oder entfernen Sie sie</string>
+    <string name="add_category">Kategorie Hinzufügen</string>
+    <string name="add_category_title">Neue Kategorie Hinzufügen</string>
+    <string name="edit_category">Kategorie Bearbeiten</string>
+    <string name="edit_category_title">Kategorie Bearbeiten</string>
+    <string name="category_name">Kategoriename</string>
+    <string name="category_name_empty">Der Kategoriename darf nicht leer sein</string>
+    <string name="category_already_exists">Kategorie existiert bereits</string>
+    <string name="delete_category_title">Kategorie Löschen?</string>
+    <string name="delete_category_message">Möchten Sie \"%1$s\" wirklich löschen? Übungen mit dieser Kategorie werden nicht gelöscht.</string>
 
     <!-- Exercises -->
     <string name="exercise">Übung</string>

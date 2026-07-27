@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -216,6 +217,12 @@ class SettingsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
+    )
+
+    val customCategories = exerciseRepository.getCustomCategories().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
     )
 
     val webServerState = webServerManager.state.stateIn(
@@ -494,6 +501,24 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             exerciseRepository.resetPresetExerciseNames()
             onComplete()
+        }
+    }
+
+    fun addCustomCategory(name: String) {
+        viewModelScope.launch {
+            exerciseRepository.addCustomCategory(name)
+        }
+    }
+
+    fun updateCustomCategory(category: CustomCategoryEntity) {
+        viewModelScope.launch {
+            exerciseRepository.updateCustomCategory(category)
+        }
+    }
+
+    fun deleteCustomCategory(category: CustomCategoryEntity) {
+        viewModelScope.launch {
+            exerciseRepository.deleteCustomCategory(category.id)
         }
     }
 

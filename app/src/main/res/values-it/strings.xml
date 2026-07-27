@@ -146,6 +146,17 @@
     <string name="reset_exercise_names_message">Questo ripristinerà i nomi di tutti gli esercizi preimpostati ai valori predefiniti. I tuoi esercizi personalizzati non saranno modificati.</string>
     <string name="exercise_customization">Personalizzazione Esercizi</string>
     <string name="exercise_customization_desc">Gestisci le opzioni di personalizzazione dei nomi degli esercizi</string>
+    <string name="custom_categories">Categorie Personalizzate</string>
+    <string name="custom_categories_desc">Aggiungi o rimuovi categorie personalizzate per i tuoi esercizi</string>
+    <string name="add_category">Aggiungi Categoria</string>
+    <string name="add_category_title">Aggiungi Nuova Categoria</string>
+    <string name="edit_category">Modifica Categoria</string>
+    <string name="edit_category_title">Modifica Categoria</string>
+    <string name="category_name">Nome categoria</string>
+    <string name="category_name_empty">Il nome della categoria non puo\' essere vuoto</string>
+    <string name="category_already_exists">La categoria esiste gia\'</string>
+    <string name="delete_category_title">Eliminare Categoria?</string>
+    <string name="delete_category_message">Sei sicuro di voler eliminare \"%1$s\"? Gli esercizi con questa categoria non verranno eliminati.</string>
 
     <!-- Exercises -->
     <string name="exercise">Esercizio</string>
