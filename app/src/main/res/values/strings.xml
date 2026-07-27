@@ -43,6 +43,7 @@
     <string name="share_exercises">Exercises</string>
     <string name="share_sets">Sets</string>
     <string name="share_volume">Tonnage</string>
+    <string name="share_duration">Duration</string>
 
     <string name="share_built_for_strength">BUILT FOR STRENGTH</string>
     <string name="share_footer_message">TRACK YOUR PROGRESS WITH TRAINABLE</string>
@@ -224,6 +225,12 @@
     <string name="warmup_timer_description">Set a timer for warmup, stretching, or anything else</string>
     <string name="warmup_timer_notifications_desc">Show warmup timer in system notifications</string>
     <string name="warmup_timer_settings_desc">Show warmup timer button during workout</string>
+    <string name="workout_timer">Workout Timer</string>
+    <string name="workout_timer_desc">Track total workout duration</string>
+    <string name="workout_duration">Workout Duration</string>
+    <string name="add_duration">Add duration</string>
+    <string name="hours">Hours</string>
+    <string name="minutes">Minutes</string>
     <string name="close_workout">Close Workout</string>
 
     <!-- Workout Session -->

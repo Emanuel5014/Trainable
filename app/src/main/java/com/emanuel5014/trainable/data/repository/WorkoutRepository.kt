@@ -297,8 +297,11 @@ class WorkoutRepository @Inject constructor(
 
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>> = workoutDao.getUnfinishedSessionsWithPlanName()
 
-    suspend fun setSessionFinished(sessionId: Int) {
+    suspend fun setSessionFinished(sessionId: Int, durationMs: Long? = null) {
         workoutDao.setSessionFinished(sessionId)
+        if (durationMs != null) {
+            workoutDao.setSessionDuration(sessionId, durationMs)
+        }
         triggerWidgetUpdate()
     }
 

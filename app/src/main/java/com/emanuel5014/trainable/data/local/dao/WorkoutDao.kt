@@ -156,6 +156,9 @@ interface WorkoutDao {
 
     @Query("UPDATE workout_sessions SET warmup_timer_end_time = :endTime, total_warmup_seconds = :totalSeconds WHERE id = :sessionId")
     suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?)
+
+    @Query("UPDATE workout_sessions SET duration_ms = :durationMs WHERE id = :sessionId")
+    suspend fun setSessionDuration(sessionId: Int, durationMs: Long)
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSet(set: SetLogEntity): Long

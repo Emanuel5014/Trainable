@@ -43,6 +43,7 @@
     <string name="share_exercises">Esercizi</string>
     <string name="share_sets">Serie</string>
     <string name="share_volume">Tonnellaggio</string>
+    <string name="share_duration">Durata</string>
 
     <string name="share_built_for_strength">COSTRUITO PER LA FORZA</string>
     <string name="share_footer_message">TRACCIA I TUOI PROGRESSI CON TRAINABLE</string>
@@ -224,6 +225,12 @@
     <string name="warmup_timer_description">Imposta un timer per riscaldamento, stretching o altro</string>
     <string name="warmup_timer_notifications_desc">Mostra il timer di riscaldamento nelle notifiche</string>
     <string name="warmup_timer_settings_desc">Mostra il pulsante timer riscaldamento durante l\'allenamento</string>
+    <string name="workout_timer">Timer Allenamento</string>
+    <string name="workout_timer_desc">Traccia la durata totale dell\'allenamento</string>
+    <string name="workout_duration">Durata Allenamento</string>
+    <string name="add_duration">Aggiungi durata</string>
+    <string name="hours">Ore</string>
+    <string name="minutes">Minuti</string>
     <string name="close_workout">Chiudi Allenamento</string>
 
     <!-- Workout Session -->

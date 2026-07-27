@@ -1296,12 +1296,30 @@ fun SessionHistoryCard(
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text(
-                            text = DateFormatter.format(session.timestamp),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = OnSurface
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = DateFormatter.format(session.timestamp),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = OnSurface
+                            )
+                            if (session.durationMs != null) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(4.dp)
+                                        .clip(CircleShape)
+                                        .background(OnSurfaceVariant.copy(alpha = 0.4f))
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = formatDuration(session.durationMs),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = OnSurfaceVariant,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                         Text(
                             text = when (planName) {
                                 "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
@@ -1687,5 +1705,17 @@ fun EditSetDialog(
         titleContentColor = OnSurface,
         textContentColor = OnSurfaceVariant
     )
+}
+
+private fun formatDuration(durationMs: Long): String {
+    val totalSeconds = durationMs / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return when {
+        hours > 0 -> "%dh %dm".format(hours, minutes)
+        minutes > 0 -> "%dm %ds".format(minutes, seconds)
+        else -> "%ds".format(seconds)
+    }
 }
 

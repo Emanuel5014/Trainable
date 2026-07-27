@@ -219,6 +219,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = false
     )
 
+    val workoutTimerEnabled = userPrefsRepository.workoutTimerEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val customCategories = exerciseRepository.getCustomCategories().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -494,6 +500,12 @@ class SettingsViewModel @Inject constructor(
     fun setEditablePresetExercises(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setEditablePresetExercises(enabled)
+        }
+    }
+
+    fun setWorkoutTimerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setWorkoutTimerEnabled(enabled)
         }
     }
 

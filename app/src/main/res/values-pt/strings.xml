@@ -43,6 +43,7 @@
     <string name="share_exercises">Exercícios</string>
     <string name="share_sets">Séries</string>
     <string name="share_volume">Tonelagem</string>
+    <string name="share_duration">Duração</string>
 
     <string name="share_built_for_strength">FEITO PARA FORÇA</string>
     <string name="share_footer_message">ACOMPANHE SEU PROGRESSO COM TRAINABLE</string>
@@ -224,6 +225,12 @@
     <string name="warmup_timer_description">Defina um timer para aquecimento, alongamento ou outros</string>
     <string name="warmup_timer_notifications_desc">Mostrar temporizador de aquecimento nas notificações do sistema</string>
     <string name="warmup_timer_settings_desc">Mostrar botão do temporizador de aquecimento durante o treino</string>
+    <string name="workout_timer">Temporizador de treino</string>
+    <string name="workout_timer_desc">Rastrear duração total do treino</string>
+    <string name="workout_duration">Duração do treino</string>
+    <string name="add_duration">Adicionar duração</string>
+    <string name="hours">Horas</string>
+    <string name="minutes">Minutos</string>
     <string name="close_workout">Fechar Treino</string>
 
     <!-- Workout Session -->

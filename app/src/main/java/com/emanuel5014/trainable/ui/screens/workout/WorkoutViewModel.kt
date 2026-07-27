@@ -56,7 +56,8 @@ data class WorkoutState(
     val exerciseExecutionOrder: Map<Int, Int> = emptyMap(),
     val nextExecutionOrder: Int = 0,
     val editablePresetExercises: Boolean = false,
-    val categories: List<String> = emptyList()
+    val categories: List<String> = emptyList(),
+    val workoutTimerEnabled: Boolean = false
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -135,6 +136,7 @@ class WorkoutViewModel @Inject constructor(
 
     private var timerJob: Job? = null
     private var warmupTimerJob: Job? = null
+    private var workoutStartTime: Long = 0L
 
     init {
         viewModelScope.launch {
@@ -190,6 +192,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.warmupTimerEnabled.collect { enabled ->
                 _state.update { it.copy(warmupTimerEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.workoutTimerEnabled.collect { enabled ->
+                _state.update { it.copy(workoutTimerEnabled = enabled) }
             }
         }
 
@@ -390,6 +398,8 @@ class WorkoutViewModel @Inject constructor(
             }
         }
 
+        workoutStartTime = System.currentTimeMillis()
+
         _state.update {
             it.copy(
                 isLoading = false,
@@ -467,6 +477,8 @@ class WorkoutViewModel @Inject constructor(
             exState.exercise.id to index
         }.toMap()
 
+        workoutStartTime = System.currentTimeMillis()
+
         _state.update {
             it.copy(
                 isLoading = false,
@@ -485,6 +497,8 @@ class WorkoutViewModel @Inject constructor(
         val sessionId = workoutRepository.startQuickWorkoutSession(name).toInt()
         val displayName = name ?: localeManager.getString(R.string.quick_workout)
         
+        workoutStartTime = System.currentTimeMillis()
+
         _state.update {
             it.copy(
                 isLoading = false,
@@ -843,9 +857,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _state.value.sessionId?.let { id ->
+                    val durationMs = if (_state.value.workoutTimerEnabled) {
+                        System.currentTimeMillis() - workoutStartTime
+                    } else null
                     withContext(Dispatchers.IO) {
                         workoutRepository.deleteUncompletedSetsForSession(id)
-                        workoutRepository.setSessionFinished(id)
+                        workoutRepository.setSessionFinished(id, durationMs)
                     }
                     stopRestTimer()
                     stopWarmupTimer()

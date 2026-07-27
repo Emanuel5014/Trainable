@@ -43,6 +43,7 @@
     <string name="share_exercises">Übungen</string>
     <string name="share_sets">Sätze</string>
     <string name="share_volume">Tonnage</string>
+    <string name="share_duration">Dauer</string>
 
     <string name="share_built_for_strength">FÜR KRAFT GEBAUT</string>
     <string name="share_footer_message">VERFOLGE DEINE FORTSCHRITTE MIT TRAINABLE</string>
@@ -224,6 +225,12 @@
     <string name="warmup_timer_description">Timer für Aufwärmen, Dehnen oder Sonstiges einstellen</string>
     <string name="warmup_timer_notifications_desc">Aufwärmtimer in Systembenachrichtigungen anzeigen</string>
     <string name="warmup_timer_settings_desc">Aufwärmtimer-Button während des Trainings anzeigen</string>
+    <string name="workout_timer">Trainingstimer</string>
+    <string name="workout_timer_desc">Gesamte Trainingsdauer aufzeichnen</string>
+    <string name="workout_duration">Trainingsdauer</string>
+    <string name="add_duration">Dauer hinzufügen</string>
+    <string name="hours">Stunden</string>
+    <string name="minutes">Minuten</string>
     <string name="close_workout">Training schließen</string>
 
     <!-- Workout Session -->

@@ -113,6 +113,7 @@ fun EditWorkoutScreen(
     var showAddCardio by remember { mutableStateOf(false) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showDurationDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -162,6 +163,32 @@ fun EditWorkoutScreen(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = " • " + stringResource(R.string.edit_date).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = OnSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { showDurationDialog = true }
+                                .padding(top = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Timer,
+                                contentDescription = null,
+                                tint = OnSurfaceVariant,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (state.sessionDurationMs != null) {
+                                    val totalSec = state.sessionDurationMs!! / 1000
+                                    val h = totalSec / 3600
+                                    val m = (totalSec % 3600) / 60
+                                    if (h > 0) "${h}h ${m}m" else "${m}m"
+                                } else stringResource(R.string.add_duration),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnSurfaceVariant,
                                 fontWeight = FontWeight.SemiBold
@@ -374,6 +401,64 @@ fun EditWorkoutScreen(
                     Text(text = stringResource(android.R.string.cancel))
                 }
             }
+        )
+    }
+
+    if (showDurationDialog) {
+        val initialDurationMs = state.sessionDurationMs ?: 0L
+        var hoursText by remember { mutableStateOf(((initialDurationMs / 3600000).toInt()).toString()) }
+        var minutesText by remember { mutableStateOf((((initialDurationMs % 3600000) / 60000).toInt()).toString()) }
+        AlertDialog(
+            onDismissRequest = { showDurationDialog = false },
+            title = { Text(stringResource(R.string.workout_duration), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black) },
+            text = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = hoursText,
+                        onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.hours)) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        shape = Shapes.medium
+                    )
+                    Text(":", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = OnSurface)
+                    OutlinedTextField(
+                        value = minutesText,
+                        onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.minutes)) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        shape = Shapes.medium
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val h = hoursText.toIntOrNull() ?: 0
+                        val m = minutesText.toIntOrNull() ?: 0
+                        val totalMs = (h * 3600L + m * 60L) * 1000L
+                        viewModel.updateSessionDuration(if (totalMs > 0) totalMs else null)
+                        showDurationDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDurationDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            },
+            containerColor = Surface,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
         )
     }
 

@@ -33,6 +33,7 @@ data class EditWorkoutState(
     val availableExercises: List<ExerciseEntity> = emptyList(),
     val categories: List<String> = emptyList(),
     val sessionTimestamp: Long = 0L,
+    val sessionDurationMs: Long? = null,
     val error: String? = null,
     val weightUnit: String = "kg"
 )
@@ -107,6 +108,7 @@ class EditWorkoutViewModel @Inject constructor(
                                 sessionId = sessionId,
                                 planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome,
                                 sessionTimestamp = sessionDetails.session.timestamp,
+                                sessionDurationMs = sessionDetails.session.durationMs,
                                 exercises = exercises,
                                 cardioLogs = sessionDetails.cardio
                             )
@@ -573,6 +575,16 @@ class EditWorkoutViewModel @Inject constructor(
             val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
             if (sessionDetails != null) {
                 workoutRepository.updateSession(sessionDetails.session.copy(timestamp = newTimestamp))
+            }
+        }
+    }
+
+    fun updateSessionDuration(durationMs: Long?) {
+        viewModelScope.launch {
+            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
+            if (sessionDetails != null) {
+                workoutRepository.updateSession(sessionDetails.session.copy(durationMs = durationMs))
+                _state.update { it.copy(sessionDurationMs = durationMs) }
             }
         }
     }
