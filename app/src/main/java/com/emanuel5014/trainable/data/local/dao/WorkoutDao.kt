@@ -157,6 +157,9 @@ interface WorkoutDao {
     @Query("UPDATE workout_sessions SET warmup_timer_end_time = :endTime, total_warmup_seconds = :totalSeconds WHERE id = :sessionId")
     suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?)
 
+    @Query("UPDATE workout_sessions SET cardio_timer_seconds = :seconds, cardio_timer_running = :running, cardio_timer_paused = :paused, cardio_timer_started_at = :startedAt WHERE id = :sessionId")
+    suspend fun updateCardioTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?)
+
     @Query("UPDATE workout_sessions SET duration_ms = :durationMs WHERE id = :sessionId")
     suspend fun setSessionDuration(sessionId: Int, durationMs: Long)
     
@@ -215,6 +218,9 @@ interface WorkoutDao {
 
     @Query("DELETE FROM set_logs WHERE session_id = :sessionId AND is_completed = 0")
     suspend fun deleteUncompletedSetsForSession(sessionId: Int)
+
+    @Query("DELETE FROM cardio_logs WHERE session_id = :sessionId AND is_completed = 0")
+    suspend fun deleteUncompletedCardioLogsForSession(sessionId: Int)
 
     @Transaction
     suspend fun updateSetOrders(sets: List<SetLogEntity>) {

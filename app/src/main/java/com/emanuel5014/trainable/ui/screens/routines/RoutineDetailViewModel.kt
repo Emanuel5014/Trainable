@@ -188,7 +188,7 @@ class RoutineDetailViewModel @Inject constructor(
         exerciseId: Int,
         cardioCategoria: String?,
         durataTargetSecondi: Int?,
-        distanzaTargetKm: Float?
+        distanzaTargetKm: Float? = null
     ) {
         viewModelScope.launch {
             val current = _uiState.value.planDetails ?: return@launch

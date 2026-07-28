@@ -177,7 +177,6 @@ fun RoutineDetailScreen(
     var repsText by remember { mutableStateOf("8-12") }
     var restText by remember { mutableStateOf("120") }
     var cardioDurationText by remember { mutableStateOf("20") }
-    var cardioDistanceText by remember { mutableStateOf("") }
 
     // Local state for dragging to ensure smoothness
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
@@ -209,7 +208,6 @@ fun RoutineDetailScreen(
         setsText = "3"
         repsText = "8"
         cardioDurationText = "20"
-        cardioDistanceText = ""
         // Inherit rest from the last exercise in the list, default to 120 if empty
         restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
         showExercisePicker = true
@@ -222,7 +220,6 @@ fun RoutineDetailScreen(
         repsText = item.planExercise.repsTarget
         restText = item.planExercise.recuperoTarget.toString()
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
-        cardioDistanceText = item.planExercise.distanzaTargetKm?.toString() ?: ""
         showExerciseSheet = true
     }
 
@@ -782,25 +779,13 @@ fun RoutineDetailScreen(
                     }
 
                     if (isSelectedCardio) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                        ) {
-                            GymInputField(
-                                value = cardioDurationText,
-                                onValueChange = { cardioDurationText = it },
-                                label = "Durata Target (min)",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
-                            )
-                            GymInputField(
-                                value = cardioDistanceText,
-                                onValueChange = { cardioDistanceText = it },
-                                label = "Distanza Target (km)",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                        GymInputField(
+                            value = cardioDurationText,
+                            onValueChange = { cardioDurationText = it },
+                            label = "Durata Target (min)",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     } else {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -928,23 +913,20 @@ fun RoutineDetailScreen(
                             val current = editingExercise
                             if (isSelectedCardio) {
                                 val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
-                                val distKm = cardioDistanceText.trim().toFloatOrNull()
                                 val category = selectedExercise?.categoria ?: "Cardio"
 
                                 if (current == null) {
                                     viewModel.addCardioExercise(
                                         exerciseId = exerciseId,
                                         cardioCategoria = category,
-                                        durataTargetSecondi = durSec,
-                                        distanzaTargetKm = distKm
+                                        durataTargetSecondi = durSec
                                     )
                                 } else {
                                     viewModel.updateExercise(
                                         original = current.planExercise.copy(
                                             exerciseType = "cardio",
                                             cardioCategoria = category,
-                                            durataTargetSecondi = durSec,
-                                            distanzaTargetKm = distKm
+                                            durataTargetSecondi = durSec
                                         ),
                                         exerciseId = exerciseId,
                                         serieTarget = 1,

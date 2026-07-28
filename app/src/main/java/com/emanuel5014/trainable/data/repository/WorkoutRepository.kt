@@ -308,6 +308,8 @@ class WorkoutRepository @Inject constructor(
     suspend fun updateRestTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateRestTimer(sessionId, endTime, totalSeconds)
 
     suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateWarmupTimer(sessionId, endTime, totalSeconds)
+
+    suspend fun updateCardioTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?) = workoutDao.updateCardioTimer(sessionId, seconds, running, paused, startedAt)
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     
@@ -466,6 +468,8 @@ class WorkoutRepository @Inject constructor(
     suspend fun updateSetOrders(sets: List<SetLogEntity>) = workoutDao.updateSetOrders(sets)
 
     suspend fun deleteUncompletedSetsForSession(sessionId: Int) = workoutDao.deleteUncompletedSetsForSession(sessionId)
+
+    suspend fun deleteUncompletedCardioLogsForSession(sessionId: Int) = workoutDao.deleteUncompletedCardioLogsForSession(sessionId)
 
     suspend fun saveExerciseSwap(swap: SessionExerciseSwapEntity) = workoutDao.insertExerciseSwap(swap)
 

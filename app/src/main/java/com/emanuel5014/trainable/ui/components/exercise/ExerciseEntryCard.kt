@@ -73,8 +73,9 @@ fun ExerciseEntryCard(
                                 .padding(horizontal = Spacing.small, vertical = 2.dp)
                         ) {
                             val cat = item.planExercise.cardioCategoria ?: item.exercise.categoria
+                            val label = if (cat.equals("Cardio", ignoreCase = true)) "Cardio" else "Cardio ($cat)"
                             Text(
-                                text = "Cardio ($cat)",
+                                text = label,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = com.emanuel5014.trainable.ui.theme.Tertiary
                             )
