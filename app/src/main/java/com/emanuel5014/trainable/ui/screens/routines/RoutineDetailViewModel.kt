@@ -184,6 +184,33 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    fun addCardioExercise(
+        exerciseId: Int,
+        cardioCategoria: String?,
+        durataTargetSecondi: Int?,
+        distanzaTargetKm: Float?
+    ) {
+        viewModelScope.launch {
+            val current = _uiState.value.planDetails ?: return@launch
+            val nextOrder = (current.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
+
+            workoutRepository.savePlanExercise(
+                PlanExerciseEntity(
+                    planId = current.plan.id,
+                    exerciseId = exerciseId,
+                    serieTarget = 1,
+                    repsTarget = "1",
+                    recuperoTarget = 0,
+                    ordine = nextOrder,
+                    exerciseType = "cardio",
+                    cardioCategoria = cardioCategoria,
+                    durataTargetSecondi = durataTargetSecondi,
+                    distanzaTargetKm = distanzaTargetKm
+                )
+            )
+        }
+    }
+
     fun updateExercise(
         original: PlanExerciseEntity,
         exerciseId: Int,

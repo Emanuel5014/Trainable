@@ -30,5 +30,9 @@ data class CardioLogEntity(
     @ColumnInfo(name = "durata_secondi")
     val durataSecondi: Int,
     @ColumnInfo(name = "timestamp")
-    val timestamp: Long
+    val timestamp: Long,
+    @ColumnInfo(name = "ordine_esercizio")
+    val ordineEsercizio: Int = 0,
+    @ColumnInfo(name = "is_completed")
+    val isCompleted: Boolean = true
 )

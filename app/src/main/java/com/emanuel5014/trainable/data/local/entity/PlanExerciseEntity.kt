@@ -40,5 +40,13 @@ data class PlanExerciseEntity(
     @ColumnInfo(name = "ordine")
     val ordine: Int,
     @ColumnInfo(name = "superset_id")
-    val supersetId: String? = null
+    val supersetId: String? = null,
+    @ColumnInfo(name = "exercise_type")
+    val exerciseType: String = "strength",
+    @ColumnInfo(name = "durata_target_secondi")
+    val durataTargetSecondi: Int? = null,
+    @ColumnInfo(name = "distanza_target_km")
+    val distanzaTargetKm: Float? = null,
+    @ColumnInfo(name = "cardio_categoria")
+    val cardioCategoria: String? = null
 )

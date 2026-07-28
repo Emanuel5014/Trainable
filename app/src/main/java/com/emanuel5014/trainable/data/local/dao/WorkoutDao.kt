@@ -167,6 +167,12 @@ interface WorkoutDao {
     suspend fun insertCardioLog(cardio: CardioLogEntity): Long
     
     @Update
+    suspend fun updateCardioLog(cardio: CardioLogEntity)
+
+    @Query("SELECT * FROM cardio_logs WHERE session_id = :sessionId")
+    fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>>
+    
+    @Update
     suspend fun updateSet(set: SetLogEntity)
     
     @Delete

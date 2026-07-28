@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
         PhysicalCheckEntity::class,
         CustomCategoryEntity::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -216,6 +216,25 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN exercise_type TEXT NOT NULL DEFAULT 'strength'")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN durata_target_secondi INTEGER")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN distanza_target_km REAL")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN cardio_categoria TEXT")
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN ordine_esercizio INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 1")
+
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (150, 'Running', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (151, 'Cycling', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (152, 'Walking', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (153, 'Elliptical', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (154, 'Rowing Machine', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (155, 'Stairmaster', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (156, 'Jump Rope', 'Cardio')")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -228,7 +247,12 @@ abstract class GymDatabase : RoomDatabase() {
                     GymDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19)
+                    .addMigrations(
+                        MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                        MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
+                        MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
+                        MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20
+                    )
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

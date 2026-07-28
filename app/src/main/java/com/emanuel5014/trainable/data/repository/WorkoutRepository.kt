@@ -311,7 +311,11 @@ class WorkoutRepository @Inject constructor(
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     
-    suspend fun saveCardioLog(cardio: CardioLogEntity) = workoutDao.insertCardioLog(cardio)
+    suspend fun saveCardioLog(cardio: CardioLogEntity): Long = workoutDao.insertCardioLog(cardio)
+
+    suspend fun updateCardioLog(cardio: CardioLogEntity) = workoutDao.updateCardioLog(cardio)
+
+    fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>> = workoutDao.getCardioLogsForSession(sessionId)
 
     suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long) {
         val user = userDao.getUser().first() ?: return

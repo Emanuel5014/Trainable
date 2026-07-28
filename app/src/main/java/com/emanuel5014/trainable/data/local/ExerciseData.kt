@@ -137,6 +137,15 @@ object ExerciseData {
         ExerciseEntity(id = 140, nome = "Guillotine Press", categoria = "Chest"),
         ExerciseEntity(id = 141, nome = "Single-Arm Dumbbell Lateral Raise", categoria = "Shoulders"),
         ExerciseEntity(id = 142, nome = "Russian Twist with Weight", categoria = "Core"),
-        ExerciseEntity(id = 143, nome = "Multipurpose", categoria = "Chest")
+        ExerciseEntity(id = 143, nome = "Multipurpose", categoria = "Chest"),
+
+        // Cardio
+        ExerciseEntity(id = 150, nome = "Running", categoria = "Cardio"),
+        ExerciseEntity(id = 151, nome = "Cycling", categoria = "Cardio"),
+        ExerciseEntity(id = 152, nome = "Walking", categoria = "Cardio"),
+        ExerciseEntity(id = 153, nome = "Elliptical", categoria = "Cardio"),
+        ExerciseEntity(id = 154, nome = "Rowing Machine", categoria = "Cardio"),
+        ExerciseEntity(id = 155, nome = "Stairmaster", categoria = "Cardio"),
+        ExerciseEntity(id = 156, nome = "Jump Rope", categoria = "Cardio")
     )
 }

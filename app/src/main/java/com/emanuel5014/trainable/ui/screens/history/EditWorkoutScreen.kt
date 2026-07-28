@@ -810,12 +810,14 @@ fun CardioEditCard(
     onEdit: (CardioLogEntity) -> Unit,
     onDelete: (CardioLogEntity) -> Unit
 ) {
-    val icon = when (cardioLog.categoria.lowercase()) {
-        "corsa", "run" -> Icons.AutoMirrored.Rounded.DirectionsRun
-        "bici", "bike", "cycling" -> Icons.AutoMirrored.Rounded.DirectionsBike
-        "camminata", "walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
+    val catLower = cardioLog.categoria.lowercase()
+    val icon = when {
+        catLower.contains("bici") || catLower.contains("bike") || catLower.contains("cycling") || catLower.contains("cyclette") -> Icons.AutoMirrored.Rounded.DirectionsBike
+        catLower.contains("camminata") || catLower.contains("walk") -> Icons.AutoMirrored.Rounded.DirectionsWalk
         else -> Icons.AutoMirrored.Rounded.DirectionsRun
     }
+    val languageCode = java.util.Locale.getDefault().language
+    val translatedTitle = ExerciseTranslations.translate(cardioLog.categoria, languageCode)
     
     GymCard(
         modifier = Modifier
@@ -840,7 +842,7 @@ fun CardioEditCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = cardioLog.categoria.uppercase(),
+                        text = translatedTitle.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
                         fontWeight = FontWeight.Black,

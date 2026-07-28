@@ -176,6 +176,8 @@ fun RoutineDetailScreen(
     var setsText by remember { mutableStateOf("3") }
     var repsText by remember { mutableStateOf("8-12") }
     var restText by remember { mutableStateOf("120") }
+    var cardioDurationText by remember { mutableStateOf("20") }
+    var cardioDistanceText by remember { mutableStateOf("") }
 
     // Local state for dragging to ensure smoothness
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
@@ -206,6 +208,8 @@ fun RoutineDetailScreen(
         selectedExerciseId = null
         setsText = "3"
         repsText = "8"
+        cardioDurationText = "20"
+        cardioDistanceText = ""
         // Inherit rest from the last exercise in the list, default to 120 if empty
         restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
         showExercisePicker = true
@@ -217,6 +221,8 @@ fun RoutineDetailScreen(
         setsText = item.planExercise.serieTarget.toString()
         repsText = item.planExercise.repsTarget
         restText = item.planExercise.recuperoTarget.toString()
+        cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
+        cardioDistanceText = item.planExercise.distanzaTargetKm?.toString() ?: ""
         showExerciseSheet = true
     }
 
@@ -687,6 +693,7 @@ fun RoutineDetailScreen(
 
     if (showExerciseSheet) {
         val selectedExercise = uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
+        val isSelectedCardio = selectedExercise?.categoria?.equals("Cardio", ignoreCase = true) == true || editingExercise?.planExercise?.exerciseType == "cardio"
 
         ModalBottomSheet(
             onDismissRequest = { showExerciseSheet = false },
@@ -774,31 +781,52 @@ fun RoutineDetailScreen(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                    ) {
-                        GymInputField(
-                            value = setsText,
-                            onValueChange = { setsText = it },
-                            label = stringResource(R.string.sets),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                        GymInputField(
-                            value = repsText,
-                            onValueChange = {
-                                repsText = it
-                                val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                    setsText = repCount.toString()
-                                }
-                            },
-                            label = stringResource(R.string.reps),
-                            supportingText = stringResource(R.string.reps_hint),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    if (isSelectedCardio) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                        ) {
+                            GymInputField(
+                                value = cardioDurationText,
+                                onValueChange = { cardioDurationText = it },
+                                label = "Durata Target (min)",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymInputField(
+                                value = cardioDistanceText,
+                                onValueChange = { cardioDistanceText = it },
+                                label = "Distanza Target (km)",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                        ) {
+                            GymInputField(
+                                value = setsText,
+                                onValueChange = { setsText = it },
+                                label = stringResource(R.string.sets),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymInputField(
+                                value = repsText,
+                                onValueChange = {
+                                    repsText = it
+                                    val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                    if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                        setsText = repCount.toString()
+                                    }
+                                },
+                                label = stringResource(R.string.reps),
+                                supportingText = stringResource(R.string.reps_hint),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
 
                         RestSlider(
                             value = restText.toIntOrNull() ?: 120,
@@ -807,6 +835,7 @@ fun RoutineDetailScreen(
                             haptic = haptic,
                             modifier = Modifier.fillMaxWidth()
                         )
+                    }
 
                         if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
                             val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
@@ -896,26 +925,54 @@ fun RoutineDetailScreen(
                     GymButton(
                         onClick = {
                             val exerciseId = selectedExerciseId ?: return@GymButton
-                            val sets = setsText.trim().toIntOrNull() ?: return@GymButton
-                            val rest = restText.trim().toIntOrNull() ?: return@GymButton
-                            val reps = repsText.trim().ifBlank { return@GymButton }
-
                             val current = editingExercise
-                            if (current == null) {
-                                viewModel.addExercise(
-                                    exerciseId = exerciseId,
-                                    serieTarget = sets,
-                                    repsTarget = reps,
-                                    recuperoTarget = rest
-                                )
+                            if (isSelectedCardio) {
+                                val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
+                                val distKm = cardioDistanceText.trim().toFloatOrNull()
+                                val category = selectedExercise?.categoria ?: "Cardio"
+
+                                if (current == null) {
+                                    viewModel.addCardioExercise(
+                                        exerciseId = exerciseId,
+                                        cardioCategoria = category,
+                                        durataTargetSecondi = durSec,
+                                        distanzaTargetKm = distKm
+                                    )
+                                } else {
+                                    viewModel.updateExercise(
+                                        original = current.planExercise.copy(
+                                            exerciseType = "cardio",
+                                            cardioCategoria = category,
+                                            durataTargetSecondi = durSec,
+                                            distanzaTargetKm = distKm
+                                        ),
+                                        exerciseId = exerciseId,
+                                        serieTarget = 1,
+                                        repsTarget = "1",
+                                        recuperoTarget = 0
+                                    )
+                                }
                             } else {
-                                viewModel.updateExercise(
-                                    original = current.planExercise,
-                                    exerciseId = exerciseId,
-                                    serieTarget = sets,
-                                    repsTarget = reps,
-                                    recuperoTarget = rest
-                                )
+                                val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                val reps = repsText.trim().ifBlank { return@GymButton }
+
+                                if (current == null) {
+                                    viewModel.addExercise(
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = reps,
+                                        recuperoTarget = rest
+                                    )
+                                } else {
+                                    viewModel.updateExercise(
+                                        original = current.planExercise,
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = reps,
+                                        recuperoTarget = rest
+                                    )
+                                }
                             }
                             scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
                                 if (!exerciseSheetState.isVisible) {

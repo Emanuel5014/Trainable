@@ -66,23 +66,54 @@ fun ExerciseEntryCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .background(SurfaceContainerHigh, CircleShape)
-                            .padding(horizontal = Spacing.small, vertical = 2.dp)
-                    ) {
+                    if (item.planExercise.exerciseType == "cardio") {
+                        Box(
+                            modifier = Modifier
+                                .background(com.emanuel5014.trainable.ui.theme.Tertiary.copy(alpha = 0.15f), CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            val cat = item.planExercise.cardioCategoria ?: item.exercise.categoria
+                            Text(
+                                text = "Cardio ($cat)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = com.emanuel5014.trainable.ui.theme.Tertiary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        val durMin = item.planExercise.durataTargetSecondi?.let { it / 60 }
+                        val distKm = item.planExercise.distanzaTargetKm
+                        val targetText = buildString {
+                            if (durMin != null && durMin > 0) append("${durMin} min")
+                            if (distKm != null && distKm > 0) {
+                                if (isNotEmpty()) append(" • ")
+                                append("${distKm} km")
+                            }
+                            if (isEmpty()) append("Free-form")
+                        }
                         Text(
-                            text = "${item.planExercise.serieTarget} × ${item.planExercise.repsTarget}",
-                            style = MaterialTheme.typography.labelSmall,
+                            text = targetText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .background(SurfaceContainerHigh, CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "${item.planExercise.serieTarget} × ${item.planExercise.repsTarget}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Text(
+                            text = "Rest: ${item.planExercise.recuperoTarget}s",
+                            style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
                     }
-                    Spacer(modifier = Modifier.width(Spacing.small))
-                    Text(
-                        text = "Rest: ${item.planExercise.recuperoTarget}s",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnSurfaceVariant
-                    )
                 }
             }
         }

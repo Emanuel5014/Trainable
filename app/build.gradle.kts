@@ -135,6 +135,9 @@ implementation(libs.google.fonts)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.cors)
 
+    // Graphics Shapes (for morph animations)
+    implementation(libs.androidx.graphics.shapes)
+
     // Biometric & Fragment support
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment)
