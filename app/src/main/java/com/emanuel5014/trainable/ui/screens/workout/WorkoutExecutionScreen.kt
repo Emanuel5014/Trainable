@@ -801,7 +801,8 @@ fun WorkoutExecutionScreen(
                                             exerciseState = ex,
                                             state = state,
                                             viewModel = viewModel,
-                                            languageCode = languageCode
+                                            languageCode = languageCode,
+                                            onFinishWorkout = { showFinishDialog = true }
                                         )
                                     }
                                 }
@@ -1370,7 +1371,7 @@ fun CardioToggleButton(
                 .fillMaxSize(0.4f)
                 .graphicsLayer { rotationZ = -rotation.value },
             imageVector = when {
-                isRunning -> Icons.Rounded.Stop
+                isRunning -> Icons.Rounded.Pause
                 isPaused -> Icons.Rounded.PlayArrow
                 else -> Icons.Rounded.PlayArrow
             },
@@ -1544,7 +1545,8 @@ fun CardioExerciseContent(
                         stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
                         trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
                         gapSize = 12.dp,
-                        wavelength = 40.dp
+                        wavelength = 40.dp,
+                        amplitude = { if (state.cardioTimerRunning) 1f else 0f }
                     )
                     CardioToggleButton(
                         isRunning = state.cardioTimerRunning,
@@ -1747,11 +1749,12 @@ fun CardioExerciseContent(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            Icon(
-                                                imageVector = if (targetDurationMet) Icons.Rounded.Check else Icons.Rounded.Close,
-                                                contentDescription = null,
-                                                tint = if (targetDurationMet) Primary else Error,
-                                                modifier = Modifier.size(20.dp)
+                                            Text(
+                                                text = "TARGET",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = if (targetDurationMet) Primary else Error,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                letterSpacing = 1.sp
                                             )
                                             Text(
                                                 text = "${String.format("%d:%02d", targetMins, targetSecs)}",
@@ -1801,7 +1804,8 @@ fun CardioHubSection(
     exerciseState: WorkoutExerciseState,
     state: WorkoutState,
     viewModel: WorkoutViewModel,
-    languageCode: String
+    languageCode: String,
+    onFinishWorkout: () -> Unit
 ) {
     val isLastExercise = state.currentExerciseIndex == state.exercises.lastIndex
 
@@ -1880,7 +1884,7 @@ fun CardioHubSection(
             }
         } else {
             GymButton(
-                onClick = { viewModel.finishWorkout() },
+                onClick = onFinishWorkout,
                 modifier = Modifier.weight(1f),
                 height = 64
             ) {
