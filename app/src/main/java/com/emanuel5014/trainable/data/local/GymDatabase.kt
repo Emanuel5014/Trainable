@@ -334,9 +334,9 @@ abstract class GymDatabase : RoomDatabase() {
 
         private suspend fun syncExercises(exerciseDao: ExerciseDao) {
             try {
-                exerciseDao.insertExercises(ExerciseData.initialExercises)
+                exerciseDao.upsertExercises(ExerciseData.initialExercises)
             } catch (e: Exception) {
-                // Exercises might already exist, ignore
+                // Ignore errors
             }
         }
     }

@@ -140,12 +140,13 @@ object ExerciseData {
         ExerciseEntity(id = 143, nome = "Multipurpose", categoria = "Chest"),
 
         // Cardio
-        ExerciseEntity(id = 150, nome = "Running", categoria = "Cardio"),
-        ExerciseEntity(id = 151, nome = "Cycling", categoria = "Cardio"),
-        ExerciseEntity(id = 152, nome = "Walking", categoria = "Cardio"),
-        ExerciseEntity(id = 153, nome = "Elliptical", categoria = "Cardio"),
+        ExerciseEntity(id = 150, nome = "Treadmill", categoria = "Cardio"),
+        ExerciseEntity(id = 151, nome = "Stationary Bike", categoria = "Cardio"),
+        ExerciseEntity(id = 152, nome = "Elliptical", categoria = "Cardio"),
+        ExerciseEntity(id = 153, nome = "Stairmaster", categoria = "Cardio"),
         ExerciseEntity(id = 154, nome = "Rowing Machine", categoria = "Cardio"),
-        ExerciseEntity(id = 155, nome = "Stairmaster", categoria = "Cardio"),
-        ExerciseEntity(id = 156, nome = "Jump Rope", categoria = "Cardio")
+        ExerciseEntity(id = 155, nome = "Assault Bike", categoria = "Cardio"),
+        ExerciseEntity(id = 156, nome = "SkiErg", categoria = "Cardio"),
+        ExerciseEntity(id = 157, nome = "Jump Rope", categoria = "Cardio")
     )
 }

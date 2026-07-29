@@ -159,13 +159,14 @@ object ExerciseTranslations {
         "Multipurpose" to "Multipurpose",
 
         // Cardio
-        "Running" to "Corsa",
-        "Cycling" to "Cyclette / Ciclismo",
-        "Walking" to "Camminata",
+        "Treadmill" to "Tapis Roulant",
+        "Stationary Bike" to "Cyclette / Spin Bike",
         "Elliptical" to "Ellittica",
+        "Stairmaster" to "Stairmaster / Scaledroid",
         "Rowing Machine" to "Vogatore",
-        "Stairmaster" to "Stairmaster",
-        "Jump Rope" to "Corda"
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Corda da Salto"
     )
 
     val es = mapOf(
@@ -326,13 +327,14 @@ object ExerciseTranslations {
         "Multipurpose" to "Multipropósito",
 
         // Cardio
-        "Running" to "Correr",
-        "Cycling" to "Ciclismo",
-        "Walking" to "Caminar",
+        "Treadmill" to "Cinta de Correr",
+        "Stationary Bike" to "Bicicleta Estática",
         "Elliptical" to "Elíptica",
-        "Rowing Machine" to "Remo",
-        "Stairmaster" to "Stairmaster",
-        "Jump Rope" to "Saltar Cuerda"
+        "Stairmaster" to "Stairmaster / Escaladora",
+        "Rowing Machine" to "Máquina de Remo",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Salto con Cuerda"
     )
 
     val itCategories = mapOf(
@@ -513,13 +515,14 @@ object ExerciseTranslations {
         "Multipurpose" to "Multifonction",
 
         // Cardio
-        "Running" to "Course à pied",
-        "Cycling" to "Vélo",
-        "Walking" to "Marche",
+        "Treadmill" to "Tapis Roulant",
+        "Stationary Bike" to "Vélo d'Appartement",
         "Elliptical" to "Elliptique",
+        "Stairmaster" to "Stairmaster / Escalier",
         "Rowing Machine" to "Rameur",
-        "Stairmaster" to "Stairmaster",
-        "Jump Rope" to "Corde à sauter"
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Corde à Sauter"
     )
 
     val frCategories = mapOf(
@@ -690,12 +693,13 @@ object ExerciseTranslations {
         "Multipurpose" to "Mehrzweck",
 
         // Cardio
-        "Running" to "Laufen",
-        "Cycling" to "Radfahren",
-        "Walking" to "Gehen",
-        "Elliptical" to "Cross-Trainer",
+        "Treadmill" to "Laufband",
+        "Stationary Bike" to "Ergometer / Heimtrainer",
+        "Elliptical" to "Crosstrainer",
+        "Stairmaster" to "Stairmaster / Treppensteiger",
         "Rowing Machine" to "Rudergerät",
-        "Stairmaster" to "Stairmaster",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
         "Jump Rope" to "Springseil"
     )
 
@@ -867,13 +871,14 @@ object ExerciseTranslations {
         "Multipurpose" to "Multiuso",
 
         // Cardio
-        "Running" to "Corrida",
-        "Cycling" to "Ciclismo",
-        "Walking" to "Caminhada",
+        "Treadmill" to "Esteira",
+        "Stationary Bike" to "Bicicleta Ergométrica",
         "Elliptical" to "Elíptico",
-        "Rowing Machine" to "Remo",
-        "Stairmaster" to "Stairmaster",
-        "Jump Rope" to "Pular Corda"
+        "Stairmaster" to "Stairmaster / Simulador de Escada",
+        "Rowing Machine" to "Remo Ergométrico",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Corda de Pular"
     )
 
     val ptCategories = mapOf(
