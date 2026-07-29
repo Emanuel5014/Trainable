@@ -164,7 +164,7 @@ class HtmlReportFormatter @Inject constructor() {
     private fun buildStatCard(label: String, value: String, icon: String): String {
         return """
             <div class="stat-card">
-                <div class="stat-card-icon"><span class="material-symbols-outlined">$icon</span></div>
+                <div class="stat-card-icon">${iconSvg(icon)}</div>
                 <div class="stat-card-value">$value</div>
                 <div class="stat-card-label">$label</div>
             </div>
@@ -174,7 +174,7 @@ class HtmlReportFormatter @Inject constructor() {
     private fun buildSummaryItem(label: String, value: String, icon: String): String {
         return """
             <div class="summary-item">
-                <span class="material-symbols-outlined summary-icon">$icon</span>
+                ${iconSvg(icon)}
                 <div class="summary-content">
                     <div class="summary-value">$value</div>
                     <div class="summary-label">$label</div>
@@ -189,6 +189,19 @@ class HtmlReportFormatter @Inject constructor() {
         } else {
             String.format("%.2f", weight)
         }
+    }
+
+    private fun iconSvg(icon: String): String {
+        val paths = when (icon) {
+            "fitness_center" -> """<rect x="4" y="8" width="4" height="8" rx="1.5"/><line x1="8" y1="12" x2="16" y2="12" stroke-width="3"/><rect x="16" y="8" width="4" height="8" rx="1.5"/>"""
+            "date_range" -> """<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>"""
+            "list" -> """<line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.5" cy="6" r="2"/><circle cx="4.5" cy="12" r="2"/><circle cx="4.5" cy="18" r="2"/>"""
+            "bar_chart" -> """<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>"""
+            "format_list_numbered" -> """<line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>"""
+            "whatshot" -> """<path d="M12 22c-3.5 0-6-2.5-6-6 0-3 2-5.5 4-7s2-3 2-5c3 2 6 5 6 10 0 3.5-2.5 6-6 6z"/>"""
+            else -> """<circle cx="12" cy="12" r="10"/>"""
+        }
+        return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">$paths</svg>"""
     }
 
     private fun escapeHtml(text: String): String {
@@ -327,7 +340,6 @@ class HtmlReportFormatter @Inject constructor() {
 
     private fun getEmbeddedCss(): String = """
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -356,20 +368,8 @@ class HtmlReportFormatter @Inject constructor() {
             -webkit-font-smoothing: antialiased;
         }
 
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined';
-            font-weight: normal;
-            font-style: normal;
-            font-size: 24px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
+        svg {
+            display: block;
         }
 
         .container {
@@ -434,8 +434,9 @@ class HtmlReportFormatter @Inject constructor() {
             flex-shrink: 0;
         }
 
-        .stat-card-icon .material-symbols-outlined {
-            font-size: 18px;
+        .stat-card-icon svg {
+            width: 18px;
+            height: 18px;
             color: var(--md-on-primary-container);
         }
 
@@ -546,10 +547,11 @@ class HtmlReportFormatter @Inject constructor() {
             border-radius: 12px;
         }
 
-        .summary-icon {
-            font-size: 18px;
-            color: var(--md-primary);
+        .summary-item svg {
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
+            color: var(--md-primary);
         }
 
         .summary-value {
@@ -703,8 +705,9 @@ class HtmlReportFormatter @Inject constructor() {
                 margin-bottom: 12px;
             }
 
-            .stat-card-icon .material-symbols-outlined {
-                font-size: 22px;
+            .stat-card-icon svg {
+                width: 22px;
+                height: 22px;
             }
 
             .stat-card-value {
@@ -761,8 +764,9 @@ class HtmlReportFormatter @Inject constructor() {
                 gap: 10px;
             }
 
-            .summary-icon {
-                font-size: 20px;
+            .summary-item svg {
+                width: 20px;
+                height: 20px;
             }
 
             .summary-value {

@@ -53,6 +53,8 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Exercise Library**: 130+ pre-populated exercises with categorized filters.
 *   **Drag & Drop Reordering**: Fluid, haptic-powered reordering of exercises within routines.
 *   **Custom Exercises**: Add and manage your own exercises with persistent categorization.
+*   **Custom Categories**: Create, rename, and delete your own exercise categories.
+*   **Editable Preset Exercises**: Toggle editing of built-in exercise names and categories.
 *   **Superset Support**: Group exercises into supersets within routines.
 *   **Auto-Adjust Sets**: Enter rep schemes like `10-8-6` and sets auto-update to match the number of segments.
 *   **Plan Scheduling**: Set Start and Expire dates when creating or editing routines.
@@ -64,6 +66,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Wheel Pickers**: Haptic-boosted weight and rep selection for precise control.
 *   **Smart Hub**: Dynamic navigation between exercises with "Finish" and "Next" logic.
 *   **Superset Flow**: Execute grouped superset exercises seamlessly.
+*   **Cardio Exercise Support**: Log cardio sessions (Run, Bike, Walk, or custom) with distance and duration tracking, including cardio timer state persistence.
 *   **Rest Timer**: Integrated countdown cards with enhanced notifications showing next-set details and planned reps.
 *   **Custom Vibration**: Configurable continuous vibration duration (0–30s) when the rest timer finishes while the device is locked.
 *   **Warmup Timer**: Configurable warmup timer in settings.
@@ -71,6 +74,9 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Swipe Navigation**: Swipe between exercises during workout execution.
 *   **Exercise Note Pre-fill**: Auto-fill exercise notes from session history.
 *   **On-the-fly Edits**: Add custom exercises mid-workout; tap plan title to view/edit plan details.
+*   **Inline Exercise Modifications**: Add or remove exercises mid-workout with inline controls.
+*   **Workout Timer**: Configurable workout duration timer with enable/disable toggle in Settings.
+
 
 ### 📈 Deep Analytics
 *   **Vico Charts**: Professional-grade visualizations for total volume and strength trends.
@@ -83,6 +89,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Body Weight**: Integrated weight logging and history tracking.
 *   **Body Weight History**: Dedicated module with date picker, delete functionality, collapsible UI, and configurable time range (1w/1m/6m/All).
 *   **Cardio Tracking**: Cardio counter in weekly goal overview.
+*   **Plans Reports**: Generate detailed HTML reports for workout plans with per-exercise history, max weight/volume, estimated 1RM, and swap tracking. Preview, save, or share reports.
 
 ### 🌍 Localization
 *   **6 Languages**: English, Italian, Portuguese, German, French, Spanish.
@@ -128,7 +135,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Google Sans Font**: Clean, modern typography throughout the app.
 *   **Horizontal Pager Navigation**: Fluid swipe-based transitions between main tabs.
 *   **Backup & Restore**: Secure ZIP-based local backup system with photo compression and expanded preference sync (Theme, Units, Language).
-*   **Auto-Backup**: Reliable WorkManager-based automated background backups.
+*   **Auto-Backup**: Reliable WorkManager-based automated background backups with configurable frequency, max count, and image inclusion.
 *   **Tactile Feedback**: Enhanced haptic responses for all critical UI interactions.
 *   **Interaction Choice**: Configure Swipe or Long-press interaction style in Settings.
 *   **Auto-Updates**: Built-in automatic update support for future releases.
@@ -156,38 +163,52 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 ```
 com/emanuel5014/trainable/
 ├── data/
+│   ├── ExerciseTranslations.kt
 │   ├── local/
-│   │   ├── dao/            # Room DAOs (WorkoutDao, ExerciseDao, PhysicalCheckDao)
-│   │   ├── entity/         # Room entities (SetLogEntity, WorkoutPlanEntity, PhysicalCheckEntity)
+│   │   ├── ExerciseData.kt
+│   │   ├── GymDatabase.kt
+│   │   ├── dao/            # Room DAOs (WorkoutDao, ExerciseDao, AnalyticsDao, etc.)
+│   │   ├── entity/         # Room entities (SetLogEntity, CardioLogEntity, CustomCategoryEntity, etc.)
 │   │   └── relation/       # Relation classes (PlanWithDetails, SessionWithSets, etc.)
 │   ├── remote/
+│   │   ├── GitHubModels.kt
 │   │   └── dto/            # DTOs for export/import (WorkoutPlanExportDto)
-│   └── repository/         # Repositories (WorkoutRepository, AnalyticsRepository, PhysicalCheckRepository)
+│   ├── report/             # HTML plan reports (ReportGenerator, HtmlReportFormatter, ReportModels)
+│   └── repository/         # Repositories (WorkoutRepository, AnalyticsRepository, ExerciseRepository, etc.)
 ├── di/                     # Hilt modules (DatabaseModule, NetworkModule)
 ├── ui/
 │   ├── components/
-│   │   ├── analytics/      # Charts, stat cards, consistency, body comp, etc.
+│   │   ├── analytics/      # Charts, stat cards, consistency, body comp, personal bests
 │   │   ├── base/           # Design system primitives (GymCard, GymButton, etc.)
 │   │   ├── dialogs/        # Reusable dialogs (UpdateDialog, ImportConfirmation)
-│   │   ├── exercise/       # Exercise cards, picker, rest timer, set log input
-│   │   ├── navbar/         # Bottom navigation bar and items
-│   │   └── shared/         # Shared utilities (EmptyState, SwipeableCard, etc.)
+│   │   ├── exercise/       # Exercise cards, cardio input, picker, rest timer, set log input
+│   │   ├── navbar/         # Bottom navigation bar and items (standard + floating)
+│   │   └── shared/         # Shared utilities (EmptyState, ImageEditor, ScreenHeader, etc.)
 │   ├── navigation/         # NavGraph, Routes
 │   ├── screens/
-│   │   ├── analytics/      # Analytics dashboard, drag-drop state
+│   │   ├── analytics/      # Analytics dashboard, drag-drop state, models
 │   │   ├── compare/        # Session comparison
 │   │   ├── dashboard/      # Main dashboard
-│   │   ├── history/        # Session history, edit, filter
+│   │   ├── history/        # Session history, edit, filter bottom sheet
 │   │   ├── onboarding/     # Onboarding flow
-│   │   ├── physicalcheck/  # Physical checks (body progression with photos & encryption)
-│   │   ├── routines/       # Routine list, detail, builder
-│   │   ├── settings/       # App settings
+│   │   ├── physicalcheck/  # Physical checks (body progression, before/after slider, settings)
+│   │   ├── routines/       # Routine list, detail, builder, report
+│   │   ├── settings/       # App settings, workout settings, exercise customization
 │   │   └── workout/        # Workout execution
-│   ├── theme/              # Color, Shape, Type, Spacing, Theme
+│   ├── theme/              # Color, Shape, Type, Spacing, Theme, ResponsiveSize, ThemeColorStore
 │   └── util/               # DateFormatter
 ├── util/
+│   ├── AppLocaleManager.kt
+│   ├── BiometricHelper.kt
+│   ├── ImageStorageUtils.kt
+│   ├── PhysicalCheckCryptoManager.kt
+│   ├── ShareUtils.kt
+│   ├── UpdateManager.kt
+│   ├── UriMigrationHelper.kt
+│   ├── WeightUnitConverter.kt
 │   ├── backup/             # AutoBackupWorker, BackupManager
 │   └── notification/       # TimerNotification, GymMembershipWorker
+├── webserver/              # Local HTTP server (Ktor), foreground service, server manager
 ├── widget/                 # Glance widgets (TrainableWidget, WeeklyGoalWidget)
 ├── MainActivity.kt
 └── GymTrackingApp.kt
@@ -223,6 +244,7 @@ com/emanuel5014/trainable/
 *   **Preferences**: DataStore Preferences (1.2.x)
 *   **Background Tasks**: WorkManager (2.11.x)
 *   **Image Loading**: Coil (2.7.x)
+*   **Web Server**: Ktor (3.x)
 *   **Build**: Gradle (9.4.x) + AGP (9.2.x)
 
 ---
