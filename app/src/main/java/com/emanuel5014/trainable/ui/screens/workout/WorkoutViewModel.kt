@@ -9,6 +9,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -461,7 +462,10 @@ class WorkoutViewModel @Inject constructor(
 
             val consumedExerciseIds = planExerciseStates.map { it.exercise.id }.toSet()
             val loggedExerciseIds = sessionWithSets.sets.map { it.exerciseId }.distinct()
-            val extraExerciseIds = loggedExerciseIds.filter { it !in consumedExerciseIds }
+            val cardioExerciseIds = cardioLogs.mapNotNull { log ->
+                allAvailableExercises.find { it.nome.equals(log.categoria, ignoreCase = true) }?.id
+            }.distinct()
+            val extraExerciseIds = (loggedExerciseIds + cardioExerciseIds).filter { it !in consumedExerciseIds }
 
             val extraExerciseStates = extraExerciseIds.mapIndexed { idx, exerciseId ->
                 val exercise = allAvailableExercises.find { it.id == exerciseId } ?: return@mapIndexed null
@@ -1518,6 +1522,22 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val currentState = _state.value
             val executionOrder = currentState.nextExecutionOrder
+            
+            var cardioLogId: Int? = null
+            if (isCardio) {
+                val cardioLog = CardioLogEntity(
+                    sessionId = sessionId,
+                    categoria = exercise.nome,
+                    distanza = 0f,
+                    durataSecondi = 0,
+                    timestamp = System.currentTimeMillis(),
+                    ordineEsercizio = executionOrder,
+                    durataTargetSecondi = targetDurationSeconds,
+                    isCompleted = false
+                )
+                cardioLogId = workoutRepository.saveCardioLog(cardioLog).toInt()
+            }
+            
             val initialSets = if (isCardio) emptyList() else (1..targetSets).map { num ->
                 val weight = 0f
                 val reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
@@ -1554,7 +1574,8 @@ class WorkoutViewModel @Inject constructor(
                         customRepsTarget = repsTarget,
                         isCardio = isCardio,
                         cardioCategoria = exercise.categoria,
-                        cardioDurataTargetSeconds = targetDurationSeconds
+                        cardioDurataTargetSeconds = targetDurationSeconds,
+                        cardioLogId = cardioLogId
                     )
                 )
                 curr.copy(
@@ -1611,6 +1632,21 @@ class WorkoutViewModel @Inject constructor(
                 workoutRepository.updateSetOrders(setsToUpdate)
             }
 
+            var cardioLogId: Int? = null
+            if (isCardio) {
+                val cardioLog = CardioLogEntity(
+                    sessionId = sessionId,
+                    categoria = exercise.nome,
+                    distanza = 0f,
+                    durataSecondi = 0,
+                    timestamp = System.currentTimeMillis(),
+                    ordineEsercizio = newOrder,
+                    durataTargetSecondi = targetDurationSeconds,
+                    isCompleted = false
+                )
+                cardioLogId = workoutRepository.saveCardioLog(cardioLog).toInt()
+            }
+
             val initialSets = if (isCardio) emptyList() else (1..targetSets).map { num ->
                 val weight = 0f
                 val reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 }
@@ -1646,7 +1682,8 @@ class WorkoutViewModel @Inject constructor(
                         customRepsTarget = repsTarget,
                         isCardio = isCardio,
                         cardioCategoria = exercise.categoria,
-                        cardioDurataTargetSeconds = targetDurationSeconds
+                        cardioDurataTargetSeconds = targetDurationSeconds,
+                        cardioLogId = cardioLogId
                     )
                 )
                 val updatedOrderMap = curr.exerciseExecutionOrder.toMutableMap()

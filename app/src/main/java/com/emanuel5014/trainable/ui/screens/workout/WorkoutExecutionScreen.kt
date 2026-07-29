@@ -648,31 +648,33 @@ fun WorkoutExecutionScreen(
                                                     Spacer(modifier = Modifier.width(8.dp))
                                                     Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
                                                 }
-                                                val isLastExercise = targetIndex == state.exercises.size - 1
-                                                GymButton(
-                                                    onClick = {
-                                                        isAddingAfterCurrent = !state.isQuickWorkout
-                                                        showAddExerciseSheet = true
-                                                    },
-                                                    modifier = Modifier.weight(1f),
-                                                    containerColor = SurfaceContainerHigh,
-                                                    contentColor = Primary
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Rounded.KeyboardDoubleArrowRight,
-                                                        contentDescription = null
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(
-                                                        text = stringResource(
-                                                            if (state.isQuickWorkout) {
-                                                                if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk
-                                                            } else {
-                                                                R.string.add_exercise
-                                                            }
-                                                        ).uppercase(),
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
+                                                if (!isExerciseCompleted) {
+                                                    val isLastExercise = targetIndex == state.exercises.size - 1
+                                                    GymButton(
+                                                        onClick = {
+                                                            isAddingAfterCurrent = !state.isQuickWorkout
+                                                            showAddExerciseSheet = true
+                                                        },
+                                                        modifier = Modifier.weight(1f),
+                                                        containerColor = SurfaceContainerHigh,
+                                                        contentColor = Primary
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.KeyboardDoubleArrowRight,
+                                                            contentDescription = null
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = stringResource(
+                                                                if (state.isQuickWorkout) {
+                                                                    if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk
+                                                                } else {
+                                                                    R.string.add_exercise
+                                                                }
+                                                            ).uppercase(),
+                                                            fontWeight = FontWeight.ExtraBold
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -910,94 +912,120 @@ fun WorkoutExecutionScreen(
                                 }
                                 HubMode.Completed -> {
                                     val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
-                                    Row(
+                                    val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
+
+                                    Column(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        // Previous Exercise Button
-                                        if (state.currentExerciseIndex > 0) {
-                                            val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
-                                            val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
+                                        if (allowModify) {
                                             GymButton(
-                                                onClick = { viewModel.previousExercise() },
-                                                modifier = Modifier.weight(1f),
+                                                onClick = {
+                                                    isAddingAfterCurrent = false
+                                                    showAddExerciseSheet = true
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
                                                 containerColor = SurfaceContainerHigh,
-                                                contentColor = OnSurface,
-                                                height = 64
+                                                contentColor = Primary
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                                                    contentDescription = null
-                                                )
+                                                Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                                 Spacer(modifier = Modifier.width(8.dp))
-                                                Column(
-                                                    horizontalAlignment = Alignment.Start,
-                                                    modifier = Modifier.weight(1f)
-                                                ) {
-                                                    Text(
-                                                        text = stringResource(R.string.previous_exercise_btn).uppercase(),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = OnSurfaceVariant,
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                    Text(
-                                                        text = translatedPrev,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight = FontWeight.Black,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                }
+                                                Text(
+                                                    text = stringResource(R.string.add_exercise).uppercase(),
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
                                             }
                                         }
 
-                                        // Next / Finish Button
-                                        if (!isLastExercise) {
-                                            val nextName = state.exercises[state.currentExerciseIndex + 1].exercise.nome
-                                            val translatedNext = ExerciseTranslations.translate(nextName, languageCode)
-                                            GymButton(
-                                                onClick = { viewModel.nextExercise() },
-                                                modifier = Modifier.weight(1f),
-                                                height = 64
-                                            ) {
-                                                Column(
-                                                    horizontalAlignment = Alignment.End,
-                                                    modifier = Modifier.weight(1f)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            // Previous Exercise Button
+                                            if (state.currentExerciseIndex > 0) {
+                                                val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
+                                                val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
+                                                GymButton(
+                                                    onClick = { viewModel.previousExercise() },
+                                                    modifier = Modifier.weight(1f),
+                                                    containerColor = SurfaceContainerHigh,
+                                                    contentColor = OnSurface,
+                                                    height = 64
                                                 ) {
-                                                    Text(
-                                                        text = stringResource(R.string.next_exercise_btn).uppercase(),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = OnPrimary.copy(alpha = 0.75f),
-                                                        fontWeight = FontWeight.ExtraBold
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                                                        contentDescription = null
                                                     )
-                                                    Text(
-                                                        text = translatedNext,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = OnPrimary,
-                                                        fontWeight = FontWeight.Black,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Column(
+                                                        horizontalAlignment = Alignment.Start,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.previous_exercise_btn).uppercase(),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = OnSurfaceVariant,
+                                                            fontWeight = FontWeight.ExtraBold
+                                                        )
+                                                        Text(
+                                                            text = translatedPrev,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            fontWeight = FontWeight.Black,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            // Next / Finish Button
+                                            if (!isLastExercise) {
+                                                val nextName = state.exercises[state.currentExerciseIndex + 1].exercise.nome
+                                                val translatedNext = ExerciseTranslations.translate(nextName, languageCode)
+                                                GymButton(
+                                                    onClick = { viewModel.nextExercise() },
+                                                    modifier = Modifier.weight(1f),
+                                                    height = 64
+                                                ) {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.End,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.next_exercise_btn).uppercase(),
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = OnPrimary.copy(alpha = 0.75f),
+                                                            fontWeight = FontWeight.ExtraBold
+                                                        )
+                                                        Text(
+                                                            text = translatedNext,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            color = OnPrimary,
+                                                            fontWeight = FontWeight.Black,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Icon(
+                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                                        contentDescription = null
                                                     )
                                                 }
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                                    contentDescription = null
-                                                )
-                                            }
-                                        } else {
-                                            // Guided / Quick workout last exercise finish button
-                                            GymButton(
-                                                onClick = { showFinishDialog = true },
-                                                modifier = Modifier.weight(1f),
-                                                height = 64
-                                            ) {
-                                                Icon(Icons.Rounded.Check, contentDescription = null)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.finish_workout).uppercase(),
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
+                                            } else {
+                                                // Guided / Quick workout last exercise finish button
+                                                GymButton(
+                                                    onClick = { showFinishDialog = true },
+                                                    modifier = Modifier.weight(1f),
+                                                    height = 64
+                                                ) {
+                                                    Icon(Icons.Rounded.Check, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = stringResource(R.string.finish_workout).uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
                                             }
                                         }
                                     }
