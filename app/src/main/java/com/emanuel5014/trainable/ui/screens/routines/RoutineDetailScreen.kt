@@ -779,11 +779,19 @@ fun RoutineDetailScreen(
                     }
 
                     if (isSelectedCardio) {
-                        GymInputField(
-                            value = cardioDurationText,
-                            onValueChange = { cardioDurationText = it },
-                            label = stringResource(R.string.cardio_duration_label),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        CardioDurationSlider(
+                            valueMinutes = cardioDurationText.toIntOrNull() ?: 20,
+                            onValueChange = { cardioDurationText = it.toString() },
+                            hapticEnabled = hapticEnabled,
+                            haptic = haptic,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        RestSlider(
+                            value = restText.toIntOrNull() ?: 120,
+                            onValueChange = { restText = it.toString() },
+                            hapticEnabled = hapticEnabled,
+                            haptic = haptic,
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
@@ -913,13 +921,15 @@ fun RoutineDetailScreen(
                             val current = editingExercise
                             if (isSelectedCardio) {
                                 val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
+                                val rest = restText.trim().toIntOrNull() ?: 0
                                 val category = selectedExercise?.categoria ?: "Cardio"
 
                                 if (current == null) {
                                     viewModel.addCardioExercise(
                                         exerciseId = exerciseId,
                                         cardioCategoria = category,
-                                        durataTargetSecondi = durSec
+                                        durataTargetSecondi = durSec,
+                                        recuperoTarget = rest
                                     )
                                 } else {
                                     viewModel.updateExercise(
@@ -931,7 +941,7 @@ fun RoutineDetailScreen(
                                         exerciseId = exerciseId,
                                         serieTarget = 1,
                                         repsTarget = "1",
-                                        recuperoTarget = 0
+                                        recuperoTarget = rest
                                     )
                                 }
                             } else {
@@ -1318,6 +1328,74 @@ private fun formatRestTime(seconds: Int): String {
         minutes == 0 -> "${secs}s"
         secs == 0 -> "${minutes}m"
         else -> "${minutes}m ${secs}s"
+    }
+}
+
+@Composable
+private fun CardioDurationSlider(
+    valueMinutes: Int,
+    onValueChange: (Int) -> Unit,
+    hapticEnabled: Boolean,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    modifier: Modifier = Modifier
+) {
+    val steps = listOf(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
+    val closestIndex = remember(valueMinutes) {
+        steps.indexOf(steps.minByOrNull { kotlin.math.abs(it - valueMinutes) } ?: 20).coerceAtLeast(0)
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.cardio_duration_slider),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${valueMinutes} min",
+                style = MaterialTheme.typography.titleMedium,
+                color = Primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+            val displayMinutes = valueMinutes / 60
+            val displaySecs = valueMinutes % 60
+            if (displayMinutes > 0 || displaySecs > 0) {
+                Text(
+                    text = when {
+                        displayMinutes == 0 -> "${displaySecs}s"
+                        displaySecs == 0 -> "${displayMinutes}m"
+                        else -> "${displayMinutes}m ${displaySecs}s"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+            }
+        }
+
+        Slider(
+            value = closestIndex.toFloat(),
+            onValueChange = { rawValue ->
+                val index = kotlin.math.round(rawValue).toInt()
+                val clampedIndex = index.coerceIn(0, steps.size - 1)
+                if (clampedIndex != closestIndex) {
+                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onValueChange(steps[clampedIndex])
+                }
+            },
+            valueRange = 0f..(steps.size - 1).toFloat(),
+            steps = steps.size - 2,
+            colors = SliderDefaults.colors(
+                thumbColor = Primary,
+                activeTrackColor = Primary,
+                inactiveTrackColor = SurfaceContainerHighest
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

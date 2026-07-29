@@ -91,7 +91,8 @@ fun SwapExerciseBottomSheet(
     modifier: Modifier = Modifier,
     isAdding: Boolean = false,
     editablePresetExercises: Boolean = false,
-    categories: List<String>? = null
+    categories: List<String>? = null,
+    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?) -> Unit)? = null
 ) {
     rememberResponsiveSize()
 
@@ -260,19 +261,34 @@ fun SwapExerciseBottomSheet(
         }
         2 -> {
             if (selectedExercise != null) {
-                SwapExerciseConfigDialog(
-                    exercise = selectedExercise!!,
-                    languageCode = languageCode,
-                    initialSets = setsText,
-                    initialReps = repsText,
-                    onConfirm = { sets, reps, rest ->
-                        onExerciseSelected(selectedExercise!!, sets, reps, rest)
-                        onDismiss()
-                    },
-                    onBack = { step = 1 },
-                    onDismiss = onDismiss,
-                    isAdding = isAdding
-                )
+                val isCardio = selectedExercise!!.categoria.equals("Cardio", ignoreCase = true)
+                if (isCardio && onCardioExerciseSelected != null) {
+                    SwapCardioConfigDialog(
+                        exercise = selectedExercise!!,
+                        languageCode = languageCode,
+                        onConfirm = { durationMinutes, rest ->
+                            onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest)
+                            onDismiss()
+                        },
+                        onBack = { step = 1 },
+                        onDismiss = onDismiss,
+                        isAdding = isAdding
+                    )
+                } else {
+                    SwapExerciseConfigDialog(
+                        exercise = selectedExercise!!,
+                        languageCode = languageCode,
+                        initialSets = setsText,
+                        initialReps = repsText,
+                        onConfirm = { sets, reps, rest ->
+                            onExerciseSelected(selectedExercise!!, sets, reps, rest)
+                            onDismiss()
+                        },
+                        onBack = { step = 1 },
+                        onDismiss = onDismiss,
+                        isAdding = isAdding
+                    )
+                }
             }
         }
     }
@@ -724,6 +740,117 @@ private fun SwapExerciseConfigDialog(
                     val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@TextButton
                     val rest = restText.toIntOrNull()
                     onConfirm(sets, reps, rest)
+                }
+            ) {
+                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onBack) {
+                Text(stringResource(R.string.back), color = OnSurfaceVariant)
+            }
+        }
+    )
+}
+
+@Composable
+private fun SwapCardioConfigDialog(
+    exercise: ExerciseEntity,
+    languageCode: String,
+    onConfirm: (Int, Int?) -> Unit,
+    onBack: () -> Unit,
+    onDismiss: () -> Unit,
+    isAdding: Boolean = false
+) {
+    var durationText by remember { mutableStateOf("20") }
+    var restText by remember { mutableStateOf("120") }
+
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { preferences ->
+            preferences[UserPreferencesRepository.HAPTIC_ENABLED] ?: true
+        }
+    }.collectAsState(initial = true)
+
+    val durationSteps = listOf(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
+    val durationMinutes = durationText.toIntOrNull() ?: 20
+    val closestIndex = remember(durationMinutes) {
+        durationSteps.indexOf(durationSteps.minByOrNull { kotlin.math.abs(it - durationMinutes) } ?: 20).coerceAtLeast(0)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Surface,
+        title = {
+            Text(
+                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = ExerciseTranslations.translate(exercise.nome, languageCode),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = OnSurface
+                )
+
+                Text(
+                    text = stringResource(R.string.cardio_duration_slider),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${durationMinutes} min",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                androidx.compose.material3.Slider(
+                    value = closestIndex.toFloat(),
+                    onValueChange = { rawValue ->
+                        val index = kotlin.math.round(rawValue).toInt()
+                        val clampedIndex = index.coerceIn(0, durationSteps.size - 1)
+                        if (clampedIndex != closestIndex) {
+                            if (hapticEnabled) haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            durationText = durationSteps[clampedIndex].toString()
+                        }
+                    },
+                    valueRange = 0f..(durationSteps.size - 1).toFloat(),
+                    steps = durationSteps.size - 2,
+                    colors = androidx.compose.material3.SliderDefaults.colors(
+                        thumbColor = Primary,
+                        activeTrackColor = Primary,
+                        inactiveTrackColor = SurfaceContainerHighest
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                RestSlider(
+                    value = restText.toIntOrNull() ?: 120,
+                    onValueChange = { restText = it.toString() },
+                    hapticEnabled = hapticEnabled,
+                    haptic = haptic,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val duration = durationText.trim().toIntOrNull() ?: return@TextButton
+                    val rest = restText.toIntOrNull()
+                    onConfirm(duration, rest)
                 }
             ) {
                 Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)

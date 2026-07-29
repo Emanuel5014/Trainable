@@ -588,6 +588,8 @@
     <string name="cardio_cat_label">Cardio</string>
     <string name="cardio_cat_with_name">Cardio (%1$s)</string>
     <string name="cardio_duration_label">Durée cible (min)</string>
+    <string name="cardio_duration_slider">Durée (min)</string>
+    <string name="cardio_custom_duration">Personnalisé (min)</string>
 
     <!-- About -->
     <string name="about">À PROPOS</string>

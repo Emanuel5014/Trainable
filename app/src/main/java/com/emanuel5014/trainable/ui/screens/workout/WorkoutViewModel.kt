@@ -1331,6 +1331,64 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    fun swapToCardioExercise(exerciseIndex: Int, newExerciseId: Int, durationMinutes: Int, restTimer: Int? = null) {
+        val currentState = _state.value
+        val sessionId = currentState.sessionId ?: return
+        val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return
+        val originalExerciseId = exState.planDetails?.id
+
+        val replacementExercise = _availableExercises.value.find { it.id == newExerciseId } ?: return
+
+        viewModelScope.launch {
+            workoutRepository.deleteExerciseFromSession(sessionId, exState.exercise.id)
+
+            if (originalExerciseId != null) {
+                workoutRepository.saveExerciseSwap(
+                    SessionExerciseSwapEntity(
+                        sessionId = sessionId,
+                        originalExerciseId = originalExerciseId,
+                        replacementExerciseId = newExerciseId
+                    )
+                )
+
+                _state.update { curr ->
+                    val mutableExercises = curr.exercises.toMutableList()
+                    val mutableSwaps = curr.exerciseSwaps.toMutableMap()
+                    mutableSwaps[originalExerciseId] = newExerciseId
+
+                    mutableExercises[exerciseIndex] = exState.copy(
+                        exercise = replacementExercise,
+                        swappedExerciseId = newExerciseId,
+                        sets = emptyList(),
+                        previousPerformance = null,
+                        customRestSeconds = restTimer,
+                        customRepsTarget = null,
+                        isCardio = true,
+                        cardioCategoria = replacementExercise.categoria,
+                        cardioDurataTargetSeconds = durationMinutes * 60
+                    )
+                    curr.copy(exercises = mutableExercises, exerciseSwaps = mutableSwaps)
+                }
+            } else {
+                _state.update { curr ->
+                    val mutableExercises = curr.exercises.toMutableList()
+                    mutableExercises[exerciseIndex] = exState.copy(
+                        exercise = replacementExercise,
+                        swappedExerciseId = newExerciseId,
+                        sets = emptyList(),
+                        previousPerformance = null,
+                        customRestSeconds = restTimer,
+                        customRepsTarget = null,
+                        isCardio = true,
+                        cardioCategoria = replacementExercise.categoria,
+                        cardioDurataTargetSeconds = durationMinutes * 60
+                    )
+                    curr.copy(exercises = mutableExercises)
+                }
+            }
+        }
+    }
+
     fun getSwappedExerciseId(originalExerciseId: Int): Int? {
         return _state.value.exerciseSwaps[originalExerciseId]
     }
@@ -1909,6 +1967,12 @@ class WorkoutViewModel @Inject constructor(
             } else {
                 workoutRepository.saveCardioLog(cardioEntity)
             }
+        }
+
+        val restSeconds = currentEx.customRestSeconds ?: currentEx.planDetails?.recuperoTarget ?: 0
+        if (restSeconds > 0) {
+            val exerciseName = ExerciseTranslations.translate(currentEx.exercise.nome, _languageCode.value)
+            startRestTimer(restSeconds, exerciseName = exerciseName)
         }
     }
 }

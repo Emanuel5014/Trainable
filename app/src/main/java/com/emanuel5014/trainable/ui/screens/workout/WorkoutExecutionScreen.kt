@@ -8,6 +8,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -459,6 +460,10 @@ fun WorkoutExecutionScreen(
                                 )
                         ) {
                             if (targetExState.isCardio) {
+                                val cardioBottomPadding by animateDpAsState(
+                                    targetValue = if (state.remainingRestSeconds > 0) 200.dp else 120.dp,
+                                    label = "cardioBottomPadding"
+                                )
                                 CardioExerciseContent(
                                     exerciseState = targetExState,
                                     languageCode = languageCode,
@@ -466,7 +471,8 @@ fun WorkoutExecutionScreen(
                                     viewModel = viewModel,
                                     onSwap = { showSwapExerciseSheet = true },
                                     distanceInput = cardioDistanceInput,
-                                    onDistanceChange = { cardioDistanceInput = it }
+                                    onDistanceChange = { cardioDistanceInput = it },
+                                    bottomPadding = cardioBottomPadding
                                 )
                             } else {
                                 // Exercise Header
@@ -782,8 +788,8 @@ fun WorkoutExecutionScreen(
 
                         AnimatedContent(
                             targetState = when {
-                                isCardioActive -> HubMode.Cardio
                                 isResting -> HubMode.Resting
+                                isCardioActive -> HubMode.Cardio
                                 activeSet == null || activeSet.isCompleted -> HubMode.Completed
                                 isEditingValues -> HubMode.Editing
                                 else -> HubMode.Logging
@@ -1159,7 +1165,11 @@ fun WorkoutExecutionScreen(
                     },
                     onDismiss = { showSwapExerciseSheet = false },
                     editablePresetExercises = state.editablePresetExercises,
-                    categories = categories
+                    categories = categories,
+                    onCardioExerciseSelected = { newExercise, durationMinutes, rest ->
+                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest)
+                        showSwapExerciseSheet = false
+                    }
                 )
             }
         }
@@ -1190,7 +1200,16 @@ fun WorkoutExecutionScreen(
                 },
                 isAdding = true,
                 editablePresetExercises = state.editablePresetExercises,
-                categories = categories
+                categories = categories,
+                onCardioExerciseSelected = { exercise, durationMinutes, rest ->
+                    if (isAddingAfterCurrent) {
+                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest)
+                    } else {
+                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest)
+                    }
+                    isAddingAfterCurrent = false
+                    showAddExerciseSheet = false
+                }
             )
         }
 
@@ -1390,7 +1409,8 @@ fun CardioExerciseContent(
     viewModel: WorkoutViewModel,
     onSwap: () -> Unit,
     distanceInput: String,
-    onDistanceChange: (String) -> Unit
+    onDistanceChange: (String) -> Unit,
+    bottomPadding: androidx.compose.ui.unit.Dp = 120.dp
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
 
@@ -1432,7 +1452,8 @@ fun CardioExerciseContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp)
+            .padding(top = 16.dp, bottom = bottomPadding)
     ) {
         Row(
             modifier = Modifier
