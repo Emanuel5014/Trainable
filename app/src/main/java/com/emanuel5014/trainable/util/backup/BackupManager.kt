@@ -240,7 +240,15 @@ class BackupManager @Inject constructor(
         try {
             GymDatabase.closeDatabase()
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
-            if (!dbDir.exists()) dbDir.mkdirs()
+            if (!dbDir.exists()) {
+                dbDir.mkdirs()
+            } else {
+                dbDir.listFiles()?.forEach { file ->
+                    if (file.name.startsWith(dbName)) {
+                        file.delete()
+                    }
+                }
+            }
             val filesDir = context.filesDir
             val routineImagesDir = File(context.filesDir, "routine_images")
             if (!routineImagesDir.exists()) routineImagesDir.mkdirs()

@@ -225,13 +225,13 @@ abstract class GymDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE cardio_logs ADD COLUMN ordine_esercizio INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE cardio_logs ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 1")
 
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (150, 'Running', 'Cardio')")
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (151, 'Cycling', 'Cardio')")
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (152, 'Walking', 'Cardio')")
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (153, 'Elliptical', 'Cardio')")
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (154, 'Rowing Machine', 'Cardio')")
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (155, 'Stairmaster', 'Cardio')")
-                db.execSQL("INSERT OR IGNORE INTO exercise_entity (id, nome, categoria) VALUES (156, 'Jump Rope', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (150, 'Running', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (151, 'Cycling', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (152, 'Walking', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (153, 'Elliptical', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (154, 'Rowing Machine', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (155, 'Stairmaster', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (156, 'Jump Rope', 'Cardio')")
             }
         }
 
@@ -262,6 +262,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21
                     )
+                    .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
