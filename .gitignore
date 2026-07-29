@@ -27,3 +27,6 @@ debug.keystore
 docs/
 release/
 debug/
+.codegraph/
+AGENTS.md
+opencode.jsonc

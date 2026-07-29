@@ -79,12 +79,13 @@ fun ExercisePickerBottomSheet(
     exercises: List<ExerciseEntity>,
     categories: List<String>,
     onExerciseSelected: (ExerciseEntity) -> Unit,
-    onAddCustomExercise: (String, String) -> Unit,
+    onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    languageCode: String = "en"
+    languageCode: String = "en",
+    editablePresetExercises: Boolean = false
 ) {
     rememberResponsiveSize()
 
@@ -232,7 +233,7 @@ fun ExercisePickerBottomSheet(
                             onExerciseSelected(exercise)
                             onDismiss()
                         },
-                        onEditClick = if (onEditCustomExercise != null && exercise.id >= 1000) {
+                        onEditClick = if (onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
                             { exerciseToEdit = exercise }
                         } else null,
                         onDeleteClick = if (onDeleteCustomExercise != null && exercise.id >= 1000) {
@@ -269,7 +270,10 @@ fun ExercisePickerBottomSheet(
         AddCustomExerciseDialog(
             categories = categories,
             onConfirm = { name, category ->
-                onAddCustomExercise(name, category)
+                onAddCustomExercise(name, category) { createdExercise ->
+                    onExerciseSelected(createdExercise)
+                    onDismiss()
+                }
                 showAddCustomDialog = false
             },
             onDismiss = { showAddCustomDialog = false }

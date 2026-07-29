@@ -110,7 +110,7 @@ fun WeightRepsInput(
             )
             TextButton(
                 onClick = { 
-                    customWeightText = if (displayWeight > 0) WeightUnitConverter.format(displayWeight) else ""
+                    customWeightText = ""
                     showCustomWeightDialog = true 
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
@@ -149,6 +149,7 @@ fun WeightRepsInput(
                     value = customWeightText,
                     onValueChange = { customWeightText = it.replace(',', '.') },
                     label = { Text("Weight (${weightUnit})") },
+                    placeholder = { Text(WeightUnitConverter.format(displayWeight), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = Shapes.large,
@@ -229,11 +230,17 @@ private fun <T> WheelPickerBox(
     }
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex }
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val viewportCenter = layoutInfo.viewportEndOffset / 2
+            layoutInfo.visibleItemsInfo.minByOrNull {
+                kotlin.math.abs(it.offset + it.size / 2 - viewportCenter)
+            }?.index
+        }
             .debounce(50L)
             .distinctUntilChanged()
             .collect { index ->
-                if (index in range.indices) {
+                if (index != null && index in range.indices) {
                     val newValue = range[index]
                     val isSame = if (newValue is Float && value is Float) {
                         kotlin.math.abs(newValue - value) < 0.001f

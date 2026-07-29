@@ -126,6 +126,7 @@ fun WorkoutShareCard(
     val totalExercises = exercisesWithSets.size + sessionDetails.cardio.size
     val totalSets = sessionDetails.sets.size
     val totalWeight = sessionDetails.sets.sumOf { it.setLog.pesoSollevato.toDouble() }.toFloat()
+    val durationMs = sessionDetails.session.durationMs
 
     Column(
         modifier = modifier
@@ -274,6 +275,39 @@ fun WorkoutShareCard(
                     .height(28.dp)
                     .background(Color.White.copy(alpha = 0.08f))
             )
+
+            // Duration Segment
+            if (durationMs != null) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val durHours = durationMs / 3600000
+                    val durMinutes = (durationMs % 3600000) / 60000
+                    Text(
+                        text = if (durHours > 0) "${durHours}h ${durMinutes}m" else "${durMinutes}m",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        color = textPrimary
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(id = com.emanuel5014.trainable.R.string.share_duration).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = textSecondary.copy(alpha = 0.7f),
+                        letterSpacing = 1.sp
+                    )
+                }
+
+                // Divider 3
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(28.dp)
+                        .background(Color.White.copy(alpha = 0.08f))
+                )
+            }
 
             // Total Tonnage Segment
             Column(

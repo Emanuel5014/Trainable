@@ -43,6 +43,7 @@
     <string name="share_exercises">Esercizi</string>
     <string name="share_sets">Serie</string>
     <string name="share_volume">Tonnellaggio</string>
+    <string name="share_duration">Durata</string>
 
     <string name="share_built_for_strength">COSTRUITO PER LA FORZA</string>
     <string name="share_footer_message">TRACCIA I TUOI PROGRESSI CON TRAINABLE</string>
@@ -139,6 +140,24 @@
     <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
     <string name="swipe_actions">Azioni Rapide Swipe</string>
     <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi e navigare tra gli esercizi</string>
+    <string name="editable_preset_exercises">Esercizi Preimpostati Modificabili</string>
+    <string name="editable_preset_exercises_desc">Consenti di rinominare gli esercizi predefiniti forniti dall\'app</string>
+    <string name="reset_exercise_names">Reimposta Nomi Esercizi</string>
+    <string name="reset_exercise_names_confirm">Reimpostare i Nomi degli Esercizi?</string>
+    <string name="reset_exercise_names_message">Questo ripristinerà i nomi di tutti gli esercizi preimpostati ai valori predefiniti. I tuoi esercizi personalizzati non saranno modificati.</string>
+    <string name="exercise_customization">Personalizzazione Esercizi</string>
+    <string name="exercise_customization_desc">Gestisci le opzioni di personalizzazione dei nomi degli esercizi</string>
+    <string name="custom_categories">Categorie Personalizzate</string>
+    <string name="custom_categories_desc">Aggiungi o rimuovi categorie personalizzate per i tuoi esercizi</string>
+    <string name="add_category">Aggiungi Categoria</string>
+    <string name="add_category_title">Aggiungi Nuova Categoria</string>
+    <string name="edit_category">Modifica Categoria</string>
+    <string name="edit_category_title">Modifica Categoria</string>
+    <string name="category_name">Nome categoria</string>
+    <string name="category_name_empty">Il nome della categoria non puo\' essere vuoto</string>
+    <string name="category_already_exists">La categoria esiste gia\'</string>
+    <string name="delete_category_title">Eliminare Categoria?</string>
+    <string name="delete_category_message">Sei sicuro di voler eliminare \"%1$s\"? Gli esercizi con questa categoria non verranno eliminati.</string>
 
     <!-- Exercises -->
     <string name="exercise">Esercizio</string>
@@ -206,6 +225,15 @@
     <string name="warmup_timer_description">Imposta un timer per riscaldamento, stretching o altro</string>
     <string name="warmup_timer_notifications_desc">Mostra il timer di riscaldamento nelle notifiche</string>
     <string name="warmup_timer_settings_desc">Mostra il pulsante timer riscaldamento durante l\'allenamento</string>
+    <string name="workout_timer">Timer Allenamento</string>
+    <string name="workout_timer_desc">Traccia la durata totale dell\'allenamento</string>
+    <string name="inline_exercise_modifications">Modifiche Inline</string>
+    <string name="inline_exercise_modifications_desc">Aggiungi serie ed esercizi durante gli allenamenti normali</string>
+    <string name="workout_settings">Allenamento</string>
+    <string name="workout_duration">Durata Allenamento</string>
+    <string name="add_duration">Aggiungi durata</string>
+    <string name="hours">Ore</string>
+    <string name="minutes">Minuti</string>
     <string name="close_workout">Chiudi Allenamento</string>
 
     <!-- Workout Session -->
@@ -544,6 +572,24 @@
     <string name="cardio_other">Altro</string>
     <string name="activity_name">Nome Attività</string>
     <string name="activity_name_placeholder">es. Nuoto, Trekking...</string>
+    <string name="cardio_badge">CARDIO</string>
+    <string name="cardio_enter_distance">Inserisci distanza</string>
+    <string name="cardio_distance_label">Distanza percorsa (km)</string>
+    <string name="cardio_target_min_format">TARGET: %1$d MIN</string>
+    <string name="cardio_target_km_format">%1$s KM</string>
+    <string name="cardio_timer_running">IN CORSO</string>
+    <string name="cardio_timer_paused">IN PAUSA</string>
+    <string name="cardio_timer_ready">PRONTO</string>
+    <string name="cardio_stop_save">STOP &amp; SALVA</string>
+    <string name="cardio_target_label">TARGET</string>
+    <string name="cardio_dist_value">%1$s km</string>
+    <string name="cardio_min_format">%1$d min</string>
+    <string name="cardio_free_form">Libero</string>
+    <string name="cardio_cat_label">Cardio</string>
+    <string name="cardio_cat_with_name">Cardio (%1$s)</string>
+    <string name="cardio_duration_label">Durata Target (min)</string>
+    <string name="cardio_duration_slider">Durata (min)</string>
+    <string name="cardio_custom_duration">Personalizzato (min)</string>
 
     <!-- About -->
     <string name="about">INFO</string>
@@ -651,5 +697,9 @@
     <string name="crop_aspect_1_1">1:1</string>
     <string name="crop_aspect_4_3">4:3</string>
     <string name="crop_aspect_16_9">16:9</string>
+
+    <!-- Report -->
+    <string name="report">Report</string>
+    <string name="report_preview">ANTEPRIMA</string>
 
 </resources>

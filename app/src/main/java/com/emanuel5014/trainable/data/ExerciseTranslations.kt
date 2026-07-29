@@ -156,7 +156,17 @@ object ExerciseTranslations {
         "Landmine Chest Press" to "Chest Press alla Landmine",
         "Wide Grip Push-ups" to "Piegamenti Presa Larga",
         "Guillotine Press" to "Guillotine Press",
-        "Multipurpose" to "Multipurpose"
+        "Multipurpose" to "Multipurpose",
+
+        // Cardio
+        "Treadmill" to "Tapis Roulant",
+        "Stationary Bike" to "Cyclette / Spin Bike",
+        "Elliptical" to "Ellittica",
+        "Stairmaster" to "Stairmaster / Scaledroid",
+        "Rowing Machine" to "Vogatore",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Corda da Salto"
     )
 
     val es = mapOf(
@@ -314,7 +324,17 @@ object ExerciseTranslations {
         "Landmine Chest Press" to "Press de Pecho en Landmine",
         "Wide Grip Push-ups" to "Flexiones con Agarre Amplio",
         "Guillotine Press" to "Press Guillotina",
-        "Multipurpose" to "Multipropósito"
+        "Multipurpose" to "Multipropósito",
+
+        // Cardio
+        "Treadmill" to "Cinta de Correr",
+        "Stationary Bike" to "Bicicleta Estática",
+        "Elliptical" to "Elíptica",
+        "Stairmaster" to "Stairmaster / Escaladora",
+        "Rowing Machine" to "Máquina de Remo",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Salto con Cuerda"
     )
 
     val itCategories = mapOf(
@@ -323,7 +343,8 @@ object ExerciseTranslations {
         "Legs" to "Gambe",
         "Shoulders" to "Spalle",
         "Arms" to "Braccia",
-        "Core" to "Addome"
+        "Core" to "Addome",
+        "Cardio" to "Cardio"
     )
 
     val esCategories = mapOf(
@@ -332,7 +353,8 @@ object ExerciseTranslations {
         "Legs" to "Piernas",
         "Shoulders" to "Hombros",
         "Arms" to "Brazos",
-        "Core" to "Abdomen"
+        "Core" to "Abdomen",
+        "Cardio" to "Cardio"
     )
 
     val fr = mapOf(
@@ -490,7 +512,17 @@ object ExerciseTranslations {
         "Landmine Chest Press" to "Développé Pecs Landmine",
         "Wide Grip Push-ups" to "Pompes Prise Large",
         "Guillotine Press" to "Développé Guillotine",
-        "Multipurpose" to "Multifonction"
+        "Multipurpose" to "Multifonction",
+
+        // Cardio
+        "Treadmill" to "Tapis Roulant",
+        "Stationary Bike" to "Vélo d'Appartement",
+        "Elliptical" to "Elliptique",
+        "Stairmaster" to "Stairmaster / Escalier",
+        "Rowing Machine" to "Rameur",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Corde à Sauter"
     )
 
     val frCategories = mapOf(
@@ -499,7 +531,8 @@ object ExerciseTranslations {
         "Legs" to "Jambes",
         "Shoulders" to "Épaules",
         "Arms" to "Bras",
-        "Core" to "Abdominaux"
+        "Core" to "Abdominaux",
+        "Cardio" to "Cardio"
     )
 
     val de = mapOf(
@@ -657,7 +690,17 @@ object ExerciseTranslations {
         "Landmine Chest Press" to "Brustpresse an der Landmine",
         "Wide Grip Push-ups" to "Liegestütze mit breitem Griff",
         "Guillotine Press" to "Guillotine Press",
-        "Multipurpose" to "Mehrzweck"
+        "Multipurpose" to "Mehrzweck",
+
+        // Cardio
+        "Treadmill" to "Laufband",
+        "Stationary Bike" to "Ergometer / Heimtrainer",
+        "Elliptical" to "Crosstrainer",
+        "Stairmaster" to "Stairmaster / Treppensteiger",
+        "Rowing Machine" to "Rudergerät",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Springseil"
     )
 
     val deCategories = mapOf(
@@ -666,7 +709,8 @@ object ExerciseTranslations {
         "Legs" to "Beine",
         "Shoulders" to "Schultern",
         "Arms" to "Arme",
-        "Core" to "Bauch"
+        "Core" to "Bauch",
+        "Cardio" to "Cardio"
     )
 
     val pt = mapOf(
@@ -824,7 +868,17 @@ object ExerciseTranslations {
         "Landmine Chest Press" to "Supino no Landmine",
         "Wide Grip Push-ups" to "Flexões com Pegada Larga",
         "Guillotine Press" to "Supino Guilhotina",
-        "Multipurpose" to "Multiuso"
+        "Multipurpose" to "Multiuso",
+
+        // Cardio
+        "Treadmill" to "Esteira",
+        "Stationary Bike" to "Bicicleta Ergométrica",
+        "Elliptical" to "Elíptico",
+        "Stairmaster" to "Stairmaster / Simulador de Escada",
+        "Rowing Machine" to "Remo Ergométrico",
+        "Assault Bike" to "Assault Bike / Air Bike",
+        "SkiErg" to "SkiErg",
+        "Jump Rope" to "Corda de Pular"
     )
 
     val ptCategories = mapOf(
@@ -833,7 +887,8 @@ object ExerciseTranslations {
         "Legs" to "Pernas",
         "Shoulders" to "Ombros",
         "Arms" to "Braços",
-        "Core" to "Abdômen"
+        "Core" to "Abdômen",
+        "Cardio" to "Cardio"
     )
 
     fun translate(name: String, targetLang: String): String {

@@ -36,5 +36,15 @@ data class WorkoutSessionEntity(
     @ColumnInfo(name = "warmup_timer_end_time")
     val warmupTimerEndTime: Long? = null,
     @ColumnInfo(name = "total_warmup_seconds")
-    val totalWarmupSeconds: Int? = null
+    val totalWarmupSeconds: Int? = null,
+    @ColumnInfo(name = "duration_ms")
+    val durationMs: Long? = null,
+    @ColumnInfo(name = "cardio_timer_seconds")
+    val cardioTimerSeconds: Int = 0,
+    @ColumnInfo(name = "cardio_timer_running")
+    val cardioTimerRunning: Boolean = false,
+    @ColumnInfo(name = "cardio_timer_paused")
+    val cardioTimerPaused: Boolean = false,
+    @ColumnInfo(name = "cardio_timer_started_at")
+    val cardioTimerStartedAt: Long? = null
 )

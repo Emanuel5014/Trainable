@@ -118,6 +118,7 @@ import kotlin.system.exitProcess
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToWorkoutSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
@@ -865,6 +866,31 @@ fun SettingsScreen(
                                 checked = swipeActionsEnabled,
                                 onCheckedChange = { viewModel.setSwipeActionsEnabled(it) }
                             )
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToWorkoutSettings() },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.workout_settings), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.workout_timer_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
                     }
                 }
@@ -1669,7 +1695,7 @@ private fun LanguageOption(
 }
 
 @Composable
-private fun SettingsSwitch(
+internal fun SettingsSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true

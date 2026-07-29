@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
@@ -28,7 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [ // 10 Entities
+    entities = [ // 11 Entities
         UserEntity::class,
         WeightLogEntity::class,
         ExerciseEntity::class,
@@ -39,9 +40,10 @@ import kotlinx.coroutines.launch
         SetLogEntity::class,
         SessionExerciseSwapEntity::class,
         CardioLogEntity::class,
-        PhysicalCheckEntity::class
+        PhysicalCheckEntity::class,
+        CustomCategoryEntity::class
     ],
-    version = 17,
+    version = 23,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -197,6 +199,69 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN duration_ms INTEGER")
+            }
+        }
+
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS custom_categories (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL
+                    )
+                """)
+            }
+        }
+
+        val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN exercise_type TEXT NOT NULL DEFAULT 'strength'")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN durata_target_secondi INTEGER")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN distanza_target_km REAL")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN cardio_categoria TEXT")
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN ordine_esercizio INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 1")
+
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (150, 'Running', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (151, 'Cycling', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (152, 'Walking', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (153, 'Elliptical', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (154, 'Rowing Machine', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (155, 'Stairmaster', 'Cardio')")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (156, 'Jump Rope', 'Cardio')")
+            }
+        }
+
+        val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN cardio_timer_seconds INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN cardio_timer_running INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN cardio_timer_paused INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN cardio_timer_started_at INTEGER")
+            }
+        }
+
+        val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN durata_target_secondi INTEGER")
+            }
+        }
+
+        val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("UPDATE exercises SET nome = 'Treadmill' WHERE id = 150")
+                db.execSQL("UPDATE exercises SET nome = 'Stationary Bike' WHERE id = 151")
+                db.execSQL("UPDATE exercises SET nome = 'Elliptical' WHERE id = 152")
+                db.execSQL("UPDATE exercises SET nome = 'Stairmaster' WHERE id = 153")
+                db.execSQL("UPDATE exercises SET nome = 'Assault Bike' WHERE id = 155")
+                db.execSQL("UPDATE exercises SET nome = 'SkiErg' WHERE id = 156")
+                db.execSQL("INSERT OR IGNORE INTO exercises (id, nome, categoria) VALUES (157, 'Jump Rope', 'Cardio')")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -209,7 +274,14 @@ abstract class GymDatabase : RoomDatabase() {
                     GymDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
+                    .addMigrations(
+                        MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                        MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
+                        MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
+                        MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
+                        MIGRATION_22_23
+                    )
+                    .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)

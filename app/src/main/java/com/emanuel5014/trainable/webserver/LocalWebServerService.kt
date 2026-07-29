@@ -97,12 +97,14 @@ class LocalWebServerService : Service() {
             Log.i(TAG, "Ktor server started at $serverUrl")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start Ktor server", e)
+            sendBroadcast(Intent(WebServerManager.ACTION_SERVER_STOPPED))
+            stopSelf()
         }
     }
 
     private fun stopServer() {
         try {
-            engine?.stop(gracePeriodMillis = 1000, timeoutMillis = 3000)
+            engine?.stop(gracePeriodMillis = 100, timeoutMillis = 500)
             engine = null
             Log.i(TAG, "Ktor server stopped")
         } catch (e: Exception) {

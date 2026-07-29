@@ -29,6 +29,8 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExerciseEntryCard(
@@ -66,23 +68,55 @@ fun ExerciseEntryCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .background(SurfaceContainerHigh, CircleShape)
-                            .padding(horizontal = Spacing.small, vertical = 2.dp)
-                    ) {
+                    if (item.planExercise.exerciseType == "cardio") {
+                        Box(
+                            modifier = Modifier
+                                .background(com.emanuel5014.trainable.ui.theme.Tertiary.copy(alpha = 0.15f), CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            val cat = item.planExercise.cardioCategoria ?: item.exercise.categoria
+                            val label = if (cat.equals("Cardio", ignoreCase = true)) stringResource(R.string.cardio_cat_label) else stringResource(R.string.cardio_cat_with_name, cat)
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = com.emanuel5014.trainable.ui.theme.Tertiary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        val durMin = item.planExercise.durataTargetSecondi?.let { it / 60 }
+                        val distKm = item.planExercise.distanzaTargetKm
+                        val targetText = buildString {
+                            if (durMin != null && durMin > 0) append(stringResource(R.string.cardio_min_format, durMin))
+                            if (distKm != null && distKm > 0) {
+                                if (isNotEmpty()) append(" • ")
+                                append(stringResource(R.string.cardio_dist_value, distKm.toString()))
+                            }
+                            if (isEmpty()) append(stringResource(R.string.cardio_free_form))
+                        }
                         Text(
-                            text = "${item.planExercise.serieTarget} × ${item.planExercise.repsTarget}",
-                            style = MaterialTheme.typography.labelSmall,
+                            text = targetText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .background(SurfaceContainerHigh, CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "${item.planExercise.serieTarget} × ${item.planExercise.repsTarget}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Text(
+                            text = "Rest: ${item.planExercise.recuperoTarget}s",
+                            style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
                     }
-                    Spacer(modifier = Modifier.width(Spacing.small))
-                    Text(
-                        text = "Rest: ${item.planExercise.recuperoTarget}s",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnSurfaceVariant
-                    )
                 }
             }
         }

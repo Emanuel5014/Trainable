@@ -45,6 +45,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -133,6 +134,7 @@ import java.util.Locale
 @Composable
 fun RoutineListScreen(
     onNavigateToDetail: (Int) -> Unit,
+    onGenerateReport: (List<Int>) -> Unit = {},
     onSwipingItemChange: ((Boolean) -> Unit)? = null,
     viewModel: RoutinesViewModel = hiltViewModel()
 ) {
@@ -276,6 +278,12 @@ fun RoutineListScreen(
                                 contentColor = Error
                             )
                         }
+                        GymIconButton(
+                            icon = Icons.Rounded.Assessment,
+                            onClick = { onGenerateReport(uiState.selectedPlanIds.toList()) },
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = Primary
+                        )
                         GymIconButton(
                             icon = Icons.Rounded.Close,
                             onClick = { viewModel.clearSelection() },

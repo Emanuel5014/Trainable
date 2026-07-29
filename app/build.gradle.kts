@@ -17,7 +17,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 1
-        versionName = "1.8.0"
+        versionName = "1.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -134,6 +134,9 @@ implementation(libs.google.fonts)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.cors)
+
+    // Graphics Shapes (for morph animations)
+    implementation(libs.androidx.graphics.shapes)
 
     // Biometric & Fragment support
     implementation(libs.androidx.biometric)

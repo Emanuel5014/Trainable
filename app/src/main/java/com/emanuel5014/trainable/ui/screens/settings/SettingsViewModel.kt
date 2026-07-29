@@ -9,7 +9,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -35,6 +37,7 @@ class SettingsViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userPrefsRepository: UserPreferencesRepository,
     private val workoutRepository: WorkoutRepository,
+    private val exerciseRepository: ExerciseRepository,
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val updateManager: UpdateManager,
@@ -208,6 +211,30 @@ class SettingsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
+    )
+
+    val editablePresetExercises = userPrefsRepository.editablePresetExercises.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val workoutTimerEnabled = userPrefsRepository.workoutTimerEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val inlineExerciseModificationsEnabled = userPrefsRepository.inlineExerciseModificationsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val customCategories = exerciseRepository.getCustomCategories().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
     )
 
     val webServerState = webServerManager.state.stateIn(
@@ -476,6 +503,49 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setEditablePresetExercises(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setEditablePresetExercises(enabled)
+        }
+    }
+
+    fun setWorkoutTimerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setWorkoutTimerEnabled(enabled)
+        }
+    }
+
+    fun setInlineExerciseModificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setInlineExerciseModificationsEnabled(enabled)
+        }
+    }
+
+    fun resetPresetExerciseNames(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            exerciseRepository.resetPresetExerciseNames()
+            onComplete()
+        }
+    }
+
+    fun addCustomCategory(name: String) {
+        viewModelScope.launch {
+            exerciseRepository.addCustomCategory(name)
+        }
+    }
+
+    fun updateCustomCategory(category: CustomCategoryEntity) {
+        viewModelScope.launch {
+            exerciseRepository.updateCustomCategory(category)
+        }
+    }
+
+    fun deleteCustomCategory(category: CustomCategoryEntity) {
+        viewModelScope.launch {
+            exerciseRepository.deleteCustomCategory(category.id)
+        }
+    }
+
     fun setThemeMode(mode: Int) {
         viewModelScope.launch {
             userPrefsRepository.setThemeMode(mode)
@@ -506,7 +576,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private var lastWebServerToggleMs = 0L
+
     fun toggleWebServer() {
+        val now = System.currentTimeMillis()
+        if (now - lastWebServerToggleMs < 600) return
+        lastWebServerToggleMs = now
         if (webServerState.value.isRunning) {
             webServerManager.stopServer()
         } else {

@@ -140,6 +140,7 @@ fun RoutineDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
+    val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
@@ -175,6 +176,7 @@ fun RoutineDetailScreen(
     var setsText by remember { mutableStateOf("3") }
     var repsText by remember { mutableStateOf("8-12") }
     var restText by remember { mutableStateOf("120") }
+    var cardioDurationText by remember { mutableStateOf("20") }
 
     // Local state for dragging to ensure smoothness
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
@@ -205,6 +207,7 @@ fun RoutineDetailScreen(
         selectedExerciseId = null
         setsText = "3"
         repsText = "8"
+        cardioDurationText = "20"
         // Inherit rest from the last exercise in the list, default to 120 if empty
         restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
         showExercisePicker = true
@@ -216,6 +219,7 @@ fun RoutineDetailScreen(
         setsText = item.planExercise.serieTarget.toString()
         repsText = item.planExercise.repsTarget
         restText = item.planExercise.recuperoTarget.toString()
+        cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
         showExerciseSheet = true
     }
 
@@ -686,6 +690,7 @@ fun RoutineDetailScreen(
 
     if (showExerciseSheet) {
         val selectedExercise = uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
+        val isSelectedCardio = selectedExercise?.categoria?.equals("Cardio", ignoreCase = true) == true || editingExercise?.planExercise?.exerciseType == "cardio"
 
         ModalBottomSheet(
             onDismissRequest = { showExerciseSheet = false },
@@ -773,31 +778,14 @@ fun RoutineDetailScreen(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                    ) {
-                        GymInputField(
-                            value = setsText,
-                            onValueChange = { setsText = it },
-                            label = stringResource(R.string.sets),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
+                    if (isSelectedCardio) {
+                        CardioDurationSlider(
+                            valueMinutes = cardioDurationText.toIntOrNull() ?: 20,
+                            onValueChange = { cardioDurationText = it.toString() },
+                            hapticEnabled = hapticEnabled,
+                            haptic = haptic,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        GymInputField(
-                            value = repsText,
-                            onValueChange = {
-                                repsText = it
-                                val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                    setsText = repCount.toString()
-                                }
-                            },
-                            label = stringResource(R.string.reps),
-                            supportingText = stringResource(R.string.reps_hint),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
 
                         RestSlider(
                             value = restText.toIntOrNull() ?: 120,
@@ -806,6 +794,41 @@ fun RoutineDetailScreen(
                             haptic = haptic,
                             modifier = Modifier.fillMaxWidth()
                         )
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                        ) {
+                            GymInputField(
+                                value = setsText,
+                                onValueChange = { setsText = it },
+                                label = stringResource(R.string.sets),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymInputField(
+                                value = repsText,
+                                onValueChange = {
+                                    repsText = it
+                                    val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                    if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                        setsText = repCount.toString()
+                                    }
+                                },
+                                label = stringResource(R.string.reps),
+                                supportingText = stringResource(R.string.reps_hint),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        RestSlider(
+                            value = restText.toIntOrNull() ?: 120,
+                            onValueChange = { restText = it.toString() },
+                            hapticEnabled = hapticEnabled,
+                            haptic = haptic,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
                         if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
                             val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
@@ -895,26 +918,53 @@ fun RoutineDetailScreen(
                     GymButton(
                         onClick = {
                             val exerciseId = selectedExerciseId ?: return@GymButton
-                            val sets = setsText.trim().toIntOrNull() ?: return@GymButton
-                            val rest = restText.trim().toIntOrNull() ?: return@GymButton
-                            val reps = repsText.trim().ifBlank { return@GymButton }
-
                             val current = editingExercise
-                            if (current == null) {
-                                viewModel.addExercise(
-                                    exerciseId = exerciseId,
-                                    serieTarget = sets,
-                                    repsTarget = reps,
-                                    recuperoTarget = rest
-                                )
+                            if (isSelectedCardio) {
+                                val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
+                                val rest = restText.trim().toIntOrNull() ?: 0
+                                val category = selectedExercise?.categoria ?: "Cardio"
+
+                                if (current == null) {
+                                    viewModel.addCardioExercise(
+                                        exerciseId = exerciseId,
+                                        cardioCategoria = category,
+                                        durataTargetSecondi = durSec,
+                                        recuperoTarget = rest
+                                    )
+                                } else {
+                                    viewModel.updateExercise(
+                                        original = current.planExercise.copy(
+                                            exerciseType = "cardio",
+                                            cardioCategoria = category,
+                                            durataTargetSecondi = durSec
+                                        ),
+                                        exerciseId = exerciseId,
+                                        serieTarget = 1,
+                                        repsTarget = "1",
+                                        recuperoTarget = rest
+                                    )
+                                }
                             } else {
-                                viewModel.updateExercise(
-                                    original = current.planExercise,
-                                    exerciseId = exerciseId,
-                                    serieTarget = sets,
-                                    repsTarget = reps,
-                                    recuperoTarget = rest
-                                )
+                                val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                val reps = repsText.trim().ifBlank { return@GymButton }
+
+                                if (current == null) {
+                                    viewModel.addExercise(
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = reps,
+                                        recuperoTarget = rest
+                                    )
+                                } else {
+                                    viewModel.updateExercise(
+                                        original = current.planExercise,
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = reps,
+                                        recuperoTarget = rest
+                                    )
+                                }
                             }
                             scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
                                 if (!exerciseSheetState.isVisible) {
@@ -943,8 +993,8 @@ fun RoutineDetailScreen(
                 showExercisePicker = false
                 showExerciseSheet = true
             },
-            onAddCustomExercise = { nome, categoria ->
-                viewModel.addCustomExercise(nome, categoria)
+            onAddCustomExercise = { nome, categoria, onCreated ->
+                viewModel.addCustomExercise(nome, categoria, onCreated)
             },
             onEditCustomExercise = { exercise ->
                 viewModel.updateCustomExercise(exercise)
@@ -953,7 +1003,8 @@ fun RoutineDetailScreen(
                 viewModel.deleteCustomExercise(exercise)
             },
             onDismiss = { showExercisePicker = false },
-            languageCode = languageCode
+            languageCode = languageCode,
+            editablePresetExercises = editablePresetExercises
         )
     }
 
@@ -1277,6 +1328,74 @@ private fun formatRestTime(seconds: Int): String {
         minutes == 0 -> "${secs}s"
         secs == 0 -> "${minutes}m"
         else -> "${minutes}m ${secs}s"
+    }
+}
+
+@Composable
+private fun CardioDurationSlider(
+    valueMinutes: Int,
+    onValueChange: (Int) -> Unit,
+    hapticEnabled: Boolean,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    modifier: Modifier = Modifier
+) {
+    val steps = listOf(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
+    val closestIndex = remember(valueMinutes) {
+        steps.indexOf(steps.minByOrNull { kotlin.math.abs(it - valueMinutes) } ?: 20).coerceAtLeast(0)
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.cardio_duration_slider),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${valueMinutes} min",
+                style = MaterialTheme.typography.titleMedium,
+                color = Primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+            val displayMinutes = valueMinutes / 60
+            val displaySecs = valueMinutes % 60
+            if (displayMinutes > 0 || displaySecs > 0) {
+                Text(
+                    text = when {
+                        displayMinutes == 0 -> "${displaySecs}s"
+                        displaySecs == 0 -> "${displayMinutes}m"
+                        else -> "${displayMinutes}m ${displaySecs}s"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+            }
+        }
+
+        Slider(
+            value = closestIndex.toFloat(),
+            onValueChange = { rawValue ->
+                val index = kotlin.math.round(rawValue).toInt()
+                val clampedIndex = index.coerceIn(0, steps.size - 1)
+                if (clampedIndex != closestIndex) {
+                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onValueChange(steps[clampedIndex])
+                }
+            },
+            valueRange = 0f..(steps.size - 1).toFloat(),
+            steps = steps.size - 2,
+            colors = SliderDefaults.colors(
+                thumbColor = Primary,
+                activeTrackColor = Primary,
+                inactiveTrackColor = SurfaceContainerHighest
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

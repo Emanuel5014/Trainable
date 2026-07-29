@@ -9,6 +9,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,6 +37,7 @@ data class RoutineDetailUiState(
 class RoutineDetailViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -47,6 +49,12 @@ class RoutineDetailViewModel @Inject constructor(
 
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
+
+    val editablePresetExercises = userPreferencesRepository.editablePresetExercises.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     init {
         viewModelScope.launch {
@@ -139,9 +147,10 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun addCustomExercise(nome: String, categoria: String) {
+    fun addCustomExercise(nome: String, categoria: String, onCreated: (ExerciseEntity) -> Unit = {}) {
         viewModelScope.launch {
-            exerciseRepository.addCustomExercise(nome, categoria)
+            val newId = exerciseRepository.addCustomExercise(nome, categoria)
+            onCreated(ExerciseEntity(id = newId, nome = nome, categoria = categoria))
         }
     }
 
@@ -170,6 +179,34 @@ class RoutineDetailViewModel @Inject constructor(
                     repsTarget = repsTarget,
                     recuperoTarget = recuperoTarget,
                     ordine = nextOrder
+                )
+            )
+        }
+    }
+
+    fun addCardioExercise(
+        exerciseId: Int,
+        cardioCategoria: String?,
+        durataTargetSecondi: Int?,
+        distanzaTargetKm: Float? = null,
+        recuperoTarget: Int = 0
+    ) {
+        viewModelScope.launch {
+            val current = _uiState.value.planDetails ?: return@launch
+            val nextOrder = (current.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
+
+            workoutRepository.savePlanExercise(
+                PlanExerciseEntity(
+                    planId = current.plan.id,
+                    exerciseId = exerciseId,
+                    serieTarget = 1,
+                    repsTarget = "1",
+                    recuperoTarget = recuperoTarget,
+                    ordine = nextOrder,
+                    exerciseType = "cardio",
+                    cardioCategoria = cardioCategoria,
+                    durataTargetSecondi = durataTargetSecondi,
+                    distanzaTargetKm = distanzaTargetKm
                 )
             )
         }

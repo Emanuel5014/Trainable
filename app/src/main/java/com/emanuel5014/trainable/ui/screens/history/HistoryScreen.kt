@@ -108,6 +108,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1296,12 +1297,30 @@ fun SessionHistoryCard(
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text(
-                            text = DateFormatter.format(session.timestamp),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = OnSurface
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = DateFormatter.format(session.timestamp),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = OnSurface
+                            )
+                            if (session.durationMs != null) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(4.dp)
+                                        .clip(CircleShape)
+                                        .background(OnSurfaceVariant.copy(alpha = 0.4f))
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = formatDuration(session.durationMs),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = OnSurfaceVariant,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                         Text(
                             text = when (planName) {
                                 "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
@@ -1448,107 +1467,124 @@ fun SessionHistoryCard(
                             blocks.add(HistoryBlock(currentSupersetId, currentBlock.toList()))
                         }
 
+                        val unifiedItems = mutableListOf<UnifiedHistoryItem>()
                         blocks.forEach { block ->
-                            val isSuperset = block.supersetId != null
+                            val ord = block.exercises.firstOrNull()?.sets?.firstOrNull()?.setLog?.ordineEsercizio ?: 0
+                            unifiedItems.add(UnifiedHistoryItem.Strength(block, ord))
+                        }
+                        details.cardio.forEach { cardio ->
+                            unifiedItems.add(UnifiedHistoryItem.Cardio(cardio, cardio.ordineEsercizio))
+                        }
 
-                            if (isSuperset) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 12.dp)
-                                        .background(Primary.copy(alpha = 0.04f), shape = Shapes.large)
-                                        .border(1.dp, Primary.copy(alpha = 0.1f), shape = Shapes.large)
-                                        .padding(horizontal = ResponsiveSize.cardPadding, vertical = 12.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(bottom = 12.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Rounded.Link,
-                                            contentDescription = null,
-                                            tint = Primary,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = stringResource(R.string.superset),
-                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                            color = Primary,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
+                        val sortedItems = unifiedItems.sortedBy { it.order }
 
-                                    block.exercises.forEachIndexed { exIndex, exWithSets ->
-                                        HistoryExerciseGroup(
-                                            exWithSets = exWithSets,
-                                            isSuperset = true,
-                                            languageCode = languageCode,
-                                            weightUnit = weightUnit,
-                                            modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp)
-                                        )
+                        sortedItems.forEach { item ->
+                            when (item) {
+                                is UnifiedHistoryItem.Strength -> {
+                                    val block = item.block
+                                    val isSuperset = block.supersetId != null
+
+                                    if (isSuperset) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 12.dp)
+                                                .background(Primary.copy(alpha = 0.04f), shape = Shapes.large)
+                                                .border(1.dp, Primary.copy(alpha = 0.1f), shape = Shapes.large)
+                                                .padding(horizontal = ResponsiveSize.cardPadding, vertical = 12.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(bottom = 12.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Rounded.Link,
+                                                    contentDescription = null,
+                                                    tint = Primary,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = stringResource(R.string.superset),
+                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                                    color = Primary,
+                                                    fontWeight = FontWeight.Black
+                                                )
+                                            }
+
+                                            block.exercises.forEachIndexed { exIndex, exWithSets ->
+                                                HistoryExerciseGroup(
+                                                    exWithSets = exWithSets,
+                                                    isSuperset = true,
+                                                    languageCode = languageCode,
+                                                    weightUnit = weightUnit,
+                                                    modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp)
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        block.exercises.forEach { exWithSets ->
+                                            HistoryExerciseGroup(
+                                                exWithSets = exWithSets,
+                                                isSuperset = false,
+                                                languageCode = languageCode,
+                                                weightUnit = weightUnit,
+                                                modifier = Modifier
+                                                    .padding(horizontal = ResponsiveSize.cardPadding)
+                                                    .padding(bottom = 16.dp)
+                                            )
+                                        }
                                     }
                                 }
-                            } else {
-                                block.exercises.forEach { exWithSets ->
-                                    HistoryExerciseGroup(
-                                        exWithSets = exWithSets,
-                                        isSuperset = false,
-                                        languageCode = languageCode,
-                                        weightUnit = weightUnit,
+                                is UnifiedHistoryItem.Cardio -> {
+                                    val cardio = item.cardio
+                                    val catLower = cardio.categoria.lowercase()
+                                    val icon = when {
+                                        catLower.contains("bici") || catLower.contains("bike") || catLower.contains("cycling") || catLower.contains("cyclette") -> Icons.AutoMirrored.Rounded.DirectionsBike
+                                        catLower.contains("camminata") || catLower.contains("walk") -> Icons.AutoMirrored.Rounded.DirectionsWalk
+                                        else -> Icons.AutoMirrored.Rounded.DirectionsRun
+                                    }
+                                    val translatedTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
+                                    Column(
                                         modifier = Modifier
                                             .padding(horizontal = ResponsiveSize.cardPadding)
                                             .padding(bottom = 16.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        details.cardio.forEach { cardio ->
-                            val icon = when (cardio.categoria.lowercase()) {
-                                "corsa", "run" -> Icons.AutoMirrored.Rounded.DirectionsRun
-                                "bici", "bike", "cycling" -> Icons.AutoMirrored.Rounded.DirectionsBike
-                                "camminata", "walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
-                                else -> Icons.AutoMirrored.Rounded.DirectionsRun
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = ResponsiveSize.cardPadding)
-                                    .padding(bottom = 16.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = cardio.categoria.uppercase(),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = Primary,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.sp
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "${cardio.distanza} km",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnSurface
-                                    )
-                                    Text(
-                                        text = run {
-                                            val h = cardio.durataSecondi / 3600
-                                            val m = (cardio.durataSecondi % 3600) / 60
-                                            val s = cardio.durataSecondi % 60
-                                            if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
-                                        },
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = OnSurfaceVariant
-                                    )
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = translatedTitle.uppercase(),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = Primary,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                letterSpacing = 1.sp
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "${cardio.distanza} km",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = OnSurface
+                                            )
+                                            Text(
+                                                text = run {
+                                                    val h = cardio.durataSecondi / 3600
+                                                    val m = (cardio.durataSecondi % 3600) / 60
+                                                    val s = cardio.durataSecondi % 60
+                                                    if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                                                },
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = OnSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1687,5 +1723,23 @@ fun EditSetDialog(
         titleContentColor = OnSurface,
         textContentColor = OnSurfaceVariant
     )
+}
+
+private fun formatDuration(durationMs: Long): String {
+    val totalSeconds = durationMs / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return when {
+        hours > 0 -> "%dh %dm".format(hours, minutes)
+        minutes > 0 -> "%dm %ds".format(minutes, seconds)
+        else -> "%ds".format(seconds)
+    }
+}
+
+private sealed interface UnifiedHistoryItem {
+    val order: Int
+    data class Strength(val block: HistoryBlock, override val order: Int) : UnifiedHistoryItem
+    data class Cardio(val cardio: CardioLogEntity, override val order: Int) : UnifiedHistoryItem
 }
 

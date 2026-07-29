@@ -297,18 +297,27 @@ class WorkoutRepository @Inject constructor(
 
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>> = workoutDao.getUnfinishedSessionsWithPlanName()
 
-    suspend fun setSessionFinished(sessionId: Int) {
+    suspend fun setSessionFinished(sessionId: Int, durationMs: Long? = null) {
         workoutDao.setSessionFinished(sessionId)
+        if (durationMs != null) {
+            workoutDao.setSessionDuration(sessionId, durationMs)
+        }
         triggerWidgetUpdate()
     }
 
     suspend fun updateRestTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateRestTimer(sessionId, endTime, totalSeconds)
 
     suspend fun updateWarmupTimer(sessionId: Int, endTime: Long?, totalSeconds: Int?) = workoutDao.updateWarmupTimer(sessionId, endTime, totalSeconds)
+
+    suspend fun updateCardioTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?) = workoutDao.updateCardioTimer(sessionId, seconds, running, paused, startedAt)
     
     suspend fun logSet(set: SetLogEntity) = workoutDao.insertSet(set)
     
-    suspend fun saveCardioLog(cardio: CardioLogEntity) = workoutDao.insertCardioLog(cardio)
+    suspend fun saveCardioLog(cardio: CardioLogEntity): Long = workoutDao.insertCardioLog(cardio)
+
+    suspend fun updateCardioLog(cardio: CardioLogEntity) = workoutDao.updateCardioLog(cardio)
+
+    fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>> = workoutDao.getCardioLogsForSession(sessionId)
 
     suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long) {
         val user = userDao.getUser().first() ?: return
@@ -458,13 +467,23 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun updateSetOrders(sets: List<SetLogEntity>) = workoutDao.updateSetOrders(sets)
 
+    suspend fun updateExerciseOrderInSession(sessionId: Int, exerciseId: Int, order: Int) = workoutDao.updateExerciseOrderInSession(sessionId, exerciseId, order)
+
     suspend fun deleteUncompletedSetsForSession(sessionId: Int) = workoutDao.deleteUncompletedSetsForSession(sessionId)
+
+    suspend fun deleteUncompletedCardioLogsForSession(sessionId: Int) = workoutDao.deleteUncompletedCardioLogsForSession(sessionId)
 
     suspend fun saveExerciseSwap(swap: SessionExerciseSwapEntity) = workoutDao.insertExerciseSwap(swap)
 
     fun getSwapsForSession(sessionId: Int): Flow<List<SessionExerciseSwapEntity>> = workoutDao.getSwapsForSession(sessionId)
 
     suspend fun removeExerciseSwap(sessionId: Int, originalExerciseId: Int) = workoutDao.removeSwapForExercise(sessionId, originalExerciseId)
+
+    suspend fun getFinishedSessionsWithDetailsForPlans(planIds: List<Int>) =
+        workoutDao.getFinishedSessionsWithDetailsForPlans(planIds)
+
+    suspend fun getSwapsForSessions(sessionIds: List<Int>) =
+        workoutDao.getSwapsForSessions(sessionIds)
 
     suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg"): String {
         val sessions = workoutDao.getAllSessionsWithDetails().first()
