@@ -64,79 +64,82 @@ fun CardioInputForm(
     onDurataMinutiChange: (String) -> Unit,
     durataSecondi: String,
     onDurataSecondiChange: (String) -> Unit,
+    showCategory: Boolean = true,
 ) {
-    val categories = listOf(
+    val categories = if (showCategory) listOf(
         CardioCategory(stringResource(R.string.cardio_run), Icons.AutoMirrored.Rounded.DirectionsRun),
         CardioCategory(stringResource(R.string.cardio_bike), Icons.AutoMirrored.Rounded.DirectionsBike),
         CardioCategory(stringResource(R.string.cardio_walk), Icons.AutoMirrored.Rounded.DirectionsWalk),
-    )
+    ) else emptyList()
 
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // Category Selection
-        Column {
-            Text(
-                text = stringResource(R.string.category).uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = OnSurfaceVariant,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(categories) { cat ->
-                    val isSelected = categoria.equals(cat.name, ignoreCase = true)
-                    CardioCategoryChip(
-                        category = cat,
-                        isSelected = isSelected,
-                        onClick = { onCategoriaChange(cat.name) }
-                    )
-                }
-                item {
-                    val isCustom = categories.none { it.name.equals(categoria, ignoreCase = true) } && categoria.isNotBlank()
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isCustom) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh)
-                            .border(
-                                width = 1.dp,
-                                color = if (isCustom) Primary else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .clickable { onCategoriaChange("") }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Rounded.MoreHoriz,
-                                contentDescription = null,
-                                tint = if (isCustom) Primary else OnSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isCustom) categoria else stringResource(R.string.cardio_other),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isCustom) Primary else OnSurface,
-                                fontWeight = if (isCustom) FontWeight.ExtraBold else FontWeight.SemiBold
-                            )
+        if (showCategory) {
+            Column {
+                Text(
+                    text = stringResource(R.string.category).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(categories) { cat ->
+                        val isSelected = categoria.equals(cat.name, ignoreCase = true)
+                        CardioCategoryChip(
+                            category = cat,
+                            isSelected = isSelected,
+                            onClick = { onCategoriaChange(cat.name) }
+                        )
+                    }
+                    item {
+                        val isCustom = categories.none { it.name.equals(categoria, ignoreCase = true) } && categoria.isNotBlank()
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isCustom) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh)
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isCustom) Primary else Color.Transparent,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { onCategoriaChange("") }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MoreHoriz,
+                                    contentDescription = null,
+                                    tint = if (isCustom) Primary else OnSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isCustom) categoria else stringResource(R.string.cardio_other),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isCustom) Primary else OnSurface,
+                                    fontWeight = if (isCustom) FontWeight.ExtraBold else FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
                 }
-            }
-            if (categoria.isBlank() || categories.none { it.name.equals(categoria, ignoreCase = true) }) {
-                Spacer(modifier = Modifier.height(8.dp))
-                GymInputField(
-                    value = categoria,
-                    onValueChange = onCategoriaChange,
-                    label = stringResource(R.string.activity_name),
-                    placeholder = stringResource(R.string.activity_name_placeholder)
-                )
+                if (categoria.isBlank() || categories.none { it.name.equals(categoria, ignoreCase = true) }) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    GymInputField(
+                        value = categoria,
+                        onValueChange = onCategoriaChange,
+                        label = stringResource(R.string.activity_name),
+                        placeholder = stringResource(R.string.activity_name_placeholder)
+                    )
+                }
             }
         }
 
@@ -323,9 +326,10 @@ private fun IncrementButton(
 @Composable
 fun AddCardioDialog(
     onDismiss: () -> Unit,
-    onConfirm: (categoria: String, distanza: Float, durataSecondi: Int) -> Unit
+    onConfirm: (categoria: String, distanza: Float, durataSecondi: Int) -> Unit,
+    initialCategoria: String? = null
 ) {
-    var categoria by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf(initialCategoria ?: "") }
     var distanza by remember { mutableStateOf("") }
     var durataOre by remember { mutableStateOf("") }
     var durataMinuti by remember { mutableStateOf("") }

@@ -168,12 +168,17 @@ class EditWorkoutViewModel @Inject constructor(
 
     fun addCardioLog(categoria: String, distanza: Float, durataSecondi: Int) {
         viewModelScope.launch {
+            val maxOrder = maxOf(
+                _state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: 0,
+                _state.value.cardioLogs.maxOfOrNull { it.ordineEsercizio } ?: 0
+            )
             val newCardio = CardioLogEntity(
                 sessionId = sessionId,
                 categoria = categoria,
                 distanza = distanza,
                 durataSecondi = durataSecondi,
-                timestamp = _state.value.sessionTimestamp
+                timestamp = _state.value.sessionTimestamp,
+                ordineEsercizio = maxOrder + 1
             )
             workoutRepository.saveCardioLog(newCardio)
         }
@@ -186,6 +191,94 @@ class EditWorkoutViewModel @Inject constructor(
                 curr.copy(cardioLogs = curr.cardioLogs.filter { it.id != cardio.id })
             }
             workoutRepository.deleteCardioLog(cardio)
+        }
+    }
+
+    fun moveCardioUp(cardio: CardioLogEntity) {
+        val allItems = mutableListOf<Pair<Int, Any>>()
+        _state.value.exercises.forEach { ex ->
+            allItems.add(Pair(ex.sets.firstOrNull()?.ordineEsercizio ?: 0, ex as Any))
+        }
+        _state.value.cardioLogs.forEach { c ->
+            allItems.add(Pair(c.ordineEsercizio, c as Any))
+        }
+        allItems.sortBy { it.first }
+
+        val cardioIndex = allItems.indexOfFirst { it.second == cardio }
+        if (cardioIndex > 0) {
+            val prevItem = allItems[cardioIndex - 1]
+            val prevOrder = prevItem.first
+            val cardioOrder = cardio.ordineEsercizio
+
+            _state.update { curr ->
+                val updatedCardioLogs = curr.cardioLogs.map {
+                    if (it.id == cardio.id) it.copy(ordineEsercizio = prevOrder) else it
+                }
+                val updatedExercises = curr.exercises.map { exState ->
+                    if (exState.sets.firstOrNull()?.ordineEsercizio == prevOrder) {
+                        exState.copy(sets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) })
+                    } else {
+                        exState
+                    }
+                }
+                curr.copy(exercises = updatedExercises, cardioLogs = updatedCardioLogs)
+            }
+
+            viewModelScope.launch {
+                workoutRepository.updateCardioLog(cardio.copy(ordineEsercizio = prevOrder))
+                if (prevItem.second is EditExerciseState) {
+                    val exState = prevItem.second as EditExerciseState
+                    val updatedSets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) }
+                    workoutRepository.updateSetOrders(updatedSets)
+                } else if (prevItem.second is CardioLogEntity) {
+                    val prevCardio = prevItem.second as CardioLogEntity
+                    workoutRepository.updateCardioLog(prevCardio.copy(ordineEsercizio = cardioOrder))
+                }
+            }
+        }
+    }
+
+    fun moveCardioDown(cardio: CardioLogEntity) {
+        val allItems = mutableListOf<Pair<Int, Any>>()
+        _state.value.exercises.forEach { ex ->
+            allItems.add(Pair(ex.sets.firstOrNull()?.ordineEsercizio ?: 0, ex as Any))
+        }
+        _state.value.cardioLogs.forEach { c ->
+            allItems.add(Pair(c.ordineEsercizio, c as Any))
+        }
+        allItems.sortBy { it.first }
+
+        val cardioIndex = allItems.indexOfFirst { it.second == cardio }
+        if (cardioIndex < allItems.lastIndex) {
+            val nextItem = allItems[cardioIndex + 1]
+            val nextOrder = nextItem.first
+            val cardioOrder = cardio.ordineEsercizio
+
+            _state.update { curr ->
+                val updatedCardioLogs = curr.cardioLogs.map {
+                    if (it.id == cardio.id) it.copy(ordineEsercizio = nextOrder) else it
+                }
+                val updatedExercises = curr.exercises.map { exState ->
+                    if (exState.sets.firstOrNull()?.ordineEsercizio == nextOrder) {
+                        exState.copy(sets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) })
+                    } else {
+                        exState
+                    }
+                }
+                curr.copy(exercises = updatedExercises, cardioLogs = updatedCardioLogs)
+            }
+
+            viewModelScope.launch {
+                workoutRepository.updateCardioLog(cardio.copy(ordineEsercizio = nextOrder))
+                if (nextItem.second is EditExerciseState) {
+                    val exState = nextItem.second as EditExerciseState
+                    val updatedSets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) }
+                    workoutRepository.updateSetOrders(updatedSets)
+                } else if (nextItem.second is CardioLogEntity) {
+                    val nextCardio = nextItem.second as CardioLogEntity
+                    workoutRepository.updateCardioLog(nextCardio.copy(ordineEsercizio = cardioOrder))
+                }
+            }
         }
     }
 
