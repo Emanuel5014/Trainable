@@ -374,7 +374,7 @@ class WorkoutViewModel @Inject constructor(
                 customRestSeconds = restoredRestSeconds,
                 isCardio = isCardio,
                 cardioCategoria = exercise.nome,
-                cardioDurataTargetSeconds = planDetail?.durataTargetSecondi,
+                cardioDurataTargetSeconds = cardioLog?.durataTargetSecondi ?: planDetail?.durataTargetSecondi,
                 cardioDistanzaTargetKm = planDetail?.distanzaTargetKm,
                 cardioLogId = cardioLog?.id,
                 cardioElapsedSeconds = cardioLog?.durataSecondi ?: 0,
@@ -1509,10 +1509,11 @@ class WorkoutViewModel @Inject constructor(
             exerciseRepository.deleteExercise(exercise)
         }
     }
-    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8", restTimer: Int? = 90) {
+    fun addExerciseToActiveSession(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8", restTimer: Int? = 90, cardioDurationMinutes: Int? = null) {
         val repsList = parseReps(repsTarget, targetSets)
         val sessionId = _state.value.sessionId ?: return
         val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true)
+        val targetDurationSeconds = if (isCardio) (cardioDurationMinutes ?: 15) * 60 else null
 
         viewModelScope.launch {
             val currentState = _state.value
@@ -1552,7 +1553,8 @@ class WorkoutViewModel @Inject constructor(
                         customRestSeconds = restTimer,
                         customRepsTarget = repsTarget,
                         isCardio = isCardio,
-                        cardioCategoria = exercise.categoria
+                        cardioCategoria = exercise.categoria,
+                        cardioDurataTargetSeconds = targetDurationSeconds
                     )
                 )
                 curr.copy(
@@ -1565,10 +1567,11 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addExerciseAfterCurrent(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8", restTimer: Int? = 90) {
+    fun addExerciseAfterCurrent(exercise: ExerciseEntity, targetSets: Int = 3, repsTarget: String = "8", restTimer: Int? = 90, cardioDurationMinutes: Int? = null) {
         val repsList = parseReps(repsTarget, targetSets)
         val sessionId = _state.value.sessionId ?: return
         val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true)
+        val targetDurationSeconds = if (isCardio) (cardioDurationMinutes ?: 15) * 60 else null
 
         viewModelScope.launch {
             val currentState = _state.value
@@ -1642,7 +1645,8 @@ class WorkoutViewModel @Inject constructor(
                         customRestSeconds = restTimer,
                         customRepsTarget = repsTarget,
                         isCardio = isCardio,
-                        cardioCategoria = exercise.categoria
+                        cardioCategoria = exercise.categoria,
+                        cardioDurataTargetSeconds = targetDurationSeconds
                     )
                 )
                 val updatedOrderMap = curr.exerciseExecutionOrder.toMutableMap()
@@ -1832,6 +1836,7 @@ class WorkoutViewModel @Inject constructor(
                         categoria = currentEx.exercise.nome,
                         distanza = currentEx.cardioDistanceKm,
                         durataSecondi = initialSeconds,
+                        durataTargetSecondi = currentEx.cardioDurataTargetSeconds,
                         timestamp = System.currentTimeMillis(),
                         ordineEsercizio = order,
                         isCompleted = false
@@ -1956,6 +1961,7 @@ class WorkoutViewModel @Inject constructor(
                 categoria = currentEx.exercise.nome,
                 distanza = distanzaKm,
                 durataSecondi = elapsed,
+                durataTargetSecondi = currentEx.cardioDurataTargetSeconds,
                 timestamp = System.currentTimeMillis(),
                 ordineEsercizio = order,
                 isCompleted = true
