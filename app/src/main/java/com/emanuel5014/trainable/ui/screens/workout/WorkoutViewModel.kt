@@ -63,7 +63,8 @@ data class WorkoutState(
     val cardioTimerRunning: Boolean = false,
     val cardioTimerPaused: Boolean = false,
     val cardioTimerStartedAt: Long? = null,
-    val cardioTimerBaseSeconds: Int = 0
+    val cardioTimerBaseSeconds: Int = 0,
+    val sessionStartTime: Long? = null
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -152,7 +153,6 @@ class WorkoutViewModel @Inject constructor(
 
     private var timerJob: Job? = null
     private var warmupTimerJob: Job? = null
-    private var workoutStartTime: Long = 0L
 
     init {
         viewModelScope.launch {
@@ -485,8 +485,6 @@ class WorkoutViewModel @Inject constructor(
 
         val isQuick = planWithDetails.plan.note == "SYSTEM_PLAN" && (planWithDetails.plan.nome == "Quick Workout" || planWithDetails.plan.nome == "Allenamento Veloce")
 
-        workoutStartTime = sessionWithSets.session.timestamp
-
         val finalActiveIndex = if (savedCardioRunning || savedCardioPaused) {
             val activeCardioLog = cardioLogs.find { !it.isCompleted }
             if (activeCardioLog != null) {
@@ -523,7 +521,8 @@ class WorkoutViewModel @Inject constructor(
                 cardioTimerSeconds = restoredCardioSeconds,
                 cardioTimerRunning = savedCardioRunning,
                 cardioTimerPaused = savedCardioPaused,
-                cardioTimerBaseSeconds = restoredCardioSeconds
+                cardioTimerBaseSeconds = restoredCardioSeconds,
+                sessionStartTime = sessionWithSets.session.timestamp
             )
         }
 
@@ -550,8 +549,8 @@ class WorkoutViewModel @Inject constructor(
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).firstOrNull() ?: return
         val planName = planWithDetails.plan.nome
 
-        // Create New Session
-        val sessionId = workoutRepository.startSession(planId, System.currentTimeMillis()).toInt()
+        val startTime = System.currentTimeMillis()
+        val sessionId = workoutRepository.startSession(planId, startTime).toInt()
 
         val exerciseStates = planWithDetails.exercises.sortedBy { it.planExercise.ordine }.map { detail ->
             val previousSets = workoutRepository.getLastSessionSetsForExercise(planId, detail.exercise.id, detail.planExercise.serieTarget).firstOrNull()
@@ -599,8 +598,6 @@ class WorkoutViewModel @Inject constructor(
             exState.exercise.id to index
         }.toMap()
 
-        workoutStartTime = System.currentTimeMillis()
-
         _state.update {
             it.copy(
                 isLoading = false,
@@ -610,16 +607,16 @@ class WorkoutViewModel @Inject constructor(
                 exercises = exerciseStates,
                 currentExerciseIndex = 0,
                 exerciseExecutionOrder = initialExecutionOrder,
-                nextExecutionOrder = exerciseStates.size
+                nextExecutionOrder = exerciseStates.size,
+                sessionStartTime = startTime
             )
         }
     }
 
     private suspend fun initializeQuickWorkout(name: String?) {
+        val startTime = System.currentTimeMillis()
         val sessionId = workoutRepository.startQuickWorkoutSession(name).toInt()
         val displayName = name ?: localeManager.getString(R.string.quick_workout)
-        
-        workoutStartTime = System.currentTimeMillis()
 
         _state.update {
             it.copy(
@@ -628,7 +625,8 @@ class WorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exercises = emptyList(),
                 currentExerciseIndex = 0,
-                isQuickWorkout = true
+                isQuickWorkout = true,
+                sessionStartTime = startTime
             )
         }
     }
@@ -980,7 +978,7 @@ class WorkoutViewModel @Inject constructor(
             try {
                 _state.value.sessionId?.let { id ->
                     val durationMs = if (_state.value.workoutTimerEnabled) {
-                        System.currentTimeMillis() - workoutStartTime
+                        _state.value.sessionStartTime?.let { System.currentTimeMillis() - it }
                     } else null
                     withContext(Dispatchers.IO) {
                         workoutRepository.deleteUncompletedSetsForSession(id)
