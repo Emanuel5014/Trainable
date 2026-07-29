@@ -60,6 +60,7 @@ data class WorkoutState(
     val categories: List<String> = emptyList(),
     val workoutTimerEnabled: Boolean = false,
     val inlineExerciseModificationsEnabled: Boolean = false,
+    val hapticEnabled: Boolean = true,
     val cardioTimerSeconds: Int = 0,
     val cardioTimerRunning: Boolean = false,
     val cardioTimerPaused: Boolean = false,
@@ -227,6 +228,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.inlineExerciseModificationsEnabled.collect { enabled ->
                 _state.update { it.copy(inlineExerciseModificationsEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.hapticEnabled.collect { enabled ->
+                _state.update { it.copy(hapticEnabled = enabled) }
             }
         }
         
@@ -403,6 +410,10 @@ class WorkoutViewModel @Inject constructor(
             }.toMap()
             val planDetailByExerciseId = planExercises.associateBy { it.exercise.id }
 
+            // Build a reverse swap map: replacementExerciseId -> originalPlanExerciseId,
+            // so cardio exercises swapped in from a plan exercise can consume the original plan exercise.
+            val reverseSwapMap = swaps?.associate { it.replacementExerciseId to it.originalExerciseId } ?: emptyMap()
+
             val exerciseStatesByOrder = mutableMapOf<Int, WorkoutExerciseState>()
             val consumedPlanDetailIds = mutableSetOf<Int>()
 
@@ -415,15 +426,27 @@ class WorkoutViewModel @Inject constructor(
                 val planState = if (planDetail != null) planDetail.planExercise else null
                 exerciseStatesByOrder[order] = createExerciseState(exercise, planState, order, true)
                 if (planDetail != null) consumedPlanDetailIds.add(planDetail.planExercise.id)
+                // If this exercise was swapped in, also consume the original plan exercise
+                reverseSwapMap[exerciseId]?.let { consumedPlanDetailIds.add(it) }
             }
 
             for ((order, cardioLogsForOrder) in cardioByOrder) {
                 if (order in exerciseStatesByOrder) continue
                 val firstCardio = cardioLogsForOrder.firstOrNull() ?: continue
                 val exercise = allAvailableExercises.find { it.nome.equals(firstCardio.categoria, ignoreCase = true) } ?: continue
-                val planDetail = planExercises.find { it.exercise.id == exercise.id }
+                var planDetail = planExercises.find { it.exercise.id == exercise.id }
+                // If the cardio exercise was swapped in from a plan exercise, use the original plan detail
+                if (planDetail == null) {
+                    val originalPlanExerciseId = reverseSwapMap[exercise.id]
+                    if (originalPlanExerciseId != null) {
+                        planDetail = planExercises.find { it.planExercise.id == originalPlanExerciseId }
+                        consumedPlanDetailIds.add(originalPlanExerciseId)
+                    }
+                }
                 exerciseStatesByOrder[order] = createExerciseState(exercise, planDetail?.planExercise, order, true)
-                if (planDetail != null) consumedPlanDetailIds.add(planDetail.planExercise.id)
+                if (planDetail != null) {
+                    consumedPlanDetailIds.add(planDetail.planExercise.id)
+                }
             }
 
             for ((origIndex, detail) in planDetailByOrigIndex) {
@@ -598,10 +621,6 @@ class WorkoutViewModel @Inject constructor(
             )
         }
 
-        val initialExecutionOrder = exerciseStates.mapIndexed { index, exState ->
-            exState.exercise.id to index
-        }.toMap()
-
         _state.update {
             it.copy(
                 isLoading = false,
@@ -610,8 +629,8 @@ class WorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exercises = exerciseStates,
                 currentExerciseIndex = 0,
-                exerciseExecutionOrder = initialExecutionOrder,
-                nextExecutionOrder = exerciseStates.size,
+                exerciseExecutionOrder = emptyMap(),
+                nextExecutionOrder = 0,
                 sessionStartTime = startTime
             )
         }
@@ -802,10 +821,18 @@ class WorkoutViewModel @Inject constructor(
             var newSetId = setState.id
 
             if (isFirstCompletion && exState.exercise.id !in currentState.exerciseExecutionOrder) {
+                val assignedOrder = currentState.nextExecutionOrder
                 _state.update { it.copy(
-                    exerciseExecutionOrder = it.exerciseExecutionOrder + (exState.exercise.id to it.nextExecutionOrder),
-                    nextExecutionOrder = it.nextExecutionOrder + 1
+                    exerciseExecutionOrder = it.exerciseExecutionOrder + (exState.exercise.id to assignedOrder),
+                    nextExecutionOrder = assignedOrder + 1
                 )}
+                if (currentState.sessionId != null) {
+                    workoutRepository.updateExerciseOrderInSession(
+                        currentState.sessionId,
+                        exState.exercise.id,
+                        assignedOrder
+                    )
+                }
             }
 
             if (currentState.sessionId != null) {
@@ -1867,7 +1894,14 @@ class WorkoutViewModel @Inject constructor(
                 if (existingLogId != null && existingLogId > 0) {
                     logId = existingLogId
                 } else {
-                    val order = currState.exerciseExecutionOrder[currentEx.exercise.id] ?: currState.currentExerciseIndex
+                    var order = currState.exerciseExecutionOrder[currentEx.exercise.id]
+                    if (order == null) {
+                        order = currState.nextExecutionOrder
+                        _state.update { it.copy(
+                            exerciseExecutionOrder = it.exerciseExecutionOrder + (currentEx.exercise.id to order),
+                            nextExecutionOrder = order + 1
+                        )}
+                    }
                     val newLog = com.emanuel5014.trainable.data.local.entity.CardioLogEntity(
                         sessionId = sessionId,
                         categoria = currentEx.exercise.nome,
@@ -1991,7 +2025,14 @@ class WorkoutViewModel @Inject constructor(
         clearCardioTimerInSession()
 
         viewModelScope.launch {
-            val order = currState.exerciseExecutionOrder[currentEx.exercise.id] ?: currState.currentExerciseIndex
+            var order = currState.exerciseExecutionOrder[currentEx.exercise.id]
+            if (order == null) {
+                order = _state.value.nextExecutionOrder
+                _state.update { it.copy(
+                    exerciseExecutionOrder = it.exerciseExecutionOrder + (currentEx.exercise.id to order),
+                    nextExecutionOrder = order + 1
+                )}
+            }
             val cardioEntity = com.emanuel5014.trainable.data.local.entity.CardioLogEntity(
                 id = logId ?: 0,
                 sessionId = sessionId,

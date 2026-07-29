@@ -1380,6 +1380,7 @@ fun CardioExerciseContent(
     bottomPadding: androidx.compose.ui.unit.Dp = 120.dp
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
 
     if (showStopDialog) {
         AlertDialog(
@@ -1552,17 +1553,18 @@ fun CardioExerciseContent(
                             else 1f
                         }
                     )
-                    CardioToggleButton(
-                        isRunning = state.cardioTimerRunning,
-                        isPaused = state.cardioTimerPaused,
-                        onToggle = {
-                            when {
-                                state.cardioTimerRunning -> viewModel.pauseCardioTimer()
-                                else -> viewModel.startCardioTimer()
-                            }
-                        },
-                        modifier = Modifier.size(cButtonSize)
-                    )
+                        CardioToggleButton(
+                            isRunning = state.cardioTimerRunning,
+                            isPaused = state.cardioTimerPaused,
+                            onToggle = {
+                                if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                when {
+                                    state.cardioTimerRunning -> viewModel.pauseCardioTimer()
+                                    else -> viewModel.startCardioTimer()
+                                }
+                            },
+                            modifier = Modifier.size(cButtonSize)
+                        )
                 }
 
                 val timerSeconds = state.cardioTimerSeconds

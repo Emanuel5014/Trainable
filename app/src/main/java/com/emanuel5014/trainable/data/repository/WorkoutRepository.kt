@@ -467,6 +467,8 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun updateSetOrders(sets: List<SetLogEntity>) = workoutDao.updateSetOrders(sets)
 
+    suspend fun updateExerciseOrderInSession(sessionId: Int, exerciseId: Int, order: Int) = workoutDao.updateExerciseOrderInSession(sessionId, exerciseId, order)
+
     suspend fun deleteUncompletedSetsForSession(sessionId: Int) = workoutDao.deleteUncompletedSetsForSession(sessionId)
 
     suspend fun deleteUncompletedCardioLogsForSession(sessionId: Int) = workoutDao.deleteUncompletedCardioLogsForSession(sessionId)
