@@ -29,6 +29,8 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExerciseEntryCard(
@@ -73,7 +75,7 @@ fun ExerciseEntryCard(
                                 .padding(horizontal = Spacing.small, vertical = 2.dp)
                         ) {
                             val cat = item.planExercise.cardioCategoria ?: item.exercise.categoria
-                            val label = if (cat.equals("Cardio", ignoreCase = true)) "Cardio" else "Cardio ($cat)"
+                            val label = if (cat.equals("Cardio", ignoreCase = true)) stringResource(R.string.cardio_cat_label) else stringResource(R.string.cardio_cat_with_name, cat)
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall,
@@ -84,12 +86,12 @@ fun ExerciseEntryCard(
                         val durMin = item.planExercise.durataTargetSecondi?.let { it / 60 }
                         val distKm = item.planExercise.distanzaTargetKm
                         val targetText = buildString {
-                            if (durMin != null && durMin > 0) append("${durMin} min")
+                            if (durMin != null && durMin > 0) append(stringResource(R.string.cardio_min_format, durMin))
                             if (distKm != null && distKm > 0) {
                                 if (isNotEmpty()) append(" • ")
-                                append("${distKm} km")
+                                append(stringResource(R.string.cardio_dist_value, distKm.toString()))
                             }
-                            if (isEmpty()) append("Free-form")
+                            if (isEmpty()) append(stringResource(R.string.cardio_free_form))
                         }
                         Text(
                             text = targetText,

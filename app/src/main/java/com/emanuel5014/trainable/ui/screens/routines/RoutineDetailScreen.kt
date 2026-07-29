@@ -782,7 +782,7 @@ fun RoutineDetailScreen(
                         GymInputField(
                             value = cardioDurationText,
                             onValueChange = { cardioDurationText = it },
-                            label = "Durata Target (min)",
+                            label = stringResource(R.string.cardio_duration_label),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )

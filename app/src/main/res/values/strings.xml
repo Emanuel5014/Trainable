@@ -572,6 +572,22 @@
     <string name="cardio_other">Other</string>
     <string name="activity_name">Activity Name</string>
     <string name="activity_name_placeholder">e.g. Swimming, Hiking...</string>
+    <string name="cardio_badge">CARDIO</string>
+    <string name="cardio_enter_distance">Enter distance</string>
+    <string name="cardio_distance_label">Distance traveled (km)</string>
+    <string name="cardio_target_min_format">TARGET: %1$d MIN</string>
+    <string name="cardio_target_km_format">%1$s KM</string>
+    <string name="cardio_timer_running">IN PROGRESS</string>
+    <string name="cardio_timer_paused">PAUSED</string>
+    <string name="cardio_timer_ready">READY</string>
+    <string name="cardio_stop_save">STOP &amp; SAVE</string>
+    <string name="cardio_target_label">TARGET</string>
+    <string name="cardio_dist_value">%1$s km</string>
+    <string name="cardio_min_format">%1$d min</string>
+    <string name="cardio_free_form">Free-form</string>
+    <string name="cardio_cat_label">Cardio</string>
+    <string name="cardio_cat_with_name">Cardio (%1$s)</string>
+    <string name="cardio_duration_label">Target Duration (min)</string>
 
     <!-- About -->
     <string name="about">ABOUT</string>

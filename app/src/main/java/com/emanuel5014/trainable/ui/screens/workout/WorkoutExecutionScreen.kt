@@ -1397,12 +1397,12 @@ fun CardioExerciseContent(
     if (showStopDialog) {
         AlertDialog(
             onDismissRequest = { showStopDialog = false },
-            title = { Text("Inserisci distanza") },
+            title = { Text(stringResource(R.string.cardio_enter_distance)) },
             text = {
                 OutlinedTextField(
                     value = distanceInput,
                     onValueChange = onDistanceChange,
-                    label = { Text("Distanza percorsa (km)") },
+                    label = { Text(stringResource(R.string.cardio_distance_label)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -1457,7 +1457,7 @@ fun CardioExerciseContent(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "CARDIO",
+                        text = stringResource(R.string.cardio_badge),
                         style = MaterialTheme.typography.titleMedium,
                         color = Tertiary,
                         fontWeight = FontWeight.ExtraBold
@@ -1503,7 +1503,7 @@ fun CardioExerciseContent(
                     ) {
                         if (targetMin != null && targetMin > 0) {
                             Text(
-                                text = "TARGET: $targetMin MIN",
+                                text = stringResource(R.string.cardio_target_min_format, targetMin),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OnSurfaceVariant,
                                 fontWeight = FontWeight.Bold
@@ -1514,7 +1514,7 @@ fun CardioExerciseContent(
                         }
                         if (targetKm != null && targetKm > 0) {
                             Text(
-                                text = "$targetKm KM",
+                                text = stringResource(R.string.cardio_target_km_format, targetKm.toString()),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OnSurfaceVariant,
                                 fontWeight = FontWeight.Bold
@@ -1580,9 +1580,9 @@ fun CardioExerciseContent(
 
                 Text(
                     text = when {
-                        state.cardioTimerRunning -> "IN CORSO"
-                        state.cardioTimerPaused -> "IN PAUSA"
-                        else -> "PRONTO"
+                        state.cardioTimerRunning -> stringResource(R.string.cardio_timer_running)
+                        state.cardioTimerPaused -> stringResource(R.string.cardio_timer_paused)
+                        else -> stringResource(R.string.cardio_timer_ready)
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = if (state.cardioTimerRunning) Primary else OnSurfaceVariant,
@@ -1601,7 +1601,7 @@ fun CardioExerciseContent(
                     ) {
                         Icon(Icons.Rounded.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("STOP & SALVA", fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(R.string.cardio_stop_save), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             } else {
@@ -1725,7 +1725,7 @@ fun CardioExerciseContent(
                                         fontWeight = FontWeight.Black
                                     )
                                     Text(
-                                        text = "${exerciseState.cardioDistanceKm} km",
+                                        text = stringResource(R.string.cardio_dist_value, exerciseState.cardioDistanceKm.toString()),
                                         style = MaterialTheme.typography.displayMedium,
                                         color = OnSurface,
                                         fontWeight = FontWeight.Black
@@ -1750,7 +1750,7 @@ fun CardioExerciseContent(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             Text(
-                                                text = "TARGET",
+                                                text = stringResource(R.string.cardio_target_label),
                                                 style = MaterialTheme.typography.labelMedium,
                                                 color = if (targetDurationMet) Primary else Error,
                                                 fontWeight = FontWeight.ExtraBold,
@@ -1782,7 +1782,7 @@ fun CardioExerciseContent(
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Text(
-                                                text = "${exerciseState.cardioDistanzaTargetKm} km",
+                                                text = stringResource(R.string.cardio_dist_value, exerciseState.cardioDistanzaTargetKm.toString()),
                                                 style = MaterialTheme.typography.titleLarge,
                                                 color = if (targetDistanceMet) Primary else Error,
                                                 fontWeight = FontWeight.Black
