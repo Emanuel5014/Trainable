@@ -554,7 +554,7 @@ fun RoutineDetailScreen(
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {
                                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                draggedItemIndex = index
+                                                draggedItemIndex = localExercises.indexOfFirst { it.planExercise.id == item.planExercise.id }
                                                 dragOffsetY = 0f
                                             },
                                             onDrag = { change, dragAmount ->
