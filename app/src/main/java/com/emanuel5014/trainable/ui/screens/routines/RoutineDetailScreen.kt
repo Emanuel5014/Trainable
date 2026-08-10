@@ -241,7 +241,7 @@ fun RoutineDetailScreen(
         AlertDialog(
             onDismissRequest = { existingSessionForPlan = null },
             title = { Text(stringResource(R.string.resume_workout)) },
-            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.planNome)) },
+            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.displayName)) },
             confirmButton = {
                 GymButton(
                     onClick = {

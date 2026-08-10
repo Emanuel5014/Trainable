@@ -8,4 +8,7 @@ data class SessionWithPlanName(
     @Embedded val session: WorkoutSessionEntity,
     @ColumnInfo(name = "plan_nome")
     val planNome: String
-)
+) {
+    val displayName: String
+        get() = session.noteSessione?.takeIf { it.isNotBlank() } ?: planNome
+}

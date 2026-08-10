@@ -192,7 +192,7 @@ private fun WidgetContent(
 ) {
     val isResume = unfinishedSession != null
     val displayPlanName = when {
-        unfinishedSession != null -> unfinishedSession.planNome
+        unfinishedSession != null -> unfinishedSession.displayName
         todayPlan != null -> todayPlan.nome
         suggestedPlan != null -> suggestedPlan.nome
         else -> null
