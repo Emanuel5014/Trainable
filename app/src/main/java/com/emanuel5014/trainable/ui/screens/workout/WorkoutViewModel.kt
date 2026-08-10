@@ -344,10 +344,11 @@ class WorkoutViewModel @Inject constructor(
             val sets = if (isCardio) emptyList() else (1..targetSets.coerceAtLeast(loggedSets.size)).map { num ->
                 val loggedSet = loggedSets.find { it.numeroSerie == num }
                 if (loggedSet != null) {
+                    val resolvedWeight = if (!loggedSet.isCompleted && loggedSet.pesoSollevato == 0f && lastLoggedWeight > 0f) lastLoggedWeight else loggedSet.pesoSollevato
                     WorkoutSetState(
                         id = loggedSet.id,
                         setNumber = num,
-                        weight = loggedSet.pesoSollevato,
+                        weight = resolvedWeight,
                         reps = loggedSet.repsEffettive,
                         note = loggedSet.note,
                         isCompleted = loggedSet.isCompleted,
