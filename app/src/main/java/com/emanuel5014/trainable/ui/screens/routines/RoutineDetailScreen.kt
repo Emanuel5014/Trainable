@@ -241,7 +241,7 @@ fun RoutineDetailScreen(
         AlertDialog(
             onDismissRequest = { existingSessionForPlan = null },
             title = { Text(stringResource(R.string.resume_workout)) },
-            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.planNome)) },
+            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.displayName)) },
             confirmButton = {
                 GymButton(
                     onClick = {
@@ -554,7 +554,7 @@ fun RoutineDetailScreen(
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {
                                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                draggedItemIndex = index
+                                                draggedItemIndex = localExercises.indexOfFirst { it.planExercise.id == item.planExercise.id }
                                                 dragOffsetY = 0f
                                             },
                                             onDrag = { change, dragAmount ->

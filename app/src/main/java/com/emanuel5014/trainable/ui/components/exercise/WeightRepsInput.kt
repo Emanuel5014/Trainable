@@ -45,10 +45,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -75,6 +77,8 @@ fun WeightRepsInput(
 ) {
     var showCustomWeightDialog by remember { mutableStateOf(false) }
     var customWeightText by remember { mutableStateOf("") }
+    var showCustomRepsDialog by remember { mutableStateOf(false) }
+    var customRepsText by remember { mutableStateOf("") }
 
     val displayWeight = remember(weight, weightUnit) {
         val converted = WeightUnitConverter.convertDisplay(weight, weightUnit)
@@ -99,7 +103,7 @@ fun WeightRepsInput(
             }
 
             WheelPickerBox(
-                label = "WEIGHT (${weightUnit.uppercase()})",
+                label = stringResource(R.string.weight_label_unit, weightUnit.uppercase()),
                 value = displayWeight,
                 range = weightRange,
                 onValueChange = { 
@@ -123,32 +127,54 @@ fun WeightRepsInput(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    "Custom",
+                    stringResource(R.string.custom),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )
             }
         }
         
-        WheelPickerBox(
-            label = "REPS",
-            value = reps.toFloat(),
-            range = (0..100).map { it.toFloat() },
-            onValueChange = { onRepsChange(it.toInt()) },
-            modifier = Modifier.weight(1f),
-            format = { it.toInt().toString() }
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            WheelPickerBox(
+                label = stringResource(R.string.reps),
+                value = reps.toFloat(),
+                range = (0..100).map { it.toFloat() },
+                onValueChange = { onRepsChange(it.toInt()) },
+                modifier = Modifier.fillMaxWidth(),
+                format = { it.toInt().toString() }
+            )
+            TextButton(
+                onClick = { 
+                    customRepsText = ""
+                    showCustomRepsDialog = true 
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = OnSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    stringResource(R.string.custom),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+            }
+        }
     }
 
     if (showCustomWeightDialog) {
         AlertDialog(
             onDismissRequest = { showCustomWeightDialog = false },
-            title = { Text("Custom Weight", color = OnSurface) },
+            title = { Text(stringResource(R.string.custom_weight), color = OnSurface) },
             text = {
                 OutlinedTextField(
                     value = customWeightText,
                     onValueChange = { customWeightText = it.replace(',', '.') },
-                    label = { Text("Weight (${weightUnit})") },
+                    label = { Text(stringResource(R.string.weight_label_unit, weightUnit)) },
                     placeholder = { Text(WeightUnitConverter.format(displayWeight), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -170,12 +196,53 @@ fun WeightRepsInput(
                         showCustomWeightDialog = false
                     }
                 ) {
-                    Text("OK", color = Primary)
+                    Text(stringResource(R.string.ok), color = Primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomWeightDialog = false }) {
-                    Text("Cancel", color = OnSurfaceVariant)
+                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                }
+            },
+            containerColor = SurfaceContainerHigh
+        )
+    }
+
+    if (showCustomRepsDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomRepsDialog = false },
+            title = { Text(stringResource(R.string.custom_reps), color = OnSurface) },
+            text = {
+                OutlinedTextField(
+                    value = customRepsText,
+                    onValueChange = { customRepsText = it.filter { char -> char.isDigit() } },
+                    label = { Text(stringResource(R.string.reps)) },
+                    placeholder = { Text(reps.toString(), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = Shapes.large,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        cursorColor = Primary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        customRepsText.toIntOrNull()?.let { 
+                            onRepsChange(it) 
+                        }
+                        showCustomRepsDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.ok), color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomRepsDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh
@@ -202,13 +269,7 @@ private fun <T> WheelPickerBox(
     val currentOnValueChange by rememberUpdatedState(onValueChange)
 
     val currentIndex = remember(range, value) {
-        range.indexOfFirst { item ->
-            if (item is Float && value is Float) {
-                kotlin.math.abs(item - value) < 0.001f
-            } else {
-                item == value
-            }
-        }.coerceAtLeast(0)
+        range.indexOfFirst { areEqual(it, value) }.coerceAtLeast(0)
     }
 
     val listState = key(range) {
@@ -216,15 +277,14 @@ private fun <T> WheelPickerBox(
     }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(value) {
-        val targetIndex = range.indexOfFirst { item ->
-            if (item is Float && value is Float) {
-                kotlin.math.abs(item - value) < 0.001f
-            } else {
-                item == value
-            }
-        }
-        if (targetIndex != -1 && targetIndex != listState.firstVisibleItemIndex) {
+    LaunchedEffect(value, listState) {
+        val layoutInfo = listState.layoutInfo
+        val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+        val centeredIndex = layoutInfo.visibleItemsInfo.minByOrNull {
+            kotlin.math.abs(it.offset + it.size / 2 - viewportCenter)
+        }?.index ?: -1
+        val targetIndex = range.indexOfFirst { areEqual(it, value) }
+        if (targetIndex != -1 && targetIndex != centeredIndex && !listState.isScrollInProgress) {
             listState.scrollToItem(targetIndex)
         }
     }
@@ -232,7 +292,7 @@ private fun <T> WheelPickerBox(
     LaunchedEffect(listState) {
         snapshotFlow {
             val layoutInfo = listState.layoutInfo
-            val viewportCenter = layoutInfo.viewportEndOffset / 2
+            val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
             layoutInfo.visibleItemsInfo.minByOrNull {
                 kotlin.math.abs(it.offset + it.size / 2 - viewportCenter)
             }?.index
@@ -242,12 +302,7 @@ private fun <T> WheelPickerBox(
             .collect { index ->
                 if (index != null && index in range.indices) {
                     val newValue = range[index]
-                    val isSame = if (newValue is Float && value is Float) {
-                        kotlin.math.abs(newValue - value) < 0.001f
-                    } else {
-                        newValue == value
-                    }
-                    if (!isSame) {
+                    if (!areEqual(newValue, value)) {
                         currentOnValueChange(newValue)
                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
@@ -320,3 +375,6 @@ private fun <T> WheelPickerBox(
         }
     }
 }
+
+private fun <T> areEqual(a: T, b: T): Boolean =
+    if (a is Float && b is Float) kotlin.math.abs(a - b) < 0.001f else a == b

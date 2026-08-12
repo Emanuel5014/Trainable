@@ -154,7 +154,7 @@ fun DashboardScreen(
         AlertDialog(
             onDismissRequest = { existingSessionForPlan = null },
             title = { Text(stringResource(R.string.resume_workout)) },
-            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.planNome)) },
+            text = { Text(stringResource(R.string.existing_workout_message, existingSessionForPlan!!.displayName)) },
             confirmButton = {
                 GymButton(
                     onClick = {
@@ -1268,7 +1268,7 @@ private fun UnfinishedSessionCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = session.planNome,
+                        text = session.displayName,
                         style = MaterialTheme.typography.titleMedium,
                         color = OnSurface,
                         fontWeight = FontWeight.ExtraBold

@@ -702,4 +702,10 @@
     <string name="report">Bericht</string>
     <string name="report_preview">VORSCHAU</string>
 
+    <string name="custom">Benutzerdefiniert</string>
+    <string name="custom_weight">Benutzerdefiniertes Gewicht</string>
+    <string name="custom_reps">Benutzerdefinierte Reps</string>
+    <string name="weight_label_unit">Gewicht (%1$s)</string>
+    <string name="remove_set_confirm">Möchtest du diesen Satz wirklich entfernen?</string>
+    <string name="toggle_superset_with_next">Supersatz mit der nächsten Übung umschalten</string>
 </resources>

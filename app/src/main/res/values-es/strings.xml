@@ -698,4 +698,10 @@
     <string name="report">Informe</string>
     <string name="report_preview">VISTA PREVIA</string>
 
+    <string name="custom">Personalizado</string>
+    <string name="custom_weight">Peso Personalizado</string>
+    <string name="custom_reps">Reps Personalizadas</string>
+    <string name="weight_label_unit">Peso (%1$s)</string>
+    <string name="remove_set_confirm">¿Seguro que quieres eliminar esta serie?</string>
+    <string name="toggle_superset_with_next">Alternar superserie con el siguiente ejercicio</string>
 </resources>

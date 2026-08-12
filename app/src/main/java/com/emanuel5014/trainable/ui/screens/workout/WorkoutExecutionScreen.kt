@@ -503,7 +503,14 @@ fun WorkoutExecutionScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         val setsCount = targetExState.sets.size
-                                        val repsCount = targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: targetExState.sets.firstOrNull()?.reps?.toString() ?: "0"
+                                        val repsCount = targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
+                                            if (targetExState.sets.isEmpty()) "0"
+                                            else {
+                                                val allReps = targetExState.sets.map { it.reps }
+                                                if (allReps.distinct().size == 1) allReps.first().toString()
+                                                else allReps.joinToString("-")
+                                            }
+                                        }
                                         Text(
                                             text = "$setsCount × $repsCount",
                                             style = MaterialTheme.typography.titleMedium,
@@ -519,7 +526,7 @@ fun WorkoutExecutionScreen(
                                             ) {
                                                 Icon(
                                                     imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
-                                                    contentDescription = "Toggle Superset with Next",
+                                                    contentDescription = stringResource(R.string.toggle_superset_with_next),
                                                     tint = if (isLinked) Primary else OnSurfaceVariant
                                                 )
                                             }
@@ -586,7 +593,7 @@ fun WorkoutExecutionScreen(
                                             AlertDialog(
                                                 onDismissRequest = { showDeleteConfirm = false },
                                                 title = { Text(stringResource(R.string.remove_set)) },
-                                                text = { Text("Are you sure you want to remove this set?") },
+                                                text = { Text(stringResource(R.string.remove_set_confirm)) },
                                                 confirmButton = {
                                                     TextButton(onClick = {
                                                         viewModel.removeSetFromExercise(targetIndex, index)
