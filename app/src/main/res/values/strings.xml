@@ -702,4 +702,10 @@
     <string name="report">Report</string>
     <string name="report_preview">PREVIEW</string>
 
+    <string name="custom">Custom</string>
+    <string name="custom_weight">Custom Weight</string>
+    <string name="custom_reps">Custom Reps</string>
+    <string name="weight_label_unit">Weight (%1$s)</string>
+    <string name="remove_set_confirm">Are you sure you want to remove this set?</string>
+    <string name="toggle_superset_with_next">Toggle superset with next exercise</string>
 </resources>

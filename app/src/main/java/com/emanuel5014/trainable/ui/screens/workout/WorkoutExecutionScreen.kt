@@ -526,7 +526,7 @@ fun WorkoutExecutionScreen(
                                             ) {
                                                 Icon(
                                                     imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
-                                                    contentDescription = "Toggle Superset with Next",
+                                                    contentDescription = stringResource(R.string.toggle_superset_with_next),
                                                     tint = if (isLinked) Primary else OnSurfaceVariant
                                                 )
                                             }
@@ -593,7 +593,7 @@ fun WorkoutExecutionScreen(
                                             AlertDialog(
                                                 onDismissRequest = { showDeleteConfirm = false },
                                                 title = { Text(stringResource(R.string.remove_set)) },
-                                                text = { Text("Are you sure you want to remove this set?") },
+                                                text = { Text(stringResource(R.string.remove_set_confirm)) },
                                                 confirmButton = {
                                                     TextButton(onClick = {
                                                         viewModel.removeSetFromExercise(targetIndex, index)

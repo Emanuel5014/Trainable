@@ -702,4 +702,10 @@
     <string name="report">Rapport</string>
     <string name="report_preview">APERÇU</string>
 
+    <string name="custom">Personnalisé</string>
+    <string name="custom_weight">Poids Personnalisé</string>
+    <string name="custom_reps">Reps Personnalisées</string>
+    <string name="weight_label_unit">Poids (%1$s)</string>
+    <string name="remove_set_confirm">Voulez-vous vraiment supprimer cette série ?</string>
+    <string name="toggle_superset_with_next">Basculer le superset avec l\'exercice suivant</string>
 </resources>
