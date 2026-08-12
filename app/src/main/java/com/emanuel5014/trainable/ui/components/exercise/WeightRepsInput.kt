@@ -269,13 +269,7 @@ private fun <T> WheelPickerBox(
     val currentOnValueChange by rememberUpdatedState(onValueChange)
 
     val currentIndex = remember(range, value) {
-        range.indexOfFirst { item ->
-            if (item is Float && value is Float) {
-                kotlin.math.abs(item - value) < 0.001f
-            } else {
-                item == value
-            }
-        }.coerceAtLeast(0)
+        range.indexOfFirst { areEqual(it, value) }.coerceAtLeast(0)
     }
 
     val listState = key(range) {
@@ -283,15 +277,14 @@ private fun <T> WheelPickerBox(
     }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(value) {
-        val targetIndex = range.indexOfFirst { item ->
-            if (item is Float && value is Float) {
-                kotlin.math.abs(item - value) < 0.001f
-            } else {
-                item == value
-            }
-        }
-        if (targetIndex != -1 && targetIndex != listState.firstVisibleItemIndex) {
+    LaunchedEffect(value, listState) {
+        val layoutInfo = listState.layoutInfo
+        val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+        val centeredIndex = layoutInfo.visibleItemsInfo.minByOrNull {
+            kotlin.math.abs(it.offset + it.size / 2 - viewportCenter)
+        }?.index ?: -1
+        val targetIndex = range.indexOfFirst { areEqual(it, value) }
+        if (targetIndex != -1 && targetIndex != centeredIndex && !listState.isScrollInProgress) {
             listState.scrollToItem(targetIndex)
         }
     }
@@ -299,7 +292,7 @@ private fun <T> WheelPickerBox(
     LaunchedEffect(listState) {
         snapshotFlow {
             val layoutInfo = listState.layoutInfo
-            val viewportCenter = layoutInfo.viewportEndOffset / 2
+            val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
             layoutInfo.visibleItemsInfo.minByOrNull {
                 kotlin.math.abs(it.offset + it.size / 2 - viewportCenter)
             }?.index
@@ -309,12 +302,7 @@ private fun <T> WheelPickerBox(
             .collect { index ->
                 if (index != null && index in range.indices) {
                     val newValue = range[index]
-                    val isSame = if (newValue is Float && value is Float) {
-                        kotlin.math.abs(newValue - value) < 0.001f
-                    } else {
-                        newValue == value
-                    }
-                    if (!isSame) {
+                    if (!areEqual(newValue, value)) {
                         currentOnValueChange(newValue)
                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
@@ -387,3 +375,6 @@ private fun <T> WheelPickerBox(
         }
     }
 }
+
+private fun <T> areEqual(a: T, b: T): Boolean =
+    if (a is Float && b is Float) kotlin.math.abs(a - b) < 0.001f else a == b
