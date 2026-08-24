@@ -121,6 +121,9 @@ dependencies {
     // OkHttp
     implementation(libs.okhttp)
 
+    // LiteRT-LM (on-device LLM inference, Gemma 4)
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.1")
+
 // Google Fonts
 implementation(libs.google.fonts)
 

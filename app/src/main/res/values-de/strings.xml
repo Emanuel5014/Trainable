@@ -708,4 +708,32 @@
     <string name="weight_label_unit">Gewicht (%1$s)</string>
     <string name="remove_set_confirm">Möchtest du diesen Satz wirklich entfernen?</string>
     <string name="toggle_superset_with_next">Supersatz mit der nächsten Übung umschalten</string>
+
+    <!-- AI Scan -->
+    <string name="ai_section_title">KI</string>
+    <string name="ai_scan_toggle">KI-Plan-Scan</string>
+    <string name="ai_scan_desc">Erstelle deinen Trainingsplan automatisch aus einem Foto, komplett offline</string>
+    <string name="ai_device_unsupported">Dieses Gerät erfüllt nicht die RAM-Anforderungen für On-Device-KI</string>
+    <string name="ai_model_variant">Modell</string>
+    <string name="ai_model_requirements">%1$s Download · benötigt %2$d GB RAM</string>
+    <string name="ai_model_download">%1$s herunterladen</string>
+    <string name="ai_model_download_retry">Download wiederholen</string>
+    <string name="ai_model_downloading">Modell wird geladen… %1$d%%</string>
+    <string name="ai_model_ready">Modell bereit</string>
+    <string name="ai_model_delete">Löschen</string>
+    <string name="ai_scan_source_title">Trainingsplan scannen</string>
+    <string name="ai_scanning">Plan wird analysiert…</string>
+    <string name="ai_scan_no_exercises">Keine Übungen im Foto erkannt</string>
+    <string name="ai_scan_failed">Plan konnte nicht analysiert werden. Versuche es erneut.</string>
+    <string name="ai_scan_preview_title">Erkannte Übungen prüfen</string>
+    <string name="ai_scan_preview_subtitle">Prüfe und korrigiere KI-Fehler vor dem Hinzufügen</string>
+    <string name="ai_scan_add_all">Übungen hinzufügen</string>
+    <string name="ai_scan_custom_label">Nicht im Katalog — wird als eigene Übung erstellt</string>
+    <string name="ai_scan_tap_to_change">Tippen zum Ändern der Übung</string>
+    <string name="ai_scan_phase_model">Modell wird geladen…</string>
+    <string name="ai_scan_phase_reading">Plan wird gelesen…</string>
+    <string name="ai_scan_phase_generating">Übungen werden extrahiert…</string>
+    <string name="ai_scan_show_thinking">Gedanken des Modells</string>
+    <string name="ai_scan_hide_thinking">Gedanken ausblenden</string>
+    <string name="ai_scan_thinking_placeholder">Die Gedankengänge des Modells erscheinen hier…</string>
 </resources>

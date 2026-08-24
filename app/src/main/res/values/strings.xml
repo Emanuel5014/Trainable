@@ -708,4 +708,32 @@
     <string name="weight_label_unit">Weight (%1$s)</string>
     <string name="remove_set_confirm">Are you sure you want to remove this set?</string>
     <string name="toggle_superset_with_next">Toggle superset with next exercise</string>
+
+    <!-- AI Scan -->
+    <string name="ai_section_title">AI</string>
+    <string name="ai_scan_toggle">AI sheet scan</string>
+    <string name="ai_scan_desc">Fill your routine automatically from a photo of your training sheet, fully offline</string>
+    <string name="ai_device_unsupported">This device does not meet the RAM requirements for on-device AI</string>
+    <string name="ai_model_variant">Model</string>
+    <string name="ai_model_requirements">%1$s download · requires %2$d GB of RAM</string>
+    <string name="ai_model_download">Download %1$s</string>
+    <string name="ai_model_download_retry">Retry download</string>
+    <string name="ai_model_downloading">Downloading model… %1$d%%</string>
+    <string name="ai_model_ready">Model ready</string>
+    <string name="ai_model_delete">Delete</string>
+    <string name="ai_scan_source_title">Scan training sheet</string>
+    <string name="ai_scanning">Analyzing sheet…</string>
+    <string name="ai_scan_no_exercises">No exercises detected in the photo</string>
+    <string name="ai_scan_failed">Couldn\'t analyze the sheet. Try again.</string>
+    <string name="ai_scan_preview_title">Review scanned exercises</string>
+    <string name="ai_scan_preview_subtitle">Check and fix anything the AI got wrong before adding</string>
+    <string name="ai_scan_add_all">Add exercises</string>
+    <string name="ai_scan_custom_label">Not in catalog — will be created as custom</string>
+    <string name="ai_scan_tap_to_change">Tap to change exercise</string>
+    <string name="ai_scan_phase_model">Loading model…</string>
+    <string name="ai_scan_phase_reading">Reading the sheet…</string>
+    <string name="ai_scan_phase_generating">Extracting exercises…</string>
+    <string name="ai_scan_show_thinking">Model thinking</string>
+    <string name="ai_scan_hide_thinking">Hide thinking</string>
+    <string name="ai_scan_thinking_placeholder">The model\'s reasoning will appear here…</string>
 </resources>

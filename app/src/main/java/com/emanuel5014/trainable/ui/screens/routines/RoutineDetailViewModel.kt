@@ -1,8 +1,15 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
 import androidx.lifecycle.SavedStateHandle
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
+import com.emanuel5014.trainable.data.ai.ModelFileManager
+import com.emanuel5014.trainable.data.ai.ScanPhase
+import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
+import com.emanuel5014.trainable.data.ai.RoutineScanner
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
@@ -33,16 +40,38 @@ data class RoutineDetailUiState(
     val unfinishedSessions: List<SessionWithPlanName> = emptyList()
 )
 
+sealed interface AiScanState {
+    data object Idle : AiScanState
+    data class Scanning(
+        val phase: ScanPhase = ScanPhase.LOADING_MODEL
+    ) : AiScanState
+    data class Success(val entries: List<ScannedExerciseEntry>) : AiScanState
+    data class Error(val message: String?) : AiScanState
+}
+
+data class AiScanStreamState(
+    val output: String = "",
+    val thinking: String = ""
+)
+
 @HiltViewModel
 class RoutineDetailViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
+    private val routineScanner: RoutineScanner,
+    private val modelFileManager: ModelFileManager,
+    private val deviceCapabilityChecker: DeviceCapabilityChecker,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val planId: Int = checkNotNull(savedStateHandle["planId"])
+
+    private companion object {
+        const val STREAM_EMIT_INTERVAL_MS = 250L
+        const val STREAM_MAX_CHARS = 4000
+    }
 
     private val _uiState = MutableStateFlow(RoutineDetailUiState(isLoading = true))
     val uiState: StateFlow<RoutineDetailUiState> = _uiState.asStateFlow()
@@ -55,6 +84,117 @@ class RoutineDetailViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
+
+    val aiScanAvailable = combine(
+        userPreferencesRepository.aiScanEnabled,
+        userPreferencesRepository.aiModelVariant
+    ) { enabled, variantId ->
+        enabled && modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    private val _aiScanState = MutableStateFlow<AiScanState>(AiScanState.Idle)
+    val aiScanState: StateFlow<AiScanState> = _aiScanState.asStateFlow()
+
+    private val _aiScanStream = MutableStateFlow(AiScanStreamState())
+    val aiScanStream: StateFlow<AiScanStreamState> = _aiScanStream.asStateFlow()
+
+    fun scanRoutineSheet(imageUri: Uri) {
+        if (_aiScanState.value is AiScanState.Scanning) return
+        _aiScanState.value = AiScanState.Scanning()
+        _aiScanStream.value = AiScanStreamState()
+        viewModelScope.launch {
+            try {
+                // Throttle stream state emissions to ~4 Hz so token-frequency
+                // updates don't trigger full-screen recomposition + blur recompute
+                var lastEmitAt = 0L
+                var latestOutput = ""
+                var latestThinking = ""
+                fun emit(force: Boolean = false) {
+                    val now = System.currentTimeMillis()
+                    if (force || now - lastEmitAt >= STREAM_EMIT_INTERVAL_MS) {
+                        lastEmitAt = now
+                        _aiScanStream.value = AiScanStreamState(
+                            output = latestOutput.takeLast(STREAM_MAX_CHARS),
+                            thinking = latestThinking.takeLast(STREAM_MAX_CHARS)
+                        )
+                    }
+                }
+
+                val entries = routineScanner.scan(
+                    imageUri = imageUri,
+                    catalog = _uiState.value.availableExercises,
+                    languageCode = localeManager.getResolvedLanguage(),
+                    onPhase = { phase ->
+                        val current = _aiScanState.value
+                        if (current is AiScanState.Scanning) {
+                            _aiScanState.value = current.copy(phase = phase)
+                        }
+                    },
+                    onStreamUpdate = { partialOutput, thinking ->
+                        latestOutput = partialOutput
+                        latestThinking = thinking
+                        emit()
+                    }
+                )
+                emit(force = true)
+                _aiScanState.value =
+                    if (entries.isEmpty()) AiScanState.Error(null) else AiScanState.Success(entries)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _aiScanState.value = AiScanState.Error(e.message)
+            }
+        }
+    }
+
+    fun dismissScanResult() {
+        _aiScanState.value = AiScanState.Idle
+        _aiScanStream.value = AiScanStreamState()
+    }
+
+    fun applyScannedExercises(entries: List<ScannedExerciseEntry>) {
+        viewModelScope.launch {
+            val details = _uiState.value.planDetails ?: return@launch
+            var nextOrder = (details.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
+
+            entries.forEach { entry ->
+                val exerciseId = entry.exerciseId ?: exerciseRepository.addCustomExercise(
+                    nome = entry.rawName,
+                    categoria = entry.suggestedCategory.ifBlank { "Custom" }
+                )
+
+                workoutRepository.savePlanExercise(
+                    if (entry.isCardio) {
+                        PlanExerciseEntity(
+                            planId = details.plan.id,
+                            exerciseId = exerciseId,
+                            serieTarget = 1,
+                            repsTarget = "1",
+                            recuperoTarget = entry.restSeconds,
+                            ordine = nextOrder++,
+                            exerciseType = "cardio",
+                            durataTargetSecondi = entry.cardioMinutes?.let { it * 60 }
+                        )
+                    } else {
+                        PlanExerciseEntity(
+                            planId = details.plan.id,
+                            exerciseId = exerciseId,
+                            serieTarget = entry.sets,
+                            repsTarget = entry.reps,
+                            recuperoTarget = entry.restSeconds,
+                            ordine = nextOrder++
+                        )
+                    }
+                )
+            }
+
+            _aiScanState.value = AiScanState.Idle
+            _aiScanStream.value = AiScanStreamState()
+        }
+    }
 
     init {
         viewModelScope.launch {

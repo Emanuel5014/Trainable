@@ -704,4 +704,32 @@
     <string name="weight_label_unit">Peso (%1$s)</string>
     <string name="remove_set_confirm">¿Seguro que quieres eliminar esta serie?</string>
     <string name="toggle_superset_with_next">Alternar superserie con el siguiente ejercicio</string>
+
+    <!-- AI Scan -->
+    <string name="ai_section_title">IA</string>
+    <string name="ai_scan_toggle">Escaneo de rutinas con IA</string>
+    <string name="ai_scan_desc">Completa tu rutina automáticamente desde una foto, totalmente sin conexión</string>
+    <string name="ai_device_unsupported">Este dispositivo no cumple los requisitos de RAM para IA local</string>
+    <string name="ai_model_variant">Modelo</string>
+    <string name="ai_model_requirements">%1$s de descarga · requiere %2$d GB de RAM</string>
+    <string name="ai_model_download">Descargar %1$s</string>
+    <string name="ai_model_download_retry">Reintentar descarga</string>
+    <string name="ai_model_downloading">Descargando modelo… %1$d%%</string>
+    <string name="ai_model_ready">Modelo listo</string>
+    <string name="ai_model_delete">Eliminar</string>
+    <string name="ai_scan_source_title">Escanear hoja de rutina</string>
+    <string name="ai_scanning">Analizando la hoja…</string>
+    <string name="ai_scan_no_exercises">No se detectaron ejercicios en la foto</string>
+    <string name="ai_scan_failed">No se pudo analizar la hoja. Inténtalo de nuevo.</string>
+    <string name="ai_scan_preview_title">Revisa los ejercicios detectados</string>
+    <string name="ai_scan_preview_subtitle">Comprueba y corrige lo que la IA haya hecho mal antes de añadir</string>
+    <string name="ai_scan_add_all">Añadir ejercicios</string>
+    <string name="ai_scan_custom_label">No está en el catálogo: se creará como personalizado</string>
+    <string name="ai_scan_tap_to_change">Toca para cambiar el ejercicio</string>
+    <string name="ai_scan_phase_model">Cargando modelo…</string>
+    <string name="ai_scan_phase_reading">Leyendo la hoja…</string>
+    <string name="ai_scan_phase_generating">Extrayendo ejercicios…</string>
+    <string name="ai_scan_show_thinking">Pensamiento del modelo</string>
+    <string name="ai_scan_hide_thinking">Ocultar pensamiento</string>
+    <string name="ai_scan_thinking_placeholder">El razonamiento del modelo aparecerá aquí…</string>
 </resources>

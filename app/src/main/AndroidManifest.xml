@@ -85,6 +85,12 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- LiteRT-LM GPU delegate: vendor driver access on API 28+.
+             Without these the runtime silently falls back to Dawn/Vulkan,
+             which can trigger lmkd termination during shader compilation. -->
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libvndksupport.so" android:required="false" />
+
         <receiver android:name=".util.notification.TimerNotificationReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="com.emanuel5014.trainable.ACTION_SKIP" />

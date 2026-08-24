@@ -8,6 +8,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
+import com.emanuel5014.trainable.data.ai.LocalLlmEngine
+import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.remote.GitHubRelease
@@ -42,6 +47,9 @@ class SettingsViewModel @Inject constructor(
     private val backupManager: BackupManager,
     private val updateManager: UpdateManager,
     private val webServerManager: WebServerManager,
+    private val deviceCapabilityChecker: DeviceCapabilityChecker,
+    private val modelFileManager: ModelFileManager,
+    private val localLlmEngine: LocalLlmEngine,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -588,4 +596,68 @@ class SettingsViewModel @Inject constructor(
             webServerManager.startServer()
         }
     }
+
+    // region AI Scan
+
+    val aiScanEnabled = userPrefsRepository.aiScanEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val aiModelVariant = userPrefsRepository.aiModelVariant.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "e2b"
+    )
+
+    val aiDeviceSupported: Boolean = deviceCapabilityChecker.isSupported(context)
+
+    private val _aiModelStatus = MutableStateFlow<AiModelStatus>(AiModelStatus.NotDownloaded)
+    val aiModelStatus: StateFlow<AiModelStatus> = _aiModelStatus.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            userPrefsRepository.aiModelVariant.collect { variantId ->
+                _aiModelStatus.value = if (modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))) {
+                    AiModelStatus.Ready
+                } else {
+                    AiModelStatus.NotDownloaded
+                }
+            }
+        }
+    }
+
+    fun setAiScanEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiScanEnabled(enabled)
+        }
+    }
+
+    fun setAiModelVariant(variantId: String) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiModelVariant(variantId)
+        }
+    }
+
+    fun downloadAiModel() {
+        if (_aiModelStatus.value is AiModelStatus.Downloading) return
+        viewModelScope.launch {
+            val variant = AiModelVariant.fromId(aiModelVariant.value)
+            modelFileManager.download(variant).collect { status ->
+                _aiModelStatus.value = status
+            }
+        }
+    }
+
+    fun deleteAiModel() {
+        viewModelScope.launch {
+            val variant = AiModelVariant.fromId(aiModelVariant.value)
+            localLlmEngine.release()
+            modelFileManager.delete(variant)
+            _aiModelStatus.value = AiModelStatus.NotDownloaded
+        }
+    }
+
+    // endregion
 }

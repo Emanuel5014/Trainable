@@ -27,15 +27,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Folder
@@ -55,6 +57,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -96,6 +99,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -146,6 +151,10 @@ fun SettingsScreen(
     val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
+    val aiScanEnabled by viewModel.aiScanEnabled.collectAsState()
+    val aiModelVariant by viewModel.aiModelVariant.collectAsState()
+    val aiModelStatus by viewModel.aiModelStatus.collectAsState()
+    val aiDeviceSupported = viewModel.aiDeviceSupported
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
     
@@ -891,6 +900,144 @@ fun SettingsScreen(
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.ai_section_title)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.DocumentScanner, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.ai_scan_toggle), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (!aiDeviceSupported) stringResource(R.string.ai_device_unsupported)
+                                        else stringResource(R.string.ai_scan_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = aiScanEnabled && aiDeviceSupported,
+                                enabled = aiDeviceSupported,
+                                onCheckedChange = { viewModel.setAiScanEnabled(it) }
+                            )
+                        }
+
+                        if (aiDeviceSupported && aiScanEnabled) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            val selectedVariant = AiModelVariant.fromId(aiModelVariant)
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(stringResource(R.string.ai_model_variant), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SurfaceContainerHighest)
+                                        .padding(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AiModelVariant.entries.forEach { variant ->
+                                        Text(
+                                            text = variant.displayName,
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(if (selectedVariant == variant) Primary else Color.Transparent)
+                                                .clickable { viewModel.setAiModelVariant(variant.id) }
+                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                            color = if (selectedVariant == variant) OnPrimary else OnSurfaceVariant,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = stringResource(R.string.ai_model_requirements, selectedVariant.sizeLabel, selectedVariant.requiredRamGb),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+
+                            when (val status = aiModelStatus) {
+                                is AiModelStatus.Downloading -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            stringResource(R.string.ai_model_downloading, (status.progress * 100).toInt()),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = Primary,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        LinearProgressIndicator(
+                                            progress = { status.progress },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Primary,
+                                            trackColor = SurfaceContainerHighest
+                                        )
+                                    }
+                                }
+                                is AiModelStatus.Ready -> {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                stringResource(R.string.ai_model_ready),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = OnSurface
+                                            )
+                                        }
+                                        TextButton(onClick = { viewModel.deleteAiModel() }) {
+                                            Text(
+                                                stringResource(R.string.ai_model_delete).uppercase(),
+                                                color = Error,
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        }
+                                    }
+                                }
+                                is AiModelStatus.Error -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(status.message, style = MaterialTheme.typography.bodySmall, color = Error)
+                                        GymButton(
+                                            onClick = { viewModel.downloadAiModel() },
+                                            containerColor = Primary.copy(alpha = 0.1f),
+                                            contentColor = Primary,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(stringResource(R.string.ai_model_download_retry))
+                                        }
+                                    }
+                                }
+                                AiModelStatus.NotDownloaded -> {
+                                    GymButton(
+                                        onClick = { viewModel.downloadAiModel() },
+                                        containerColor = Primary.copy(alpha = 0.1f),
+                                        contentColor = Primary,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
+                                    }
+                                }
+                            }
                         }
                     }
                 }
