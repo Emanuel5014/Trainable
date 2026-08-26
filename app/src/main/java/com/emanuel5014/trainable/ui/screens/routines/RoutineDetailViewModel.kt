@@ -127,6 +127,7 @@ class RoutineDetailViewModel @Inject constructor(
                 val entries = routineScanner.scan(
                     imageUri = imageUri,
                     catalog = _uiState.value.availableExercises,
+                    categories = _uiState.value.categories,
                     languageCode = localeManager.getResolvedLanguage(),
                     onPhase = { phase ->
                         val current = _aiScanState.value

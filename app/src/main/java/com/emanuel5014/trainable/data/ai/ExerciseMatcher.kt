@@ -9,17 +9,30 @@ class ExerciseMatcher(
     private val languageCode: String
 ) {
 
-    // Reverse translations: localized name -> canonical English name
-    private val reverseTranslation: Map<String, String> by lazy {
-        val forward = when (languageCode) {
-            "it" -> ExerciseTranslations.it
-            "es" -> ExerciseTranslations.es
-            "fr" -> ExerciseTranslations.fr
-            "de" -> ExerciseTranslations.de
-            "pt" -> ExerciseTranslations.pt
-            else -> emptyMap()
-        }
-        forward.entries.associate { (en, localized) -> normalize(localized) to en }
+    /**
+     * Every known way to refer to each exercise: canonical English names plus
+     * all localized names from every supported language. Fuzzy-matching the
+     * scanned text against this vocabulary makes OCR typos tolerant
+     * (e.g. "panca piano" still resolves to "Flat Bench Press").
+     */
+    private val candidates: List<Pair<ExerciseEntity, String>> by lazy {
+        val byCanonicalName = catalog.associateBy { it.nome.lowercase() }
+        buildList {
+            catalog.forEach { add(it to normalize(it.nome)) }
+            listOf(
+                ExerciseTranslations.it,
+                ExerciseTranslations.es,
+                ExerciseTranslations.fr,
+                ExerciseTranslations.de,
+                ExerciseTranslations.pt
+            ).forEach { translations ->
+                translations.forEach { (canonical, localized) ->
+                    byCanonicalName[canonical.lowercase()]?.let { exercise ->
+                        add(exercise to normalize(localized))
+                    }
+                }
+            }
+        }.distinctBy { (_, name) -> name }
     }
 
     data class Match(val exercise: ExerciseEntity, val score: Double)
@@ -28,18 +41,16 @@ class ExerciseMatcher(
         val query = normalize(name)
         if (query.isBlank()) return null
 
-        var best: Match? = null
-        for (exercise in catalog) {
-            val canonicalQuery = reverseTranslation[query] ?: query
-            val score = maxOf(
-                similarity(query, normalize(exercise.nome)),
-                if (canonicalQuery != query) similarity(normalize(canonicalQuery), normalize(exercise.nome)) else 0.0
-            )
-            if (best == null || score > best.score) {
-                best = Match(exercise, score)
+        var bestScore = 0.0
+        var best: ExerciseEntity? = null
+        for ((exercise, candidate) in candidates) {
+            val score = similarity(query, candidate)
+            if (score > bestScore) {
+                bestScore = score
+                best = exercise
             }
         }
-        return best?.takeIf { it.score >= MATCH_THRESHOLD }
+        return best?.takeIf { bestScore >= MATCH_THRESHOLD }?.let { Match(it, bestScore) }
     }
 
     fun suggestCategory(name: String): String = bestMatch(name)?.exercise?.categoria ?: ""
@@ -63,6 +74,25 @@ class ExerciseMatcher(
             val distance = levenshtein(a, b)
             return 1.0 - distance.toDouble() / maxOf(a.length, b.length)
         }
+
+        /** Maps an arbitrary (possibly translated) category name to a known one, or null. */
+        fun mapToKnownCategory(name: String, knownCategories: List<String>): String? {
+            val query = normalize(name)
+            if (query.isBlank() || knownCategories.isEmpty()) return null
+
+            var bestScore = 0.0
+            var best: String? = null
+            for (category in knownCategories) {
+                val score = similarity(query, normalize(category))
+                if (score > bestScore) {
+                    bestScore = score
+                    best = category
+                }
+            }
+            return best?.takeIf { bestScore >= CATEGORY_MATCH_THRESHOLD }
+        }
+
+        private const val CATEGORY_MATCH_THRESHOLD = 0.7
 
         private fun levenshtein(a: String, b: String): Int {
             var prev = IntArray(b.length + 1) { it }

@@ -9,7 +9,8 @@ data class ParsedExercise(
     val sets: Int = 3,
     val reps: String = "8-12",
     @SerialName("rest_seconds") val restSeconds: Int = 120,
-    @SerialName("cardio_minutes") val cardioMinutes: Int? = null
+    @SerialName("cardio_minutes") val cardioMinutes: Int? = null,
+    val category: String? = null
 )
 
 enum class AiModelVariant(
