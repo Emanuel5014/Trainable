@@ -753,4 +753,8 @@
     <string name="ai_scan_exercise_name_label">Nome do exercício</string>
     <string name="ai_scan_category_label">Categoria</string>
     <string name="ai_scan_save_changes">Guardar alterações</string>
+    <string name="ai_scan_stop">Parar digitalização</string>
+    <string name="ai_scan_stop_confirm_title">Parar digitalização?</string>
+    <string name="ai_scan_stop_confirm_desc">A análise do treino será interrompida e terá de iniciar uma nova.</string>
+    <string name="ai_scan_continue">Continuar digitalização</string>
 </resources>

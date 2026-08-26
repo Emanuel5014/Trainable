@@ -753,4 +753,8 @@
     <string name="ai_scan_exercise_name_label">Exercise name</string>
     <string name="ai_scan_category_label">Category</string>
     <string name="ai_scan_save_changes">Save changes</string>
+    <string name="ai_scan_stop">Stop scan</string>
+    <string name="ai_scan_stop_confirm_title">Stop scanning?</string>
+    <string name="ai_scan_stop_confirm_desc">The sheet analysis will be stopped and you will need to start a new one.</string>
+    <string name="ai_scan_continue">Continue scan</string>
 </resources>

@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
@@ -50,6 +52,7 @@ import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DatePicker
@@ -1418,7 +1421,8 @@ fun RoutineDetailScreen(
                 phase = state.phase,
                 stream = scanStream,
                 isDark = isDark,
-                hazeState = scanHazeState
+                hazeState = scanHazeState,
+                onCancel = { viewModel.cancelAiScan() }
             )
         }
         is AiScanState.Success -> {
@@ -1462,8 +1466,15 @@ private fun AiScanningOverlay(
     phase: com.emanuel5014.trainable.data.ai.ScanPhase,
     stream: AiScanStreamState,
     isDark: Boolean,
-    hazeState: HazeState
+    hazeState: HazeState,
+    onCancel: () -> Unit
 ) {
+    var showCancelConfirmation by remember { mutableStateOf(false) }
+
+    androidx.activity.compose.BackHandler {
+        showCancelConfirmation = true
+    }
+
     var showThinking by remember { mutableStateOf(false) }
     var elapsedSeconds by remember { mutableIntStateOf(0) }
 
@@ -1475,11 +1486,14 @@ private fun AiScanningOverlay(
     }
 
     val scrimColor = com.emanuel5014.trainable.ui.theme.Surface
-        .copy(alpha = if (isDark) 0.55f else 0.75f)
+        .copy(alpha = if (isDark) 0.65f else 0.85f)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures { /* Consume touches to prevent triggering underlying buttons */ }
+            }
             .hazeEffect(state = hazeState) {
                 blurRadius = 24.dp
                 tints = listOf(HazeTint(scrimColor))
@@ -1587,8 +1601,75 @@ private fun AiScanningOverlay(
                         }
                     }
                 }
+                
+                OutlinedButton(
+                    onClick = { showCancelConfirmation = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = Shapes.medium,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f))
+                ) {
+                    Icon(
+                        Icons.Rounded.Close,
+                        contentDescription = null,
+                        tint = Error,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.ai_scan_stop),
+                        color = Error,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
+    }
+
+    if (showCancelConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showCancelConfirmation = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.ai_scan_stop_confirm_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.ai_scan_stop_confirm_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showCancelConfirmation = false
+                        onCancel()
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_stop),
+                        color = Error,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelConfirmation = false }) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_continue),
+                        color = Primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            shape = Shapes.extraLarge
+        )
     }
 }
 

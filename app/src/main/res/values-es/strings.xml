@@ -749,4 +749,8 @@
     <string name="ai_scan_exercise_name_label">Nombre del ejercicio</string>
     <string name="ai_scan_category_label">Categoría</string>
     <string name="ai_scan_save_changes">Guardar cambios</string>
+    <string name="ai_scan_stop">Detener escaneo</string>
+    <string name="ai_scan_stop_confirm_title">¿Detener escaneo?</string>
+    <string name="ai_scan_stop_confirm_desc">El análisis de la rutina se detendrá y tendrás que iniciar uno nuevo.</string>
+    <string name="ai_scan_continue">Continuar escaneo</string>
 </resources>

@@ -753,4 +753,8 @@
     <string name="ai_scan_exercise_name_label">Übungsname</string>
     <string name="ai_scan_category_label">Kategorie</string>
     <string name="ai_scan_save_changes">Änderungen speichern</string>
+    <string name="ai_scan_stop">Scan abbrechen</string>
+    <string name="ai_scan_stop_confirm_title">Scan abbrechen?</string>
+    <string name="ai_scan_stop_confirm_desc">Die Analyse des Trainingsplans wird abgebrochen.</string>
+    <string name="ai_scan_continue">Scan fortsetzen</string>
 </resources>

@@ -105,11 +105,14 @@ class RoutineDetailViewModel @Inject constructor(
     private val _aiScanStream = MutableStateFlow(AiScanStreamState())
     val aiScanStream: StateFlow<AiScanStreamState> = _aiScanStream.asStateFlow()
 
+    private var scanJob: kotlinx.coroutines.Job? = null
+
     fun scanRoutineSheet(imageUri: Uri) {
         if (_aiScanState.value is AiScanState.Scanning) return
         _aiScanState.value = AiScanState.Scanning()
         _aiScanStream.value = AiScanStreamState()
-        viewModelScope.launch {
+        scanJob?.cancel()
+        scanJob = viewModelScope.launch {
             try {
                 // Throttle stream state emissions to ~4 Hz so token-frequency
                 // updates don't trigger full-screen recomposition + blur recompute
@@ -148,11 +151,22 @@ class RoutineDetailViewModel @Inject constructor(
                 _aiScanState.value =
                     if (entries.isEmpty()) AiScanState.Error(null)
                     else AiScanState.Success(entries = entries, imageUri = imageUri)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancelled by user
+                _aiScanState.value = AiScanState.Idle
+                _aiScanStream.value = AiScanStreamState()
             } catch (e: Exception) {
                 e.printStackTrace()
                 _aiScanState.value = AiScanState.Error(e.message)
             }
         }
+    }
+
+    fun cancelAiScan() {
+        scanJob?.cancel()
+        scanJob = null
+        _aiScanState.value = AiScanState.Idle
+        _aiScanStream.value = AiScanStreamState()
     }
 
     fun dismissScanResult() {

@@ -28,23 +28,28 @@ data class LlmScanResult(
 class LocalLlmEngine @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val mutex = kotlinx.coroutines.sync.Mutex()
     private var engine: Engine? = null
     private var loadedPath: String? = null
 
     suspend fun ensureReady(modelFile: File) = withContext(Dispatchers.IO) {
-        if (engine != null && loadedPath == modelFile.absolutePath && modelFile.exists()) return@withContext
-        release()
-        val config = EngineConfig(
-            modelPath = modelFile.absolutePath,
-            backend = Backend.CPU(),
-            visionBackend = Backend.GPU(),
-            cacheDir = context.cacheDir.absolutePath
-        )
-        val newEngine = Engine(config)
-        newEngine.initialize()
-        engine = newEngine
-        loadedPath = modelFile.absolutePath
-        Unit
+        mutex.lock()
+        try {
+            if (engine != null && loadedPath == modelFile.absolutePath && modelFile.exists()) return@withContext
+            releaseInternal()
+            val config = EngineConfig(
+                modelPath = modelFile.absolutePath,
+                backend = Backend.CPU(),
+                visionBackend = Backend.GPU(),
+                cacheDir = context.cacheDir.absolutePath
+            )
+            val newEngine = Engine(config)
+            newEngine.initialize()
+            engine = newEngine
+            loadedPath = modelFile.absolutePath
+        } finally {
+            mutex.unlock()
+        }
     }
 
     /**
@@ -56,14 +61,16 @@ class LocalLlmEngine @Inject constructor(
         prompt: String,
         onStreamUpdate: (String, String) -> Unit = { _, _ -> }
     ): LlmScanResult = withContext(Dispatchers.IO) {
-        val activeEngine = engine ?: error("Engine not initialized")
+        mutex.lock()
         val tempImage = decodeScaledImage(imageUri)
         try {
+            val activeEngine = engine ?: error("Engine not initialized")
             val conversation = activeEngine.createConversation()
             try {
                 val output = StringBuilder()
                 val thinking = StringBuilder()
                 val completion = CompletableDeferred<Unit>()
+                val isCancelled = java.util.concurrent.atomic.AtomicBoolean(false)
 
                 conversation.sendMessageAsync(
                     Contents.of(
@@ -72,6 +79,7 @@ class LocalLlmEngine @Inject constructor(
                     ),
                     object : MessageCallback {
                         override fun onMessage(message: Message) {
+                            if (isCancelled.get()) return
                             message.contents.contents
                                 .filterIsInstance<Content.Text>()
                                 .forEach { output.append(it.text) }
@@ -84,25 +92,47 @@ class LocalLlmEngine @Inject constructor(
                         }
 
                         override fun onError(throwable: Throwable) {
-                            completion.completeExceptionally(throwable)
+                            if (!completion.isCompleted) {
+                                completion.completeExceptionally(throwable)
+                            }
                         }
                     }
                 )
 
-                completion.await()
+                try {
+                    completion.await()
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    isCancelled.set(true)
+                    // IMPORTANT: Do NOT close conversation or release engine synchronously while native
+                    // C++ thread is actively running inference. Wait for native onDone/onError safely in NonCancellable block.
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        try {
+                            completion.await()
+                        } catch (_: Throwable) {
+                        }
+                        runCatching { conversation.close() }
+                    }
+                    throw e
+                }
+
                 LlmScanResult(
                     output = output.toString(),
                     thinking = thinking.toString()
                 )
             } finally {
-                conversation.close()
+                runCatching { conversation.close() }
             }
         } finally {
             tempImage.delete()
+            mutex.unlock()
         }
     }
 
     fun release() {
+        releaseInternal()
+    }
+
+    private fun releaseInternal() {
         try {
             engine?.close()
         } catch (_: Exception) {

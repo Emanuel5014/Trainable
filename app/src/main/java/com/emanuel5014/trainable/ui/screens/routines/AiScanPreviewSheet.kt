@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -142,17 +143,19 @@ fun AiScanPreviewSheet(
     onConfirm: (List<ScannedExerciseEntry>, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Prevent accidental gesture drag-to-dismiss so the user never loses scanned data by mistake
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { sheetValue -> sheetValue != SheetValue.Hidden }
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editableEntries = remember { mutableStateListOf(*entries.toTypedArray()) }
     var pickingIndex by remember { mutableStateOf<Int?>(null) }
     var customEditIndex by remember { mutableStateOf<Int?>(null) }
     var isAddingNewExercise by remember { mutableStateOf(false) }
     var saveImageToPlan by remember { mutableStateOf(imageUri != null) }
     var showFullscreenPhoto by remember { mutableStateOf(false) }
+
+    // System BackHandler ensuring the back button always dismisses cleanly
+    val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise
+    BackHandler(enabled = !isChildSheetOpen) {
+        onDismiss()
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
