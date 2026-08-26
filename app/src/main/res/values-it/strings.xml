@@ -736,4 +736,21 @@
     <string name="ai_scan_show_thinking">Pensiero del modello</string>
     <string name="ai_scan_hide_thinking">Nascondi pensiero</string>
     <string name="ai_scan_thinking_placeholder">Il ragionamento del modello apparirà qui…</string>
+    <string name="ai_scan_original_sheet">Foto originale</string>
+    <string name="ai_scan_save_image_to_routine">Allega foto alla scheda</string>
+    <string name="ai_scan_add_missing_exercise">Aggiungi esercizio mancante</string>
+    <string name="ai_scan_fullscreen_photo">Foto a schermo intero</string>
+    <string name="ai_scan_collapse_photo">Nascondi foto</string>
+    <string name="ai_scan_expand_photo">Mostra foto</string>
+    <string name="ai_scan_zoom_hint">Pizzica o tocca due volte per ingrandire</string>
+    <string name="ai_scan_custom_options_title">Opzioni nuovo esercizio</string>
+    <string name="ai_scan_custom_options_desc">Questo esercizio non è ancora nel tuo catalogo. Cosa desideri fare?</string>
+    <string name="ai_scan_edit_name_and_category">Modifica nome e categoria</string>
+    <string name="ai_scan_select_from_catalog">Collega a esercizio esistente</string>
+    <string name="ai_scan_save_to_library_checkbox">Salva nella libreria esercizi personalizzati</string>
+    <string name="ai_scan_edit_exercise_title">Modifica esercizio</string>
+    <string name="ai_scan_custom_badge">NUOVO</string>
+    <string name="ai_scan_exercise_name_label">Nome esercizio</string>
+    <string name="ai_scan_category_label">Categoria</string>
+    <string name="ai_scan_save_changes">Salva modifiche</string>
 </resources>

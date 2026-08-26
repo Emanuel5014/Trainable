@@ -118,6 +118,7 @@ import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
+import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -1422,6 +1423,7 @@ fun RoutineDetailScreen(
         }
         is AiScanState.Success -> {
             AiScanPreviewSheet(
+                imageUri = state.imageUri,
                 entries = state.entries,
                 exercises = uiState.availableExercises,
                 categories = uiState.categories,
@@ -1430,7 +1432,13 @@ fun RoutineDetailScreen(
                 onAddCustomExercise = { nome, categoria, onCreated ->
                     viewModel.addCustomExercise(nome, categoria, onCreated)
                 },
-                onConfirm = { entries ->
+                onConfirm = { entries, saveImage ->
+                    if (saveImage && state.imageUri != null) {
+                        val savedPath = ImageStorageUtils.compressAndSaveImage(context, state.imageUri)
+                        if (savedPath != null) {
+                            viewModel.addPlanImage(savedPath)
+                        }
+                    }
                     viewModel.applyScannedExercises(entries)
                 },
                 onDismiss = { viewModel.dismissScanResult() }

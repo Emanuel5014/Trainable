@@ -19,6 +19,11 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+data class LlmScanResult(
+    val output: String,
+    val thinking: String
+)
+
 @Singleton
 class LocalLlmEngine @Inject constructor(
     @ApplicationContext private val context: Context
@@ -45,16 +50,12 @@ class LocalLlmEngine @Inject constructor(
     /**
      * Streams the model response for a routine sheet scan.
      * [onStreamUpdate] is invoked with (partialOutput, thinkingOutput) as chunks arrive.
-     *
-     * Uses the callback-based sendMessageAsync instead of the Flow variant:
-     * the Flow implementation calls a kotlinx-coroutines ABI signature that is
-     * incompatible with the coroutines version resolved by this app.
      */
     suspend fun scanRoutineSheet(
         imageUri: Uri,
         prompt: String,
         onStreamUpdate: (String, String) -> Unit = { _, _ -> }
-    ): String = withContext(Dispatchers.IO) {
+    ): LlmScanResult = withContext(Dispatchers.IO) {
         val activeEngine = engine ?: error("Engine not initialized")
         val tempImage = decodeScaledImage(imageUri)
         try {
@@ -89,7 +90,10 @@ class LocalLlmEngine @Inject constructor(
                 )
 
                 completion.await()
-                output.toString()
+                LlmScanResult(
+                    output = output.toString(),
+                    thinking = thinking.toString()
+                )
             } finally {
                 conversation.close()
             }

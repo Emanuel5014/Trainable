@@ -736,4 +736,21 @@
     <string name="ai_scan_show_thinking">Gedanken des Modells</string>
     <string name="ai_scan_hide_thinking">Gedanken ausblenden</string>
     <string name="ai_scan_thinking_placeholder">Die Gedankengänge des Modells erscheinen hier…</string>
+    <string name="ai_scan_original_sheet">Originalfoto</string>
+    <string name="ai_scan_save_image_to_routine">Foto an Trainingsplan anhängen</string>
+    <string name="ai_scan_add_missing_exercise">Fehlende Übung hinzufügen</string>
+    <string name="ai_scan_fullscreen_photo">Vollbild-Foto</string>
+    <string name="ai_scan_collapse_photo">Foto ausblenden</string>
+    <string name="ai_scan_expand_photo">Foto einblenden</string>
+    <string name="ai_scan_zoom_hint">Zum Zoomen zusammenziehen oder doppeltippen</string>
+    <string name="ai_scan_custom_options_title">Optionen für neue Übung</string>
+    <string name="ai_scan_custom_options_desc">Diese Übung ist noch nicht im Katalog. Was möchten Sie tun?</string>
+    <string name="ai_scan_edit_name_and_category">Name &amp; Kategorie bearbeiten</string>
+    <string name="ai_scan_select_from_catalog">Mit vorhandener Übung verknüpfen</string>
+    <string name="ai_scan_save_to_library_checkbox">In der Übungsbibliothek speichern</string>
+    <string name="ai_scan_edit_exercise_title">Übung bearbeiten</string>
+    <string name="ai_scan_custom_badge">NEU</string>
+    <string name="ai_scan_exercise_name_label">Übungsname</string>
+    <string name="ai_scan_category_label">Kategorie</string>
+    <string name="ai_scan_save_changes">Änderungen speichern</string>
 </resources>

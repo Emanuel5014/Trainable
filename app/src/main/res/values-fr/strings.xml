@@ -736,4 +736,21 @@
     <string name="ai_scan_show_thinking">Réflexion du modèle</string>
     <string name="ai_scan_hide_thinking">Masquer la réflexion</string>
     <string name="ai_scan_thinking_placeholder">Le raisonnement du modèle apparaîtra ici…</string>
+    <string name="ai_scan_original_sheet">Photo originale</string>
+    <string name="ai_scan_save_image_to_routine">Joindre la photo à la séance</string>
+    <string name="ai_scan_add_missing_exercise">Ajouter l\'exercice manquant</string>
+    <string name="ai_scan_fullscreen_photo">Photo plein écran</string>
+    <string name="ai_scan_collapse_photo">Masquer la photo</string>
+    <string name="ai_scan_expand_photo">Afficher la photo</string>
+    <string name="ai_scan_zoom_hint">Pincer ou appuyer deux fois pour zoomer</string>
+    <string name="ai_scan_custom_options_title">Options du nouvel exercice</string>
+    <string name="ai_scan_custom_options_desc">Cet exercice n\'est pas encore dans votre catalogue. Que souhaitez-vous faire ?</string>
+    <string name="ai_scan_edit_name_and_category">Modifier le nom et la catégorie</string>
+    <string name="ai_scan_select_from_catalog">Lier à un exercice existant</string>
+    <string name="ai_scan_save_to_library_checkbox">Enregistrer dans la bibliothèque d\'exercices</string>
+    <string name="ai_scan_edit_exercise_title">Modifier l\'exercice</string>
+    <string name="ai_scan_custom_badge">NOUVEAU</string>
+    <string name="ai_scan_exercise_name_label">Nom de l\'exercice</string>
+    <string name="ai_scan_category_label">Catégorie</string>
+    <string name="ai_scan_save_changes">Enregistrer les modifications</string>
 </resources>

@@ -45,7 +45,10 @@ sealed interface AiScanState {
     data class Scanning(
         val phase: ScanPhase = ScanPhase.LOADING_MODEL
     ) : AiScanState
-    data class Success(val entries: List<ScannedExerciseEntry>) : AiScanState
+    data class Success(
+        val entries: List<ScannedExerciseEntry>,
+        val imageUri: Uri? = null
+    ) : AiScanState
     data class Error(val message: String?) : AiScanState
 }
 
@@ -143,7 +146,8 @@ class RoutineDetailViewModel @Inject constructor(
                 )
                 emit(force = true)
                 _aiScanState.value =
-                    if (entries.isEmpty()) AiScanState.Error(null) else AiScanState.Success(entries)
+                    if (entries.isEmpty()) AiScanState.Error(null)
+                    else AiScanState.Success(entries = entries, imageUri = imageUri)
             } catch (e: Exception) {
                 e.printStackTrace()
                 _aiScanState.value = AiScanState.Error(e.message)

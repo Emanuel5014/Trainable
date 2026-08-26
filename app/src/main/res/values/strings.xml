@@ -736,4 +736,21 @@
     <string name="ai_scan_show_thinking">Model thinking</string>
     <string name="ai_scan_hide_thinking">Hide thinking</string>
     <string name="ai_scan_thinking_placeholder">The model\'s reasoning will appear here…</string>
+    <string name="ai_scan_original_sheet">Original photo</string>
+    <string name="ai_scan_save_image_to_routine">Attach photo to routine</string>
+    <string name="ai_scan_add_missing_exercise">Add missing exercise</string>
+    <string name="ai_scan_fullscreen_photo">Fullscreen photo</string>
+    <string name="ai_scan_collapse_photo">Hide photo</string>
+    <string name="ai_scan_expand_photo">Show photo</string>
+    <string name="ai_scan_zoom_hint">Pinch or double tap to zoom</string>
+    <string name="ai_scan_custom_options_title">New Exercise Options</string>
+    <string name="ai_scan_custom_options_desc">This exercise isn\'t in your catalog yet. What would you like to do?</string>
+    <string name="ai_scan_edit_name_and_category">Edit name &amp; category</string>
+    <string name="ai_scan_select_from_catalog">Link to existing exercise</string>
+    <string name="ai_scan_save_to_library_checkbox">Save to custom exercise library</string>
+    <string name="ai_scan_edit_exercise_title">Edit Exercise</string>
+    <string name="ai_scan_custom_badge">NEW</string>
+    <string name="ai_scan_exercise_name_label">Exercise name</string>
+    <string name="ai_scan_category_label">Category</string>
+    <string name="ai_scan_save_changes">Save changes</string>
 </resources>

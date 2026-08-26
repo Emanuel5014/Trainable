@@ -22,20 +22,42 @@ data class ScannedExerciseEntry(
 
 object RoutineScanPrompt {
 
-    fun build(languageCode: String, categories: List<String> = emptyList()): String = """
-You are an assistant that reads photos of gym workout programs (training sheets).
-Look at the image and extract the list of exercises exactly as written.
+    fun build(languageCode: String, categories: List<String> = emptyList()): String {
+        val categoriesStr = if (categories.isNotEmpty()) {
+            categories.joinToString(", ") { "\"$it\"" }
+        } else {
+            "\"Petto\", \"Dorso\", \"Gambe\", \"Spalle\", \"Braccia\", \"Addome\", \"Cardio\""
+        }
 
-Rules:
-- For each exercise extract: name, number of sets, reps target (e.g. "8-12" or "12"), rest in seconds (if written like "90s", "1'30\"" or "2 min" convert to seconds; use 120 if not specified).
-- If an entry is a cardio activity (treadmill, bike, rowing, etc.) set "cardio_minutes" to the duration in minutes and reps to "1"; otherwise "cardio_minutes" must be null.
-- For "category": classify each exercise into the muscle group / type it primarily targets. Use one of these exact values when it fits: ${categories.joinToString(", ") { "\"$it\"" }}. If none fits well, pick the closest muscle group in English (e.g. "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio").
-- Do NOT invent exercises that are not visible. If the sheet is unreadable or contains no program, return an empty array [].
-- Answer with a valid JSON array ONLY, no explanations, no markdown formatting.
+        return """
+You are an expert fitness AI specialized in reading and extracting gym workout routines / training cards from images.
+Analyze the provided image and extract ALL exercises, sets, repetitions, recovery rest, and cardio duration.
 
-JSON schema:
-[{"name": "...", "sets": 3, "reps": "8-12", "rest_seconds": 120, "cardio_minutes": null, "category": "..."}]
+EXTRACTION INSTRUCTIONS:
+- name: The exercise name as visible (e.g. "Panca Piana", "Lat Machine", "Squat", "Leg Press", "Curl Manubri", "Alzate Laterali"). If gym shorthand is used (e.g. "P. Piana", "Lat Mach.", "Press 45", "Alz. Lat."), write the full recognizable exercise name.
+- sets: Number of sets (integer, e.g. 3 or 4). If not specified, default to 3.
+- reps: Repetitions target as string (e.g. "8-12", "10", "6-8-10", "12").
+- rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"" into seconds (e.g. 90, 120). Default to 120 if not specified.
+- cardio_minutes: If the entry is a cardio activity (Tapis Roulant / Treadmill, Cyclette / Bike, Ellittica / Elliptical, Vogatore / Rower, Stairmaster), the duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
+- category: The target muscle group category (choose from: $categoriesStr).
+
+OUTPUT FORMAT RULES:
+- Output MUST be a valid JSON array of objects.
+- Do NOT output extra conversational text before or after the JSON.
+
+JSON Schema Example:
+[
+  {
+    "name": "Panca Piana",
+    "sets": 4,
+    "reps": "8-10",
+    "rest_seconds": 90,
+    "cardio_minutes": null,
+    "category": "Petto"
+  }
+]
 """.trim()
+    }
 }
 
 enum class ScanPhase {
@@ -68,23 +90,34 @@ class RoutineScanner @Inject constructor(
         engine.ensureReady(modelFile)
 
         onPhase(ScanPhase.READING_SHEET)
-        val response = engine.scanRoutineSheet(
+        val result = engine.scanRoutineSheet(
             imageUri = imageUri,
             prompt = RoutineScanPrompt.build(languageCode, categories),
             onStreamUpdate = onStreamUpdate
         )
 
         onPhase(ScanPhase.PARSING)
-        val parsed = RoutineScanParser.parse(response)
+        // 1. Try parsing from main output
+        var parsed = RoutineScanParser.parse(result.output)
+
+        // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
+        if (parsed.isEmpty() && result.thinking.isNotBlank()) {
+            parsed = RoutineScanParser.parse(result.thinking)
+        }
+
+        // 3. Fallback: try parsing combined output and thinking
+        if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
+            parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
+        }
 
         val matcher = ExerciseMatcher(catalog, languageCode)
         return parsed.map { item ->
             val match = matcher.resolve(item.name)
-            // Category priority: catalog match > LLM classification (mapped to a
-            // known category) > empty (falls back to "Custom" when applying)
+            // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
             val suggestedCategory = match?.categoria
                 ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
-                ?: ""
+                ?: matcher.suggestCategory(item.name, categories)
+
             ScannedExerciseEntry(
                 rawName = item.name,
                 exerciseId = match?.id,
@@ -98,3 +131,4 @@ class RoutineScanner @Inject constructor(
         }
     }
 }
+

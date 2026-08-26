@@ -732,4 +732,21 @@
     <string name="ai_scan_show_thinking">Pensamiento del modelo</string>
     <string name="ai_scan_hide_thinking">Ocultar pensamiento</string>
     <string name="ai_scan_thinking_placeholder">El razonamiento del modelo aparecerá aquí…</string>
+    <string name="ai_scan_original_sheet">Foto original</string>
+    <string name="ai_scan_save_image_to_routine">Adjuntar foto a la rutina</string>
+    <string name="ai_scan_add_missing_exercise">Añadir ejercicio que falta</string>
+    <string name="ai_scan_fullscreen_photo">Foto a pantalla completa</string>
+    <string name="ai_scan_collapse_photo">Ocultar foto</string>
+    <string name="ai_scan_expand_photo">Mostrar foto</string>
+    <string name="ai_scan_zoom_hint">Pellizca o toca dos veces para ampliar</string>
+    <string name="ai_scan_custom_options_title">Opciones de nuevo ejercicio</string>
+    <string name="ai_scan_custom_options_desc">Este ejercicio no está en tu catálogo. ¿Qué deseas hacer?</string>
+    <string name="ai_scan_edit_name_and_category">Editar nombre y categoría</string>
+    <string name="ai_scan_select_from_catalog">Vincular a ejercicio existente</string>
+    <string name="ai_scan_save_to_library_checkbox">Guardar en la biblioteca de ejercicios</string>
+    <string name="ai_scan_edit_exercise_title">Editar ejercicio</string>
+    <string name="ai_scan_custom_badge">NUEVO</string>
+    <string name="ai_scan_exercise_name_label">Nombre del ejercicio</string>
+    <string name="ai_scan_category_label">Categoría</string>
+    <string name="ai_scan_save_changes">Guardar cambios</string>
 </resources>
