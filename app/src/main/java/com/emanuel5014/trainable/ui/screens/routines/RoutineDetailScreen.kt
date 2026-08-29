@@ -861,7 +861,7 @@ fun RoutineDetailScreen(
                                 )
                                 selectedExercise?.let {
                                     Text(
-                                        text = it.categoria,
+                                        text = ExerciseTranslations.translateCategory(it.categoria, languageCode),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = OnSurfaceVariant
                                     )

@@ -1,7 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,14 +49,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +68,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -66,11 +80,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.ui.components.CardioInputForm
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
@@ -90,8 +107,30 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.Date
+
+private fun getMergedSupersetRange(index: Int, list: List<Any>): IntRange {
+    val currentEx = list.getOrNull(index) as? EditExerciseState ?: return index..index
+    val sid = currentEx.sets.firstOrNull()?.supersetId ?: return index..index
+
+    var start = index
+    while (start > 0) {
+        val prevEx = list[start - 1] as? EditExerciseState ?: break
+        if (prevEx.sets.firstOrNull()?.supersetId != sid) break
+        start--
+    }
+
+    var end = index
+    while (end < list.lastIndex) {
+        val nextEx = list[end + 1] as? EditExerciseState ?: break
+        if (nextEx.sets.firstOrNull()?.supersetId != sid) break
+        end++
+    }
+
+    return start..end
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +141,33 @@ fun EditWorkoutScreen(
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+    }.collectAsState(initial = true)
+
+    val localMergedItems = remember { mutableStateListOf<Any>() }
+    var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(state.exercises, state.cardioLogs) {
+        if (draggedItemIndex == null) {
+            val items = mutableListOf<Pair<Int, Any>>()
+            state.exercises.forEach { ex ->
+                val order = ex.sets.firstOrNull()?.ordineEsercizio ?: 0
+                items.add(Pair(order, ex as Any))
+            }
+            state.cardioLogs.forEach { cardio ->
+                val order = cardio.ordineEsercizio
+                items.add(Pair(if (order > 0) order else Int.MAX_VALUE, cardio as Any))
+            }
+            items.sortBy { it.first }
+            localMergedItems.clear()
+            localMergedItems.addAll(items.map { it.second })
+        }
+    }
+
     var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
     var editingCardio by remember { mutableStateOf<CardioLogEntity?>(null) }
     var showExercisePicker by remember { mutableStateOf(false) }
@@ -274,17 +340,6 @@ fun EditWorkoutScreen(
                     }
                 }
             } else {
-                val mergedItems = mutableListOf<Pair<Int, Any>>()
-                state.exercises.forEach { ex ->
-                    val order = ex.sets.firstOrNull()?.ordineEsercizio ?: 0
-                    mergedItems.add(Pair(order, ex as Any))
-                }
-                state.cardioLogs.forEach { cardio ->
-                    val order = cardio.ordineEsercizio
-                    mergedItems.add(Pair(if (order > 0) order else Int.MAX_VALUE, cardio as Any))
-                }
-                mergedItems.sortBy { it.first }
-
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -292,53 +347,158 @@ fun EditWorkoutScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    itemsIndexed(mergedItems, key = { _, item ->
-                        when (val obj = item.second) {
-                            is EditExerciseState -> -obj.exercise.id
-                            is CardioLogEntity -> obj.id
+                    itemsIndexed(localMergedItems, key = { _, item ->
+                        when (item) {
+                            is EditExerciseState -> -item.exercise.id
+                            is CardioLogEntity -> item.id
                             else -> 0
                         }
-                    }) { index, (_, item) ->
-                        when (item) {
-                            is EditExerciseState -> {
-                                val exerciseState = item
-                                val currentSid = exerciseState.sets.firstOrNull()?.supersetId
-                                val isSuperset = currentSid != null
-                                val isLinked = isSuperset && index < mergedItems.lastIndex &&
-                                        (mergedItems[index + 1].second as? EditExerciseState)?.sets?.firstOrNull()?.supersetId == currentSid
+                    }) { index, item ->
+                        val currentDraggedIndex = draggedItemIndex
+                        val draggedRange = if (currentDraggedIndex != null) getMergedSupersetRange(currentDraggedIndex, localMergedItems) else null
+                        val isDragging = draggedRange != null && index in draggedRange
 
-                                EditExerciseCard(
-                                    exerciseState = exerciseState,
-                                    languageCode = languageCode,
-                                    isFirst = index == 0,
-                                    isLast = index == mergedItems.lastIndex,
-                                    isSuperset = isSuperset,
-                                    isLinked = isLinked,
-                                    weightUnit = state.weightUnit,
-                                    onEditSet = { editingSet = it },
-                                    onAddSet = { viewModel.addSet(exerciseState.exercise.id) },
-                                    onSwapExercise = {
-                                        exerciseToSwap = exerciseState.exercise.id
-                                        showExercisePicker = true
-                                    },
-                                    onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
-                                    onMoveSetUp = { viewModel.moveSetUp(it) },
-                                    onMoveSetDown = { viewModel.moveSetDown(it) },
-                                    onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
-                                    onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) },
-                                    onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) }
-                                )
-                            }
-                            is CardioLogEntity -> {
-                                CardioEditCard(
-                                    cardioLog = item,
-                                    isFirst = index == 0,
-                                    isLast = index == mergedItems.lastIndex,
-                                    onEdit = { editingCardio = it },
-                                    onDelete = { viewModel.deleteCardioLog(it) },
-                                    onMoveUp = { viewModel.moveCardioUp(it) },
-                                    onMoveDown = { viewModel.moveCardioDown(it) }
-                                )
+                        val animatedScale by animateFloatAsState(
+                            targetValue = if (isDragging) 1.04f else 1f,
+                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                            label = "exercise_drag_scale"
+                        )
+                        val elevation by animateDpAsState(
+                            targetValue = if (isDragging) 16.dp else 0.dp,
+                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                            label = "exercise_drag_elevation"
+                        )
+
+                        val itemKey = when (item) {
+                            is EditExerciseState -> -item.exercise.id
+                            is CardioLogEntity -> item.id
+                            else -> 0
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(if (draggedItemIndex != null && !isDragging) Modifier.animateItem() else Modifier)
+                                .zIndex(if (isDragging) 10f else 1f)
+                                .graphicsLayer {
+                                    translationY = if (isDragging) dragOffsetY else 0f
+                                    scaleX = animatedScale
+                                    scaleY = animatedScale
+                                    shadowElevation = elevation.toPx()
+                                    shape = Shapes.extraLarge
+                                    clip = false
+                                }
+                                .pointerInput(itemKey) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            draggedItemIndex = index
+                                            dragOffsetY = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            dragOffsetY += dragAmount.y
+
+                                            val itemHeight = 160.dp.toPx()
+                                            val currentIdx = draggedItemIndex
+                                            if (currentIdx != null) {
+                                                val range = getMergedSupersetRange(currentIdx, localMergedItems)
+                                                val size = range.endInclusive - range.start + 1
+
+                                                if (dragOffsetY > 0 && range.endInclusive < localMergedItems.lastIndex) {
+                                                    val nextIndex = range.endInclusive + 1
+                                                    val nextRange = getMergedSupersetRange(nextIndex, localMergedItems)
+                                                    val nextSize = nextRange.endInclusive - nextRange.start + 1
+                                                    val threshold = (nextSize * itemHeight) / 2f
+
+                                                    if (dragOffsetY > threshold) {
+                                                        val draggedItems = localMergedItems.subList(range.start, range.endInclusive + 1).toList()
+                                                        repeat(size) {
+                                                            localMergedItems.removeAt(range.start)
+                                                        }
+                                                        val insertIndex = range.start + nextSize
+                                                        localMergedItems.addAll(insertIndex, draggedItems)
+
+                                                        draggedItemIndex = insertIndex + (currentIdx - range.start)
+                                                        dragOffsetY -= nextSize * itemHeight
+                                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    }
+                                                } else if (dragOffsetY < 0 && range.start > 0) {
+                                                    val prevIndex = range.start - 1
+                                                    val prevRange = getMergedSupersetRange(prevIndex, localMergedItems)
+                                                    val prevSize = prevRange.endInclusive - prevRange.start + 1
+                                                    val threshold = -(prevSize * itemHeight) / 2f
+
+                                                    if (dragOffsetY < threshold) {
+                                                        val draggedItems = localMergedItems.subList(range.start, range.endInclusive + 1).toList()
+                                                        repeat(size) {
+                                                            localMergedItems.removeAt(range.start)
+                                                        }
+                                                        val insertIndex = prevRange.start
+                                                        localMergedItems.addAll(insertIndex, draggedItems)
+
+                                                        draggedItemIndex = insertIndex + (currentIdx - range.start)
+                                                        dragOffsetY += prevSize * itemHeight
+                                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onDragEnd = {
+                                            viewModel.updateItemsOrder(localMergedItems.toList())
+                                            draggedItemIndex = null
+                                            dragOffsetY = 0f
+                                        },
+                                        onDragCancel = {
+                                            draggedItemIndex = null
+                                            dragOffsetY = 0f
+                                        }
+                                    )
+                                }
+                        ) {
+                            when (item) {
+                                is EditExerciseState -> {
+                                    val exerciseState = item
+                                    val currentSid = exerciseState.sets.firstOrNull()?.supersetId
+                                    val isSuperset = currentSid != null
+                                    val isLinked = isSuperset && index < localMergedItems.lastIndex &&
+                                            (localMergedItems[index + 1] as? EditExerciseState)?.sets?.firstOrNull()?.supersetId == currentSid
+
+                                    EditExerciseCard(
+                                        exerciseState = exerciseState,
+                                        languageCode = languageCode,
+                                        isFirst = index == 0,
+                                        isLast = index == localMergedItems.lastIndex,
+                                        isSuperset = isSuperset,
+                                        isLinked = isLinked,
+                                        isDragging = isDragging,
+                                        weightUnit = state.weightUnit,
+                                        onEditSet = { editingSet = it },
+                                        onAddSet = { viewModel.addSet(exerciseState.exercise.id) },
+                                        onSwapExercise = {
+                                            exerciseToSwap = exerciseState.exercise.id
+                                            showExercisePicker = true
+                                        },
+                                        onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
+                                        onMoveSetUp = { viewModel.moveSetUp(it) },
+                                        onMoveSetDown = { viewModel.moveSetDown(it) },
+                                        onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
+                                        onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) },
+                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) }
+                                    )
+                                }
+                                is CardioLogEntity -> {
+                                    CardioEditCard(
+                                        cardioLog = item,
+                                        isFirst = index == 0,
+                                        isLast = index == localMergedItems.lastIndex,
+                                        isDragging = isDragging,
+                                        onEdit = { editingCardio = it },
+                                        onDelete = { viewModel.deleteCardioLog(it) },
+                                        onMoveUp = { viewModel.moveCardioUp(it) },
+                                        onMoveDown = { viewModel.moveCardioDown(it) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -619,6 +779,7 @@ fun EditExerciseCard(
     isLast: Boolean,
     isSuperset: Boolean,
     isLinked: Boolean,
+    isDragging: Boolean = false,
     weightUnit: String = "kg",
     onEditSet: (SetLogEntity) -> Unit,
     onAddSet: () -> Unit,
@@ -630,8 +791,15 @@ fun EditExerciseCard(
     onMoveExerciseDown: () -> Unit,
     onToggleSuperset: () -> Unit
 ) {
-    val cardBgColor = if (isSuperset) Primary.copy(alpha = 0.04f) else SurfaceContainerLow
-    val cardBorder = if (isSuperset) androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.15f)) else null
+    val cardBgColor = when {
+        isDragging -> SurfaceContainerHigh
+        else -> SurfaceContainerLow
+    }
+    val cardBorder = when {
+        isDragging -> androidx.compose.foundation.BorderStroke(2.dp, Primary)
+        isSuperset -> androidx.compose.foundation.BorderStroke(1.dp, Primary.copy(alpha = 0.35f))
+        else -> null
+    }
 
     GymCard(
         modifier = Modifier.fillMaxWidth(),
@@ -644,65 +812,121 @@ fun EditExerciseCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
                     if (isSuperset) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 4.dp)
+                        Surface(
+                            shape = CircleShape,
+                            color = Primary.copy(alpha = 0.12f)
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Timer,
-                                contentDescription = null,
-                                tint = Primary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = stringResource(R.string.superset).uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                color = Primary,
-                                fontWeight = FontWeight.Black
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.superset).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
+                                    color = Primary,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
                         }
                     }
                     Text(
                         text = exerciseState.exercise.categoria.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                        color = OnSurface
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onMoveExerciseUp, enabled = !isFirst) {
-                        Icon(Icons.Rounded.KeyboardArrowUp, contentDescription = null, tint = if (isFirst) OnSurfaceVariant.copy(alpha = 0.2f) else Primary)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    IconButton(
+                        onClick = onMoveExerciseUp,
+                        enabled = !isFirst,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowUp,
+                            contentDescription = null,
+                            tint = if (isFirst) OnSurfaceVariant.copy(alpha = 0.2f) else Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                    IconButton(onClick = onMoveExerciseDown, enabled = !isLast) {
-                        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = if (isLast) OnSurfaceVariant.copy(alpha = 0.2f) else Primary)
+                    IconButton(
+                        onClick = onMoveExerciseDown,
+                        enabled = !isLast,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = if (isLast) OnSurfaceVariant.copy(alpha = 0.2f) else Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     if (!isLast) {
-                        IconButton(onClick = onToggleSuperset) {
+                        IconButton(
+                            onClick = onToggleSuperset,
+                            modifier = Modifier.size(32.dp)
+                        ) {
                             Icon(
                                 imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
                                 contentDescription = null,
-                                tint = if (isLinked) Primary else OnSurfaceVariant
+                                tint = if (isLinked) Primary else OnSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
-                    IconButton(onClick = onSwapExercise) {
-                        Icon(Icons.Rounded.SwapHoriz, contentDescription = null, tint = OnSurfaceVariant)
+                    IconButton(
+                        onClick = onSwapExercise,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.SwapHoriz,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                    IconButton(onClick = onDeleteExercise) {
-                        Icon(Icons.Rounded.DeleteOutline, contentDescription = null, tint = Error)
+                    IconButton(
+                        onClick = onDeleteExercise,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.DeleteOutline,
+                            contentDescription = null,
+                            tint = Error,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = OnSurface,
+                modifier = Modifier.fillMaxWidth()
+            )
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -837,6 +1061,7 @@ fun CardioEditCard(
     cardioLog: CardioLogEntity,
     isFirst: Boolean,
     isLast: Boolean,
+    isDragging: Boolean = false,
     onEdit: (CardioLogEntity) -> Unit,
     onDelete: (CardioLogEntity) -> Unit,
     onMoveUp: (CardioLogEntity) -> Unit,
@@ -844,83 +1069,106 @@ fun CardioEditCard(
 ) {
     val languageCode = java.util.Locale.getDefault().language
     val translatedTitle = ExerciseTranslations.translate(cardioLog.categoria, languageCode)
+    val cardBgColor = if (isDragging) SurfaceContainerHigh else SurfaceContainerLow
+    val cardBorder = if (isDragging) androidx.compose.foundation.BorderStroke(2.dp, Primary) else null
     
     GymCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onEdit(cardioLog) }
+            .clickable { onEdit(cardioLog) },
+        containerColor = cardBgColor,
+        border = cardBorder
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = translatedTitle.uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black,
-                    color = OnSurface
+                    text = stringResource(R.string.cardio_cat_label).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (cardioLog.distanza > 0f) {
-                        Text(
-                            text = "${cardioLog.distanza} km",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = OnSurface
-                        )
-                        Text(
-                            text = " • ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = OnSurfaceVariant.copy(alpha = 0.5f)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    IconButton(
+                        onClick = { onMoveUp(cardioLog) },
+                        enabled = !isFirst,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowUp,
+                            contentDescription = null,
+                            tint = if (isFirst) OnSurfaceVariant.copy(alpha = 0.2f) else Primary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    val h = cardioLog.durataSecondi / 3600
-                    val m = (cardioLog.durataSecondi % 3600) / 60
-                    val s = cardioLog.durataSecondi % 60
-                    val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                    IconButton(
+                        onClick = { onMoveDown(cardioLog) },
+                        enabled = !isLast,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = if (isLast) OnSurfaceVariant.copy(alpha = 0.2f) else Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = { onDelete(cardioLog) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.DeleteOutline,
+                            contentDescription = null,
+                            tint = Error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = translatedTitle,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = OnSurface,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (cardioLog.distanza > 0f) {
                     Text(
-                        text = durationText,
+                        text = "${cardioLog.distanza} km",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = OnSurface
                     )
-                }
-            }
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = { onMoveUp(cardioLog) },
-                    enabled = !isFirst,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        Icons.Rounded.KeyboardArrowUp,
-                        contentDescription = null,
-                        tint = if (isFirst) OnSurfaceVariant.copy(alpha = 0.2f) else OnSurfaceVariant
+                    Text(
+                        text = " • ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant.copy(alpha = 0.5f)
                     )
                 }
-                IconButton(
-                    onClick = { onMoveDown(cardioLog) },
-                    enabled = !isLast,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        Icons.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = if (isLast) OnSurfaceVariant.copy(alpha = 0.2f) else OnSurfaceVariant
-                    )
-                }
-                IconButton(
-                    onClick = { onDelete(cardioLog) }
-                ) {
-                    Icon(
-                        Icons.Rounded.DeleteOutline,
-                        contentDescription = null,
-                        tint = Error
-                    )
-                }
+                val h = cardioLog.durataSecondi / 3600
+                val m = (cardioLog.durataSecondi % 3600) / 60
+                val s = cardioLog.durataSecondi % 60
+                val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                Text(
+                    text = durationText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface
+                )
             }
         }
     }

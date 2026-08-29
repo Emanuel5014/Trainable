@@ -681,4 +681,43 @@ class EditWorkoutViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateItemsOrder(orderedItems: List<Any>) {
+        viewModelScope.launch {
+            val setsToUpdate = mutableListOf<SetLogEntity>()
+            val cardioToUpdate = mutableListOf<CardioLogEntity>()
+            val updatedExercises = mutableListOf<EditExerciseState>()
+            val updatedCardioLogs = mutableListOf<CardioLogEntity>()
+
+            orderedItems.forEachIndexed { index, item ->
+                when (item) {
+                    is EditExerciseState -> {
+                        val updatedSets = item.sets.map { it.copy(ordineEsercizio = index) }
+                        setsToUpdate.addAll(updatedSets)
+                        updatedExercises.add(item.copy(sets = updatedSets))
+                    }
+                    is CardioLogEntity -> {
+                        val updatedCardio = item.copy(ordineEsercizio = index)
+                        cardioToUpdate.add(updatedCardio)
+                        updatedCardioLogs.add(updatedCardio)
+                    }
+                }
+            }
+
+            // Optimistic update
+            _state.update { curr ->
+                curr.copy(
+                    exercises = updatedExercises,
+                    cardioLogs = updatedCardioLogs
+                )
+            }
+
+            if (setsToUpdate.isNotEmpty()) {
+                workoutRepository.updateSetOrders(setsToUpdate)
+            }
+            cardioToUpdate.forEach { cardio ->
+                workoutRepository.updateCardioLog(cardio)
+            }
+        }
+    }
 }
