@@ -721,6 +721,8 @@
     <string name="ai_model_downloading">Téléchargement du modèle… %1$d%%</string>
     <string name="ai_model_ready">Modèle prêt</string>
     <string name="ai_model_delete">Supprimer</string>
+    <string name="ai_model_delete_confirm_title">Supprimer le modèle ?</string>
+    <string name="ai_model_delete_confirm_desc">Le modèle IA sera supprimé de votre appareil. Vous pourrez le télécharger à nouveau plus tard.</string>
     <string name="ai_scan_source_title">Scanner la fiche d\'entraînement</string>
     <string name="ai_scanning">Analyse de la fiche…</string>
     <string name="ai_scan_no_exercises">Aucun exercice détecté sur la photo</string>

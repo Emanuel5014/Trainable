@@ -721,6 +721,8 @@
     <string name="ai_model_downloading">A transferir o modelo… %1$d%%</string>
     <string name="ai_model_ready">Modelo pronto</string>
     <string name="ai_model_delete">Eliminar</string>
+    <string name="ai_model_delete_confirm_title">Eliminar modelo?</string>
+    <string name="ai_model_delete_confirm_desc">O modelo de IA será eliminado do seu dispositivo. Pode transferi-lo novamente mais tarde.</string>
     <string name="ai_scan_source_title">Digitalizar ficha de treino</string>
     <string name="ai_scanning">A analisar a ficha…</string>
     <string name="ai_scan_no_exercises">Nenhum exercício detetado na foto</string>

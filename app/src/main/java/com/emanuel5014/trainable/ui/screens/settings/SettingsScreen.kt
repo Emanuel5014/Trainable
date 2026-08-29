@@ -57,7 +57,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -119,7 +120,7 @@ import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
 import com.emanuel5014.trainable.ui.theme.toHSV
 import kotlin.system.exitProcess
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
@@ -174,6 +175,7 @@ fun SettingsScreen(
     var savedStyleForRestore by remember { mutableIntStateOf(0) }
     var includeImagesChoice by remember { mutableStateOf(false) }
     var pendingNotificationType by remember { mutableStateOf<String?>(null) }
+    var showDeleteModelDialog by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -440,6 +442,41 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                }
+            }
+        )
+    }
+
+    if (showDeleteModelDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteModelDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.ai_model_delete_confirm_title),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.ai_model_delete_confirm_desc),
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteModelDialog = false
+                        viewModel.deleteAiModel()
+                    }
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteModelDialog = false }) {
                     Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
             }
@@ -978,11 +1015,9 @@ fun SettingsScreen(
                                             color = Primary,
                                             fontWeight = FontWeight.ExtraBold
                                         )
-                                        LinearProgressIndicator(
+                                        LinearWavyProgressIndicator(
                                             progress = { status.progress },
                                             modifier = Modifier.fillMaxWidth(),
-                                            color = Primary,
-                                            trackColor = SurfaceContainerHighest
                                         )
                                     }
                                 }
@@ -1001,7 +1036,7 @@ fun SettingsScreen(
                                                 color = OnSurface
                                             )
                                         }
-                                        TextButton(onClick = { viewModel.deleteAiModel() }) {
+                                        TextButton(onClick = { showDeleteModelDialog = true }) {
                                             Text(
                                                 stringResource(R.string.ai_model_delete).uppercase(),
                                                 color = Error,

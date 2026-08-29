@@ -1633,7 +1633,7 @@ private fun AiScanningOverlay(
                 Text(
                     text = stringResource(R.string.ai_scan_stop_confirm_title),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
             },
@@ -1652,18 +1652,17 @@ private fun AiScanningOverlay(
                     }
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_scan_stop),
+                        text = stringResource(R.string.ai_scan_stop).uppercase(),
                         color = Error,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelConfirmation = false }) {
                     Text(
-                        text = stringResource(R.string.ai_scan_continue),
-                        color = Primary,
-                        fontWeight = FontWeight.SemiBold
+                        text = stringResource(R.string.ai_scan_continue).uppercase(),
+                        color = Primary
                     )
                 }
             },

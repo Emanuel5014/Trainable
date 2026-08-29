@@ -721,6 +721,8 @@
     <string name="ai_model_downloading">Downloading model… %1$d%%</string>
     <string name="ai_model_ready">Model ready</string>
     <string name="ai_model_delete">Delete</string>
+    <string name="ai_model_delete_confirm_title">Delete model?</string>
+    <string name="ai_model_delete_confirm_desc">The AI model will be deleted from your device. You can download it again later.</string>
     <string name="ai_scan_source_title">Scan training sheet</string>
     <string name="ai_scanning">Analyzing sheet…</string>
     <string name="ai_scan_no_exercises">No exercises detected in the photo</string>
