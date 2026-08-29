@@ -452,6 +452,8 @@ class WorkoutRepository @Inject constructor(
     
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 
+    fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getLastFinishedSetsForExercise(exerciseId)
+
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>> = 
         workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
 
