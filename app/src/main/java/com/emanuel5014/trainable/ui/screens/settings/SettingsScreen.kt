@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Analytics
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -110,6 +112,7 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -153,6 +156,7 @@ fun SettingsScreen(
     val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
     val aiScanEnabled by viewModel.aiScanEnabled.collectAsState()
+    val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiModelVariant by viewModel.aiModelVariant.collectAsState()
     val aiModelStatus by viewModel.aiModelStatus.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
@@ -1009,12 +1013,25 @@ fun SettingsScreen(
                             when (val status = aiModelStatus) {
                                 is AiModelStatus.Downloading -> {
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(
-                                            stringResource(R.string.ai_model_downloading, (status.progress * 100).toInt()),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = Primary,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.ai_model_downloading, (status.progress * 100).toInt()),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = Primary,
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                            TextButton(onClick = { viewModel.cancelAiModelDownload() }) {
+                                                Text(
+                                                    stringResource(R.string.ai_download_cancel).uppercase(),
+                                                    color = Error,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                            }
+                                        }
                                         LinearWavyProgressIndicator(
                                             progress = { status.progress },
                                             modifier = Modifier.fillMaxWidth(),
@@ -1072,6 +1089,78 @@ fun SettingsScreen(
                                         Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
                                     }
                                 }
+                            }
+
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(
+                                        Icons.Rounded.Analytics,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(
+                                            stringResource(R.string.ai_resource_analytics_toggle),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        Text(
+                                            stringResource(R.string.ai_resource_analytics_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                SettingsSwitch(
+                                    checked = aiResourceAnalyticsEnabled,
+                                    onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SurfaceContainerHighest.copy(alpha = 0.5f))
+                                .border(1.dp, OutlineVariant.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Primary.copy(alpha = 0.15f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "BETA",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Primary
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.ai_disclaimer_beta),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                         }
                     }

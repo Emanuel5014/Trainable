@@ -759,4 +759,25 @@
     <string name="ai_scan_stop_confirm_title">Scan abbrechen?</string>
     <string name="ai_scan_stop_confirm_desc">Die Analyse des Trainingsplans wird abgebrochen.</string>
     <string name="ai_scan_continue">Scan fortsetzen</string>
+    <string name="ai_resource_analytics_toggle">Smartphone-Ressourcenanalyse</string>
+    <string name="ai_resource_analytics_desc">Echtzeit-Auslastung von RAM, CPU, Akku, Temperatur und Geschwindigkeit beim KI-Scan anzeigen</string>
+    <string name="ai_analytics_title">Geräteressourcen</string>
+    <string name="ai_analytics_ram">RAM-Auslastung</string>
+    <string name="ai_analytics_app_ram">App-RAM</string>
+    <string name="ai_analytics_system_ram">System-RAM</string>
+    <string name="ai_analytics_native_ram">Nativ</string>
+    <string name="ai_analytics_speed">Geschwindigkeit</string>
+    <string name="ai_analytics_battery_temp">Akku &amp; Temp.</string>
+    <string name="ai_analytics_thermal">Thermischer Status</string>
+    <string name="ai_analytics_backend">Backend</string>
+    <string name="ai_analytics_cores">Kerne</string>
+    <string name="ai_analytics_cpu">CPU-Auslastung</string>
+    <string name="ai_disclaimer_beta">KI-Funktionen sind in der BETA-Phase und können Fehler machen. Überprüfe extrahierte Übungen und Daten stets selbst.</string>
+    <string name="ai_download_channel_name">KI-Modell-Downloads</string>
+    <string name="ai_download_channel_desc">Zeigt den Fortschritt beim Herunterladen von KI-Modellen im Hintergrund</string>
+    <string name="ai_download_notification_title">KI-Modell wird heruntergeladen</string>
+    <string name="ai_download_notification_progress">%1$s wird heruntergeladen: %2$d%%</string>
+    <string name="ai_download_notification_complete">KI-Modell erfolgreich heruntergeladen</string>
+    <string name="ai_download_notification_failed">Download des KI-Modells fehlgeschlagen</string>
+    <string name="ai_download_cancel">Abbrechen</string>
 </resources>

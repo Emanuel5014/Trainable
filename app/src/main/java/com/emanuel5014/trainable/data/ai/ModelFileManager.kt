@@ -25,6 +25,13 @@ class ModelFileManager @Inject constructor(
     private val modelsDir: File
         get() = File(context.filesDir, "ai_models").apply { mkdirs() }
 
+    private val _filesUpdatedTrigger = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    val filesUpdatedTrigger: kotlinx.coroutines.flow.StateFlow<Long> = _filesUpdatedTrigger
+
+    fun notifyFilesChanged() {
+        _filesUpdatedTrigger.value = System.currentTimeMillis()
+    }
+
     fun getModelFile(variant: AiModelVariant): File = File(modelsDir, variant.fileName)
 
     fun isDownloaded(variant: AiModelVariant): Boolean {
@@ -32,8 +39,13 @@ class ModelFileManager @Inject constructor(
         return file.exists() && file.length() > 0
     }
 
-    fun delete(variant: AiModelVariant) {
-        getModelFile(variant).delete()
+    fun delete(variant: AiModelVariant): Boolean {
+        val file = getModelFile(variant)
+        val deleted = if (file.exists()) file.delete() else true
+        val partFile = File(modelsDir, variant.fileName + ".part")
+        if (partFile.exists()) partFile.delete()
+        notifyFilesChanged()
+        return deleted
     }
 
     suspend fun download(variant: AiModelVariant): Flow<AiModelStatus> = flow {

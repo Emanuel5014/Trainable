@@ -759,4 +759,25 @@
     <string name="ai_scan_stop_confirm_title">Stop scanning?</string>
     <string name="ai_scan_stop_confirm_desc">The sheet analysis will be stopped and you will need to start a new one.</string>
     <string name="ai_scan_continue">Continue scan</string>
+    <string name="ai_resource_analytics_toggle">Device resource analytics</string>
+    <string name="ai_resource_analytics_desc">Monitor live RAM, CPU, battery, temperature, and generation speed during AI scan</string>
+    <string name="ai_analytics_title">Resource Analytics</string>
+    <string name="ai_analytics_ram">RAM Usage</string>
+    <string name="ai_analytics_app_ram">App RAM</string>
+    <string name="ai_analytics_system_ram">System RAM</string>
+    <string name="ai_analytics_native_ram">Native</string>
+    <string name="ai_analytics_speed">Speed</string>
+    <string name="ai_analytics_battery_temp">Battery &amp; Temp</string>
+    <string name="ai_analytics_thermal">Thermal State</string>
+    <string name="ai_analytics_backend">Backend</string>
+    <string name="ai_analytics_cores">Cores</string>
+    <string name="ai_analytics_cpu">CPU Usage</string>
+    <string name="ai_disclaimer_beta">AI features are in BETA and may make mistakes. Always verify extracted exercises and details.</string>
+    <string name="ai_download_channel_name">AI Model Downloads</string>
+    <string name="ai_download_channel_desc">Shows progress for AI model downloads in the background</string>
+    <string name="ai_download_notification_title">Downloading AI Model</string>
+    <string name="ai_download_notification_progress">Downloading %1$s: %2$d%%</string>
+    <string name="ai_download_notification_complete">AI Model downloaded successfully</string>
+    <string name="ai_download_notification_failed">AI Model download failed</string>
+    <string name="ai_download_cancel">Cancel</string>
 </resources>

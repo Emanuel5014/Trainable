@@ -58,6 +58,7 @@ class UserPreferencesRepository @Inject constructor(
     val WORKOUT_TIMER_ENABLED = booleanPreferencesKey("workout_timer_enabled")
     val INLINE_EXERCISE_MODIFICATIONS_ENABLED = booleanPreferencesKey("inline_exercise_modifications_enabled")
     val AI_SCAN_ENABLED = booleanPreferencesKey("ai_scan_enabled")
+    val AI_RESOURCE_ANALYTICS_ENABLED = booleanPreferencesKey("ai_resource_analytics_enabled")
     val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
     }
 
@@ -231,6 +232,11 @@ class UserPreferencesRepository @Inject constructor(
             preferences[AI_SCAN_ENABLED] ?: false
         }
 
+    val aiResourceAnalyticsEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AI_RESOURCE_ANALYTICS_ENABLED] ?: false
+        }
+
     val aiModelVariant: Flow<String> = dataStore.data
         .map { preferences ->
             preferences[AI_MODEL_VARIANT] ?: "e2b"
@@ -262,6 +268,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAiScanEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[AI_SCAN_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAiResourceAnalyticsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AI_RESOURCE_ANALYTICS_ENABLED] = enabled
         }
     }
 

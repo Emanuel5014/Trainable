@@ -759,4 +759,25 @@
     <string name="ai_scan_stop_confirm_title">Parar digitalização?</string>
     <string name="ai_scan_stop_confirm_desc">A análise do treino será interrompida e terá de iniciar uma nova.</string>
     <string name="ai_scan_continue">Continuar digitalização</string>
+    <string name="ai_resource_analytics_toggle">Análise de recursos do telemóvel</string>
+    <string name="ai_resource_analytics_desc">Mostrar em tempo real o uso de RAM, CPU, bateria, temperatura e velocidade durante o scan IA</string>
+    <string name="ai_analytics_title">Recursos do dispositivo</string>
+    <string name="ai_analytics_ram">Uso de RAM</string>
+    <string name="ai_analytics_app_ram">RAM da app</string>
+    <string name="ai_analytics_system_ram">RAM do sistema</string>
+    <string name="ai_analytics_native_ram">Nativa</string>
+    <string name="ai_analytics_speed">Velocidade</string>
+    <string name="ai_analytics_battery_temp">Bateria &amp; Temp.</string>
+    <string name="ai_analytics_thermal">Estado térmico</string>
+    <string name="ai_analytics_backend">Backend</string>
+    <string name="ai_analytics_cores">Núcleos</string>
+    <string name="ai_analytics_cpu">Uso de CPU</string>
+    <string name="ai_disclaimer_beta">As funcionalidades de IA estão em versão BETA e podem cometer erros. Verifique sempre os exercícios e informações extraídas.</string>
+    <string name="ai_download_channel_name">Transferências de modelos IA</string>
+    <string name="ai_download_channel_desc">Mostra o progresso das transferências dos modelos IA em segundo plano</string>
+    <string name="ai_download_notification_title">A transferir modelo IA</string>
+    <string name="ai_download_notification_progress">A transferir %1$s: %2$d%%</string>
+    <string name="ai_download_notification_complete">Modelo IA transferido com sucesso</string>
+    <string name="ai_download_notification_failed">Falha ao transferir o modelo IA</string>
+    <string name="ai_download_cancel">Cancelar</string>
 </resources>

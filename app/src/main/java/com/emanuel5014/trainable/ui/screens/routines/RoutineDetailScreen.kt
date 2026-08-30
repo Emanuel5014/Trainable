@@ -41,6 +41,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.BatteryChargingFull
+import androidx.compose.material.icons.rounded.BatteryStd
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
@@ -48,11 +52,13 @@ import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
+import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DatePicker
@@ -126,13 +132,16 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.Tertiary
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
@@ -172,6 +181,7 @@ fun RoutineDetailScreen(
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
     val aiScanAvailable by viewModel.aiScanAvailable.collectAsState()
+    val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiScanState by viewModel.aiScanState.collectAsState()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -1420,6 +1430,7 @@ fun RoutineDetailScreen(
             AiScanningOverlay(
                 phase = state.phase,
                 stream = scanStream,
+                showResourceAnalytics = aiResourceAnalyticsEnabled,
                 isDark = isDark,
                 hazeState = scanHazeState,
                 onCancel = { viewModel.cancelAiScan() }
@@ -1465,6 +1476,7 @@ private fun createScanTempImageUri(context: android.content.Context): android.ne
 private fun AiScanningOverlay(
     phase: com.emanuel5014.trainable.data.ai.ScanPhase,
     stream: AiScanStreamState,
+    showResourceAnalytics: Boolean = false,
     isDark: Boolean,
     hazeState: HazeState,
     onCancel: () -> Unit
@@ -1507,14 +1519,14 @@ private fun AiScanningOverlay(
             tonalElevation = 3.dp,
             shadowElevation = if (isDark) 12.dp else 0.dp,
             modifier = Modifier
-                .padding(horizontal = 32.dp)
+                .padding(horizontal = 24.dp)
                 .animateContentSize()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 360.dp)
-                    .padding(horizontal = 28.dp, vertical = 24.dp),
+                    .widthIn(max = 380.dp)
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -1532,11 +1544,11 @@ private fun AiScanningOverlay(
                         color = OnSurface,
                         fontWeight = FontWeight.ExtraBold
                     )
-                Text(
-                    text = aiPhaseLabel(phase) + " · ${elapsedSeconds}s",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OnSurfaceVariant
-                )
+                    Text(
+                        text = aiPhaseLabel(phase) + " · ${elapsedSeconds}s",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = OnSurfaceVariant
+                    )
                 }
 
                 LinearProgressIndicator(
@@ -1544,6 +1556,13 @@ private fun AiScanningOverlay(
                     color = Primary,
                     trackColor = SurfaceContainerHighest
                 )
+
+                if (showResourceAnalytics && stream.metrics != null) {
+                    DeviceResourceAnalyticsCard(
+                        metrics = stream.metrics,
+                        isDark = isDark
+                    )
+                }
 
                 TextButton(onClick = { showThinking = !showThinking }) {
                     Icon(
@@ -1669,6 +1688,252 @@ private fun AiScanningOverlay(
             containerColor = SurfaceContainerHigh,
             shape = Shapes.extraLarge
         )
+    }
+}
+
+@Composable
+private fun DeviceResourceAnalyticsCard(
+    metrics: com.emanuel5014.trainable.data.ai.DeviceResourceMetrics,
+    isDark: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = SurfaceContainerHighest.copy(alpha = if (isDark) 0.6f else 0.75f),
+        border = BorderStroke(1.dp, OutlineVariant.copy(alpha = 0.35f))
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Analytics,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.ai_analytics_title),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = OnSurface
+                    )
+                }
+
+                // Backend / Model tag
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Primary.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = metrics.inferenceBackend,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Primary,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            // CPU Usage Section
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Memory,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "${stringResource(R.string.ai_analytics_cpu)} (${metrics.cpuCores} Core)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        text = "${metrics.cpuUsagePercent}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                LinearProgressIndicator(
+                    progress = { (metrics.cpuUsagePercent / 100f).coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = if (metrics.cpuUsagePercent > 85) Error else Primary,
+                    trackColor = SurfaceContainer
+                )
+            }
+
+            // RAM Section
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Analytics,
+                            contentDescription = null,
+                            tint = OnSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.ai_analytics_ram),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Text(
+                        text = "${metrics.appRamUsedMb} MB App · ${"%.1f".format(metrics.systemRamUsedGb)}/${"%.1f".format(metrics.systemRamTotalGb)} GB (${metrics.systemRamPercent}%)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                LinearProgressIndicator(
+                    progress = { (metrics.systemRamPercent / 100f).coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = if (metrics.systemRamPercent > 85) Error else Primary,
+                    trackColor = SurfaceContainer
+                )
+            }
+
+            // 2-Column Metrics: Speed / Throughput & Battery / Thermal
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Speed Chip
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = SurfaceContainer.copy(alpha = 0.8f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Bolt,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Column {
+                            Text(
+                                text = stringResource(R.string.ai_analytics_speed),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = OnSurfaceVariant
+                            )
+                            Text(
+                                text = if (metrics.throughputTokPerSec > 0f) {
+                                    "${"%.1f".format(metrics.throughputTokPerSec)} tok/s"
+                                } else {
+                                    "0.0 tok/s"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = OnSurface
+                            )
+                        }
+                    }
+                }
+
+                // Battery & Temp Chip
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (metrics.isThermalThrottling) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f) else SurfaceContainer.copy(alpha = 0.8f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            if (metrics.isCharging) Icons.Rounded.BatteryChargingFull else Icons.Rounded.BatteryStd,
+                            contentDescription = null,
+                            tint = if (metrics.isThermalThrottling) MaterialTheme.colorScheme.onErrorContainer else Primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Column {
+                            Text(
+                                text = stringResource(R.string.ai_analytics_battery_temp),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = if (metrics.isThermalThrottling) MaterialTheme.colorScheme.onErrorContainer else OnSurfaceVariant
+                            )
+                            Text(
+                                text = buildString {
+                                    if (metrics.batteryPercent != null) append("${metrics.batteryPercent}%")
+                                    if (metrics.batteryTemperatureC != null) {
+                                        if (isNotEmpty()) append(" · ")
+                                        append("${"%.1f".format(metrics.batteryTemperatureC)}°C")
+                                    }
+                                    if (isEmpty()) append("--")
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (metrics.isThermalThrottling) MaterialTheme.colorScheme.onErrorContainer else OnSurface
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Thermal Status Footer
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Android Runtime",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = OnSurfaceVariant
+                )
+                Text(
+                    text = "${stringResource(R.string.ai_analytics_thermal)}: ${metrics.thermalStatus}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = if (metrics.isThermalThrottling) Error else OnSurfaceVariant
+                )
+            }
+        }
     }
 }
 

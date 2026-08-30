@@ -12,6 +12,7 @@ import com.emanuel5014.trainable.data.ai.AiModelStatus
 import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
 import com.emanuel5014.trainable.data.ai.LocalLlmEngine
+import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -49,6 +51,7 @@ class SettingsViewModel @Inject constructor(
     private val webServerManager: WebServerManager,
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
     private val modelFileManager: ModelFileManager,
+    private val modelDownloadManager: ModelDownloadManager,
     private val localLlmEngine: LocalLlmEngine,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -605,6 +608,12 @@ class SettingsViewModel @Inject constructor(
         initialValue = false
     )
 
+    val aiResourceAnalyticsEnabled = userPrefsRepository.aiResourceAnalyticsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val aiModelVariant = userPrefsRepository.aiModelVariant.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -613,24 +622,33 @@ class SettingsViewModel @Inject constructor(
 
     val aiDeviceSupported: Boolean = deviceCapabilityChecker.isSupported(context)
 
-    private val _aiModelStatus = MutableStateFlow<AiModelStatus>(AiModelStatus.NotDownloaded)
-    val aiModelStatus: StateFlow<AiModelStatus> = _aiModelStatus.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            userPrefsRepository.aiModelVariant.collect { variantId ->
-                _aiModelStatus.value = if (modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))) {
-                    AiModelStatus.Ready
-                } else {
-                    AiModelStatus.NotDownloaded
-                }
-            }
+    val aiModelStatus: StateFlow<AiModelStatus> = combine(
+        userPrefsRepository.aiModelVariant,
+        modelDownloadManager.activeDownloads,
+        modelFileManager.filesUpdatedTrigger
+    ) { variantId, downloads, _ ->
+        val variant = AiModelVariant.fromId(variantId)
+        val ongoing = downloads[variant.id]
+        when {
+            ongoing != null -> ongoing
+            modelFileManager.isDownloaded(variant) -> AiModelStatus.Ready
+            else -> AiModelStatus.NotDownloaded
         }
-    }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = AiModelStatus.NotDownloaded
+    )
 
     fun setAiScanEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setAiScanEnabled(enabled)
+        }
+    }
+
+    fun setAiResourceAnalyticsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiResourceAnalyticsEnabled(enabled)
         }
     }
 
@@ -641,21 +659,21 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun downloadAiModel() {
-        if (_aiModelStatus.value is AiModelStatus.Downloading) return
-        viewModelScope.launch {
-            val variant = AiModelVariant.fromId(aiModelVariant.value)
-            modelFileManager.download(variant).collect { status ->
-                _aiModelStatus.value = status
-            }
-        }
+        val variant = AiModelVariant.fromId(aiModelVariant.value)
+        modelDownloadManager.startDownload(variant)
+    }
+
+    fun cancelAiModelDownload() {
+        val variant = AiModelVariant.fromId(aiModelVariant.value)
+        modelDownloadManager.cancelDownload(variant)
     }
 
     fun deleteAiModel() {
         viewModelScope.launch {
             val variant = AiModelVariant.fromId(aiModelVariant.value)
+            modelDownloadManager.cancelDownload(variant)
             localLlmEngine.release()
             modelFileManager.delete(variant)
-            _aiModelStatus.value = AiModelStatus.NotDownloaded
         }
     }
 

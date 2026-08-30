@@ -32,7 +32,9 @@ class DeviceCapabilityChecker @Inject constructor() {
             "google_sdk" == Build.PRODUCT
 
     companion object {
-        const val MIN_RAM_GB = 6
+        // Android reports available user-space memory which is lower than physical RAM
+        // (e.g. 6 GB physical RAM devices report ~5.2 - 5.7 GB totalMem).
+        const val MIN_RAM_GB = 5.0
         const val MIN_FREE_STORAGE_BYTES = 3L * 1024 * 1024 * 1024
     }
 }

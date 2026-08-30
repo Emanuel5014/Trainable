@@ -759,4 +759,25 @@
     <string name="ai_scan_stop_confirm_title">Interrompere la scansione?</string>
     <string name="ai_scan_stop_confirm_desc">L\'analisi della scheda verrà interrotta e dovrai avviarne una nuova.</string>
     <string name="ai_scan_continue">Continua scansione</string>
+    <string name="ai_resource_analytics_toggle">Analytics risorse smartphone</string>
+    <string name="ai_resource_analytics_desc">Mostra in tempo reale l\'utilizzo di RAM, CPU, batteria, temperatura e velocità durante lo scan AI</string>
+    <string name="ai_analytics_title">Risorse dispositivo</string>
+    <string name="ai_analytics_ram">Utilizzo RAM</string>
+    <string name="ai_analytics_app_ram">RAM app</string>
+    <string name="ai_analytics_system_ram">RAM di sistema</string>
+    <string name="ai_analytics_native_ram">Nativa</string>
+    <string name="ai_analytics_speed">Velocità</string>
+    <string name="ai_analytics_battery_temp">Batteria &amp; Temp</string>
+    <string name="ai_analytics_thermal">Stato termico</string>
+    <string name="ai_analytics_backend">Backend</string>
+    <string name="ai_analytics_cores">Core</string>
+    <string name="ai_analytics_cpu">Utilizzo CPU</string>
+    <string name="ai_disclaimer_beta">Le funzionalità AI sono in versione BETA e potrebbero commettere errori. Verifica sempre gli esercizi e le informazioni estratte.</string>
+    <string name="ai_download_channel_name">Download modelli AI</string>
+    <string name="ai_download_channel_desc">Mostra l\'avanzamento del download dei modelli AI in background</string>
+    <string name="ai_download_notification_title">Download modello AI</string>
+    <string name="ai_download_notification_progress">Download di %1$s in corso: %2$d%%</string>
+    <string name="ai_download_notification_complete">Modello AI scaricato con successo</string>
+    <string name="ai_download_notification_failed">Download del modello AI non riuscito</string>
+    <string name="ai_download_cancel">Annulla</string>
 </resources>

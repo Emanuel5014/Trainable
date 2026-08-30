@@ -759,4 +759,25 @@
     <string name="ai_scan_stop_confirm_title">Arrêter l\'analyse ?</string>
     <string name="ai_scan_stop_confirm_desc">L\'analyse de la séance sera interrompue et vous devrez en recommencer une.</string>
     <string name="ai_scan_continue">Continuer l\'analyse</string>
+    <string name="ai_resource_analytics_toggle">Analyse des ressources du smartphone</string>
+    <string name="ai_resource_analytics_desc">Afficher en temps réel l\'utilisation de la RAM, du CPU, de la batterie, la température et la vitesse lors du scan IA</string>
+    <string name="ai_analytics_title">Ressources de l\'appareil</string>
+    <string name="ai_analytics_ram">Utilisation RAM</string>
+    <string name="ai_analytics_app_ram">RAM app</string>
+    <string name="ai_analytics_system_ram">RAM système</string>
+    <string name="ai_analytics_native_ram">Native</string>
+    <string name="ai_analytics_speed">Vitesse</string>
+    <string name="ai_analytics_battery_temp">Batterie &amp; Temp.</string>
+    <string name="ai_analytics_thermal">État thermique</string>
+    <string name="ai_analytics_backend">Backend</string>
+    <string name="ai_analytics_cores">Cœurs</string>
+    <string name="ai_analytics_cpu">Utilisation CPU</string>
+    <string name="ai_disclaimer_beta">Les fonctionnalités IA sont en version BETA et peuvent faire des erreurs. Vérifiez toujours les exercices et informations extraits.</string>
+    <string name="ai_download_channel_name">Téléchargements de modèles IA</string>
+    <string name="ai_download_channel_desc">Affiche la progression du téléchargement des modèles IA en arrière-plan</string>
+    <string name="ai_download_notification_title">Téléchargement du modèle IA</string>
+    <string name="ai_download_notification_progress">Téléchargement de %1$s : %2$d%%</string>
+    <string name="ai_download_notification_complete">Modèle IA téléchargé avec succès</string>
+    <string name="ai_download_notification_failed">Échec du téléchargement du modèle IA</string>
+    <string name="ai_download_cancel">Annuler</string>
 </resources>

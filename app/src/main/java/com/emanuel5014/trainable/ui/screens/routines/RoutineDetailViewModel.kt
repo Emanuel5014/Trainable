@@ -5,7 +5,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.AiResourceTracker
 import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
+import com.emanuel5014.trainable.data.ai.DeviceResourceMetrics
 import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.ai.ScanPhase
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
@@ -20,12 +22,15 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,7 +59,8 @@ sealed interface AiScanState {
 
 data class AiScanStreamState(
     val output: String = "",
-    val thinking: String = ""
+    val thinking: String = "",
+    val metrics: DeviceResourceMetrics? = null
 )
 
 @HiltViewModel
@@ -66,6 +72,7 @@ class RoutineDetailViewModel @Inject constructor(
     private val routineScanner: RoutineScanner,
     private val modelFileManager: ModelFileManager,
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
+    private val aiResourceTracker: AiResourceTracker,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -90,10 +97,17 @@ class RoutineDetailViewModel @Inject constructor(
 
     val aiScanAvailable = combine(
         userPreferencesRepository.aiScanEnabled,
-        userPreferencesRepository.aiModelVariant
-    ) { enabled, variantId ->
+        userPreferencesRepository.aiModelVariant,
+        modelFileManager.filesUpdatedTrigger
+    ) { enabled, variantId, _ ->
         enabled && modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))
     }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val aiResourceAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
@@ -114,6 +128,9 @@ class RoutineDetailViewModel @Inject constructor(
         scanJob?.cancel()
         scanJob = viewModelScope.launch {
             try {
+                val startTime = System.currentTimeMillis()
+                val isAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.first()
+
                 // Throttle stream state emissions to ~4 Hz so token-frequency
                 // updates don't trigger full-screen recomposition + blur recompute
                 var lastEmitAt = 0L
@@ -123,12 +140,46 @@ class RoutineDetailViewModel @Inject constructor(
                     val now = System.currentTimeMillis()
                     if (force || now - lastEmitAt >= STREAM_EMIT_INTERVAL_MS) {
                         lastEmitAt = now
+                        val elapsedSec = ((now - startTime) / 1000L).toInt()
+                        val metrics = if (isAnalyticsEnabled) {
+                            aiResourceTracker.captureMetrics(
+                                charsGenerated = latestOutput.length + latestThinking.length,
+                                elapsedSeconds = elapsedSec
+                            )
+                        } else null
                         _aiScanStream.value = AiScanStreamState(
                             output = latestOutput.takeLast(STREAM_MAX_CHARS),
-                            thinking = latestThinking.takeLast(STREAM_MAX_CHARS)
+                            thinking = latestThinking.takeLast(STREAM_MAX_CHARS),
+                            metrics = metrics
                         )
                     }
                 }
+
+                // Initial metrics capture
+                if (isAnalyticsEnabled) {
+                    _aiScanStream.value = _aiScanStream.value.copy(
+                        metrics = aiResourceTracker.captureMetrics(
+                            charsGenerated = 0,
+                            elapsedSeconds = 0
+                        )
+                    )
+                }
+
+                // Live background metrics ticker during pre-generation phases
+                val metricsJob = if (isAnalyticsEnabled) {
+                    launch {
+                        while (isActive) {
+                            delay(500)
+                            val now = System.currentTimeMillis()
+                            val elapsedSec = ((now - startTime) / 1000L).toInt()
+                            val metrics = aiResourceTracker.captureMetrics(
+                                charsGenerated = latestOutput.length + latestThinking.length,
+                                elapsedSeconds = elapsedSec
+                            )
+                            _aiScanStream.value = _aiScanStream.value.copy(metrics = metrics)
+                        }
+                    }
+                } else null
 
                 val entries = routineScanner.scan(
                     imageUri = imageUri,
@@ -147,6 +198,7 @@ class RoutineDetailViewModel @Inject constructor(
                         emit()
                     }
                 )
+                metricsJob?.cancel()
                 emit(force = true)
                 _aiScanState.value =
                     if (entries.isEmpty()) AiScanState.Error(null)
