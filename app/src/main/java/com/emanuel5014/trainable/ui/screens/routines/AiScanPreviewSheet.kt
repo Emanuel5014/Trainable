@@ -530,12 +530,16 @@ private fun SaveImageToggleCard(
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = OnPrimary,
-                    checkedTrackColor = Primary,
-                    uncheckedThumbColor = OnSurfaceVariant,
-                    uncheckedTrackColor = SurfaceContainerHighest
-                )
+                thumbContent = if (checked) {
+                    {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                            tint = Primary
+                        )
+                    }
+                } else null
             )
         }
     }
@@ -1036,12 +1040,16 @@ private fun EditCustomExerciseSheet(
                     Switch(
                         checked = saveToLibrary,
                         onCheckedChange = { saveToLibrary = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = OnPrimary,
-                            checkedTrackColor = Primary,
-                            uncheckedThumbColor = OnSurfaceVariant,
-                            uncheckedTrackColor = SurfaceContainerHighest
-                        )
+                        thumbContent = if (saveToLibrary) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    tint = Primary
+                                )
+                            }
+                        } else null
                     )
                 }
             }
