@@ -50,10 +50,12 @@ sealed class AnalyticsWidget(val id: String) {
     ) : AnalyticsWidget("weight")
     data class Calendar(val workoutDates: List<Long>) : AnalyticsWidget("calendar")
     data class Exercise(
+        val widgetId: String,
         val exerciseId: Int,
         val exerciseName: String,
+        val timeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth,
         val history: List<AnalyticsChartPoint>
-    ) : AnalyticsWidget("exercise_$exerciseId")
+    ) : AnalyticsWidget(widgetId)
 
     data class Volume(
         val widgetId: String,
