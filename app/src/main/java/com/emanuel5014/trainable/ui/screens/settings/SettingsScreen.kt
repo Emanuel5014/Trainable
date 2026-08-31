@@ -53,6 +53,7 @@ import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -128,6 +129,7 @@ import kotlin.system.exitProcess
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToWorkoutSettings: () -> Unit,
+    onNavigateToDonors: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
@@ -162,7 +164,7 @@ fun SettingsScreen(
     val aiDeviceSupported = viewModel.aiDeviceSupported
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
-    
+
     val latestRelease by viewModel.latestRelease.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
     val downloadProgress by viewModel.downloadProgress.collectAsState()
@@ -247,7 +249,7 @@ fun SettingsScreen(
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let { 
+        uri?.let {
             viewModel.importDatabase(it) {
                 Toast.makeText(context, "Database imported. Restarting app...", Toast.LENGTH_LONG).show()
                 val intent = Intent(context, MainActivity::class.java)
@@ -330,9 +332,9 @@ fun SettingsScreen(
                             Icon(Icons.Rounded.Folder, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                if (autoBackupFolderUri != null) 
-                                    viewModel.getFolderDisplayPath(autoBackupFolderUri) 
-                                else 
+                                if (autoBackupFolderUri != null)
+                                    viewModel.getFolderDisplayPath(autoBackupFolderUri)
+                                else
                                     stringResource(R.string.choose_folder)
                             )
                         }
@@ -511,13 +513,13 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        stringResource(R.string.settings_title), 
+                        stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp,
                         style = MaterialTheme.typography.titleLarge
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     Box(modifier = Modifier.padding(start = 8.dp)) {
@@ -900,9 +902,9 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.RestartAlt, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
+                                    imageVector = Icons.Rounded.RestartAlt,
+                                    contentDescription = null,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -1294,7 +1296,7 @@ fun SettingsScreen(
                                                 .size(56.dp)
                                                 .clip(CircleShape)
                                                 .background(SurfaceContainerHighest)
-                                                .clickable { 
+                                                .clickable {
                                                     viewModel.setDynamicColorSeed(null)
                                                     viewModel.setThemeStyle(0)
                                                 }
@@ -1338,7 +1340,7 @@ fun SettingsScreen(
                                             PalettePreviewCircle(
                                                 colors = getSeedPreviewColors(primarySeed, styleIndex),
                                                 isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
-                                                onClick = { 
+                                                onClick = {
                                                     viewModel.setDynamicColorSeed(primarySeed)
                                                     viewModel.setThemeStyle(styleIndex)
                                                 }
@@ -1473,9 +1475,9 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Notifications, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
+                                    imageVector = Icons.Rounded.Notifications,
+                                    contentDescription = null,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -1595,9 +1597,9 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.CreditCard, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
+                                    imageVector = Icons.Rounded.CreditCard,
+                                    contentDescription = null,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -1679,7 +1681,7 @@ fun SettingsScreen(
                                 }
                                 SettingsSwitch(
                                     checked = autoBackupEnabled,
-                                    onCheckedChange = { 
+                                    onCheckedChange = {
                                         if (it) {
                                             showBackupSetupDialog = true
                                         } else {
@@ -1745,7 +1747,7 @@ fun SettingsScreen(
                     }
 
                     GymButton(
-                        onClick = { 
+                        onClick = {
                             val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
                             csvExportLauncher.launch("Workouts_$timestamp.csv")
                             viewModel.exportWorkoutsToCsv()
@@ -1848,7 +1850,7 @@ fun SettingsScreen(
                                     ) {
                                         easterEggClicks++
                                         if (easterEggClicks >= 3) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=fHLTWJ8X7iQ"))
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=5jc_R9_im9w"))
                                             context.startActivity(intent)
                                             easterEggClicks = 0
                                         }
@@ -1880,7 +1882,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             GymButton(
-                                onClick = { 
+                                onClick = {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
                                     context.startActivity(intent)
                                 },
@@ -1889,8 +1891,8 @@ fun SettingsScreen(
                                 contentColor = OnSurface
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_github), 
-                                    contentDescription = null, 
+                                    painter = painterResource(R.drawable.ic_github),
+                                    contentDescription = null,
                                     tint = OnSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -1899,7 +1901,7 @@ fun SettingsScreen(
                             }
 
                             GymButton(
-                                onClick = { 
+                                onClick = {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
                                     context.startActivity(intent)
                                 },
@@ -1908,14 +1910,53 @@ fun SettingsScreen(
                                 contentColor = OnSurface
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_kofi), 
-                                    contentDescription = null, 
+                                    painter = painterResource(R.drawable.ic_kofi),
+                                    contentDescription = null,
                                     tint = Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
                             }
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = Surface.copy(alpha = 0.5f)
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onNavigateToDonors() }
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.VolunteerActivism,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        stringResource(R.string.donors_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = OnSurface,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Text(
+                                        stringResource(R.string.donors_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
                     }
                 }

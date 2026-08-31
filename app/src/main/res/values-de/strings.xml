@@ -595,6 +595,14 @@
     <string name="about">ÜBER</string>
     <string name="star_on_github">Auf GitHub bewerten</string>
     <string name="buy_me_a_coffee">Kauf mir einen Kaffee</string>
+    <string name="donors">Spender</string>
+    <string name="donors_title">Unterstützer &amp; Spender</string>
+    <string name="donors_desc">Besonderer Dank an alle Unterstützer</string>
+    <string name="donors_hero_title">Herzlichen Dank</string>
+    <string name="donors_hero_subtitle">Trainable ist ein kostenloses Open-Source-Projekt. Ein großes Dankeschön an alle, die die Entwicklung unterstützen!</string>
+    <string name="donors_support_button">Kauf mir einen Kaffee auf Ko-fi</string>
+    <string name="donors_hall_of_fame">Ehrengalerie</string>
+    <string name="donor_supporter_badge">Unterstützer</string>
 
     <!-- Double back to exit -->
     <string name="press_back_again">Drücke erneut Zurück, um zu beenden</string>
