@@ -61,6 +61,15 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Routine Sharing**: Export and import routines via `.trainableplan` file format.
 *   **Routine Photos**: Capture multiple photos in-app and include them in exports.
 
+### 🤖 On-Device AI Routine Scanner
+*   **100% On-Device & Private**: Powered locally by Google's LiteRT-LM (Gemma 4 E2B / E4B) — zero cloud dependency, no API keys, and complete data privacy.
+*   **Intelligent Sheet Extraction**: Capture or pick a picture of a paper gym sheet and automatically extract exercise names, sets, rep schemes, rest times, cardio durations, and suggested categories.
+*   **Smart Catalog Matching**: Fuzzy-matches extracted exercises with 130+ built-in movements or user-defined custom exercises.
+*   **Interactive Review & Inspector**: Collapsible photo inspector with high-resolution pinch-to-zoom, pan, fullscreen mode, and per-exercise editing before importing into the plan.
+*   **Background Model Downloader**: Dedicated Foreground Service with WakeLock and real-time progress notifications with cancel control, allowing models to download uninterrupted even when switching apps or locking the phone.
+*   **Live Resource Analytics**: Real-time telemetry dashboard monitoring CPU usage (with active core count), JVM/Native/System RAM allocation, token generation speed (`tok/s`), battery level, temperature (°C), and thermal throttling state during scanning.
+*   **Hardware Compatibility Check**: Automatic device capability verification calibrated for devices with 6GB+ RAM and storage requirements.
+
 ### 💪 High-Performance Workout Execution
 *   **Expressive UI**: Massive, touch-friendly inputs designed for use during heavy sets.
 *   **Wheel Pickers**: Haptic-boosted weight and rep selection for precise control.
@@ -149,10 +158,11 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 
 *   **UI Layer**: 100% Jetpack Compose using the **Monolithic Design System** (no XML).
 *   **Presentation Layer**: Hilt-injected ViewModels managing `StateFlow` for reactive UI updates.
+*   **On-Device AI Engine**: Google LiteRT-LM runtime executing local quantized Gemma models (E2B / E4B) directly on-device with GPU/CPU acceleration.
 *   **Data Layer**: 
     *   **Room Database**: Single Source of Truth (SSoT).
-    *   **DataStore**: For lightweight user preferences (Haptic settings, theme).
-    *   **WorkManager**: Automated background backups.
+    *   **DataStore**: For lightweight user preferences (Haptic settings, theme, AI configuration).
+    *   **WorkManager & Foreground Services**: Automated background backups, persistent web server, and resilient background model downloading with WakeLock.
 *   **Navigation**: Type-safe navigation with `@Serializable` routes.
 
 
@@ -163,6 +173,7 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 ```
 com/emanuel5014/trainable/
 ├── data/
+│   ├── ai/                 # On-device AI (LocalLlmEngine, RoutineScanner, ModelFileManager, ModelDownloadService & Manager, AiResourceTracker, DeviceCapabilityChecker)
 │   ├── ExerciseTranslations.kt
 │   ├── local/
 │   │   ├── ExerciseData.kt
@@ -192,8 +203,8 @@ com/emanuel5014/trainable/
 │   │   ├── history/        # Session history, edit, filter bottom sheet
 │   │   ├── onboarding/     # Onboarding flow
 │   │   ├── physicalcheck/  # Physical checks (body progression, before/after slider, settings)
-│   │   ├── routines/       # Routine list, detail, builder, report
-│   │   ├── settings/       # App settings, workout settings, exercise customization
+│   │   ├── routines/       # Routine list, detail, builder, report, AI scan preview sheet
+│   │   ├── settings/       # App settings, workout settings, exercise customization, AI model manager
 │   │   └── workout/        # Workout execution
 │   ├── theme/              # Color, Shape, Type, Spacing, Theme, ResponsiveSize, ThemeColorStore
 │   └── util/               # DateFormatter
@@ -235,6 +246,7 @@ com/emanuel5014/trainable/
 ## 🛠️ Tech Stack
 *   **Language**: Kotlin (2.3.x)
 *   **UI**: Jetpack Compose (2026.x) with Material3 (1.5.x)
+*   **On-Device AI**: Google LiteRT-LM (Gemma 4 E2B / E4B)
 *   **Dependency Injection**: Dagger Hilt (2.59.x)
 *   **Database**: Room (2.8.x) with KSP
 *   **Charts**: Vico (2.1.x)
@@ -242,7 +254,7 @@ com/emanuel5014/trainable/
 *   **Navigation**: Navigation Compose (2.9.x)
 *   **Concurrency**: Kotlin Coroutines & Flow
 *   **Preferences**: DataStore Preferences (1.2.x)
-*   **Background Tasks**: WorkManager (2.11.x)
+*   **Background Tasks**: WorkManager (2.11.x) & Foreground Services
 *   **Image Loading**: Coil (2.7.x)
 *   **Web Server**: Ktor (3.x)
 *   **Build**: Gradle (9.4.x) + AGP (9.2.x)
