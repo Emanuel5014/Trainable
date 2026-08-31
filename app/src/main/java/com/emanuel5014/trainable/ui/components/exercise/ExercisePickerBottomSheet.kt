@@ -269,6 +269,7 @@ fun ExercisePickerBottomSheet(
     if (showAddCustomDialog) {
         AddCustomExerciseDialog(
             categories = categories,
+            languageCode = languageCode,
             onConfirm = { name, category ->
                 onAddCustomExercise(name, category) { createdExercise ->
                     onExerciseSelected(createdExercise)
@@ -284,6 +285,7 @@ fun ExercisePickerBottomSheet(
         EditCustomExerciseDialog(
             exercise = exerciseToEdit!!,
             categories = categories,
+            languageCode = languageCode,
             onConfirm = { updatedExercise ->
                 onEditCustomExercise?.invoke(updatedExercise)
                 exerciseToEdit = null
@@ -408,6 +410,7 @@ private fun ExercisePickerItem(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AddCustomExerciseDialog(
     categories: List<String>,
+    languageCode: String,
     onConfirm: (String, String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -451,7 +454,7 @@ private fun AddCustomExerciseDialog(
                         }
                     ) {
                         OutlinedTextField(
-                            value = selectedCategory,
+                            value = ExerciseTranslations.translateCategory(selectedCategory, languageCode),
                             onValueChange = {},
                             readOnly = true,
                             enabled = true,
@@ -473,7 +476,7 @@ private fun AddCustomExerciseDialog(
                     ) {
                         categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category) },
+                                text = { Text(ExerciseTranslations.translateCategory(category, languageCode)) },
                                 onClick = {
                                     selectedCategory = category
                                     categoryExpanded = false
@@ -510,6 +513,7 @@ private fun AddCustomExerciseDialog(
 private fun EditCustomExerciseDialog(
     exercise: ExerciseEntity,
     categories: List<String>,
+    languageCode: String,
     onConfirm: (ExerciseEntity) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -553,7 +557,7 @@ private fun EditCustomExerciseDialog(
                         }
                     ) {
                         OutlinedTextField(
-                            value = selectedCategory,
+                            value = ExerciseTranslations.translateCategory(selectedCategory, languageCode),
                             onValueChange = {},
                             readOnly = true,
                             enabled = true,
@@ -575,7 +579,7 @@ private fun EditCustomExerciseDialog(
                     ) {
                         categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category) },
+                                text = { Text(ExerciseTranslations.translateCategory(category, languageCode)) },
                                 onClick = {
                                     selectedCategory = category
                                     categoryExpanded = false

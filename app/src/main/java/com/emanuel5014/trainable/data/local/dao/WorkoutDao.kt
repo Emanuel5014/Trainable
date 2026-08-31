@@ -199,10 +199,36 @@ interface WorkoutDao {
     @Query("""
         SELECT sl.* FROM set_logs sl
         INNER JOIN workout_sessions ws ON sl.session_id = ws.id
+        WHERE sl.exercise_id = :exerciseId
+        AND ws.is_finished = 1
+        AND ws.id = (
+            SELECT ws2.id FROM workout_sessions ws2
+            INNER JOIN set_logs sl2 ON sl2.session_id = ws2.id
+            WHERE sl2.exercise_id = :exerciseId
+            AND ws2.is_finished = 1
+            ORDER BY ws2.timestamp DESC, ws2.id DESC
+            LIMIT 1
+        )
+        ORDER BY sl.numero_serie ASC
+    """)
+    fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>>
+
+    @Query("""
+        SELECT sl.* FROM set_logs sl
+        INNER JOIN workout_sessions ws ON sl.session_id = ws.id
         WHERE ws.plan_id = :planId
         AND sl.exercise_id = :exerciseId
         AND ws.is_finished = 1
-        ORDER BY sl.session_id DESC, sl.numero_serie ASC
+        AND ws.id = (
+            SELECT ws2.id FROM workout_sessions ws2
+            INNER JOIN set_logs sl2 ON sl2.session_id = ws2.id
+            WHERE ws2.plan_id = :planId
+            AND sl2.exercise_id = :exerciseId
+            AND ws2.is_finished = 1
+            ORDER BY ws2.timestamp DESC, ws2.id DESC
+            LIMIT 1
+        )
+        ORDER BY sl.numero_serie ASC
         LIMIT :limitSets
     """)
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>>

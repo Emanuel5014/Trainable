@@ -181,6 +181,7 @@ fun AnalyticsScreen(
     var showCategoryVolumeSettings by remember { mutableStateOf(false) }
     var showTimePeriodComparisonSettings by remember { mutableStateOf(false) }
     var showBodyWeightSettings by remember { mutableStateOf(false) }
+    var showExerciseSettings by remember { mutableStateOf<String?>(null) }
     var showAddCategoryVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
@@ -439,9 +440,11 @@ fun AnalyticsScreen(
                                         isDragging = isDragging,
                                         isRecentlyMoved = isRecentlyDropped,
                                         exerciseName = widget.exerciseName,
+                                        timeRange = widget.timeRange,
                                         history = widget.history,
                                         weightUnit = weightUnit,
-                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onEdit = { showExerciseSettings = widget.id }
                                     )
                                 }
                                 is AnalyticsWidget.Volume -> {
@@ -617,6 +620,22 @@ fun AnalyticsScreen(
                     showBodyWeightSettings = false
                 }
             )
+        }
+
+        if (showExerciseSettings != null) {
+            val widgetId = showExerciseSettings!!
+            val widget = uiState.widgets.find { it.id == widgetId } as? AnalyticsWidget.Exercise
+            if (widget != null) {
+                ExerciseSettingsBottomSheet(
+                    exerciseName = widget.exerciseName,
+                    currentTimeRange = widget.timeRange,
+                    onDismiss = { showExerciseSettings = null },
+                    onConfirm = { range ->
+                        viewModel.updateExerciseChart(widgetId, range)
+                        showExerciseSettings = null
+                    }
+                )
+            }
         }
     }
 }
@@ -1151,9 +1170,11 @@ fun ExerciseChartSection(
     isDragging: Boolean = false,
     isRecentlyMoved: Boolean = false,
     exerciseName: String,
+    timeRange: AnalyticsTimeRange,
     history: List<AnalyticsChartPoint>,
     weightUnit: String,
-    onRemove: (() -> Unit)? = null
+    onRemove: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null
 ) {
     val elevation by animateDpAsState(
         targetValue = if (isDragging) 14.dp else if (isRecentlyMoved) 8.dp else 2.dp,
@@ -1189,7 +1210,7 @@ fun ExerciseChartSection(
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold
                 )
-                WidgetControls(onRemove)
+                WidgetControls(onRemove, onEdit)
             }
             
             Spacer(modifier = Modifier.height(Spacing.medium))
@@ -1214,7 +1235,7 @@ fun ExerciseChartSection(
                             color = Primary
                         )
                         Text(
-                            text = stringResource(R.string.analytics_estimated_1rm_short),
+                            text = "${stringResource(R.string.analytics_estimated_1rm_short)} • ${stringResource(timeRange.labelResId)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -1928,6 +1949,88 @@ fun BodyWeightSettingsBottomSheet(
         ) {
             Text(
                 text = stringResource(R.string.analytics_body_weight),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(bottom = Spacing.medium)
+            )
+
+            Text(
+                text = stringResource(R.string.analytics_time_range),
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = Spacing.small)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            ) {
+                AnalyticsTimeRange.values().forEach { range ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selectedTimeRange == range) Primary else SurfaceContainerHigh)
+                            .clickable { selectedTimeRange = range }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(range.labelResId),
+                            color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.large))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Primary)
+                    .clickable { onConfirm(selectedTimeRange) }
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    color = OnPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExerciseSettingsBottomSheet(
+    exerciseName: String,
+    currentTimeRange: AnalyticsTimeRange,
+    onDismiss: () -> Unit,
+    onConfirm: (AnalyticsTimeRange) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedTimeRange by remember { mutableStateOf(currentTimeRange) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.medium)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = exerciseName,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(bottom = Spacing.medium)

@@ -17,7 +17,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 1
-        versionName = "1.9.1"
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -120,6 +120,9 @@ dependencies {
 
     // OkHttp
     implementation(libs.okhttp)
+
+    // LiteRT-LM (on-device LLM inference, Gemma 4)
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.1")
 
 // Google Fonts
 implementation(libs.google.fonts)

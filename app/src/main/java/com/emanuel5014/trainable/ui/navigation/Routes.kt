@@ -61,3 +61,6 @@ data class PhysicalCheckCompare(val id1: Int, val id2: Int)
 @Serializable
 data class Report(val planIdsString: String)
 
+@Serializable
+object Donors
+

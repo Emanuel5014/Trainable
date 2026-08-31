@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,15 +28,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Folder
@@ -49,12 +53,15 @@ import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -96,6 +103,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -104,6 +113,7 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -114,11 +124,12 @@ import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
 import com.emanuel5014.trainable.ui.theme.toHSV
 import kotlin.system.exitProcess
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToWorkoutSettings: () -> Unit,
+    onNavigateToDonors: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
@@ -146,9 +157,14 @@ fun SettingsScreen(
     val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
+    val aiScanEnabled by viewModel.aiScanEnabled.collectAsState()
+    val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
+    val aiModelVariant by viewModel.aiModelVariant.collectAsState()
+    val aiModelStatus by viewModel.aiModelStatus.collectAsState()
+    val aiDeviceSupported = viewModel.aiDeviceSupported
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
-    
+
     val latestRelease by viewModel.latestRelease.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
     val downloadProgress by viewModel.downloadProgress.collectAsState()
@@ -165,6 +181,7 @@ fun SettingsScreen(
     var savedStyleForRestore by remember { mutableIntStateOf(0) }
     var includeImagesChoice by remember { mutableStateOf(false) }
     var pendingNotificationType by remember { mutableStateOf<String?>(null) }
+    var showDeleteModelDialog by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -232,7 +249,7 @@ fun SettingsScreen(
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let { 
+        uri?.let {
             viewModel.importDatabase(it) {
                 Toast.makeText(context, "Database imported. Restarting app...", Toast.LENGTH_LONG).show()
                 val intent = Intent(context, MainActivity::class.java)
@@ -315,9 +332,9 @@ fun SettingsScreen(
                             Icon(Icons.Rounded.Folder, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                if (autoBackupFolderUri != null) 
-                                    viewModel.getFolderDisplayPath(autoBackupFolderUri) 
-                                else 
+                                if (autoBackupFolderUri != null)
+                                    viewModel.getFolderDisplayPath(autoBackupFolderUri)
+                                else
                                     stringResource(R.string.choose_folder)
                             )
                         }
@@ -437,6 +454,41 @@ fun SettingsScreen(
         )
     }
 
+    if (showDeleteModelDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteModelDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.ai_model_delete_confirm_title),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.ai_model_delete_confirm_desc),
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteModelDialog = false
+                        viewModel.deleteAiModel()
+                    }
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteModelDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                }
+            }
+        )
+    }
+
     if (showCustomColorDialog) {
         CustomColorPickerDialog(
             initialColor = savedSeedForRestore?.let { Color(it) },
@@ -461,13 +513,13 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        stringResource(R.string.settings_title), 
+                        stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp,
                         style = MaterialTheme.typography.titleLarge
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     Box(modifier = Modifier.padding(start = 8.dp)) {
@@ -850,9 +902,9 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.RestartAlt, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
+                                    imageVector = Icons.Rounded.RestartAlt,
+                                    contentDescription = null,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -891,6 +943,227 @@ fun SettingsScreen(
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(title = stringResource(R.string.ai_section_title)) {
+                GymCard(containerColor = SurfaceContainerHigh) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Rounded.DocumentScanner, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.ai_scan_toggle), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        if (!aiDeviceSupported) stringResource(R.string.ai_device_unsupported)
+                                        else stringResource(R.string.ai_scan_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            SettingsSwitch(
+                                checked = aiScanEnabled && aiDeviceSupported,
+                                enabled = aiDeviceSupported,
+                                onCheckedChange = { viewModel.setAiScanEnabled(it) }
+                            )
+                        }
+
+                        if (aiDeviceSupported && aiScanEnabled) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            val selectedVariant = AiModelVariant.fromId(aiModelVariant)
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(stringResource(R.string.ai_model_variant), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SurfaceContainerHighest)
+                                        .padding(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AiModelVariant.entries.forEach { variant ->
+                                        Text(
+                                            text = variant.displayName,
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(if (selectedVariant == variant) Primary else Color.Transparent)
+                                                .clickable { viewModel.setAiModelVariant(variant.id) }
+                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                            color = if (selectedVariant == variant) OnPrimary else OnSurfaceVariant,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = stringResource(R.string.ai_model_requirements, selectedVariant.sizeLabel, selectedVariant.requiredRamGb),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+
+                            when (val status = aiModelStatus) {
+                                is AiModelStatus.Downloading -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.ai_model_downloading, (status.progress * 100).toInt()),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = Primary,
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                            TextButton(onClick = { viewModel.cancelAiModelDownload() }) {
+                                                Text(
+                                                    stringResource(R.string.ai_download_cancel).uppercase(),
+                                                    color = Error,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                            }
+                                        }
+                                        LinearWavyProgressIndicator(
+                                            progress = { status.progress },
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    }
+                                }
+                                is AiModelStatus.Ready -> {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                stringResource(R.string.ai_model_ready),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = OnSurface
+                                            )
+                                        }
+                                        TextButton(onClick = { showDeleteModelDialog = true }) {
+                                            Text(
+                                                stringResource(R.string.ai_model_delete).uppercase(),
+                                                color = Error,
+                                                fontWeight = FontWeight.ExtraBold
+                                            )
+                                        }
+                                    }
+                                }
+                                is AiModelStatus.Error -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(status.message, style = MaterialTheme.typography.bodySmall, color = Error)
+                                        GymButton(
+                                            onClick = { viewModel.downloadAiModel() },
+                                            containerColor = Primary.copy(alpha = 0.1f),
+                                            contentColor = Primary,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(stringResource(R.string.ai_model_download_retry))
+                                        }
+                                    }
+                                }
+                                AiModelStatus.NotDownloaded -> {
+                                    GymButton(
+                                        onClick = { viewModel.downloadAiModel() },
+                                        containerColor = Primary.copy(alpha = 0.1f),
+                                        contentColor = Primary,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
+                                    }
+                                }
+                            }
+
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(
+                                        Icons.Rounded.Analytics,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(
+                                            stringResource(R.string.ai_resource_analytics_toggle),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        Text(
+                                            stringResource(R.string.ai_resource_analytics_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                SettingsSwitch(
+                                    checked = aiResourceAnalyticsEnabled,
+                                    onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SurfaceContainerHighest.copy(alpha = 0.5f))
+                                .border(1.dp, OutlineVariant.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Primary.copy(alpha = 0.15f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "BETA",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Primary
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.ai_disclaimer_beta),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
@@ -1023,7 +1296,7 @@ fun SettingsScreen(
                                                 .size(56.dp)
                                                 .clip(CircleShape)
                                                 .background(SurfaceContainerHighest)
-                                                .clickable { 
+                                                .clickable {
                                                     viewModel.setDynamicColorSeed(null)
                                                     viewModel.setThemeStyle(0)
                                                 }
@@ -1067,7 +1340,7 @@ fun SettingsScreen(
                                             PalettePreviewCircle(
                                                 colors = getSeedPreviewColors(primarySeed, styleIndex),
                                                 isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
-                                                onClick = { 
+                                                onClick = {
                                                     viewModel.setDynamicColorSeed(primarySeed)
                                                     viewModel.setThemeStyle(styleIndex)
                                                 }
@@ -1202,9 +1475,9 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Notifications, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
+                                    imageVector = Icons.Rounded.Notifications,
+                                    contentDescription = null,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -1324,9 +1597,9 @@ fun SettingsScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                 Icon(
-                                    imageVector = Icons.Rounded.CreditCard, 
-                                    contentDescription = null, 
-                                    tint = Primary, 
+                                    imageVector = Icons.Rounded.CreditCard,
+                                    contentDescription = null,
+                                    tint = Primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
@@ -1408,7 +1681,7 @@ fun SettingsScreen(
                                 }
                                 SettingsSwitch(
                                     checked = autoBackupEnabled,
-                                    onCheckedChange = { 
+                                    onCheckedChange = {
                                         if (it) {
                                             showBackupSetupDialog = true
                                         } else {
@@ -1474,7 +1747,7 @@ fun SettingsScreen(
                     }
 
                     GymButton(
-                        onClick = { 
+                        onClick = {
                             val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
                             csvExportLauncher.launch("Workouts_$timestamp.csv")
                             viewModel.exportWorkoutsToCsv()
@@ -1577,7 +1850,7 @@ fun SettingsScreen(
                                     ) {
                                         easterEggClicks++
                                         if (easterEggClicks >= 3) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=fHLTWJ8X7iQ"))
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=5jc_R9_im9w"))
                                             context.startActivity(intent)
                                             easterEggClicks = 0
                                         }
@@ -1609,7 +1882,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             GymButton(
-                                onClick = { 
+                                onClick = {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
                                     context.startActivity(intent)
                                 },
@@ -1618,8 +1891,8 @@ fun SettingsScreen(
                                 contentColor = OnSurface
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_github), 
-                                    contentDescription = null, 
+                                    painter = painterResource(R.drawable.ic_github),
+                                    contentDescription = null,
                                     tint = OnSurface,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -1628,7 +1901,7 @@ fun SettingsScreen(
                             }
 
                             GymButton(
-                                onClick = { 
+                                onClick = {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
                                     context.startActivity(intent)
                                 },
@@ -1637,14 +1910,53 @@ fun SettingsScreen(
                                 contentColor = OnSurface
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_kofi), 
-                                    contentDescription = null, 
+                                    painter = painterResource(R.drawable.ic_kofi),
+                                    contentDescription = null,
                                     tint = Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
                             }
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            color = Surface.copy(alpha = 0.5f)
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onNavigateToDonors() }
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.VolunteerActivism,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        stringResource(R.string.donors_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = OnSurface,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Text(
+                                        stringResource(R.string.donors_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
                     }
                 }

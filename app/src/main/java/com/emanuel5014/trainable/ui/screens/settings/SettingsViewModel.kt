@@ -8,6 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
+import com.emanuel5014.trainable.data.ai.LocalLlmEngine
+import com.emanuel5014.trainable.data.ai.ModelDownloadManager
+import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.remote.GitHubRelease
@@ -28,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,6 +49,10 @@ class SettingsViewModel @Inject constructor(
     private val backupManager: BackupManager,
     private val updateManager: UpdateManager,
     private val webServerManager: WebServerManager,
+    private val deviceCapabilityChecker: DeviceCapabilityChecker,
+    private val modelFileManager: ModelFileManager,
+    private val modelDownloadManager: ModelDownloadManager,
+    private val localLlmEngine: LocalLlmEngine,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -588,4 +599,83 @@ class SettingsViewModel @Inject constructor(
             webServerManager.startServer()
         }
     }
+
+    // region AI Scan
+
+    val aiScanEnabled = userPrefsRepository.aiScanEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val aiResourceAnalyticsEnabled = userPrefsRepository.aiResourceAnalyticsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val aiModelVariant = userPrefsRepository.aiModelVariant.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "e2b"
+    )
+
+    val aiDeviceSupported: Boolean = deviceCapabilityChecker.isSupported(context)
+
+    val aiModelStatus: StateFlow<AiModelStatus> = combine(
+        userPrefsRepository.aiModelVariant,
+        modelDownloadManager.activeDownloads,
+        modelFileManager.filesUpdatedTrigger
+    ) { variantId, downloads, _ ->
+        val variant = AiModelVariant.fromId(variantId)
+        val ongoing = downloads[variant.id]
+        when {
+            ongoing != null -> ongoing
+            modelFileManager.isDownloaded(variant) -> AiModelStatus.Ready
+            else -> AiModelStatus.NotDownloaded
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = AiModelStatus.NotDownloaded
+    )
+
+    fun setAiScanEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiScanEnabled(enabled)
+        }
+    }
+
+    fun setAiResourceAnalyticsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiResourceAnalyticsEnabled(enabled)
+        }
+    }
+
+    fun setAiModelVariant(variantId: String) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiModelVariant(variantId)
+        }
+    }
+
+    fun downloadAiModel() {
+        val variant = AiModelVariant.fromId(aiModelVariant.value)
+        modelDownloadManager.startDownload(variant)
+    }
+
+    fun cancelAiModelDownload() {
+        val variant = AiModelVariant.fromId(aiModelVariant.value)
+        modelDownloadManager.cancelDownload(variant)
+    }
+
+    fun deleteAiModel() {
+        viewModelScope.launch {
+            val variant = AiModelVariant.fromId(aiModelVariant.value)
+            modelDownloadManager.cancelDownload(variant)
+            localLlmEngine.release()
+            modelFileManager.delete(variant)
+        }
+    }
+
+    // endregion
 }

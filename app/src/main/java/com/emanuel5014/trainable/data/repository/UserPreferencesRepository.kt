@@ -55,8 +55,11 @@ class UserPreferencesRepository @Inject constructor(
         val PHYSICAL_CHECK_VALIDATION_BLOCK = stringPreferencesKey("physical_check_validation_block")
         val PHYSICAL_CHECK_VALIDATION_IV = stringPreferencesKey("physical_check_validation_iv")
         val EDITABLE_PRESET_EXERCISES = booleanPreferencesKey("editable_preset_exercises")
-        val WORKOUT_TIMER_ENABLED = booleanPreferencesKey("workout_timer_enabled")
-        val INLINE_EXERCISE_MODIFICATIONS_ENABLED = booleanPreferencesKey("inline_exercise_modifications_enabled")
+    val WORKOUT_TIMER_ENABLED = booleanPreferencesKey("workout_timer_enabled")
+    val INLINE_EXERCISE_MODIFICATIONS_ENABLED = booleanPreferencesKey("inline_exercise_modifications_enabled")
+    val AI_SCAN_ENABLED = booleanPreferencesKey("ai_scan_enabled")
+    val AI_RESOURCE_ANALYTICS_ENABLED = booleanPreferencesKey("ai_resource_analytics_enabled")
+    val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -224,6 +227,21 @@ class UserPreferencesRepository @Inject constructor(
             preferences[INLINE_EXERCISE_MODIFICATIONS_ENABLED] ?: false
         }
 
+    val aiScanEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AI_SCAN_ENABLED] ?: false
+        }
+
+    val aiResourceAnalyticsEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AI_RESOURCE_ANALYTICS_ENABLED] ?: false
+        }
+
+    val aiModelVariant: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[AI_MODEL_VARIANT] ?: "e2b"
+        }
+
     val themeMode: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[THEME_MODE] ?: 0
@@ -244,6 +262,24 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setHapticEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[HAPTIC_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAiScanEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AI_SCAN_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAiResourceAnalyticsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AI_RESOURCE_ANALYTICS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAiModelVariant(variantId: String) {
+        dataStore.edit { preferences ->
+            preferences[AI_MODEL_VARIANT] = variantId
         }
     }
 

@@ -256,13 +256,19 @@ class AnalyticsViewModel @Inject constructor(
         val exerciseChartFlows = context.widgetOrder
             .filter { it.startsWith("exercise_") }
             .map { idStr ->
-                val exerciseId = idStr.removePrefix("exercise_").toInt()
-                analyticsRepository.getExerciseProgressHistory(exerciseId, context.startDate)
-                    .map { history -> exerciseId to history }
+                val parts = idStr.split("_")
+                val exerciseId = parts[1].toInt()
+                val timeRange = if (parts.size >= 3) {
+                    try { AnalyticsTimeRange.valueOf(parts[2]) } catch (_: Exception) { AnalyticsTimeRange.OneMonth }
+                } else {
+                    AnalyticsTimeRange.OneMonth
+                }
+                analyticsRepository.getExerciseProgressHistory(exerciseId, timeRange.startDate())
+                    .map { history -> idStr to history }
             }
 
         val exerciseHistoriesFlow = if (exerciseChartFlows.isEmpty()) {
-            flowOf(emptyMap<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>())
+            flowOf(emptyMap<String, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>())
         } else {
             combine(exerciseChartFlows) { pairs ->
                 pairs.associate { it.first to it.second }
@@ -405,19 +411,35 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
-    fun addExerciseChart(exerciseId: Int) {
-        addMultipleExerciseCharts(setOf(exerciseId))
+    fun addExerciseChart(exerciseId: Int, timeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth) {
+        addMultipleExerciseCharts(setOf(exerciseId), timeRange)
     }
 
-    fun addMultipleExerciseCharts(exerciseIds: Set<Int>) {
+    fun addMultipleExerciseCharts(exerciseIds: Set<Int>, timeRange: AnalyticsTimeRange = AnalyticsTimeRange.OneMonth) {
         widgetOrder.update { current ->
             var newList = current
-            exerciseIds.forEach { id ->
-                val widgetId = "exercise_$id"
-                if (!newList.contains(widgetId)) {
+            val timestamp = System.currentTimeMillis()
+            exerciseIds.forEachIndexed { index, id ->
+                val widgetId = "exercise_${id}_${timeRange.name}_${timestamp + index}"
+                if (!newList.any { it == "exercise_$id" || it.startsWith("exercise_${id}_") }) {
                     newList = newList + widgetId
                 }
             }
+            saveWidgetOrder(newList)
+            newList
+        }
+    }
+
+    fun updateExerciseChart(widgetId: String, timeRange: AnalyticsTimeRange) {
+        widgetOrder.update { current ->
+            val index = current.indexOf(widgetId)
+            if (index == -1) return@update current
+            val parts = widgetId.split("_")
+            val exerciseId = parts[1].toInt()
+            val suffix = if (parts.size >= 4) parts[3] else "${System.currentTimeMillis()}"
+            val newId = "exercise_${exerciseId}_${timeRange.name}_$suffix"
+            val newList = current.toMutableList()
+            newList[index] = newId
             saveWidgetOrder(newList)
             newList
         }
@@ -579,7 +601,7 @@ class AnalyticsViewModel @Inject constructor(
         categoryVolumeStartDate: Long,
         weightHistory: List<com.emanuel5014.trainable.data.local.entity.WeightLogEntity>,
         sessions: List<WorkoutSessionEntity>,
-        exerciseHistories: Map<Int, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
+        exerciseHistories: Map<String, List<com.emanuel5014.trainable.data.local.dao.DailyExerciseMax>>,
         volumeHistories: Map<String, List<com.emanuel5014.trainable.data.local.dao.DailyVolume>>,
         weightUnit: String,
         languageCode: String,
@@ -635,17 +657,25 @@ class AnalyticsViewModel @Inject constructor(
                     AnalyticsWidget.Calendar(workoutDates = finishedSessionDates)
                 }
                 id.startsWith("exercise_") -> {
-                    val exerciseId = id.removePrefix("exercise_").toInt()
+                    val parts = id.split("_")
+                    val exerciseId = parts[1].toInt()
+                    val timeRangeWidget = if (parts.size >= 3) {
+                        try { AnalyticsTimeRange.valueOf(parts[2]) } catch (_: Exception) { AnalyticsTimeRange.OneMonth }
+                    } else {
+                        AnalyticsTimeRange.OneMonth
+                    }
                     val exerciseName = allBests.find { it.exerciseId == exerciseId }?.exerciseName ?: "Unknown"
-                    val history = exerciseHistories[exerciseId]?.map { point ->
+                    val history = exerciseHistories[id]?.map { point ->
                         AnalyticsChartPoint(
                             timestamp = point.timestamp,
                             value = WeightUnitConverter.convertDisplay(point.maxValue, weightUnit)
                         )
                     } ?: emptyList()
                     AnalyticsWidget.Exercise(
+                        widgetId = id,
                         exerciseId = exerciseId,
                         exerciseName = exerciseName,
+                        timeRange = timeRangeWidget,
                         history = history
                     )
                 }

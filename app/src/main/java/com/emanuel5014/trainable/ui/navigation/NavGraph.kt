@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseCustomizationScreen
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsScreen
+import com.emanuel5014.trainable.ui.screens.settings.DonorsScreen
 import com.emanuel5014.trainable.ui.screens.workout.WorkoutExecutionScreen
 import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckScreen
 import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckSettingsScreen
@@ -53,7 +54,13 @@ fun MainNavGraph(
         composable<Settings> {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToWorkoutSettings = { navController.navigate(WorkoutSettings) }
+                onNavigateToWorkoutSettings = { navController.navigate(WorkoutSettings) },
+                onNavigateToDonors = { navController.navigate(Donors) }
+            )
+        }
+        composable<Donors> {
+            DonorsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable<ExerciseCustomization> {
