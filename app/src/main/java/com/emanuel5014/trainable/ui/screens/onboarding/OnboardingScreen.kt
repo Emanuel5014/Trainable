@@ -37,15 +37,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.IosShare
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
@@ -54,9 +57,11 @@ import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -94,12 +99,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -116,7 +124,7 @@ fun OnboardingScreen(
     onFinished: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
-    val pagerState = rememberPagerState(pageCount = { 7 })
+    val pagerState = rememberPagerState(pageCount = { 8 })
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -135,6 +143,10 @@ fun OnboardingScreen(
     var autoBackupFolderUri by remember { mutableStateOf<String?>(null) }
     var autoBackupMaxCount by remember { mutableIntStateOf(5) }
     var autoBackupIncludeImages by remember { mutableStateOf(false) }
+    var aiScanEnabled by remember { mutableStateOf(false) }
+    val selectedAiModelVariant by viewModel.aiModelVariant.collectAsState()
+    val aiDeviceSupported = viewModel.aiDeviceSupported
+    val aiModelStatus by viewModel.aiModelStatus.collectAsState()
     val dynamicColorEnabled by viewModel.dynamicColor.collectAsState(initial = true)
     val dynamicColorSeed by viewModel.dynamicColorSeed.collectAsState(initial = null)
     val themePalette by viewModel.themePalette.collectAsState(initial = 0)
@@ -228,7 +240,17 @@ fun OnboardingScreen(
                         swipeActionsEnabled = swipeActionsEnabled,
                         onSwipeActionsChange = { swipeActionsEnabled = it }
                     )
-                    5 -> BackupSlide(
+                    5 -> LocalAiSlide(
+                        aiDeviceSupported = aiDeviceSupported,
+                        aiScanEnabled = aiScanEnabled,
+                        onAiScanEnabledChange = { aiScanEnabled = it },
+                        selectedVariant = AiModelVariant.fromId(selectedAiModelVariant),
+                        onVariantSelected = { viewModel.setAiModelVariant(it.id) },
+                        aiModelStatus = aiModelStatus,
+                        onDownloadModel = { viewModel.downloadAiModel() },
+                        onCancelDownload = { viewModel.cancelAiModelDownload() }
+                    )
+                    6 -> BackupSlide(
                         autoBackupEnabled = autoBackupEnabled,
                         onAutoBackupChange = { autoBackupEnabled = it },
                         autoBackupFrequency = autoBackupFrequency,
@@ -241,7 +263,7 @@ fun OnboardingScreen(
                         onPickFolder = { folderPickerLauncher.launch(null) },
                         onImport = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }
                     )
-                    6 -> ProfileSetupSlide(
+                    7 -> ProfileSetupSlide(
                         username = username,
                         onUsernameChange = { username = it },
                         weightInput = weightInput,
@@ -310,7 +332,9 @@ fun OnboardingScreen(
                                 dynamicColorSeed = dynamicColorSeed,
                                 themePalette = themePalette,
                                 themeStyle = themeStyle,
-                                themeMode = themeMode
+                                themeMode = themeMode,
+                                aiScanEnabled = aiScanEnabled,
+                                aiModelVariant = selectedAiModelVariant
                             )
                             onFinished()
                         } else {
@@ -1135,6 +1159,8 @@ private fun BackupSlide(
             style = MaterialTheme.typography.bodySmall,
             color = OnSurfaceVariant
         )
+
+        Spacer(modifier = Modifier.height(140.dp))
     }
 }
 
@@ -1557,3 +1583,285 @@ private fun HueSlider(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LocalAiSlide(
+    aiDeviceSupported: Boolean,
+    aiScanEnabled: Boolean,
+    onAiScanEnabledChange: (Boolean) -> Unit,
+    selectedVariant: AiModelVariant,
+    onVariantSelected: (AiModelVariant) -> Unit,
+    aiModelStatus: AiModelStatus,
+    onDownloadModel: () -> Unit,
+    onCancelDownload: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(32.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.onboarding_ai_title),
+            style = MaterialTheme.typography.displaySmall,
+            color = OnSurface,
+            fontWeight = FontWeight.Black,
+            lineHeight = 44.sp
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            if (!aiDeviceSupported) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(SurfaceContainerHigh)
+                        .padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SurfaceContainerHighest),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.Info,
+                                contentDescription = null,
+                                tint = OnSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.ai_device_unsupported),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(R.string.onboarding_ai_unsupported_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant,
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+            } else {
+                CustomizeToggleItem(
+                    icon = Icons.Rounded.AutoAwesome,
+                    title = stringResource(R.string.onboarding_ai_toggle_title),
+                    desc = stringResource(R.string.onboarding_ai_toggle_desc),
+                    checked = aiScanEnabled,
+                    onCheckedChange = onAiScanEnabledChange
+                )
+
+                if (aiScanEnabled) {
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    Text(
+                        text = stringResource(R.string.ai_model_variant),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = OnSurface
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        AiModelVariant.entries.forEach { variant ->
+                            val isSelected = variant == selectedVariant
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (isSelected) Primary.copy(alpha = 0.12f) else SurfaceContainerHigh)
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) Primary else OutlineVariant.copy(alpha = 0.35f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .clickable { onVariantSelected(variant) }
+                                    .padding(12.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = variant.displayName,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = if (isSelected) Primary else OnSurface
+                                        )
+                                        if (isSelected) {
+                                            Icon(
+                                                Icons.Rounded.Check,
+                                                contentDescription = null,
+                                                tint = Primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = "${variant.sizeLabel} • ≥${variant.requiredRamGb}GB RAM",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    when (aiModelStatus) {
+                        is AiModelStatus.Downloading -> {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(SurfaceContainerHigh)
+                                    .padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        stringResource(R.string.ai_model_downloading, (aiModelStatus.progress * 100).toInt()),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Primary,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    TextButton(onClick = onCancelDownload) {
+                                        Text(
+                                            stringResource(R.string.ai_download_cancel).uppercase(),
+                                            color = Error,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+                                LinearWavyProgressIndicator(
+                                    progress = { aiModelStatus.progress },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                        is AiModelStatus.Ready -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Primary.copy(alpha = 0.1f))
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Text(
+                                    stringResource(R.string.ai_model_ready),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OnSurface
+                                )
+                            }
+                        }
+                        else -> {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                GymButton(
+                                    onClick = onDownloadModel,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    containerColor = SurfaceContainerHigh,
+                                    contentColor = OnSurface
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.CloudDownload,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        stringResource(R.string.ai_model_download, selectedVariant.displayName),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(R.string.onboarding_ai_download_note),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    // BETA Disclaimer Card
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceContainerHigh.copy(alpha = 0.6f))
+                            .border(1.dp, OutlineVariant.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Primary.copy(alpha = 0.15f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "BETA",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Primary
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.ai_disclaimer_beta),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(140.dp))
+    }
+}
+

@@ -788,4 +788,10 @@
     <string name="ai_download_notification_complete">Modèle IA téléchargé avec succès</string>
     <string name="ai_download_notification_failed">Échec du téléchargement du modèle IA</string>
     <string name="ai_download_cancel">Annuler</string>
+    <string name="onboarding_ai_title">Scan IA\nLocal.</string>
+    <string name="onboarding_ai_desc">Scannez vos feuilles d\'entraînement papier et importez les exercices automatiquement avec une IA 100% locale et privée.</string>
+    <string name="onboarding_ai_toggle_title">Activer le scanner de séances IA</string>
+    <string name="onboarding_ai_toggle_desc">Utilise un modèle local pour extraire séries, répétitions et exercices des photos.</string>
+    <string name="onboarding_ai_unsupported_desc">Votre appareil ne dispose pas de la configuration requise (au moins 6 Go de RAM) pour l\'IA locale. Vous pouvez toujours créer vos séances manuellement.</string>
+    <string name="onboarding_ai_download_note">Vous pouvez télécharger le modèle maintenant ou plus tard dans les Paramètres.</string>
 </resources>

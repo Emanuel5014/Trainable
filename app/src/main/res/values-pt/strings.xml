@@ -788,4 +788,10 @@
     <string name="ai_download_notification_complete">Modelo IA transferido com sucesso</string>
     <string name="ai_download_notification_failed">Falha ao transferir o modelo IA</string>
     <string name="ai_download_cancel">Cancelar</string>
+    <string name="onboarding_ai_title">Digitalização IA\nLocal.</string>
+    <string name="onboarding_ai_desc">Digitalize planos de treino em papel e importe exercícios automaticamente com IA 100% local e privada.</string>
+    <string name="onboarding_ai_toggle_title">Ativar digitalizador de rotinas IA</string>
+    <string name="onboarding_ai_toggle_desc">Usa um modelo local para extrair séries, repetições e exercícios de fotos.</string>
+    <string name="onboarding_ai_unsupported_desc">O seu dispositivo não cumpre os requisitos mínimos (pelo menos 6 GB de RAM) para IA local. Pode criar e gerir rotinas manualmente.</string>
+    <string name="onboarding_ai_download_note">Pode transferir o modelo agora ou mais tarde nas Definições.</string>
 </resources>

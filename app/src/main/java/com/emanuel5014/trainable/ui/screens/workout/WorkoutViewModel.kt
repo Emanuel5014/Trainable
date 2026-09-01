@@ -268,16 +268,10 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun getPreviousSetsForExercise(planId: Int?, exerciseId: Int, limitSets: Int = 3): List<SetLogEntity> {
-        val planSets = if (planId != null && planId != 0 && planId != -1) {
-            workoutRepository.getLastSessionSetsForExercise(planId, exerciseId, limitSets).firstOrNull()
-        } else null
-
-        if (!planSets.isNullOrEmpty()) {
-            return planSets
+        if (planId != null && planId != 0 && planId != -1) {
+            return workoutRepository.getLastSessionSetsForExercise(planId, exerciseId, limitSets).firstOrNull() ?: emptyList()
         }
-
-        val anySets = workoutRepository.getLastFinishedSetsForExercise(exerciseId).firstOrNull()
-        return anySets?.take(limitSets) ?: emptyList()
+        return emptyList()
     }
 
     private suspend fun resumeWorkout(sessionId: Int) {
@@ -655,11 +649,14 @@ class WorkoutViewModel @Inject constructor(
     private suspend fun initializeQuickWorkout(name: String?) {
         val startTime = System.currentTimeMillis()
         val sessionId = workoutRepository.startQuickWorkoutSession(name).toInt()
+        val sessionWithSets = workoutRepository.getSessionWithSets(sessionId).firstOrNull()
+        val planId = sessionWithSets?.session?.planId
         val displayName = name ?: localeManager.getString(R.string.quick_workout)
 
         _state.update {
             it.copy(
                 isLoading = false,
+                planId = planId,
                 planName = displayName,
                 sessionId = sessionId,
                 exercises = emptyList(),
