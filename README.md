@@ -173,41 +173,42 @@ Trainable follows **Clean Architecture** principles combined with **MVVM** for a
 ```
 com/emanuel5014/trainable/
 ├── data/
-│   ├── ai/                 # On-device AI (LocalLlmEngine, RoutineScanner, ModelFileManager, ModelDownloadService & Manager, AiResourceTracker, DeviceCapabilityChecker)
+│   ├── ai/                     # On-device AI (LocalLlmEngine, RoutineScanner, ModelFileManager, ModelDownloadService & Manager, AiResourceTracker, DeviceCapabilityChecker, RoutineScanParser, AiModels, ExerciseMatcher)
 │   ├── ExerciseTranslations.kt
 │   ├── local/
 │   │   ├── ExerciseData.kt
 │   │   ├── GymDatabase.kt
-│   │   ├── dao/            # Room DAOs (WorkoutDao, ExerciseDao, AnalyticsDao, etc.)
-│   │   ├── entity/         # Room entities (SetLogEntity, CardioLogEntity, CustomCategoryEntity, etc.)
-│   │   └── relation/       # Relation classes (PlanWithDetails, SessionWithSets, etc.)
+│   │   ├── dao/                # Room DAOs (WorkoutDao, ExerciseDao, AnalyticsDao, UserDao, PhysicalCheckDao, WeightLogDao)
+│   │   ├── entity/             # Room entities (SetLogEntity, CardioLogEntity, CustomCategoryEntity, WorkoutPlanEntity, WorkoutSessionEntity, ExerciseEntity, PlanExerciseEntity, SessionExerciseSwapEntity, PhysicalCheckEntity, WeightLogEntity, UserEntity, WorkoutPlanImageEntity)
+│   │   └── relation/           # Relation classes (PlanWithDetails, SessionWithSets, SessionWithDetails, SessionWithPlanName)
 │   ├── remote/
 │   │   ├── GitHubModels.kt
-│   │   └── dto/            # DTOs for export/import (WorkoutPlanExportDto)
-│   ├── report/             # HTML plan reports (ReportGenerator, HtmlReportFormatter, ReportModels)
-│   └── repository/         # Repositories (WorkoutRepository, AnalyticsRepository, ExerciseRepository, etc.)
-├── di/                     # Hilt modules (DatabaseModule, NetworkModule)
+│   │   └── dto/                # DTOs for export/import (WorkoutPlanExportDto)
+│   ├── report/                 # HTML plan reports (ReportGenerator, HtmlReportFormatter, ReportModels)
+│   └── repository/             # Repositories (WorkoutRepository, AnalyticsRepository, ExerciseRepository, UserPreferencesRepository, UserRepository, PhysicalCheckRepository)
+├── di/                         # Hilt modules (DatabaseModule, NetworkModule)
 ├── ui/
 │   ├── components/
-│   │   ├── analytics/      # Charts, stat cards, consistency, body comp, personal bests
-│   │   ├── base/           # Design system primitives (GymCard, GymButton, etc.)
-│   │   ├── dialogs/        # Reusable dialogs (UpdateDialog, ImportConfirmation)
-│   │   ├── exercise/       # Exercise cards, cardio input, picker, rest timer, set log input
-│   │   ├── navbar/         # Bottom navigation bar and items (standard + floating)
-│   │   └── shared/         # Shared utilities (EmptyState, ImageEditor, ScreenHeader, etc.)
-│   ├── navigation/         # NavGraph, Routes
+│   │   ├── analytics/          # Charts, stat cards, consistency, body comp, personal bests (AnalyticsCharts, StatCard, ConsistencyCard, BodyCompositionCard, PersonalBestsSection, StrengthIndexCard)
+│   │   ├── base/               # Design system primitives (GymCard, GymButton, GymIconButton, GymInputField, GymLoadingIndicator)
+│   │   ├── dialogs/            # Reusable dialogs (UpdateDialog, ImportConfirmationDialog)
+│   │   ├── exercise/           # Exercise cards, cardio input, picker, rest timer, set log input (ExerciseEntryCard, ExerciseGroupHeader, CardioInputForm, ExercisePickerBottomSheet, RestTimerSection, WeightRepsInput, SetLogRow, ExerciseNavigation, SwapExerciseBottomSheet)
+│   │   ├── navbar/             # Bottom navigation bar and items (BottomNavBar, BottomNavItems, BottomBarManager, BottomNavBar_flo)
+│   │   └── shared/             # Shared utilities (EmptyState, ImageEditor, ScreenHeader, SwipeableCard, WorkoutShareCard, RoutineImagePicker)
+│   ├── navigation/             # NavGraph, Routes
 │   ├── screens/
-│   │   ├── analytics/      # Analytics dashboard, drag-drop state, models
-│   │   ├── compare/        # Session comparison
-│   │   ├── dashboard/      # Main dashboard
-│   │   ├── history/        # Session history, edit, filter bottom sheet
-│   │   ├── onboarding/     # Onboarding flow
-│   │   ├── physicalcheck/  # Physical checks (body progression, before/after slider, settings)
-│   │   ├── routines/       # Routine list, detail, builder, report, AI scan preview sheet
-│   │   ├── settings/       # App settings, workout settings, exercise customization, AI model manager
-│   │   └── workout/        # Workout execution
-│   ├── theme/              # Color, Shape, Type, Spacing, Theme, ResponsiveSize, ThemeColorStore
-│   └── util/               # DateFormatter
+│   │   ├── analytics/          # Analytics dashboard, drag-drop state, models (AnalyticsScreen, AnalyticsViewModel, AnalyticsModels, DragDropState)
+│   │   ├── compare/            # Session comparison (CompareSessionsScreen, CompareSessionsViewModel)
+│   │   ├── dashboard/          # Main dashboard (DashboardScreen, DashboardViewModel)
+│   │   ├── history/            # Session history, edit, filter bottom sheet (HistoryScreen, HistoryViewModel, EditWorkoutScreen, EditWorkoutViewModel, EditWorkoutDragDropState, HistoryFilterBottomSheet)
+│   │   ├── onboarding/         # Onboarding flow (OnboardingScreen, OnboardingViewModel)
+│   │   ├── physicalcheck/      # Physical checks (body progression, before/after slider, settings) (PhysicalCheckScreen, PhysicalCheckViewModel, PhysicalCheckCompareScreen, PhysicalCheckSettingsScreen, BeforeAfterSlider)
+│   │   ├── routines/           # Routine list, detail, builder, report, AI scan preview sheet (RoutineListScreen, RoutineDetailScreen, RoutineDetailViewModel, RoutinesViewModel, ReportScreen, ReportViewModel, AiScanPreviewSheet)
+│   │   ├── settings/           # App settings, workout settings, exercise customization, AI model manager (SettingsScreen, SettingsViewModel, WorkoutSettingsScreen, ExerciseCustomizationScreen, DonorsScreen)
+│   │   └── workout/            # Workout execution (WorkoutExecutionScreen, WorkoutViewModel)
+│   │   └── MainPagerScreen.kt
+│   ├── theme/                  # Color, Shape, Type, Spacing, Theme, ResponsiveSize, ThemeColorStore
+│   └── util/                   # DateFormatter
 ├── util/
 │   ├── AppLocaleManager.kt
 │   ├── BiometricHelper.kt
@@ -217,10 +218,10 @@ com/emanuel5014/trainable/
 │   ├── UpdateManager.kt
 │   ├── UriMigrationHelper.kt
 │   ├── WeightUnitConverter.kt
-│   ├── backup/             # AutoBackupWorker, BackupManager
-│   └── notification/       # TimerNotification, GymMembershipWorker
-├── webserver/              # Local HTTP server (Ktor), foreground service, server manager
-├── widget/                 # Glance widgets (TrainableWidget, WeeklyGoalWidget)
+│   ├── backup/                 # AutoBackupWorker, BackupManager
+│   └── notification/           # TimerNotificationHelper, TimerNotificationReceiver, GymMembershipWorker
+├── webserver/                  # Local HTTP server (Ktor), foreground service, server manager (LocalWebServer, LocalWebServerService, WebServerManager)
+├── widget/                     # Glance widgets (TrainableWidget, TrainableWidgetReceiver, WeeklyGoalWidget, WeeklyGoalWidgetReceiver)
 ├── MainActivity.kt
 └── GymTrackingApp.kt
 ```

@@ -788,4 +788,10 @@
     <string name="ai_download_notification_complete">KI-Modell erfolgreich heruntergeladen</string>
     <string name="ai_download_notification_failed">Download des KI-Modells fehlgeschlagen</string>
     <string name="ai_download_cancel">Abbrechen</string>
+    <string name="onboarding_ai_title">Lokaler KI-\nPlan-Scan.</string>
+    <string name="onboarding_ai_desc">Scanne Trainingspläne auf Papier und importiere Übungen automatisch mit 100% lokaler, privater KI.</string>
+    <string name="onboarding_ai_toggle_title">KI-Routinen-Scanner aktivieren</string>
+    <string name="onboarding_ai_toggle_desc">Verwendet ein lokales Modell, um Sätze, Wdh. und Übungen aus Fotos zu extrahieren.</string>
+    <string name="onboarding_ai_unsupported_desc">Dein Gerät erfüllt nicht die Mindestanforderungen (mind. 6 GB RAM) für lokale KI. Du kannst Trainingspläne weiterhin manuell erstellen.</string>
+    <string name="onboarding_ai_download_note">Du kannst das Modell jetzt oder jederzeit später in den Einstellungen herunterladen.</string>
 </resources>

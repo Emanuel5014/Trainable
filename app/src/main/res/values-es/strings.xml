@@ -784,4 +784,10 @@
     <string name="ai_download_notification_complete">Modelo IA descargado con éxito</string>
     <string name="ai_download_notification_failed">Error al descargar el modelo IA</string>
     <string name="ai_download_cancel">Cancelar</string>
+    <string name="onboarding_ai_title">Escaneo IA\nLocal.</string>
+    <string name="onboarding_ai_desc">Escanea rutinas en papel e importa ejercicios automáticamente con IA 100% local y privada.</string>
+    <string name="onboarding_ai_toggle_title">Activar escáner de rutinas IA</string>
+    <string name="onboarding_ai_toggle_desc">Usa un modelo local para extraer series, repeticiones y ejercicios de fotos.</string>
+    <string name="onboarding_ai_unsupported_desc">Tu dispositivo no cumple los requisitos mínimos (al menos 6 GB de RAM) para ejecutar IA local. Aún puedes crear y gestionar rutinas manualmente.</string>
+    <string name="onboarding_ai_download_note">Puedes descargar el modelo ahora o más tarde en Ajustes.</string>
 </resources>

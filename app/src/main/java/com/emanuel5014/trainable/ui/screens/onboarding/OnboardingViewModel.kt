@@ -6,6 +6,11 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.ExistingPeriodicWorkPolicy
+import com.emanuel5014.trainable.data.ai.AiModelStatus
+import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
+import com.emanuel5014.trainable.data.ai.ModelDownloadManager
+import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.local.entity.UserEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
@@ -14,9 +19,12 @@ import com.emanuel5014.trainable.util.backup.BackupManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,6 +33,9 @@ class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userPrefsRepository: UserPreferencesRepository,
     private val backupManager: BackupManager,
+    private val deviceCapabilityChecker: DeviceCapabilityChecker,
+    private val modelFileManager: ModelFileManager,
+    private val modelDownloadManager: ModelDownloadManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -36,6 +47,32 @@ class OnboardingViewModel @Inject constructor(
     val themePalette = userPrefsRepository.themePalette
     val themeStyle = userPrefsRepository.themeStyle
     val themeMode = userPrefsRepository.themeMode
+
+    val aiScanEnabled = userPrefsRepository.aiScanEnabled
+    val aiModelVariant = userPrefsRepository.aiModelVariant.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "e2b"
+    )
+    val aiDeviceSupported: Boolean = deviceCapabilityChecker.isSupported(context)
+
+    val aiModelStatus: StateFlow<AiModelStatus> = combine(
+        userPrefsRepository.aiModelVariant,
+        modelDownloadManager.activeDownloads,
+        modelFileManager.filesUpdatedTrigger
+    ) { variantId, downloads, _ ->
+        val variant = AiModelVariant.fromId(variantId)
+        val ongoing = downloads[variant.id]
+        when {
+            ongoing != null -> ongoing
+            modelFileManager.isDownloaded(variant) -> AiModelStatus.Ready
+            else -> AiModelStatus.NotDownloaded
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = AiModelStatus.NotDownloaded
+    )
 
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
@@ -65,6 +102,28 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             userPrefsRepository.setThemeMode(mode)
         }
+    }
+
+    fun setAiScanEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiScanEnabled(enabled)
+        }
+    }
+
+    fun setAiModelVariant(variantId: String) {
+        viewModelScope.launch {
+            userPrefsRepository.setAiModelVariant(variantId)
+        }
+    }
+
+    fun downloadAiModel() {
+        val variant = AiModelVariant.fromId(aiModelVariant.value)
+        modelDownloadManager.startDownload(variant)
+    }
+
+    fun cancelAiModelDownload() {
+        val variant = AiModelVariant.fromId(aiModelVariant.value)
+        modelDownloadManager.cancelDownload(variant)
     }
 
     fun clearStatus() {
@@ -97,7 +156,8 @@ class OnboardingViewModel @Inject constructor(
                 uri,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             )
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     suspend fun completeOnboarding(
@@ -120,7 +180,9 @@ class OnboardingViewModel @Inject constructor(
         dynamicColorSeed: Int? = null,
         themePalette: Int = 0,
         themeStyle: Int = 0,
-        themeMode: Int = 0
+        themeMode: Int = 0,
+        aiScanEnabled: Boolean = false,
+        aiModelVariant: String = "e2b"
     ) {
         val existingUser = userRepository.currentUser.firstOrNull()
 
@@ -164,6 +226,8 @@ class OnboardingViewModel @Inject constructor(
         }
         userPrefsRepository.setThemeStyle(themeStyle)
         userPrefsRepository.setThemeMode(themeMode)
+        userPrefsRepository.setAiScanEnabled(aiScanEnabled)
+        userPrefsRepository.setAiModelVariant(aiModelVariant)
         userPrefsRepository.setOnboardingCompleted(true)
 
         if (autoBackupEnabled) {

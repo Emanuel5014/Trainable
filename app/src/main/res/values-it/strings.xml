@@ -788,4 +788,10 @@
     <string name="ai_download_notification_complete">Modello AI scaricato con successo</string>
     <string name="ai_download_notification_failed">Download del modello AI non riuscito</string>
     <string name="ai_download_cancel">Annulla</string>
+    <string name="onboarding_ai_title">Scansione IA\nLocale.</string>
+    <string name="onboarding_ai_desc">Scansiona le schede di allenamento cartacee e importa gli esercizi automaticamente con l\'IA 100% locale e privata.</string>
+    <string name="onboarding_ai_toggle_title">Abilita Scanner Schede IA</string>
+    <string name="onboarding_ai_toggle_desc">Usa un modello locale per estrarre serie, ripetizioni ed esercizi dalle foto.</string>
+    <string name="onboarding_ai_unsupported_desc">Il tuo dispositivo non soddisfa i requisiti minimi (almeno 6 GB di RAM) per eseguire l\'IA locale. Potrai comunque creare e gestire le schede manualmente.</string>
+    <string name="onboarding_ai_download_note">Puoi scaricare il modello ora oppure in qualsiasi momento dalle Impostazioni.</string>
 </resources>
