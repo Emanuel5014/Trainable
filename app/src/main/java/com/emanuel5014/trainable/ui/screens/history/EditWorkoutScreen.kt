@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -59,10 +61,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,6 +74,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
@@ -108,29 +111,9 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
-
-private fun getMergedSupersetRange(index: Int, list: List<Any>): IntRange {
-    val currentEx = list.getOrNull(index) as? EditExerciseState ?: return index..index
-    val sid = currentEx.sets.firstOrNull()?.supersetId ?: return index..index
-
-    var start = index
-    while (start > 0) {
-        val prevEx = list[start - 1] as? EditExerciseState ?: break
-        if (prevEx.sets.firstOrNull()?.supersetId != sid) break
-        start--
-    }
-
-    var end = index
-    while (end < list.lastIndex) {
-        val nextEx = list[end + 1] as? EditExerciseState ?: break
-        if (nextEx.sets.firstOrNull()?.supersetId != sid) break
-        end++
-    }
-
-    return start..end
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,11 +131,22 @@ fun EditWorkoutScreen(
     }.collectAsState(initial = true)
 
     val localMergedItems = remember { mutableStateListOf<Any>() }
-    var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+    val dragDropState = rememberEditWorkoutDragDropState(
+        lazyListState = listState,
+        items = localMergedItems,
+        haptic = haptic,
+        hapticEnabled = hapticEnabled,
+        scope = scope,
+        onOrderChanged = { newOrder ->
+            viewModel.updateItemsOrder(newOrder)
+        }
+    )
 
     LaunchedEffect(state.exercises, state.cardioLogs) {
-        if (draggedItemIndex == null) {
+        if (!dragDropState.isDragging) {
             val items = mutableListOf<Pair<Int, Any>>()
             state.exercises.forEach { ex ->
                 val order = ex.sets.firstOrNull()?.ordineEsercizio ?: 0
@@ -160,7 +154,7 @@ fun EditWorkoutScreen(
             }
             state.cardioLogs.forEach { cardio ->
                 val order = cardio.ordineEsercizio
-                items.add(Pair(if (order > 0) order else Int.MAX_VALUE, cardio as Any))
+                items.add(Pair(order, cardio as Any))
             }
             items.sortBy { it.first }
             localMergedItems.clear()
@@ -179,6 +173,39 @@ fun EditWorkoutScreen(
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showDurationDialog by remember { mutableStateOf(false) }
+
+    val autoScrollThreshold = with(density) { 48.dp.toPx() }
+    val maxAutoScrollSpeed = with(density) { 12.dp.toPx() }
+
+    LaunchedEffect(dragDropState.isDragging) {
+        if (dragDropState.isDragging) {
+            while (true) {
+                val viewportHeight = listState.layoutInfo.viewportSize.height.toFloat()
+                if (viewportHeight > 0f) {
+                    val fingerY = dragDropState.fingerY
+                    if (fingerY < autoScrollThreshold) {
+                        val ratio = (1f - (fingerY / autoScrollThreshold)).coerceIn(0f, 1f)
+                        val speed = maxAutoScrollSpeed * ratio
+                        if (speed > 0.5f) {
+                            listState.scrollBy(-speed)
+                            dragDropState.onScroll(-speed)
+                            dragDropState.onDrag(fingerY)
+                        }
+                    } else if (fingerY > viewportHeight - autoScrollThreshold) {
+                        val distanceToBottom = viewportHeight - fingerY
+                        val ratio = (1f - (distanceToBottom / autoScrollThreshold)).coerceIn(0f, 1f)
+                        val speed = maxAutoScrollSpeed * ratio
+                        if (speed > 0.5f) {
+                            listState.scrollBy(speed)
+                            dragDropState.onScroll(speed)
+                            dragDropState.onDrag(fingerY)
+                        }
+                    }
+                }
+                delay(16)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -341,27 +368,44 @@ fun EditWorkoutScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
+                        .padding(paddingValues)
+                        .pointerInput(Unit) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { offset ->
+                                    dragDropState.onDragStart(offset)
+                                },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    dragDropState.onDrag(change.position.y)
+                                },
+                                onDragEnd = {
+                                    dragDropState.onDragEnd()
+                                },
+                                onDragCancel = {
+                                    dragDropState.onDragEnd()
+                                }
+                            )
+                        },
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    itemsIndexed(localMergedItems, key = { _, item ->
-                        when (item) {
-                            is EditExerciseState -> -item.exercise.id
-                            is CardioLogEntity -> item.id
-                            else -> 0
-                        }
-                    }) { index, item ->
-                        val currentDraggedIndex = draggedItemIndex
-                        val draggedRange = if (currentDraggedIndex != null) getMergedSupersetRange(currentDraggedIndex, localMergedItems) else null
-                        val isDragging = draggedRange != null && index in draggedRange
+                    itemsIndexed(localMergedItems, key = { _, item -> getWorkoutItemKey(item) }) { index, item ->
+                        val itemKey = getWorkoutItemKey(item)
+                        val isDragging = itemKey in dragDropState.draggedItemKeys
+                        val translationY = dragDropState.dragTranslationY(itemKey)
 
                         val animatedScale by animateFloatAsState(
                             targetValue = if (isDragging) 1.04f else 1f,
                             animationSpec = spring(stiffness = Spring.StiffnessMedium),
                             label = "exercise_drag_scale"
+                        )
+                        val animatedAlpha by animateFloatAsState(
+                            targetValue = if (dragDropState.isDragging && !isDragging) 0.65f else 1f,
+                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                            label = "exercise_drag_alpha"
                         )
                         val elevation by animateDpAsState(
                             targetValue = if (isDragging) 16.dp else 0.dp,
@@ -369,91 +413,27 @@ fun EditWorkoutScreen(
                             label = "exercise_drag_elevation"
                         )
 
-                        val itemKey = when (item) {
-                            is EditExerciseState -> -item.exercise.id
-                            is CardioLogEntity -> item.id
-                            else -> 0
-                        }
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .then(if (draggedItemIndex != null && !isDragging) Modifier.animateItem() else Modifier)
-                                .zIndex(if (isDragging) 10f else 1f)
+                                .then(
+                                    if (isDragging) Modifier
+                                    else Modifier.animateItem(
+                                        placementSpec = spring(
+                                            stiffness = Spring.StiffnessMediumLow,
+                                            dampingRatio = 0.85f
+                                        )
+                                    )
+                                )
+                                .zIndex(if (isDragging) 100f else 1f)
                                 .graphicsLayer {
-                                    translationY = if (isDragging) dragOffsetY else 0f
+                                    this.translationY = translationY
                                     scaleX = animatedScale
                                     scaleY = animatedScale
+                                    alpha = animatedAlpha
                                     shadowElevation = elevation.toPx()
                                     shape = Shapes.extraLarge
                                     clip = false
-                                }
-                                .pointerInput(itemKey) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            draggedItemIndex = index
-                                            dragOffsetY = 0f
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            dragOffsetY += dragAmount.y
-
-                                            val itemHeight = 160.dp.toPx()
-                                            val currentIdx = draggedItemIndex
-                                            if (currentIdx != null) {
-                                                val range = getMergedSupersetRange(currentIdx, localMergedItems)
-                                                val size = range.endInclusive - range.start + 1
-
-                                                if (dragOffsetY > 0 && range.endInclusive < localMergedItems.lastIndex) {
-                                                    val nextIndex = range.endInclusive + 1
-                                                    val nextRange = getMergedSupersetRange(nextIndex, localMergedItems)
-                                                    val nextSize = nextRange.endInclusive - nextRange.start + 1
-                                                    val threshold = (nextSize * itemHeight) / 2f
-
-                                                    if (dragOffsetY > threshold) {
-                                                        val draggedItems = localMergedItems.subList(range.start, range.endInclusive + 1).toList()
-                                                        repeat(size) {
-                                                            localMergedItems.removeAt(range.start)
-                                                        }
-                                                        val insertIndex = range.start + nextSize
-                                                        localMergedItems.addAll(insertIndex, draggedItems)
-
-                                                        draggedItemIndex = insertIndex + (currentIdx - range.start)
-                                                        dragOffsetY -= nextSize * itemHeight
-                                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    }
-                                                } else if (dragOffsetY < 0 && range.start > 0) {
-                                                    val prevIndex = range.start - 1
-                                                    val prevRange = getMergedSupersetRange(prevIndex, localMergedItems)
-                                                    val prevSize = prevRange.endInclusive - prevRange.start + 1
-                                                    val threshold = -(prevSize * itemHeight) / 2f
-
-                                                    if (dragOffsetY < threshold) {
-                                                        val draggedItems = localMergedItems.subList(range.start, range.endInclusive + 1).toList()
-                                                        repeat(size) {
-                                                            localMergedItems.removeAt(range.start)
-                                                        }
-                                                        val insertIndex = prevRange.start
-                                                        localMergedItems.addAll(insertIndex, draggedItems)
-
-                                                        draggedItemIndex = insertIndex + (currentIdx - range.start)
-                                                        dragOffsetY += prevSize * itemHeight
-                                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        onDragEnd = {
-                                            viewModel.updateItemsOrder(localMergedItems.toList())
-                                            draggedItemIndex = null
-                                            dragOffsetY = 0f
-                                        },
-                                        onDragCancel = {
-                                            draggedItemIndex = null
-                                            dragOffsetY = 0f
-                                        }
-                                    )
                                 }
                         ) {
                             when (item) {
