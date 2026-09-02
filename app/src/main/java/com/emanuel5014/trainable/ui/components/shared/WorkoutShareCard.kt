@@ -125,7 +125,7 @@ fun WorkoutShareCard(
 
     val totalExercises = exercisesWithSets.size + sessionDetails.cardio.size
     val totalSets = sessionDetails.sets.size
-    val totalWeight = sessionDetails.sets.sumOf { it.setLog.pesoSollevato.toDouble() }.toFloat()
+    val totalWeight = sessionDetails.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
     val durationMs = sessionDetails.session.durationMs
 
     Column(
