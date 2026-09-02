@@ -794,4 +794,12 @@
     <string name="onboarding_ai_toggle_desc">Usa un modello locale per estrarre serie, ripetizioni ed esercizi dalle foto.</string>
     <string name="onboarding_ai_unsupported_desc">Il tuo dispositivo non soddisfa i requisiti minimi (almeno 6 GB di RAM) per eseguire l\'IA locale. Potrai comunque creare e gestire le schede manualmente.</string>
     <string name="onboarding_ai_download_note">Puoi scaricare il modello ora oppure in qualsiasi momento dalle Impostazioni.</string>
+    <string name="ai_scan_empty_state_title">Costruisci la tua scheda</string>
+    <string name="ai_scan_empty_state_desc">Scansiona una foto della tua scheda cartacea per importare gli esercizi in automatico, oppure aggiungili manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Scansiona scheda con IA</string>
+    <string name="ai_scan_empty_state_add_manual">Aggiungi a mano</string>
+    <string name="ai_scan_confirm_dialog_title">Aggiungere gli esercizi?</string>
+    <string name="ai_scan_confirm_dialog_desc">Vuoi confermare e aggiungere i %1$d esercizi rilevati alla tua scheda?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Conferma e aggiungi</string>
+    <string name="ai_scan_confirm_dialog_review">Ricontrolla</string>
 </resources>

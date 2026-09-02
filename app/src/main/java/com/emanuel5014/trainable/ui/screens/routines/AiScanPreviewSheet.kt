@@ -44,6 +44,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +61,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -150,9 +152,10 @@ fun AiScanPreviewSheet(
     var isAddingNewExercise by remember { mutableStateOf(false) }
     var saveImageToPlan by remember { mutableStateOf(imageUri != null) }
     var showFullscreenPhoto by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     // System BackHandler ensuring the back button always dismisses cleanly
-    val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise
+    val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise || showConfirmDialog
     BackHandler(enabled = !isChildSheetOpen) {
         onDismiss()
     }
@@ -297,7 +300,7 @@ fun AiScanPreviewSheet(
 
                         ActionButtonsSection(
                             onDismiss = onDismiss,
-                            onConfirm = { onConfirm(editableEntries.toList(), saveImageToPlan) },
+                            onConfirm = { showConfirmDialog = true },
                             canConfirm = editableEntries.isNotEmpty()
                         )
                     }
@@ -345,12 +348,60 @@ fun AiScanPreviewSheet(
 
                     ActionButtonsSection(
                         onDismiss = onDismiss,
-                        onConfirm = { onConfirm(editableEntries.toList(), saveImageToPlan) },
+                        onConfirm = { showConfirmDialog = true },
                         canConfirm = editableEntries.isNotEmpty()
                     )
                 }
             }
         }
+    }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.ai_scan_confirm_dialog_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.ai_scan_confirm_dialog_desc, editableEntries.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmDialog = false
+                        onConfirm(editableEntries.toList(), saveImageToPlan)
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_confirm_dialog_confirm),
+                        color = Primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_confirm_dialog_review),
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            shape = Shapes.large
+        )
     }
 
     // Fullscreen Image Dialog

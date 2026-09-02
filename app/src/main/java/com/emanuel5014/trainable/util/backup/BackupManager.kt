@@ -355,18 +355,6 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.PHYSICAL_CHECK_VALIDATION_IV] = jsonObject.getString("physical_check_validation_iv")
                                             if (jsonObject.has("editable_preset_exercises"))
                                                 prefs[UserPreferencesRepository.EDITABLE_PRESET_EXERCISES] = jsonObject.getBoolean("editable_preset_exercises")
-                                            if (jsonObject.has("workout_timer_enabled"))
-                                                prefs[UserPreferencesRepository.WORKOUT_TIMER_ENABLED] = jsonObject.getBoolean("workout_timer_enabled")
-                                            if (jsonObject.has("inline_exercise_modifications_enabled"))
-                                                prefs[UserPreferencesRepository.INLINE_EXERCISE_MODIFICATIONS_ENABLED] = jsonObject.getBoolean("inline_exercise_modifications_enabled")
-                                            if (jsonObject.has("timer_finished_lockscreen_vibration_duration"))
-                                                prefs[UserPreferencesRepository.TIMER_FINISHED_LOCKSCREEN_VIBRATION_DURATION] = jsonObject.getInt("timer_finished_lockscreen_vibration_duration")
-                                            if (jsonObject.has("ai_scan_enabled"))
-                                                prefs[UserPreferencesRepository.AI_SCAN_ENABLED] = jsonObject.getBoolean("ai_scan_enabled")
-                                            if (jsonObject.has("ai_model_variant") && !jsonObject.isNull("ai_model_variant"))
-                                                prefs[UserPreferencesRepository.AI_MODEL_VARIANT] = jsonObject.getString("ai_model_variant")
-                                            if (jsonObject.has("ai_resource_analytics_enabled"))
-                                                prefs[UserPreferencesRepository.AI_RESOURCE_ANALYTICS_ENABLED] = jsonObject.getBoolean("ai_resource_analytics_enabled")
                                         }
                                     }
                                 } catch (e: Exception) {

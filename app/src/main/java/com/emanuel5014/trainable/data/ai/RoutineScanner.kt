@@ -86,48 +86,60 @@ class RoutineScanner @Inject constructor(
         val modelFile = modelFileManager.getModelFile(variant)
         check(modelFileManager.isDownloaded(variant)) { "AI model not downloaded" }
 
-        onPhase(ScanPhase.LOADING_MODEL)
-        engine.ensureReady(modelFile)
+        try {
+            onPhase(ScanPhase.LOADING_MODEL)
+            engine.ensureReady(modelFile)
 
-        onPhase(ScanPhase.READING_SHEET)
-        val result = engine.scanRoutineSheet(
-            imageUri = imageUri,
-            prompt = RoutineScanPrompt.build(languageCode, categories),
-            onStreamUpdate = onStreamUpdate
-        )
-
-        onPhase(ScanPhase.PARSING)
-        // 1. Try parsing from main output
-        var parsed = RoutineScanParser.parse(result.output)
-
-        // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
-        if (parsed.isEmpty() && result.thinking.isNotBlank()) {
-            parsed = RoutineScanParser.parse(result.thinking)
-        }
-
-        // 3. Fallback: try parsing combined output and thinking
-        if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
-            parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
-        }
-
-        val matcher = ExerciseMatcher(catalog, languageCode)
-        return parsed.map { item ->
-            val match = matcher.resolve(item.name)
-            // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
-            val suggestedCategory = match?.categoria
-                ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
-                ?: matcher.suggestCategory(item.name, categories)
-
-            ScannedExerciseEntry(
-                rawName = item.name,
-                exerciseId = match?.id,
-                matchedName = match?.nome,
-                suggestedCategory = suggestedCategory,
-                sets = item.sets.coerceIn(1, 30),
-                reps = item.reps.ifBlank { "8-12" },
-                restSeconds = item.restSeconds.coerceAtLeast(0),
-                cardioMinutes = item.cardioMinutes?.takeIf { it > 0 }
+            onPhase(ScanPhase.READING_SHEET)
+            val result = engine.scanRoutineSheet(
+                imageUri = imageUri,
+                prompt = RoutineScanPrompt.build(languageCode, categories),
+                onStreamUpdate = onStreamUpdate
             )
+
+            onPhase(ScanPhase.PARSING)
+            // 1. Try parsing from main output
+            var parsed = RoutineScanParser.parse(result.output)
+
+            // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
+            if (parsed.isEmpty() && result.thinking.isNotBlank()) {
+                parsed = RoutineScanParser.parse(result.thinking)
+            }
+
+            // 3. Fallback: try parsing combined output and thinking
+            if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
+                parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
+            }
+
+            val matcher = ExerciseMatcher(catalog, languageCode)
+            return parsed.map { item ->
+                val match = matcher.resolve(item.name)
+                // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
+                val suggestedCategory = match?.categoria
+                    ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
+                    ?: matcher.suggestCategory(item.name, categories)
+
+                ScannedExerciseEntry(
+                    rawName = item.name,
+                    exerciseId = match?.id,
+                    matchedName = match?.nome,
+                    suggestedCategory = suggestedCategory,
+                    sets = item.sets.coerceIn(1, 30),
+                    reps = item.reps.ifBlank { "8-12" },
+                    restSeconds = item.restSeconds.coerceAtLeast(0),
+                    cardioMinutes = item.cardioMinutes?.takeIf { it > 0 }
+                )
+            }
+        } finally {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                engine.release()
+            }
+        }
+    }
+
+    suspend fun release() {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+            engine.release()
         }
     }
 }

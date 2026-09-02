@@ -7,7 +7,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -96,6 +103,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -106,6 +116,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -442,15 +454,6 @@ fun RoutineDetailScreen(
                             )
                         },
                         actions = {
-                            if (aiScanAvailable) {
-                                GymIconButton(
-                                    icon = Icons.Rounded.DocumentScanner,
-                                    onClick = { showScanSourceSheet = true },
-                                    containerColor = SurfaceContainerHigh,
-                                    contentColor = Primary,
-                                    description = "Scan Routine Sheet"
-                                )
-                            }
                             GymIconButton(
                                 icon = Icons.Rounded.Edit,
                                 onClick = { openRoutineEditSheet() },
@@ -582,27 +585,105 @@ fun RoutineDetailScreen(
 
                 if (localExercises.isEmpty()) {
                     item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 80.dp, bottom = 40.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = stringResource(R.string.no_exercises_in_routine),
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnSurface
-                            )
-                            Spacer(modifier = Modifier.height(Spacing.xtraSmall))
-                            Text(
-                                text = stringResource(R.string.tap_plus_to_add),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = OnSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 48.dp)
-                            )
+                        if (aiScanAvailable) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = ResponsiveSize.horizontalPadding)
+                                    .padding(top = 24.dp, bottom = 40.dp),
+                                shape = Shapes.medium,
+                                color = SurfaceContainerHigh,
+                                tonalElevation = 1.dp
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Primary.copy(alpha = 0.12f),
+                                        modifier = Modifier.size(56.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.DocumentScanner,
+                                                contentDescription = null,
+                                                tint = Primary,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.ai_scan_empty_state_title),
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)
+                                            ),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = OnSurface,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.ai_scan_empty_state_desc),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = OnSurfaceVariant,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
+                                    GymButton(
+                                        onClick = { showScanSourceSheet = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        containerColor = Primary,
+                                        contentColor = OnPrimary
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.DocumentScanner,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.ai_scan_empty_state_scan_button),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 80.dp, bottom = 40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.no_exercises_in_routine),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = OnSurface
+                                )
+                                Spacer(modifier = Modifier.height(Spacing.xtraSmall))
+                                Text(
+                                    text = stringResource(R.string.tap_plus_to_add),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = OnSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 48.dp)
+                                )
+                            }
                         }
                     }
                 } else {
@@ -1497,7 +1578,50 @@ private fun AiScanningOverlay(
         }
     }
 
-    val scrimColor = com.emanuel5014.trainable.ui.theme.Surface
+    val infiniteTransition = rememberInfiniteTransition(label = "ai_scan_glow_transition")
+
+    val angle1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 10000, easing = LinearEasing)
+        ),
+        label = "glow_angle_1"
+    )
+
+    val angle2 by infiniteTransition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13000, easing = LinearEasing)
+        ),
+        label = "glow_angle_2"
+    )
+
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_pulse_scale"
+    )
+
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.65f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_pulse_alpha"
+    )
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val scrimColor = MaterialTheme.colorScheme.surface
         .copy(alpha = if (isDark) 0.65f else 0.85f)
 
     Box(
@@ -1510,14 +1634,90 @@ private fun AiScanningOverlay(
                 blurRadius = 24.dp
                 tints = listOf(HazeTint(scrimColor))
                 noiseFactor = 0.05f
+            }
+            .drawBehind {
+                val width = size.width
+                val height = size.height
+                val centerX = width / 2f
+                val centerY = height / 2f
+
+                // Orb 1: Primary color orbital glow
+                val rad1 = Math.toRadians(angle1.toDouble())
+                val offset1 = Offset(
+                    x = centerX + (cos(rad1) * width * 0.30f).toFloat(),
+                    y = centerY + (sin(rad1) * height * 0.22f).toFloat()
+                )
+                val radius1 = (width * 0.72f * pulseScale).coerceAtLeast(160f)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = if (isDark) 0.40f * pulseAlpha else 0.28f * pulseAlpha),
+                            primaryColor.copy(alpha = if (isDark) 0.15f * pulseAlpha else 0.09f * pulseAlpha),
+                            Color.Transparent
+                        ),
+                        center = offset1,
+                        radius = radius1
+                    ),
+                    center = offset1,
+                    radius = radius1
+                )
+
+                // Orb 2: Tertiary / Accent color orbital glow (counter-rotation)
+                val rad2 = Math.toRadians(angle2.toDouble())
+                val offset2 = Offset(
+                    x = centerX + (cos(rad2) * width * 0.34f).toFloat(),
+                    y = centerY + (sin(rad2) * height * 0.25f).toFloat()
+                )
+                val radius2 = (width * 0.65f * (2.1f - pulseScale)).coerceAtLeast(160f)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            tertiaryColor.copy(alpha = if (isDark) 0.35f * pulseAlpha else 0.22f * pulseAlpha),
+                            tertiaryColor.copy(alpha = if (isDark) 0.12f * pulseAlpha else 0.07f * pulseAlpha),
+                            Color.Transparent
+                        ),
+                        center = offset2,
+                        radius = radius2
+                    ),
+                    center = offset2,
+                    radius = radius2
+                )
+
+                // Orb 3: Central breathing ambient aura behind card
+                val radiusCenter = width * 0.52f * pulseScale
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = if (isDark) 0.25f * pulseAlpha else 0.16f * pulseAlpha),
+                            secondaryColor.copy(alpha = if (isDark) 0.10f * pulseAlpha else 0.05f * pulseAlpha),
+                            Color.Transparent
+                        ),
+                        center = Offset(centerX, centerY),
+                        radius = radiusCenter
+                    ),
+                    center = Offset(centerX, centerY),
+                    radius = radiusCenter
+                )
             },
         contentAlignment = Alignment.Center
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = SurfaceContainerHigh,
-            tonalElevation = 3.dp,
-            shadowElevation = if (isDark) 12.dp else 0.dp,
+            color = SurfaceContainerHigh.copy(alpha = if (isDark) 0.92f else 0.96f),
+            tonalElevation = 4.dp,
+            shadowElevation = if (isDark) 16.dp else 4.dp,
+            border = BorderStroke(
+                width = 1.dp,
+                brush = Brush.sweepGradient(
+                    colors = listOf(
+                        primaryColor.copy(alpha = 0.5f),
+                        tertiaryColor.copy(alpha = 0.35f),
+                        primaryColor.copy(alpha = 0.15f),
+                        tertiaryColor.copy(alpha = 0.45f),
+                        primaryColor.copy(alpha = 0.5f)
+                    )
+                )
+            ),
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .animateContentSize()

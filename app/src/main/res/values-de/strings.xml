@@ -794,4 +794,12 @@
     <string name="onboarding_ai_toggle_desc">Verwendet ein lokales Modell, um Sätze, Wdh. und Übungen aus Fotos zu extrahieren.</string>
     <string name="onboarding_ai_unsupported_desc">Dein Gerät erfüllt nicht die Mindestanforderungen (mind. 6 GB RAM) für lokale KI. Du kannst Trainingspläne weiterhin manuell erstellen.</string>
     <string name="onboarding_ai_download_note">Du kannst das Modell jetzt oder jederzeit später in den Einstellungen herunterladen.</string>
+    <string name="ai_scan_empty_state_title">Erstelle deinen Plan</string>
+    <string name="ai_scan_empty_state_desc">Scanne ein Foto deines Papiertrainingsplans, um Übungen automatisch zu importieren, oder füge sie manuell hinzu.</string>
+    <string name="ai_scan_empty_state_scan_button">Plan mit KI scannen</string>
+    <string name="ai_scan_empty_state_add_manual">Manuell hinzufügen</string>
+    <string name="ai_scan_confirm_dialog_title">Übungen hinzufügen?</string>
+    <string name="ai_scan_confirm_dialog_desc">Möchtest du die %1$d erkannten Übungen zu deinem Plan hinzufügen?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Bestätigen &amp; hinzufügen</string>
+    <string name="ai_scan_confirm_dialog_review">Überprüfen</string>
 </resources>

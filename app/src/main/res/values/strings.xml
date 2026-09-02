@@ -794,4 +794,12 @@
     <string name="onboarding_ai_toggle_desc">Uses a local model to parse sets, reps, and exercises from photos.</string>
     <string name="onboarding_ai_unsupported_desc">Your device does not meet the hardware requirements (at least 6 GB RAM) for local AI execution. You can still create and manage routines manually.</string>
     <string name="onboarding_ai_download_note">You can download the model now or anytime later in Settings.</string>
+    <string name="ai_scan_empty_state_title">Build your routine</string>
+    <string name="ai_scan_empty_state_desc">Scan a photo of your paper training sheet to import exercises automatically, or add them manually.</string>
+    <string name="ai_scan_empty_state_scan_button">Scan sheet with AI</string>
+    <string name="ai_scan_empty_state_add_manual">Add manually</string>
+    <string name="ai_scan_confirm_dialog_title">Add scanned exercises?</string>
+    <string name="ai_scan_confirm_dialog_desc">Are you sure you want to add the %1$d scanned exercises to your routine?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirm &amp; Add</string>
+    <string name="ai_scan_confirm_dialog_review">Review</string>
 </resources>

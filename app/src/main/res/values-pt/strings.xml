@@ -794,4 +794,12 @@
     <string name="onboarding_ai_toggle_desc">Usa um modelo local para extrair séries, repetições e exercícios de fotos.</string>
     <string name="onboarding_ai_unsupported_desc">O seu dispositivo não cumpre os requisitos mínimos (pelo menos 6 GB de RAM) para IA local. Pode criar e gerir rotinas manualmente.</string>
     <string name="onboarding_ai_download_note">Pode transferir o modelo agora ou mais tarde nas Definições.</string>
+    <string name="ai_scan_empty_state_title">Constrói o teu plano</string>
+    <string name="ai_scan_empty_state_desc">Digitaliza uma foto da tua folha de treino em papel para importar exercícios automaticamente, ou adiciona-os manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Digitalizar folha com IA</string>
+    <string name="ai_scan_empty_state_add_manual">Adicionar manualmente</string>
+    <string name="ai_scan_confirm_dialog_title">Adicionar exercícios digitalizados?</string>
+    <string name="ai_scan_confirm_dialog_desc">Quer adicionar os %1$d exercícios detetados ao teu plano?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirmar e adicionar</string>
+    <string name="ai_scan_confirm_dialog_review">Rever</string>
 </resources>

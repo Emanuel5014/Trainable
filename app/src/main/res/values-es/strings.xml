@@ -790,4 +790,12 @@
     <string name="onboarding_ai_toggle_desc">Usa un modelo local para extraer series, repeticiones y ejercicios de fotos.</string>
     <string name="onboarding_ai_unsupported_desc">Tu dispositivo no cumple los requisitos mínimos (al menos 6 GB de RAM) para ejecutar IA local. Aún puedes crear y gestionar rutinas manualmente.</string>
     <string name="onboarding_ai_download_note">Puedes descargar el modelo ahora o más tarde en Ajustes.</string>
+    <string name="ai_scan_empty_state_title">Construye tu rutina</string>
+    <string name="ai_scan_empty_state_desc">Escanea una foto de tu hoja de entrenamiento en papel para importar ejercicios automáticamente, o añádelos manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Escanear hoja con IA</string>
+    <string name="ai_scan_empty_state_add_manual">Añadir manualmente</string>
+    <string name="ai_scan_confirm_dialog_title">¿Añadir ejercicios escaneados?</string>
+    <string name="ai_scan_confirm_dialog_desc">¿Quieres añadir los %1$d ejercicios detectados a tu rutina?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirmar y añadir</string>
+    <string name="ai_scan_confirm_dialog_review">Revisar</string>
 </resources>

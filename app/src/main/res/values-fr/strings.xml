@@ -794,4 +794,12 @@
     <string name="onboarding_ai_toggle_desc">Utilise un modèle local pour extraire séries, répétitions et exercices des photos.</string>
     <string name="onboarding_ai_unsupported_desc">Votre appareil ne dispose pas de la configuration requise (au moins 6 Go de RAM) pour l\'IA locale. Vous pouvez toujours créer vos séances manuellement.</string>
     <string name="onboarding_ai_download_note">Vous pouvez télécharger le modèle maintenant ou plus tard dans les Paramètres.</string>
+    <string name="ai_scan_empty_state_title">Construis ta séance</string>
+    <string name="ai_scan_empty_state_desc">Scanne une photo de ta feuille d\'entraînement papier pour importer les exercices automatiquement, ou ajoute-les manuellement.</string>
+    <string name="ai_scan_empty_state_scan_button">Scanner la feuille avec l\'IA</string>
+    <string name="ai_scan_empty_state_add_manual">Ajouter manuellement</string>
+    <string name="ai_scan_confirm_dialog_title">Ajouter les exercices scannés ?</string>
+    <string name="ai_scan_confirm_dialog_desc">Veux-tu ajouter les %1$d exercices détectés à ta séance ?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirmer et ajouter</string>
+    <string name="ai_scan_confirm_dialog_review">Vérifier</string>
 </resources>

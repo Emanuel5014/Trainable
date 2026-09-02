@@ -219,11 +219,26 @@ class RoutineDetailViewModel @Inject constructor(
         scanJob = null
         _aiScanState.value = AiScanState.Idle
         _aiScanStream.value = AiScanStreamState()
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            routineScanner.release()
+        }
     }
 
     fun dismissScanResult() {
         _aiScanState.value = AiScanState.Idle
         _aiScanStream.value = AiScanStreamState()
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            routineScanner.release()
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        scanJob?.cancel()
+        scanJob = null
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            routineScanner.release()
+        }
     }
 
     fun applyScannedExercises(entries: List<ScannedExerciseEntry>) {
