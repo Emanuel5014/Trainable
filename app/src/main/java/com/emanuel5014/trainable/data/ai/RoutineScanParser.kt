@@ -68,8 +68,8 @@ object RoutineScanParser {
         val cleanName = cleanExerciseName(rawName)
         if (cleanName.isBlank()) return null
 
-        val sets = parseSets(obj)
         val reps = parseReps(obj)
+        val sets = parseSets(obj, reps)
         val rest = parseRest(obj)
         val cardio = parseCardioMinutes(obj, cleanName)
         val category = obj.optString("category")
@@ -94,39 +94,73 @@ object RoutineScanParser {
             .trim(' ', '"', '\'', '`', ',', '.', ';')
     }
 
-    private fun parseSets(obj: JSONObject): Int {
-        // If it's a direct number
+    private fun parseSets(obj: JSONObject, reps: String): Int {
+        var explicitSets: Int? = null
         if (obj.has("sets")) {
             val v = obj.opt("sets")
-            if (v is Number) return v.toInt().coerceIn(1, 30)
-            if (v is String) {
-                val num = Regex("""\d+""").find(v)?.value?.toIntOrNull()
-                if (num != null) return num.coerceIn(1, 30)
+            if (v is Number) explicitSets = v.toInt()
+            else if (v is String) {
+                explicitSets = Regex("""\d+""").find(v)?.value?.toIntOrNull()
             }
         }
-        if (obj.has("serie")) {
+        if (explicitSets == null && obj.has("serie")) {
             val v = obj.opt("serie")
-            if (v is Number) return v.toInt().coerceIn(1, 30)
-            if (v is String) {
-                val num = Regex("""\d+""").find(v)?.value?.toIntOrNull()
-                if (num != null) return num.coerceIn(1, 30)
+            if (v is Number) explicitSets = v.toInt()
+            else if (v is String) {
+                explicitSets = Regex("""\d+""").find(v)?.value?.toIntOrNull()
             }
         }
-        return 3
+
+        // Deduce sets count if reps has a pyramidal sequence (e.g. "8-6-4-2" -> 4 sets)
+        val numbers = Regex("""\d+""").findAll(reps).mapNotNull { it.value.toIntOrNull() }.toList()
+        if (numbers.size >= 3) {
+            // If explicitSets is missing or defaulted to less than number of stages, use stages count
+            if (explicitSets == null || explicitSets < numbers.size) {
+                return numbers.size.coerceIn(1, 30)
+            }
+        } else if (numbers.size == 2 && numbers[0] > numbers[1] && (explicitSets == null || explicitSets < 2)) {
+            // E.g. "8-6" (descending 2 stages)
+            return 2
+        }
+
+        return (explicitSets ?: 3).coerceIn(1, 30)
     }
 
     private fun parseReps(obj: JSONObject): String {
-        if (obj.has("reps")) {
+        val raw = if (obj.has("reps")) {
             val v = obj.opt("reps")
-            if (v is String && v.isNotBlank()) return v.trim()
-            if (v is Number) return v.toString()
-        }
-        if (obj.has("ripetizioni")) {
+            if (v is String && v.isNotBlank()) v.trim()
+            else if (v is Number) v.toString()
+            else null
+        } else if (obj.has("ripetizioni")) {
             val v = obj.opt("ripetizioni")
-            if (v is String && v.isNotBlank()) return v.trim()
-            if (v is Number) return v.toString()
+            if (v is String && v.isNotBlank()) v.trim()
+            else if (v is Number) v.toString()
+            else null
+        } else null
+
+        if (raw != null) {
+            return cleanRepsString(raw)
         }
         return "8-12"
+    }
+
+    fun cleanRepsString(raw: String): String {
+        var reps = raw.trim().trim('"', '\'', '`')
+        if (reps.isBlank()) return "8-12"
+
+        // If it's a multi-number sequence separated by slashes, commas, dots, or spaces (e.g. "8/6/4/2", "12, 10, 8, 6", "8 6 4 2")
+        if ((reps.contains("/") || reps.contains(",") || reps.contains(" ") || (reps.contains(".") && !reps.contains(".."))) && !reps.contains("+")) {
+            val numbers = Regex("""\d+""").findAll(reps).map { it.value }.toList()
+            if (numbers.size >= 2) {
+                return numbers.joinToString("-")
+            }
+        }
+
+        return reps
+            .replace(Regex("""\s*-\s*"""), "-")
+            .replace(Regex("""\s*\+\s*"""), "+")
+            .replace(Regex("""\s*/\s*"""), "-")
     }
 
     private fun parseRest(obj: JSONObject): Int {
@@ -197,30 +231,64 @@ object RoutineScanParser {
         val list = mutableListOf<ParsedExercise>()
         val lines = text.lines()
 
-        // Pattern matching: "1. Panca Piana 4x8-10 90s" or "- Squat: 3x12 rec 120"
-        val lineRegex = Regex("""(?:^|\n)\s*(?:[\d+\.\-\*\#\)]+\s*)?([A-Za-zÀ-ÿ\s\/\-\'\(\)]+?)\s*[:\-]?\s*(\d+)\s*[xX*]\s*([\d\-]+)(?:[^\d]*?(\d+)\s*(?:s|sec|min|'|"))?""")
+        // Match with explicit multiplier "4x 8-6-4-2" or "3x 8-10":
+        val explicitSetsRegex = Regex("""(?:^|\n)\s*(?:[\d+\.\-\*\#\)]+\s*)?([A-Za-zÀ-ÿ\s\/\-\'\(\)]+?)\s*[:\-]?\s*(\d+)\s*[xX*]\s*([0-9\-\/\,\+\s]+?)(?:[^\d\n]*?(\d+)\s*(?:s|sec|min|'|"))?(?:\n|$)""")
+        // Match without multiplier "Panca Piana 8-6-4-2 rec 90s":
+        val directRepsRegex = Regex("""(?:^|\n)\s*(?:[\d+\.\-\*\#\)]+\s*)?([A-Za-zÀ-ÿ\s\/\-\'\(\)]+?)\s*[:\-]?\s*(\d+(?:[\-\/\,\s]\d+){1,6})(?:[^\d\n]*?(\d+)\s*(?:s|sec|min|'|"))?(?:\n|$)""")
 
         for (line in lines) {
-            val match = lineRegex.find(line.trim()) ?: continue
-            val name = cleanExerciseName(match.groupValues[1])
-            if (name.length < 3) continue
+            val trimmed = line.trim()
+            if (trimmed.length < 4) continue
 
-            val sets = match.groupValues[2].toIntOrNull() ?: 3
-            val reps = match.groupValues[3].ifBlank { "8-12" }
-            val rest = match.groupValues.getOrNull(4)?.toIntOrNull() ?: 120
+            val explicitMatch = explicitSetsRegex.find(trimmed)
+            if (explicitMatch != null) {
+                val name = cleanExerciseName(explicitMatch.groupValues[1])
+                if (name.length >= 3) {
+                    val rawReps = explicitMatch.groupValues[3]
+                    val reps = cleanRepsString(rawReps)
+                    val rawSets = explicitMatch.groupValues[2].toIntOrNull() ?: 3
+                    val numbers = Regex("""\d+""").findAll(reps).toList()
+                    val sets = if (numbers.size >= 3 && rawSets < numbers.size) numbers.size else rawSets
+                    val rest = explicitMatch.groupValues.getOrNull(4)?.toIntOrNull() ?: 120
+                    val cardio = if (listOf("treadmill", "tapis", "cyclette", "bike").any { name.lowercase().contains(it) }) 20 else null
 
-            val cardio = if (listOf("treadmill", "tapis", "cyclette", "bike").any { name.lowercase().contains(it) }) 20 else null
+                    list.add(
+                        ParsedExercise(
+                            name = name,
+                            sets = sets.coerceIn(1, 30),
+                            reps = reps,
+                            restSeconds = rest.coerceIn(0, 600),
+                            cardioMinutes = cardio,
+                            category = null
+                        )
+                    )
+                    continue
+                }
+            }
 
-            list.add(
-                ParsedExercise(
-                    name = name,
-                    sets = sets.coerceIn(1, 30),
-                    reps = reps,
-                    restSeconds = rest.coerceIn(0, 600),
-                    cardioMinutes = cardio,
-                    category = null
-                )
-            )
+            val directMatch = directRepsRegex.find(trimmed)
+            if (directMatch != null) {
+                val name = cleanExerciseName(directMatch.groupValues[1])
+                if (name.length >= 3) {
+                    val rawReps = directMatch.groupValues[2]
+                    val reps = cleanRepsString(rawReps)
+                    val numbers = Regex("""\d+""").findAll(reps).mapNotNull { it.value.toIntOrNull() }.toList()
+                    val sets = if (numbers.size >= 3) numbers.size else if (numbers.size == 2 && numbers[0] > numbers[1]) 2 else 3
+                    val rest = directMatch.groupValues.getOrNull(3)?.toIntOrNull() ?: 120
+                    val cardio = if (listOf("treadmill", "tapis", "cyclette", "bike").any { name.lowercase().contains(it) }) 20 else null
+
+                    list.add(
+                        ParsedExercise(
+                            name = name,
+                            sets = sets.coerceIn(1, 30),
+                            reps = reps,
+                            restSeconds = rest.coerceIn(0, 600),
+                            cardioMinutes = cardio,
+                            category = null
+                        )
+                    )
+                }
+            }
         }
         return list
     }

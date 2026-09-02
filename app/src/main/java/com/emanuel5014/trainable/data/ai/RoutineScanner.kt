@@ -34,26 +34,66 @@ You are an expert fitness AI specialized in reading and extracting gym workout r
 Analyze the provided image and extract ALL exercises, sets, repetitions, recovery rest, and cardio duration.
 
 EXTRACTION INSTRUCTIONS:
-- name: The exercise name as visible (e.g. "Panca Piana", "Lat Machine", "Squat", "Leg Press", "Curl Manubri", "Alzate Laterali"). If gym shorthand is used (e.g. "P. Piana", "Lat Mach.", "Press 45", "Alz. Lat."), write the full recognizable exercise name.
-- sets: Number of sets (integer, e.g. 3 or 4). If not specified, default to 3.
-- reps: Repetitions target as string (e.g. "8-12", "10", "6-8-10", "12").
-- rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"" into seconds (e.g. 90, 120). Default to 120 if not specified.
-- cardio_minutes: If the entry is a cardio activity (Tapis Roulant / Treadmill, Cyclette / Bike, Ellittica / Elliptical, Vogatore / Rower, Stairmaster), the duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
+- name: The exercise name as visible on the card (e.g. "Panca Piana", "Lat Machine", "Squat", "Leg Press", "Curl Manubri", "Alzate Laterali", "Spinte Manubri", "Pulley", "Croci"). If gym shorthand is used (e.g. "P. Piana", "Lat Mach.", "Press 45", "Alz. Lat.", "Trazioni alla sbarra"), expand into the full recognizable exercise name.
+- sets: Total number of sets (integer, e.g. 3, 4, 5).
+  * If a pyramidal scheme is listed (e.g. "8-6-4-2" or "12-10-8-6"), count the stages (e.g. 4 numbers = 4 sets).
+  * If written as "4x 8-6-4-2" or "4x8" or "3x10-12", sets is the first number (e.g. 4 or 3).
+  * If unspecified, default to 3.
+- reps: Repetitions target as a string. CRITICAL ACCURACY RULES:
+  * PYRAMIDAL / MULTI-SET SCHEMES: If an exercise has a descending or ascending series of numbers like "8-6-4-2", "12-10-8-6", "10-8-6-4", "4-6-8-10", "12-10-8", "8-6-4", you MUST extract the COMPLETE string with ALL numbers (e.g. "8-6-4-2"). NEVER truncate or shorten it to only two numbers (do NOT write "8-6" instead of "8-6-4-2").
+  * RANGES: e.g. "8-12", "8-10", "10-12", "6-8", "12-15".
+  * FIXED REPS: e.g. "10", "12", "8".
+  * SPECIAL TECHNIQUES: e.g. "6+6+6" (stripping / drop set), "MAX" (to failure).
+  * Format multi-number sequences using dashes (e.g. "8-6-4-2", not slashes or commas).
+- rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"", "1 min 30 s", "2'" into total seconds (e.g. 90, 120). Default to 120 if not specified.
+- cardio_minutes: If the entry is a cardio activity (Tapis Roulant / Treadmill, Cyclette / Bike, Ellittica / Elliptical, Vogatore / Rower, Stairmaster, Cyclette Recline), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
 - category: The target muscle group category (choose from: $categoriesStr).
 
 OUTPUT FORMAT RULES:
-- Output MUST be a valid JSON array of objects.
-- Do NOT output extra conversational text before or after the JSON.
+- Output MUST be ONLY a valid JSON array of objects.
+- Do NOT output extra conversational text, commentary, or markdown outside the JSON block.
 
 JSON Schema Example:
 [
   {
     "name": "Panca Piana",
     "sets": 4,
-    "reps": "8-10",
+    "reps": "8-6-4-2",
     "rest_seconds": 90,
     "cardio_minutes": null,
     "category": "Petto"
+  },
+  {
+    "name": "Lat Machine",
+    "sets": 4,
+    "reps": "12-10-8-6",
+    "rest_seconds": 90,
+    "cardio_minutes": null,
+    "category": "Dorso"
+  },
+  {
+    "name": "Squat",
+    "sets": 3,
+    "reps": "8-12",
+    "rest_seconds": 120,
+    "cardio_minutes": null,
+    "category": "Gambe"
+  },
+  {
+    "name": "Alzate Laterali",
+    "sets": 3,
+    "reps": "6+6+6",
+    "rest_seconds": 60,
+    "cardio_minutes": null,
+    "category": "Spalle"
+  },
+  {
+    "name": "Tapis Roulant",
+    "sets": 1,
+    "reps": "1",
+    "rest_seconds": 0,
+    "cardio_minutes": 20,
+    "category": "Cardio"
   }
 ]
 """.trim()
