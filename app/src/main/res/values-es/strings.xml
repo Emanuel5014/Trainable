@@ -227,9 +227,19 @@
     <string name="warmup_timer_settings_desc">Mostrar botón de temporizador de calentamiento durante el entrenamiento</string>
     <string name="workout_timer">Temporizador de entrenamiento</string>
     <string name="workout_timer_desc">Seguimiento de la duración total del entrenamiento</string>
+    <string name="auto_stop_cardio_at_target">Parada automática de cardio en el objetivo</string>
+    <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
+    <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
+    <string name="auto_stop_time_weight_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo de la serie</string>
     <string name="inline_exercise_modifications">Modificaciones en línea</string>
     <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
     <string name="workout_settings">Entrenamiento</string>
+    <string name="workout_settings_desc">Temporizador, paradas automáticas y opciones de ejercicios</string>
+    <string name="ai_settings_desc">Escaneo sin conexión y modelo</string>
+    <string name="personalization_desc">Tema, colores y apariencia</string>
+    <string name="notifications_settings_desc">Alertas de temporizador, calentamiento y membresía</string>
+    <string name="personalization_title">Personalización</string>
+    <string name="notifications_title">Notificaciones</string>
     <string name="workout_duration">Duración del entrenamiento</string>
     <string name="add_duration">Añadir duración</string>
     <string name="hours">Horas</string>
@@ -625,6 +635,10 @@
     <string name="widget_action_start">INICIAR</string>
     <string name="widget_action_open_app">ABRIR APP</string>
     <string name="widget_start_routine">Iniciar una rutina</string>
+    <string name="widget_trainable_label">Entrenamiento</string>
+    <string name="widget_trainable_description">Entrenamiento sugerido e inicio rápido</string>
+    <string name="widget_weekly_goal_label">Objetivo Semanal</string>
+    <string name="widget_weekly_goal_description">Seguimiento del progreso semanal</string>
 
     <!-- Common -->
     <string name="ok">OK</string>

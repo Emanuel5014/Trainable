@@ -23,6 +23,9 @@ import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseCustomizationScreen
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsScreen
+import com.emanuel5014.trainable.ui.screens.settings.AiSettingsScreen
+import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsScreen
+import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.DonorsScreen
 import com.emanuel5014.trainable.ui.screens.workout.WorkoutExecutionScreen
 import com.emanuel5014.trainable.ui.screens.physicalcheck.PhysicalCheckScreen
@@ -55,6 +58,9 @@ fun MainNavGraph(
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToWorkoutSettings = { navController.navigate(WorkoutSettings) },
+                onNavigateToAiSettings = { navController.navigate(AiSettings) },
+                onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
+                onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
                 onNavigateToDonors = { navController.navigate(Donors) }
             )
         }
@@ -72,6 +78,21 @@ fun MainNavGraph(
             WorkoutSettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToExerciseCustomization = { navController.navigate(ExerciseCustomization) }
+            )
+        }
+        composable<AiSettings> {
+            AiSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<PersonalizationSettings> {
+            PersonalizationSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<NotificationSettings> {
+            NotificationSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable<WorkoutExecution> {

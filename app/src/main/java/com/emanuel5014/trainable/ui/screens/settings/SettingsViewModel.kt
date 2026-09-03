@@ -242,6 +242,18 @@ class SettingsViewModel @Inject constructor(
         initialValue = false
     )
 
+    val autoStopCardioAtTarget = userPrefsRepository.autoStopCardioAtTarget.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val autoStopTimeWeightAtTarget = userPrefsRepository.autoStopTimeWeightAtTarget.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val customCategories = exerciseRepository.getCustomCategories().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -529,6 +541,18 @@ class SettingsViewModel @Inject constructor(
     fun setInlineExerciseModificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setInlineExerciseModificationsEnabled(enabled)
+        }
+    }
+
+    fun setAutoStopCardioAtTarget(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAutoStopCardioAtTarget(enabled)
+        }
+    }
+
+    fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAutoStopTimeWeightAtTarget(enabled)
         }
     }
 

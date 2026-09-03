@@ -14,9 +14,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -54,6 +56,8 @@ fun WorkoutSettingsScreen(
 ) {
     val workoutTimerEnabled by viewModel.workoutTimerEnabled.collectAsState()
     val inlineExerciseModificationsEnabled by viewModel.inlineExerciseModificationsEnabled.collectAsState()
+    val autoStopCardioAtTarget by viewModel.autoStopCardioAtTarget.collectAsState()
+    val autoStopTimeWeightAtTarget by viewModel.autoStopTimeWeightAtTarget.collectAsState()
 
     Scaffold(
         containerColor = Surface,
@@ -161,6 +165,78 @@ fun WorkoutSettingsScreen(
                         SettingsSwitch(
                             checked = inlineExerciseModificationsEnabled,
                             onCheckedChange = { viewModel.setInlineExerciseModificationsEnabled(it) }
+                        )
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.DirectionsRun,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.auto_stop_cardio_at_target),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.auto_stop_cardio_at_target_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = autoStopCardioAtTarget,
+                            onCheckedChange = { viewModel.setAutoStopCardioAtTarget(it) }
+                        )
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.auto_stop_time_weight_at_target),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.auto_stop_time_weight_at_target_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = autoStopTimeWeightAtTarget,
+                            onCheckedChange = { viewModel.setAutoStopTimeWeightAtTarget(it) }
                         )
                     }
 

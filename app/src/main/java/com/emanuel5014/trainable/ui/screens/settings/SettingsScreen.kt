@@ -5,11 +5,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,20 +21,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Analytics
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
-import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
@@ -57,21 +49,16 @@ import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -80,7 +67,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,11 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -103,8 +85,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.BuildConfig
 import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
-import com.emanuel5014.trainable.data.ai.AiModelStatus
-import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -113,15 +93,10 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
-import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
-import com.emanuel5014.trainable.ui.theme.fromHSV
-import com.emanuel5014.trainable.ui.theme.getPalettePreviewColors
-import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
-import com.emanuel5014.trainable.ui.theme.toHSV
 import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -129,13 +104,15 @@ import kotlin.system.exitProcess
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToWorkoutSettings: () -> Unit,
+    onNavigateToAiSettings: () -> Unit,
+    onNavigateToPersonalizationSettings: () -> Unit,
+    onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDonors: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
     val weeklyGoal by viewModel.weeklyGoal.collectAsState()
     val hapticEnabled by viewModel.hapticEnabled.collectAsState()
-    val haptic = LocalHapticFeedback.current
     val autoBackupEnabled by viewModel.autoBackupEnabled.collectAsState()
     val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
     val autoBackupFolderUri by viewModel.autoBackupFolderUri.collectAsState()
@@ -143,27 +120,9 @@ fun SettingsScreen(
     val autoBackupIncludeImages by viewModel.autoBackupIncludeImages.collectAsState()
     val backupStatus by viewModel.backupStatus.collectAsState()
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
-    val dynamicColor by viewModel.dynamicColor.collectAsState()
-    val dynamicColorSeed by viewModel.dynamicColorSeed.collectAsState()
-    val wallpaperColors by viewModel.wallpaperColors.collectAsState()
-    val themePalette by viewModel.themePalette.collectAsState()
-    val themeStyle by viewModel.themeStyle.collectAsState()
-    val themeMode by viewModel.themeMode.collectAsState()
-    val timerNotificationsEnabled by viewModel.timerNotificationsEnabled.collectAsState()
-    val timerFinishedLockscreenVibrationDuration by viewModel.timerFinishedLockscreenVibrationDuration.collectAsState()
-    val gymMembershipExpiryNotificationsEnabled by viewModel.gymMembershipExpiryNotificationsEnabled.collectAsState()
-    val gymMembershipExpiryNotificationDaysBefore by viewModel.gymMembershipExpiryNotificationDaysBefore.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
-    val warmupTimerEnabled by viewModel.warmupTimerEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
-    val aiScanEnabled by viewModel.aiScanEnabled.collectAsState()
-    val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
-    val aiModelVariant by viewModel.aiModelVariant.collectAsState()
-    val aiModelStatus by viewModel.aiModelStatus.collectAsState()
-    val aiDeviceSupported = viewModel.aiDeviceSupported
-
-    val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
 
     val latestRelease by viewModel.latestRelease.collectAsState()
     val isDownloading by viewModel.isDownloading.collectAsState()
@@ -176,40 +135,12 @@ fun SettingsScreen(
     var easterEggClicks by remember { mutableIntStateOf(0) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
-    var showCustomColorDialog by remember { mutableStateOf(false) }
-    var savedSeedForRestore by remember { mutableStateOf<Int?>(null) }
-    var savedStyleForRestore by remember { mutableIntStateOf(0) }
     var includeImagesChoice by remember { mutableStateOf(false) }
-    var pendingNotificationType by remember { mutableStateOf<String?>(null) }
-    var showDeleteModelDialog by remember { mutableStateOf(false) }
-
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            when (pendingNotificationType) {
-                "timer" -> viewModel.setTimerNotificationsEnabled(true)
-                "membership" -> viewModel.setGymMembershipExpiryNotificationsEnabled(true)
-            }
-        } else {
-            Toast.makeText(context, "Permission denied for notifications", Toast.LENGTH_SHORT).show()
-        }
-        pendingNotificationType = null
-    }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearStatus()
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            val granted = context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            if (!granted && timerNotificationsEnabled) {
-                viewModel.setTimerNotificationsEnabled(false)
-            }
         }
     }
 
@@ -450,60 +381,6 @@ fun SettingsScreen(
                 TextButton(onClick = { showResetDialog = false }) {
                     Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
-            }
-        )
-    }
-
-    if (showDeleteModelDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteModelDialog = false },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(
-                    stringResource(R.string.ai_model_delete_confirm_title),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurface
-                )
-            },
-            text = {
-                Text(
-                    stringResource(R.string.ai_model_delete_confirm_desc),
-                    color = OnSurfaceVariant
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteModelDialog = false
-                        viewModel.deleteAiModel()
-                    }
-                ) {
-                    Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteModelDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
-                }
-            }
-        )
-    }
-
-    if (showCustomColorDialog) {
-        CustomColorPickerDialog(
-            initialColor = savedSeedForRestore?.let { Color(it) },
-            initialStyle = savedStyleForRestore,
-            onDismiss = {
-                if (savedSeedForRestore != null) {
-                    viewModel.setDynamicColorSeed(savedSeedForRestore)
-                    viewModel.setThemeStyle(savedStyleForRestore)
-                }
-                showCustomColorDialog = false
-            },
-            onApply = { colorSeed, style ->
-                viewModel.setDynamicColorSeed(colorSeed)
-                viewModel.setThemeStyle(style)
-                showCustomColorDialog = false
             }
         )
     }
@@ -939,286 +816,43 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(stringResource(R.string.workout_settings), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.workout_timer_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(R.string.workout_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
-                    }
-                }
-            }
 
-            SettingsSection(title = stringResource(R.string.ai_section_title)) {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToAiSettings() },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.DocumentScanner, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                Icon(
+                                    imageVector = Icons.Rounded.DocumentScanner,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.ai_scan_toggle), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(
-                                        if (!aiDeviceSupported) stringResource(R.string.ai_device_unsupported)
-                                        else stringResource(R.string.ai_scan_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant
-                                    )
+                                    Text(stringResource(R.string.ai_section_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.ai_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = aiScanEnabled && aiDeviceSupported,
-                                enabled = aiDeviceSupported,
-                                onCheckedChange = { viewModel.setAiScanEnabled(it) }
-                            )
-                        }
-
-                        if (aiDeviceSupported && aiScanEnabled) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            val selectedVariant = AiModelVariant.fromId(aiModelVariant)
-
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(stringResource(R.string.ai_model_variant), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(SurfaceContainerHighest)
-                                        .padding(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    AiModelVariant.entries.forEach { variant ->
-                                        Text(
-                                            text = variant.displayName,
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(if (selectedVariant == variant) Primary else Color.Transparent)
-                                                .clickable { viewModel.setAiModelVariant(variant.id) }
-                                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                                            color = if (selectedVariant == variant) OnPrimary else OnSurfaceVariant,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = stringResource(R.string.ai_model_requirements, selectedVariant.sizeLabel, selectedVariant.requiredRamGb),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant
-                                )
-                            }
-
-                            when (val status = aiModelStatus) {
-                                is AiModelStatus.Downloading -> {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                stringResource(R.string.ai_model_downloading, (status.progress * 100).toInt()),
-                                                style = MaterialTheme.typography.labelLarge,
-                                                color = Primary,
-                                                fontWeight = FontWeight.ExtraBold
-                                            )
-                                            TextButton(onClick = { viewModel.cancelAiModelDownload() }) {
-                                                Text(
-                                                    stringResource(R.string.ai_download_cancel).uppercase(),
-                                                    color = Error,
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                            }
-                                        }
-                                        LinearWavyProgressIndicator(
-                                            progress = { status.progress },
-                                            modifier = Modifier.fillMaxWidth(),
-                                        )
-                                    }
-                                }
-                                is AiModelStatus.Ready -> {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                stringResource(R.string.ai_model_ready),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = OnSurface
-                                            )
-                                        }
-                                        TextButton(onClick = { showDeleteModelDialog = true }) {
-                                            Text(
-                                                stringResource(R.string.ai_model_delete).uppercase(),
-                                                color = Error,
-                                                fontWeight = FontWeight.ExtraBold
-                                            )
-                                        }
-                                    }
-                                }
-                                is AiModelStatus.Error -> {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text(status.message, style = MaterialTheme.typography.bodySmall, color = Error)
-                                        GymButton(
-                                            onClick = { viewModel.downloadAiModel() },
-                                            containerColor = Primary.copy(alpha = 0.1f),
-                                            contentColor = Primary,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            Text(stringResource(R.string.ai_model_download_retry))
-                                        }
-                                    }
-                                }
-                                AiModelStatus.NotDownloaded -> {
-                                    GymButton(
-                                        onClick = { viewModel.downloadAiModel() },
-                                        containerColor = Primary.copy(alpha = 0.1f),
-                                        contentColor = Primary,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
-                                    }
-                                }
-                            }
-
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Icon(
-                                        Icons.Rounded.Analytics,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(
-                                            stringResource(R.string.ai_resource_analytics_toggle),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                        Text(
-                                            stringResource(R.string.ai_resource_analytics_desc),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = OnSurfaceVariant
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                                SettingsSwitch(
-                                    checked = aiResourceAnalyticsEnabled,
-                                    onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
-                                )
-                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
 
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(SurfaceContainerHighest.copy(alpha = 0.5f))
-                                .border(1.dp, OutlineVariant.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
-                                .padding(12.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Primary.copy(alpha = 0.15f))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "BETA",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Primary
-                                    )
-                                }
-                                Text(
-                                    text = stringResource(R.string.ai_disclaimer_beta),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            SettingsSection(title = stringResource(R.string.personalization)) {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        var showThemeModeDialog by remember { mutableStateOf(false) }
-
-                        if (showThemeModeDialog) {
-                            AlertDialog(
-                                onDismissRequest = { showThemeModeDialog = false },
-                                containerColor = SurfaceContainerHigh,
-                                title = { Text(stringResource(R.string.theme_mode), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-                                text = {
-                                    Column {
-                                        LanguageOption(
-                                            title = stringResource(R.string.theme_mode_system),
-                                            isSelected = themeMode == 0,
-                                            onClick = {
-                                                viewModel.setThemeMode(0)
-                                                showThemeModeDialog = false
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.theme_mode_light),
-                                            isSelected = themeMode == 1,
-                                            onClick = {
-                                                viewModel.setThemeMode(1)
-                                                showThemeModeDialog = false
-                                            }
-                                        )
-                                        LanguageOption(
-                                            title = stringResource(R.string.theme_mode_dark),
-                                            isSelected = themeMode == 2,
-                                            onClick = {
-                                                viewModel.setThemeMode(2)
-                                                showThemeModeDialog = false
-                                            }
-                                        )
-                                    }
-                                },
-                                confirmButton = {
-                                    TextButton(onClick = { showThemeModeDialog = false }) {
-                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                                    }
-                                }
-                            )
-                        }
-
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { showThemeModeDialog = true },
+                                .clickable { onNavigateToPersonalizationSettings() },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -1231,15 +865,8 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(
-                                        when (themeMode) {
-                                            0 -> stringResource(R.string.theme_mode_system)
-                                            1 -> stringResource(R.string.theme_mode_light)
-                                            else -> stringResource(R.string.theme_mode_dark)
-                                        },
-                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                                    )
+                                    Text(stringResource(R.string.personalization_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.personalization_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
@@ -1248,228 +875,9 @@ fun SettingsScreen(
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    val isDynamicColorSupported = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-                                    Text(stringResource(R.string.dynamic_color), style = MaterialTheme.typography.titleMedium, color = if (isDynamicColorSupported) OnSurface else OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
-                                    Text(
-                                        if (isDynamicColorSupported) stringResource(R.string.dynamic_color_desc) else stringResource(R.string.dynamic_color_not_supported),
-                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S,
-                                onCheckedChange = { viewModel.setDynamicColor(it) },
-                                enabled = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
-                            )
-                        }
-
-                        if (dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && wallpaperColors.isNotEmpty()) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                        Text(stringResource(R.string.app_palette_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                    }
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(56.dp)
-                                                .clip(CircleShape)
-                                                .background(SurfaceContainerHighest)
-                                                .clickable {
-                                                    viewModel.setDynamicColorSeed(null)
-                                                    viewModel.setThemeStyle(0)
-                                                }
-                                                .padding(if (dynamicColorSeed == null) 4.dp else 0.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (dynamicColorSeed == null) {
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize().background(Primary.copy(alpha = 0.2f), CircleShape),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        Icons.Rounded.RestartAlt,
-                                                        contentDescription = stringResource(R.string.system_default),
-                                                        tint = Primary,
-                                                        modifier = Modifier.size(28.dp)
-                                                    )
-                                                }
-                                            } else {
-                                                Icon(
-                                                    Icons.Rounded.RestartAlt,
-                                                    contentDescription = stringResource(R.string.system_default),
-                                                    tint = OnSurfaceVariant,
-                                                    modifier = Modifier.size(28.dp)
-                                                )
-                                            }
-                                        }
-                                        Text(stringResource(R.string.palette_default), style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == null) Primary else OnSurfaceVariant, maxLines = 1)
-                                    }
-
-                                    val primarySeed = wallpaperColors.first()
-                                    val styleNames = listOf(
-                                        stringResource(R.string.style_tonal_spot),
-                                        stringResource(R.string.style_vibrant),
-                                        stringResource(R.string.style_expressive),
-                                        stringResource(R.string.style_neutral),
-                                        stringResource(R.string.style_fruit_salad)
-                                    )
-                                    (0..4).forEach { styleIndex ->
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            PalettePreviewCircle(
-                                                colors = getSeedPreviewColors(primarySeed, styleIndex),
-                                                isSelected = dynamicColorSeed == primarySeed && themeStyle == styleIndex,
-                                                onClick = {
-                                                    viewModel.setDynamicColorSeed(primarySeed)
-                                                    viewModel.setThemeStyle(styleIndex)
-                                                }
-                                            )
-                                            Text(styleNames[styleIndex], style = MaterialTheme.typography.labelSmall, color = if (dynamicColorSeed == primarySeed && themeStyle == styleIndex) Primary else OnSurfaceVariant, maxLines = 1)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (!dynamicColor || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(stringResource(R.string.app_palette), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                        Text(stringResource(R.string.app_palette_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                    }
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val paletteNames = listOf(
-                                        stringResource(R.string.palette_default),
-                                        stringResource(R.string.palette_blue),
-                                        stringResource(R.string.palette_green),
-                                        stringResource(R.string.palette_red),
-                                        stringResource(R.string.palette_purple),
-                                        stringResource(R.string.palette_orange),
-                                        stringResource(R.string.palette_pink),
-                                        stringResource(R.string.palette_teal),
-                                        stringResource(R.string.palette_monochrome)
-                                    )
-                                    (0..8).forEach { index ->
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            PalettePreviewCircle(
-                                                colors = getPalettePreviewColors(index),
-                                                isSelected = themePalette == index,
-                                                onClick = { viewModel.setThemePalette(index) }
-                                            )
-                                            Text(paletteNames[index], style = MaterialTheme.typography.labelSmall, color = if (themePalette == index) Primary else OnSurfaceVariant, maxLines = 1)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    savedSeedForRestore = dynamicColorSeed
-                                    savedStyleForRestore = themeStyle
-                                    viewModel.setDynamicColorSeed(null)
-                                    viewModel.setThemeStyle(0)
-                                    showCustomColorDialog = true
-                                },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Palette,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.custom_color), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-                                    if (hasCustomColor) {
-                                        val styleName = when (themeStyle) {
-                                            1 -> stringResource(R.string.style_vibrant)
-                                            2 -> stringResource(R.string.style_expressive)
-                                            3 -> stringResource(R.string.style_neutral)
-                                            4 -> stringResource(R.string.style_fruit_salad)
-                                            else -> stringResource(R.string.style_tonal_spot)
-                                        }
-                                        Text(styleName, style = MaterialTheme.typography.bodySmall, color = Primary, maxLines = 1)
-                                    } else {
-                                        Text(stringResource(R.string.pick_theme_color), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant, maxLines = 2)
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            if (hasCustomColor) {
-                                val previewColors = getSeedPreviewColors(dynamicColorSeed!!, themeStyle)
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    PalettePreviewCircle(
-                                        colors = previewColors,
-                                        isSelected = false,
-                                        onClick = {}
-                                    )
-                                    TextButton(
-                                        onClick = {
-                                            viewModel.setDynamicColorSeed(null)
-                                            viewModel.setThemeStyle(0)
-                                        },
-                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                                    ) {
-                                        Text(stringResource(R.string.reset), color = OnSurfaceVariant, style = MaterialTheme.typography.labelSmall)
-                                    }
-                                }
-                            } else {
-                                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                            }
-                        }
-
-                    }
-                }
-            }
-
-            SettingsSection(title = stringResource(R.string.notifications)) {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
+                                .clickable { onNavigateToNotificationSettings() },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -1482,178 +890,11 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.timer_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.timer_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(R.string.notifications_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.notifications_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = timerNotificationsEnabled,
-                                onCheckedChange = { enabled ->
-                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        pendingNotificationType = "timer"
-                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                    } else {
-                                        viewModel.setTimerNotificationsEnabled(enabled)
-                                    }
-                                }
-                            )
-                        }
-
-                        if (timerNotificationsEnabled) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Vibration,
-                                            contentDescription = null,
-                                            tint = Primary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(16.dp))
-                                        Column {
-                                            Text(stringResource(R.string.lockscreen_vibration), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                            Text(stringResource(R.string.lockscreen_vibration_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                        }
-                                    }
-                                    Text(
-                                        text = if (timerFinishedLockscreenVibrationDuration == 0) {
-                                            stringResource(R.string.vibration_default)
-                                        } else {
-                                            stringResource(R.string.vibration_seconds, timerFinishedLockscreenVibrationDuration)
-                                        },
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Primary,
-                                        fontWeight = FontWeight.Black,
-                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                    )
-                                }
-
-                                var lastHapticSliderValue by remember { mutableIntStateOf(-1) }
-
-                                Slider(
-                                    value = timerFinishedLockscreenVibrationDuration.toFloat(),
-                                    onValueChange = {
-                                        val newValue = it.toInt()
-                                        if (newValue != lastHapticSliderValue) {
-                                            lastHapticSliderValue = newValue
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        }
-                                        viewModel.setTimerFinishedLockscreenVibrationDuration(newValue)
-                                    },
-                                    valueRange = 0f..30f,
-                                    steps = 29,
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Primary,
-                                        activeTrackColor = Primary,
-                                        inactiveTrackColor = SurfaceContainerHighest,
-                                        activeTickColor = Color.Transparent,
-                                        inactiveTickColor = Color.Transparent
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Timer,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.warmup_timer), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.warmup_timer_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = warmupTimerEnabled,
-                                onCheckedChange = { viewModel.setWarmupTimerEnabled(it) }
-                            )
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.CreditCard,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(stringResource(R.string.gym_membership_notifications), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.gym_membership_notifications_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = gymMembershipExpiryNotificationsEnabled,
-                                onCheckedChange = { enabled ->
-                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        pendingNotificationType = "membership"
-                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                    } else {
-                                        viewModel.setGymMembershipExpiryNotificationsEnabled(enabled)
-                                    }
-                                }
-                            )
-                        }
-
-                        if (gymMembershipExpiryNotificationsEnabled) {
-                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                    Icon(Icons.Rounded.Flag, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column {
-                                        Text(stringResource(R.string.notify_days_before), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                        Text(stringResource(R.string.notify_days_before_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                    }
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(onClick = { if (gymMembershipExpiryNotificationDaysBefore > 1) viewModel.setGymMembershipExpiryNotificationDaysBefore(gymMembershipExpiryNotificationDaysBefore - 1) }) {
-                                        Icon(Icons.Rounded.RemoveCircleOutline, contentDescription = "Decrease", tint = OnSurfaceVariant)
-                                    }
-                                    Text(
-                                        text = gymMembershipExpiryNotificationDaysBefore.toString(),
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = Primary,
-                                        fontWeight = FontWeight.Black,
-                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                    )
-                                    IconButton(onClick = { if (gymMembershipExpiryNotificationDaysBefore < 30) viewModel.setGymMembershipExpiryNotificationDaysBefore(gymMembershipExpiryNotificationDaysBefore + 1) }) {
-                                        Icon(Icons.Rounded.AddCircleOutline, contentDescription = "Increase", tint = OnSurfaceVariant)
-                                    }
-                                }
-                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
                     }
                 }
@@ -1963,289 +1204,6 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
-}
-
-@Composable
-private fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            color = Primary,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 1.sp
-        )
-        content()
-    }
-}
-
-@Composable
-private fun LanguageOption(
-    title: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = OnSurface
-        )
-        if (isSelected) {
-            Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
-        }
-    }
-}
-
-@Composable
-internal fun SettingsSwitch(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true
-) {
-    Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        enabled = enabled,
-        thumbContent = if (checked) {
-            {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                    tint = Primary
-                )
-            }
-        } else {
-            null
-        }
-    )
-}
-
-@Composable
-private fun PalettePreviewCircle(
-    colors: List<Color>,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(56.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) Primary.copy(alpha = 0.2f) else Color.Transparent)
-            .clickable { onClick() }
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                if (colors.size == 1) {
-                    drawCircle(color = colors[0])
-                } else {
-                    val primary = colors.getOrElse(0) { Color.Gray }
-                    val secondary = colors.getOrElse(1) { primary.copy(alpha = 0.7f) }
-                    val tertiary = colors.getOrElse(2) { primary.copy(alpha = 0.5f) }
-                    val neutral = colors.getOrElse(3) { primary.copy(alpha = 0.3f) }
-
-                    // Top-left quadrant
-                    drawArc(
-                        color = primary,
-                        startAngle = 180f,
-                        sweepAngle = 90f,
-                        useCenter = true
-                    )
-                    // Top-right quadrant
-                    drawArc(
-                        color = secondary,
-                        startAngle = 270f,
-                        sweepAngle = 90f,
-                        useCenter = true
-                    )
-                    // Bottom-right quadrant
-                    drawArc(
-                        color = tertiary,
-                        startAngle = 0f,
-                        sweepAngle = 90f,
-                        useCenter = true
-                    )
-                    // Bottom-left quadrant
-                    drawArc(
-                        color = neutral,
-                        startAngle = 90f,
-                        sweepAngle = 90f,
-                        useCenter = true
-                    )
-                }
-            }
-        }
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Rounded.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CustomColorPickerDialog(
-    initialColor: Color?,
-    initialStyle: Int,
-    onDismiss: () -> Unit,
-    onApply: (colorSeed: Int, style: Int) -> Unit
-) {
-    val defaultHue = initialColor?.toHSV()?.get(0) ?: 220f
-    var hue by remember { mutableFloatStateOf(defaultHue) }
-    var selectedStyle by remember { mutableIntStateOf(initialStyle) }
-
-    val currentColor = remember(hue) { Color.fromHSV(hue, 0.8f, 0.9f) }
-    val seedArgb = remember(currentColor) { currentColor.toArgb() }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceContainerHigh,
-        title = {
-            Text(stringResource(R.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-        },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(currentColor),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "#${seedArgb.toString(16).padStart(8, '0').substring(2).uppercase()}",
-                        color = if (currentColor.let { c -> c.red * 0.299f + c.green * 0.587f + c.blue * 0.114f > 0.5f } ) Color.Black else Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                HueSlider(
-                    hue = hue,
-                    onHueChange = { hue = it },
-                    currentColor = currentColor
-                )
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        (0..4).forEach { styleIndex ->
-                            PalettePreviewCircle(
-                                colors = getSeedPreviewColors(seedArgb, styleIndex),
-                                isSelected = selectedStyle == styleIndex,
-                                onClick = { selectedStyle = styleIndex }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onApply(seedArgb, selectedStyle) }) {
-                Text(stringResource(R.string.apply).uppercase(), color = Primary)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
-        }
-    )
-}
-
-@Composable
-private fun HueSlider(
-    hue: Float,
-    onHueChange: (Float) -> Unit,
-    currentColor: Color
-) {
-    Column {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.hue), style = MaterialTheme.typography.labelLarge, color = OnSurfaceVariant)
-            Text("${hue.toInt()}°", style = MaterialTheme.typography.labelLarge, color = OnSurface)
-        }
-
-        val rainbowColors = remember {
-            listOf(
-                Color(0xFFFF0000),
-                Color(0xFFFF8800),
-                Color(0xFFFFFF00),
-                Color(0xFF00FF00),
-                Color(0xFF00CBFF),
-                Color(0xFF0055FF),
-                Color(0xFF8800FF),
-                Color(0xFFFF00FF),
-                Color(0xFFFF0000),
-            )
-        }
-
-        val rainbowStops = remember {
-            listOf(0f, 30f / 360f, 60f / 360f, 120f / 360f, 180f / 360f, 240f / 360f, 280f / 360f, 300f / 360f, 1f)
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = rainbowColors,
-                            startX = 0f,
-                            endX = Float.POSITIVE_INFINITY
-                        )
-                    )
-                    .align(Alignment.Center)
-            )
-
-            Slider(
-                value = hue,
-                onValueChange = onHueChange,
-                valueRange = 0f..360f,
-                modifier = Modifier.fillMaxSize(),
-                colors = SliderDefaults.colors(
-                    thumbColor = currentColor,
-                    activeTrackColor = Color.Transparent,
-                    inactiveTrackColor = Color.Transparent,
-                )
-            )
         }
     }
 }

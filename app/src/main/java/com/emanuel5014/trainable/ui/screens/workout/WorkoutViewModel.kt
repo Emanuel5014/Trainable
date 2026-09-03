@@ -71,6 +71,8 @@ data class WorkoutState(
     val setTimerPaused: Boolean = false,
     val setTimerStartedAt: Long? = null,
     val setTimerBaseSeconds: Int = 0,
+    val autoStopCardioAtTarget: Boolean = false,
+    val autoStopTimeWeightAtTarget: Boolean = false,
     val sessionStartTime: Long? = null
 ) {
     val currentExercise: WorkoutExerciseState?
@@ -246,6 +248,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.hapticEnabled.collect { enabled ->
                 _state.update { it.copy(hapticEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.autoStopCardioAtTarget.collect { enabled ->
+                _state.update { it.copy(autoStopCardioAtTarget = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.autoStopTimeWeightAtTarget.collect { enabled ->
+                _state.update { it.copy(autoStopTimeWeightAtTarget = enabled) }
             }
         }
         
@@ -2164,6 +2178,7 @@ class WorkoutViewModel @Inject constructor(
                     if (state.cardioTimerRunning && !state.cardioTimerPaused) {
                         val startedAt = state.cardioTimerStartedAt ?: now
                         val elapsed = state.cardioTimerBaseSeconds + ((System.currentTimeMillis() - startedAt) / 1000).toInt().coerceAtLeast(0)
+                        if (maybeAutoPauseCardioAtTarget(elapsed)) break
                         _state.update { s ->
                             val updatedExercises = s.exercises.toMutableList()
                             val idx = s.currentExerciseIndex
@@ -2189,6 +2204,7 @@ class WorkoutViewModel @Inject constructor(
                 if (state.cardioTimerRunning && !state.cardioTimerPaused) {
                     val startedAt = state.cardioTimerStartedAt ?: continue
                     val elapsed = state.cardioTimerBaseSeconds + ((System.currentTimeMillis() - startedAt) / 1000).toInt().coerceAtLeast(0)
+                    if (maybeAutoPauseCardioAtTarget(elapsed)) break
                     _state.update { s ->
                         val updatedExercises = s.exercises.toMutableList()
                         val idx = s.currentExerciseIndex
@@ -2203,6 +2219,36 @@ class WorkoutViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * If auto-stop at target is enabled and [elapsed] reached the cardio target,
+     * clamp the timer to the target and pause it. Returns true when auto-paused.
+     */
+    private fun maybeAutoPauseCardioAtTarget(elapsed: Int): Boolean {
+        val state = _state.value
+        if (!state.autoStopCardioAtTarget) return false
+        val target = state.currentExercise?.cardioDurataTargetSeconds?.takeIf { it > 0 } ?: return false
+        if (elapsed < target) return false
+        cardioTimerJob?.cancel()
+        cardioTimerJob = null
+        _state.update { s ->
+            val updatedExercises = s.exercises.toMutableList()
+            val idx = s.currentExerciseIndex
+            if (idx in updatedExercises.indices) {
+                updatedExercises[idx] = updatedExercises[idx].copy(cardioElapsedSeconds = target)
+            }
+            s.copy(
+                cardioTimerSeconds = target,
+                cardioTimerRunning = false,
+                cardioTimerPaused = true,
+                cardioTimerStartedAt = null,
+                cardioTimerBaseSeconds = target,
+                exercises = updatedExercises
+            )
+        }
+        saveCardioTimerToSession(target, false, true, null)
+        return true
     }
 
     fun pauseCardioTimer() {
@@ -2335,12 +2381,43 @@ class WorkoutViewModel @Inject constructor(
                 if (state.setTimerRunning && !state.setTimerPaused) {
                     val startedAt = state.setTimerStartedAt ?: continue
                     val elapsed = state.setTimerBaseSeconds + ((System.currentTimeMillis() - startedAt) / 1000).toInt().coerceAtLeast(0)
+                    if (maybeAutoPauseSetTimerAtTarget(elapsed)) break
                     _state.update { s ->
                         s.copy(setTimerSeconds = elapsed)
                     }
                 }
             }
         }
+    }
+
+    private fun activeTimeWeightTargetSeconds(): Int? {
+        val ex = _state.value.currentExercise ?: return null
+        if (!ex.isTimeAndWeight) return null
+        val activeSet = ex.sets.firstOrNull { !it.isCompleted } ?: return null
+        return (activeSet.timeSeconds ?: ex.timeTargetSeconds)?.takeIf { it > 0 }
+    }
+
+    /**
+     * If auto-stop at target is enabled and [elapsed] reached the active set target,
+     * clamp the timer to the target and pause it. Returns true when auto-paused.
+     */
+    private fun maybeAutoPauseSetTimerAtTarget(elapsed: Int): Boolean {
+        if (!_state.value.autoStopTimeWeightAtTarget) return false
+        val target = activeTimeWeightTargetSeconds() ?: return false
+        if (elapsed < target) return false
+        setTimerJob?.cancel()
+        setTimerJob = null
+        _state.update {
+            it.copy(
+                setTimerRunning = false,
+                setTimerPaused = true,
+                setTimerSeconds = target,
+                setTimerBaseSeconds = target,
+                setTimerStartedAt = null
+            )
+        }
+        saveSetTimerToSession(target, false, true, null)
+        return true
     }
 
     fun pauseSetTimer() {
