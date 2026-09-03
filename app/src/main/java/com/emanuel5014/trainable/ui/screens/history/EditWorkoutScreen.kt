@@ -981,11 +981,12 @@ fun EditSetRow(
         Spacer(modifier = Modifier.width(16.dp))
         
         Column(modifier = Modifier.weight(1f)) {
+            val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
             Text(
                 text = WeightUnitConverter.formatWithUnit(
                     WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
                     weightUnit
-                ) + " × ${set.repsEffettive}",
+                ) + " × $repsOrTime",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = OnSurface

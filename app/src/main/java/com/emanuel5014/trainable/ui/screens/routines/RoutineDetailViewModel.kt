@@ -392,7 +392,14 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun addExercise(exerciseId: Int, serieTarget: Int, repsTarget: String, recuperoTarget: Int) {
+    fun addExercise(
+        exerciseId: Int,
+        serieTarget: Int,
+        repsTarget: String,
+        recuperoTarget: Int,
+        exerciseType: String = "strength",
+        durataTargetSecondi: Int? = null
+    ) {
         viewModelScope.launch {
             val current = _uiState.value.planDetails ?: return@launch
             val nextOrder = (current.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
@@ -404,7 +411,9 @@ class RoutineDetailViewModel @Inject constructor(
                     serieTarget = serieTarget,
                     repsTarget = repsTarget,
                     recuperoTarget = recuperoTarget,
-                    ordine = nextOrder
+                    ordine = nextOrder,
+                    exerciseType = exerciseType,
+                    durataTargetSecondi = durataTargetSecondi
                 )
             )
         }
@@ -443,7 +452,9 @@ class RoutineDetailViewModel @Inject constructor(
         exerciseId: Int,
         serieTarget: Int,
         repsTarget: String,
-        recuperoTarget: Int
+        recuperoTarget: Int,
+        exerciseType: String = original.exerciseType,
+        durataTargetSecondi: Int? = original.durataTargetSecondi
     ) {
         viewModelScope.launch {
             workoutRepository.updatePlanExercise(
@@ -451,7 +462,9 @@ class RoutineDetailViewModel @Inject constructor(
                     exerciseId = exerciseId,
                     serieTarget = serieTarget,
                     repsTarget = repsTarget,
-                    recuperoTarget = recuperoTarget
+                    recuperoTarget = recuperoTarget,
+                    exerciseType = exerciseType,
+                    durataTargetSecondi = durataTargetSecondi
                 )
             )
         }

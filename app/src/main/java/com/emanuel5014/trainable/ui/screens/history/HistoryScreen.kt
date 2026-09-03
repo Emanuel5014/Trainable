@@ -1201,11 +1201,12 @@ private fun HistoryExerciseGroup(
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )
+                    val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                     Text(
                         text = WeightUnitConverter.formatWithUnit(
                             WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
                             weightUnit
-                        ) + " × ${set.repsEffettive}",
+                        ) + " × $repsOrTime",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = OnSurface
@@ -1613,9 +1614,11 @@ fun EditSetDialog(
         )
     }
     var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
+    var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "") }
     var note by remember { mutableStateOf(set.note ?: "") }
+    val isTimeSet = set.durataSecondi != null
 
-    val isValid = weight.isNotBlank() && reps.isNotBlank()
+    val isValid = weight.isNotBlank() && (if (isTimeSet) seconds.isNotBlank() else reps.isNotBlank())
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1645,12 +1648,21 @@ fun EditSetDialog(
                         }
                     } else null
                 )
-                GymInputField(
-                    value = reps,
-                    onValueChange = { reps = it },
-                    label = stringResource(R.string.reps),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
+                if (isTimeSet) {
+                    GymInputField(
+                        value = seconds,
+                        onValueChange = { seconds = it.filter { char -> char.isDigit() } },
+                        label = stringResource(R.string.set_duration_label),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                } else {
+                    GymInputField(
+                        value = reps,
+                        onValueChange = { reps = it },
+                        label = stringResource(R.string.reps),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
                 GymInputField(
                     value = note,
                     onValueChange = { note = it },
@@ -1699,6 +1711,7 @@ fun EditSetDialog(
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
                             repsEffettive = reps.toIntOrNull() ?: 0,
+                            durataSecondi = if (isTimeSet) seconds.toIntOrNull() else set.durataSecondi,
                             note = note.ifBlank { null }
                         )
                         onConfirm(updatedSet)

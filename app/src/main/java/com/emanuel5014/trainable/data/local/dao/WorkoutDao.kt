@@ -160,6 +160,9 @@ interface WorkoutDao {
     @Query("UPDATE workout_sessions SET cardio_timer_seconds = :seconds, cardio_timer_running = :running, cardio_timer_paused = :paused, cardio_timer_started_at = :startedAt WHERE id = :sessionId")
     suspend fun updateCardioTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?)
 
+    @Query("UPDATE workout_sessions SET set_timer_seconds = :seconds, set_timer_running = :running, set_timer_paused = :paused, set_timer_started_at = :startedAt WHERE id = :sessionId")
+    suspend fun updateSetTimer(sessionId: Int, seconds: Int, running: Boolean, paused: Boolean, startedAt: Long?)
+
     @Query("UPDATE workout_sessions SET duration_ms = :durationMs WHERE id = :sessionId")
     suspend fun setSessionDuration(sessionId: Int, durationMs: Long)
     

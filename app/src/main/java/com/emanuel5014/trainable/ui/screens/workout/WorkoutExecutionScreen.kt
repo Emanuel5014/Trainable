@@ -60,6 +60,7 @@ import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.ThumbDown
@@ -128,6 +129,11 @@ import com.emanuel5014.trainable.ui.components.RestTimerSection
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.rounded.FastForward
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material3.OutlinedButton
+import com.emanuel5014.trainable.ui.components.WeightTimeInput
 import com.emanuel5014.trainable.ui.components.RestSlider
 import com.emanuel5014.trainable.ui.components.formatRestTime
 import com.emanuel5014.trainable.ui.theme.Error
@@ -138,6 +144,9 @@ import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.theme.Shapes
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.launch
@@ -225,6 +234,7 @@ fun WorkoutExecutionScreen(
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
                 viewModel.cancelCustomVibration()
                 viewModel.restartCardioTimerIfNeeded()
+                viewModel.restartSetTimerIfNeeded()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -491,6 +501,12 @@ fun WorkoutExecutionScreen(
                                     bottomPadding = cardioBottomPadding
                                 )
                             } else {
+                                var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
+                                LaunchedEffect(targetActiveSetIndex) {
+                                    if (targetExState.isTimeAndWeight) {
+                                        expandedSetIndex = targetActiveSetIndex
+                                    }
+                                }
                                 // Exercise Header
                                 Column(
                                     modifier = Modifier
@@ -503,12 +519,17 @@ fun WorkoutExecutionScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         val setsCount = targetExState.sets.size
-                                        val repsCount = targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
-                                            if (targetExState.sets.isEmpty()) "0"
-                                            else {
-                                                val allReps = targetExState.sets.map { it.reps }
-                                                if (allReps.distinct().size == 1) allReps.first().toString()
-                                                else allReps.joinToString("-")
+                                        val repsCount = if (targetExState.isTimeAndWeight) {
+                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
+                                            "${sec}s"
+                                        } else {
+                                            targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
+                                                if (targetExState.sets.isEmpty()) "0"
+                                                else {
+                                                    val allReps = targetExState.sets.map { it.reps }
+                                                    if (allReps.distinct().size == 1) allReps.first().toString()
+                                                    else allReps.joinToString("-")
+                                                }
                                             }
                                         }
                                         Text(
@@ -614,6 +635,8 @@ fun WorkoutExecutionScreen(
                                         }
 
                                         val haptic = LocalHapticFeedback.current
+                                        val isExpanded = targetExState.isTimeAndWeight && (expandedSetIndex == index) && !set.isCompleted
+
                                         SetLogRow(
                                             setNumber = set.setNumber,
                                             weight = set.weight,
@@ -622,7 +645,16 @@ fun WorkoutExecutionScreen(
                                             isWarmup = set.isWarmup,
                                             isCompleted = set.isCompleted,
                                             onToggleComplete = { 
-                                                viewModel.toggleSetComplete(targetIndex, index) 
+                                                if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                                    viewModel.skipTimerAndLogSet(
+                                                        targetIndex,
+                                                        index,
+                                                        set.weight,
+                                                        set.timeSeconds ?: targetExState.timeTargetSeconds ?: 45
+                                                    )
+                                                } else {
+                                                    viewModel.toggleSetComplete(targetIndex, index) 
+                                                }
                                             },
                                             onNoteChange = { newNote ->
                                                 viewModel.updateSetNote(targetIndex, index, newNote)
@@ -634,7 +666,143 @@ fun WorkoutExecutionScreen(
                                             onEditValues = { isEditingValues = !isEditingValues },
                                             isActive = isActive,
                                             weightUnit = state.weightUnit,
-                                            previousNote = set.previousNote
+                                            previousNote = set.previousNote,
+                                            timeSeconds = set.timeSeconds,
+                                            isExpanded = isExpanded,
+                                            onToggleExpanded = if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                                { expandedSetIndex = if (expandedSetIndex == index) null else index }
+                                            } else null,
+                                            expandedContent = if (isExpanded) {
+                                                {
+                                                    val targetSeconds = set.timeSeconds ?: targetExState.timeTargetSeconds ?: 45
+                                                    val isCurrentActive = index == targetActiveSetIndex
+                                                    val timerSeconds = if (isCurrentActive) state.setTimerSeconds else 0
+                                                    val isRunning = isCurrentActive && state.setTimerRunning
+                                                    val isPaused = isCurrentActive && state.setTimerPaused
+                                                    val isTargetReached = targetSeconds > 0 && timerSeconds >= targetSeconds
+                                                    val timerColor = if (isTargetReached) Color(0xFF4CAF50) else Primary
+                                                    val timerTrackColor = if (isTargetReached) Color(0xFF4CAF50).copy(alpha = 0.25f) else Primary.copy(alpha = 0.2f)
+                                                    val progress = if (targetSeconds > 0) (timerSeconds.toFloat() / targetSeconds.toFloat()).coerceIn(0f, 1f) else 0f
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clip(RoundedCornerShape(16.dp))
+                                                            .background(SurfaceContainerHighest.copy(alpha = 0.5f))
+                                                            .padding(vertical = 16.dp, horizontal = 12.dp),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Column(
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                                        ) {
+                                                            Box(
+                                                                contentAlignment = Alignment.Center,
+                                                                modifier = Modifier.size(130.dp)
+                                                            ) {
+                                                                CircularWavyProgressIndicator(
+                                                                    progress = { progress },
+                                                                    modifier = Modifier.size(130.dp),
+                                                                    color = timerColor,
+                                                                    trackColor = timerTrackColor,
+                                                                    stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
+                                                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
+                                                                    gapSize = 8.dp,
+                                                                    wavelength = 28.dp,
+                                                                    amplitude = { p ->
+                                                                        if (!isRunning) 0f
+                                                                        else if (p <= 0.1f) 0f
+                                                                        else 1f
+                                                                    }
+                                                                )
+                                                                CardioToggleButton(
+                                                                    isRunning = isRunning,
+                                                                    isPaused = isPaused,
+                                                                    onToggle = {
+                                                                        if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                        when {
+                                                                            isRunning -> viewModel.pauseSetTimer()
+                                                                            else -> viewModel.startSetTimer()
+                                                                        }
+                                                                    },
+                                                                    modifier = Modifier.size(80.dp),
+                                                                    activeColor = timerColor,
+                                                                    onActiveColor = if (isTargetReached) Color.White else OnPrimary
+                                                                )
+                                                            }
+
+                                                            val curFormatted = String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)
+                                                            val tarFormatted = String.format("%02d:%02d", targetSeconds / 60, targetSeconds % 60)
+                                                            Row(
+                                                                verticalAlignment = Alignment.Bottom,
+                                                                horizontalArrangement = Arrangement.Center
+                                                            ) {
+                                                                Text(
+                                                                    text = curFormatted,
+                                                                    style = MaterialTheme.typography.headlineMedium,
+                                                                    fontWeight = FontWeight.Black,
+                                                                    color = if (isTargetReached) timerColor else if (isRunning) Primary else OnSurface
+                                                                )
+                                                                Spacer(modifier = Modifier.width(6.dp))
+                                                                Text(
+                                                                    text = "/ $tarFormatted",
+                                                                    style = MaterialTheme.typography.titleMedium,
+                                                                    color = OnSurfaceVariant,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    modifier = Modifier.padding(bottom = 2.dp)
+                                                                )
+                                                            }
+
+                                                            if (isRunning || isPaused || timerSeconds > 0) {
+                                                                Row(
+                                                                    modifier = Modifier.fillMaxWidth(),
+                                                                    horizontalArrangement = Arrangement.Center,
+                                                                    verticalAlignment = Alignment.CenterVertically
+                                                                ) {
+                                                                    FilledIconButton(
+                                                                        onClick = {
+                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                            viewModel.resetSetTimer()
+                                                                        },
+                                                                        colors = IconButtonDefaults.filledIconButtonColors(
+                                                                            containerColor = SurfaceContainerHigh,
+                                                                            contentColor = OnSurfaceVariant
+                                                                        ),
+                                                                        modifier = Modifier.size(42.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            imageVector = Icons.Rounded.Replay,
+                                                                            contentDescription = stringResource(R.string.time_weight_reset_timer),
+                                                                            modifier = Modifier.size(20.dp)
+                                                                        )
+                                                                    }
+
+                                                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                                                    GymButton(
+                                                                        onClick = {
+                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                            viewModel.finishSetTimer(targetIndex, index, set.weight)
+                                                                        },
+                                                                        containerColor = timerColor,
+                                                                        contentColor = if (isTargetReached) Color.White else OnPrimary,
+                                                                        modifier = Modifier.fillMaxWidth(0.72f),
+                                                                        height = 42
+                                                                    ) {
+                                                                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                                        Text(
+                                                                            stringResource(R.string.time_weight_finish_set),
+                                                                            style = MaterialTheme.typography.labelLarge,
+                                                                            fontWeight = FontWeight.ExtraBold
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } else null
                                         )
                                     }
                                      if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
@@ -805,9 +973,6 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
-                        val currentExState = state.currentExercise
-                        val isCardioActive = currentExState?.isCardio == true
-
                         AnimatedContent(
                             targetState = when {
                                 isResting -> HubMode.Resting
@@ -864,14 +1029,36 @@ fun WorkoutExecutionScreen(
                                                     Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
                                                 }
                                             }
-                                            WeightRepsInput(
-                                                weight = set.weight,
-                                                reps = set.reps,
-                                                onWeightChange = { newW -> viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newW) },
-                                                onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
-                                                weightUnit = state.weightUnit
-                                            )
-                                            LogSetButton(onClick = { viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex) })
+                                            if (currentExState?.isTimeAndWeight == true) {
+                                                WeightTimeInput(
+                                                    weight = set.weight,
+                                                    seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45,
+                                                    onWeightChange = { newW -> viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newW) },
+                                                    onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
+                                                    weightUnit = state.weightUnit
+                                                )
+                                            } else {
+                                                WeightRepsInput(
+                                                    weight = set.weight,
+                                                    reps = set.reps,
+                                                    onWeightChange = { newW -> viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newW) },
+                                                    onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
+                                                    weightUnit = state.weightUnit
+                                                )
+                                            }
+                                            LogSetButton(onClick = {
+                                                if (currentExState?.isTimeAndWeight == true) {
+                                                    viewModel.skipTimerAndLogSet(
+                                                        state.currentExerciseIndex,
+                                                        activeSetIndex,
+                                                        set.weight,
+                                                        set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
+                                                    )
+                                                } else {
+                                                    viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
+                                                }
+                                                isEditingValues = false
+                                            })
                                         }
                                     }
                                 }
@@ -898,11 +1085,16 @@ fun WorkoutExecutionScreen(
                                             Spacer(modifier = Modifier.width(16.dp))
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                                                val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
+                                                    "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
+                                                } else {
+                                                    "${set.reps}"
+                                                }
                                                 Text(
                                                     text = WeightUnitConverter.formatWithUnit(
                                                         WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
                                                         state.weightUnit
-                                                    ) + " × ${set.reps}", 
+                                                    ) + " × $repsOrTime", 
                                                     style = MaterialTheme.typography.titleLarge, 
                                                     fontWeight = FontWeight.ExtraBold
                                                 )
@@ -910,7 +1102,18 @@ fun WorkoutExecutionScreen(
                                             Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
                                             Spacer(modifier = Modifier.width(12.dp))
                                             LogSetButton(
-                                                onClick = { viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex) },
+                                                onClick = {
+                                                    if (currentExState?.isTimeAndWeight == true) {
+                                                        viewModel.skipTimerAndLogSet(
+                                                            state.currentExerciseIndex,
+                                                            activeSetIndex,
+                                                            set.weight,
+                                                            set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
+                                                        )
+                                                    } else {
+                                                        viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
+                                                    }
+                                                },
                                                 modifier = Modifier.width(120.dp),
                                                 compact = true
                                             )
@@ -1019,6 +1222,20 @@ fun WorkoutExecutionScreen(
                                                         contentDescription = null
                                                     )
                                                 }
+                                            } else if (state.isQuickWorkout) {
+                                                // Quick workout last exercise finish button
+                                                GymButton(
+                                                    onClick = { showFinishDialog = true },
+                                                    modifier = Modifier.weight(1f),
+                                                    height = 64
+                                                ) {
+                                                    Icon(Icons.Rounded.Check, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = stringResource(R.string.finish_workout).uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
                                             } else {
                                                 // Guided / Quick workout last exercise finish button
                                                 GymButton(
@@ -1123,8 +1340,8 @@ fun WorkoutExecutionScreen(
                     currentReps = exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
                     availableExercises = availableExercises,
                     languageCode = languageCode,
-                    onExerciseSelected = { newExercise, sets, reps, rest ->
-                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest)
+                    onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
+                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, exerciseType, durataTargetSec)
                         showSwapExerciseSheet = false
                     },
                     onAddCustomExercise = { nome, categoria, onCreated ->
@@ -1153,11 +1370,11 @@ fun WorkoutExecutionScreen(
                 currentReps = "8",
                 availableExercises = availableExercises,
                 languageCode = languageCode,
-                onExerciseSelected = { exercise, sets, reps, rest ->
+                onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
                     if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest)
+                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec)
                     } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest)
+                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false
@@ -1285,22 +1502,24 @@ fun CardioToggleButton(
     isRunning: Boolean,
     isPaused: Boolean,
     onToggle: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    activeColor: Color = Primary,
+    onActiveColor: Color = OnPrimary
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
-            isRunning -> Primary
+            isRunning -> activeColor
             isPaused -> Tertiary
-            else -> Primary
+            else -> activeColor
         },
         label = "cardioBtnBg",
         animationSpec = spring(stiffness = Spring.StiffnessLow)
     )
     val contentColor by animateColorAsState(
         targetValue = when {
-            isRunning -> OnPrimary
+            isRunning -> onActiveColor
             isPaused -> OnTertiary
-            else -> OnPrimary
+            else -> onActiveColor
         },
         label = "cardioBtnContent",
         animationSpec = spring(stiffness = Spring.StiffnessLow)

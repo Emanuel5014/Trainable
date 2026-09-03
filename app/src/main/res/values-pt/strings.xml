@@ -802,4 +802,21 @@
     <string name="ai_scan_confirm_dialog_desc">Quer adicionar os %1$d exercícios detetados ao teu plano?</string>
     <string name="ai_scan_confirm_dialog_confirm">Confirmar e adicionar</string>
     <string name="ai_scan_confirm_dialog_review">Rever</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Peso &amp; Repetições</string>
+    <string name="exercise_type_time_and_weight">Tempo &amp; Peso</string>
+    <string name="target_time">Tempo alvo</string>
+    <string name="target_seconds">Alvo (segundos)</string>
+    <string name="seconds_short">seg</string>
+    <string name="time_and_weight_badge">TEMPO &amp; PESO</string>
+    <string name="skip_timer">Ignorar temporizador</string>
+    <string name="skip_timer_and_log">Ignorar temporizador e Registar</string>
+    <string name="set_duration_label">Duração</string>
+    <string name="adjust_weight">Ajustar peso</string>
+    <string name="time_weight_ready">PRONTO PARA COMEÇAR</string>
+    <string name="time_weight_running">TEMPORIZADOR A DECORRER</string>
+    <string name="time_weight_paused">TEMPORIZADOR EM PAUSA</string>
+    <string name="time_weight_finish_set">TERMINAR SÉRIE</string>
+    <string name="time_weight_reset_timer">Repor temporizador</string>
 </resources>

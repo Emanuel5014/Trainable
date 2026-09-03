@@ -802,4 +802,21 @@
     <string name="ai_scan_confirm_dialog_desc">Veux-tu ajouter les %1$d exercices détectés à ta séance ?</string>
     <string name="ai_scan_confirm_dialog_confirm">Confirmer et ajouter</string>
     <string name="ai_scan_confirm_dialog_review">Vérifier</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Poids &amp; Répétitions</string>
+    <string name="exercise_type_time_and_weight">Temps &amp; Poids</string>
+    <string name="target_time">Temps cible</string>
+    <string name="target_seconds">Cible (secondes)</string>
+    <string name="seconds_short">sec</string>
+    <string name="time_and_weight_badge">TEMPS &amp; POIDS</string>
+    <string name="skip_timer">Passer le minuteur</string>
+    <string name="skip_timer_and_log">Passer le minuteur &amp; Valider</string>
+    <string name="set_duration_label">Durée</string>
+    <string name="adjust_weight">Ajuster le poids</string>
+    <string name="time_weight_ready">PRÊT À COMMENCER</string>
+    <string name="time_weight_running">MINUTEUR EN COURS</string>
+    <string name="time_weight_paused">MINUTEUR EN PAUSE</string>
+    <string name="time_weight_finish_set">TERMINER LA SÉRIE</string>
+    <string name="time_weight_reset_timer">Réinitialiser le minuteur</string>
 </resources>

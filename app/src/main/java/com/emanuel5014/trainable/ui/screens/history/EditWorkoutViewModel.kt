@@ -309,6 +309,7 @@ class EditWorkoutViewModel @Inject constructor(
             val nextSerie = (exerciseState?.sets?.maxOfOrNull { it.numeroSerie } ?: 0) + 1
             val lastWeight = exerciseState?.sets?.lastOrNull()?.pesoSollevato ?: 0f
             val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 8
+            val lastDuration = exerciseState?.sets?.lastOrNull()?.durataSecondi
             val exerciseOrder = exerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = exerciseState?.sets?.firstOrNull()?.supersetId
 
@@ -319,7 +320,8 @@ class EditWorkoutViewModel @Inject constructor(
                 repsEffettive = lastReps,
                 numeroSerie = nextSerie,
                 ordineEsercizio = exerciseOrder,
-                supersetId = supersetId
+                supersetId = supersetId,
+                durataSecondi = lastDuration
             )
 
             // Optimistic update to prevent duplicates on rapid clicks

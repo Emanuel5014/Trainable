@@ -802,4 +802,21 @@
     <string name="ai_scan_confirm_dialog_desc">Vuoi confermare e aggiungere i %1$d esercizi rilevati alla tua scheda?</string>
     <string name="ai_scan_confirm_dialog_confirm">Conferma e aggiungi</string>
     <string name="ai_scan_confirm_dialog_review">Ricontrolla</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Peso &amp; Ripetizioni</string>
+    <string name="exercise_type_time_and_weight">Tempo &amp; Peso</string>
+    <string name="target_time">Tempo target</string>
+    <string name="target_seconds">Target (secondi)</string>
+    <string name="seconds_short">sec</string>
+    <string name="time_and_weight_badge">TEMPO &amp; PESO</string>
+    <string name="skip_timer">Salta timer</string>
+    <string name="skip_timer_and_log">Salta timer e Salva</string>
+    <string name="set_duration_label">Durata</string>
+    <string name="adjust_weight">Regola peso</string>
+    <string name="time_weight_ready">PRONTO PER INIZIARE</string>
+    <string name="time_weight_running">TIMER IN ESECUZIONE</string>
+    <string name="time_weight_paused">TIMER IN PAUSA</string>
+    <string name="time_weight_finish_set">TERMINA SERIE</string>
+    <string name="time_weight_reset_timer">Azzera timer</string>
 </resources>

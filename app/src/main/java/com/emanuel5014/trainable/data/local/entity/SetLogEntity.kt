@@ -50,5 +50,7 @@ data class SetLogEntity(
     @ColumnInfo(name = "rest_timer_seconds")
     val restTimerSeconds: Int? = null,
     @ColumnInfo(name = "is_completed")
-    val isCompleted: Boolean = true
+    val isCompleted: Boolean = true,
+    @ColumnInfo(name = "durata_secondi")
+    val durataSecondi: Int? = null
 )

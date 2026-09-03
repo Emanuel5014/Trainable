@@ -21,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +72,11 @@ fun SetLogRow(
     onEditValues: (() -> Unit)? = null,
     isActive: Boolean = false,
     weightUnit: String = "kg",
-    previousNote: String? = null
+    previousNote: String? = null,
+    timeSeconds: Int? = null,
+    isExpanded: Boolean = false,
+    onToggleExpanded: (() -> Unit)? = null,
+    expandedContent: (@Composable () -> Unit)? = null
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -155,11 +161,12 @@ fun SetLogRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val repsOrTimeText = if (timeSeconds != null) "${timeSeconds}s" else "$reps"
                 Text(
                     text = WeightUnitConverter.formatWithUnit(
                         WeightUnitConverter.convertDisplay(weight, weightUnit),
                         weightUnit
-                    ) + " × $reps",
+                    ) + " × $repsOrTimeText",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = textColor
@@ -178,6 +185,17 @@ fun SetLogRow(
                         )
                     }
                 }
+            }
+        }
+
+        // Optional Expand/Collapse Button (next to Note icon)
+        if (onToggleExpanded != null) {
+            IconButton(onClick = onToggleExpanded) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Collapse timer" else "Expand timer",
+                    tint = if (isExpanded) Primary else OnSurfaceVariant.copy(alpha = 0.7f)
+                )
             }
         }
 
@@ -216,6 +234,18 @@ fun SetLogRow(
                 )
             }
         }
+        }
+
+        // Expanded Content (e.g. Timer for Time & Weight)
+        if (isExpanded && expandedContent != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(bottom = 12.dp)
+            ) {
+                expandedContent()
+            }
         }
 
         // Note Input Area (Expandable)

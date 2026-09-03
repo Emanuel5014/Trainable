@@ -74,6 +74,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -139,6 +143,7 @@ import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
+import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -263,6 +268,8 @@ fun RoutineDetailScreen(
     val selectedDays = remember { mutableStateListOf<DayOfWeek>() }
 
     var selectedExerciseId by remember { mutableStateOf<Int?>(null) }
+    var selectedExerciseType by remember { mutableStateOf("strength") }
+    var timeTargetSecondsText by remember { mutableStateOf("45") }
     var setsText by remember { mutableStateOf("3") }
     var repsText by remember { mutableStateOf("8-12") }
     var restText by remember { mutableStateOf("120") }
@@ -308,8 +315,10 @@ fun RoutineDetailScreen(
     fun openAddSheet() {
         editingExerciseId = null
         selectedExerciseId = null
+        selectedExerciseType = "strength"
         setsText = "3"
         repsText = "8"
+        timeTargetSecondsText = "45"
         cardioDurationText = "20"
         // Inherit rest from the last exercise in the list, default to 120 if empty
         restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
@@ -319,8 +328,10 @@ fun RoutineDetailScreen(
     fun openEditSheet(item: PlanExerciseWithDetails) {
         editingExerciseId = item.planExercise.id
         selectedExerciseId = item.exercise.id
+        selectedExerciseType = item.planExercise.exerciseType
         setsText = item.planExercise.serieTarget.toString()
         repsText = item.planExercise.repsTarget
+        timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString() ?: item.planExercise.repsTarget.filter { it.isDigit() }.ifBlank { "45" }
         restText = item.planExercise.recuperoTarget.toString()
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
         showExerciseSheet = true
@@ -985,28 +996,86 @@ fun RoutineDetailScreen(
                     } else {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            FilterChip(
+                                selected = selectedExerciseType == "strength",
+                                onClick = { selectedExerciseType = "strength" },
+                                label = { Text(stringResource(R.string.exercise_type_strength)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FitnessCenter,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                    selectedLabelColor = Primary,
+                                    selectedLeadingIconColor = Primary
+                                )
+                            )
+                            FilterChip(
+                                selected = selectedExerciseType == "time_and_weight",
+                                onClick = { selectedExerciseType = "time_and_weight" },
+                                label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Timer,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                    selectedLabelColor = Primary,
+                                    selectedLeadingIconColor = Primary
+                                )
+                            )
+                        }
+
+                        if (selectedExerciseType == "time_and_weight") {
                             GymInputField(
                                 value = setsText,
                                 onValueChange = { setsText = it },
                                 label = stringResource(R.string.sets),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            GymInputField(
-                                value = repsText,
-                                onValueChange = {
-                                    repsText = it
-                                    val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                    if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                        setsText = repCount.toString()
-                                    }
-                                },
-                                label = stringResource(R.string.reps),
-                                supportingText = stringResource(R.string.reps_hint),
-                                modifier = Modifier.weight(1f)
+
+                            TargetSecondsSlider(
+                                valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
+                                onValueChange = { timeTargetSecondsText = it.toString() },
+                                hapticEnabled = hapticEnabled,
+                                haptic = haptic,
+                                modifier = Modifier.fillMaxWidth()
                             )
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                            ) {
+                                GymInputField(
+                                    value = setsText,
+                                    onValueChange = { setsText = it },
+                                    label = stringResource(R.string.sets),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                GymInputField(
+                                    value = repsText,
+                                    onValueChange = {
+                                        repsText = it
+                                        val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                        if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                            setsText = repCount.toString()
+                                        }
+                                    },
+                                    label = stringResource(R.string.reps),
+                                    supportingText = stringResource(R.string.reps_hint),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
 
                         RestSlider(
@@ -1132,6 +1201,31 @@ fun RoutineDetailScreen(
                                         recuperoTarget = rest
                                     )
                                 }
+                            } else if (selectedExerciseType == "time_and_weight") {
+                                val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
+
+                                if (current == null) {
+                                    viewModel.addExercise(
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = "${targetSec}s",
+                                        recuperoTarget = rest,
+                                        exerciseType = "time_and_weight",
+                                        durataTargetSecondi = targetSec
+                                    )
+                                } else {
+                                    viewModel.updateExercise(
+                                        original = current.planExercise,
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = "${targetSec}s",
+                                        recuperoTarget = rest,
+                                        exerciseType = "time_and_weight",
+                                        durataTargetSecondi = targetSec
+                                    )
+                                }
                             } else {
                                 val sets = setsText.trim().toIntOrNull() ?: return@GymButton
                                 val rest = restText.trim().toIntOrNull() ?: return@GymButton
@@ -1142,7 +1236,9 @@ fun RoutineDetailScreen(
                                         exerciseId = exerciseId,
                                         serieTarget = sets,
                                         repsTarget = reps,
-                                        recuperoTarget = rest
+                                        recuperoTarget = rest,
+                                        exerciseType = "strength",
+                                        durataTargetSecondi = null
                                     )
                                 } else {
                                     viewModel.updateExercise(
@@ -1150,7 +1246,9 @@ fun RoutineDetailScreen(
                                         exerciseId = exerciseId,
                                         serieTarget = sets,
                                         repsTarget = reps,
-                                        recuperoTarget = rest
+                                        recuperoTarget = rest,
+                                        exerciseType = "strength",
+                                        durataTargetSecondi = null
                                     )
                                 }
                             }
