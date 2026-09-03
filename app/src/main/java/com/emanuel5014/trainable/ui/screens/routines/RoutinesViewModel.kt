@@ -125,11 +125,25 @@ class RoutinesViewModel @Inject constructor(
         viewModelScope.launch {
             val ids = _uiState.value.selectedPlanIds.toList()
             if (ids.isNotEmpty()) {
+                val allPlans = _uiState.value.plans + _uiState.value.archivedPlans
+                val selected = allPlans.filter { it.plan.id in ids }
                 val json = workoutRepository.exportPlans(ids, includeImages)
-                ShareUtils.shareWorkoutPlans(context, json)
+                ShareUtils.shareWorkoutPlans(context, json, buildExportFileName(selected.map { it.plan.nome }))
                 clearSelection()
             }
         }
+    }
+
+    private fun buildExportFileName(planNames: List<String>): String {
+        if (planNames.isEmpty()) return "routines.trainableplan"
+        val base = planNames.first()
+            .lowercase()
+            .replace(("[^a-z0-9]+").toRegex(), "-")
+            .trim('-')
+            .take(30)
+            .ifBlank { "routines" }
+        val suffix = if (planNames.size > 1) "-plus${planNames.size - 1}" else ""
+        return "$base$suffix.trainableplan"
     }
 
     fun deleteSelectedPlans() {
@@ -163,8 +177,12 @@ class RoutinesViewModel @Inject constructor(
     fun importPlans(jsonData: String) {
         viewModelScope.launch {
             try {
-                workoutRepository.importPlans(jsonData)
-                _uiState.update { it.copy(error = null) }
+                val imported = workoutRepository.importPlans(jsonData)
+                if (imported > 0) {
+                    _uiState.update { it.copy(error = null) }
+                } else {
+                    _uiState.update { it.copy(error = "Import failed: empty or invalid file") }
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Import failed: ${e.localizedMessage}") }
             }

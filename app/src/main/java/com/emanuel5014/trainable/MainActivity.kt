@@ -30,6 +30,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -51,7 +52,6 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import java.util.Locale
 import javax.inject.Inject
 
@@ -132,21 +132,30 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            // Handle Import Intent
-            LaunchedEffect(intent?.data) {
-                intent?.data?.let { uri ->
+            // Handle Import Intent (also triggered again via onNewIntent)
+            val pendingImportIntent = workoutIntentState
+            LaunchedEffect(pendingImportIntent?.data) {
+                pendingImportIntent?.data?.let { uri ->
                     if (uri.scheme == "content" || uri.scheme == "file") {
                         scope.launch {
                             try {
                                 contentResolver.openInputStream(uri)?.use { inputStream ->
                                     val jsonData = inputStream.bufferedReader().use { it.readText() }
-                                    val json = Json { ignoreUnknownKeys = true }
-                                    val plans = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
-                                    plansToImport = plans
-                                    jsonDataToImport = jsonData
+                                    val plans = TrainablePlanParser.decode(jsonData)
+                                    if (plans.isEmpty()) {
+                                        Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                                        workoutIntentState = null
+                                    } else {
+                                        plansToImport = plans
+                                        jsonDataToImport = jsonData
+                                    }
+                                } ?: run {
+                                    Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                                    workoutIntentState = null
                                 }
                             } catch (e: Exception) {
                                 Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+                                workoutIntentState = null
                                 e.printStackTrace()
                             }
                         }
@@ -292,9 +301,13 @@ class MainActivity : FragmentActivity() {
                             onConfirm = {
                                 scope.launch {
                                     try {
-                                        jsonDataToImport?.let { 
+                                        val imported = jsonDataToImport?.let {
                                             workoutRepository.importPlans(it)
+                                        } ?: 0
+                                        if (imported > 0) {
                                             Toast.makeText(this@MainActivity, getString(R.string.import_successful), Toast.LENGTH_LONG).show()
+                                        } else {
+                                            Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: Exception) {
                                         Toast.makeText(this@MainActivity, getString(R.string.import_failed), Toast.LENGTH_LONG).show()
@@ -302,6 +315,7 @@ class MainActivity : FragmentActivity() {
                                         plansToImport = null
                                         jsonDataToImport = null
                                         intent?.data = null
+                                        workoutIntentState = null
                                     }
                                 }
                             },
@@ -309,6 +323,7 @@ class MainActivity : FragmentActivity() {
                                 plansToImport = null
                                 jsonDataToImport = null
                                 intent?.data = null
+                                workoutIntentState = null
                             }
                         )
                     }

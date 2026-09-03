@@ -17,6 +17,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
+import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
@@ -24,7 +25,6 @@ import com.emanuel5014.trainable.util.UriMigrationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,8 +78,13 @@ class WorkoutRepository @Inject constructor(
                 nome = planWithDetails.plan.nome,
                 note = planWithDetails.plan.note,
                 sessioniTargetSettimana = planWithDetails.plan.sessioniTargetSettimana,
-                imageUri = planWithDetails.plan.imageUri,
-                images = planWithDetails.images.map { it.imageUri },
+                giorniSettimana = planWithDetails.plan.giorniSettimana,
+                dataInizio = planWithDetails.plan.dataInizio,
+                dataFine = planWithDetails.plan.dataFine,
+                // Only keep raw URIs when blobs are not included (legacy fallback);
+                // otherwise the receiver restores images from blobs with fresh local URIs.
+                imageUri = if (includeImages) null else planWithDetails.plan.imageUri,
+                images = if (includeImages) emptyList() else planWithDetails.images.map { it.imageUri },
                 imageBlobs = if (includeImages) {
                     buildList {
                         // Collect all unique URIs to encode
@@ -98,119 +103,159 @@ class WorkoutRepository @Inject constructor(
                         serieTarget = exerciseWithDetails.planExercise.serieTarget,
                         repsTarget = exerciseWithDetails.planExercise.repsTarget,
                         recuperoTarget = exerciseWithDetails.planExercise.recuperoTarget,
-                        ordine = exerciseWithDetails.planExercise.ordine
+                        ordine = exerciseWithDetails.planExercise.ordine,
+                        supersetId = exerciseWithDetails.planExercise.supersetId,
+                        exerciseType = exerciseWithDetails.planExercise.exerciseType,
+                        durataTargetSecondi = exerciseWithDetails.planExercise.durataTargetSecondi,
+                        distanzaTargetKm = exerciseWithDetails.planExercise.distanzaTargetKm,
+                        cardioCategoria = exerciseWithDetails.planExercise.cardioCategoria
                     )
                 }
             )
         }
-        return Json.encodeToString(exportDtos)
+        return TrainablePlanParser.encode(exportDtos)
     }
 
-    suspend fun importPlans(jsonData: String) {
-        val user = userDao.getUser().first() ?: return
-        val json = Json { ignoreUnknownKeys = true }
-        val importDtos = json.decodeFromString<List<WorkoutPlanExportDto>>(jsonData)
-        
+    /**
+     * Imports plans from a .trainableplan payload (v2 envelope, v1 list or v1 single object).
+     * @return number of plans actually imported.
+     */
+    suspend fun importPlans(jsonData: String): Int {
+        val user = userDao.getUser().first() ?: return 0
+        val importDtos = TrainablePlanParser.decode(jsonData)
+        if (importDtos.isEmpty()) return 0
+
         val currentPlans = workoutDao.getAllPlans().first()
-        val allExercises = exerciseDao.getAllExercises().first()
+        val knownExercises = exerciseDao.getAllExercises().first().toMutableList()
         var nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
+        var imported = 0
 
         importDtos.forEach { dto ->
-            val newPlan = WorkoutPlanEntity(
-                userId = user.id,
-                nome = dto.nome,
-                dataInizio = System.currentTimeMillis(),
-                note = dto.note,
-                isActive = true,
-                sessioniTargetSettimana = dto.sessioniTargetSettimana,
-                imageUri = dto.imageUri,
-                ordine = nextOrder++
-            )
-            val planId = workoutDao.insertPlan(newPlan).toInt()
-            
-            val imagesToInsert = mutableListOf<WorkoutPlanImageEntity>()
+            try {
+                // Remap superset ids per imported plan so they never collide
+                // with existing plans nor across imported plans.
+                val supersetRemap = mutableMapOf<String, String>()
+                fun remapSuperset(raw: String?): String? {
+                    if (raw == null) return null
+                    return supersetRemap.getOrPut(raw) { java.util.UUID.randomUUID().toString() }
+                }
 
-            // 1. From encoded blobs (new way)
-            if (dto.imageBlobs.isNotEmpty()) {
-                dto.imageBlobs.forEachIndexed { index, blob ->
-                    ImageStorageUtils.saveBase64Image(context, blob)?.let { newUri ->
-                        imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = newUri, ordine = index))
-                    }
-                }
-            } else {
-                // 2. From the new 'images' list (old way, might contain invalid URIs)
-                dto.images.forEachIndexed { index, uri ->
-                    imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = uri, ordine = index))
-                }
-                
-                // 3. Fallback for old single 'imageUri' if 'images' is empty
-                if (imagesToInsert.isEmpty() && dto.imageUri != null) {
-                    imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = dto.imageUri, ordine = 0))
-                }
-            }
-            
-            if (imagesToInsert.isNotEmpty()) {
-                workoutDao.insertPlanImages(imagesToInsert)
-                // Update the main plan image with the first imported image if it was null or broken
-                imagesToInsert.firstOrNull()?.let { firstImage ->
-                    workoutDao.updatePlan(newPlan.copy(id = planId, imageUri = firstImage.imageUri))
-                }
-            }
-            
-            val exercisesToInsert = mutableListOf<PlanExerciseEntity>()
-            
-            dto.exercises.forEach { exerciseDto ->
-                var finalExerciseId: Int? = null
-                
-                // 1. Try to find by ID
-                val exerciseById = allExercises.find { it.id == exerciseDto.exerciseId }
-                if (exerciseById != null) {
-                    finalExerciseId = exerciseById.id
-                } else if (exerciseDto.exerciseName != null) {
-                    // 2. Try to find by Name
-                    val exerciseByName = allExercises.find { 
-                        it.nome.equals(exerciseDto.exerciseName, ignoreCase = true) 
-                    }
-                    if (exerciseByName != null) {
-                        finalExerciseId = exerciseByName.id
-                    } else {
-                        // 3. Create new custom exercise if we have name info
-                        try {
-                            val maxId = exerciseDao.getMaxId()
-                            val newId = if (maxId < 1000) 1000 else maxId + 1
-                            val newExercise = ExerciseEntity(
-                                id = newId,
-                                nome = exerciseDto.exerciseName,
-                                categoria = exerciseDto.exerciseCategory ?: "Custom"
-                            )
-                            exerciseDao.insertExercise(newExercise)
-                            finalExerciseId = newId
-                            // Update allExercises to include the new one for subsequent lookups
-                            // (though unlikely to be needed in the same import loop unless duplicate exercises exist)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                val newPlan = WorkoutPlanEntity(
+                    userId = user.id,
+                    nome = dto.nome,
+                    dataInizio = dto.dataInizio ?: System.currentTimeMillis(),
+                    dataFine = dto.dataFine,
+                    note = dto.note,
+                    isActive = true,
+                    sessioniTargetSettimana = dto.sessioniTargetSettimana,
+                    imageUri = null,
+                    ordine = nextOrder++,
+                    giorniSettimana = dto.giorniSettimana
+                )
+                val planId = workoutDao.insertPlan(newPlan).toInt()
+
+                val imagesToInsert = mutableListOf<WorkoutPlanImageEntity>()
+
+                // 1. From encoded blobs (restored to fresh local files)
+                if (dto.imageBlobs.isNotEmpty()) {
+                    dto.imageBlobs.forEachIndexed { index, blob ->
+                        ImageStorageUtils.saveBase64Image(context, blob)?.let { newUri ->
+                            imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = newUri, ordine = index))
                         }
                     }
+                } else {
+                    // 2. Legacy: raw URIs from the sender device (kept for backward
+                    // compatibility, but they may not resolve on this device).
+                    dto.images.forEachIndexed { index, uri ->
+                        imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = uri, ordine = index))
+                    }
+
+                    // 3. Fallback for old single 'imageUri' if 'images' is empty
+                    if (imagesToInsert.isEmpty() && dto.imageUri != null) {
+                        imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = dto.imageUri, ordine = 0))
+                    }
                 }
-                
-                if (finalExerciseId != null) {
-                    exercisesToInsert.add(
-                        PlanExerciseEntity(
-                            planId = planId,
-                            exerciseId = finalExerciseId,
-                            serieTarget = exerciseDto.serieTarget,
-                            repsTarget = exerciseDto.repsTarget,
-                            recuperoTarget = exerciseDto.recuperoTarget,
-                            ordine = exerciseDto.ordine
+
+                if (imagesToInsert.isNotEmpty()) {
+                    workoutDao.insertPlanImages(imagesToInsert)
+                    // Point the cover only at an image that actually resolves locally:
+                    // prefer a blob-restored image, otherwise leave the cover empty
+                    // instead of referencing a foreign URI.
+                    val cover = if (dto.imageBlobs.isNotEmpty()) {
+                        imagesToInsert.firstOrNull()
+                    } else {
+                        null
+                    }
+                    cover?.let { firstImage ->
+                        workoutDao.updatePlan(newPlan.copy(id = planId, imageUri = firstImage.imageUri))
+                    }
+                }
+
+                val exercisesToInsert = mutableListOf<PlanExerciseEntity>()
+
+                dto.exercises.forEach { exerciseDto ->
+                    var finalExerciseId: Int? = null
+
+                    // 1. Try to find by ID
+                    val exerciseById = knownExercises.find { it.id == exerciseDto.exerciseId }
+                    if (exerciseById != null) {
+                        finalExerciseId = exerciseById.id
+                    } else if (exerciseDto.exerciseName != null) {
+                        // 2. Try to find by Name
+                        val exerciseByName = knownExercises.find {
+                            it.nome.equals(exerciseDto.exerciseName, ignoreCase = true)
+                        }
+                        if (exerciseByName != null) {
+                            finalExerciseId = exerciseByName.id
+                        } else {
+                            // 3. Create new custom exercise if we have name info
+                            try {
+                                val maxId = knownExercises.maxOfOrNull { it.id }
+                                    ?: exerciseDao.getMaxId()
+                                val newId = if (maxId < 1000) 1000 else maxId + 1
+                                val newExercise = ExerciseEntity(
+                                    id = newId,
+                                    nome = exerciseDto.exerciseName,
+                                    categoria = exerciseDto.exerciseCategory ?: "Custom"
+                                )
+                                exerciseDao.insertExercise(newExercise)
+                                knownExercises.add(newExercise)
+                                finalExerciseId = newId
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+
+                    if (finalExerciseId != null) {
+                        exercisesToInsert.add(
+                            PlanExerciseEntity(
+                                planId = planId,
+                                exerciseId = finalExerciseId,
+                                serieTarget = exerciseDto.serieTarget,
+                                repsTarget = exerciseDto.repsTarget,
+                                recuperoTarget = exerciseDto.recuperoTarget,
+                                ordine = exerciseDto.ordine,
+                                supersetId = remapSuperset(exerciseDto.supersetId),
+                                exerciseType = exerciseDto.exerciseType,
+                                durataTargetSecondi = exerciseDto.durataTargetSecondi,
+                                distanzaTargetKm = exerciseDto.distanzaTargetKm,
+                                cardioCategoria = exerciseDto.cardioCategoria
+                            )
                         )
-                    )
+                    }
                 }
-            }
-            
-            if (exercisesToInsert.isNotEmpty()) {
-                workoutDao.insertPlanExercises(exercisesToInsert)
+
+                if (exercisesToInsert.isNotEmpty()) {
+                    workoutDao.insertPlanExercises(exercisesToInsert)
+                }
+                imported++
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Skip the broken plan and continue with the rest.
             }
         }
+        return imported
     }
 
     suspend fun deletePlan(plan: WorkoutPlanEntity) {
