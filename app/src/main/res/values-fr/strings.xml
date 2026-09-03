@@ -122,6 +122,8 @@
     <string name="schedule_days">JOURS PROGRAMMÉS</string>
     <string name="delete_routine">Supprimer la Routine ?</string>
     <string name="delete_routine_message">Cela supprimera définitivement cette routine et tous ses exercices.</string>
+    <string name="reset_routine_content">Réinitialiser le Contenu ?</string>
+    <string name="reset_routine_content_message">Cela supprimera définitivement toutes les images et tous les exercices de cette routine. La routine elle-même sera conservée. Cette action est irréversible.</string>
     <string name="archive_routine">Archiver la Routine ?</string>
     <string name="archive_routine_message">Cette routine sera déplacée dans la section archivée.</string>
     <string name="unarchive_routine">Restaurer la Routine ?</string>

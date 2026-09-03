@@ -122,6 +122,8 @@
     <string name="schedule_days">DIAS PROGRAMADOS</string>
     <string name="delete_routine">Excluir Rotina?</string>
     <string name="delete_routine_message">Isso excluirá permanentemente esta rotina e todos os seus exercícios.</string>
+    <string name="reset_routine_content">Redefinir Conteúdo?</string>
+    <string name="reset_routine_content_message">Isso removerá permanentemente todas as imagens e exercícios desta rotina. A rotina será mantida. Esta ação não pode ser desfeita.</string>
     <string name="archive_routine">Arquivar Rotina?</string>
     <string name="archive_routine_message">Esta rotina será movida para a seção arquivada.</string>
     <string name="unarchive_routine">Restaurar Rotina?</string>

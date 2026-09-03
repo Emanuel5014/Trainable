@@ -70,6 +70,18 @@ class WorkoutRepository @Inject constructor(
     suspend fun savePlanImage(image: WorkoutPlanImageEntity) = workoutDao.insertPlanImage(image)
 
     suspend fun deletePlanImage(image: WorkoutPlanImageEntity) = workoutDao.deletePlanImage(image)
+
+    suspend fun deleteImagesForPlan(planId: Int) = workoutDao.deleteImagesForPlan(planId)
+
+    suspend fun deleteExercisesForPlan(planId: Int) = workoutDao.deleteExercisesForPlan(planId)
+
+    suspend fun resetPlanContent(planId: Int) {
+        workoutDao.deleteExercisesForPlan(planId)
+        workoutDao.deleteImagesForPlan(planId)
+        // Also clear the cover/legacy image URI on the plan itself, otherwise
+        // the auto-migration in RoutineDetailViewModel would re-add it as a plan image.
+        workoutDao.clearPlanCoverImage(planId)
+    }
     
     suspend fun exportPlans(planIds: List<Int>, includeImages: Boolean = true): String {
         val plans = workoutDao.getPlansWithDetails(planIds)

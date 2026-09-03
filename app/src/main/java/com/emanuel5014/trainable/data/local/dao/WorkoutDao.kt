@@ -59,6 +59,9 @@ interface WorkoutDao {
     @Query("UPDATE workout_plans SET is_active = :active WHERE id = :planId")
     suspend fun setPlanActive(planId: Int, active: Boolean)
 
+    @Query("UPDATE workout_plans SET image_uri = NULL WHERE id = :planId")
+    suspend fun clearPlanCoverImage(planId: Int)
+
     @Delete
     suspend fun deletePlan(plan: WorkoutPlanEntity)
 
@@ -107,6 +110,9 @@ interface WorkoutDao {
 
     @Delete
     suspend fun deletePlanExercise(exercise: PlanExerciseEntity)
+
+    @Query("DELETE FROM plan_exercises WHERE plan_id = :planId")
+    suspend fun deleteExercisesForPlan(planId: Int)
 
     // --- Sessions & Sets ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

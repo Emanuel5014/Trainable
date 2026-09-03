@@ -122,6 +122,8 @@
     <string name="schedule_days">GIORNI PROGRAMMATI</string>
     <string name="delete_routine">Elimina Scheda?</string>
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
+    <string name="reset_routine_content">Resettare Contenuto?</string>
+    <string name="reset_routine_content_message">Questo rimuoverà permanentemente tutte le immagini e gli esercizi da questa scheda. La scheda verrà mantenuta. Questa azione non può essere annullata.</string>
     <string name="archive_routine">Archivia Scheda?</string>
     <string name="archive_routine_message">Questa scheda verrà spostata nella sezione archiviata.</string>
     <string name="unarchive_routine">Ripristina Scheda?</string>

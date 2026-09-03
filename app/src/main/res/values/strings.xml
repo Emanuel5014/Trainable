@@ -122,6 +122,8 @@
     <string name="schedule_days">SCHEDULE DAYS</string>
     <string name="delete_routine">Delete Routine?</string>
     <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
+    <string name="reset_routine_content">Reset Content?</string>
+    <string name="reset_routine_content_message">This will permanently remove all images and exercises from this routine. The routine itself will be kept. This action cannot be undone.</string>
     <string name="archive_routine">Archive Routine?</string>
     <string name="archive_routine_message">This routine will be moved to the archived section.</string>
     <string name="unarchive_routine">Restore Routine?</string>

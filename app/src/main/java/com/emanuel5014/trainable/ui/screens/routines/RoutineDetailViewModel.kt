@@ -558,6 +558,13 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    fun resetRoutineContent() {
+        viewModelScope.launch {
+            val planId = _uiState.value.planDetails?.plan?.id ?: return@launch
+            workoutRepository.resetPlanContent(planId)
+        }
+    }
+
     fun updatePlan(
         nome: String,
         note: String?,

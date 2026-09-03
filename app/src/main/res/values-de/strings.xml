@@ -122,6 +122,8 @@
     <string name="schedule_days">PLANMÄSSIGE TAGE</string>
     <string name="delete_routine">Routine löschen?</string>
     <string name="delete_routine_message">Dies löscht dauerhaft diese Routine und alle ihre Übungen.</string>
+    <string name="reset_routine_content">Inhalt zurücksetzen?</string>
+    <string name="reset_routine_content_message">Dies entfernt dauerhaft alle Bilder und Übungen aus dieser Routine. Die Routine selbst bleibt erhalten. Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="archive_routine">Routine archivieren?</string>
     <string name="archive_routine_message">Diese Routine wird in den archivierten Bereich verschoben.</string>
     <string name="unarchive_routine">Routine wiederherstellen?</string>

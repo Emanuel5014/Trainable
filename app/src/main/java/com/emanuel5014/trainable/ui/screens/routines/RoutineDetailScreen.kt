@@ -64,6 +64,7 @@ import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ButtonDefaults
@@ -258,6 +259,7 @@ fun RoutineDetailScreen(
     }
 
     var showRoutineEditSheet by remember { mutableStateOf(false) }
+    var showResetConfirmDialog by remember { mutableStateOf(false) }
     var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
@@ -387,6 +389,40 @@ fun RoutineDetailScreen(
         )
     }
 
+    if (showResetConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirmDialog = false },
+            title = { Text(stringResource(R.string.reset_routine_content)) },
+            text = { Text(stringResource(R.string.reset_routine_content_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.resetRoutineContent()
+                        showResetConfirmDialog = false
+                    },
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showResetConfirmDialog = false },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
     val isScanActive = aiScanState is AiScanState.Scanning
 
     Scaffold(
@@ -465,6 +501,13 @@ fun RoutineDetailScreen(
                             )
                         },
                         actions = {
+                            GymIconButton(
+                                icon = Icons.Rounded.RestartAlt,
+                                onClick = { showResetConfirmDialog = true },
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = Error,
+                                description = "Reset Routine Content"
+                            )
                             GymIconButton(
                                 icon = Icons.Rounded.Edit,
                                 onClick = { openRoutineEditSheet() },
