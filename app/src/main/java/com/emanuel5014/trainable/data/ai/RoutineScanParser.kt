@@ -76,14 +76,46 @@ object RoutineScanParser {
             .ifBlank { obj.optString("categoria") }
             .ifBlank { obj.optString("muscle_group") }
             .takeIf { it.isNotBlank() }
+        val explicitType = obj.optString("exercise_type")
+            .ifBlank { obj.optString("type") }
+            .ifBlank { obj.optString("tipo") }
+            .trim()
+            .lowercase()
+
+        var explicitTimeSeconds: Int? = null
+        if (obj.has("time_seconds")) {
+            explicitTimeSeconds = obj.optInt("time_seconds").takeIf { it > 0 }
+        } else if (obj.has("seconds")) {
+            explicitTimeSeconds = obj.optInt("seconds").takeIf { it > 0 }
+        }
+
+        val isTimed = explicitType == "time_and_weight" ||
+            reps.endsWith("s", ignoreCase = true) ||
+            reps.endsWith("sec", ignoreCase = true) ||
+            reps.contains("''") ||
+            reps.contains("\"") ||
+            cleanName.lowercase().let { it.contains("plank") || it.contains("wall sit") || it.contains("isometria") || it.contains("hollow") }
+
+        val detectedType = when {
+            cardio != null || explicitType == "cardio" -> "cardio"
+            isTimed -> "time_and_weight"
+            explicitType == "strength" -> "strength"
+            else -> "strength"
+        }
+
+        val parsedTimeSeconds = if (detectedType == "time_and_weight") {
+            explicitTimeSeconds ?: reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+        } else null
 
         return ParsedExercise(
             name = cleanName,
             sets = sets,
-            reps = reps,
+            reps = if (detectedType == "time_and_weight" && !reps.endsWith("s")) "${parsedTimeSeconds ?: 45}s" else reps,
             restSeconds = rest,
             cardioMinutes = cardio,
-            category = category
+            category = category,
+            exerciseType = detectedType,
+            timeSeconds = parsedTimeSeconds
         )
     }
 
@@ -251,15 +283,22 @@ object RoutineScanParser {
                     val sets = if (numbers.size >= 3 && rawSets < numbers.size) numbers.size else rawSets
                     val rest = explicitMatch.groupValues.getOrNull(4)?.toIntOrNull() ?: 120
                     val cardio = if (listOf("treadmill", "tapis", "cyclette", "bike").any { name.lowercase().contains(it) }) 20 else null
+                    val isTimed = reps.endsWith("s", ignoreCase = true) ||
+                        reps.endsWith("sec", ignoreCase = true) ||
+                        name.lowercase().let { it.contains("plank") || it.contains("wall sit") || it.contains("isometria") || it.contains("hollow") }
+                    val type = if (cardio != null) "cardio" else if (isTimed) "time_and_weight" else "strength"
+                    val timeSec = if (type == "time_and_weight") reps.filter { it.isDigit() }.toIntOrNull() ?: 45 else null
 
                     list.add(
                         ParsedExercise(
                             name = name,
                             sets = sets.coerceIn(1, 30),
-                            reps = reps,
+                            reps = if (type == "time_and_weight" && !reps.endsWith("s")) "${timeSec ?: 45}s" else reps,
                             restSeconds = rest.coerceIn(0, 600),
                             cardioMinutes = cardio,
-                            category = null
+                            category = null,
+                            exerciseType = type,
+                            timeSeconds = timeSec
                         )
                     )
                     continue
@@ -276,15 +315,22 @@ object RoutineScanParser {
                     val sets = if (numbers.size >= 3) numbers.size else if (numbers.size == 2 && numbers[0] > numbers[1]) 2 else 3
                     val rest = directMatch.groupValues.getOrNull(3)?.toIntOrNull() ?: 120
                     val cardio = if (listOf("treadmill", "tapis", "cyclette", "bike").any { name.lowercase().contains(it) }) 20 else null
+                    val isTimed = reps.endsWith("s", ignoreCase = true) ||
+                        reps.endsWith("sec", ignoreCase = true) ||
+                        name.lowercase().let { it.contains("plank") || it.contains("wall sit") || it.contains("isometria") || it.contains("hollow") }
+                    val type = if (cardio != null) "cardio" else if (isTimed) "time_and_weight" else "strength"
+                    val timeSec = if (type == "time_and_weight") reps.filter { it.isDigit() }.toIntOrNull() ?: 45 else null
 
                     list.add(
                         ParsedExercise(
                             name = name,
                             sets = sets.coerceIn(1, 30),
-                            reps = reps,
+                            reps = if (type == "time_and_weight" && !reps.endsWith("s")) "${timeSec ?: 45}s" else reps,
                             restSeconds = rest.coerceIn(0, 600),
                             cardioMinutes = cardio,
-                            category = null
+                            category = null,
+                            exerciseType = type,
+                            timeSeconds = timeSec
                         )
                     )
                 }

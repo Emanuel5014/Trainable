@@ -264,6 +264,18 @@ class RoutineDetailViewModel @Inject constructor(
                             exerciseType = "cardio",
                             durataTargetSecondi = entry.cardioMinutes?.let { it * 60 }
                         )
+                    } else if (entry.isTimeAndWeight) {
+                        val sec = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                        PlanExerciseEntity(
+                            planId = details.plan.id,
+                            exerciseId = exerciseId,
+                            serieTarget = entry.sets,
+                            repsTarget = "${sec}s",
+                            recuperoTarget = entry.restSeconds,
+                            ordine = nextOrder++,
+                            exerciseType = "time_and_weight",
+                            durataTargetSecondi = sec
+                        )
                     } else {
                         PlanExerciseEntity(
                             planId = details.plan.id,
@@ -271,7 +283,8 @@ class RoutineDetailViewModel @Inject constructor(
                             serieTarget = entry.sets,
                             repsTarget = entry.reps,
                             recuperoTarget = entry.restSeconds,
-                            ordine = nextOrder++
+                            ordine = nextOrder++,
+                            exerciseType = "strength"
                         )
                     }
                 )
