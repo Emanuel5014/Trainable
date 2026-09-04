@@ -83,6 +83,8 @@ class ExerciseMatcher(
                 .replace(Regex("""\bbil\b|\bbb\b"""), "bilanciere")
                 .replace(Regex("""\bman\b|\bdb\b"""), "manubri")
                 .replace(Regex("""\brdl\b"""), "stacco rumeno")
+                .replace(Regex("""\bohp\b"""), "military press")
+                .replace(Regex("""\bpd\b"""), "pulldown")
                 .replace(Regex("""\bsq\b"""), "squat")
                 .replace(Regex("""\bspinte\b"""), "press")
                 .replace(Regex("""\balz\b"""), "alzate")

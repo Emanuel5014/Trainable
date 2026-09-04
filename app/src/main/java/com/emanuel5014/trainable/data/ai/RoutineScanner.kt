@@ -29,15 +29,31 @@ object RoutineScanPrompt {
         val categoriesStr = if (categories.isNotEmpty()) {
             categories.joinToString(", ") { "\"$it\"" }
         } else {
-            "\"Petto\", \"Dorso\", \"Gambe\", \"Spalle\", \"Braccia\", \"Addome\", \"Cardio\""
+            when (languageCode.lowercase()) {
+                "it" -> "\"Petto\", \"Dorso\", \"Gambe\", \"Spalle\", \"Braccia\", \"Addome\", \"Cardio\""
+                "es" -> "\"Pecho\", \"Espalda\", \"Piernas\", \"Hombros\", \"Brazos\", \"Core\", \"Cardio\""
+                "fr" -> "\"Pectoraux\", \"Dos\", \"Jambes\", \"Épaules\", \"Bras\", \"Abdos\", \"Cardio\""
+                "de" -> "\"Brust\", \"Rücken\", \"Beine\", \"Schultern\", \"Arme\", \"Bauch\", \"Cardio\""
+                "pt" -> "\"Peito\", \"Costas\", \"Pernas\", \"Ombros\", \"Braços\", \"Abdômen\", \"Cardio\""
+                else -> "\"Chest\", \"Back\", \"Legs\", \"Shoulders\", \"Arms\", \"Core\", \"Cardio\""
+            }
         }
+
+        val exampleJson = buildExampleJson(languageCode.lowercase(), categories)
 
         return """
 You are an expert fitness AI specialized in reading and extracting gym workout routines / training cards from images.
 Analyze the provided image and extract ALL exercises, sets, repetitions, recovery rest, and cardio duration.
 
 EXTRACTION INSTRUCTIONS:
-- name: The exercise name as visible on the card (e.g. "Panca Piana", "Lat Machine", "Squat", "Leg Press", "Curl Manubri", "Alzate Laterali", "Spinte Manubri", "Pulley", "Croci", "Plank"). If gym shorthand is used (e.g. "P. Piana", "Lat Mach.", "Press 45", "Alz. Lat.", "Trazioni alla sbarra"), expand into the full recognizable exercise name.
+- name: The exercise name as visible on the card.
+  * LANGUAGE PRESERVATION (CRITICAL): Always extract the exercise name in the original language written on the card. DO NOT translate exercise names between languages! (e.g. If the card is in English, write "Incline Dumbbell Press", NOT "Spinte Manubri Inclinata"; if in Italian, write "Panca Piana", NOT "Flat Bench Press"; if in Spanish, write "Press de Banca", NOT "Bench Press").
+  * EXPAND GYM SHORTHAND & ABBREVIATIONS into the full recognizable exercise name within the card's language:
+    - English / International: e.g. "Inc. DB Press" -> "Incline Dumbbell Press", "BB Row" -> "Barbell Row", "Lat PD" -> "Lat Pulldown", "OHP" -> "Overhead Press", "RDL" -> "Romanian Deadlift", "Leg Ext." -> "Leg Extension", "Calf Raise" -> "Calf Raises", "DB Curl" -> "Dumbbell Curl", "Cable Fly" -> "Cable Flyes".
+    - Italian: e.g. "P. Piana" -> "Panca Piana", "Lat Mach." -> "Lat Machine", "Alz. Lat." -> "Alzate Laterali", "Press 45" -> "Leg Press 45", "Trazioni sbarra" -> "Trazioni alla sbarra", "Spinte Man." -> "Spinte Manubri", "Curl Bil." -> "Curl Bilanciere".
+    - Spanish: e.g. "Press Banca" -> "Press de Banca", "Elev. Lat." -> "Elevaciones Laterales", "Remo c/m" -> "Remo con Mancuerna", "Sentadilla" -> "Sentadilla con Barra".
+    - French / German: e.g. "Dév. Couché" -> "Développé Couché", "Bankdr." -> "Bankdrücken".
+    - If no shorthand is used, preserve the exercise name as written.
 - sets: Total number of sets (integer, e.g. 3, 4, 5).
   * If a pyramidal scheme is listed (e.g. "8-6-4-2" or "12-10-8-6"), count the stages (e.g. 4 numbers = 4 sets).
   * If written as "4x 8-6-4-2" or "4x8" or "3x10-12", sets is the first number (e.g. 4 or 3).
@@ -52,10 +68,10 @@ EXTRACTION INSTRUCTIONS:
 - exercise_type: The exercise type:
   * "strength": Standard weight & repetition exercises (default).
   * "time_and_weight": Isometric, timed, or hold exercises where performance is measured by seconds / time (e.g. Plank, Wall Sit, Barbell Hold, Farmer's Walk, or exercises with duration in seconds like "45s", "60\"").
-  * "cardio": Aerobic cardio machines (Tapis Roulant, Cyclette, Ellittica, etc.).
+  * "cardio": Aerobic cardio machines (Treadmill / Tapis Roulant, Stationary Bike / Cyclette, Elliptical / Ellittica, Rower / Vogatore, Stairmaster).
 - time_seconds: For "time_and_weight" exercises, target duration in seconds as integer (e.g. 45, 60, 30); null for other types.
 - rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"", "1 min 30 s", "2'" into total seconds (e.g. 90, 120). Default to 120 if not specified.
-- cardio_minutes: If the entry is a cardio activity (Tapis Roulant / Treadmill, Cyclette / Bike, Ellittica / Elliptical, Vogatore / Rower, Stairmaster, Cyclette Recline), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
+- cardio_minutes: If the entry is a cardio activity (Treadmill / Tapis Roulant / Cinta, Bike / Cyclette / Bicicleta, Elliptical / Ellittica, Rower / Vogatore / Remo, Stairmaster), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
 - category: The target muscle group category (choose from: $categoriesStr).
 
 OUTPUT FORMAT RULES:
@@ -63,6 +79,18 @@ OUTPUT FORMAT RULES:
 - Do NOT output extra conversational text, commentary, or markdown outside the JSON block.
 
 JSON Schema Example:
+$exampleJson
+""".trim()
+    }
+
+    private fun buildExampleJson(lang: String, categories: List<String>): String {
+        val chestCat = categories.find { it.contains("petto", true) || it.contains("chest", true) || it.contains("pecho", true) || it.contains("brust", true) } ?: if (lang == "it") "Petto" else "Chest"
+        val coreCat = categories.find { it.contains("addome", true) || it.contains("core", true) || it.contains("abs", true) || it.contains("bauch", true) } ?: if (lang == "it") "Addome" else "Core"
+        val backCat = categories.find { it.contains("dorso", true) || it.contains("back", true) || it.contains("espalda", true) || it.contains("rücken", true) } ?: if (lang == "it") "Dorso" else "Back"
+        val cardioCat = categories.find { it.contains("cardio", true) } ?: "Cardio"
+
+        return when (lang) {
+            "it" -> """
 [
   {
     "name": "Panca Piana",
@@ -72,7 +100,7 @@ JSON Schema Example:
     "exercise_type": "strength",
     "time_seconds": null,
     "cardio_minutes": null,
-    "category": "Petto"
+    "category": "$chestCat"
   },
   {
     "name": "Plank",
@@ -82,7 +110,7 @@ JSON Schema Example:
     "exercise_type": "time_and_weight",
     "time_seconds": 60,
     "cardio_minutes": null,
-    "category": "Addome"
+    "category": "$coreCat"
   },
   {
     "name": "Lat Machine",
@@ -92,7 +120,7 @@ JSON Schema Example:
     "exercise_type": "strength",
     "time_seconds": null,
     "cardio_minutes": null,
-    "category": "Dorso"
+    "category": "$backCat"
   },
   {
     "name": "Tapis Roulant",
@@ -102,10 +130,99 @@ JSON Schema Example:
     "exercise_type": "cardio",
     "time_seconds": null,
     "cardio_minutes": 20,
-    "category": "Cardio"
+    "category": "$cardioCat"
   }
 ]
-""".trim()
+""".trimIndent()
+            "es" -> """
+[
+  {
+    "name": "Press de Banca",
+    "sets": 4,
+    "reps": "8-6-4-2",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$chestCat"
+  },
+  {
+    "name": "Plank",
+    "sets": 3,
+    "reps": "60s",
+    "rest_seconds": 60,
+    "exercise_type": "time_and_weight",
+    "time_seconds": 60,
+    "cardio_minutes": null,
+    "category": "$coreCat"
+  },
+  {
+    "name": "Jalón al Pecho",
+    "sets": 4,
+    "reps": "12-10-8-6",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
+  },
+  {
+    "name": "Cinta de Correr",
+    "sets": 1,
+    "reps": "1",
+    "rest_seconds": 0,
+    "exercise_type": "cardio",
+    "time_seconds": null,
+    "cardio_minutes": 20,
+    "category": "$cardioCat"
+  }
+]
+""".trimIndent()
+            else -> """
+[
+  {
+    "name": "Flat Bench Press",
+    "sets": 4,
+    "reps": "8-6-4-2",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$chestCat"
+  },
+  {
+    "name": "Plank",
+    "sets": 3,
+    "reps": "60s",
+    "rest_seconds": 60,
+    "exercise_type": "time_and_weight",
+    "time_seconds": 60,
+    "cardio_minutes": null,
+    "category": "$coreCat"
+  },
+  {
+    "name": "Lat Pulldown",
+    "sets": 4,
+    "reps": "12-10-8-6",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
+  },
+  {
+    "name": "Treadmill",
+    "sets": 1,
+    "reps": "1",
+    "rest_seconds": 0,
+    "exercise_type": "cardio",
+    "time_seconds": null,
+    "cardio_minutes": 20,
+    "category": "$cardioCat"
+  }
+]
+""".trimIndent()
+        }
     }
 }
 
