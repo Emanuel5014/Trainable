@@ -93,7 +93,7 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.ui.components.CardioInputForm
-import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
+import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -628,27 +628,49 @@ fun EditWorkoutScreen(
     }
 
     if (showExercisePicker) {
-        ExercisePickerBottomSheet(
-            exercises = state.availableExercises,
+        val exerciseStateToSwap = exerciseToSwap?.let { swapId -> state.exercises.find { it.exercise.id == swapId } }
+        val currentSets = exerciseStateToSwap?.sets?.size ?: 3
+        val currentReps = exerciseStateToSwap?.sets?.firstOrNull()?.let {
+            if (it.durataSecondi != null) "${it.durataSecondi}" else "${it.repsEffettive}"
+        } ?: "8"
+
+        SwapExerciseBottomSheet(
+            currentSets = currentSets,
+            currentReps = currentReps,
+            availableExercises = state.availableExercises,
+            languageCode = languageCode,
+            isAdding = exerciseToSwap == null,
+            editablePresetExercises = editablePresetExercises,
             categories = state.categories,
-            onDismiss = { showExercisePicker = false },
-            onExerciseSelected = { exercise ->
+            onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
                 val currentSwapId = exerciseToSwap
                 if (currentSwapId != null) {
-                    viewModel.swapExercise(currentSwapId, exercise.id)
-                } else if (exercise.categoria.equals("Cardio", ignoreCase = true)) {
-                    pendingCardioCategory = ExerciseTranslations.translate(exercise.nome, languageCode)
-                    showAddCardio = true
+                    viewModel.swapExercise(currentSwapId, exercise.id, exerciseType, durataTargetSec)
                 } else {
-                    viewModel.addExercise(exercise.id)
+                    viewModel.addExercise(exercise.id, sets, reps, exerciseType, durataTargetSec)
                 }
+                exerciseToSwap = null
+                showExercisePicker = false
+            },
+            onCardioExerciseSelected = { exercise, durationMinutes, rest ->
+                val currentSwapId = exerciseToSwap
+                if (currentSwapId != null) {
+                    viewModel.swapExerciseWithCardio(currentSwapId, exercise.nome, durationMinutes)
+                } else {
+                    viewModel.addCardioLog(exercise.nome, 0f, durationMinutes * 60)
+                }
+                exerciseToSwap = null
                 showExercisePicker = false
             },
             onAddCustomExercise = { name, category, onCreated ->
                 viewModel.addCustomExercise(name, category, onCreated)
             },
-            languageCode = languageCode,
-            editablePresetExercises = editablePresetExercises
+            onEditCustomExercise = viewModel::updateCustomExercise,
+            onDeleteCustomExercise = viewModel::deleteCustomExercise,
+            onDismiss = {
+                exerciseToSwap = null
+                showExercisePicker = false
+            }
         )
     }
 
@@ -807,7 +829,7 @@ fun EditExerciseCard(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Timer,
+                                    imageVector = Icons.Rounded.Link,
                                     contentDescription = null,
                                     tint = Primary,
                                     modifier = Modifier.size(12.dp)
@@ -815,6 +837,32 @@ fun EditExerciseCard(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = stringResource(R.string.superset).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
+                                    color = Primary,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
+                    val isTimeAndWeight = exerciseState.sets.any { it.durataSecondi != null }
+                    if (isTimeAndWeight) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Primary.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.time_and_weight_badge).uppercase(),
                                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
                                     color = Primary,
                                     fontWeight = FontWeight.ExtraBold

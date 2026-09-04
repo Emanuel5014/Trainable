@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseOutExpo
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -87,6 +88,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -94,6 +96,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -295,7 +298,7 @@ fun RoutineListScreen(
                 modifier = if (uiState.isSelectionMode) Modifier.padding(top = 8.dp) else Modifier
             )
 
-            // Modern Tab Row (click only, no swipe)
+            // M3 Expressive segmented tabs — pill guidata dal pager per un glide sincronizzato
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -307,20 +310,26 @@ fun RoutineListScreen(
             ) {
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                     val indicatorWidth = maxWidth / 2
-                    val indicatorOffset by animateDpAsState(
-                        targetValue = if (pagerState.currentPage == 0) 0.dp else indicatorWidth,
-                        animationSpec = spring(
-                            dampingRatio = 0.78f,
-                            stiffness = 380f
-                        ),
-                        label = "indicator_offset"
-                    )
+                    // Progresso continuo 0..1: segue animateScrollToPage (spring di default)
+                    // così la pill resta sincronizzata con il parallax delle pagine sotto.
+                    val progress = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
+                        .coerceIn(0f, 1f)
+                    // 0 quando è ferma su un tab, 1 a metà strada: serve per lo squash & stretch
+                    val transit = (kotlin.math.abs(progress - kotlin.math.round(progress)) * 2f)
+                        .coerceIn(0f, 1f)
+                    val pillScaleX = 1f + 0.10f * transit
+                    val pillScaleY = 1f - 0.05f * transit
 
                     Box(
                         modifier = Modifier
                             .width(indicatorWidth)
                             .height(44.dp)
-                            .offset(x = indicatorOffset)
+                            .offset(x = indicatorWidth * progress)
+                            .graphicsLayer {
+                                scaleX = pillScaleX
+                                scaleY = pillScaleY
+                            }
+                            .shadow(2.dp, Shapes.medium, clip = false)
                             .clip(Shapes.medium)
                             .background(Surface)
                     )
@@ -337,11 +346,16 @@ fun RoutineListScreen(
                         val isSelected = pagerState.currentPage == index
                         val contentColor by animateColorAsState(
                             targetValue = if (isSelected) Primary else OnSurfaceVariant,
-                            animationSpec = spring(
-                                dampingRatio = 0.78f,
-                                stiffness = 380f
-                            ),
+                            animationSpec = tween(durationMillis = 250),
                             label = "tab_content"
+                        )
+                        val textScale by animateFloatAsState(
+                            targetValue = if (isSelected) 1f else 0.94f,
+                            animationSpec = spring(
+                                dampingRatio = 0.7f,
+                                stiffness = 500f
+                            ),
+                            label = "tab_scale"
                         )
 
                         Box(
@@ -349,12 +363,18 @@ fun RoutineListScreen(
                                 .weight(1f)
                                 .height(44.dp)
                                 .clip(Shapes.medium)
-                                .clickable {
-                                    coroutineScope.launch {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        pagerState.animateScrollToPage(index)
+                                .selectable(
+                                    selected = isSelected,
+                                    role = Role.Tab,
+                                    onClick = {
+                                        if (pagerState.currentPage != index) {
+                                            coroutineScope.launch {
+                                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                pagerState.animateScrollToPage(index)
+                                            }
+                                        }
                                     }
-                                },
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -362,7 +382,11 @@ fun RoutineListScreen(
                                 style = MaterialTheme.typography.labelLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize)),
                                 fontWeight = if (isSelected) FontWeight.Black else FontWeight.SemiBold,
                                 color = contentColor,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp,
+                                modifier = Modifier.graphicsLayer {
+                                    scaleX = textScale
+                                    scaleY = textScale
+                                }
                             )
                         }
                     }

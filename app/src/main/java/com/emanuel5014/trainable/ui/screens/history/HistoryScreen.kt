@@ -66,11 +66,14 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -1614,9 +1617,9 @@ fun EditSetDialog(
         )
     }
     var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
-    var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "") }
+    var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "45") }
     var note by remember { mutableStateOf(set.note ?: "") }
-    val isTimeSet = set.durataSecondi != null
+    var isTimeSet by remember { mutableStateOf(set.durataSecondi != null) }
 
     val isValid = weight.isNotBlank() && (if (isTimeSet) seconds.isNotBlank() else reps.isNotBlank())
 
@@ -1628,6 +1631,49 @@ fun EditSetDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = !isTimeSet,
+                        onClick = { isTimeSet = false },
+                        label = { Text(stringResource(R.string.exercise_type_strength)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                    FilterChip(
+                        selected = isTimeSet,
+                        onClick = {
+                            isTimeSet = true
+                            if (seconds.isBlank()) seconds = "45"
+                        },
+                        label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Timer,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                }
+
                 GymInputField(
                     value = weight,
                     onValueChange = { newValue ->
@@ -1710,8 +1756,8 @@ fun EditSetDialog(
                         val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
-                            repsEffettive = reps.toIntOrNull() ?: 0,
-                            durataSecondi = if (isTimeSet) seconds.toIntOrNull() else set.durataSecondi,
+                            repsEffettive = if (isTimeSet) 0 else (reps.toIntOrNull() ?: 0),
+                            durataSecondi = if (isTimeSet) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null }
                         )
                         onConfirm(updatedSet)
