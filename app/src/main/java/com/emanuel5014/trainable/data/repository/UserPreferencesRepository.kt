@@ -246,12 +246,12 @@ class UserPreferencesRepository @Inject constructor(
 
     val autoStopCardioAtTarget: Flow<Boolean> = dataStore.data
         .map { preferences ->
-            preferences[AUTO_STOP_CARDIO_AT_TARGET] ?: false
+            preferences[AUTO_STOP_CARDIO_AT_TARGET] ?: true
         }
 
     val autoStopTimeWeightAtTarget: Flow<Boolean> = dataStore.data
         .map { preferences ->
-            preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: false
+            preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: true
         }
 
     val themeMode: Flow<Int> = dataStore.data

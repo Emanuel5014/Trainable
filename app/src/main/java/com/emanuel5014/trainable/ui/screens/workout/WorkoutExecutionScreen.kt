@@ -715,20 +715,36 @@ fun WorkoutExecutionScreen(
                                                                         else 1f
                                                                     }
                                                                 )
-                                                                CardioToggleButton(
-                                                                    isRunning = isRunning,
-                                                                    isPaused = isPaused,
-                                                                    onToggle = {
-                                                                        if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                        when {
-                                                                            isRunning -> viewModel.pauseSetTimer()
-                                                                            else -> viewModel.startSetTimer()
-                                                                        }
-                                                                    },
-                                                                    modifier = Modifier.size(80.dp),
-                                                                    activeColor = timerColor,
-                                                                    onActiveColor = if (isTargetReached) Color.White else OnPrimary
-                                                                )
+                                                                if (state.autoStopTimeWeightAtTarget && isTargetReached) {
+                                                                    Box(
+                                                                        modifier = Modifier
+                                                                            .size(80.dp)
+                                                                            .background(timerColor, CircleShape),
+                                                                        contentAlignment = Alignment.Center
+                                                                    ) {
+                                                                        Icon(
+                                                                            imageVector = Icons.Rounded.ThumbUp,
+                                                                            contentDescription = null,
+                                                                            tint = Color.White,
+                                                                            modifier = Modifier.size(36.dp)
+                                                                        )
+                                                                    }
+                                                                } else {
+                                                                    CardioToggleButton(
+                                                                        isRunning = isRunning,
+                                                                        isPaused = isPaused,
+                                                                        onToggle = {
+                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                            when {
+                                                                                isRunning -> viewModel.pauseSetTimer()
+                                                                                else -> viewModel.startSetTimer()
+                                                                            }
+                                                                        },
+                                                                        modifier = Modifier.size(80.dp),
+                                                                        activeColor = timerColor,
+                                                                        onActiveColor = if (isTargetReached) Color.White else OnPrimary
+                                                                    )
+                                                                }
                                                             }
 
                                                             val curFormatted = String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)

@@ -154,8 +154,8 @@ fun OnboardingScreen(
     var gymMembershipExpiryNotificationsEnabled by remember { mutableStateOf(false) }
     var gymMembershipExpiryNotificationDaysBefore by remember { mutableIntStateOf(3) }
     var timerFinishedLockscreenVibrationDuration by remember { mutableIntStateOf(30) }
-    var autoStopCardioAtTarget by remember { mutableStateOf(false) }
-    var autoStopTimeWeightAtTarget by remember { mutableStateOf(false) }
+    var autoStopCardioAtTarget by remember { mutableStateOf(true) }
+    var autoStopTimeWeightAtTarget by remember { mutableStateOf(true) }
     var autoBackupEnabled by remember { mutableStateOf(false) }
     var autoBackupFrequency by remember { mutableIntStateOf(1) }
     var autoBackupFolderUri by remember { mutableStateOf<String?>(null) }

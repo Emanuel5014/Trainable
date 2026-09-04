@@ -245,13 +245,13 @@ class SettingsViewModel @Inject constructor(
     val autoStopCardioAtTarget = userPrefsRepository.autoStopCardioAtTarget.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
+        initialValue = true
     )
 
     val autoStopTimeWeightAtTarget = userPrefsRepository.autoStopTimeWeightAtTarget.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
+        initialValue = true
     )
 
     val customCategories = exerciseRepository.getCustomCategories().stateIn(
