@@ -76,6 +76,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -139,10 +140,21 @@ fun RoutineListScreen(
     onNavigateToDetail: (Int) -> Unit,
     onGenerateReport: (List<Int>) -> Unit = {},
     onSwipingItemChange: ((Boolean) -> Unit)? = null,
+    isVisible: Boolean = true,
     viewModel: RoutinesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
+
+    // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
+    // quindi la selezione sopravvivrebbe allo spostamento: la si resetta qui,
+    // sia al cambio tab che all'uscita verso le schermate di dettaglio.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) viewModel.clearSelection()
+    }
+    DisposableEffect(Unit) {
+        onDispose { viewModel.clearSelection() }
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current

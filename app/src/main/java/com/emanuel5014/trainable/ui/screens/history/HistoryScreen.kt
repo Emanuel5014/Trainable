@@ -190,13 +190,42 @@ private data class HistoryBlock(
 @Composable
 fun HistoryScreen(
     navController: NavController? = null,
+    isVisible: Boolean = true,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
+
+    // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
+    // quindi la selezione sopravvivrebbe allo spostamento: la si resetta qui,
+    // sia al cambio tab che all'uscita verso le schermate di dettaglio.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) viewModel.clearSelection()
+    }
+    DisposableEffect(Unit) {
+        onDispose { viewModel.clearSelection() }
+    }
     
     val listState = rememberLazyListState()
+
+    // Quando si completa un workout la query è ORDER BY timestamp DESC,
+    // quindi il più recente è in cima (index 0): se la lista cresce,
+    // torna in cima automaticamente invece di costringere a scrollare a mano.
+    var previousListSize by remember { mutableStateOf<Int?>(null) }
+    val newestSessionId = uiState.filteredSessions.firstOrNull()?.session?.id
+    LaunchedEffect(uiState.filteredSessions.size, newestSessionId) {
+        val currentSize = uiState.filteredSessions.size
+        val prevSize = previousListSize
+        if (prevSize != null && currentSize > prevSize) {
+            if (listState.firstVisibleItemIndex > 6) {
+                listState.scrollToItem(0)
+            } else {
+                listState.animateScrollToItem(0)
+            }
+        }
+        previousListSize = currentSize
+    }
 
     // Resolve colors at the top of the Composable
     val surfaceColor = Surface
