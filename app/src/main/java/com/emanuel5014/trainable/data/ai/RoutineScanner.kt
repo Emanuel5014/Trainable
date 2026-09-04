@@ -55,15 +55,14 @@ EXTRACTION INSTRUCTIONS:
     - French / German: e.g. "Dév. Couché" -> "Développé Couché", "Bankdr." -> "Bankdrücken".
     - If no shorthand is used, preserve the exercise name as written.
 - sets: Total number of sets (integer, e.g. 3, 4, 5).
-  * If a pyramidal scheme is listed (e.g. "8-6-4-2" or "12-10-8-6"), count the stages (e.g. 4 numbers = 4 sets).
-  * If written as "4x 8-6-4-2" or "4x8" or "3x10-12", sets is the first number (e.g. 4 or 3).
-  * If unspecified, default to 3.
-- reps: Repetitions target as a string. CRITICAL ACCURACY RULES:
-  * PYRAMIDAL / MULTI-SET SCHEMES: If an exercise has a descending or ascending series of numbers like "8-6-4-2", "12-10-8-6", "10-8-6-4", "4-6-8-10", "12-10-8", "8-6-4", you MUST extract the COMPLETE string with ALL numbers (e.g. "8-6-4-2"). NEVER truncate or shorten it to only two numbers (do NOT write "8-6" instead of "8-6-4-2").
-  * RANGES: e.g. "8-12", "8-10", "10-12", "6-8", "12-15".
-  * FIXED REPS: e.g. "10", "12", "8".
+  * Standard: If written as "4x10", "3x8", "4x 8-12", sets is the first number (e.g. 4 or 3). Default to 3 if unspecified.
+  * Only if an explicit pyramidal series is written (e.g. "12-10-8-6"), count the number of stages (4 numbers = 4 sets).
+- reps: Repetitions target as written on the card. CRITICAL ACCURACY RULES:
+  * FIXED REPS (MOST COMMON): e.g. "10", "12", "8", "15". If the card says "3x10", reps is "10" and sets is 3.
+  * RANGES: e.g. "8-12", "8-10", "10-12", "6-8", "12-15". Keep the range exactly in ascending order as written (e.g. "8-10", NEVER invert to "10-8").
+  * NO HALLUCINATED PYRAMIDALS: NEVER invent, assume, or guess a pyramidal scheme (like "8-6-4-2" or "10-8")! ONLY output a multi-number series if multiple distinct numbers are literally written on the image. If the sheet writes "4x10" or "3x10", reps MUST be "10", NEVER "8-6-4-2" or "10-8".
+  * REAL PYRAMIDAL SCHEMES: If and only if the card explicitly writes a series of numbers (e.g. "10-8-6" or "12-10-8-6"), extract the full sequence with all numbers separated by dashes (e.g. "12-10-8-6").
   * SPECIAL TECHNIQUES: e.g. "6+6+6" (stripping / drop set), "MAX" (to failure).
-  * Format multi-number sequences using dashes (e.g. "8-6-4-2", not slashes or commas).
   * TIME-BASED / ISOMETRIC: For timed or isometric exercises (e.g. Plank, Wall Sit, Hollow Body, Farmer's Walk, or any hold with duration like "3x45s", "30\"", "1 min"), write the duration with 's' (e.g. "45s", "60s", "30s").
 - exercise_type: The exercise type:
   * "strength": Standard weight & repetition exercises (default).
@@ -94,13 +93,23 @@ $exampleJson
 [
   {
     "name": "Panca Piana",
-    "sets": 4,
-    "reps": "8-6-4-2",
+    "sets": 3,
+    "reps": "10",
     "rest_seconds": 90,
     "exercise_type": "strength",
     "time_seconds": null,
     "cardio_minutes": null,
     "category": "$chestCat"
+  },
+  {
+    "name": "Lat Machine",
+    "sets": 4,
+    "reps": "8-12",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
   },
   {
     "name": "Plank",
@@ -111,16 +120,6 @@ $exampleJson
     "time_seconds": 60,
     "cardio_minutes": null,
     "category": "$coreCat"
-  },
-  {
-    "name": "Lat Machine",
-    "sets": 4,
-    "reps": "12-10-8-6",
-    "rest_seconds": 90,
-    "exercise_type": "strength",
-    "time_seconds": null,
-    "cardio_minutes": null,
-    "category": "$backCat"
   },
   {
     "name": "Tapis Roulant",
@@ -138,13 +137,23 @@ $exampleJson
 [
   {
     "name": "Press de Banca",
-    "sets": 4,
-    "reps": "8-6-4-2",
+    "sets": 3,
+    "reps": "10",
     "rest_seconds": 90,
     "exercise_type": "strength",
     "time_seconds": null,
     "cardio_minutes": null,
     "category": "$chestCat"
+  },
+  {
+    "name": "Jalón al Pecho",
+    "sets": 4,
+    "reps": "8-12",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
   },
   {
     "name": "Plank",
@@ -155,16 +164,6 @@ $exampleJson
     "time_seconds": 60,
     "cardio_minutes": null,
     "category": "$coreCat"
-  },
-  {
-    "name": "Jalón al Pecho",
-    "sets": 4,
-    "reps": "12-10-8-6",
-    "rest_seconds": 90,
-    "exercise_type": "strength",
-    "time_seconds": null,
-    "cardio_minutes": null,
-    "category": "$backCat"
   },
   {
     "name": "Cinta de Correr",
@@ -182,13 +181,23 @@ $exampleJson
 [
   {
     "name": "Flat Bench Press",
-    "sets": 4,
-    "reps": "8-6-4-2",
+    "sets": 3,
+    "reps": "10",
     "rest_seconds": 90,
     "exercise_type": "strength",
     "time_seconds": null,
     "cardio_minutes": null,
     "category": "$chestCat"
+  },
+  {
+    "name": "Lat Pulldown",
+    "sets": 4,
+    "reps": "8-12",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
   },
   {
     "name": "Plank",
@@ -199,16 +208,6 @@ $exampleJson
     "time_seconds": 60,
     "cardio_minutes": null,
     "category": "$coreCat"
-  },
-  {
-    "name": "Lat Pulldown",
-    "sets": 4,
-    "reps": "12-10-8-6",
-    "rest_seconds": 90,
-    "exercise_type": "strength",
-    "time_seconds": null,
-    "cardio_minutes": null,
-    "category": "$backCat"
   },
   {
     "name": "Treadmill",
