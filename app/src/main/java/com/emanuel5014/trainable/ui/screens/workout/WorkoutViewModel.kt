@@ -108,7 +108,9 @@ data class WorkoutExerciseState(
     val timeTargetSeconds: Int? = null
 ) {
     val isTimeAndWeight: Boolean
-        get() = exerciseType == "time_and_weight" || planDetails?.exerciseType == "time_and_weight"
+        get() = exerciseType == "time_and_weight" || 
+                (planDetails?.exerciseType == "time_and_weight" && swappedExerciseId == null) ||
+                sets.any { it.timeSeconds != null }
 }
 
 data class WorkoutSetState(
@@ -308,6 +310,7 @@ class WorkoutViewModel @Inject constructor(
         
         val swaps = workoutRepository.getSwapsForSession(sessionId).firstOrNull()
         val swapMap = swaps?.associate { it.originalExerciseId to it.replacementExerciseId } ?: emptyMap()
+        val reverseSwapMap = swaps?.associate { it.replacementExerciseId to it.originalExerciseId } ?: emptyMap()
 
         // Load saved rest timer from session
         val savedEndTime = sessionWithSets.session.restTimerEndTime
@@ -355,20 +358,6 @@ class WorkoutViewModel @Inject constructor(
         val useOrdine = sessionWithSets.sets.any { it.ordineEsercizio > 0 } || cardioLogs.any { it.ordineEsercizio > 0 }
 
         suspend fun createExerciseState(exercise: ExerciseEntity, planDetail: PlanExerciseEntity?, exerciseIndex: Int, useOrdine: Boolean): WorkoutExerciseState {
-            val previousSets = getPreviousSetsForExercise(planId, exercise.id, planDetail?.serieTarget ?: 3)
-            val isTimeAndWeight = planDetail?.exerciseType == "time_and_weight"
-            val defaultTargetSeconds = planDetail?.durataTargetSecondi ?: 45
-            val prevPerfStr = if (previousSets.isNotEmpty()) {
-                val bestSet = previousSets.maxByOrNull { it.pesoSollevato }
-                if (bestSet != null) {
-                    if (isTimeAndWeight || bestSet.durataSecondi != null) {
-                        "Last: ${bestSet.pesoSollevato}kg × ${bestSet.durataSecondi ?: bestSet.repsEffettive}s"
-                    } else {
-                        "Last: ${bestSet.pesoSollevato}kg × ${bestSet.repsEffettive}"
-                    }
-                } else null
-            } else null
-
             val isCardio = exercise.categoria.equals("Cardio", ignoreCase = true) || planDetail?.exerciseType == "cardio"
             val cardioLog = if (isCardio) {
                 cardioLogs.find { if (useOrdine) it.ordineEsercizio == exerciseIndex else it.categoria.equals(exercise.nome, ignoreCase = true) }
@@ -380,6 +369,42 @@ class WorkoutViewModel @Inject constructor(
             } else {
                 sessionWithSets.sets.filter { it.exerciseId == exercise.id }
             }
+
+            val isSwapped = (planDetail != null && swapMap[planDetail.id] != null) || reverseSwapMap[exercise.id] != null
+            val hasLoggedTime = loggedSets.any { it.durataSecondi != null }
+            val loggedTargetSeconds = loggedSets.firstOrNull { it.durataSecondi != null }?.durataSecondi
+
+            val isTimeAndWeight = when {
+                isCardio -> false
+                hasLoggedTime -> true
+                isSwapped -> false
+                planDetail != null -> planDetail.exerciseType == "time_and_weight"
+                else -> false
+            }
+
+            val resolvedExerciseType = when {
+                isCardio -> "cardio"
+                isTimeAndWeight -> "time_and_weight"
+                else -> "strength"
+            }
+
+            val resolvedTargetSeconds = when {
+                isTimeAndWeight -> loggedTargetSeconds ?: (if (!isSwapped) planDetail?.durataTargetSecondi else null) ?: 45
+                else -> null
+            }
+
+            val defaultTargetSeconds = resolvedTargetSeconds ?: 45
+            val previousSets = getPreviousSetsForExercise(planId, exercise.id, planDetail?.serieTarget ?: 3)
+            val prevPerfStr = if (previousSets.isNotEmpty()) {
+                val bestSet = previousSets.maxByOrNull { it.pesoSollevato }
+                if (bestSet != null) {
+                    if (isTimeAndWeight || bestSet.durataSecondi != null) {
+                        "Last: ${bestSet.pesoSollevato}kg × ${bestSet.durataSecondi ?: bestSet.repsEffettive}s"
+                    } else {
+                        "Last: ${bestSet.pesoSollevato}kg × ${bestSet.repsEffettive}"
+                    }
+                } else null
+            } else null
             
             val targetSets = if (planDetail == null && loggedSets.isNotEmpty()) {
                 loggedSets.size
@@ -441,7 +466,7 @@ class WorkoutViewModel @Inject constructor(
                 planDetails = planDetail,
                 sets = sets,
                 previousPerformance = prevPerfStr,
-                swappedExerciseId = planDetail?.id?.let { swapMap[it] },
+                swappedExerciseId = planDetail?.id?.let { swapMap[it] } ?: if (isSwapped) exercise.id else null,
                 supersetId = planDetail?.supersetId ?: loggedSets.firstOrNull()?.supersetId,
                 customRestSeconds = restoredRestSeconds,
                 isCardio = isCardio,
@@ -452,8 +477,8 @@ class WorkoutViewModel @Inject constructor(
                 cardioElapsedSeconds = cardioLog?.durataSecondi ?: 0,
                 cardioDistanceKm = cardioLog?.distanza ?: 0f,
                 isCardioCompleted = cardioLog?.isCompleted ?: false,
-                exerciseType = planDetail?.exerciseType ?: if (isCardio) "cardio" else "strength",
-                timeTargetSeconds = planDetail?.durataTargetSecondi
+                exerciseType = resolvedExerciseType,
+                timeTargetSeconds = resolvedTargetSeconds
             )
         }
 
@@ -476,17 +501,19 @@ class WorkoutViewModel @Inject constructor(
             }.toMap()
             val planDetailByExerciseId = planExercises.associateBy { it.exercise.id }
 
-            // Build a reverse swap map: replacementExerciseId -> originalPlanExerciseId,
-            // so cardio exercises swapped in from a plan exercise can consume the original plan exercise.
-            val reverseSwapMap = swaps?.associate { it.replacementExerciseId to it.originalExerciseId } ?: emptyMap()
-
             val exerciseStatesByOrder = mutableMapOf<Int, WorkoutExerciseState>()
             val consumedPlanDetailIds = mutableSetOf<Int>()
 
             for ((order, setsForOrder) in setsByOrder) {
                 val firstSet = setsForOrder.firstOrNull() ?: continue
                 val exerciseId = firstSet.exerciseId
-                val planDetail = planDetailByExerciseId[exerciseId]
+                var planDetail = planDetailByExerciseId[exerciseId]
+                if (planDetail == null) {
+                    val originalPlanExerciseId = reverseSwapMap[exerciseId]
+                    if (originalPlanExerciseId != null) {
+                        planDetail = planExercises.find { it.planExercise.id == originalPlanExerciseId }
+                    }
+                }
                 val exercise = allAvailableExercises.find { it.id == exerciseId } ?: continue
 
                 val planState = if (planDetail != null) planDetail.planExercise else null
@@ -641,10 +668,12 @@ class WorkoutViewModel @Inject constructor(
                 clearCardioTimerInSession()
             }
         }
-        if (savedSetRunning) {
+        if (savedSetRunning || savedSetPaused) {
             val targetExState = exerciseStates.getOrNull(finalActiveIndex)
             if (targetExState != null && targetExState.isTimeAndWeight) {
-                startSetTimer()
+                if (savedSetRunning) {
+                    startSetTimer()
+                }
             } else {
                 clearSetTimerInSession()
             }
