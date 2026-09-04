@@ -378,3 +378,198 @@ private fun <T> WheelPickerBox(
 
 private fun <T> areEqual(a: T, b: T): Boolean =
     if (a is Float && b is Float) kotlin.math.abs(a - b) < 0.001f else a == b
+
+@OptIn(FlowPreview::class)
+@Composable
+fun WeightTimeInput(
+    weight: Float,
+    seconds: Int,
+    onWeightChange: (Float) -> Unit,
+    onSecondsChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    weightUnit: String = "kg"
+) {
+    var showCustomWeightDialog by remember { mutableStateOf(false) }
+    var customWeightText by remember { mutableStateOf("") }
+    var showCustomSecondsDialog by remember { mutableStateOf(false) }
+    var customSecondsText by remember { mutableStateOf("") }
+
+    val displayWeight = remember(weight, weightUnit) {
+        val converted = WeightUnitConverter.convertDisplay(weight, weightUnit)
+        (kotlin.math.round(converted * 100) / 100f)
+    }
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            val baseWeightRange = remember(weightUnit) {
+                if (weightUnit == "lb") (0..2000).map { it * 1f } else (0..1000).map { it * 0.5f }
+            }
+            val weightRange = remember(displayWeight, baseWeightRange) {
+                val isInRange = baseWeightRange.any { kotlin.math.abs(it - displayWeight) < 0.001f }
+                if (!isInRange && displayWeight > 0) {
+                    (baseWeightRange + displayWeight).sorted()
+                } else {
+                    baseWeightRange
+                }
+            }
+
+            WheelPickerBox(
+                label = stringResource(R.string.weight_label_unit, weightUnit.uppercase()),
+                value = displayWeight,
+                range = weightRange,
+                onValueChange = { 
+                    val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
+                    onWeightChange(kgWeight) 
+                },
+                format = { WeightUnitConverter.format(it) }
+            )
+            TextButton(
+                onClick = { 
+                    customWeightText = ""
+                    showCustomWeightDialog = true 
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = OnSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    stringResource(R.string.custom),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+            }
+        }
+        
+        Column(modifier = Modifier.weight(1f)) {
+            val baseSecondsRange = remember {
+                (5..600 step 5).map { it.toFloat() }
+            }
+            val secondsRange = remember(seconds, baseSecondsRange) {
+                val secF = seconds.toFloat()
+                if (!baseSecondsRange.contains(secF) && seconds > 0) {
+                    (baseSecondsRange + secF).sorted()
+                } else {
+                    baseSecondsRange
+                }
+            }
+
+            WheelPickerBox(
+                label = stringResource(R.string.set_duration_label),
+                value = seconds.toFloat(),
+                range = secondsRange,
+                onValueChange = { onSecondsChange(it.toInt()) },
+                modifier = Modifier.fillMaxWidth(),
+                format = { "${it.toInt()}s" }
+            )
+            TextButton(
+                onClick = { 
+                    customSecondsText = ""
+                    showCustomSecondsDialog = true 
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = OnSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    stringResource(R.string.custom),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant
+                )
+            }
+        }
+    }
+
+    if (showCustomWeightDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomWeightDialog = false },
+            title = { Text(stringResource(R.string.custom_weight), color = OnSurface) },
+            text = {
+                OutlinedTextField(
+                    value = customWeightText,
+                    onValueChange = { customWeightText = it.replace(',', '.') },
+                    label = { Text(stringResource(R.string.weight_label_unit, weightUnit)) },
+                    placeholder = { Text(WeightUnitConverter.format(displayWeight), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = Shapes.large,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        cursorColor = Primary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        customWeightText.toFloatOrNull()?.let { 
+                            val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
+                            onWeightChange(kgWeight) 
+                        }
+                        showCustomWeightDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.ok), color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomWeightDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                }
+            },
+            containerColor = SurfaceContainerHigh
+        )
+    }
+
+    if (showCustomSecondsDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomSecondsDialog = false },
+            title = { Text(stringResource(R.string.set_duration_label), color = OnSurface) },
+            text = {
+                OutlinedTextField(
+                    value = customSecondsText,
+                    onValueChange = { customSecondsText = it.filter { char -> char.isDigit() } },
+                    label = { Text(stringResource(R.string.target_seconds)) },
+                    placeholder = { Text(seconds.toString(), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = Shapes.large,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Primary,
+                        cursorColor = Primary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        customSecondsText.toIntOrNull()?.let { onSecondsChange(it) }
+                        showCustomSecondsDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.ok), color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomSecondsDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+                }
+            },
+            containerColor = SurfaceContainerHigh
+        )
+    }
+}

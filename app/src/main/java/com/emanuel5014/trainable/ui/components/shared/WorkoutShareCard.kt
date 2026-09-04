@@ -123,9 +123,19 @@ fun WorkoutShareCard(
         blocks.add(ShareBlock(currentSupersetId, currentBlock.toList()))
     }
 
+    val unifiedItems = mutableListOf<UnifiedShareItem>()
+    blocks.forEach { block ->
+        val ord = block.exercises.firstOrNull()?.sets?.firstOrNull()?.setLog?.ordineEsercizio ?: 0
+        unifiedItems.add(UnifiedShareItem.Strength(block, ord))
+    }
+    sessionDetails.cardio.forEach { cardio ->
+        unifiedItems.add(UnifiedShareItem.Cardio(cardio, cardio.ordineEsercizio))
+    }
+    val sortedUnifiedItems = unifiedItems.sortedBy { it.order }
+
     val totalExercises = exercisesWithSets.size + sessionDetails.cardio.size
     val totalSets = sessionDetails.sets.size
-    val totalWeight = sessionDetails.sets.sumOf { it.setLog.pesoSollevato.toDouble() }.toFloat()
+    val totalWeight = sessionDetails.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
     val durationMs = sessionDetails.session.durationMs
 
     Column(
@@ -372,129 +382,225 @@ fun WorkoutShareCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            blocks.forEach { block ->
-                val isSuperset = block.supersetId != null
+            sortedUnifiedItems.forEach { unifiedItem ->
+                when (unifiedItem) {
+                    is UnifiedShareItem.Strength -> {
+                        val block = unifiedItem.block
+                        val isSuperset = block.supersetId != null
 
-                if (isSuperset) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(cardBackground)
-                            .border(BorderStroke(1.dp, primaryColor.copy(alpha = 0.35f)), RoundedCornerShape(16.dp))
-                            .padding(14.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Link,
-                                contentDescription = null,
-                                tint = primaryColor,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = stringResource(id = com.emanuel5014.trainable.R.string.superset).uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Black,
-                                color = primaryColor,
-                                letterSpacing = 1.sp
-                            )
-                        }
-
-                        block.exercises.forEachIndexed { exIndex, item ->
-                            if (exIndex > 0) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(1.dp)
-                                        .background(Color.White.copy(alpha = 0.05f))
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
-
-                            val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
+                        if (isSuperset) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(cardBackground)
+                                    .border(BorderStroke(1.dp, primaryColor.copy(alpha = 0.35f)), RoundedCornerShape(16.dp))
+                                    .padding(14.dp)
                             ) {
-                                Text(
-                                    text = exerciseName.uppercase(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Black,
-                                    color = primaryColor,
-                                    letterSpacing = 0.5.sp,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                val planExercise = planExerciseMap?.get(item.exercise.id)
-                                if (planExercise != null) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(bottom = 10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Link,
+                                        contentDescription = null,
+                                        tint = primaryColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "${planExercise.planExercise.serieTarget}×${planExercise.planExercise.repsTarget}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        text = stringResource(id = com.emanuel5014.trainable.R.string.superset).uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Black,
+                                        color = primaryColor,
+                                        letterSpacing = 1.sp
                                     )
                                 }
-                            }
 
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            item.sets.forEach { setWithEx ->
-                                val set = setWithEx.setLog
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = 38.dp, height = 18.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(Color.White.copy(alpha = 0.05f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "SET ${set.numeroSerie}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = textSecondary,
-                                            fontWeight = FontWeight.Bold
+                                block.exercises.forEachIndexed { exIndex, item ->
+                                    if (exIndex > 0) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(1.dp)
+                                                .background(Color.White.copy(alpha = 0.05f))
                                         )
+                                        Spacer(modifier = Modifier.height(12.dp))
                                     }
 
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = exerciseName.uppercase(),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Black,
+                                            color = primaryColor,
+                                            letterSpacing = 0.5.sp,
+                                            modifier = Modifier.weight(1f)
+                                        )
 
-                                    Text(
-                                        text = WeightUnitConverter.formatWithUnit(
-                                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                            weightUnit
-                                        ) + " × ${set.repsEffettive}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = textPrimary
-                                    )
+                                        val planExercise = planExerciseMap?.get(item.exercise.id)
+                                        if (planExercise != null) {
+                                            val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
+                                            val targetDisplay = if (isTime) "${planExercise.planExercise.repsTarget}s" else planExercise.planExercise.repsTarget
+                                            Text(
+                                                text = "${planExercise.planExercise.serieTarget}×$targetDisplay",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = textSecondary
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    item.sets.forEach { setWithEx ->
+                                        val set = setWithEx.setLog
+                                        val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.Start,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(width = 38.dp, height = 18.dp)
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(Color.White.copy(alpha = 0.05f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "SET ${set.numeroSerie}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = textSecondary,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.width(8.dp))
+
+                                            Text(
+                                                text = WeightUnitConverter.formatWithUnit(
+                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                                                    weightUnit
+                                                ) + " × $repsOrTime",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = textPrimary
+                                            )
+                                        }
+
+                                        if (!set.note.isNullOrBlank()) {
+                                            Text(
+                                                text = set.note,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = textSecondary,
+                                                fontStyle = FontStyle.Italic,
+                                                modifier = Modifier.padding(start = 46.dp, top = 2.dp)
+                                            )
+                                        }
+                                    }
                                 }
+                            }
+                        } else {
+                            block.exercises.forEach { item ->
+                                val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
 
-                                if (!set.note.isNullOrBlank()) {
-                                    Text(
-                                        text = set.note,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = textSecondary,
-                                        fontStyle = FontStyle.Italic,
-                                        modifier = Modifier.padding(start = 46.dp, top = 2.dp)
-                                    )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(cardBackground)
+                                        .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
+                                        .padding(14.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = exerciseName.uppercase(),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Black,
+                                            color = primaryColor,
+                                            letterSpacing = 0.5.sp,
+                                            modifier = Modifier.weight(1f)
+                                        )
+
+                                        val planExercise = planExerciseMap?.get(item.exercise.id)
+                                        if (planExercise != null) {
+                                            val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
+                                            val targetDisplay = if (isTime) "${planExercise.planExercise.repsTarget}s" else planExercise.planExercise.repsTarget
+                                            Text(
+                                                text = "${planExercise.planExercise.serieTarget}×$targetDisplay",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = textSecondary
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    item.sets.forEach { setWithEx ->
+                                        val set = setWithEx.setLog
+                                        val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.Start,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(width = 38.dp, height = 18.dp)
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(Color.White.copy(alpha = 0.05f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = "SET ${set.numeroSerie}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = textSecondary,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.width(8.dp))
+
+                                            Text(
+                                                text = WeightUnitConverter.formatWithUnit(
+                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
+                                                    weightUnit
+                                                ) + " × $repsOrTime",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = textPrimary
+                                            )
+                                        }
+
+                                        if (!set.note.isNullOrBlank()) {
+                                            Text(
+                                                text = set.note,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = textSecondary,
+                                                fontStyle = FontStyle.Italic,
+                                                modifier = Modifier.padding(start = 46.dp, top = 2.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                } else {
-                    block.exercises.forEach { item ->
-                        val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-
+                    is UnifiedShareItem.Cardio -> {
+                        val cardio = unifiedItem.cardio
+                        val cardioTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -503,121 +609,37 @@ fun WorkoutShareCard(
                                 .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
                                 .padding(14.dp)
                         ) {
+                            Text(
+                                text = cardioTitle.uppercase(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Black,
+                                color = primaryColor,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = exerciseName.uppercase(),
+                                    text = "${cardio.distanza} KM",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Black,
-                                    color = primaryColor,
-                                    letterSpacing = 0.5.sp,
-                                    modifier = Modifier.weight(1f)
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = textPrimary
                                 )
-
-                                val planExercise = planExerciseMap?.get(item.exercise.id)
-                                if (planExercise != null) {
-                                    Text(
-                                        text = "${planExercise.planExercise.serieTarget}×${planExercise.planExercise.repsTarget}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = textSecondary
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            item.sets.forEach { setWithEx ->
-                                val set = setWithEx.setLog
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = 38.dp, height = 18.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(Color.White.copy(alpha = 0.05f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "SET ${set.numeroSerie}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = textSecondary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    Text(
-                                        text = WeightUnitConverter.formatWithUnit(
-                                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                            weightUnit
-                                        ) + " × ${set.repsEffettive}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = textPrimary
-                                    )
-                                }
-
-                                if (!set.note.isNullOrBlank()) {
-                                    Text(
-                                        text = set.note,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = textSecondary,
-                                        fontStyle = FontStyle.Italic,
-                                        modifier = Modifier.padding(start = 46.dp, top = 2.dp)
-                                    )
-                                }
+                                val h = cardio.durataSecondi / 3600
+                                val m = (cardio.durataSecondi % 3600) / 60
+                                val s = cardio.durataSecondi % 60
+                                val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                                Text(
+                                    text = durationText,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = textSecondary,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
-                    }
-                }
-            }
-
-            sessionDetails.cardio.forEach { cardio ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(cardBackground)
-                        .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
-                        .padding(14.dp)
-                ) {
-                    Text(
-                        text = cardio.categoria.uppercase(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Black,
-                        color = primaryColor,
-                        letterSpacing = 0.5.sp
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${cardio.distanza} KM",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = textPrimary
-                        )
-                        val h = cardio.durataSecondi / 3600
-                        val m = (cardio.durataSecondi % 3600) / 60
-                        val s = cardio.durataSecondi % 60
-                        val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
-                        Text(
-                            text = durationText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = textSecondary,
-                            fontWeight = FontWeight.Bold
-                        )
                     }
                 }
             }
@@ -655,3 +677,9 @@ private data class ShareBlock(
     val supersetId: String?,
     val exercises: List<ShareExerciseItem>
 )
+
+private sealed interface UnifiedShareItem {
+    val order: Int
+    data class Strength(val block: ShareBlock, override val order: Int) : UnifiedShareItem
+    data class Cardio(val cardio: com.emanuel5014.trainable.data.local.entity.CardioLogEntity, override val order: Int) : UnifiedShareItem
+}

@@ -35,16 +35,31 @@ fun ImportConfirmationDialog(
                     color = OnSurfaceVariant
                 )
                 plans.forEach { plan ->
+                    val typeSummary = buildString {
+                        val cardio = plan.exercises.count { it.exerciseType == "cardio" }
+                        val timed = plan.exercises.count { it.exerciseType == "time_and_weight" }
+                        val supersets = plan.exercises.mapNotNull { it.supersetId }.distinct().size
+                        if (cardio > 0) append(" • $cardio cardio")
+                        if (timed > 0) append(" • $timed timed")
+                        if (supersets > 0) append(" • $supersets superset")
+                    }
                     Text(
                         text = "• " + stringResource(
                             R.string.import_plan_summary,
                             plan.nome,
                             plan.exercises.size
-                        ),
+                        ) + typeSummary,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = OnSurface
                     )
+                    if (plan.giorniSettimana != null) {
+                        Text(
+                            text = stringResource(R.string.schedule_days) + ": " + plan.giorniSettimana,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
                 }
             }
         },

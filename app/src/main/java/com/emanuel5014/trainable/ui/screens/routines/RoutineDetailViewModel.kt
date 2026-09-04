@@ -219,11 +219,26 @@ class RoutineDetailViewModel @Inject constructor(
         scanJob = null
         _aiScanState.value = AiScanState.Idle
         _aiScanStream.value = AiScanStreamState()
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            routineScanner.release()
+        }
     }
 
     fun dismissScanResult() {
         _aiScanState.value = AiScanState.Idle
         _aiScanStream.value = AiScanStreamState()
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            routineScanner.release()
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        scanJob?.cancel()
+        scanJob = null
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            routineScanner.release()
+        }
     }
 
     fun applyScannedExercises(entries: List<ScannedExerciseEntry>) {
@@ -249,6 +264,18 @@ class RoutineDetailViewModel @Inject constructor(
                             exerciseType = "cardio",
                             durataTargetSecondi = entry.cardioMinutes?.let { it * 60 }
                         )
+                    } else if (entry.isTimeAndWeight) {
+                        val sec = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                        PlanExerciseEntity(
+                            planId = details.plan.id,
+                            exerciseId = exerciseId,
+                            serieTarget = entry.sets,
+                            repsTarget = "${sec}s",
+                            recuperoTarget = entry.restSeconds,
+                            ordine = nextOrder++,
+                            exerciseType = "time_and_weight",
+                            durataTargetSecondi = sec
+                        )
                     } else {
                         PlanExerciseEntity(
                             planId = details.plan.id,
@@ -256,7 +283,8 @@ class RoutineDetailViewModel @Inject constructor(
                             serieTarget = entry.sets,
                             repsTarget = entry.reps,
                             recuperoTarget = entry.restSeconds,
-                            ordine = nextOrder++
+                            ordine = nextOrder++,
+                            exerciseType = "strength"
                         )
                     }
                 )
@@ -377,7 +405,14 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun addExercise(exerciseId: Int, serieTarget: Int, repsTarget: String, recuperoTarget: Int) {
+    fun addExercise(
+        exerciseId: Int,
+        serieTarget: Int,
+        repsTarget: String,
+        recuperoTarget: Int,
+        exerciseType: String = "strength",
+        durataTargetSecondi: Int? = null
+    ) {
         viewModelScope.launch {
             val current = _uiState.value.planDetails ?: return@launch
             val nextOrder = (current.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
@@ -389,7 +424,9 @@ class RoutineDetailViewModel @Inject constructor(
                     serieTarget = serieTarget,
                     repsTarget = repsTarget,
                     recuperoTarget = recuperoTarget,
-                    ordine = nextOrder
+                    ordine = nextOrder,
+                    exerciseType = exerciseType,
+                    durataTargetSecondi = durataTargetSecondi
                 )
             )
         }
@@ -428,7 +465,9 @@ class RoutineDetailViewModel @Inject constructor(
         exerciseId: Int,
         serieTarget: Int,
         repsTarget: String,
-        recuperoTarget: Int
+        recuperoTarget: Int,
+        exerciseType: String = original.exerciseType,
+        durataTargetSecondi: Int? = original.durataTargetSecondi
     ) {
         viewModelScope.launch {
             workoutRepository.updatePlanExercise(
@@ -436,7 +475,9 @@ class RoutineDetailViewModel @Inject constructor(
                     exerciseId = exerciseId,
                     serieTarget = serieTarget,
                     repsTarget = repsTarget,
-                    recuperoTarget = recuperoTarget
+                    recuperoTarget = recuperoTarget,
+                    exerciseType = exerciseType,
+                    durataTargetSecondi = durataTargetSecondi
                 )
             )
         }
@@ -514,6 +555,13 @@ class RoutineDetailViewModel @Inject constructor(
     fun removePlanImage(image: WorkoutPlanImageEntity) {
         viewModelScope.launch {
             workoutRepository.deletePlanImage(image)
+        }
+    }
+
+    fun resetRoutineContent() {
+        viewModelScope.launch {
+            val planId = _uiState.value.planDetails?.plan?.id ?: return@launch
+            workoutRepository.resetPlanContent(planId)
         }
     }
 

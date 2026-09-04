@@ -15,9 +15,12 @@ data class ScannedExerciseEntry(
     val sets: Int,
     val reps: String,
     val restSeconds: Int,
-    val cardioMinutes: Int?
+    val cardioMinutes: Int?,
+    val exerciseType: String = "strength",
+    val timeSeconds: Int? = null
 ) {
-    val isCardio: Boolean get() = cardioMinutes != null
+    val isCardio: Boolean get() = exerciseType == "cardio" || cardioMinutes != null
+    val isTimeAndWeight: Boolean get() = exerciseType == "time_and_weight"
 }
 
 object RoutineScanPrompt {
@@ -26,37 +29,199 @@ object RoutineScanPrompt {
         val categoriesStr = if (categories.isNotEmpty()) {
             categories.joinToString(", ") { "\"$it\"" }
         } else {
-            "\"Petto\", \"Dorso\", \"Gambe\", \"Spalle\", \"Braccia\", \"Addome\", \"Cardio\""
+            when (languageCode.lowercase()) {
+                "it" -> "\"Petto\", \"Dorso\", \"Gambe\", \"Spalle\", \"Braccia\", \"Addome\", \"Cardio\""
+                "es" -> "\"Pecho\", \"Espalda\", \"Piernas\", \"Hombros\", \"Brazos\", \"Core\", \"Cardio\""
+                "fr" -> "\"Pectoraux\", \"Dos\", \"Jambes\", \"Épaules\", \"Bras\", \"Abdos\", \"Cardio\""
+                "de" -> "\"Brust\", \"Rücken\", \"Beine\", \"Schultern\", \"Arme\", \"Bauch\", \"Cardio\""
+                "pt" -> "\"Peito\", \"Costas\", \"Pernas\", \"Ombros\", \"Braços\", \"Abdômen\", \"Cardio\""
+                else -> "\"Chest\", \"Back\", \"Legs\", \"Shoulders\", \"Arms\", \"Core\", \"Cardio\""
+            }
         }
+
+        val exampleJson = buildExampleJson(languageCode.lowercase(), categories)
 
         return """
 You are an expert fitness AI specialized in reading and extracting gym workout routines / training cards from images.
 Analyze the provided image and extract ALL exercises, sets, repetitions, recovery rest, and cardio duration.
 
 EXTRACTION INSTRUCTIONS:
-- name: The exercise name as visible (e.g. "Panca Piana", "Lat Machine", "Squat", "Leg Press", "Curl Manubri", "Alzate Laterali"). If gym shorthand is used (e.g. "P. Piana", "Lat Mach.", "Press 45", "Alz. Lat."), write the full recognizable exercise name.
-- sets: Number of sets (integer, e.g. 3 or 4). If not specified, default to 3.
-- reps: Repetitions target as string (e.g. "8-12", "10", "6-8-10", "12").
-- rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"" into seconds (e.g. 90, 120). Default to 120 if not specified.
-- cardio_minutes: If the entry is a cardio activity (Tapis Roulant / Treadmill, Cyclette / Bike, Ellittica / Elliptical, Vogatore / Rower, Stairmaster), the duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
+- name: The exercise name as visible on the card.
+  * LANGUAGE PRESERVATION (CRITICAL): Always extract the exercise name in the original language written on the card. DO NOT translate exercise names between languages! (e.g. If the card is in English, write "Incline Dumbbell Press", NOT "Spinte Manubri Inclinata"; if in Italian, write "Panca Piana", NOT "Flat Bench Press"; if in Spanish, write "Press de Banca", NOT "Bench Press").
+  * EXPAND GYM SHORTHAND & ABBREVIATIONS into the full recognizable exercise name within the card's language:
+    - English / International: e.g. "Inc. DB Press" -> "Incline Dumbbell Press", "BB Row" -> "Barbell Row", "Lat PD" -> "Lat Pulldown", "OHP" -> "Overhead Press", "RDL" -> "Romanian Deadlift", "Leg Ext." -> "Leg Extension", "Calf Raise" -> "Calf Raises", "DB Curl" -> "Dumbbell Curl", "Cable Fly" -> "Cable Flyes".
+    - Italian: e.g. "P. Piana" -> "Panca Piana", "Lat Mach." -> "Lat Machine", "Alz. Lat." -> "Alzate Laterali", "Press 45" -> "Leg Press 45", "Trazioni sbarra" -> "Trazioni alla sbarra", "Spinte Man." -> "Spinte Manubri", "Curl Bil." -> "Curl Bilanciere".
+    - Spanish: e.g. "Press Banca" -> "Press de Banca", "Elev. Lat." -> "Elevaciones Laterales", "Remo c/m" -> "Remo con Mancuerna", "Sentadilla" -> "Sentadilla con Barra".
+    - French / German: e.g. "Dév. Couché" -> "Développé Couché", "Bankdr." -> "Bankdrücken".
+    - If no shorthand is used, preserve the exercise name as written.
+- sets: Total number of sets (integer, e.g. 3, 4, 5).
+  * Standard: If written as "4x10", "3x8", "4x 8-12", sets is the first number (e.g. 4 or 3). Default to 3 if unspecified.
+  * Only if an explicit pyramidal series is written (e.g. "12-10-8-6"), count the number of stages (4 numbers = 4 sets).
+- reps: Repetitions target as written on the card. CRITICAL ACCURACY RULES:
+  * FIXED REPS (MOST COMMON): e.g. "10", "12", "8", "15". If the card says "3x10", reps is "10" and sets is 3.
+  * RANGES: e.g. "8-12", "8-10", "10-12", "6-8", "12-15". Keep the range exactly in ascending order as written (e.g. "8-10", NEVER invert to "10-8").
+  * NO HALLUCINATED PYRAMIDALS: NEVER invent, assume, or guess a pyramidal scheme (like "8-6-4-2" or "10-8")! ONLY output a multi-number series if multiple distinct numbers are literally written on the image. If the sheet writes "4x10" or "3x10", reps MUST be "10", NEVER "8-6-4-2" or "10-8".
+  * REAL PYRAMIDAL SCHEMES: If and only if the card explicitly writes a series of numbers (e.g. "10-8-6" or "12-10-8-6"), extract the full sequence with all numbers separated by dashes (e.g. "12-10-8-6").
+  * SPECIAL TECHNIQUES: e.g. "6+6+6" (stripping / drop set), "MAX" (to failure).
+  * TIME-BASED / ISOMETRIC: For timed or isometric exercises (e.g. Plank, Wall Sit, Hollow Body, Farmer's Walk, or any hold with duration like "3x45s", "30\"", "1 min"), write the duration with 's' (e.g. "45s", "60s", "30s").
+- exercise_type: The exercise type:
+  * "strength": Standard weight & repetition exercises (default).
+  * "time_and_weight": Isometric, timed, or hold exercises where performance is measured by seconds / time (e.g. Plank, Wall Sit, Barbell Hold, Farmer's Walk, or exercises with duration in seconds like "45s", "60\"").
+  * "cardio": Aerobic cardio machines (Treadmill / Tapis Roulant, Stationary Bike / Cyclette, Elliptical / Ellittica, Rower / Vogatore, Stairmaster).
+- time_seconds: For "time_and_weight" exercises, target duration in seconds as integer (e.g. 45, 60, 30); null for other types.
+- rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"", "1 min 30 s", "2'" into total seconds (e.g. 90, 120). Default to 120 if not specified.
+- cardio_minutes: If the entry is a cardio activity (Treadmill / Tapis Roulant / Cinta, Bike / Cyclette / Bicicleta, Elliptical / Ellittica, Rower / Vogatore / Remo, Stairmaster), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
 - category: The target muscle group category (choose from: $categoriesStr).
 
 OUTPUT FORMAT RULES:
-- Output MUST be a valid JSON array of objects.
-- Do NOT output extra conversational text before or after the JSON.
+- Output MUST be ONLY a valid JSON array of objects.
+- Do NOT output extra conversational text, commentary, or markdown outside the JSON block.
 
 JSON Schema Example:
+$exampleJson
+""".trim()
+    }
+
+    private fun buildExampleJson(lang: String, categories: List<String>): String {
+        val chestCat = categories.find { it.contains("petto", true) || it.contains("chest", true) || it.contains("pecho", true) || it.contains("brust", true) } ?: if (lang == "it") "Petto" else "Chest"
+        val coreCat = categories.find { it.contains("addome", true) || it.contains("core", true) || it.contains("abs", true) || it.contains("bauch", true) } ?: if (lang == "it") "Addome" else "Core"
+        val backCat = categories.find { it.contains("dorso", true) || it.contains("back", true) || it.contains("espalda", true) || it.contains("rücken", true) } ?: if (lang == "it") "Dorso" else "Back"
+        val cardioCat = categories.find { it.contains("cardio", true) } ?: "Cardio"
+
+        return when (lang) {
+            "it" -> """
 [
   {
     "name": "Panca Piana",
-    "sets": 4,
-    "reps": "8-10",
+    "sets": 3,
+    "reps": "10",
     "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
     "cardio_minutes": null,
-    "category": "Petto"
+    "category": "$chestCat"
+  },
+  {
+    "name": "Lat Machine",
+    "sets": 4,
+    "reps": "8-12",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
+  },
+  {
+    "name": "Plank",
+    "sets": 3,
+    "reps": "60s",
+    "rest_seconds": 60,
+    "exercise_type": "time_and_weight",
+    "time_seconds": 60,
+    "cardio_minutes": null,
+    "category": "$coreCat"
+  },
+  {
+    "name": "Tapis Roulant",
+    "sets": 1,
+    "reps": "1",
+    "rest_seconds": 0,
+    "exercise_type": "cardio",
+    "time_seconds": null,
+    "cardio_minutes": 20,
+    "category": "$cardioCat"
   }
 ]
-""".trim()
+""".trimIndent()
+            "es" -> """
+[
+  {
+    "name": "Press de Banca",
+    "sets": 3,
+    "reps": "10",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$chestCat"
+  },
+  {
+    "name": "Jalón al Pecho",
+    "sets": 4,
+    "reps": "8-12",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
+  },
+  {
+    "name": "Plank",
+    "sets": 3,
+    "reps": "60s",
+    "rest_seconds": 60,
+    "exercise_type": "time_and_weight",
+    "time_seconds": 60,
+    "cardio_minutes": null,
+    "category": "$coreCat"
+  },
+  {
+    "name": "Cinta de Correr",
+    "sets": 1,
+    "reps": "1",
+    "rest_seconds": 0,
+    "exercise_type": "cardio",
+    "time_seconds": null,
+    "cardio_minutes": 20,
+    "category": "$cardioCat"
+  }
+]
+""".trimIndent()
+            else -> """
+[
+  {
+    "name": "Flat Bench Press",
+    "sets": 3,
+    "reps": "10",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$chestCat"
+  },
+  {
+    "name": "Lat Pulldown",
+    "sets": 4,
+    "reps": "8-12",
+    "rest_seconds": 90,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "category": "$backCat"
+  },
+  {
+    "name": "Plank",
+    "sets": 3,
+    "reps": "60s",
+    "rest_seconds": 60,
+    "exercise_type": "time_and_weight",
+    "time_seconds": 60,
+    "cardio_minutes": null,
+    "category": "$coreCat"
+  },
+  {
+    "name": "Treadmill",
+    "sets": 1,
+    "reps": "1",
+    "rest_seconds": 0,
+    "exercise_type": "cardio",
+    "time_seconds": null,
+    "cardio_minutes": 20,
+    "category": "$cardioCat"
+  }
+]
+""".trimIndent()
+        }
     }
 }
 
@@ -86,48 +251,71 @@ class RoutineScanner @Inject constructor(
         val modelFile = modelFileManager.getModelFile(variant)
         check(modelFileManager.isDownloaded(variant)) { "AI model not downloaded" }
 
-        onPhase(ScanPhase.LOADING_MODEL)
-        engine.ensureReady(modelFile)
+        try {
+            onPhase(ScanPhase.LOADING_MODEL)
+            engine.ensureReady(modelFile)
 
-        onPhase(ScanPhase.READING_SHEET)
-        val result = engine.scanRoutineSheet(
-            imageUri = imageUri,
-            prompt = RoutineScanPrompt.build(languageCode, categories),
-            onStreamUpdate = onStreamUpdate
-        )
-
-        onPhase(ScanPhase.PARSING)
-        // 1. Try parsing from main output
-        var parsed = RoutineScanParser.parse(result.output)
-
-        // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
-        if (parsed.isEmpty() && result.thinking.isNotBlank()) {
-            parsed = RoutineScanParser.parse(result.thinking)
-        }
-
-        // 3. Fallback: try parsing combined output and thinking
-        if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
-            parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
-        }
-
-        val matcher = ExerciseMatcher(catalog, languageCode)
-        return parsed.map { item ->
-            val match = matcher.resolve(item.name)
-            // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
-            val suggestedCategory = match?.categoria
-                ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
-                ?: matcher.suggestCategory(item.name, categories)
-
-            ScannedExerciseEntry(
-                rawName = item.name,
-                exerciseId = match?.id,
-                matchedName = match?.nome,
-                suggestedCategory = suggestedCategory,
-                sets = item.sets.coerceIn(1, 30),
-                reps = item.reps.ifBlank { "8-12" },
-                restSeconds = item.restSeconds.coerceAtLeast(0),
-                cardioMinutes = item.cardioMinutes?.takeIf { it > 0 }
+            onPhase(ScanPhase.READING_SHEET)
+            val result = engine.scanRoutineSheet(
+                imageUri = imageUri,
+                prompt = RoutineScanPrompt.build(languageCode, categories),
+                onStreamUpdate = onStreamUpdate
             )
+
+            onPhase(ScanPhase.PARSING)
+            // 1. Try parsing from main output
+            var parsed = RoutineScanParser.parse(result.output)
+
+            // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
+            if (parsed.isEmpty() && result.thinking.isNotBlank()) {
+                parsed = RoutineScanParser.parse(result.thinking)
+            }
+
+            // 3. Fallback: try parsing combined output and thinking
+            if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
+                parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
+            }
+
+            val matcher = ExerciseMatcher(catalog, languageCode)
+            return parsed.map { item ->
+                val match = matcher.resolve(item.name)
+                // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
+                val suggestedCategory = match?.categoria
+                    ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
+                    ?: matcher.suggestCategory(item.name, categories)
+
+                val resolvedType = when {
+                    item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
+                    item.exerciseType == "time_and_weight" || item.timeSeconds != null || item.reps.endsWith("s", ignoreCase = true) -> "time_and_weight"
+                    else -> "strength"
+                }
+                val resolvedTimeSeconds = if (resolvedType == "time_and_weight") {
+                    item.timeSeconds ?: item.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                } else null
+
+                ScannedExerciseEntry(
+                    rawName = item.name,
+                    exerciseId = match?.id,
+                    matchedName = match?.nome,
+                    suggestedCategory = suggestedCategory,
+                    sets = item.sets.coerceIn(1, 30),
+                    reps = if (resolvedType == "time_and_weight" && !item.reps.endsWith("s")) "${resolvedTimeSeconds ?: 45}s" else item.reps.ifBlank { "8-12" },
+                    restSeconds = item.restSeconds.coerceAtLeast(0),
+                    cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
+                    exerciseType = resolvedType,
+                    timeSeconds = resolvedTimeSeconds
+                )
+            }
+        } finally {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                engine.release()
+            }
+        }
+    }
+
+    suspend fun release() {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+            engine.release()
         }
     }
 }

@@ -60,6 +60,8 @@ class UserPreferencesRepository @Inject constructor(
     val AI_SCAN_ENABLED = booleanPreferencesKey("ai_scan_enabled")
     val AI_RESOURCE_ANALYTICS_ENABLED = booleanPreferencesKey("ai_resource_analytics_enabled")
     val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
+    val AUTO_STOP_CARDIO_AT_TARGET = booleanPreferencesKey("auto_stop_cardio_at_target")
+    val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -242,6 +244,16 @@ class UserPreferencesRepository @Inject constructor(
             preferences[AI_MODEL_VARIANT] ?: "e2b"
         }
 
+    val autoStopCardioAtTarget: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AUTO_STOP_CARDIO_AT_TARGET] ?: true
+        }
+
+    val autoStopTimeWeightAtTarget: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: true
+        }
+
     val themeMode: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[THEME_MODE] ?: 0
@@ -280,6 +292,18 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAiModelVariant(variantId: String) {
         dataStore.edit { preferences ->
             preferences[AI_MODEL_VARIANT] = variantId
+        }
+    }
+
+    suspend fun setAutoStopCardioAtTarget(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AUTO_STOP_CARDIO_AT_TARGET] = enabled
+        }
+    }
+
+    suspend fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] = enabled
         }
     }
 

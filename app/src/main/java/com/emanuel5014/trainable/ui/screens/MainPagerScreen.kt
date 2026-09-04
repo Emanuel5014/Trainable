@@ -72,6 +72,7 @@ fun MainPagerScreen(
                 onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
             )
             1 -> RoutineListScreen(
+                isVisible = pagerState.currentPage == 1,
                 onNavigateToDetail = { planId ->
                     navController.navigate(RoutineDetail(planId))
                 },
@@ -79,7 +80,10 @@ fun MainPagerScreen(
                     navController.navigate(Report(planIds.joinToString(",")))
                 }
             )
-            2 -> HistoryScreen(navController = navController)
+            2 -> HistoryScreen(
+                navController = navController,
+                isVisible = pagerState.currentPage == 2
+            )
             3 -> AnalyticsScreen()
         }
     }

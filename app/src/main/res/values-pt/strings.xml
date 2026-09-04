@@ -122,6 +122,8 @@
     <string name="schedule_days">DIAS PROGRAMADOS</string>
     <string name="delete_routine">Excluir Rotina?</string>
     <string name="delete_routine_message">Isso excluirá permanentemente esta rotina e todos os seus exercícios.</string>
+    <string name="reset_routine_content">Redefinir Conteúdo?</string>
+    <string name="reset_routine_content_message">Isso removerá permanentemente todas as imagens e exercícios desta rotina. A rotina será mantida. Esta ação não pode ser desfeita.</string>
     <string name="archive_routine">Arquivar Rotina?</string>
     <string name="archive_routine_message">Esta rotina será movida para a seção arquivada.</string>
     <string name="unarchive_routine">Restaurar Rotina?</string>
@@ -227,9 +229,19 @@
     <string name="warmup_timer_settings_desc">Mostrar botão do temporizador de aquecimento durante o treino</string>
     <string name="workout_timer">Temporizador de treino</string>
     <string name="workout_timer_desc">Rastrear duração total do treino</string>
+    <string name="auto_stop_cardio_at_target">Parada automática do cardio na meta</string>
+    <string name="auto_stop_cardio_at_target_desc">Pausar o temporizador automaticamente ao atingir a meta de tempo</string>
+    <string name="auto_stop_time_weight_at_target">Parada automática de séries cronometradas na meta</string>
+    <string name="auto_stop_time_weight_at_target_desc">Pausar o temporizador automaticamente ao atingir o tempo da série</string>
     <string name="inline_exercise_modifications">Modificações inline</string>
     <string name="inline_exercise_modifications_desc">Adicionar séries e exercícios durante treinos normais</string>
     <string name="workout_settings">Treino</string>
+    <string name="workout_settings_desc">Temporizador, paragens automáticas e opções de exercícios</string>
+    <string name="ai_settings_desc">Digitalização offline e modelo</string>
+    <string name="personalization_desc">Tema, cores e aparência</string>
+    <string name="notifications_settings_desc">Alertas de temporizador, aquecimento e assinatura</string>
+    <string name="personalization_title">Personalização</string>
+    <string name="notifications_title">Notificações</string>
     <string name="workout_duration">Duração do treino</string>
     <string name="add_duration">Adicionar duração</string>
     <string name="hours">Horas</string>
@@ -794,4 +806,29 @@
     <string name="onboarding_ai_toggle_desc">Usa um modelo local para extrair séries, repetições e exercícios de fotos.</string>
     <string name="onboarding_ai_unsupported_desc">O seu dispositivo não cumpre os requisitos mínimos (pelo menos 6 GB de RAM) para IA local. Pode criar e gerir rotinas manualmente.</string>
     <string name="onboarding_ai_download_note">Pode transferir o modelo agora ou mais tarde nas Definições.</string>
+    <string name="ai_scan_empty_state_title">Constrói o teu plano</string>
+    <string name="ai_scan_empty_state_desc">Digitaliza uma foto da tua folha de treino em papel para importar exercícios automaticamente, ou adiciona-os manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Digitalizar folha com IA</string>
+    <string name="ai_scan_empty_state_add_manual">Adicionar manualmente</string>
+    <string name="ai_scan_confirm_dialog_title">Adicionar exercícios digitalizados?</string>
+    <string name="ai_scan_confirm_dialog_desc">Quer adicionar os %1$d exercícios detetados ao teu plano?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirmar e adicionar</string>
+    <string name="ai_scan_confirm_dialog_review">Rever</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Peso &amp; Repetições</string>
+    <string name="exercise_type_time_and_weight">Tempo &amp; Peso</string>
+    <string name="target_time">Tempo alvo</string>
+    <string name="target_seconds">Alvo (segundos)</string>
+    <string name="seconds_short">seg</string>
+    <string name="time_and_weight_badge">TEMPO &amp; PESO</string>
+    <string name="skip_timer">Ignorar temporizador</string>
+    <string name="skip_timer_and_log">Ignorar temporizador e Registar</string>
+    <string name="set_duration_label">Duração</string>
+    <string name="adjust_weight">Ajustar peso</string>
+    <string name="time_weight_ready">PRONTO PARA COMEÇAR</string>
+    <string name="time_weight_running">TEMPORIZADOR A DECORRER</string>
+    <string name="time_weight_paused">TEMPORIZADOR EM PAUSA</string>
+    <string name="time_weight_finish_set">TERMINAR SÉRIE</string>
+    <string name="time_weight_reset_timer">Repor temporizador</string>
 </resources>

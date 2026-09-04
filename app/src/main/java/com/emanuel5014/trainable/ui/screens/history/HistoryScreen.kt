@@ -66,11 +66,14 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -187,13 +190,42 @@ private data class HistoryBlock(
 @Composable
 fun HistoryScreen(
     navController: NavController? = null,
+    isVisible: Boolean = true,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
+
+    // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
+    // quindi la selezione sopravvivrebbe allo spostamento: la si resetta qui,
+    // sia al cambio tab che all'uscita verso le schermate di dettaglio.
+    LaunchedEffect(isVisible) {
+        if (!isVisible) viewModel.clearSelection()
+    }
+    DisposableEffect(Unit) {
+        onDispose { viewModel.clearSelection() }
+    }
     
     val listState = rememberLazyListState()
+
+    // Quando si completa un workout la query è ORDER BY timestamp DESC,
+    // quindi il più recente è in cima (index 0): se la lista cresce,
+    // torna in cima automaticamente invece di costringere a scrollare a mano.
+    var previousListSize by remember { mutableStateOf<Int?>(null) }
+    val newestSessionId = uiState.filteredSessions.firstOrNull()?.session?.id
+    LaunchedEffect(uiState.filteredSessions.size, newestSessionId) {
+        val currentSize = uiState.filteredSessions.size
+        val prevSize = previousListSize
+        if (prevSize != null && currentSize > prevSize) {
+            if (listState.firstVisibleItemIndex > 6) {
+                listState.scrollToItem(0)
+            } else {
+                listState.animateScrollToItem(0)
+            }
+        }
+        previousListSize = currentSize
+    }
 
     // Resolve colors at the top of the Composable
     val surfaceColor = Surface
@@ -1201,11 +1233,12 @@ private fun HistoryExerciseGroup(
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )
+                    val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                     Text(
                         text = WeightUnitConverter.formatWithUnit(
                             WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
                             weightUnit
-                        ) + " × ${set.repsEffettive}",
+                        ) + " × $repsOrTime",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = OnSurface
@@ -1613,9 +1646,11 @@ fun EditSetDialog(
         )
     }
     var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
+    var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "45") }
     var note by remember { mutableStateOf(set.note ?: "") }
+    var isTimeSet by remember { mutableStateOf(set.durataSecondi != null) }
 
-    val isValid = weight.isNotBlank() && reps.isNotBlank()
+    val isValid = weight.isNotBlank() && (if (isTimeSet) seconds.isNotBlank() else reps.isNotBlank())
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1625,6 +1660,49 @@ fun EditSetDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = !isTimeSet,
+                        onClick = { isTimeSet = false },
+                        label = { Text(stringResource(R.string.exercise_type_strength)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                    FilterChip(
+                        selected = isTimeSet,
+                        onClick = {
+                            isTimeSet = true
+                            if (seconds.isBlank()) seconds = "45"
+                        },
+                        label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Timer,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                }
+
                 GymInputField(
                     value = weight,
                     onValueChange = { newValue ->
@@ -1645,12 +1723,21 @@ fun EditSetDialog(
                         }
                     } else null
                 )
-                GymInputField(
-                    value = reps,
-                    onValueChange = { reps = it },
-                    label = stringResource(R.string.reps),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
+                if (isTimeSet) {
+                    GymInputField(
+                        value = seconds,
+                        onValueChange = { seconds = it.filter { char -> char.isDigit() } },
+                        label = stringResource(R.string.set_duration_label),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                } else {
+                    GymInputField(
+                        value = reps,
+                        onValueChange = { reps = it },
+                        label = stringResource(R.string.reps),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
                 GymInputField(
                     value = note,
                     onValueChange = { note = it },
@@ -1698,7 +1785,8 @@ fun EditSetDialog(
                         val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
-                            repsEffettive = reps.toIntOrNull() ?: 0,
+                            repsEffettive = if (isTimeSet) 0 else (reps.toIntOrNull() ?: 0),
+                            durataSecondi = if (isTimeSet) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null }
                         )
                         onConfirm(updatedSet)

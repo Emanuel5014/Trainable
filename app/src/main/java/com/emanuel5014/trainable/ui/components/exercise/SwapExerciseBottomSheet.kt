@@ -32,7 +32,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -83,7 +86,7 @@ fun SwapExerciseBottomSheet(
     currentReps: String,
     availableExercises: List<ExerciseEntity>,
     languageCode: String,
-    onExerciseSelected: (ExerciseEntity, Int, String, Int?) -> Unit,
+    onExerciseSelected: (ExerciseEntity, Int, String, Int?, String, Int?) -> Unit,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
@@ -275,19 +278,21 @@ fun SwapExerciseBottomSheet(
                         isAdding = isAdding
                     )
                 } else {
-                    SwapExerciseConfigDialog(
-                        exercise = selectedExercise!!,
-                        languageCode = languageCode,
-                        initialSets = setsText,
-                        initialReps = repsText,
-                        onConfirm = { sets, reps, rest ->
-                            onExerciseSelected(selectedExercise!!, sets, reps, rest)
-                            onDismiss()
-                        },
-                        onBack = { step = 1 },
-                        onDismiss = onDismiss,
-                        isAdding = isAdding
-                    )
+                    selectedExercise?.let { ex ->
+                        SwapExerciseConfigDialog(
+                            exercise = ex,
+                            languageCode = languageCode,
+                            initialSets = setsText,
+                            initialReps = repsText,
+                            onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
+                                onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
+                                onDismiss()
+                            },
+                            onBack = { step = 1 },
+                            onDismiss = onDismiss,
+                            isAdding = isAdding
+                        )
+                    }
                 }
             }
         }
@@ -662,13 +667,15 @@ private fun SwapExerciseConfigDialog(
     languageCode: String,
     initialSets: String,
     initialReps: String,
-    onConfirm: (Int, String, Int?) -> Unit,
+    onConfirm: (Int, String, Int?, String, Int?) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     isAdding: Boolean = false
 ) {
+    var selectedExerciseType by remember { mutableStateOf("strength") }
     var setsText by remember { mutableStateOf(initialSets) }
     var repsText by remember { mutableStateOf(initialReps) }
+    var timeTargetSecondsText by remember { mutableStateOf("45") }
     var restText by remember { mutableStateOf("120") }
     
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -705,27 +712,85 @@ private fun SwapExerciseConfigDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    FilterChip(
+                        selected = selectedExerciseType == "strength",
+                        onClick = { selectedExerciseType = "strength" },
+                        label = { Text(stringResource(R.string.exercise_type_strength)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                    FilterChip(
+                        selected = selectedExerciseType == "time_and_weight",
+                        onClick = { selectedExerciseType = "time_and_weight" },
+                        label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Timer,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                }
+
+                if (selectedExerciseType == "time_and_weight") {
                     GymInputField(
                         value = setsText,
                         onValueChange = { setsText = it },
                         label = stringResource(R.string.sets),
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    GymInputField(
-                        value = repsText,
-                        onValueChange = {
-                            repsText = it
-                            val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                            if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                setsText = repCount.toString()
-                            }
-                        },
-                        label = stringResource(R.string.reps),
-                        modifier = Modifier.weight(1f)
+
+                    TargetSecondsSlider(
+                        valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
+                        onValueChange = { timeTargetSecondsText = it.toString() },
+                        hapticEnabled = hapticEnabled,
+                        haptic = haptic,
+                        modifier = Modifier.fillMaxWidth()
                     )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GymInputField(
+                            value = setsText,
+                            onValueChange = { setsText = it },
+                            label = stringResource(R.string.sets),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                        GymInputField(
+                            value = repsText,
+                            onValueChange = {
+                                repsText = it
+                                val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                    setsText = repCount.toString()
+                                }
+                            },
+                            label = stringResource(R.string.reps),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 RestSlider(
@@ -741,9 +806,14 @@ private fun SwapExerciseConfigDialog(
             TextButton(
                 onClick = {
                     val sets = setsText.trim().toIntOrNull() ?: return@TextButton
-                    val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@TextButton
                     val rest = restText.toIntOrNull()
-                    onConfirm(sets, reps, rest)
+                    if (selectedExerciseType == "time_and_weight") {
+                        val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
+                        onConfirm(sets, "${targetSec}s", rest, "time_and_weight", targetSec)
+                    } else {
+                        val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@TextButton
+                        onConfirm(sets, reps, rest, "strength", null)
+                    }
                 }
             ) {
                 Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)

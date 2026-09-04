@@ -309,6 +309,7 @@ class EditWorkoutViewModel @Inject constructor(
             val nextSerie = (exerciseState?.sets?.maxOfOrNull { it.numeroSerie } ?: 0) + 1
             val lastWeight = exerciseState?.sets?.lastOrNull()?.pesoSollevato ?: 0f
             val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 8
+            val lastDuration = exerciseState?.sets?.lastOrNull()?.durataSecondi
             val exerciseOrder = exerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = exerciseState?.sets?.firstOrNull()?.supersetId
 
@@ -319,7 +320,8 @@ class EditWorkoutViewModel @Inject constructor(
                 repsEffettive = lastReps,
                 numeroSerie = nextSerie,
                 ordineEsercizio = exerciseOrder,
-                supersetId = supersetId
+                supersetId = supersetId,
+                durataSecondi = lastDuration
             )
 
             // Optimistic update to prevent duplicates on rapid clicks
@@ -369,12 +371,19 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun swapExercise(oldExerciseId: Int, newExerciseId: Int) {
+    fun swapExercise(
+        oldExerciseId: Int,
+        newExerciseId: Int,
+        exerciseType: String = "strength",
+        durataTargetSecondi: Int? = null
+    ) {
         viewModelScope.launch {
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
             val sets = oldExerciseState.sets
             val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = sets.firstOrNull()?.supersetId
+            val isTimeAndWeight = exerciseType == "time_and_weight"
+            val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
 
             // Optimistic update
             val replacementExercise = _state.value.availableExercises.find { it.id == newExerciseId }
@@ -385,7 +394,15 @@ class EditWorkoutViewModel @Inject constructor(
                     if (index != -1) {
                         mutableExercises[index] = EditExerciseState(
                             exercise = replacementExercise,
-                            sets = sets.map { it.copy(exerciseId = newExerciseId, id = 0, supersetId = supersetId) }
+                            sets = sets.map {
+                                it.copy(
+                                    exerciseId = newExerciseId,
+                                    id = 0,
+                                    supersetId = supersetId,
+                                    durataSecondi = if (isTimeAndWeight) (it.durataSecondi ?: targetSec) else null,
+                                    repsEffettive = if (isTimeAndWeight && it.repsEffettive == 0) 0 else it.repsEffettive
+                                )
+                            }
                         )
                     }
                     curr.copy(exercises = mutableExercises)
@@ -398,7 +415,14 @@ class EditWorkoutViewModel @Inject constructor(
             // Insert new sets with new exerciseId and same order, then update state with real IDs
             val newSetIds = sets.map { set ->
                 workoutRepository.logSet(
-                    set.copy(id = 0, exerciseId = newExerciseId, ordineEsercizio = exerciseOrder, supersetId = supersetId)
+                    set.copy(
+                        id = 0,
+                        exerciseId = newExerciseId,
+                        ordineEsercizio = exerciseOrder,
+                        supersetId = supersetId,
+                        durataSecondi = if (isTimeAndWeight) (set.durataSecondi ?: targetSec) else null,
+                        repsEffettive = if (isTimeAndWeight && set.repsEffettive == 0) 0 else set.repsEffettive
+                    )
                 )
             }
             
@@ -419,38 +443,81 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addExercise(exerciseId: Int) {
+    fun swapExerciseWithCardio(oldExerciseId: Int, cardioCategory: String, durationMinutes: Int) {
+        viewModelScope.launch {
+            val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId }
+            val order = oldExerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
+
+            workoutRepository.deleteExerciseFromSession(sessionId, oldExerciseId)
+            _state.update { curr ->
+                curr.copy(exercises = curr.exercises.filter { it.exercise.id != oldExerciseId })
+            }
+
+            val newCardio = CardioLogEntity(
+                sessionId = sessionId,
+                categoria = cardioCategory,
+                distanza = 0f,
+                durataSecondi = durationMinutes * 60,
+                timestamp = _state.value.sessionTimestamp,
+                ordineEsercizio = order
+            )
+            val cardioId = workoutRepository.saveCardioLog(newCardio)
+            _state.update { curr ->
+                curr.copy(cardioLogs = curr.cardioLogs + newCardio.copy(id = cardioId.toInt()))
+            }
+        }
+    }
+
+    fun addExercise(
+        exerciseId: Int,
+        targetSets: Int = 1,
+        repsTarget: String = "8",
+        exerciseType: String = "strength",
+        durataTargetSecondi: Int? = null
+    ) {
         viewModelScope.launch {
             val nextOrder = (_state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: -1) + 1
             val exercise = _state.value.availableExercises.find { it.id == exerciseId }
-            
-            val newSet = SetLogEntity(
-                sessionId = sessionId,
-                exerciseId = exerciseId,
-                pesoSollevato = 0f,
-                repsEffettive = 8,
-                numeroSerie = 1,
-                ordineEsercizio = nextOrder,
-                supersetId = null
-            )
+            val isTimeAndWeight = exerciseType == "time_and_weight"
+            val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
+            val repsNum = if (isTimeAndWeight) 0 else (repsTarget.toIntOrNull() ?: 8)
+            val setsCount = targetSets.coerceAtLeast(1)
+
+            val newSets = (1..setsCount).map { setNum ->
+                SetLogEntity(
+                    sessionId = sessionId,
+                    exerciseId = exerciseId,
+                    pesoSollevato = 0f,
+                    repsEffettive = repsNum,
+                    numeroSerie = setNum,
+                    ordineEsercizio = nextOrder,
+                    supersetId = null,
+                    durataSecondi = targetSec
+                )
+            }
 
             // Optimistic update
             if (exercise != null) {
                 _state.update { curr ->
-                    curr.copy(exercises = curr.exercises + EditExerciseState(exercise, listOf(newSet)))
+                    curr.copy(exercises = curr.exercises + EditExerciseState(exercise, newSets))
                 }
             }
 
-            // Add a first set for the new exercise and update ID
-            val id = workoutRepository.logSet(newSet)
+            // Add sets to repository and update state with real IDs
+            val realIds = newSets.map { set ->
+                workoutRepository.logSet(set).toInt()
+            }
+
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
                 val index = mutableExercises.indexOfFirst { it.exercise.id == exerciseId }
                 if (index != -1) {
                     val exState = mutableExercises[index]
-                    mutableExercises[index] = exState.copy(sets = exState.sets.map { 
-                        if (it.id == 0 && it.numeroSerie == 1) it.copy(id = id.toInt()) else it 
-                    })
+                    mutableExercises[index] = exState.copy(
+                        sets = exState.sets.mapIndexed { i, s ->
+                            if (s.id == 0 && i < realIds.size) s.copy(id = realIds[i]) else s
+                        }
+                    )
                 }
                 curr.copy(exercises = mutableExercises)
             }
@@ -460,8 +527,20 @@ class EditWorkoutViewModel @Inject constructor(
     fun addCustomExercise(name: String, category: String, onCreated: (ExerciseEntity) -> Unit = {}) {
         viewModelScope.launch {
             val exerciseId = exerciseRepository.addCustomExercise(name, category)
-            addExercise(exerciseId)
-            onCreated(ExerciseEntity(id = exerciseId, nome = name, categoria = category))
+            val newEx = ExerciseEntity(id = exerciseId, nome = name, categoria = category)
+            onCreated(newEx)
+        }
+    }
+
+    fun updateCustomExercise(exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            exerciseRepository.saveExercise(exercise)
+        }
+    }
+
+    fun deleteCustomExercise(exercise: ExerciseEntity) {
+        viewModelScope.launch {
+            exerciseRepository.deleteExercise(exercise)
         }
     }
 

@@ -128,7 +128,16 @@ class LocalLlmEngine @Inject constructor(
         }
     }
 
-    fun release() {
+    suspend fun release() = withContext(Dispatchers.IO) {
+        mutex.lock()
+        try {
+            releaseInternal()
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    fun releaseNow() {
         releaseInternal()
     }
 

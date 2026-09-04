@@ -171,6 +171,8 @@ class OnboardingViewModel @Inject constructor(
         gymMembershipExpiryNotificationsEnabled: Boolean = false,
         gymMembershipExpiryNotificationDaysBefore: Int = 3,
         timerFinishedLockscreenVibrationDuration: Int = 30,
+        autoStopCardioAtTarget: Boolean = true,
+        autoStopTimeWeightAtTarget: Boolean = true,
         autoBackupEnabled: Boolean = false,
         autoBackupFrequency: Int = 1,
         autoBackupFolderUri: String? = null,
@@ -208,6 +210,8 @@ class OnboardingViewModel @Inject constructor(
         userPrefsRepository.setWeeklyGoal(if (weeklyGoal > 0) weeklyGoal else 3)
         userPrefsRepository.setHapticEnabled(hapticEnabled)
         userPrefsRepository.setTimerFinishedLockscreenVibrationDuration(timerFinishedLockscreenVibrationDuration)
+        userPrefsRepository.setAutoStopCardioAtTarget(autoStopCardioAtTarget)
+        userPrefsRepository.setAutoStopTimeWeightAtTarget(autoStopTimeWeightAtTarget)
         userPrefsRepository.setSwipeActionsEnabled(swipeActionsEnabled)
         userPrefsRepository.setTimerNotificationsEnabled(timerNotificationsEnabled)
         userPrefsRepository.setGymMembershipExpiryNotificationsEnabled(gymMembershipExpiryNotificationsEnabled)

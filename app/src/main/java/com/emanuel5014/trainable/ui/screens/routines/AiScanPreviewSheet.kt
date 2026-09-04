@@ -38,12 +38,15 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +63,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -96,6 +100,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -150,9 +155,10 @@ fun AiScanPreviewSheet(
     var isAddingNewExercise by remember { mutableStateOf(false) }
     var saveImageToPlan by remember { mutableStateOf(imageUri != null) }
     var showFullscreenPhoto by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     // System BackHandler ensuring the back button always dismisses cleanly
-    val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise
+    val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise || showConfirmDialog
     BackHandler(enabled = !isChildSheetOpen) {
         onDismiss()
     }
@@ -297,7 +303,7 @@ fun AiScanPreviewSheet(
 
                         ActionButtonsSection(
                             onDismiss = onDismiss,
-                            onConfirm = { onConfirm(editableEntries.toList(), saveImageToPlan) },
+                            onConfirm = { showConfirmDialog = true },
                             canConfirm = editableEntries.isNotEmpty()
                         )
                     }
@@ -345,12 +351,60 @@ fun AiScanPreviewSheet(
 
                     ActionButtonsSection(
                         onDismiss = onDismiss,
-                        onConfirm = { onConfirm(editableEntries.toList(), saveImageToPlan) },
+                        onConfirm = { showConfirmDialog = true },
                         canConfirm = editableEntries.isNotEmpty()
                     )
                 }
             }
         }
+    }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.ai_scan_confirm_dialog_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.ai_scan_confirm_dialog_desc, editableEntries.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmDialog = false
+                        onConfirm(editableEntries.toList(), saveImageToPlan)
+                    }
+                ) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_confirm_dialog_confirm),
+                        color = Primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_confirm_dialog_review),
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            shape = Shapes.large
+        )
     }
 
     // Fullscreen Image Dialog
@@ -1279,8 +1333,62 @@ private fun ScanEntryCard(
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                FilterChip(
+                    selected = !entry.isTimeAndWeight,
+                    onClick = {
+                        val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                        onUpdate(
+                            entry.copy(
+                                exerciseType = "strength",
+                                reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps
+                            )
+                        )
+                    },
+                    label = { Text(stringResource(R.string.exercise_type_strength)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.FitnessCenter,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Primary.copy(alpha = 0.15f),
+                        selectedLabelColor = Primary,
+                        selectedLeadingIconColor = Primary
+                    )
+                )
+                FilterChip(
+                    selected = entry.isTimeAndWeight,
+                    onClick = {
+                        val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                        onUpdate(
+                            entry.copy(
+                                exerciseType = "time_and_weight",
+                                timeSeconds = currentTarget,
+                                reps = "${currentTarget}s"
+                            )
+                        )
+                    },
+                    label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Timer,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Primary.copy(alpha = 0.15f),
+                        selectedLabelColor = Primary,
+                        selectedLeadingIconColor = Primary
+                    )
+                )
+            }
+
+            if (entry.isTimeAndWeight) {
                 GymInputField(
                     value = setsText,
                     onValueChange = { value ->
@@ -1289,17 +1397,44 @@ private fun ScanEntryCard(
                     },
                     label = stringResource(R.string.sets),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 )
-                GymInputField(
-                    value = repsText,
-                    onValueChange = { value ->
-                        repsText = value
-                        onUpdate(entry.copy(reps = value))
+
+                val targetSec = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                TargetSecondsSlider(
+                    valueSeconds = targetSec,
+                    onValueChange = { newSec ->
+                        onUpdate(entry.copy(timeSeconds = newSec, reps = "${newSec}s"))
                     },
-                    label = stringResource(R.string.reps),
-                    modifier = Modifier.weight(1f)
+                    hapticEnabled = true,
+                    haptic = haptic,
+                    modifier = Modifier.fillMaxWidth()
                 )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    GymInputField(
+                        value = setsText,
+                        onValueChange = { value ->
+                            setsText = value
+                            value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
+                        },
+                        label = stringResource(R.string.sets),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                    GymInputField(
+                        value = repsText,
+                        onValueChange = { value ->
+                            repsText = value
+                            onUpdate(entry.copy(reps = value))
+                        },
+                        label = stringResource(R.string.reps),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
 

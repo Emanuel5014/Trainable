@@ -122,6 +122,8 @@
     <string name="schedule_days">DIAS PROGRAMADOS</string>
     <string name="delete_routine">¿Eliminar Rutina?</string>
     <string name="delete_routine_message">Esto eliminará permanentemente esta rutina y todos sus ejercicios.</string>
+    <string name="reset_routine_content">¿Restablecer Contenido?</string>
+    <string name="reset_routine_content_message">Esto eliminará permanentemente todas las imágenes y ejercicios de esta rutina. La rutina se conservará. Esta acción no se puede deshacer.</string>
     <string name="archive_routine">¿Archivar Rutina?</string>
     <string name="archive_routine_message">Esta rutina se moverá a la sección archivada.</string>
     <string name="unarchive_routine">¿Restaurar Rutina?</string>
@@ -227,9 +229,19 @@
     <string name="warmup_timer_settings_desc">Mostrar botón de temporizador de calentamiento durante el entrenamiento</string>
     <string name="workout_timer">Temporizador de entrenamiento</string>
     <string name="workout_timer_desc">Seguimiento de la duración total del entrenamiento</string>
+    <string name="auto_stop_cardio_at_target">Parada automática de cardio en el objetivo</string>
+    <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
+    <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
+    <string name="auto_stop_time_weight_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo de la serie</string>
     <string name="inline_exercise_modifications">Modificaciones en línea</string>
     <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
     <string name="workout_settings">Entrenamiento</string>
+    <string name="workout_settings_desc">Temporizador, paradas automáticas y opciones de ejercicios</string>
+    <string name="ai_settings_desc">Escaneo sin conexión y modelo</string>
+    <string name="personalization_desc">Tema, colores y apariencia</string>
+    <string name="notifications_settings_desc">Alertas de temporizador, calentamiento y membresía</string>
+    <string name="personalization_title">Personalización</string>
+    <string name="notifications_title">Notificaciones</string>
     <string name="workout_duration">Duración del entrenamiento</string>
     <string name="add_duration">Añadir duración</string>
     <string name="hours">Horas</string>
@@ -625,6 +637,10 @@
     <string name="widget_action_start">INICIAR</string>
     <string name="widget_action_open_app">ABRIR APP</string>
     <string name="widget_start_routine">Iniciar una rutina</string>
+    <string name="widget_trainable_label">Entrenamiento</string>
+    <string name="widget_trainable_description">Entrenamiento sugerido e inicio rápido</string>
+    <string name="widget_weekly_goal_label">Objetivo Semanal</string>
+    <string name="widget_weekly_goal_description">Seguimiento del progreso semanal</string>
 
     <!-- Common -->
     <string name="ok">OK</string>
@@ -790,4 +806,29 @@
     <string name="onboarding_ai_toggle_desc">Usa un modelo local para extraer series, repeticiones y ejercicios de fotos.</string>
     <string name="onboarding_ai_unsupported_desc">Tu dispositivo no cumple los requisitos mínimos (al menos 6 GB de RAM) para ejecutar IA local. Aún puedes crear y gestionar rutinas manualmente.</string>
     <string name="onboarding_ai_download_note">Puedes descargar el modelo ahora o más tarde en Ajustes.</string>
+    <string name="ai_scan_empty_state_title">Construye tu rutina</string>
+    <string name="ai_scan_empty_state_desc">Escanea una foto de tu hoja de entrenamiento en papel para importar ejercicios automáticamente, o añádelos manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Escanear hoja con IA</string>
+    <string name="ai_scan_empty_state_add_manual">Añadir manualmente</string>
+    <string name="ai_scan_confirm_dialog_title">¿Añadir ejercicios escaneados?</string>
+    <string name="ai_scan_confirm_dialog_desc">¿Quieres añadir los %1$d ejercicios detectados a tu rutina?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirmar y añadir</string>
+    <string name="ai_scan_confirm_dialog_review">Revisar</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Peso y Repeticiones</string>
+    <string name="exercise_type_time_and_weight">Tiempo y Peso</string>
+    <string name="target_time">Tiempo objetivo</string>
+    <string name="target_seconds">Objetivo (segundos)</string>
+    <string name="seconds_short">seg</string>
+    <string name="time_and_weight_badge">TIEMPO Y PESO</string>
+    <string name="skip_timer">Saltar temporizador</string>
+    <string name="skip_timer_and_log">Saltar temporizador y Registrar</string>
+    <string name="set_duration_label">Duración</string>
+    <string name="adjust_weight">Ajustar peso</string>
+    <string name="time_weight_ready">LISTO PARA EMPEZAR</string>
+    <string name="time_weight_running">TEMPORIZADOR EN MARCHA</string>
+    <string name="time_weight_paused">TEMPORIZADOR EN PAUSA</string>
+    <string name="time_weight_finish_set">TERMINAR SERIE</string>
+    <string name="time_weight_reset_timer">Reiniciar temporizador</string>
 </resources>

@@ -122,6 +122,8 @@
     <string name="schedule_days">GIORNI PROGRAMMATI</string>
     <string name="delete_routine">Elimina Scheda?</string>
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
+    <string name="reset_routine_content">Resettare Contenuto?</string>
+    <string name="reset_routine_content_message">Questo rimuoverà permanentemente tutte le immagini e gli esercizi da questa scheda. La scheda verrà mantenuta. Questa azione non può essere annullata.</string>
     <string name="archive_routine">Archivia Scheda?</string>
     <string name="archive_routine_message">Questa scheda verrà spostata nella sezione archiviata.</string>
     <string name="unarchive_routine">Ripristina Scheda?</string>
@@ -227,9 +229,19 @@
     <string name="warmup_timer_settings_desc">Mostra il pulsante timer riscaldamento durante l\'allenamento</string>
     <string name="workout_timer">Timer Allenamento</string>
     <string name="workout_timer_desc">Traccia la durata totale dell\'allenamento</string>
+    <string name="auto_stop_cardio_at_target">Stop automatico cardio al target</string>
+    <string name="auto_stop_cardio_at_target_desc">Mette in pausa il timer automaticamente al raggiungimento del tempo target</string>
+    <string name="auto_stop_time_weight_at_target">Stop automatico serie a tempo al target</string>
+    <string name="auto_stop_time_weight_at_target_desc">Mette in pausa il timer automaticamente al raggiungimento del tempo della serie</string>
     <string name="inline_exercise_modifications">Modifiche Inline</string>
     <string name="inline_exercise_modifications_desc">Aggiungi serie ed esercizi durante gli allenamenti normali</string>
     <string name="workout_settings">Allenamento</string>
+    <string name="workout_settings_desc">Timer, stop automatici e opzioni esercizi</string>
+    <string name="ai_settings_desc">Scansione schede offline e modello</string>
+    <string name="personalization_desc">Tema, colori e aspetto</string>
+    <string name="notifications_settings_desc">Timer, riscaldamento e avvisi abbonamento</string>
+    <string name="personalization_title">Personalizzazione</string>
+    <string name="notifications_title">Notifiche</string>
     <string name="workout_duration">Durata Allenamento</string>
     <string name="add_duration">Aggiungi durata</string>
     <string name="hours">Ore</string>
@@ -794,4 +806,29 @@
     <string name="onboarding_ai_toggle_desc">Usa un modello locale per estrarre serie, ripetizioni ed esercizi dalle foto.</string>
     <string name="onboarding_ai_unsupported_desc">Il tuo dispositivo non soddisfa i requisiti minimi (almeno 6 GB di RAM) per eseguire l\'IA locale. Potrai comunque creare e gestire le schede manualmente.</string>
     <string name="onboarding_ai_download_note">Puoi scaricare il modello ora oppure in qualsiasi momento dalle Impostazioni.</string>
+    <string name="ai_scan_empty_state_title">Costruisci la tua scheda</string>
+    <string name="ai_scan_empty_state_desc">Scansiona una foto della tua scheda cartacea per importare gli esercizi in automatico, oppure aggiungili manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Scansiona scheda con IA</string>
+    <string name="ai_scan_empty_state_add_manual">Aggiungi a mano</string>
+    <string name="ai_scan_confirm_dialog_title">Aggiungere gli esercizi?</string>
+    <string name="ai_scan_confirm_dialog_desc">Vuoi confermare e aggiungere i %1$d esercizi rilevati alla tua scheda?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Conferma e aggiungi</string>
+    <string name="ai_scan_confirm_dialog_review">Ricontrolla</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Peso &amp; Ripetizioni</string>
+    <string name="exercise_type_time_and_weight">Tempo &amp; Peso</string>
+    <string name="target_time">Tempo target</string>
+    <string name="target_seconds">Target (secondi)</string>
+    <string name="seconds_short">sec</string>
+    <string name="time_and_weight_badge">TEMPO &amp; PESO</string>
+    <string name="skip_timer">Salta timer</string>
+    <string name="skip_timer_and_log">Salta timer e Salva</string>
+    <string name="set_duration_label">Durata</string>
+    <string name="adjust_weight">Regola peso</string>
+    <string name="time_weight_ready">PRONTO PER INIZIARE</string>
+    <string name="time_weight_running">TIMER IN ESECUZIONE</string>
+    <string name="time_weight_paused">TIMER IN PAUSA</string>
+    <string name="time_weight_finish_set">TERMINA SERIE</string>
+    <string name="time_weight_reset_timer">Azzera timer</string>
 </resources>

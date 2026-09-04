@@ -122,6 +122,8 @@
     <string name="schedule_days">SCHEDULE DAYS</string>
     <string name="delete_routine">Delete Routine?</string>
     <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
+    <string name="reset_routine_content">Reset Content?</string>
+    <string name="reset_routine_content_message">This will permanently remove all images and exercises from this routine. The routine itself will be kept. This action cannot be undone.</string>
     <string name="archive_routine">Archive Routine?</string>
     <string name="archive_routine_message">This routine will be moved to the archived section.</string>
     <string name="unarchive_routine">Restore Routine?</string>
@@ -227,9 +229,19 @@
     <string name="warmup_timer_settings_desc">Show warmup timer button during workout</string>
     <string name="workout_timer">Workout Timer</string>
     <string name="workout_timer_desc">Track total workout duration</string>
+    <string name="auto_stop_cardio_at_target">Auto-stop cardio at target</string>
+    <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
+    <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
+    <string name="auto_stop_time_weight_at_target_desc">Pause the timer automatically when the set time target is reached</string>
     <string name="inline_exercise_modifications">Inline Modifications</string>
     <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
     <string name="workout_settings">Workout</string>
+    <string name="workout_settings_desc">Timer, auto-stop and exercise options</string>
+    <string name="ai_settings_desc">Offline sheet scan and model</string>
+    <string name="personalization_desc">Theme, colors and appearance</string>
+    <string name="notifications_settings_desc">Timer, warmup and membership alerts</string>
+    <string name="personalization_title">Personalization</string>
+    <string name="notifications_title">Notifications</string>
     <string name="workout_duration">Workout Duration</string>
     <string name="add_duration">Add duration</string>
     <string name="hours">Hours</string>
@@ -794,4 +806,29 @@
     <string name="onboarding_ai_toggle_desc">Uses a local model to parse sets, reps, and exercises from photos.</string>
     <string name="onboarding_ai_unsupported_desc">Your device does not meet the hardware requirements (at least 6 GB RAM) for local AI execution. You can still create and manage routines manually.</string>
     <string name="onboarding_ai_download_note">You can download the model now or anytime later in Settings.</string>
+    <string name="ai_scan_empty_state_title">Build your routine</string>
+    <string name="ai_scan_empty_state_desc">Scan a photo of your paper training sheet to import exercises automatically, or add them manually.</string>
+    <string name="ai_scan_empty_state_scan_button">Scan sheet with AI</string>
+    <string name="ai_scan_empty_state_add_manual">Add manually</string>
+    <string name="ai_scan_confirm_dialog_title">Add scanned exercises?</string>
+    <string name="ai_scan_confirm_dialog_desc">Are you sure you want to add the %1$d scanned exercises to your routine?</string>
+    <string name="ai_scan_confirm_dialog_confirm">Confirm &amp; Add</string>
+    <string name="ai_scan_confirm_dialog_review">Review</string>
+
+    <!-- Exercise Types -->
+    <string name="exercise_type_strength">Weight &amp; Reps</string>
+    <string name="exercise_type_time_and_weight">Time &amp; Weight</string>
+    <string name="target_time">Target Time</string>
+    <string name="target_seconds">Target (seconds)</string>
+    <string name="seconds_short">sec</string>
+    <string name="time_and_weight_badge">TIME &amp; WEIGHT</string>
+    <string name="skip_timer">Skip Timer</string>
+    <string name="skip_timer_and_log">Skip timer &amp; Log</string>
+    <string name="set_duration_label">Duration</string>
+    <string name="adjust_weight">Adjust Weight</string>
+    <string name="time_weight_ready">READY TO START</string>
+    <string name="time_weight_running">TIMER RUNNING</string>
+    <string name="time_weight_paused">TIMER PAUSED</string>
+    <string name="time_weight_finish_set">FINISH SET</string>
+    <string name="time_weight_reset_timer">Reset timer</string>
 </resources>

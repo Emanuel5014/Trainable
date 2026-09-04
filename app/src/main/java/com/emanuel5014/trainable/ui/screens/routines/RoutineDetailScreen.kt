@@ -7,7 +7,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,6 +64,7 @@ import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +75,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -96,6 +108,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -106,6 +121,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -127,6 +144,7 @@ import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
+import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -241,6 +259,7 @@ fun RoutineDetailScreen(
     }
 
     var showRoutineEditSheet by remember { mutableStateOf(false) }
+    var showResetConfirmDialog by remember { mutableStateOf(false) }
     var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
     var routineName by remember { mutableStateOf("") }
     var routineNote by remember { mutableStateOf("") }
@@ -251,6 +270,8 @@ fun RoutineDetailScreen(
     val selectedDays = remember { mutableStateListOf<DayOfWeek>() }
 
     var selectedExerciseId by remember { mutableStateOf<Int?>(null) }
+    var selectedExerciseType by remember { mutableStateOf("strength") }
+    var timeTargetSecondsText by remember { mutableStateOf("45") }
     var setsText by remember { mutableStateOf("3") }
     var repsText by remember { mutableStateOf("8-12") }
     var restText by remember { mutableStateOf("120") }
@@ -296,8 +317,10 @@ fun RoutineDetailScreen(
     fun openAddSheet() {
         editingExerciseId = null
         selectedExerciseId = null
+        selectedExerciseType = "strength"
         setsText = "3"
         repsText = "8"
+        timeTargetSecondsText = "45"
         cardioDurationText = "20"
         // Inherit rest from the last exercise in the list, default to 120 if empty
         restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
@@ -307,8 +330,10 @@ fun RoutineDetailScreen(
     fun openEditSheet(item: PlanExerciseWithDetails) {
         editingExerciseId = item.planExercise.id
         selectedExerciseId = item.exercise.id
+        selectedExerciseType = item.planExercise.exerciseType
         setsText = item.planExercise.serieTarget.toString()
         repsText = item.planExercise.repsTarget
+        timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString() ?: item.planExercise.repsTarget.filter { it.isDigit() }.ifBlank { "45" }
         restText = item.planExercise.recuperoTarget.toString()
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
         showExerciseSheet = true
@@ -351,6 +376,40 @@ fun RoutineDetailScreen(
             dismissButton = {
                 GymButton(
                     onClick = { existingSessionForPlan = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    if (showResetConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirmDialog = false },
+            title = { Text(stringResource(R.string.reset_routine_content)) },
+            text = { Text(stringResource(R.string.reset_routine_content_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.resetRoutineContent()
+                        showResetConfirmDialog = false
+                    },
+                    containerColor = Error.copy(alpha = 0.1f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { showResetConfirmDialog = false },
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
@@ -442,15 +501,13 @@ fun RoutineDetailScreen(
                             )
                         },
                         actions = {
-                            if (aiScanAvailable) {
-                                GymIconButton(
-                                    icon = Icons.Rounded.DocumentScanner,
-                                    onClick = { showScanSourceSheet = true },
-                                    containerColor = SurfaceContainerHigh,
-                                    contentColor = Primary,
-                                    description = "Scan Routine Sheet"
-                                )
-                            }
+                            GymIconButton(
+                                icon = Icons.Rounded.RestartAlt,
+                                onClick = { showResetConfirmDialog = true },
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = Error,
+                                description = "Reset Routine Content"
+                            )
                             GymIconButton(
                                 icon = Icons.Rounded.Edit,
                                 onClick = { openRoutineEditSheet() },
@@ -582,27 +639,105 @@ fun RoutineDetailScreen(
 
                 if (localExercises.isEmpty()) {
                     item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 80.dp, bottom = 40.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = stringResource(R.string.no_exercises_in_routine),
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnSurface
-                            )
-                            Spacer(modifier = Modifier.height(Spacing.xtraSmall))
-                            Text(
-                                text = stringResource(R.string.tap_plus_to_add),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = OnSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 48.dp)
-                            )
+                        if (aiScanAvailable) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = ResponsiveSize.horizontalPadding)
+                                    .padding(top = 24.dp, bottom = 40.dp),
+                                shape = Shapes.medium,
+                                color = SurfaceContainerHigh,
+                                tonalElevation = 1.dp
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Primary.copy(alpha = 0.12f),
+                                        modifier = Modifier.size(56.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.DocumentScanner,
+                                                contentDescription = null,
+                                                tint = Primary,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.ai_scan_empty_state_title),
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)
+                                            ),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = OnSurface,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.ai_scan_empty_state_desc),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = OnSurfaceVariant,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
+                                    GymButton(
+                                        onClick = { showScanSourceSheet = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        containerColor = Primary,
+                                        contentColor = OnPrimary
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.DocumentScanner,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.ai_scan_empty_state_scan_button),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 80.dp, bottom = 40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.no_exercises_in_routine),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = OnSurface
+                                )
+                                Spacer(modifier = Modifier.height(Spacing.xtraSmall))
+                                Text(
+                                    text = stringResource(R.string.tap_plus_to_add),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = OnSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 48.dp)
+                                )
+                            }
                         }
                     }
                 } else {
@@ -904,28 +1039,86 @@ fun RoutineDetailScreen(
                     } else {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            FilterChip(
+                                selected = selectedExerciseType == "strength",
+                                onClick = { selectedExerciseType = "strength" },
+                                label = { Text(stringResource(R.string.exercise_type_strength)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FitnessCenter,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                    selectedLabelColor = Primary,
+                                    selectedLeadingIconColor = Primary
+                                )
+                            )
+                            FilterChip(
+                                selected = selectedExerciseType == "time_and_weight",
+                                onClick = { selectedExerciseType = "time_and_weight" },
+                                label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Timer,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                    selectedLabelColor = Primary,
+                                    selectedLeadingIconColor = Primary
+                                )
+                            )
+                        }
+
+                        if (selectedExerciseType == "time_and_weight") {
                             GymInputField(
                                 value = setsText,
                                 onValueChange = { setsText = it },
                                 label = stringResource(R.string.sets),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            GymInputField(
-                                value = repsText,
-                                onValueChange = {
-                                    repsText = it
-                                    val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                    if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                        setsText = repCount.toString()
-                                    }
-                                },
-                                label = stringResource(R.string.reps),
-                                supportingText = stringResource(R.string.reps_hint),
-                                modifier = Modifier.weight(1f)
+
+                            TargetSecondsSlider(
+                                valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
+                                onValueChange = { timeTargetSecondsText = it.toString() },
+                                hapticEnabled = hapticEnabled,
+                                haptic = haptic,
+                                modifier = Modifier.fillMaxWidth()
                             )
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                            ) {
+                                GymInputField(
+                                    value = setsText,
+                                    onValueChange = { setsText = it },
+                                    label = stringResource(R.string.sets),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                GymInputField(
+                                    value = repsText,
+                                    onValueChange = {
+                                        repsText = it
+                                        val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                        if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                            setsText = repCount.toString()
+                                        }
+                                    },
+                                    label = stringResource(R.string.reps),
+                                    supportingText = stringResource(R.string.reps_hint),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
 
                         RestSlider(
@@ -1051,6 +1244,31 @@ fun RoutineDetailScreen(
                                         recuperoTarget = rest
                                     )
                                 }
+                            } else if (selectedExerciseType == "time_and_weight") {
+                                val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
+
+                                if (current == null) {
+                                    viewModel.addExercise(
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = "${targetSec}s",
+                                        recuperoTarget = rest,
+                                        exerciseType = "time_and_weight",
+                                        durataTargetSecondi = targetSec
+                                    )
+                                } else {
+                                    viewModel.updateExercise(
+                                        original = current.planExercise,
+                                        exerciseId = exerciseId,
+                                        serieTarget = sets,
+                                        repsTarget = "${targetSec}s",
+                                        recuperoTarget = rest,
+                                        exerciseType = "time_and_weight",
+                                        durataTargetSecondi = targetSec
+                                    )
+                                }
                             } else {
                                 val sets = setsText.trim().toIntOrNull() ?: return@GymButton
                                 val rest = restText.trim().toIntOrNull() ?: return@GymButton
@@ -1061,7 +1279,9 @@ fun RoutineDetailScreen(
                                         exerciseId = exerciseId,
                                         serieTarget = sets,
                                         repsTarget = reps,
-                                        recuperoTarget = rest
+                                        recuperoTarget = rest,
+                                        exerciseType = "strength",
+                                        durataTargetSecondi = null
                                     )
                                 } else {
                                     viewModel.updateExercise(
@@ -1069,7 +1289,9 @@ fun RoutineDetailScreen(
                                         exerciseId = exerciseId,
                                         serieTarget = sets,
                                         repsTarget = reps,
-                                        recuperoTarget = rest
+                                        recuperoTarget = rest,
+                                        exerciseType = "strength",
+                                        durataTargetSecondi = null
                                     )
                                 }
                             }
@@ -1497,7 +1719,50 @@ private fun AiScanningOverlay(
         }
     }
 
-    val scrimColor = com.emanuel5014.trainable.ui.theme.Surface
+    val infiniteTransition = rememberInfiniteTransition(label = "ai_scan_glow_transition")
+
+    val angle1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 10000, easing = LinearEasing)
+        ),
+        label = "glow_angle_1"
+    )
+
+    val angle2 by infiniteTransition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 13000, easing = LinearEasing)
+        ),
+        label = "glow_angle_2"
+    )
+
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_pulse_scale"
+    )
+
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.65f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_pulse_alpha"
+    )
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val scrimColor = MaterialTheme.colorScheme.surface
         .copy(alpha = if (isDark) 0.65f else 0.85f)
 
     Box(
@@ -1510,14 +1775,90 @@ private fun AiScanningOverlay(
                 blurRadius = 24.dp
                 tints = listOf(HazeTint(scrimColor))
                 noiseFactor = 0.05f
+            }
+            .drawBehind {
+                val width = size.width
+                val height = size.height
+                val centerX = width / 2f
+                val centerY = height / 2f
+
+                // Orb 1: Primary color orbital glow
+                val rad1 = Math.toRadians(angle1.toDouble())
+                val offset1 = Offset(
+                    x = centerX + (cos(rad1) * width * 0.30f).toFloat(),
+                    y = centerY + (sin(rad1) * height * 0.22f).toFloat()
+                )
+                val radius1 = (width * 0.72f * pulseScale).coerceAtLeast(160f)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = if (isDark) 0.40f * pulseAlpha else 0.28f * pulseAlpha),
+                            primaryColor.copy(alpha = if (isDark) 0.15f * pulseAlpha else 0.09f * pulseAlpha),
+                            Color.Transparent
+                        ),
+                        center = offset1,
+                        radius = radius1
+                    ),
+                    center = offset1,
+                    radius = radius1
+                )
+
+                // Orb 2: Tertiary / Accent color orbital glow (counter-rotation)
+                val rad2 = Math.toRadians(angle2.toDouble())
+                val offset2 = Offset(
+                    x = centerX + (cos(rad2) * width * 0.34f).toFloat(),
+                    y = centerY + (sin(rad2) * height * 0.25f).toFloat()
+                )
+                val radius2 = (width * 0.65f * (2.1f - pulseScale)).coerceAtLeast(160f)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            tertiaryColor.copy(alpha = if (isDark) 0.35f * pulseAlpha else 0.22f * pulseAlpha),
+                            tertiaryColor.copy(alpha = if (isDark) 0.12f * pulseAlpha else 0.07f * pulseAlpha),
+                            Color.Transparent
+                        ),
+                        center = offset2,
+                        radius = radius2
+                    ),
+                    center = offset2,
+                    radius = radius2
+                )
+
+                // Orb 3: Central breathing ambient aura behind card
+                val radiusCenter = width * 0.52f * pulseScale
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = if (isDark) 0.25f * pulseAlpha else 0.16f * pulseAlpha),
+                            secondaryColor.copy(alpha = if (isDark) 0.10f * pulseAlpha else 0.05f * pulseAlpha),
+                            Color.Transparent
+                        ),
+                        center = Offset(centerX, centerY),
+                        radius = radiusCenter
+                    ),
+                    center = Offset(centerX, centerY),
+                    radius = radiusCenter
+                )
             },
         contentAlignment = Alignment.Center
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = SurfaceContainerHigh,
-            tonalElevation = 3.dp,
-            shadowElevation = if (isDark) 12.dp else 0.dp,
+            color = SurfaceContainerHigh.copy(alpha = if (isDark) 0.92f else 0.96f),
+            tonalElevation = 4.dp,
+            shadowElevation = if (isDark) 16.dp else 4.dp,
+            border = BorderStroke(
+                width = 1.dp,
+                brush = Brush.sweepGradient(
+                    colors = listOf(
+                        primaryColor.copy(alpha = 0.5f),
+                        tertiaryColor.copy(alpha = 0.35f),
+                        primaryColor.copy(alpha = 0.15f),
+                        tertiaryColor.copy(alpha = 0.45f),
+                        primaryColor.copy(alpha = 0.5f)
+                    )
+                )
+            ),
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .animateContentSize()

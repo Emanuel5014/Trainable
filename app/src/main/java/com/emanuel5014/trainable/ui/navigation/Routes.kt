@@ -56,6 +56,15 @@ object ExerciseCustomization
 object WorkoutSettings
 
 @Serializable
+object AiSettings
+
+@Serializable
+object PersonalizationSettings
+
+@Serializable
+object NotificationSettings
+
+@Serializable
 data class PhysicalCheckCompare(val id1: Int, val id2: Int)
 
 @Serializable

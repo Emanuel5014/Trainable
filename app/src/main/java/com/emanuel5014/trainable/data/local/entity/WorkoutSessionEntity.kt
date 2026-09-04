@@ -46,5 +46,13 @@ data class WorkoutSessionEntity(
     @ColumnInfo(name = "cardio_timer_paused")
     val cardioTimerPaused: Boolean = false,
     @ColumnInfo(name = "cardio_timer_started_at")
-    val cardioTimerStartedAt: Long? = null
+    val cardioTimerStartedAt: Long? = null,
+    @ColumnInfo(name = "set_timer_seconds")
+    val setTimerSeconds: Int = 0,
+    @ColumnInfo(name = "set_timer_running")
+    val setTimerRunning: Boolean = false,
+    @ColumnInfo(name = "set_timer_paused")
+    val setTimerPaused: Boolean = false,
+    @ColumnInfo(name = "set_timer_started_at")
+    val setTimerStartedAt: Long? = null
 )

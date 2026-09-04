@@ -29,6 +29,7 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.R
 import androidx.compose.ui.res.stringResource
 
@@ -95,6 +96,25 @@ fun ExerciseEntryCard(
                         }
                         Text(
                             text = targetText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
+                    } else if (item.planExercise.exerciseType == "time_and_weight") {
+                        Box(
+                            modifier = Modifier
+                                .background(Primary.copy(alpha = 0.15f), CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.time_and_weight_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        val durSec = item.planExercise.durataTargetSecondi ?: item.planExercise.repsTarget.filter { it.isDigit() }.toIntOrNull() ?: 45
+                        Text(
+                            text = "${item.planExercise.serieTarget} × ${durSec}s • Rest: ${item.planExercise.recuperoTarget}s",
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
