@@ -233,6 +233,10 @@
     <string name="auto_stop_cardio_at_target_desc">Timer beim Erreichen des Zeitziels automatisch pausieren</string>
     <string name="auto_stop_time_weight_at_target">Zeitsätze am Ziel automatisch stoppen</string>
     <string name="auto_stop_time_weight_at_target_desc">Timer beim Erreichen der Satzzielzeit automatisch pausieren</string>
+    <string name="keep_screen_on_cardio_timer">Bildschirm anlassen (Cardio)</string>
+    <string name="keep_screen_on_cardio_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Cardio-Timer läuft</string>
+    <string name="keep_screen_on_set_timer">Bildschirm anlassen (Zeitsätze)</string>
+    <string name="keep_screen_on_set_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Satz-Timer läuft</string>
     <string name="inline_exercise_modifications">Inline-Änderungen</string>
     <string name="inline_exercise_modifications_desc">Sätze und Übungen während normaler Workouts hinzufügen</string>
     <string name="workout_settings">Training</string>

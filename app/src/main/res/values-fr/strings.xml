@@ -233,6 +233,10 @@
     <string name="auto_stop_cardio_at_target_desc">Mettre le minuteur en pause automatiquement à l\'objectif de temps</string>
     <string name="auto_stop_time_weight_at_target">Arrêt auto des séries chronométrées à l\'objectif</string>
     <string name="auto_stop_time_weight_at_target_desc">Mettre le minuteur en pause automatiquement à l\'objectif de la série</string>
+    <string name="keep_screen_on_cardio_timer">Garder l\'écran allumé (cardio)</string>
+    <string name="keep_screen_on_cardio_timer_desc">Empêche l\'extinction automatique de l\'écran pendant le minuteur cardio</string>
+    <string name="keep_screen_on_set_timer">Garder l\'écran allumé (séries chronométrées)</string>
+    <string name="keep_screen_on_set_timer_desc">Empêche l\'extinction automatique de l\'écran pendant le minuteur de série</string>
     <string name="inline_exercise_modifications">Modifications en ligne</string>
     <string name="inline_exercise_modifications_desc">Ajouter des séries et exercices pendant les entraînements normaux</string>
     <string name="workout_settings">Entraînement</string>

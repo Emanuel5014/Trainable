@@ -11,15 +11,22 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -30,9 +37,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
@@ -40,6 +49,7 @@ import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +59,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -57,7 +68,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -167,12 +180,10 @@ fun EditWorkoutScreen(
     var showExercisePicker by remember { mutableStateOf(false) }
     var exerciseToSwap by remember { mutableStateOf<Int?>(null) }
     var showDeleteExerciseDialog by remember { mutableStateOf<Int?>(null) }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showEditDetailsSheet by remember { mutableStateOf(false) }
     var showAddCardio by remember { mutableStateOf(false) }
     var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
-    var showRenameDialog by remember { mutableStateOf(false) }
-    var showDurationDialog by remember { mutableStateOf(false) }
 
     val autoScrollThreshold = with(density) { 48.dp.toPx() }
     val maxAutoScrollSpeed = with(density) { 12.dp.toPx() }
@@ -211,82 +222,20 @@ fun EditWorkoutScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { showRenameDialog = true }
-                                .padding(end = 8.dp)
-                        ) {
-                            Text(
-                                text = when (state.planName) {
-                                    "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-                                    "Custom Workout" -> stringResource(R.string.custom_workout)
-                                    else -> state.planName
-                                },
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                imageVector = Icons.Rounded.Edit,
-                                contentDescription = null,
-                                tint = Primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { showDatePicker = true }
-                        ) {
-                            Text(
-                                text = SimpleDateFormat("EEEE, d MMMM yyyy", LocalLocale.current.platformLocale)
-                                    .format(Date(state.sessionTimestamp)),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Primary,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = " • " + stringResource(R.string.edit_date).uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = OnSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { showDurationDialog = true }
-                                .padding(top = 2.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Timer,
-                                contentDescription = null,
-                                tint = OnSurfaceVariant,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (state.sessionDurationMs != null) {
-                                    val totalSec = state.sessionDurationMs!! / 1000
-                                    val h = totalSec / 3600
-                                    val m = (totalSec % 3600) / 60
-                                    if (h > 0) "${h}h ${m}m" else "${m}m"
-                                } else stringResource(R.string.add_duration),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = OnSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
+                    Text(
+                        text = when (state.planName) {
+                            "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                            "Custom Workout" -> stringResource(R.string.custom_workout)
+                            else -> state.planName
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showEditDetailsSheet = true }
+                    )
                 },
                 navigationIcon = {
                     GymIconButton(
@@ -328,70 +277,81 @@ fun EditWorkoutScreen(
                 GymLoadingIndicator()
             }
         } else {
-            if (state.exercises.isEmpty() && state.cardioLogs.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                WorkoutSessionHeaderCard(
+                    sessionTimestamp = state.sessionTimestamp,
+                    sessionDurationMs = state.sessionDurationMs,
+                    exerciseCount = localMergedItems.size,
+                    onEditClick = { showEditDetailsSheet = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+
+                if (state.exercises.isEmpty() && state.cardioLogs.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = null,
-                            tint = Primary,
-                            modifier = Modifier
-                                .size(64.dp)
-                                .background(Primary.copy(alpha = 0.12f), CircleShape)
-                                .padding(16.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_exercises_in_session),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = OnSurface,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.tap_plus_to_add),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = OnSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .pointerInput(Unit) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { offset ->
-                                    dragDropState.onDragStart(offset)
-                                },
-                                onDrag = { change, _ ->
-                                    change.consume()
-                                    dragDropState.onDrag(change.position.y)
-                                },
-                                onDragEnd = {
-                                    dragDropState.onDragEnd()
-                                },
-                                onDragCancel = {
-                                    dragDropState.onDragEnd()
-                                }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .background(Primary.copy(alpha = 0.12f), CircleShape)
+                                    .padding(16.dp)
                             )
-                        },
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.no_exercises_in_session),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.tap_plus_to_add),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = OnSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        dragDropState.onDragStart(offset)
+                                    },
+                                    onDrag = { change, _ ->
+                                        change.consume()
+                                        dragDropState.onDrag(change.position.y)
+                                    },
+                                    onDragEnd = {
+                                        dragDropState.onDragEnd()
+                                    },
+                                    onDragCancel = {
+                                        dragDropState.onDragEnd()
+                                    }
+                                )
+                            },
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
                     itemsIndexed(localMergedItems, key = { _, item -> getWorkoutItemKey(item) }) { index, item ->
                         val itemKey = getWorkoutItemKey(item)
                         val isDragging = itemKey in dragDropState.draggedItemKeys
@@ -488,6 +448,7 @@ fun EditWorkoutScreen(
             }
         }
     }
+    }
 
     if (editingSet != null) {
         EditSetDialog(
@@ -532,98 +493,16 @@ fun EditWorkoutScreen(
         )
     }
 
-    if (showRenameDialog) {
-        var newName by remember { 
-            mutableStateOf(
-                if (state.planName == "Custom Workout") "" else state.planName
-            )
-        }
-        AlertDialog(
-            onDismissRequest = { showRenameDialog = false },
-            title = { Text(text = stringResource(R.string.rename_workout)) },
-            text = {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    placeholder = { Text(text = stringResource(R.string.custom_workout)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = Shapes.medium
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.updateSessionName(newName)
-                        showRenameDialog = false
-                    }
-                ) {
-                    Text(text = stringResource(android.R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) {
-                    Text(text = stringResource(android.R.string.cancel))
-                }
+    if (showEditDetailsSheet) {
+        EditWorkoutDetailsBottomSheet(
+            currentName = state.planName,
+            currentTimestamp = state.sessionTimestamp,
+            currentDurationMs = state.sessionDurationMs,
+            onDismiss = { showEditDetailsSheet = false },
+            onConfirm = { newName, newTimestamp, newDurationMs ->
+                viewModel.updateSessionDetails(newName, newTimestamp, newDurationMs)
+                showEditDetailsSheet = false
             }
-        )
-    }
-
-    if (showDurationDialog) {
-        val initialDurationMs = state.sessionDurationMs ?: 0L
-        var hoursText by remember { mutableStateOf(((initialDurationMs / 3600000).toInt()).toString()) }
-        var minutesText by remember { mutableStateOf((((initialDurationMs % 3600000) / 60000).toInt()).toString()) }
-        AlertDialog(
-            onDismissRequest = { showDurationDialog = false },
-            title = { Text(stringResource(R.string.workout_duration), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black) },
-            text = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = hoursText,
-                        onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.hours)) },
-                        singleLine = true,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = Shapes.medium
-                    )
-                    Text(":", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = OnSurface)
-                    OutlinedTextField(
-                        value = minutesText,
-                        onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.minutes)) },
-                        singleLine = true,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = Shapes.medium
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val h = hoursText.toIntOrNull() ?: 0
-                        val m = minutesText.toIntOrNull() ?: 0
-                        val totalMs = (h * 3600L + m * 60L) * 1000L
-                        viewModel.updateSessionDuration(if (totalMs > 0) totalMs else null)
-                        showDurationDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDurationDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            },
-            containerColor = Surface,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
         )
     }
 
@@ -708,36 +587,6 @@ fun EditWorkoutScreen(
         )
     }
 
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = state.sessionTimestamp
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { 
-                            viewModel.updateSessionDate(it)
-                        }
-                        showDatePicker = false
-                    }
-                ) {
-                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-                }
-            },
-            colors = androidx.compose.material3.DatePickerDefaults.colors(
-                containerColor = Surface
-            )
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
 
     if (showDeleteSessionDialog) {
         AlertDialog(
@@ -814,71 +663,15 @@ fun EditExerciseCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                Text(
+                    text = ExerciseTranslations.translateCategory(exerciseState.exercise.categoria, languageCode).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
-                ) {
-                    if (isSuperset) {
-                        Surface(
-                            shape = CircleShape,
-                            color = Primary.copy(alpha = 0.12f)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Link,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(R.string.superset).uppercase(),
-                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
-                                    color = Primary,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
-                    }
-                    val isTimeAndWeight = exerciseState.sets.any { it.durataSecondi != null }
-                    if (isTimeAndWeight) {
-                        Surface(
-                            shape = CircleShape,
-                            color = Primary.copy(alpha = 0.12f)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Timer,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(R.string.time_and_weight_badge).uppercase(),
-                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
-                                    color = Primary,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
-                    }
-                    Text(
-                        text = exerciseState.exercise.categoria.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                )
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -955,6 +748,71 @@ fun EditExerciseCard(
                 color = OnSurface,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            val isTimeAndWeight = exerciseState.sets.any { it.durataSecondi != null }
+            if (isSuperset || isTimeAndWeight) {
+                Spacer(modifier = Modifier.height(6.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isSuperset) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Primary.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Link,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.superset).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
+                                    color = Primary,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        }
+                    }
+                    if (isTimeAndWeight) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Primary.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.time_and_weight_badge).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
+                                    color = Primary,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -1118,7 +976,10 @@ fun CardioEditCard(
                     text = stringResource(R.string.cardio_cat_label).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -1270,4 +1131,344 @@ fun EditCardioDialog(
         textContentColor = OnSurfaceVariant,
         shape = Shapes.extraLarge
     )
+}
+
+@Composable
+fun WorkoutSessionHeaderCard(
+    sessionTimestamp: Long,
+    sessionDurationMs: Long?,
+    exerciseCount: Int,
+    onEditClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onEditClick,
+        shape = RoundedCornerShape(16.dp),
+        color = SurfaceContainerLow,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            FlowRow(
+                modifier = Modifier.weight(1f, fill = false),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Date
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CalendarMonth,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = remember(sessionTimestamp) {
+                            SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault()).format(Date(sessionTimestamp))
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = OnSurface
+                    )
+                }
+
+                // Duration
+                val durationText = remember(sessionDurationMs) {
+                    if (sessionDurationMs != null && sessionDurationMs > 0L) {
+                        val totalSec = sessionDurationMs / 1000
+                        val h = totalSec / 3600
+                        val m = (totalSec % 3600) / 60
+                        if (h > 0) "${h}h ${m}m" else "${m}m"
+                    } else null
+                }
+                if (durationText != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Timer,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = durationText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = OnSurface
+                        )
+                    }
+                }
+
+                // Exercise count
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.FitnessCenter,
+                        contentDescription = null,
+                        tint = Primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    val countLabel = if (exerciseCount == 1) {
+                        stringResource(R.string.exercise)
+                    } else {
+                        stringResource(R.string.share_exercises).lowercase()
+                    }
+                    Text(
+                        text = "$exerciseCount $countLabel",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = OnSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Surface(
+                shape = CircleShape,
+                color = SurfaceContainerHigh,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = stringResource(R.string.edit),
+                        tint = OnSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditWorkoutDetailsBottomSheet(
+    currentName: String,
+    currentTimestamp: Long,
+    currentDurationMs: Long?,
+    onDismiss: () -> Unit,
+    onConfirm: (newName: String, newTimestamp: Long, newDurationMs: Long?) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var nameText by remember {
+        mutableStateOf(if (currentName == "Custom Workout" || currentName == "Cardio") "" else currentName)
+    }
+    var selectedTimestamp by remember { mutableLongStateOf(currentTimestamp) }
+
+    val initialDurationMs = currentDurationMs ?: 0L
+    var hoursText by remember {
+        mutableStateOf(if (initialDurationMs > 0L) (initialDurationMs / 3600000).toString() else "")
+    }
+    var minutesText by remember {
+        mutableStateOf(if (initialDurationMs > 0L) (((initialDurationMs % 3600000) / 60000)).toString() else "")
+    }
+
+    var showDatePickerDialog by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Surface,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        modifier = Modifier.imePadding()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.session_details),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = OnSurface
+            )
+
+            // 1. Workout Name
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.rename_workout),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = nameText,
+                    onValueChange = { nameText = it },
+                    placeholder = { Text(text = stringResource(R.string.custom_workout)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.FitnessCenter,
+                            contentDescription = null,
+                            tint = Primary
+                        )
+                    },
+                    singleLine = true,
+                    shape = Shapes.medium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // 2. Workout Date
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.edit_date),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurfaceVariant
+                )
+                Surface(
+                    onClick = { showDatePickerDialog = true },
+                    shape = Shapes.medium,
+                    color = SurfaceContainerHigh,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.CalendarMonth,
+                            contentDescription = null,
+                            tint = Primary
+                        )
+                        Text(
+                            text = remember(selectedTimestamp) {
+                                SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault()).format(Date(selectedTimestamp))
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = OnSurface
+                        )
+                    }
+                }
+            }
+
+            // 3. Duration
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.workout_duration),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = hoursText,
+                        onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.hours)) },
+                        leadingIcon = {
+                            Icon(Icons.Rounded.Timer, contentDescription = null, tint = Primary)
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        shape = Shapes.medium
+                    )
+                    Text(
+                        ":",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        color = OnSurface
+                    )
+                    OutlinedTextField(
+                        value = minutesText,
+                        onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.minutes)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        shape = Shapes.medium
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                GymButton(
+                    onClick = onDismiss,
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                }
+
+                GymButton(
+                    onClick = {
+                        val h = hoursText.toIntOrNull() ?: 0
+                        val m = minutesText.toIntOrNull() ?: 0
+                        val totalMs = (h * 3600L + m * 60L) * 1000L
+                        val newDuration = if (totalMs > 0) totalMs else null
+                        onConfirm(nameText, selectedTimestamp, newDuration)
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+    }
+
+    if (showDatePickerDialog) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedTimestamp
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePickerDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            selectedTimestamp = it
+                        }
+                        showDatePickerDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePickerDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            },
+            colors = androidx.compose.material3.DatePickerDefaults.colors(
+                containerColor = Surface
+            )
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }

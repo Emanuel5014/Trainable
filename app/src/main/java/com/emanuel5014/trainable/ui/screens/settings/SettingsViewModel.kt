@@ -254,6 +254,18 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val keepScreenOnCardioTimer = userPrefsRepository.keepScreenOnCardioTimer.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    val keepScreenOnSetTimer = userPrefsRepository.keepScreenOnSetTimer.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
     val customCategories = exerciseRepository.getCustomCategories().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -553,6 +565,18 @@ class SettingsViewModel @Inject constructor(
     fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setAutoStopTimeWeightAtTarget(enabled)
+        }
+    }
+
+    fun setKeepScreenOnCardioTimer(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setKeepScreenOnCardioTimer(enabled)
+        }
+    }
+
+    fun setKeepScreenOnSetTimer(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setKeepScreenOnSetTimer(enabled)
         }
     }
 

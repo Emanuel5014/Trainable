@@ -51,13 +51,14 @@ fun ScreenHeader(
         titleContent = {
             Text(
                 text = title,
-                style = titleStyle.copy(fontSize = fontSize),
+                style = titleStyle.copy(fontSize = fontSize, lineHeight = lineHeight),
                 color = OnSurface,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-1).sp,
                 lineHeight = lineHeight,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = true
             )
         },
         subtitle = subtitle,
@@ -80,10 +81,14 @@ fun ScreenHeader(
     titleInRow: Boolean = false
 ) {
     val horizontalPad = ResponsiveSize.horizontalPadding
+    val topPad = if (ResponsiveSize.isShortHeight) 12.dp
+        else if (navigationIcon != null || (actions != null && titleInRow)) 8.dp else 24.dp
+    val iconBox = if (ResponsiveSize.isCompact) 48.dp else 56.dp
+    val iconInner = if (ResponsiveSize.isCompact) 24.dp else 28.dp
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = if (navigationIcon != null || (actions != null && titleInRow)) 8.dp else 24.dp, bottom = 16.dp)
+            .padding(top = topPad, bottom = 16.dp)
     ) {
         if (navigationIcon != null || (actions != null && titleInRow) || titleInRow) {
             Row(
@@ -126,12 +131,12 @@ fun ScreenHeader(
                     .fillMaxWidth()
                     .padding(horizontal = horizontalPad),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (ResponsiveSize.isCompact) 12.dp else 16.dp)
             ) {
                 if (icon != null) {
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(iconBox)
                             .clip(CircleShape)
                             .background(SurfaceContainerHigh),
                         contentAlignment = Alignment.Center
@@ -140,14 +145,14 @@ fun ScreenHeader(
                             imageVector = icon,
                             contentDescription = null,
                             tint = Primary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(iconInner)
                         )
                     }
                 }
 
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1f, fill = true)
                         .clipToBounds()
                 ) {
                     if (subtitle != null) {

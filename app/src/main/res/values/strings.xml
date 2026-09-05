@@ -233,6 +233,10 @@
     <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
     <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
     <string name="auto_stop_time_weight_at_target_desc">Pause the timer automatically when the set time target is reached</string>
+    <string name="keep_screen_on_cardio_timer">Keep screen on during cardio</string>
+    <string name="keep_screen_on_cardio_timer_desc">Prevent the screen from turning off while the cardio timer is running</string>
+    <string name="keep_screen_on_set_timer">Keep screen on during timed sets</string>
+    <string name="keep_screen_on_set_timer_desc">Prevent the screen from turning off while the set timer is running</string>
     <string name="inline_exercise_modifications">Inline Modifications</string>
     <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
     <string name="workout_settings">Workout</string>

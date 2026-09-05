@@ -761,6 +761,27 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
+    fun updateSessionDetails(name: String, timestamp: Long, durationMs: Long?) {
+        viewModelScope.launch {
+            val sessionDetails = workoutRepository.getSessionWithDetails(sessionId).first()
+            if (sessionDetails != null) {
+                val updatedSession = sessionDetails.session.copy(
+                    noteSessione = name.ifBlank { null },
+                    timestamp = timestamp,
+                    durationMs = durationMs
+                )
+                workoutRepository.updateSession(updatedSession)
+                _state.update {
+                    it.copy(
+                        planName = name.ifBlank { sessionDetails.plan.nome },
+                        sessionTimestamp = timestamp,
+                        sessionDurationMs = durationMs
+                    )
+                }
+            }
+        }
+    }
+
     fun updateItemsOrder(orderedItems: List<Any>) {
         viewModelScope.launch {
             val setsToUpdate = mutableListOf<SetLogEntity>()
