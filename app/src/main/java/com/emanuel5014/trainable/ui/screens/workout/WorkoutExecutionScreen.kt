@@ -871,7 +871,8 @@ fun WorkoutExecutionScreen(
                                         }
                                     }
                                     item {
-                                        Spacer(modifier = Modifier.height(300.dp)) // Sufficient space for the dynamic hub
+                                        val hubSpacer = if (com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight) 220.dp else 280.dp
+                                        Spacer(modifier = Modifier.height(hubSpacer)) // Space for the dynamic hub
                                     }
                                 }
                             }
@@ -900,7 +901,7 @@ fun WorkoutExecutionScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                            .padding(horizontal = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding, vertical = 16.dp)
                     ) {
                         val isResting = state.remainingRestSeconds > 0
 
@@ -1662,11 +1663,12 @@ fun CardioExerciseContent(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding)
             .padding(top = 16.dp, bottom = bottomPadding)
     ) {
-        // Responsive scale: reference 360dp wide screen at ~700dp tall as baseline
-        val scale = (minOf(maxWidth, maxHeight) / 360.dp).coerceIn(0.7f, 1.1f)
+        // Responsive scale: width-based so short/landscape heights don't collapse the UI.
+        // Clamped to avoid glitches on extreme DPI / smallest-width settings.
+        val scale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
         val cIndicatorSize = (200f * scale).dp
         val cButtonSize = (135f * scale).dp
         val cTimerFontSize = (46f * scale).sp

@@ -15,4 +15,20 @@ object Spacing {
     val SectionSpacing = 48.dp
     val ContainerPadding = 32.dp
     val CardPadding = 24.dp
+
+    /** Responsive variants: shrink on very small / short screens, grow on tablets. */
+    val screenHorizontal get() = ResponsiveSize.horizontalPadding
+    val cardResponsive get() = ResponsiveSize.cardPadding
+    val sectionResponsive
+        get() = when {
+            ResponsiveSize.isShortHeight || ResponsiveSize.isCompact -> 32.dp
+            ResponsiveSize.isTablet -> 56.dp
+            else -> 48.dp
+        }
+    val bottomNavSpacer
+        get() = when {
+            ResponsiveSize.isShortHeight -> 80.dp
+            ResponsiveSize.isTablet -> 110.dp
+            else -> 100.dp
+        }
 }

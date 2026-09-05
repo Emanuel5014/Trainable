@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -814,71 +815,15 @@ fun EditExerciseCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                Text(
+                    text = ExerciseTranslations.translateCategory(exerciseState.exercise.categoria, languageCode).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
-                ) {
-                    if (isSuperset) {
-                        Surface(
-                            shape = CircleShape,
-                            color = Primary.copy(alpha = 0.12f)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Link,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(R.string.superset).uppercase(),
-                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
-                                    color = Primary,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
-                    }
-                    val isTimeAndWeight = exerciseState.sets.any { it.durataSecondi != null }
-                    if (isTimeAndWeight) {
-                        Surface(
-                            shape = CircleShape,
-                            color = Primary.copy(alpha = 0.12f)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Timer,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = stringResource(R.string.time_and_weight_badge).uppercase(),
-                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
-                                    color = Primary,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                        }
-                    }
-                    Text(
-                        text = exerciseState.exercise.categoria.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                )
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -955,6 +900,71 @@ fun EditExerciseCard(
                 color = OnSurface,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            val isTimeAndWeight = exerciseState.sets.any { it.durataSecondi != null }
+            if (isSuperset || isTimeAndWeight) {
+                Spacer(modifier = Modifier.height(6.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isSuperset) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Primary.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Link,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.superset).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
+                                    color = Primary,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        }
+                    }
+                    if (isTimeAndWeight) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Primary.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Timer,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = stringResource(R.string.time_and_weight_badge).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
+                                    color = Primary,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -1118,7 +1128,10 @@ fun CardioEditCard(
                     text = stringResource(R.string.cardio_cat_label).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
