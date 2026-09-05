@@ -1,7 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -96,6 +98,7 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -424,6 +427,20 @@ fun RoutineDetailScreen(
     }
 
     val isScanActive = aiScanState is AiScanState.Scanning
+
+    // AI scan (LLM inference) can take a while: keep the screen on for its whole duration.
+    // Always on, no setting. Released when scanning ends or the screen is left.
+    val scanWindow = (context as? Activity)?.window
+    DisposableEffect(isScanActive) {
+        if (isScanActive) {
+            scanWindow?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            scanWindow?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            scanWindow?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     Scaffold(
         modifier = Modifier
