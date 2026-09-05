@@ -232,6 +232,8 @@ class BackupManager @Inject constructor(
                 json.put("timer_finished_lockscreen_vibration_duration", prefs[UserPreferencesRepository.TIMER_FINISHED_LOCKSCREEN_VIBRATION_DURATION] ?: 30)
                 json.put("auto_stop_cardio_at_target", prefs[UserPreferencesRepository.AUTO_STOP_CARDIO_AT_TARGET] ?: true)
                 json.put("auto_stop_time_weight_at_target", prefs[UserPreferencesRepository.AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: true)
+                json.put("keep_screen_on_cardio_timer", prefs[UserPreferencesRepository.KEEP_SCREEN_ON_CARDIO_TIMER] ?: true)
+                json.put("keep_screen_on_set_timer", prefs[UserPreferencesRepository.KEEP_SCREEN_ON_SET_TIMER] ?: true)
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -361,6 +363,10 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.AUTO_STOP_CARDIO_AT_TARGET] = jsonObject.getBoolean("auto_stop_cardio_at_target")
                                             if (jsonObject.has("auto_stop_time_weight_at_target"))
                                                 prefs[UserPreferencesRepository.AUTO_STOP_TIME_WEIGHT_AT_TARGET] = jsonObject.getBoolean("auto_stop_time_weight_at_target")
+                                            if (jsonObject.has("keep_screen_on_cardio_timer"))
+                                                prefs[UserPreferencesRepository.KEEP_SCREEN_ON_CARDIO_TIMER] = jsonObject.getBoolean("keep_screen_on_cardio_timer")
+                                            if (jsonObject.has("keep_screen_on_set_timer"))
+                                                prefs[UserPreferencesRepository.KEEP_SCREEN_ON_SET_TIMER] = jsonObject.getBoolean("keep_screen_on_set_timer")
                                         }
                                     }
                                 } catch (e: Exception) {

@@ -233,6 +233,10 @@
     <string name="auto_stop_cardio_at_target_desc">Mette in pausa il timer automaticamente al raggiungimento del tempo target</string>
     <string name="auto_stop_time_weight_at_target">Stop automatico serie a tempo al target</string>
     <string name="auto_stop_time_weight_at_target_desc">Mette in pausa il timer automaticamente al raggiungimento del tempo della serie</string>
+    <string name="keep_screen_on_cardio_timer">Mantieni lo schermo acceso (cardio)</string>
+    <string name="keep_screen_on_cardio_timer_desc">Impedisce lo spegnimento automatico dello schermo mentre il timer cardio è in corso</string>
+    <string name="keep_screen_on_set_timer">Mantieni lo schermo acceso (serie a tempo)</string>
+    <string name="keep_screen_on_set_timer_desc">Impedisce lo spegnimento automatico dello schermo mentre il timer della serie è in corso</string>
     <string name="inline_exercise_modifications">Modifiche Inline</string>
     <string name="inline_exercise_modifications_desc">Aggiungi serie ed esercizi durante gli allenamenti normali</string>
     <string name="workout_settings">Allenamento</string>

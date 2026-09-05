@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -88,6 +90,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -108,6 +111,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -162,6 +166,22 @@ fun WorkoutExecutionScreen(
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val availableExercises by viewModel.availableExercises.collectAsState()
     val categories by viewModel.categories.collectAsState()
+
+    // Keep the screen on while a cardio or set timer is active (running or paused).
+    // Released automatically when the timer finishes, is reset, or the screen is left.
+    val activityWindow = (LocalContext.current as? Activity)?.window
+    val keepScreenOn = (state.keepScreenOnCardioTimer && (state.cardioTimerRunning || state.cardioTimerPaused)) ||
+        (state.keepScreenOnSetTimer && (state.setTimerRunning || state.setTimerPaused))
+    DisposableEffect(keepScreenOn) {
+        if (keepScreenOn) {
+            activityWindow?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activityWindow?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activityWindow?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }

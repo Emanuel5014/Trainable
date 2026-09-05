@@ -62,6 +62,8 @@ class UserPreferencesRepository @Inject constructor(
     val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
     val AUTO_STOP_CARDIO_AT_TARGET = booleanPreferencesKey("auto_stop_cardio_at_target")
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
+    val KEEP_SCREEN_ON_CARDIO_TIMER = booleanPreferencesKey("keep_screen_on_cardio_timer")
+    val KEEP_SCREEN_ON_SET_TIMER = booleanPreferencesKey("keep_screen_on_set_timer")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -254,6 +256,16 @@ class UserPreferencesRepository @Inject constructor(
             preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: true
         }
 
+    val keepScreenOnCardioTimer: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[KEEP_SCREEN_ON_CARDIO_TIMER] ?: true
+        }
+
+    val keepScreenOnSetTimer: Flow<Boolean> = dataStore.data
+        .map { preferences ->
+            preferences[KEEP_SCREEN_ON_SET_TIMER] ?: true
+        }
+
     val themeMode: Flow<Int> = dataStore.data
         .map { preferences ->
             preferences[THEME_MODE] ?: 0
@@ -304,6 +316,18 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAutoStopTimeWeightAtTarget(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[AUTO_STOP_TIME_WEIGHT_AT_TARGET] = enabled
+        }
+    }
+
+    suspend fun setKeepScreenOnCardioTimer(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[KEEP_SCREEN_ON_CARDIO_TIMER] = enabled
+        }
+    }
+
+    suspend fun setKeepScreenOnSetTimer(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[KEEP_SCREEN_ON_SET_TIMER] = enabled
         }
     }
 

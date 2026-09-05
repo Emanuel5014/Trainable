@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -58,6 +59,8 @@ fun WorkoutSettingsScreen(
     val inlineExerciseModificationsEnabled by viewModel.inlineExerciseModificationsEnabled.collectAsState()
     val autoStopCardioAtTarget by viewModel.autoStopCardioAtTarget.collectAsState()
     val autoStopTimeWeightAtTarget by viewModel.autoStopTimeWeightAtTarget.collectAsState()
+    val keepScreenOnCardioTimer by viewModel.keepScreenOnCardioTimer.collectAsState()
+    val keepScreenOnSetTimer by viewModel.keepScreenOnSetTimer.collectAsState()
 
     Scaffold(
         containerColor = Surface,
@@ -237,6 +240,78 @@ fun WorkoutSettingsScreen(
                         SettingsSwitch(
                             checked = autoStopTimeWeightAtTarget,
                             onCheckedChange = { viewModel.setAutoStopTimeWeightAtTarget(it) }
+                        )
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Rounded.PhoneAndroid,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.keep_screen_on_cardio_timer),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.keep_screen_on_cardio_timer_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = keepScreenOnCardioTimer,
+                            onCheckedChange = { viewModel.setKeepScreenOnCardioTimer(it) }
+                        )
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Rounded.PhoneAndroid,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.keep_screen_on_set_timer),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.keep_screen_on_set_timer_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = keepScreenOnSetTimer,
+                            onCheckedChange = { viewModel.setKeepScreenOnSetTimer(it) }
                         )
                     }
 

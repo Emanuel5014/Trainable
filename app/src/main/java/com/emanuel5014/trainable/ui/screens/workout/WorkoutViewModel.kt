@@ -73,6 +73,8 @@ data class WorkoutState(
     val setTimerBaseSeconds: Int = 0,
     val autoStopCardioAtTarget: Boolean = false,
     val autoStopTimeWeightAtTarget: Boolean = false,
+    val keepScreenOnCardioTimer: Boolean = true,
+    val keepScreenOnSetTimer: Boolean = true,
     val sessionStartTime: Long? = null
 ) {
     val currentExercise: WorkoutExerciseState?
@@ -262,6 +264,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.autoStopTimeWeightAtTarget.collect { enabled ->
                 _state.update { it.copy(autoStopTimeWeightAtTarget = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.keepScreenOnCardioTimer.collect { enabled ->
+                _state.update { it.copy(keepScreenOnCardioTimer = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.keepScreenOnSetTimer.collect { enabled ->
+                _state.update { it.copy(keepScreenOnSetTimer = enabled) }
             }
         }
         

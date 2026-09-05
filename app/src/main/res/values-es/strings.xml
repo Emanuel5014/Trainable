@@ -233,6 +233,10 @@
     <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
     <string name="auto_stop_time_weight_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo de la serie</string>
+    <string name="keep_screen_on_cardio_timer">Mantener la pantalla encendida (cardio)</string>
+    <string name="keep_screen_on_cardio_timer_desc">Evita que la pantalla se apague mientras el temporizador de cardio está en marcha</string>
+    <string name="keep_screen_on_set_timer">Mantener la pantalla encendida (series temporizadas)</string>
+    <string name="keep_screen_on_set_timer_desc">Evita que la pantalla se apague mientras el temporizador de la serie está en marcha</string>
     <string name="inline_exercise_modifications">Modificaciones en línea</string>
     <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
     <string name="workout_settings">Entrenamiento</string>
