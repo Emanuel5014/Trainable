@@ -1210,7 +1210,7 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
             _state.value.sessionId?.let { sessionId ->
-                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit)
+                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit, totalSeconds = seconds)
             }
         }
         saveTimerToSession(endTime, seconds)
@@ -1252,7 +1252,8 @@ class WorkoutViewModel @Inject constructor(
                     val info = buildNextSetLabel()
                     timerNotificationHelper.startOrUpdateTimerNotification(
                         remaining, sessionId,
-                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit
+                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
+                        totalSeconds = totalSeconds
                     )
                 }
             }
@@ -1288,9 +1289,24 @@ class WorkoutViewModel @Inject constructor(
                 }
                 
                 if (remaining != _state.value.remainingRestSeconds) {
-                    // We no longer call showOrUpdateTimer(remaining) here 
-                    // because the System UI Chronometer handles the countdown.
                     _state.update { it.copy(remainingRestSeconds = remaining) }
+                    if (timerNotificationHelper.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                        _state.value.sessionId?.let { sessionId ->
+                            val info = buildNextSetLabel()
+                            timerNotificationHelper.startOrUpdateTimerNotification(
+                                remainingSeconds = remaining,
+                                sessionId = sessionId,
+                                exerciseName = info?.exerciseName,
+                                nextSetNumber = info?.setNumber,
+                                nextSetWeight = info?.weight,
+                                nextSetReps = info?.reps,
+                                previousReps = info?.previousReps,
+                                weightUnit = info?.weightUnit,
+                                totalSeconds = _state.value.totalRestSeconds,
+                                scheduleAlarm = false
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -1320,7 +1336,8 @@ class WorkoutViewModel @Inject constructor(
                     val info = buildNextSetLabel()
                     timerNotificationHelper.startOrUpdateTimerNotification(
                         newRemaining, sessionId,
-                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit
+                        info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
+                        totalSeconds = newTotal
                     )
                 }
             }
@@ -1341,7 +1358,7 @@ class WorkoutViewModel @Inject constructor(
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(warmupTimerRemaining = seconds, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = seconds) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-            timerNotificationHelper.startOrUpdateWarmupTimerNotification(seconds)
+            timerNotificationHelper.startOrUpdateWarmupTimerNotification(seconds, totalSeconds = seconds)
         }
         saveWarmupTimerToSession(endTime, seconds)
         startWarmupTimerJob()
@@ -1360,7 +1377,7 @@ class WorkoutViewModel @Inject constructor(
             val newTotal = _state.value.warmupTimerTotalSeconds + seconds
             _state.update { it.copy(warmupTimerEndTime = newEnd, warmupTimerRemaining = newRemaining, warmupTimerTotalSeconds = newTotal) }
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateWarmupTimerNotification(newRemaining)
+                timerNotificationHelper.startOrUpdateWarmupTimerNotification(newRemaining, totalSeconds = newTotal)
             }
             saveWarmupTimerToSession(newEnd, newTotal)
         }
@@ -1400,6 +1417,13 @@ class WorkoutViewModel @Inject constructor(
 
                 if (remaining != _state.value.warmupTimerRemaining) {
                     _state.update { it.copy(warmupTimerRemaining = remaining) }
+                    if (timerNotificationHelper.isLiveNotificationSupported() && _state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+                        timerNotificationHelper.startOrUpdateWarmupTimerNotification(
+                            remainingSeconds = remaining,
+                            totalSeconds = _state.value.warmupTimerTotalSeconds,
+                            scheduleAlarm = false
+                        )
+                    }
                 }
             }
         }
@@ -1424,7 +1448,7 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(warmupTimerRemaining = remaining, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = totalSeconds) }
         if (remaining > 0) {
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
-                timerNotificationHelper.startOrUpdateWarmupTimerNotification(remaining)
+                timerNotificationHelper.startOrUpdateWarmupTimerNotification(remaining, totalSeconds = totalSeconds)
             }
             startWarmupTimerJob()
         } else {
