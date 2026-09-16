@@ -64,6 +64,14 @@ class UserPreferencesRepository @Inject constructor(
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
     val KEEP_SCREEN_ON_CARDIO_TIMER = booleanPreferencesKey("keep_screen_on_cardio_timer")
     val KEEP_SCREEN_ON_SET_TIMER = booleanPreferencesKey("keep_screen_on_set_timer")
+    val NEXTCLOUD_BACKUP_ENABLED = booleanPreferencesKey("nextcloud_backup_enabled")
+    val NEXTCLOUD_AUTO_BACKUP_ENABLED = booleanPreferencesKey("nextcloud_auto_backup_enabled")
+    val NEXTCLOUD_SERVER_URL = stringPreferencesKey("nextcloud_server_url")
+    val NEXTCLOUD_USERNAME = stringPreferencesKey("nextcloud_username")
+    val NEXTCLOUD_ENCRYPTED_PASSWORD = stringPreferencesKey("nextcloud_encrypted_password")
+    val NEXTCLOUD_PASSWORD_IV = stringPreferencesKey("nextcloud_password_iv")
+    val NEXTCLOUD_REMOTE_FOLDER = stringPreferencesKey("nextcloud_remote_folder")
+    val NEXTCLOUD_WIFI_ONLY = booleanPreferencesKey("nextcloud_wifi_only")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -556,6 +564,77 @@ class UserPreferencesRepository @Inject constructor(
             } else {
                 preferences.remove(PHYSICAL_CHECK_VALIDATION_IV)
             }
+        }
+    }
+
+    val nextcloudBackupEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_BACKUP_ENABLED] ?: false }
+
+    val nextcloudAutoBackupEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_AUTO_BACKUP_ENABLED] ?: false }
+
+    val nextcloudServerUrl: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_SERVER_URL] }
+
+    val nextcloudUsername: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_USERNAME] }
+
+    val nextcloudEncryptedPassword: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_ENCRYPTED_PASSWORD] }
+
+    val nextcloudPasswordIv: Flow<String?> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_PASSWORD_IV] }
+
+    val nextcloudRemoteFolder: Flow<String> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_REMOTE_FOLDER] ?: "Trainable/Backups" }
+
+    val nextcloudWifiOnly: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_WIFI_ONLY] ?: false }
+
+    suspend fun setNextcloudConfig(
+        serverUrl: String,
+        username: String,
+        encryptedPasswordHex: String,
+        passwordIvHex: String,
+        remoteFolder: String
+    ) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_SERVER_URL] = serverUrl
+            preferences[NEXTCLOUD_USERNAME] = username
+            preferences[NEXTCLOUD_ENCRYPTED_PASSWORD] = encryptedPasswordHex
+            preferences[NEXTCLOUD_PASSWORD_IV] = passwordIvHex
+            preferences[NEXTCLOUD_REMOTE_FOLDER] = remoteFolder
+            preferences[NEXTCLOUD_BACKUP_ENABLED] = true
+        }
+    }
+
+    suspend fun clearNextcloudConfig() {
+        dataStore.edit { preferences ->
+            preferences.remove(NEXTCLOUD_SERVER_URL)
+            preferences.remove(NEXTCLOUD_USERNAME)
+            preferences.remove(NEXTCLOUD_ENCRYPTED_PASSWORD)
+            preferences.remove(NEXTCLOUD_PASSWORD_IV)
+            preferences.remove(NEXTCLOUD_REMOTE_FOLDER)
+            preferences[NEXTCLOUD_BACKUP_ENABLED] = false
+            preferences[NEXTCLOUD_AUTO_BACKUP_ENABLED] = false
+        }
+    }
+
+    suspend fun setNextcloudAutoBackupEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_AUTO_BACKUP_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setNextcloudWifiOnly(wifiOnly: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_WIFI_ONLY] = wifiOnly
+        }
+    }
+
+    suspend fun setNextcloudRemoteFolder(folder: String) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_REMOTE_FOLDER] = folder
         }
     }
 }

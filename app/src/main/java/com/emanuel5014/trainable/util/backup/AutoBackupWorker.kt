@@ -7,6 +7,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -25,31 +26,54 @@ class AutoBackupWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
     private val backupManager: BackupManager,
+    private val nextcloudBackupManager: NextcloudBackupManager,
     private val userPrefsRepository: UserPreferencesRepository
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
         return try {
-            val folderUriString = userPrefsRepository.autoBackupFolderUri.first()
+            val localEnabled = userPrefsRepository.autoBackupEnabled.first()
+            val nextcloudAutoEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.first()
             val maxBackups = userPrefsRepository.autoBackupMaxCount.first()
             val includeImages = userPrefsRepository.autoBackupIncludeImages.first()
 
-            if (folderUriString.isNullOrEmpty()) {
-                // Should not happen if UI enforces it, but handle it gracefully
-                return Result.failure()
+            var anySuccess = false
+            var anyFailure = false
+
+            if (localEnabled) {
+                val folderUriString = userPrefsRepository.autoBackupFolderUri.first()
+                if (!folderUriString.isNullOrEmpty()) {
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
+                    val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
+                    val uri = Uri.parse(folderUriString)
+                    val success = backupManager.exportDatabaseToFolder(uri, fileName, includeImages)
+                    if (success) {
+                        cleanupOldBackupsSaf(uri, maxBackups)
+                        anySuccess = true
+                    } else {
+                        anyFailure = true
+                    }
+                }
             }
 
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
-            val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
+            if (nextcloudAutoEnabled) {
+                val ncResult = nextcloudBackupManager.performAutoBackup(maxBackups, includeImages)
+                if (ncResult.isSuccess) {
+                    anySuccess = true
+                } else {
+                    anyFailure = true
+                }
+            }
 
-            val uri = Uri.parse(folderUriString)
-            val success = backupManager.exportDatabaseToFolder(uri, fileName, includeImages)
-            if (success) {
-                cleanupOldBackupsSaf(uri, maxBackups)
+            if (!localEnabled && !nextcloudAutoEnabled) {
+                return Result.success()
+            }
+
+            if (anyFailure && !anySuccess) {
+                Result.retry()
             } else {
-                return Result.retry()
+                Result.success()
             }
-            Result.success()
         } catch (e: Exception) {
             e.printStackTrace()
             Result.retry()
@@ -120,17 +144,24 @@ class AutoBackupWorker @AssistedInject constructor(
         fun schedule(
             context: Context, 
             frequencyDays: Int = 1, 
+            requiresNetwork: Boolean = false,
+            wifiOnly: Boolean = false,
             policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.UPDATE
         ) {
-            val constraints = Constraints.Builder()
+            val constraintsBuilder = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
-                .build()
+
+            if (requiresNetwork) {
+                constraintsBuilder.setRequiredNetworkType(
+                    if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
+                )
+            }
 
             // Removed initial delay to allow immediate feedback when enabled
             val backupRequest = PeriodicWorkRequestBuilder<AutoBackupWorker>(
                 frequencyDays.toLong(), TimeUnit.DAYS
             )
-                .setConstraints(constraints)
+                .setConstraints(constraintsBuilder.build())
                 .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(

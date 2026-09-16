@@ -487,6 +487,42 @@
     <string name="preparing_share">Preparazione scheda allenamento...</string>
     <string name="edit_backup">MODIFICA</string>
 
+    <!-- Nextcloud Backup -->
+    <string name="nextcloud_title">Backup Cloud Nextcloud</string>
+    <string name="nextcloud_backup_desc">Salva e ripristina i tuoi dati sul tuo server Nextcloud privato.</string>
+    <string name="nextcloud_configured_as">Connesso come %1$s su %2$s</string>
+    <string name="nextcloud_not_configured">Non configurato</string>
+    <string name="nextcloud_configure">Configura Nextcloud</string>
+    <string name="nextcloud_setup_title">Configurazione Nextcloud</string>
+    <string name="nextcloud_server_url">URL Server</string>
+    <string name="nextcloud_server_url_hint">https://cloud.example.com</string>
+    <string name="nextcloud_username">Nome utente</string>
+    <string name="nextcloud_password_token">Password / Password Applicazione</string>
+    <string name="nextcloud_password_hint">Inserisci Password Applicazione</string>
+    <string name="nextcloud_remote_folder">Cartella Remota</string>
+    <string name="nextcloud_remote_folder_hint">es. Trainable/Backups</string>
+    <string name="nextcloud_app_password_notice">Consiglio: Per maggiore sicurezza, usa una Password Applicazione generata in Impostazioni Nextcloud &gt; Sicurezza &gt; Dispositivi e sessioni.</string>
+    <string name="nextcloud_test_connection">Testa Connessione</string>
+    <string name="nextcloud_testing_connection">Verifica connessione in corso...</string>
+    <string name="nextcloud_connection_successful">Connessione riuscita!</string>
+    <string name="nextcloud_connection_failed">Connessione fallita: %s</string>
+    <string name="nextcloud_backup_now">Backup su Nextcloud</string>
+    <string name="nextcloud_restore">Ripristina da Nextcloud</string>
+    <string name="nextcloud_disconnect">Disconnetti</string>
+    <string name="nextcloud_disconnect_confirm">Sei sicuro di voler disconnettere Nextcloud? I backup già presenti sul server non verranno eliminati.</string>
+    <string name="nextcloud_auto_backup">Auto-backup Nextcloud</string>
+    <string name="nextcloud_auto_backup_desc">Carica automaticamente i backup schedulati sul tuo Nextcloud</string>
+    <string name="nextcloud_wifi_only">Solo Wi-Fi</string>
+    <string name="nextcloud_wifi_only_desc">Carica i backup su Nextcloud solo se connesso a una rete Wi-Fi</string>
+    <string name="nextcloud_backups_list_title">Backup su Nextcloud</string>
+    <string name="nextcloud_no_backups_found">Nessun backup trovato nella cartella remota</string>
+    <string name="nextcloud_restore_confirm_title">Ripristinare Database?</string>
+    <string name="nextcloud_restore_confirm_desc">Il ripristino di questo backup sovrascriverà tutti i dati attuali dell\'app e riavvierà Trainable. Continuare?</string>
+    <string name="nextcloud_restoring">Ripristino da Nextcloud in corso...</string>
+    <string name="nextcloud_backup_success">Backup caricato su Nextcloud con successo!</string>
+    <string name="nextcloud_backup_failed">Backup Nextcloud fallito: %s</string>
+    <string name="nextcloud_uploading">Caricamento backup su Nextcloud in corso...</string>
+
     <!-- Reset -->
     <string name="reset_app_button">RESET APP</string>
     <string name="reset_app_dialog">Ripristina App?</string>

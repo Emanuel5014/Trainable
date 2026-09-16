@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.screens.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.text.format.Formatter
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -27,27 +30,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Scale
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.TableChart
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -63,6 +77,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -118,6 +136,19 @@ fun SettingsScreen(
     val autoBackupFolderUri by viewModel.autoBackupFolderUri.collectAsState()
     val autoBackupMaxCount by viewModel.autoBackupMaxCount.collectAsState()
     val autoBackupIncludeImages by viewModel.autoBackupIncludeImages.collectAsState()
+    val nextcloudBackupEnabled by viewModel.nextcloudBackupEnabled.collectAsState()
+    val nextcloudAutoBackupEnabled by viewModel.nextcloudAutoBackupEnabled.collectAsState()
+    val nextcloudServerUrl by viewModel.nextcloudServerUrl.collectAsState()
+    val nextcloudUsername by viewModel.nextcloudUsername.collectAsState()
+    val nextcloudRemoteFolder by viewModel.nextcloudRemoteFolder.collectAsState()
+    val nextcloudWifiOnly by viewModel.nextcloudWifiOnly.collectAsState()
+    val nextcloudTestState by viewModel.nextcloudTestState.collectAsState()
+    val isTestingConnection by viewModel.isTestingConnection.collectAsState()
+    val isNextcloudBackingUp by viewModel.isNextcloudBackingUp.collectAsState()
+    val isNextcloudRestoring by viewModel.isNextcloudRestoring.collectAsState()
+    val nextcloudBackups by viewModel.nextcloudBackups.collectAsState()
+    val isLoadingNextcloudBackups by viewModel.isLoadingNextcloudBackups.collectAsState()
+
     val backupStatus by viewModel.backupStatus.collectAsState()
     val floatingNavBar by viewModel.floatingNavBar.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
@@ -136,6 +167,12 @@ fun SettingsScreen(
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
+
+    var showNextcloudSetupDialog by remember { mutableStateOf(false) }
+    var showNextcloudRestoreDialog by remember { mutableStateOf(false) }
+    var showNextcloudDisconnectDialog by remember { mutableStateOf(false) }
+    var selectedBackupForRestore by remember { mutableStateOf<NextcloudBackupFile?>(null) }
+    var showNextcloudIncludeImagesDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
@@ -335,6 +372,419 @@ fun SettingsScreen(
                         includeImagesChoice = false
                         showIncludeImagesDialog = false
                         exportLauncher.launch("Trainable_Backup.zip")
+                    }
+                ) {
+                    Text(stringResource(R.string.no), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (showNextcloudSetupDialog) {
+        var tempServerUrl by remember { mutableStateOf(nextcloudServerUrl ?: "") }
+        var tempUsername by remember { mutableStateOf(nextcloudUsername ?: "") }
+        var tempPassword by remember { mutableStateOf("") }
+        var tempRemoteFolder by remember { mutableStateOf(nextcloudRemoteFolder) }
+        var showPassword by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = {
+                showNextcloudSetupDialog = false
+                viewModel.clearNextcloudTestState()
+            },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.nextcloud_setup_title),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.nextcloud_backup_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = OnSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = tempServerUrl,
+                        onValueChange = { tempServerUrl = it },
+                        label = { Text(stringResource(R.string.nextcloud_server_url)) },
+                        placeholder = { Text(stringResource(R.string.nextcloud_server_url_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = OnSurfaceVariant
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = tempUsername,
+                        onValueChange = { tempUsername = it },
+                        label = { Text(stringResource(R.string.nextcloud_username)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = OnSurfaceVariant
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = tempPassword,
+                        onValueChange = { tempPassword = it },
+                        label = { Text(stringResource(R.string.nextcloud_password_token)) },
+                        placeholder = { Text(stringResource(R.string.nextcloud_password_hint)) },
+                        singleLine = true,
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    if (showPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                    contentDescription = null,
+                                    tint = OnSurfaceVariant
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = OnSurfaceVariant
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = tempRemoteFolder,
+                        onValueChange = { tempRemoteFolder = it },
+                        label = { Text(stringResource(R.string.nextcloud_remote_folder)) },
+                        placeholder = { Text(stringResource(R.string.nextcloud_remote_folder_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Primary,
+                            unfocusedBorderColor = OnSurfaceVariant
+                        )
+                    )
+
+                    GymCard(containerColor = SurfaceContainerHighest) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.Info,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                stringResource(R.string.nextcloud_app_password_notice),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                    }
+
+                    GymButton(
+                        onClick = {
+                            viewModel.testNextcloudConnection(tempServerUrl, tempUsername, tempPassword)
+                        },
+                        enabled = !isTestingConnection && tempServerUrl.isNotBlank() && tempUsername.isNotBlank() && tempPassword.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = SurfaceContainerHighest,
+                        contentColor = Primary
+                    ) {
+                        if (isTestingConnection) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.nextcloud_testing_connection))
+                        } else {
+                            Icon(Icons.Rounded.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.nextcloud_test_connection), fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    when (val result = nextcloudTestState) {
+                        is NextcloudConnectionResult.Success -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary)
+                                Text(
+                                    stringResource(R.string.nextcloud_connection_successful),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        is NextcloudConnectionResult.Error -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Rounded.ErrorOutline, contentDescription = null, tint = Error)
+                                Text(
+                                    stringResource(R.string.nextcloud_connection_failed, result.message),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Error
+                                )
+                            }
+                        }
+                        null -> {}
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = tempServerUrl.isNotBlank() && tempUsername.isNotBlank() && tempPassword.isNotBlank(),
+                    onClick = {
+                        viewModel.saveNextcloudConfig(
+                            serverUrl = tempServerUrl,
+                            username = tempUsername,
+                            passwordOrToken = tempPassword,
+                            remoteFolder = tempRemoteFolder
+                        )
+                        viewModel.clearNextcloudTestState()
+                        showNextcloudSetupDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearNextcloudTestState()
+                        showNextcloudSetupDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (showNextcloudRestoreDialog) {
+        AlertDialog(
+            onDismissRequest = { showNextcloudRestoreDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.nextcloud_backups_list_title),
+                        fontWeight = FontWeight.ExtraBold,
+                        color = OnSurface
+                    )
+                    IconButton(onClick = { viewModel.loadNextcloudBackups() }) {
+                        Icon(Icons.Rounded.Refresh, contentDescription = "Refresh", tint = Primary)
+                    }
+                }
+            },
+            text = {
+                if (isLoadingNextcloudBackups) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Primary)
+                    }
+                } else if (nextcloudBackups.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            stringResource(R.string.nextcloud_no_backups_found),
+                            color = OnSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(nextcloudBackups) { backup ->
+                            GymCard(
+                                containerColor = SurfaceContainerHighest,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            backup.name,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OnSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            Formatter.formatFileSize(context, backup.sizeBytes),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                    GymButton(
+                                        onClick = {
+                                            selectedBackupForRestore = backup
+                                        },
+                                        containerColor = Primary.copy(alpha = 0.15f),
+                                        contentColor = Primary
+                                    ) {
+                                        Text(stringResource(R.string.import_database), style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showNextcloudRestoreDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (selectedBackupForRestore != null) {
+        AlertDialog(
+            onDismissRequest = { selectedBackupForRestore = null },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.nextcloud_restore_confirm_title),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.nextcloud_restore_confirm_desc),
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val file = selectedBackupForRestore!!
+                        selectedBackupForRestore = null
+                        showNextcloudRestoreDialog = false
+                        viewModel.restoreFromNextcloud(file) {
+                            Toast.makeText(context, context.getString(R.string.database_imported), Toast.LENGTH_LONG).show()
+                            val intent = Intent(context, MainActivity::class.java)
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                            context.startActivity(intent)
+                            exitProcess(0)
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.import_database), color = Primary, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedBackupForRestore = null }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (showNextcloudDisconnectDialog) {
+        AlertDialog(
+            onDismissRequest = { showNextcloudDisconnectDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.nextcloud_disconnect),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.nextcloud_disconnect_confirm),
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.disconnectNextcloud()
+                        showNextcloudDisconnectDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.nextcloud_disconnect).uppercase(), color = Error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNextcloudDisconnectDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
+    if (showNextcloudIncludeImagesDialog) {
+        AlertDialog(
+            onDismissRequest = { showNextcloudIncludeImagesDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = {
+                Text(
+                    stringResource(R.string.include_images),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.include_images_description),
+                    color = OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNextcloudIncludeImagesDialog = false
+                        viewModel.backupToNextcloud(includeImages = true)
+                    }
+                ) {
+                    Text(stringResource(R.string.yes), color = Primary)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showNextcloudIncludeImagesDialog = false
+                        viewModel.backupToNextcloud(includeImages = false)
                     }
                 ) {
                     Text(stringResource(R.string.no), color = OnSurfaceVariant)
@@ -953,6 +1403,163 @@ fun SettingsScreen(
                                     }
                                     TextButton(onClick = { showBackupSetupDialog = true }) {
                                         Text(stringResource(R.string.edit_backup).uppercase(), color = Primary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    GymCard(containerColor = SurfaceContainerHigh) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(
+                                        if (nextcloudBackupEnabled) Icons.Rounded.CloudDone else Icons.Rounded.Cloud,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Text(
+                                            stringResource(R.string.nextcloud_title),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        Text(
+                                            if (nextcloudBackupEnabled && nextcloudServerUrl != null && nextcloudUsername != null) {
+                                                val host = try { Uri.parse(nextcloudServerUrl).host ?: nextcloudServerUrl } catch (e: Exception) { nextcloudServerUrl }
+                                                stringResource(R.string.nextcloud_configured_as, nextcloudUsername!!, host!!)
+                                            } else {
+                                                stringResource(R.string.nextcloud_not_configured)
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                if (!nextcloudBackupEnabled) {
+                                    GymButton(
+                                        onClick = { showNextcloudSetupDialog = true },
+                                        containerColor = Primary.copy(alpha = 0.15f),
+                                        contentColor = Primary
+                                    ) {
+                                        Text(stringResource(R.string.nextcloud_configure), style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+                            }
+
+                            if (nextcloudBackupEnabled) {
+                                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            stringResource(R.string.nextcloud_auto_backup),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OnSurface
+                                        )
+                                        Text(
+                                            stringResource(R.string.nextcloud_auto_backup_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                    SettingsSwitch(
+                                        checked = nextcloudAutoBackupEnabled,
+                                        onCheckedChange = { viewModel.setNextcloudAutoBackupEnabled(it) }
+                                    )
+                                }
+
+                                if (nextcloudAutoBackupEnabled) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                stringResource(R.string.nextcloud_wifi_only),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = OnSurface
+                                            )
+                                            Text(
+                                                stringResource(R.string.nextcloud_wifi_only_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = OnSurfaceVariant
+                                            )
+                                        }
+                                        SettingsSwitch(
+                                            checked = nextcloudWifiOnly,
+                                            onCheckedChange = { viewModel.setNextcloudWifiOnly(it) }
+                                        )
+                                    }
+                                }
+
+                                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    GymButton(
+                                        onClick = { showNextcloudIncludeImagesDialog = true },
+                                        enabled = !isNextcloudBackingUp,
+                                        modifier = Modifier.weight(1f),
+                                        containerColor = SurfaceContainerHighest,
+                                        contentColor = OnSurface
+                                    ) {
+                                        if (isNextcloudBackingUp) {
+                                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Primary)
+                                        } else {
+                                            Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = Primary)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(stringResource(R.string.nextcloud_backup_now), style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
+
+                                    GymButton(
+                                        onClick = {
+                                            viewModel.loadNextcloudBackups()
+                                            showNextcloudRestoreDialog = true
+                                        },
+                                        enabled = !isNextcloudRestoring,
+                                        modifier = Modifier.weight(1f),
+                                        containerColor = SurfaceContainerHighest,
+                                        contentColor = OnSurface
+                                    ) {
+                                        if (isNextcloudRestoring) {
+                                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Primary)
+                                        } else {
+                                            Icon(Icons.Rounded.CloudDownload, contentDescription = null, tint = Primary)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(stringResource(R.string.nextcloud_restore), style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextButton(onClick = { showNextcloudSetupDialog = true }) {
+                                        Text(stringResource(R.string.edit_backup).uppercase(), color = Primary)
+                                    }
+                                    TextButton(onClick = { showNextcloudDisconnectDialog = true }) {
+                                        Text(stringResource(R.string.nextcloud_disconnect).uppercase(), color = Error)
                                     }
                                 }
                             }

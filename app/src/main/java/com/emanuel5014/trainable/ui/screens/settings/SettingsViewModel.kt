@@ -35,8 +35,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConfig
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudWebDavClient
+import com.emanuel5014.trainable.util.NextcloudCryptoManager
+import com.emanuel5014.trainable.util.backup.NextcloudBackupManager
 import javax.inject.Inject
 
 @HiltViewModel
@@ -47,6 +54,9 @@ class SettingsViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
+    private val nextcloudBackupManager: NextcloudBackupManager,
+    private val nextcloudWebDavClient: NextcloudWebDavClient,
+    private val nextcloudCryptoManager: NextcloudCryptoManager,
     private val updateManager: UpdateManager,
     private val webServerManager: WebServerManager,
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
@@ -103,6 +113,60 @@ class SettingsViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
+
+    val nextcloudBackupEnabled = userPrefsRepository.nextcloudBackupEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val nextcloudAutoBackupEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val nextcloudServerUrl = userPrefsRepository.nextcloudServerUrl.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    val nextcloudUsername = userPrefsRepository.nextcloudUsername.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    val nextcloudRemoteFolder = userPrefsRepository.nextcloudRemoteFolder.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "Trainable/Backups"
+    )
+
+    val nextcloudWifiOnly = userPrefsRepository.nextcloudWifiOnly.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    private val _nextcloudTestState = MutableStateFlow<NextcloudConnectionResult?>(null)
+    val nextcloudTestState: StateFlow<NextcloudConnectionResult?> = _nextcloudTestState.asStateFlow()
+
+    private val _isTestingConnection = MutableStateFlow(false)
+    val isTestingConnection: StateFlow<Boolean> = _isTestingConnection.asStateFlow()
+
+    private val _isNextcloudBackingUp = MutableStateFlow(false)
+    val isNextcloudBackingUp: StateFlow<Boolean> = _isNextcloudBackingUp.asStateFlow()
+
+    private val _isNextcloudRestoring = MutableStateFlow(false)
+    val isNextcloudRestoring: StateFlow<Boolean> = _isNextcloudRestoring.asStateFlow()
+
+    private val _nextcloudBackups = MutableStateFlow<List<NextcloudBackupFile>>(emptyList())
+    val nextcloudBackups: StateFlow<List<NextcloudBackupFile>> = _nextcloudBackups.asStateFlow()
+
+    private val _isLoadingNextcloudBackups = MutableStateFlow(false)
+    val isLoadingNextcloudBackups: StateFlow<Boolean> = _isLoadingNextcloudBackups.asStateFlow()
 
     val userLanguage = localeManager.currentLanguage.stateIn(
         scope = viewModelScope,
@@ -337,24 +401,147 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setAutoBackupEnabled(enabled: Boolean) {
+    private fun rescheduleAutoBackup() {
         viewModelScope.launch {
-            userPrefsRepository.setAutoBackupEnabled(enabled)
-            if (enabled) {
-                AutoBackupWorker.schedule(context, autoBackupFrequency.value)
+            val localEnabled = userPrefsRepository.autoBackupEnabled.first()
+            val nextcloudEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.first()
+            val frequency = userPrefsRepository.autoBackupFrequency.first()
+            val wifiOnly = userPrefsRepository.nextcloudWifiOnly.first()
+
+            if (localEnabled || nextcloudEnabled) {
+                AutoBackupWorker.schedule(
+                    context = context,
+                    frequencyDays = frequency,
+                    requiresNetwork = nextcloudEnabled,
+                    wifiOnly = wifiOnly
+                )
             } else {
                 AutoBackupWorker.cancel(context)
             }
         }
     }
 
+    fun setAutoBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAutoBackupEnabled(enabled)
+            rescheduleAutoBackup()
+        }
+    }
+
     fun setAutoBackupFrequency(frequency: Int) {
         viewModelScope.launch {
             userPrefsRepository.setAutoBackupFrequency(frequency)
-            if (autoBackupEnabled.value) {
-                AutoBackupWorker.schedule(context, frequency)
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun setNextcloudAutoBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudAutoBackupEnabled(enabled)
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun setNextcloudWifiOnly(wifiOnly: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudWifiOnly(wifiOnly)
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun clearNextcloudTestState() {
+        _nextcloudTestState.value = null
+    }
+
+    fun testNextcloudConnection(serverUrl: String, username: String, passwordOrToken: String) {
+        viewModelScope.launch {
+            _isTestingConnection.value = true
+            _nextcloudTestState.value = null
+            val config = NextcloudConfig(
+                serverUrl = serverUrl.trim(),
+                username = username.trim(),
+                passwordOrToken = passwordOrToken.trim()
+            )
+            val result = nextcloudWebDavClient.testConnection(config)
+            _nextcloudTestState.value = result
+            _isTestingConnection.value = false
+        }
+    }
+
+    fun saveNextcloudConfig(
+        serverUrl: String,
+        username: String,
+        passwordOrToken: String,
+        remoteFolder: String
+    ) {
+        viewModelScope.launch {
+            val (encrypted, iv) = nextcloudCryptoManager.encryptPassword(passwordOrToken.trim())
+            userPrefsRepository.setNextcloudConfig(
+                serverUrl = serverUrl.trim(),
+                username = username.trim(),
+                encryptedPasswordHex = toHex(encrypted),
+                passwordIvHex = toHex(iv),
+                remoteFolder = remoteFolder.trim().ifEmpty { "Trainable/Backups" }
+            )
+            _backupStatus.value = "Nextcloud configured successfully"
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun disconnectNextcloud() {
+        viewModelScope.launch {
+            userPrefsRepository.clearNextcloudConfig()
+            _nextcloudBackups.value = emptyList()
+            _backupStatus.value = "Nextcloud disconnected"
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun backupToNextcloud(includeImages: Boolean = false) {
+        viewModelScope.launch {
+            _isNextcloudBackingUp.value = true
+            _backupStatus.value = "Uploading backup to Nextcloud..."
+            val result = nextcloudBackupManager.backupNow(includeImages)
+            _isNextcloudBackingUp.value = false
+            if (result.isSuccess) {
+                _backupStatus.value = "Backup uploaded to Nextcloud successfully!"
+                loadNextcloudBackups()
+            } else {
+                _backupStatus.value = "Nextcloud backup failed: ${result.exceptionOrNull()?.localizedMessage}"
             }
         }
+    }
+
+    fun loadNextcloudBackups() {
+        viewModelScope.launch {
+            _isLoadingNextcloudBackups.value = true
+            val result = nextcloudBackupManager.listBackups()
+            _isLoadingNextcloudBackups.value = false
+            if (result.isSuccess) {
+                _nextcloudBackups.value = result.getOrDefault(emptyList())
+            } else {
+                _backupStatus.value = "Failed to load backups: ${result.exceptionOrNull()?.localizedMessage}"
+            }
+        }
+    }
+
+    fun restoreFromNextcloud(backupFile: NextcloudBackupFile, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _isNextcloudRestoring.value = true
+            _backupStatus.value = "Restoring from Nextcloud..."
+            val result = nextcloudBackupManager.restoreBackup(backupFile)
+            _isNextcloudRestoring.value = false
+            if (result.isSuccess) {
+                _backupStatus.value = "Restore complete. Restarting..."
+                onSuccess()
+            } else {
+                _backupStatus.value = "Restore failed: ${result.exceptionOrNull()?.localizedMessage}"
+            }
+        }
+    }
+
+    private fun toHex(byteArray: ByteArray): String {
+        return byteArray.joinToString("") { "%02x".format(it) }
     }
 
     fun setAutoBackupFolder(uri: Uri) {
