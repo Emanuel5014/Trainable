@@ -487,6 +487,51 @@
     <string name="preparing_share">Préparation de ta carte d\'entraînement...</string>
     <string name="edit_backup">MODIFIER</string>
 
+    <!-- Nextcloud Backup -->
+    <string name="nextcloud_title">Sauvegarde Cloud Nextcloud</string>
+    <string name="nextcloud_backup_desc">Sauvegarde et restaure tes données sur ton serveur privé Nextcloud.</string>
+    <string name="nextcloud_configured_as">Connecté en tant que %1$s sur %2$s</string>
+    <string name="nextcloud_not_configured">Non configuré</string>
+    <string name="nextcloud_configure">Configurer Nextcloud</string>
+    <string name="nextcloud_setup_title">Configuration Nextcloud</string>
+    <string name="nextcloud_server_url">URL du serveur</string>
+    <string name="nextcloud_server_url_hint">https://cloud.example.com</string>
+    <string name="nextcloud_username">Nom d\'utilisateur</string>
+    <string name="nextcloud_password_token">Mot de passe d\'application / Mot de passe</string>
+    <string name="nextcloud_password_hint">Entre le mot de passe d\'application</string>
+    <string name="nextcloud_remote_folder">Dossier distant</string>
+    <string name="nextcloud_remote_folder_hint">ex. Trainable/Backups</string>
+    <string name="nextcloud_app_password_notice">Conseil : Pour plus de sécurité, utilise un mot de passe d\'application généré dans Paramètres Nextcloud &gt; Sécurité &gt; Appareils et sessions.</string>
+    <string name="nextcloud_test_connection">Tester la connexion</string>
+    <string name="nextcloud_testing_connection">Vérification de la connexion en cours...</string>
+    <string name="nextcloud_connection_successful">Connexion réussie !</string>
+    <string name="nextcloud_connection_failed">Échec de la connexion : %s</string>
+    <string name="nextcloud_backup_now">Sauvegarder vers Nextcloud</string>
+    <string name="nextcloud_restore">Restaurer depuis Nextcloud</string>
+    <string name="nextcloud_disconnect">Déconnecter</string>
+    <string name="nextcloud_disconnect_confirm">Es-tu sûr de vouloir déconnecter Nextcloud ? Les sauvegardes présentes sur le serveur ne seront pas supprimées.</string>
+    <string name="nextcloud_auto_backup">Auto-sauvegarde Nextcloud</string>
+    <string name="nextcloud_auto_backup_desc">Envoie automatiquement les sauvegardes planifiées vers ton Nextcloud</string>
+    <string name="nextcloud_auto_backup_setup">Configuration de l\'auto-sauvegarde Nextcloud</string>
+    <string name="nextcloud_auto_backup_summary">Tous les %1$d jours • Dernières %2$d • %3$s</string>
+    <string name="restore_action">Restaurer</string>
+    <string name="backup_type_auto">Auto</string>
+    <string name="backup_type_manual">Manuelle</string>
+    <string name="with_images">Avec images</string>
+    <string name="without_images">Sans images</string>
+    <string name="nextcloud_wifi_only">Wi-Fi uniquement</string>
+    <string name="nextcloud_wifi_only_desc">Envoyer les sauvegardes vers Nextcloud uniquement en connexion Wi-Fi</string>
+    <string name="nextcloud_backups_list_title">Sauvegardes sur Nextcloud</string>
+    <string name="nextcloud_restore_picker_desc">Sélectionne une sauvegarde à restaurer</string>
+    <string name="nextcloud_loading_backups">Chargement des sauvegardes depuis Nextcloud...</string>
+    <string name="nextcloud_no_backups_found">Aucune sauvegarde trouvée dans le dossier distant</string>
+    <string name="nextcloud_restore_confirm_title">Restaurer la base de données ?</string>
+    <string name="nextcloud_restore_confirm_desc">Restaurer cette sauvegarde écrasera toutes les données actuelles de l\'app et redémarrera Trainable. Continuer ?</string>
+    <string name="nextcloud_restoring">Restauration depuis Nextcloud en cours...</string>
+    <string name="nextcloud_backup_success">Sauvegarde envoyée vers Nextcloud avec succès !</string>
+    <string name="nextcloud_backup_failed">Échec de la sauvegarde Nextcloud : %s</string>
+    <string name="nextcloud_uploading">Envoi de la sauvegarde vers Nextcloud...</string>
+
     <!-- Reset -->
     <string name="reset_app_button">RÉINITIALISER L\'APP</string>
     <string name="reset_app_dialog">Réinitialiser l\'App ?</string>
