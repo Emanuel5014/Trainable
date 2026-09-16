@@ -34,8 +34,10 @@ class AutoBackupWorker @AssistedInject constructor(
         return try {
             val localEnabled = userPrefsRepository.autoBackupEnabled.first()
             val nextcloudAutoEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.first()
-            val maxBackups = userPrefsRepository.autoBackupMaxCount.first()
-            val includeImages = userPrefsRepository.autoBackupIncludeImages.first()
+            val localMaxBackups = userPrefsRepository.autoBackupMaxCount.first()
+            val localIncludeImages = userPrefsRepository.autoBackupIncludeImages.first()
+            val ncMaxBackups = userPrefsRepository.nextcloudAutoBackupMaxCount.first()
+            val ncIncludeImages = userPrefsRepository.nextcloudAutoBackupIncludeImages.first()
 
             var anySuccess = false
             var anyFailure = false
@@ -46,9 +48,9 @@ class AutoBackupWorker @AssistedInject constructor(
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault())
                     val fileName = "Trainable_AutoBackup_${dateFormat.format(Date())}.zip"
                     val uri = Uri.parse(folderUriString)
-                    val success = backupManager.exportDatabaseToFolder(uri, fileName, includeImages)
+                    val success = backupManager.exportDatabaseToFolder(uri, fileName, localIncludeImages)
                     if (success) {
-                        cleanupOldBackupsSaf(uri, maxBackups)
+                        cleanupOldBackupsSaf(uri, localMaxBackups)
                         anySuccess = true
                     } else {
                         anyFailure = true
@@ -57,7 +59,7 @@ class AutoBackupWorker @AssistedInject constructor(
             }
 
             if (nextcloudAutoEnabled) {
-                val ncResult = nextcloudBackupManager.performAutoBackup(maxBackups, includeImages)
+                val ncResult = nextcloudBackupManager.performAutoBackup(ncMaxBackups, ncIncludeImages)
                 if (ncResult.isSuccess) {
                     anySuccess = true
                 } else {

@@ -150,6 +150,24 @@ class SettingsViewModel @Inject constructor(
         initialValue = false
     )
 
+    val nextcloudAutoBackupFrequency = userPrefsRepository.nextcloudAutoBackupFrequency.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 1
+    )
+
+    val nextcloudAutoBackupMaxCount = userPrefsRepository.nextcloudAutoBackupMaxCount.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 5
+    )
+
+    val nextcloudAutoBackupIncludeImages = userPrefsRepository.nextcloudAutoBackupIncludeImages.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     private val _nextcloudTestState = MutableStateFlow<NextcloudConnectionResult?>(null)
     val nextcloudTestState: StateFlow<NextcloudConnectionResult?> = _nextcloudTestState.asStateFlow()
 
@@ -405,10 +423,16 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val localEnabled = userPrefsRepository.autoBackupEnabled.first()
             val nextcloudEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.first()
-            val frequency = userPrefsRepository.autoBackupFrequency.first()
+            val localFrequency = userPrefsRepository.autoBackupFrequency.first()
+            val ncFrequency = userPrefsRepository.nextcloudAutoBackupFrequency.first()
             val wifiOnly = userPrefsRepository.nextcloudWifiOnly.first()
 
             if (localEnabled || nextcloudEnabled) {
+                val frequency = when {
+                    localEnabled && nextcloudEnabled -> minOf(localFrequency, ncFrequency)
+                    localEnabled -> localFrequency
+                    else -> ncFrequency
+                }
                 AutoBackupWorker.schedule(
                     context = context,
                     frequencyDays = frequency,
@@ -445,6 +469,41 @@ class SettingsViewModel @Inject constructor(
     fun setNextcloudWifiOnly(wifiOnly: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setNextcloudWifiOnly(wifiOnly)
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun setNextcloudAutoBackupFrequency(frequency: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudAutoBackupFrequency(frequency)
+            rescheduleAutoBackup()
+        }
+    }
+
+    fun setNextcloudAutoBackupMaxCount(maxCount: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudAutoBackupMaxCount(maxCount)
+        }
+    }
+
+    fun setNextcloudAutoBackupIncludeImages(includeImages: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudAutoBackupIncludeImages(includeImages)
+        }
+    }
+
+    fun setNextcloudAutoBackupSettings(
+        frequency: Int,
+        maxCount: Int,
+        includeImages: Boolean,
+        wifiOnly: Boolean
+    ) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudAutoBackupFrequency(frequency)
+            userPrefsRepository.setNextcloudAutoBackupMaxCount(maxCount)
+            userPrefsRepository.setNextcloudAutoBackupIncludeImages(includeImages)
+            userPrefsRepository.setNextcloudWifiOnly(wifiOnly)
+            userPrefsRepository.setNextcloudAutoBackupEnabled(true)
             rescheduleAutoBackup()
         }
     }

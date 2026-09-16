@@ -72,6 +72,9 @@ class UserPreferencesRepository @Inject constructor(
     val NEXTCLOUD_PASSWORD_IV = stringPreferencesKey("nextcloud_password_iv")
     val NEXTCLOUD_REMOTE_FOLDER = stringPreferencesKey("nextcloud_remote_folder")
     val NEXTCLOUD_WIFI_ONLY = booleanPreferencesKey("nextcloud_wifi_only")
+    val NEXTCLOUD_AUTO_BACKUP_FREQUENCY = intPreferencesKey("nextcloud_auto_backup_frequency")
+    val NEXTCLOUD_AUTO_BACKUP_MAX_COUNT = intPreferencesKey("nextcloud_auto_backup_max_count")
+    val NEXTCLOUD_AUTO_BACKUP_INCLUDE_IMAGES = booleanPreferencesKey("nextcloud_auto_backup_include_images")
     }
 
     val hasCompletedOnboarding: Flow<Boolean> = dataStore.data
@@ -591,6 +594,15 @@ class UserPreferencesRepository @Inject constructor(
     val nextcloudWifiOnly: Flow<Boolean> = dataStore.data
         .map { preferences -> preferences[NEXTCLOUD_WIFI_ONLY] ?: false }
 
+    val nextcloudAutoBackupFrequency: Flow<Int> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_AUTO_BACKUP_FREQUENCY] ?: 1 }
+
+    val nextcloudAutoBackupMaxCount: Flow<Int> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_AUTO_BACKUP_MAX_COUNT] ?: 5 }
+
+    val nextcloudAutoBackupIncludeImages: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[NEXTCLOUD_AUTO_BACKUP_INCLUDE_IMAGES] ?: false }
+
     suspend fun setNextcloudConfig(
         serverUrl: String,
         username: String,
@@ -615,6 +627,10 @@ class UserPreferencesRepository @Inject constructor(
             preferences.remove(NEXTCLOUD_ENCRYPTED_PASSWORD)
             preferences.remove(NEXTCLOUD_PASSWORD_IV)
             preferences.remove(NEXTCLOUD_REMOTE_FOLDER)
+            preferences.remove(NEXTCLOUD_AUTO_BACKUP_FREQUENCY)
+            preferences.remove(NEXTCLOUD_AUTO_BACKUP_MAX_COUNT)
+            preferences.remove(NEXTCLOUD_AUTO_BACKUP_INCLUDE_IMAGES)
+            preferences.remove(NEXTCLOUD_WIFI_ONLY)
             preferences[NEXTCLOUD_BACKUP_ENABLED] = false
             preferences[NEXTCLOUD_AUTO_BACKUP_ENABLED] = false
         }
@@ -635,6 +651,24 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setNextcloudRemoteFolder(folder: String) {
         dataStore.edit { preferences ->
             preferences[NEXTCLOUD_REMOTE_FOLDER] = folder
+        }
+    }
+
+    suspend fun setNextcloudAutoBackupFrequency(frequency: Int) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_AUTO_BACKUP_FREQUENCY] = frequency
+        }
+    }
+
+    suspend fun setNextcloudAutoBackupMaxCount(maxCount: Int) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_AUTO_BACKUP_MAX_COUNT] = maxCount
+        }
+    }
+
+    suspend fun setNextcloudAutoBackupIncludeImages(includeImages: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_AUTO_BACKUP_INCLUDE_IMAGES] = includeImages
         }
     }
 }
