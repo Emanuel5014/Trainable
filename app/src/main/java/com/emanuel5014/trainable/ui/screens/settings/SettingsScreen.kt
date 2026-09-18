@@ -32,8 +32,6 @@ import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Cloud
-import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.CloudUpload
@@ -1845,7 +1843,7 @@ fun SettingsScreen(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                     Icon(
-                                        if (nextcloudBackupEnabled) Icons.Rounded.CloudDone else Icons.Rounded.Cloud,
+                                        painter = painterResource(R.drawable.ic_nextcloud),
                                         contentDescription = null,
                                         tint = Primary,
                                         modifier = Modifier.size(24.dp)
@@ -1871,15 +1869,20 @@ fun SettingsScreen(
                                     }
                                 }
 
-                                if (!nextcloudBackupEnabled) {
-                                    GymButton(
-                                        onClick = { showNextcloudSetupDialog = true },
-                                        containerColor = Primary.copy(alpha = 0.15f),
-                                        contentColor = Primary
-                                    ) {
-                                        Text(stringResource(R.string.nextcloud_configure), style = MaterialTheme.typography.labelMedium)
+                                SettingsSwitch(
+                                    checked = nextcloudBackupEnabled,
+                                    onCheckedChange = {
+                                        if (it) {
+                                            if (nextcloudServerUrl != null && nextcloudUsername != null) {
+                                                viewModel.setNextcloudBackupEnabled(true)
+                                            } else {
+                                                showNextcloudSetupDialog = true
+                                            }
+                                        } else {
+                                            viewModel.setNextcloudBackupEnabled(false)
+                                        }
                                     }
-                                }
+                                )
                             }
 
                             if (nextcloudBackupEnabled) {

@@ -28,6 +28,8 @@ class UpdateManager @Inject constructor(
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun checkForUpdates(): GitHubRelease? = withContext(Dispatchers.IO) {
+        // No update prompt in debug builds, only in release
+        if (BuildConfig.DEBUG) return@withContext null
         try {
             val request = Request.Builder()
                 .url(GITHUB_API_URL)

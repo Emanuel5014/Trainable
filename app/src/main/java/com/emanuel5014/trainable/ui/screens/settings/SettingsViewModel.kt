@@ -459,6 +459,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setNextcloudBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setNextcloudBackupEnabled(enabled)
+            rescheduleAutoBackup()
+        }
+    }
+
     fun setNextcloudAutoBackupEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setNextcloudAutoBackupEnabled(enabled)

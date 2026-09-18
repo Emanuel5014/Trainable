@@ -636,6 +636,12 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    suspend fun setNextcloudBackupEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[NEXTCLOUD_BACKUP_ENABLED] = enabled
+        }
+    }
+
     suspend fun setNextcloudAutoBackupEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[NEXTCLOUD_AUTO_BACKUP_ENABLED] = enabled
