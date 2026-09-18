@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -247,7 +248,7 @@ class BackupManager @Inject constructor(
         }
     }
 
-    suspend fun importDatabaseZip(inputUri: Uri): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun importDatabaseFromStream(inputStream: InputStream): Boolean = withContext(Dispatchers.IO) {
         try {
             GymDatabase.closeDatabase()
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
@@ -264,9 +265,8 @@ class BackupManager @Inject constructor(
             val routineImagesDir = File(context.filesDir, "routine_images")
             if (!routineImagesDir.exists()) routineImagesDir.mkdirs()
 
-            context.contentResolver.openInputStream(inputUri)?.use { fis ->
-                ZipInputStream(fis).use { zis ->
-                    var entry = zis.nextEntry
+            ZipInputStream(inputStream).use { zis ->
+                var entry = zis.nextEntry
                     while (entry != null) {
                         when {
                             entry.name == "settings.json" -> {
@@ -404,11 +404,44 @@ class BackupManager @Inject constructor(
                         entry = zis.nextEntry
                     }
                 }
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
             }
-            true
+        }
+
+    suspend fun importDatabaseZip(inputUri: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openInputStream(inputUri)?.use { fis ->
+                importDatabaseFromStream(fis)
+            } ?: false
         } catch (e: Exception) {
             e.printStackTrace()
             false
+        }
+    }
+
+    suspend fun importDatabaseFromFile(inputFile: File): Boolean = withContext(Dispatchers.IO) {
+        try {
+            FileInputStream(inputFile).use { fis ->
+                importDatabaseFromStream(fis)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun exportDatabaseToTempFile(fileName: String, includeImages: Boolean = false): File? = withContext(Dispatchers.IO) {
+        try {
+            val tempFile = File(context.cacheDir, fileName)
+            if (tempFile.exists()) tempFile.delete()
+            val success = exportDatabaseToFile(tempFile, includeImages)
+            if (success) tempFile else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 

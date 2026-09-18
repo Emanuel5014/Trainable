@@ -103,6 +103,18 @@ class TimerNotificationHelper @Inject constructor(
         }
     }
 
+    fun canPostPromotedNotifications(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            notificationManager.canPostPromotedNotifications()
+        } else {
+            false
+        }
+    }
+
+    fun isLiveNotificationSupported(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
+    }
+
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = context.getString(R.string.rest_timer)
@@ -172,7 +184,9 @@ class TimerNotificationHelper @Inject constructor(
         nextSetWeight: Float? = null,
         nextSetReps: Int? = null,
         previousReps: Int? = null,
-        weightUnit: String? = null
+        weightUnit: String? = null,
+        totalSeconds: Int? = null,
+        scheduleAlarm: Boolean = true
     ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         
@@ -208,6 +222,10 @@ class TimerNotificationHelper @Inject constructor(
         } else null
         lastNextSetLabel = nextSetLabel
 
+        val total = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
+        val elapsed = (total - remainingSeconds).coerceAtLeast(0)
+        val progress = if (total > 0) ((elapsed.toFloat() / total.toFloat()) * 100).toInt().coerceIn(0, 100) else 0
+
         val notification = NotificationCompat.Builder(context, runningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.rest_timer))
@@ -222,27 +240,39 @@ class TimerNotificationHelper @Inject constructor(
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
             .setContentText(nextSetLabel)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(nextSetLabel))
             .addAction(0, "+30s", addPendingIntent)
             .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                    val progressStyle = NotificationCompat.ProgressStyle()
+                        .setStyledByProgress(true)
+                        .setProgress(progress)
+                    setStyle(progressStyle)
+                    setRequestPromotedOngoing(true)
+                } else {
+                    setStyle(NotificationCompat.BigTextStyle().bigText(nextSetLabel))
+                }
+            }
             .build()
 
         notificationManager.notify(notificationId, notification)
         cancelCustomVibration()
 
-        // Schedule Alarm for exact finish
-        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
-            action = TimerNotificationReceiver.ACTION_TIMER_FINISHED
-            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+        if (scheduleAlarm) {
+            // Schedule Alarm for exact finish
+            val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply { 
+                action = TimerNotificationReceiver.ACTION_TIMER_FINISHED
+                putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+            }
+            val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            
+            AlarmManagerCompat.setExactAndAllowWhileIdle(
+                alarmManager,
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                finishPendingIntent
+            )
         }
-        val finishPendingIntent = PendingIntent.getBroadcast(context, 4, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        
-        AlarmManagerCompat.setExactAndAllowWhileIdle(
-            alarmManager,
-            AlarmManager.RTC_WAKEUP,
-            triggerTime,
-            finishPendingIntent
-        )
     }
 
     fun showRestFinished() {
@@ -318,7 +348,11 @@ class TimerNotificationHelper @Inject constructor(
 
     // ---- Warmup / General Timer ----
 
-    fun startOrUpdateWarmupTimerNotification(remainingSeconds: Int) {
+    fun startOrUpdateWarmupTimerNotification(
+        remainingSeconds: Int,
+        totalSeconds: Int? = null,
+        scheduleAlarm: Boolean = true
+    ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
 
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -343,9 +377,16 @@ class TimerNotificationHelper @Inject constructor(
             context, 12, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val warmupDesc = context.getString(R.string.warmup_timer_description)
+
+        val total = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
+        val elapsed = (total - remainingSeconds).coerceAtLeast(0)
+        val progress = if (total > 0) ((elapsed.toFloat() / total.toFloat()) * 100).toInt().coerceIn(0, 100) else 0
+
         val notification = NotificationCompat.Builder(context, warmupRunningChannelId)
             .setSmallIcon(R.drawable.ic_app_logo)
             .setContentTitle(context.getString(R.string.warmup_timer))
+            .setContentText(warmupDesc)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
@@ -358,19 +399,32 @@ class TimerNotificationHelper @Inject constructor(
             .setWhen(triggerTime)
             .addAction(0, "+30s", addPendingIntent)
             .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                    val progressStyle = NotificationCompat.ProgressStyle()
+                        .setStyledByProgress(true)
+                        .setProgress(progress)
+                    setStyle(progressStyle)
+                    setRequestPromotedOngoing(true)
+                } else {
+                    setStyle(NotificationCompat.BigTextStyle().bigText(warmupDesc))
+                }
+            }
             .build()
 
         notificationManager.notify(warmupNotificationId, notification)
 
-        val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
-            action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED
+        if (scheduleAlarm) {
+            val finishIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+                action = TimerNotificationReceiver.ACTION_WARMUP_FINISHED
+            }
+            val finishPendingIntent = PendingIntent.getBroadcast(
+                context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            AlarmManagerCompat.setExactAndAllowWhileIdle(
+                alarmManager, AlarmManager.RTC_WAKEUP, triggerTime, finishPendingIntent
+            )
         }
-        val finishPendingIntent = PendingIntent.getBroadcast(
-            context, 14, finishIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        AlarmManagerCompat.setExactAndAllowWhileIdle(
-            alarmManager, AlarmManager.RTC_WAKEUP, triggerTime, finishPendingIntent
-        )
     }
 
     fun showWarmupTimerFinished() {

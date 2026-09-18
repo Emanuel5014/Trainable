@@ -487,6 +487,51 @@
     <string name="preparing_share">Preparing your workout card...</string>
     <string name="edit_backup">EDIT</string>
 
+    <!-- Nextcloud Backup -->
+    <string name="nextcloud_title">Nextcloud Cloud Backup</string>
+    <string name="nextcloud_backup_desc">Backup and restore your data to your private Nextcloud server.</string>
+    <string name="nextcloud_configured_as">Connected as %1$s on %2$s</string>
+    <string name="nextcloud_not_configured">Not configured</string>
+    <string name="nextcloud_configure">Configure Nextcloud</string>
+    <string name="nextcloud_setup_title">Nextcloud Setup</string>
+    <string name="nextcloud_server_url">Server URL</string>
+    <string name="nextcloud_server_url_hint">https://cloud.example.com</string>
+    <string name="nextcloud_username">Username</string>
+    <string name="nextcloud_password_token">App Password / Password</string>
+    <string name="nextcloud_password_hint">Enter App Password or Password</string>
+    <string name="nextcloud_remote_folder">Remote Folder</string>
+    <string name="nextcloud_remote_folder_hint">e.g. Trainable/Backups</string>
+    <string name="nextcloud_app_password_notice">Tip: For security, use an App Password generated in Nextcloud Settings &gt; Security &gt; Devices &amp; sessions.</string>
+    <string name="nextcloud_test_connection">Test Connection</string>
+    <string name="nextcloud_testing_connection">Testing connection...</string>
+    <string name="nextcloud_connection_successful">Connection successful!</string>
+    <string name="nextcloud_connection_failed">Connection failed: %s</string>
+    <string name="nextcloud_backup_now">Backup to Nextcloud</string>
+    <string name="nextcloud_restore">Restore from Nextcloud</string>
+    <string name="nextcloud_disconnect">Disconnect</string>
+    <string name="nextcloud_disconnect_confirm">Are you sure you want to disconnect Nextcloud? Backups on the server will not be deleted.</string>
+    <string name="nextcloud_auto_backup">Nextcloud Auto-Backup</string>
+    <string name="nextcloud_auto_backup_desc">Automatically upload scheduled backups to your Nextcloud</string>
+    <string name="nextcloud_auto_backup_setup">Nextcloud Auto-Backup Setup</string>
+    <string name="nextcloud_auto_backup_summary">Every %1$d day(s) • Last %2$d • %3$s</string>
+    <string name="restore_action">Restore</string>
+    <string name="backup_type_auto">Auto</string>
+    <string name="backup_type_manual">Manual</string>
+    <string name="with_images">With images</string>
+    <string name="without_images">Without images</string>
+    <string name="nextcloud_wifi_only">Wi-Fi Only</string>
+    <string name="nextcloud_wifi_only_desc">Upload backups to Nextcloud only when connected to Wi-Fi</string>
+    <string name="nextcloud_backups_list_title">Nextcloud Backups</string>
+    <string name="nextcloud_restore_picker_desc">Select a backup to restore on this device</string>
+    <string name="nextcloud_loading_backups">Loading backups from Nextcloud...</string>
+    <string name="nextcloud_no_backups_found">No backups found in remote folder</string>
+    <string name="nextcloud_restore_confirm_title">Restore Database?</string>
+    <string name="nextcloud_restore_confirm_desc">Restoring this backup will overwrite your current app data and restart Trainable. Continue?</string>
+    <string name="nextcloud_restoring">Restoring from Nextcloud...</string>
+    <string name="nextcloud_backup_success">Backup uploaded to Nextcloud successfully!</string>
+    <string name="nextcloud_backup_failed">Nextcloud backup failed: %s</string>
+    <string name="nextcloud_uploading">Uploading backup to Nextcloud...</string>
+
     <!-- Reset -->
     <string name="reset_app_button">RESET APP</string>
     <string name="reset_app_dialog">Reset App?</string>

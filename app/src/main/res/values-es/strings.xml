@@ -487,6 +487,51 @@
     <string name="preparing_share">Preparando tarjeta de entrenamiento...</string>
     <string name="edit_backup">EDITAR</string>
 
+    <!-- Nextcloud Backup -->
+    <string name="nextcloud_title">Copia de seguridad en Nextcloud</string>
+    <string name="nextcloud_backup_desc">Guarda y restaura tus datos en tu servidor privado de Nextcloud.</string>
+    <string name="nextcloud_configured_as">Conectado como %1$s en %2$s</string>
+    <string name="nextcloud_not_configured">Sin configurar</string>
+    <string name="nextcloud_configure">Configurar Nextcloud</string>
+    <string name="nextcloud_setup_title">Configuración de Nextcloud</string>
+    <string name="nextcloud_server_url">URL del servidor</string>
+    <string name="nextcloud_server_url_hint">https://cloud.example.com</string>
+    <string name="nextcloud_username">Nombre de usuario</string>
+    <string name="nextcloud_password_token">Contraseña de aplicación / Contraseña</string>
+    <string name="nextcloud_password_hint">Introduce la contraseña de aplicación</string>
+    <string name="nextcloud_remote_folder">Carpeta remota</string>
+    <string name="nextcloud_remote_folder_hint">p. ej. Trainable/Backups</string>
+    <string name="nextcloud_app_password_notice">Consejo: Por seguridad, usa una contraseña de aplicación generada en Ajustes de Nextcloud &gt; Seguridad &gt; Dispositivos y sesiones.</string>
+    <string name="nextcloud_test_connection">Probar conexión</string>
+    <string name="nextcloud_testing_connection">Verificando conexión...</string>
+    <string name="nextcloud_connection_successful">¡Conexión exitosa!</string>
+    <string name="nextcloud_connection_failed">Conexión fallida: %s</string>
+    <string name="nextcloud_backup_now">Guardar en Nextcloud</string>
+    <string name="nextcloud_restore">Restaurar desde Nextcloud</string>
+    <string name="nextcloud_disconnect">Desconectar</string>
+    <string name="nextcloud_disconnect_confirm">¿Seguro que quieres desconectar Nextcloud? Las copias del servidor no se eliminarán.</string>
+    <string name="nextcloud_auto_backup">Auto-backup en Nextcloud</string>
+    <string name="nextcloud_auto_backup_desc">Sube automáticamente las copias programadas a tu Nextcloud</string>
+    <string name="nextcloud_auto_backup_setup">Configuración del auto-backup en Nextcloud</string>
+    <string name="nextcloud_auto_backup_summary">Cada %1$d días • Últimas %2$d • %3$s</string>
+    <string name="restore_action">Restaurar</string>
+    <string name="backup_type_auto">Auto</string>
+    <string name="backup_type_manual">Manual</string>
+    <string name="with_images">Con imágenes</string>
+    <string name="without_images">Sin imágenes</string>
+    <string name="nextcloud_wifi_only">Solo Wi-Fi</string>
+    <string name="nextcloud_wifi_only_desc">Subir copias a Nextcloud solo cuando estés conectado a una red Wi-Fi</string>
+    <string name="nextcloud_backups_list_title">Copias en Nextcloud</string>
+    <string name="nextcloud_restore_picker_desc">Selecciona una copia para restaurar</string>
+    <string name="nextcloud_loading_backups">Cargando copias desde Nextcloud...</string>
+    <string name="nextcloud_no_backups_found">No se encontraron copias en la carpeta remota</string>
+    <string name="nextcloud_restore_confirm_title">¿Restaurar base de datos?</string>
+    <string name="nextcloud_restore_confirm_desc">Restaurar esta copia sobrescribirá todos los datos actuales de la app y reiniciará Trainable. ¿Continuar?</string>
+    <string name="nextcloud_restoring">Restaurando desde Nextcloud...</string>
+    <string name="nextcloud_backup_success">¡Copia subida a Nextcloud con éxito!</string>
+    <string name="nextcloud_backup_failed">Fallo la copia en Nextcloud: %s</string>
+    <string name="nextcloud_uploading">Subiendo copia a Nextcloud...</string>
+
     <!-- Reset -->
     <string name="reset_app_button">REINICIAR APP</string>
     <string name="reset_app_dialog">¿Reiniciar App?</string>

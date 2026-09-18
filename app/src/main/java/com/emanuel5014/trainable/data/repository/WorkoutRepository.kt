@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.data.repository
 
 import android.content.Context
+import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
@@ -546,28 +547,58 @@ class WorkoutRepository @Inject constructor(
     suspend fun getSwapsForSessions(sessionIds: List<Int>) =
         workoutDao.getSwapsForSessions(sessionIds)
 
-    suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg"): String {
+    suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg", languageCode: String = "en"): String {
         val sessions = workoutDao.getAllSessionsWithDetails().first()
 
         val sb = StringBuilder()
-        sb.appendLine("Date,Session ID,Plan,Exercise,Category,Set,Weight ($weightUnit),Reps,Note")
+        sb.appendLine(csvHeader(languageCode, weightUnit))
+
+        fun escapeCsv(value: String): String {
+            var v = value.replace("\r", " ").replace("\n", " ")
+            if (v.contains(",") || v.contains("\"")) {
+                v = "\"" + v.replace("\"", "\"\"") + "\""
+            }
+            return v
+        }
 
         sessions.forEach { session ->
             val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(session.session.timestamp))
-            val planName = session.plan.nome.replace(",", ";")
+            val planName = escapeCsv(session.plan.nome)
 
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
                 val exercise = setWithExercise.exercise
-                val exerciseName = exercise.nome
-                val category = exercise.categoria
-                val note = setLog.note?.replace(",", ";")?.replace("\n", " ") ?: ""
+                val exerciseName = escapeCsv(ExerciseTranslations.translate(exercise.nome, languageCode))
+                val category = escapeCsv(ExerciseTranslations.translateCategory(exercise.categoria, languageCode))
+                val note = escapeCsv(setLog.note ?: "")
                 val weight = WeightUnitConverter.convertDisplay(setLog.pesoSollevato, weightUnit)
 
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,${setLog.numeroSerie},$weight,${setLog.repsEffettive},$note")
+                val isTimeAndWeight = setLog.durataSecondi != null
+                val type = if (isTimeAndWeight) "time_and_weight" else "strength"
+                val reps = if (isTimeAndWeight) "" else setLog.repsEffettive.toString()
+                val duration = setLog.durataSecondi?.toString() ?: ""
+
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note")
+            }
+
+            session.cardio.forEach { cardio ->
+                val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
+                val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},")
             }
         }
 
         return sb.toString()
+    }
+
+    private fun csvHeader(languageCode: String, weightUnit: String): String {
+        return when (languageCode) {
+            "it" -> "Data,ID Sessione,Scheda,Esercizio,Categoria,Tipo,Serie,Peso ($weightUnit),Ripetizioni,Durata (s),Distanza (km),Nota"
+            "es" -> "Fecha,ID Sesión,Plan,Ejercicio,Categoría,Tipo,Serie,Peso ($weightUnit),Repeticiones,Duración (s),Distancia (km),Nota"
+            "fr" -> "Date,ID Séance,Programme,Exercice,Catégorie,Type,Série,Poids ($weightUnit),Répétitions,Durée (s),Distance (km),Note"
+            "de" -> "Datum,Sitzungs-ID,Plan,Übung,Kategorie,Typ,Satz,Gewicht ($weightUnit),Wiederholungen,Dauer (s),Distanz (km),Notiz"
+            "pt" -> "Data,ID Sessão,Plano,Exercício,Categoria,Tipo,Série,Peso ($weightUnit),Repetições,Duração (s),Distância (km),Nota"
+            else -> "Date,Session ID,Plan,Exercise,Category,Type,Set,Weight ($weightUnit),Reps,Duration (s),Distance (km),Note"
+        }
     }
 }
