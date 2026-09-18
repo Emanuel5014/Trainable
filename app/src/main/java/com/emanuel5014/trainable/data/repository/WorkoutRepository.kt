@@ -550,21 +550,39 @@ class WorkoutRepository @Inject constructor(
         val sessions = workoutDao.getAllSessionsWithDetails().first()
 
         val sb = StringBuilder()
-        sb.appendLine("Date,Session ID,Plan,Exercise,Category,Set,Weight ($weightUnit),Reps,Note")
+        sb.appendLine("Date,Session ID,Plan,Exercise,Category,Type,Set,Weight ($weightUnit),Reps,Duration (s),Distance (km),Note")
+
+        fun escapeCsv(value: String): String {
+            var v = value.replace("\r", " ").replace("\n", " ")
+            if (v.contains(",") || v.contains("\"")) {
+                v = "\"" + v.replace("\"", "\"\"") + "\""
+            }
+            return v
+        }
 
         sessions.forEach { session ->
             val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(session.session.timestamp))
-            val planName = session.plan.nome.replace(",", ";")
+            val planName = escapeCsv(session.plan.nome)
 
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
                 val exercise = setWithExercise.exercise
-                val exerciseName = exercise.nome
-                val category = exercise.categoria
-                val note = setLog.note?.replace(",", ";")?.replace("\n", " ") ?: ""
+                val exerciseName = escapeCsv(exercise.nome)
+                val category = escapeCsv(exercise.categoria)
+                val note = escapeCsv(setLog.note ?: "")
                 val weight = WeightUnitConverter.convertDisplay(setLog.pesoSollevato, weightUnit)
 
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,${setLog.numeroSerie},$weight,${setLog.repsEffettive},$note")
+                val isTimeAndWeight = setLog.durataSecondi != null
+                val type = if (isTimeAndWeight) "time_and_weight" else "strength"
+                val reps = if (isTimeAndWeight) "" else setLog.repsEffettive.toString()
+                val duration = setLog.durataSecondi?.toString() ?: ""
+
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note")
+            }
+
+            session.cardio.forEach { cardio ->
+                val exerciseName = escapeCsv(cardio.categoria)
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,Cardio,cardio,,,,${cardio.durataSecondi},${cardio.distanza},")
             }
         }
 
