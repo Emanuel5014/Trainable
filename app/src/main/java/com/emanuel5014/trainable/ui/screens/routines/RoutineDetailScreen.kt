@@ -79,6 +79,23 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Percent
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
+import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
+import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
+import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.ui.components.NumberStepper
+import com.emanuel5014.trainable.ui.components.OneRepMaxCard
+import com.emanuel5014.trainable.ui.components.OneRepMaxDialog
+import com.emanuel5014.trainable.ui.components.PrescriptionBlocksEditor
+import com.emanuel5014.trainable.ui.components.PrescriptionPill
+import com.emanuel5014.trainable.ui.components.WeekSelector
+import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -191,7 +208,7 @@ private fun getSupersetRange(index: Int, list: List<PlanExerciseWithDetails>): I
     return start..end
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun RoutineDetailScreen(
     onNavigateBack: () -> Unit,
@@ -280,6 +297,28 @@ fun RoutineDetailScreen(
     var restText by remember { mutableStateOf("120") }
     var cardioDurationText by remember { mutableStateOf("20") }
 
+    // Advanced (%1RM / blocks) prescription drafts
+    val weightUnit by viewModel.weightUnit.collectAsState()
+    val roundingIncrement by viewModel.loadRoundingIncrement.collectAsState()
+    val oneRepMaxes by viewModel.oneRepMaxes.collectAsState()
+    val estimatedOneRepMaxes by viewModel.estimatedOneRepMaxes.collectAsState()
+    val prescriptionLabels = rememberPrescriptionLabels(weightUnit)
+    val advancedWeeks = remember { mutableStateMapOf<Int, List<PrescriptionBlock>>() }
+    val draftExcludedWeeks = remember { mutableStateListOf<Int>() }
+    var draftWeeksCount by remember { mutableIntStateOf(1) }
+    var editorWeek by remember { mutableIntStateOf(1) }
+    var showOneRepMaxDialog by remember { mutableStateOf(false) }
+    var pendingOneRepMaxKg by remember { mutableStateOf<Float?>(null) }
+    val planWeeksCount = uiState.planDetails?.plan?.weeksCount ?: 1
+    val planCurrentWeek = uiState.planDetails?.plan?.currentWeek ?: 1
+    var viewWeek by remember { mutableIntStateOf(1) }
+    LaunchedEffect(uiState.planDetails?.plan?.id, planCurrentWeek) { viewWeek = planCurrentWeek }
+    LaunchedEffect(planWeeksCount) { if (viewWeek > planWeeksCount) viewWeek = planWeeksCount }
+
+    var routineWeeksCount by remember { mutableIntStateOf(1) }
+    var routineCurrentWeek by remember { mutableIntStateOf(1) }
+    var routineAutoAdvance by remember { mutableStateOf(true) }
+
     // Local state for dragging to ensure smoothness
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
     var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
@@ -325,6 +364,10 @@ fun RoutineDetailScreen(
         repsText = "8"
         timeTargetSecondsText = "45"
         cardioDurationText = "20"
+        advancedWeeks.clear()
+        draftExcludedWeeks.clear()
+        draftWeeksCount = planWeeksCount
+        editorWeek = viewWeek
         // Inherit rest from the last exercise in the list, default to 120 if empty
         restText = localExercises.lastOrNull()?.planExercise?.recuperoTarget?.toString() ?: "120"
         showExercisePicker = true
@@ -333,7 +376,13 @@ fun RoutineDetailScreen(
     fun openEditSheet(item: PlanExerciseWithDetails) {
         editingExerciseId = item.planExercise.id
         selectedExerciseId = item.exercise.id
-        selectedExerciseType = item.planExercise.exerciseType
+        selectedExerciseType = if (item.isAdvanced) "advanced" else item.planExercise.exerciseType
+        advancedWeeks.clear()
+        advancedWeeks.putAll(item.blocksByWeek)
+        draftExcludedWeeks.clear()
+        draftExcludedWeeks.addAll(item.excludedWeeks)
+        draftWeeksCount = maxOf(planWeeksCount, item.blocksByWeek.keys.maxOrNull() ?: 1)
+        editorWeek = viewWeek.coerceAtMost(draftWeeksCount)
         setsText = item.planExercise.serieTarget.toString()
         repsText = item.planExercise.repsTarget
         timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString() ?: item.planExercise.repsTarget.filter { it.isDigit() }.ifBlank { "45" }
@@ -348,6 +397,9 @@ fun RoutineDetailScreen(
             routineNote = plan.note.orEmpty()
             startDate = plan.dataInizio
             endDate = plan.dataFine
+            routineWeeksCount = plan.weeksCount
+            routineCurrentWeek = plan.currentWeek
+            routineAutoAdvance = plan.autoAdvanceWeek
             selectedDays.clear()
             plan.giorniSettimana?.split(",")?.forEach {
                 it.toIntOrNull()?.let { value -> selectedDays.add(DayOfWeek.of(value)) }
@@ -651,6 +703,49 @@ fun RoutineDetailScreen(
                                 }
                             }
                         }
+
+                        if (details.plan.weeksCount > 1) {
+                            Column(
+                                modifier = Modifier.padding(top = 14.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.week_of, viewWeek, details.plan.weeksCount).uppercase(),
+                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                        color = Primary,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    if (viewWeek == details.plan.currentWeek) {
+                                        PrescriptionPill(
+                                            text = stringResource(R.string.current_badge),
+                                            containerColor = Primary.copy(alpha = 0.12f),
+                                            contentColor = Primary
+                                        )
+                                    } else {
+                                        TextButton(onClick = { viewModel.setCurrentWeek(viewWeek) }) {
+                                            Text(
+                                                text = stringResource(R.string.set_as_current_week).uppercase(),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Primary
+                                            )
+                                        }
+                                    }
+                                }
+                                WeekSelector(
+                                    weeksCount = details.plan.weeksCount,
+                                    selectedWeek = viewWeek,
+                                    onWeekSelected = { viewWeek = it },
+                                    currentWeek = details.plan.currentWeek,
+                                    hapticEnabled = hapticEnabled
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -931,7 +1026,11 @@ fun RoutineDetailScreen(
                                     onClick = { openEditSheet(item) },
                                     modifier = Modifier.weight(1f),
                                     languageCode = languageCode,
-                                    isSuperset = isSuperset
+                                    isSuperset = isSuperset,
+                                    week = viewWeek,
+                                    weeksCount = planWeeksCount,
+                                    labels = prescriptionLabels,
+                                    oneRepMaxKg = oneRepMaxes[item.exercise.id]
                                 )
                             }
                         }
@@ -1054,7 +1153,7 @@ fun RoutineDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     } else {
-                        Row(
+                        androidx.compose.foundation.layout.FlowRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -1092,9 +1191,141 @@ fun RoutineDetailScreen(
                                     selectedLeadingIconColor = Primary
                                 )
                             )
+                            FilterChip(
+                                selected = selectedExerciseType == "advanced",
+                                onClick = {
+                                    if (selectedExerciseType != "advanced" && advancedWeeks.values.none { it.isNotEmpty() }) {
+                                        // Carry the simple sets × reps over as a first free block
+                                        val sets = setsText.trim().toIntOrNull() ?: 3
+                                        val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                        advancedWeeks[editorWeek] = listOf(PrescriptionBlock(sets = sets, reps = reps))
+                                    }
+                                    selectedExerciseType = "advanced"
+                                },
+                                label = { Text(stringResource(R.string.exercise_type_advanced)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Percent,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                    selectedLabelColor = Primary,
+                                    selectedLeadingIconColor = Primary
+                                )
+                            )
                         }
 
-                        if (selectedExerciseType == "time_and_weight") {
+                        if (selectedExerciseType == "advanced") {
+                            val exId = selectedExerciseId
+                            OneRepMaxCard(
+                                oneRepMaxKg = exId?.let { oneRepMaxes[it] },
+                                estimatedKg = exId?.let { estimatedOneRepMaxes[it] },
+                                weightUnit = weightUnit,
+                                onEdit = {
+                                    pendingOneRepMaxKg = null
+                                    showOneRepMaxDialog = true
+                                },
+                                onUseEstimate = { kg ->
+                                    exId?.let {
+                                        viewModel.saveOneRepMax(it, LoadCalculator.roundTo(kg, LoadCalculator.DEFAULT_INCREMENT_KG), OneRepMaxEntity.SOURCE_ESTIMATED)
+                                    }
+                                }
+                            )
+
+                            WeekSelector(
+                                weeksCount = draftWeeksCount,
+                                selectedWeek = editorWeek,
+                                onWeekSelected = { editorWeek = it },
+                                currentWeek = if (draftWeeksCount > 1) planCurrentWeek else null,
+                                dimmedWeeks = draftExcludedWeeks.toSet(),
+                                hapticEnabled = hapticEnabled,
+                                onAddWeek = if (draftWeeksCount < RoutineDetailViewModel.MAX_WEEKS) {
+                                    {
+                                        draftWeeksCount += 1
+                                        editorWeek = draftWeeksCount
+                                    }
+                                } else null
+                            )
+
+                            val isWeekExcluded = editorWeek in draftExcludedWeeks
+                            if (draftWeeksCount > 1) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (editorWeek > 1 && !isWeekExcluded) {
+                                        TextButton(onClick = {
+                                            val source = PrescriptionResolver.resolve(advancedWeeks.toMap(), emptySet(), editorWeek - 1)
+                                            if (source is ResolvedPrescription.Blocks) advancedWeeks[editorWeek] = source.blocks
+                                        }) {
+                                            Text(
+                                                text = stringResource(R.string.copy_previous_week, editorWeek - 1).uppercase(),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Primary
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Text(
+                                        text = stringResource(R.string.skip_this_week),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = OnSurfaceVariant,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Switch(
+                                        checked = isWeekExcluded,
+                                        onCheckedChange = { skip ->
+                                            if (skip) draftExcludedWeeks.add(editorWeek) else draftExcludedWeeks.remove(editorWeek)
+                                        },
+                                        colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                                    )
+                                }
+                            }
+
+                            if (isWeekExcluded) {
+                                PrescriptionPill(text = stringResource(R.string.not_in_week, editorWeek))
+                            } else {
+                                val weekBlocks = advancedWeeks[editorWeek].orEmpty()
+                                if (weekBlocks.isEmpty()) {
+                                    val fallback = PrescriptionResolver.resolve(advancedWeeks.toMap(), emptySet(), editorWeek)
+                                    if (fallback is ResolvedPrescription.Blocks && fallback.isFallback) {
+                                        Text(
+                                            text = stringResource(R.string.week_repeats, fallback.sourceWeek),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                }
+                                key(editorWeek) {
+                                    PrescriptionBlocksEditor(
+                                        blocks = weekBlocks,
+                                        onBlocksChange = { advancedWeeks[editorWeek] = it },
+                                        onApplyNotation = { program ->
+                                            if (program.weeks.keys == setOf(1)) {
+                                                advancedWeeks[editorWeek] = program.weeks.getValue(1)
+                                            } else {
+                                                program.weeks.forEach { (week, blocks) -> advancedWeeks[week] = blocks }
+                                                draftWeeksCount = maxOf(draftWeeksCount, program.weeks.keys.max())
+                                            }
+                                            val parsedMax = program.oneRepMaxKg
+                                            if (parsedMax != null && exId != null && oneRepMaxes[exId] != parsedMax) {
+                                                pendingOneRepMaxKg = parsedMax
+                                                showOneRepMaxDialog = true
+                                            }
+                                        },
+                                        oneRepMaxKg = exId?.let { oneRepMaxes[it] },
+                                        weightUnit = weightUnit,
+                                        roundingIncrement = roundingIncrement,
+                                        hapticEnabled = hapticEnabled
+                                    )
+                                }
+                            }
+                        } else if (selectedExerciseType == "time_and_weight") {
                             GymInputField(
                                 value = setsText,
                                 onValueChange = { setsText = it },
@@ -1146,6 +1377,34 @@ fun RoutineDetailScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+
+                        if (planWeeksCount > 1 && selectedExerciseType != "advanced") {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = stringResource(R.string.skip_this_week),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = OnSurfaceVariant,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Row(
+                                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    (1..planWeeksCount).forEach { week ->
+                                        val skipped = week in draftExcludedWeeks
+                                        FilterChip(
+                                            selected = skipped,
+                                            onClick = { if (skipped) draftExcludedWeeks.remove(week) else draftExcludedWeeks.add(week) },
+                                            label = { Text(stringResource(R.string.week_short, week)) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = Error.copy(alpha = 0.15f),
+                                                selectedLabelColor = Error
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
                             val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
@@ -1258,9 +1517,25 @@ fun RoutineDetailScreen(
                                         exerciseId = exerciseId,
                                         serieTarget = 1,
                                         repsTarget = "1",
-                                        recuperoTarget = rest
+                                        recuperoTarget = rest,
+                                        excludedWeeks = draftExcludedWeeks.toSet(),
+                                        clearAdvanced = current.isAdvanced
                                     )
                                 }
+                            } else if (selectedExerciseType == "advanced") {
+                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                if (advancedWeeks.values.none { it.isNotEmpty() }) {
+                                    Toast.makeText(context, context.getString(R.string.advanced_needs_block), Toast.LENGTH_SHORT).show()
+                                    return@GymButton
+                                }
+                                viewModel.saveAdvancedExercise(
+                                    original = current?.planExercise,
+                                    exerciseId = exerciseId,
+                                    recuperoTarget = rest,
+                                    blocksByWeek = advancedWeeks.toMap(),
+                                    excludedWeeks = draftExcludedWeeks.toSet(),
+                                    weeksCount = draftWeeksCount
+                                )
                             } else if (selectedExerciseType == "time_and_weight") {
                                 val sets = setsText.trim().toIntOrNull() ?: return@GymButton
                                 val rest = restText.trim().toIntOrNull() ?: return@GymButton
@@ -1273,7 +1548,8 @@ fun RoutineDetailScreen(
                                         repsTarget = "${targetSec}s",
                                         recuperoTarget = rest,
                                         exerciseType = "time_and_weight",
-                                        durataTargetSecondi = targetSec
+                                        durataTargetSecondi = targetSec,
+                                        excludedWeeks = draftExcludedWeeks.toSet()
                                     )
                                 } else {
                                     viewModel.updateExercise(
@@ -1283,7 +1559,9 @@ fun RoutineDetailScreen(
                                         repsTarget = "${targetSec}s",
                                         recuperoTarget = rest,
                                         exerciseType = "time_and_weight",
-                                        durataTargetSecondi = targetSec
+                                        durataTargetSecondi = targetSec,
+                                        excludedWeeks = draftExcludedWeeks.toSet(),
+                                        clearAdvanced = current.isAdvanced
                                     )
                                 }
                             } else {
@@ -1298,7 +1576,8 @@ fun RoutineDetailScreen(
                                         repsTarget = reps,
                                         recuperoTarget = rest,
                                         exerciseType = "strength",
-                                        durataTargetSecondi = null
+                                        durataTargetSecondi = null,
+                                        excludedWeeks = draftExcludedWeeks.toSet()
                                     )
                                 } else {
                                     viewModel.updateExercise(
@@ -1308,7 +1587,9 @@ fun RoutineDetailScreen(
                                         repsTarget = reps,
                                         recuperoTarget = rest,
                                         exerciseType = "strength",
-                                        durataTargetSecondi = null
+                                        durataTargetSecondi = null,
+                                        excludedWeeks = draftExcludedWeeks.toSet(),
+                                        clearAdvanced = current.isAdvanced
                                     )
                                 }
                             }
@@ -1328,6 +1609,24 @@ fun RoutineDetailScreen(
                 }
             }
         }
+    }
+
+    if (showOneRepMaxDialog) {
+        val exId = selectedExerciseId
+        OneRepMaxDialog(
+            title = stringResource(R.string.edit_one_rep_max),
+            initialKg = pendingOneRepMaxKg ?: exId?.let { oneRepMaxes[it] },
+            weightUnit = weightUnit,
+            onDismiss = {
+                showOneRepMaxDialog = false
+                pendingOneRepMaxKg = null
+            },
+            onConfirm = { kg, source ->
+                exId?.let { viewModel.saveOneRepMax(it, kg, source) }
+                showOneRepMaxDialog = false
+                pendingOneRepMaxKg = null
+            }
+        )
     }
 
     if (showExercisePicker) {
@@ -1482,6 +1781,73 @@ fun RoutineDetailScreen(
                         }
                     }
 
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.weekly_program),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = OnSurfaceVariant,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    text = stringResource(R.string.weekly_program_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant.copy(alpha = 0.8f)
+                                )
+                            }
+                            Switch(
+                                checked = routineWeeksCount > 1,
+                                onCheckedChange = { enabled ->
+                                    routineWeeksCount = if (enabled) maxOf(4, planWeeksCount) else 1
+                                    routineCurrentWeek = routineCurrentWeek.coerceAtMost(routineWeeksCount)
+                                },
+                                colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                            )
+                        }
+                        AnimatedVisibility(visible = routineWeeksCount > 1) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                NumberStepper(
+                                    value = routineWeeksCount.toFloat(),
+                                    step = 1f,
+                                    range = 2f..RoutineDetailViewModel.MAX_WEEKS.toFloat(),
+                                    label = stringResource(R.string.weeks_count),
+                                    onValueChange = {
+                                        routineWeeksCount = it.toInt()
+                                        routineCurrentWeek = routineCurrentWeek.coerceAtMost(routineWeeksCount)
+                                    }
+                                )
+                                NumberStepper(
+                                    value = routineCurrentWeek.toFloat(),
+                                    step = 1f,
+                                    range = 1f..routineWeeksCount.toFloat().coerceAtLeast(1f),
+                                    label = stringResource(R.string.program_current_week),
+                                    onValueChange = { routineCurrentWeek = it.toInt() }
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.auto_advance_week),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.auto_advance_week_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                    Switch(
+                                        checked = routineAutoAdvance,
+                                        onCheckedChange = { routineAutoAdvance = it },
+                                        colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     GymInputField(
                         value = routineNote,
                         onValueChange = { routineNote = it },
@@ -1522,7 +1888,10 @@ fun RoutineDetailScreen(
                                     note = note,
                                     giorniSettimana = daysString,
                                     dataInizio = startDate,
-                                    dataFine = endDate
+                                    dataFine = endDate,
+                                    weeksCount = routineWeeksCount,
+                                    currentWeek = routineCurrentWeek,
+                                    autoAdvanceWeek = routineAutoAdvance
                                 )
                                 scope.launch { routineSheetState.hide() }.invokeOnCompletion {
                                     if (!routineSheetState.isVisible) {

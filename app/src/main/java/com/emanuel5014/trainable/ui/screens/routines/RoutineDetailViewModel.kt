@@ -18,6 +18,12 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
+import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
@@ -28,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.isActive
@@ -73,14 +80,16 @@ class RoutineDetailViewModel @Inject constructor(
     private val modelFileManager: ModelFileManager,
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
     private val aiResourceTracker: AiResourceTracker,
+    private val oneRepMaxRepository: OneRepMaxRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val planId: Int = checkNotNull(savedStateHandle["planId"])
 
-    private companion object {
-        const val STREAM_EMIT_INTERVAL_MS = 250L
-        const val STREAM_MAX_CHARS = 4000
+    companion object {
+        const val MAX_WEEKS = 52
+        private const val STREAM_EMIT_INTERVAL_MS = 250L
+        private const val STREAM_MAX_CHARS = 4000
     }
 
     private val _uiState = MutableStateFlow(RoutineDetailUiState(isLoading = true))
@@ -112,6 +121,40 @@ class RoutineDetailViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
+
+    val weightUnit = userPreferencesRepository.weightUnit.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "kg"
+    )
+
+    val loadRoundingIncrement = userPreferencesRepository.loadRoundingIncrement.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = LoadCalculator.DEFAULT_INCREMENT_KG
+    )
+
+    /** exerciseId → current 1RM (kg). */
+    val oneRepMaxes = oneRepMaxRepository.currentByExercise().map { map ->
+        map.mapValues { it.value.weightKg }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
+
+    /** exerciseId → Epley estimate from recent logs (kg). */
+    val estimatedOneRepMaxes = oneRepMaxRepository.estimatedByExercise().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
+
+    fun saveOneRepMax(exerciseId: Int, weightKg: Float, source: String) {
+        viewModelScope.launch {
+            oneRepMaxRepository.add(exerciseId = exerciseId, weightKg = weightKg, source = source)
+        }
+    }
 
     private val _aiScanState = MutableStateFlow<AiScanState>(AiScanState.Idle)
     val aiScanState: StateFlow<AiScanState> = _aiScanState.asStateFlow()
@@ -411,7 +454,8 @@ class RoutineDetailViewModel @Inject constructor(
         repsTarget: String,
         recuperoTarget: Int,
         exerciseType: String = "strength",
-        durataTargetSecondi: Int? = null
+        durataTargetSecondi: Int? = null,
+        excludedWeeks: Set<Int> = emptySet()
     ) {
         viewModelScope.launch {
             val current = _uiState.value.planDetails ?: return@launch
@@ -426,9 +470,76 @@ class RoutineDetailViewModel @Inject constructor(
                     recuperoTarget = recuperoTarget,
                     ordine = nextOrder,
                     exerciseType = exerciseType,
-                    durataTargetSecondi = durataTargetSecondi
+                    durataTargetSecondi = durataTargetSecondi,
+                    excludedWeeks = com.emanuel5014.trainable.domain.prescription.WeekSetCodec.encode(excludedWeeks)
                 )
             )
+        }
+    }
+
+    /**
+     * Creates or updates an advanced (%1RM / blocks) exercise. Legacy sets/reps are derived from
+     * the plan's current week so every older consumer still shows a sensible summary.
+     */
+    fun saveAdvancedExercise(
+        original: PlanExerciseEntity?,
+        exerciseId: Int,
+        recuperoTarget: Int,
+        blocksByWeek: Map<Int, List<PrescriptionBlock>>,
+        excludedWeeks: Set<Int>,
+        weeksCount: Int
+    ) {
+        viewModelScope.launch {
+            val current = _uiState.value.planDetails ?: return@launch
+            val defined = blocksByWeek.filterValues { it.isNotEmpty() }
+            if (defined.isEmpty()) return@launch
+            val summaryBlocks = when (val resolved = PrescriptionResolver.resolve(defined, emptySet(), current.plan.currentWeek)) {
+                is ResolvedPrescription.Blocks -> resolved.blocks
+                else -> defined.values.first()
+            }
+            val (sets, reps) = PrescriptionExpander.legacyTargets(summaryBlocks)
+            val encodedExcluded = com.emanuel5014.trainable.domain.prescription.WeekSetCodec.encode(excludedWeeks)
+
+            val planExerciseId = if (original == null) {
+                val nextOrder = (current.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
+                workoutRepository.savePlanExercise(
+                    PlanExerciseEntity(
+                        planId = current.plan.id,
+                        exerciseId = exerciseId,
+                        serieTarget = sets,
+                        repsTarget = reps,
+                        recuperoTarget = recuperoTarget,
+                        ordine = nextOrder,
+                        exerciseType = "strength",
+                        excludedWeeks = encodedExcluded
+                    )
+                ).toInt()
+            } else {
+                workoutRepository.updatePlanExercise(
+                    original.copy(
+                        exerciseId = exerciseId,
+                        serieTarget = sets,
+                        repsTarget = reps,
+                        recuperoTarget = recuperoTarget,
+                        exerciseType = "strength",
+                        durataTargetSecondi = null,
+                        excludedWeeks = encodedExcluded
+                    )
+                )
+                original.id
+            }
+            workoutRepository.savePlanExerciseBlocks(planExerciseId, defined)
+
+            if (weeksCount > current.plan.weeksCount) {
+                workoutRepository.updatePlan(current.plan.copy(weeksCount = weeksCount))
+            }
+        }
+    }
+
+    fun setCurrentWeek(week: Int) {
+        viewModelScope.launch {
+            val plan = _uiState.value.planDetails?.plan ?: return@launch
+            workoutRepository.setPlanCurrentWeek(plan.id, week.coerceIn(1, plan.weeksCount))
         }
     }
 
@@ -467,7 +578,9 @@ class RoutineDetailViewModel @Inject constructor(
         repsTarget: String,
         recuperoTarget: Int,
         exerciseType: String = original.exerciseType,
-        durataTargetSecondi: Int? = original.durataTargetSecondi
+        durataTargetSecondi: Int? = original.durataTargetSecondi,
+        excludedWeeks: Set<Int>? = null,
+        clearAdvanced: Boolean = false
     ) {
         viewModelScope.launch {
             workoutRepository.updatePlanExercise(
@@ -477,9 +590,12 @@ class RoutineDetailViewModel @Inject constructor(
                     repsTarget = repsTarget,
                     recuperoTarget = recuperoTarget,
                     exerciseType = exerciseType,
-                    durataTargetSecondi = durataTargetSecondi
+                    durataTargetSecondi = durataTargetSecondi,
+                    excludedWeeks = excludedWeeks?.let { com.emanuel5014.trainable.domain.prescription.WeekSetCodec.encode(it) }
+                        ?: original.excludedWeeks
                 )
             )
+            if (clearAdvanced) workoutRepository.savePlanExerciseBlocks(original.id, emptyMap())
         }
     }
 
@@ -570,19 +686,27 @@ class RoutineDetailViewModel @Inject constructor(
         note: String?,
         giorniSettimana: String? = null,
         dataInizio: Long? = null,
-        dataFine: Long? = null
+        dataFine: Long? = null,
+        weeksCount: Int? = null,
+        currentWeek: Int? = null,
+        autoAdvanceWeek: Boolean? = null
     ) {
         viewModelScope.launch {
             uiState.value.planDetails?.plan?.let { plan ->
+                val newWeeks = (weeksCount ?: plan.weeksCount).coerceIn(1, MAX_WEEKS)
                 workoutRepository.updatePlan(
                     plan.copy(
                         nome = nome,
                         note = note,
                         giorniSettimana = giorniSettimana,
                         dataInizio = dataInizio ?: plan.dataInizio,
-                        dataFine = dataFine
+                        dataFine = dataFine,
+                        weeksCount = newWeeks,
+                        currentWeek = (currentWeek ?: plan.currentWeek).coerceIn(1, newWeeks),
+                        autoAdvanceWeek = autoAdvanceWeek ?: plan.autoAdvanceWeek
                     )
                 )
+                if (newWeeks < plan.weeksCount) workoutRepository.trimPlanWeeks(plan.id, newWeeks)
             }
         }
     }

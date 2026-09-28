@@ -11,6 +11,21 @@ import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
+import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
+import com.emanuel5014.trainable.domain.prescription.LegacyReps
+import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.domain.prescription.PlannedSet
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
+import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.Technique
+import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
+import com.emanuel5014.trainable.ui.components.prescriptionLabels
+import com.emanuel5014.trainable.ui.components.techniqueLabel
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
@@ -26,6 +41,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -75,7 +91,16 @@ data class WorkoutState(
     val autoStopTimeWeightAtTarget: Boolean = false,
     val keepScreenOnCardioTimer: Boolean = true,
     val keepScreenOnSetTimer: Boolean = true,
-    val sessionStartTime: Long? = null
+    val sessionStartTime: Long? = null,
+    /** Week of a periodized plan this session follows (null for plain routines). */
+    val programWeek: Int? = null,
+    val weeksCount: Int = 1,
+    val autoAdvanceWeek: Boolean = true,
+    val loadRoundingIncrement: Float = LoadCalculator.DEFAULT_INCREMENT_KG,
+    /** 0 = advanced exercises only, 1 = always, 2 = never. */
+    val rpeInputMode: Int = 0,
+    /** Pending "new 1RM?" prompts shown before the session is closed. */
+    val oneRepMaxSuggestions: List<OneRepMaxSuggestion> = emptyList()
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -107,8 +132,13 @@ data class WorkoutExerciseState(
     val cardioDistanceKm: Float = 0f,
     val isCardioCompleted: Boolean = false,
     val exerciseType: String = "strength",
-    val timeTargetSeconds: Int? = null
+    val timeTargetSeconds: Int? = null,
+    /** Advanced prescription blocks for this session's week (empty for plain exercises). */
+    val blocks: List<PrescriptionBlock> = emptyList(),
+    val oneRepMaxKg: Float? = null
 ) {
+    val isAdvanced: Boolean get() = blocks.isNotEmpty()
+
     val isTimeAndWeight: Boolean
         get() = exerciseType == "time_and_weight" || 
                 (planDetails?.exerciseType == "time_and_weight" && swappedExerciseId == null) ||
@@ -127,7 +157,23 @@ data class WorkoutSetState(
     val isCompleted: Boolean = false,
     val isWarmup: Boolean = false,
     val timeSeconds: Int? = null,
-    val previousTimeSeconds: Int? = null
+    val previousTimeSeconds: Int? = null,
+    /** Planned %1RM / reps / techniques for this set, null for plain sets. */
+    val prescription: PlannedSet? = null,
+    val rpe: Float? = null,
+    /** Set added on top of the plan (e.g. top singles). */
+    val isExtra: Boolean = false
+) {
+    val isAmrap: Boolean get() = prescription?.repMode == RepMode.AMRAP
+}
+
+data class OneRepMaxSuggestion(
+    val exerciseId: Int,
+    val exerciseName: String,
+    val weightKg: Float,
+    val reps: Int,
+    val currentKg: Float,
+    val suggestedKg: Float
 )
 
 data class NextSetInfo(
@@ -136,7 +182,9 @@ data class NextSetInfo(
     val weight: Float,
     val reps: Int,
     val weightUnit: String,
-    val previousReps: Int? = null
+    val previousReps: Int? = null,
+    val repsLabel: String? = null,
+    val detail: String? = null
 )
 
 @HiltViewModel
@@ -146,6 +194,7 @@ class WorkoutViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
     private val timerNotificationHelper: TimerNotificationHelper,
     private val localeManager: AppLocaleManager,
+    private val oneRepMaxRepository: OneRepMaxRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -160,6 +209,12 @@ class WorkoutViewModel @Inject constructor(
 
     sealed class WorkoutNavEvent {
         object NavigateBack : WorkoutNavEvent()
+        object ProgramCompleted : WorkoutNavEvent()
+    }
+
+    private companion object {
+        /** Fetch every set of the previous session (advanced exercises match them per block). */
+        const val ALL_SETS = 500
     }
 
     private val _languageCode = MutableStateFlow("en")
@@ -216,6 +271,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.weightUnit.collect { unit ->
                 _state.update { it.copy(weightUnit = unit) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.loadRoundingIncrement.collect { increment ->
+                _state.update { it.copy(loadRoundingIncrement = increment) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.rpeInputMode.collect { mode ->
+                _state.update { it.copy(rpeInputMode = mode) }
             }
         }
 
@@ -363,6 +430,12 @@ class WorkoutViewModel @Inject constructor(
         }
 
         val planExercises = planWithDetails.exercises.sortedBy { it.planExercise.ordine }
+        val resumePlan = planWithDetails.plan
+        val resumeWeek = sessionWithSets.session.programWeek
+            ?: resumePlan.currentWeek.coerceIn(1, resumePlan.weeksCount.coerceAtLeast(1))
+        val resumeUnit = userPreferencesRepository.weightUnit.first()
+        val resumeIncrement = userPreferencesRepository.loadRoundingIncrement.first()
+        val resumeOneRepMaxes = oneRepMaxRepository.currentByExercise().first()
         
         val allAvailableExercises = _availableExercises.value.ifEmpty { 
             exerciseRepository.getAllExercises().firstOrNull() ?: emptyList() 
@@ -408,6 +481,22 @@ class WorkoutViewModel @Inject constructor(
             }
 
             val defaultTargetSeconds = resolvedTargetSeconds ?: 45
+            val resumeOneRepMaxKg = resumeOneRepMaxes[exercise.id]?.weightKg
+            val planDetailWithBlocks = planDetail?.let { pd -> planExercises.find { it.planExercise.id == pd.id } }
+            val resolvedBlocks = (planDetailWithBlocks?.resolve(resumeWeek) as? ResolvedPrescription.Blocks)?.blocks
+            if (resolvedBlocks != null && !isCardio && !isTimeAndWeight && !isSwapped) {
+                val previous = getPreviousSetsForExercise(planId, exercise.id, ALL_SETS)
+                return WorkoutExerciseState(
+                    exercise = exercise,
+                    planDetails = planDetail,
+                    sets = buildAdvancedSets(resolvedBlocks, loggedSets, previous, resumeOneRepMaxKg, resumeUnit, resumeIncrement),
+                    previousPerformance = previous.maxByOrNull { it.pesoSollevato }?.let { "Last: ${it.pesoSollevato}kg × ${it.repsEffettive}" },
+                    supersetId = planDetail.supersetId,
+                    exerciseType = "strength",
+                    blocks = resolvedBlocks,
+                    oneRepMaxKg = resumeOneRepMaxKg
+                )
+            }
             val previousSets = getPreviousSetsForExercise(planId, exercise.id, planDetail?.serieTarget ?: 3)
             val prevPerfStr = if (previousSets.isNotEmpty()) {
                 val bestSet = previousSets.maxByOrNull { it.pesoSollevato }
@@ -453,7 +542,9 @@ class WorkoutViewModel @Inject constructor(
                         isCompleted = loggedSet.isCompleted,
                         isWarmup = loggedSet.isWarmup,
                         timeSeconds = setDuration,
-                        previousTimeSeconds = prevSet?.durataSecondi
+                        previousTimeSeconds = prevSet?.durataSecondi,
+                        rpe = loggedSet.rpe,
+                        isExtra = loggedSet.isExtra
                     )
                 } else {
                     WorkoutSetState(
@@ -492,7 +583,8 @@ class WorkoutViewModel @Inject constructor(
                 cardioDistanceKm = cardioLog?.distanza ?: 0f,
                 isCardioCompleted = cardioLog?.isCompleted ?: false,
                 exerciseType = resolvedExerciseType,
-                timeTargetSeconds = resolvedTargetSeconds
+                timeTargetSeconds = resolvedTargetSeconds,
+                oneRepMaxKg = resumeOneRepMaxKg
             )
         }
 
@@ -642,6 +734,9 @@ class WorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exercises = exerciseStates,
                 currentExerciseIndex = finalActiveIndex,
+                programWeek = sessionWithSets.session.programWeek,
+                weeksCount = resumePlan.weeksCount,
+                autoAdvanceWeek = resumePlan.autoAdvanceWeek,
                 exerciseSwaps = swapMap,
                 remainingRestSeconds = savedRemainingSeconds,
                 totalRestSeconds = savedTotalSeconds ?: 90,
@@ -701,7 +796,31 @@ class WorkoutViewModel @Inject constructor(
         val startTime = System.currentTimeMillis()
         val sessionId = workoutRepository.startSession(planId, startTime).toInt()
 
-        val exerciseStates = planWithDetails.exercises.sortedBy { it.planExercise.ordine }.map { detail ->
+        val plan = planWithDetails.plan
+        val week = plan.currentWeek.coerceIn(1, plan.weeksCount.coerceAtLeast(1))
+        val programWeek = if (plan.weeksCount > 1) week else null
+        if (programWeek != null) workoutRepository.setSessionProgramWeek(sessionId, programWeek)
+        val unit = userPreferencesRepository.weightUnit.first()
+        val increment = userPreferencesRepository.loadRoundingIncrement.first()
+        val oneRepMaxes = oneRepMaxRepository.currentByExercise().first()
+
+        val exerciseStates = planWithDetails.exercises.sortedBy { it.planExercise.ordine }.mapNotNull { detail ->
+            val resolved = detail.resolve(week)
+            if (resolved is ResolvedPrescription.Excluded) return@mapNotNull null
+            val oneRepMaxKg = oneRepMaxes[detail.exercise.id]?.weightKg
+            if (resolved is ResolvedPrescription.Blocks && detail.planExercise.exerciseType == "strength") {
+                val previous = getPreviousSetsForExercise(planId, detail.exercise.id, ALL_SETS)
+                return@mapNotNull WorkoutExerciseState(
+                    exercise = detail.exercise,
+                    planDetails = detail.planExercise,
+                    sets = buildAdvancedSets(resolved.blocks, emptyList(), previous, oneRepMaxKg, unit, increment),
+                    previousPerformance = previous.maxByOrNull { it.pesoSollevato }?.let { "Last: ${it.pesoSollevato}kg × ${it.repsEffettive}" },
+                    supersetId = detail.planExercise.supersetId,
+                    exerciseType = "strength",
+                    blocks = resolved.blocks,
+                    oneRepMaxKg = oneRepMaxKg
+                )
+            }
             val previousSets = getPreviousSetsForExercise(planId, detail.exercise.id, detail.planExercise.serieTarget)
             val isTimeAndWeight = detail.planExercise.exerciseType == "time_and_weight"
             val defaultTargetSeconds = detail.planExercise.durataTargetSecondi ?: 45
@@ -752,7 +871,8 @@ class WorkoutViewModel @Inject constructor(
                 cardioDurataTargetSeconds = detail.planExercise.durataTargetSecondi,
                 cardioDistanzaTargetKm = detail.planExercise.distanzaTargetKm,
                 exerciseType = detail.planExercise.exerciseType,
-                timeTargetSeconds = detail.planExercise.durataTargetSecondi
+                timeTargetSeconds = detail.planExercise.durataTargetSecondi,
+                oneRepMaxKg = oneRepMaxKg
             )
         }
 
@@ -762,6 +882,9 @@ class WorkoutViewModel @Inject constructor(
                 planId = planId,
                 planName = planName,
                 sessionId = sessionId,
+                programWeek = programWeek,
+                weeksCount = plan.weeksCount,
+                autoAdvanceWeek = plan.autoAdvanceWeek,
                 exercises = exerciseStates,
                 currentExerciseIndex = 0,
                 exerciseExecutionOrder = emptyMap(),
@@ -792,19 +915,332 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    private fun parseReps(repsTarget: String, targetSets: Int): List<Int> {
-        val parts = repsTarget.split("-").mapNotNull { it.trim().toIntOrNull() }
-        return when {
-            parts.isEmpty() -> List(targetSets) { 8 }
-            parts.size == 1 -> List(targetSets) { parts[0] }
-            parts.size >= targetSets -> parts.take(targetSets)
-            else -> {
-                val result = parts.toMutableList()
-                while (result.size < targetSets) {
-                    result.add(parts.last())
-                }
-                result
+    private fun parseReps(repsTarget: String, targetSets: Int): List<Int> = LegacyReps.parse(repsTarget, targetSets)
+
+    // --- Advanced (%1RM / blocks) prescriptions ---
+
+    private fun SetLogEntity.withSnapshot(set: WorkoutSetState): SetLogEntity {
+        val p = set.prescription
+        return copy(
+            rpe = set.rpe,
+            isExtra = set.isExtra,
+            targetPercent = p?.percent,
+            targetRpe = p?.targetRpe,
+            targetReps = p?.let { it.targetReps?.toString() ?: if (it.repMode == RepMode.AMRAP) "MAX" else null },
+            repMode = p?.repMode?.code,
+            blockIndex = p?.blockIndex,
+            techniques = p?.let { TechniqueCodec.encode(it.techniques) },
+            targetTotalReps = p?.totalReps
+        )
+    }
+
+    /** Rebuilds a planned set from the snapshot stored on a log row (used on resume). */
+    private fun SetLogEntity.snapshotPrescription(fallback: PlannedSet?): PlannedSet? {
+        val block = blockIndex ?: return null
+        val mode = RepMode.fromCode(repMode)
+        return (fallback ?: PlannedSet(blockIndex = block, indexInBlock = 0, targetReps = null, repMode = mode)).copy(
+            blockIndex = block,
+            repMode = mode,
+            targetReps = targetReps?.toIntOrNull(),
+            totalReps = targetTotalReps ?: fallback?.totalReps,
+            techniques = if (techniques != null) TechniqueCodec.decode(techniques) else fallback?.techniques.orEmpty()
+        ).let { planned ->
+            when {
+                targetPercent != null -> planned.copy(intensityType = com.emanuel5014.trainable.domain.prescription.IntensityType.PERCENT, intensityValue = targetPercent)
+                targetRpe != null -> planned.copy(intensityType = com.emanuel5014.trainable.domain.prescription.IntensityType.RPE, intensityValue = targetRpe)
+                else -> planned
             }
+        }
+    }
+
+    /**
+     * Builds the set list of an advanced exercise: planned sets expanded from the blocks,
+     * merged with rows already logged in this session (resume) and with the ALSAP follow-up
+     * sets / extra sets they may contain. Loads come from %×1RM when possible, otherwise from
+     * the same block/position of the previous session.
+     */
+    private fun buildAdvancedSets(
+        blocks: List<PrescriptionBlock>,
+        logged: List<SetLogEntity>,
+        previous: List<SetLogEntity>,
+        oneRepMaxKg: Float?,
+        unit: String,
+        increment: Float
+    ): List<WorkoutSetState> {
+        val planned = PrescriptionExpander.expand(blocks)
+        val previousByBlock = previous.filter { it.blockIndex != null && !it.isExtra }
+            .sortedBy { it.numeroSerie }.groupBy { it.blockIndex!! }
+        val loggedSorted = logged.sortedBy { it.numeroSerie }
+        val loggedByBlock = loggedSorted.filter { it.blockIndex != null && !it.isExtra }.groupBy { it.blockIndex!! }
+        val result = mutableListOf<WorkoutSetState>()
+
+        fun plannedState(p: PlannedSet, lastWeightInBlock: Float?): WorkoutSetState {
+            val prev = previousByBlock[p.blockIndex]?.getOrNull(p.indexInBlock)
+            val target = LoadCalculator.targetWeightKg(p, oneRepMaxKg, unit, increment)
+            val reps = when (p.repMode) {
+                RepMode.FIXED -> p.targetReps ?: prev?.repsEffettive ?: 5
+                RepMode.AMRAP -> prev?.repsEffettive ?: 5
+                RepMode.TOTAL -> (prev?.repsEffettive ?: p.targetReps ?: 5).coerceAtMost(p.targetReps ?: Int.MAX_VALUE)
+            }
+            return WorkoutSetState(
+                setNumber = 0,
+                weight = target ?: lastWeightInBlock ?: prev?.pesoSollevato ?: 0f,
+                reps = reps,
+                previousNote = prev?.note,
+                previousReps = prev?.repsEffettive,
+                previousWeight = prev?.pesoSollevato,
+                prescription = p
+            )
+        }
+
+        planned.groupBy { it.blockIndex }.toSortedMap().forEach { (blockIndex, blockPlan) ->
+            val loggedInBlock = loggedByBlock[blockIndex].orEmpty()
+            var lastWeight: Float? = null
+            loggedInBlock.forEachIndexed { i, row ->
+                val fallback = blockPlan.getOrNull(i) ?: blockPlan.last().copy(indexInBlock = i)
+                lastWeight = row.pesoSollevato
+                result += WorkoutSetState(
+                    id = row.id,
+                    setNumber = 0,
+                    weight = row.pesoSollevato,
+                    reps = row.repsEffettive,
+                    note = row.note,
+                    isCompleted = row.isCompleted,
+                    isWarmup = row.isWarmup,
+                    timeSeconds = row.durataSecondi,
+                    prescription = row.snapshotPrescription(fallback) ?: fallback,
+                    rpe = row.rpe
+                )
+            }
+            val template = blockPlan.first()
+            if (template.repMode == RepMode.TOTAL) {
+                val done = loggedInBlock.filter { it.isCompleted }.sumOf { it.repsEffettive }
+                val remaining = (template.totalReps ?: 0) - done
+                if (remaining > 0 && loggedInBlock.none { !it.isCompleted }) {
+                    val next = template.copy(indexInBlock = loggedInBlock.size, targetReps = remaining)
+                    result += plannedState(next, lastWeight).copy(reps = if (loggedInBlock.isEmpty()) plannedState(next, lastWeight).reps else remaining)
+                }
+            } else {
+                blockPlan.drop(loggedInBlock.size).forEach { p ->
+                    val state = plannedState(p, lastWeight)
+                    lastWeight = state.weight
+                    result += state
+                }
+            }
+        }
+        // Extra sets and rows without a block (e.g. added manually) keep their logged order at the end
+        loggedSorted.filter { it.isExtra || it.blockIndex == null }.forEach { row ->
+            result += WorkoutSetState(
+                id = row.id,
+                setNumber = 0,
+                weight = row.pesoSollevato,
+                reps = row.repsEffettive,
+                note = row.note,
+                isCompleted = row.isCompleted,
+                isWarmup = row.isWarmup,
+                timeSeconds = row.durataSecondi,
+                rpe = row.rpe,
+                isExtra = row.isExtra
+            )
+        }
+        return result.mapIndexed { i, set -> set.copy(setNumber = i + 1) }
+    }
+
+    private fun prescriptionDetail(set: WorkoutSetState?): String? {
+        val p = set?.prescription ?: return if (set?.isExtra == true) localeManager.getString(R.string.extra_badge) else null
+        val context = localeManager.localizedContext()
+        val labels = prescriptionLabels(context, _state.value.weightUnit)
+        val parts = listOfNotNull(PrescriptionFormatter.intensity(p.intensityType, p.intensityValue, labels)) +
+            p.techniques.map { techniqueLabel(context, it) }
+        return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
+    }
+
+    private fun repsLabelFor(set: WorkoutSetState?): String? =
+        if (set?.isAmrap == true) localeManager.getString(R.string.max_label) else null
+
+    /** Rest after a set: block override, EMOM (rest of the minute), then exercise / plan rest. */
+    private fun restSecondsAfter(exState: WorkoutExerciseState, set: WorkoutSetState): Int {
+        val p = set.prescription
+        if (p != null && Technique.Emom in p.techniques) {
+            return (60 - set.reps * 3).coerceIn(20, 55)
+        }
+        return p?.restSeconds ?: exState.customRestSeconds ?: exState.planDetails?.recuperoTarget ?: 90
+    }
+
+    fun updateSetRpe(exerciseIndex: Int, setIndex: Int, rpe: Float?) {
+        updateSetState(exerciseIndex, setIndex) { it.copy(rpe = rpe) }
+    }
+
+    /** Adds a set on top of the plan (e.g. top singles), prefilled with the last load and 1 rep. */
+    fun addExtraSet(exerciseIndex: Int) {
+        val currentState = _state.value
+        val sessionId = currentState.sessionId ?: return
+        val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return
+        val lastSet = exState.sets.lastOrNull { it.isCompleted } ?: exState.sets.lastOrNull()
+        val newSet = WorkoutSetState(
+            setNumber = exState.sets.size + 1,
+            weight = lastSet?.weight ?: 0f,
+            reps = 1,
+            isExtra = true
+        )
+        viewModelScope.launch {
+            val executionOrder = currentState.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
+            val logId = workoutRepository.logSet(
+                SetLogEntity(
+                    sessionId = sessionId,
+                    exerciseId = exState.exercise.id,
+                    pesoSollevato = newSet.weight,
+                    repsEffettive = newSet.reps,
+                    numeroSerie = newSet.setNumber,
+                    isCompleted = false,
+                    ordineEsercizio = executionOrder,
+                    supersetId = exState.supersetId,
+                    restTimerSeconds = exState.customRestSeconds
+                ).withSnapshot(newSet)
+            )
+            _state.update { curr ->
+                val exercises = curr.exercises.toMutableList()
+                val inner = exercises.getOrNull(exerciseIndex) ?: return@update curr
+                exercises[exerciseIndex] = inner.copy(sets = inner.sets + newSet.copy(id = logId.toInt(), setNumber = inner.sets.size + 1))
+                curr.copy(exercises = exercises)
+            }
+        }
+    }
+
+    /** The follow-up set a TOTAL (ALSAP) block needs after completing [setIndex], if any. */
+    private fun totalFollowUpSet(exState: WorkoutExerciseState, setIndex: Int): WorkoutSetState? {
+        val set = exState.sets.getOrNull(setIndex) ?: return null
+        val p = set.prescription?.takeIf { it.repMode == RepMode.TOTAL } ?: return null
+        val blockSets = exState.sets.filter { it.prescription?.blockIndex == p.blockIndex }
+        if (blockSets.any { !it.isCompleted && it !== set }) return null
+        val done = blockSets.filter { it.isCompleted || it === set }.sumOf { it.reps }
+        val next = PrescriptionExpander.nextTotalRepsSet(p.copy(indexInBlock = blockSets.size - 1), done) ?: return null
+        return WorkoutSetState(setNumber = set.setNumber + 1, weight = set.weight, reps = next.targetReps ?: 1, prescription = next)
+    }
+
+    /**
+     * Keeps a TOTAL (ALSAP) block consistent with the reps done so far: adds the next set with the
+     * remaining reps, updates it, or removes pending sets once the target is reached.
+     */
+    private fun reconcileTotalBlock(exerciseIndex: Int, blockIndex: Int) {
+        val curr = _state.value
+        val exState = curr.exercises.getOrNull(exerciseIndex) ?: return
+        val blockEntries = exState.sets.withIndex().filter {
+            it.value.prescription?.blockIndex == blockIndex && it.value.prescription?.repMode == RepMode.TOTAL
+        }
+        if (blockEntries.isEmpty()) return
+        val template = blockEntries.first().value.prescription ?: return
+        val total = template.totalReps ?: return
+        val remaining = total - blockEntries.filter { it.value.isCompleted }.sumOf { it.value.reps }
+        val pending = blockEntries.filter { !it.value.isCompleted }
+        val sets = exState.sets.toMutableList()
+        val toDelete = mutableListOf<WorkoutSetState>()
+
+        when {
+            remaining > 0 && pending.isEmpty() -> {
+                val last = blockEntries.last()
+                sets.add(
+                    last.index + 1,
+                    WorkoutSetState(
+                        setNumber = 0,
+                        weight = last.value.weight,
+                        reps = remaining,
+                        prescription = template.copy(indexInBlock = blockEntries.size, targetReps = remaining)
+                    )
+                )
+            }
+            remaining <= 0 && pending.isNotEmpty() -> {
+                pending.sortedByDescending { it.index }.forEach { entry ->
+                    sets.removeAt(entry.index)
+                    if (entry.value.id != null) toDelete += entry.value
+                }
+            }
+            remaining > 0 -> {
+                val first = pending.first()
+                sets[first.index] = first.value.copy(
+                    reps = remaining,
+                    prescription = first.value.prescription?.copy(targetReps = remaining)
+                )
+            }
+            else -> return
+        }
+
+        val renumbered = sets.mapIndexed { i, set -> set.copy(setNumber = i + 1) }
+        val changed = renumbered.filter { set -> set.id != null && exState.sets.none { it.id == set.id && it.setNumber == set.setNumber && it.reps == set.reps } }
+        _state.update { state ->
+            val exercises = state.exercises.toMutableList()
+            val inner = exercises.getOrNull(exerciseIndex) ?: return@update state
+            exercises[exerciseIndex] = inner.copy(sets = renumbered)
+            state.copy(exercises = exercises)
+        }
+        val sessionId = curr.sessionId ?: return
+        val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
+        viewModelScope.launch {
+            toDelete.forEach { set ->
+                workoutRepository.deleteSet(
+                    SetLogEntity(
+                        id = set.id!!, sessionId = sessionId, exerciseId = exState.exercise.id,
+                        pesoSollevato = set.weight, repsEffettive = set.reps, numeroSerie = set.setNumber
+                    )
+                )
+            }
+            changed.forEach { set ->
+                workoutRepository.updateSet(
+                    SetLogEntity(
+                        id = set.id!!,
+                        sessionId = sessionId,
+                        exerciseId = exState.exercise.id,
+                        pesoSollevato = set.weight,
+                        repsEffettive = set.reps,
+                        numeroSerie = set.setNumber,
+                        isWarmup = set.isWarmup,
+                        note = set.note,
+                        supersetId = exState.supersetId,
+                        isCompleted = set.isCompleted,
+                        ordineEsercizio = executionOrder,
+                        restTimerSeconds = exState.customRestSeconds,
+                        durataSecondi = set.timeSeconds
+                    ).withSnapshot(set)
+                )
+            }
+        }
+    }
+
+    /** New-1RM candidates: a single above the current 1RM, or a low-rep set whose e1RM beats it by >2.5%. */
+    private fun computeOneRepMaxSuggestions(): List<OneRepMaxSuggestion> =
+        _state.value.exercises.mapNotNull { ex ->
+            val current = ex.oneRepMaxKg ?: return@mapNotNull null
+            if (ex.isCardio || ex.isTimeAndWeight) return@mapNotNull null
+            val best = ex.sets
+                .filter { it.isCompleted && !it.isWarmup && it.weight > 0f && it.reps in 1..5 }
+                .maxByOrNull { LoadCalculator.epley(it.weight, it.reps) } ?: return@mapNotNull null
+            val estimate = LoadCalculator.epley(best.weight, best.reps)
+            val beats = if (best.reps == 1) best.weight > current else estimate > current * 1.025f
+            if (!beats) return@mapNotNull null
+            OneRepMaxSuggestion(
+                exerciseId = ex.exercise.id,
+                exerciseName = ExerciseTranslations.translate(ex.exercise.nome, _languageCode.value),
+                weightKg = best.weight,
+                reps = best.reps,
+                currentKg = current,
+                suggestedKg = if (best.reps == 1) best.weight else LoadCalculator.roundTo(estimate, 0.5f)
+            )
+        }
+
+    /** Handles the first pending "new 1RM?" prompt; the session closes once none are left. */
+    fun resolveOneRepMaxSuggestion(accept: Boolean) {
+        val suggestion = _state.value.oneRepMaxSuggestions.firstOrNull() ?: return
+        viewModelScope.launch {
+            if (accept) {
+                oneRepMaxRepository.add(
+                    exerciseId = suggestion.exerciseId,
+                    weightKg = suggestion.suggestedKg,
+                    source = if (suggestion.reps == 1) OneRepMaxEntity.SOURCE_TESTED else OneRepMaxEntity.SOURCE_ESTIMATED
+                )
+            }
+            val remaining = _state.value.oneRepMaxSuggestions.drop(1)
+            _state.update { it.copy(oneRepMaxSuggestions = remaining) }
+            if (remaining.isEmpty()) performFinish()
         }
     }
 
@@ -840,13 +1276,13 @@ class WorkoutViewModel @Inject constructor(
                             ordineEsercizio = executionOrder,
                             restTimerSeconds = exState.customRestSeconds,
                             durataSecondi = updatedSet.timeSeconds
-                        )
+                        ).withSnapshot(updatedSet)
                     )
                 }
             }
             
             val isQuickOrCustom = curr.isQuickWorkout || exState.swappedExerciseId != null || exState.planDetails == null
-            val shouldPropagate = isQuickOrCustom || exState.previousPerformance == null
+            val shouldPropagate = (isQuickOrCustom || exState.previousPerformance == null) && !exState.isAdvanced
 
             if (shouldPropagate) {
                 for (i in (setIndex + 1) until mutableSets.size) {
@@ -871,7 +1307,7 @@ class WorkoutViewModel @Inject constructor(
                                         ordineEsercizio = executionOrder,
                                         restTimerSeconds = exState.customRestSeconds,
                                         durataSecondi = propSet.timeSeconds
-                                    )
+                                    ).withSnapshot(propSet)
                                 )
                             }
                         }
@@ -914,7 +1350,7 @@ class WorkoutViewModel @Inject constructor(
                             ordineEsercizio = executionOrder,
                             restTimerSeconds = exState.customRestSeconds,
                             durataSecondi = updatedSet.timeSeconds
-                        )
+                        ).withSnapshot(updatedSet)
                     )
                 }
             }
@@ -947,7 +1383,7 @@ class WorkoutViewModel @Inject constructor(
                         ordineEsercizio = executionOrder,
                         restTimerSeconds = exState.customRestSeconds,
                         durataSecondi = setState.timeSeconds
-                    )
+                    ).withSnapshot(setState)
                 )
             }
         }
@@ -996,7 +1432,7 @@ class WorkoutViewModel @Inject constructor(
                         ordineEsercizio = executionOrder,
                         restTimerSeconds = exState.customRestSeconds,
                         durataSecondi = setState.timeSeconds
-                    )
+                    ).withSnapshot(setState)
                 )
                 newSetId = logId.toInt()
                 
@@ -1018,21 +1454,31 @@ class WorkoutViewModel @Inject constructor(
                     }
                 }
                 
+                val totalFollowUp = if (newIsCompleted) totalFollowUpSet(exState, setIndex) else null
                 if (newIsCompleted) {
-                    if (shouldStartTimer && !(isLastExercise && isLastSet)) {
-                        val restTime = exState.customRestSeconds ?: exState.planDetails?.recuperoTarget ?: 90
-                        val nextSet = exState.sets.drop(setIndex + 1).firstOrNull { !it.isCompleted }
+                    if (shouldStartTimer && (!(isLastExercise && isLastSet) || totalFollowUp != null)) {
+                        val restTime = restSecondsAfter(exState, setState)
+                        val nextSet = totalFollowUp ?: exState.sets.drop(setIndex + 1).firstOrNull { !it.isCompleted }
                         if (nextSet != null) {
                             val translatedName = ExerciseTranslations.translate(exState.exercise.nome, _languageCode.value)
-                            val plannedReps = getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
-                            startRestTimer(restTime, translatedName, nextSet.setNumber, nextSet.weight, plannedReps, nextSet.previousReps, currentState.weightUnit)
+                            val plannedReps = if (exState.isAdvanced) nextSet.prescription?.targetReps ?: nextSet.reps
+                                else getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+                            startRestTimer(
+                                restTime, translatedName, nextSet.setNumber, nextSet.weight, plannedReps, nextSet.previousReps, currentState.weightUnit,
+                                nextSetRepsLabel = repsLabelFor(nextSet),
+                                nextSetDetail = prescriptionDetail(nextSet)
+                            )
                         } else if (!isLastExercise) {
                             val nextExState = currentState.exercises.getOrNull(exerciseIndex + 1)
                             val firstSet = nextExState?.sets?.firstOrNull()
                             if (firstSet != null) {
                                 val translatedName = ExerciseTranslations.translate(nextExState.exercise.nome, _languageCode.value)
                                 val plannedReps = getPlannedRepsForSet(nextExState, firstSet.setNumber) ?: firstSet.reps
-                                startRestTimer(restTime, translatedName, firstSet.setNumber, firstSet.weight, plannedReps, firstSet.previousReps, currentState.weightUnit)
+                                startRestTimer(
+                                    restTime, translatedName, firstSet.setNumber, firstSet.weight, plannedReps, firstSet.previousReps, currentState.weightUnit,
+                                    nextSetRepsLabel = repsLabelFor(firstSet),
+                                    nextSetDetail = prescriptionDetail(firstSet)
+                                )
                             } else {
                                 startRestTimer(restTime)
                             }
@@ -1048,6 +1494,8 @@ class WorkoutViewModel @Inject constructor(
             updateSetState(exerciseIndex, setIndex) { 
                 it.copy(isCompleted = newIsCompleted, id = newSetId) 
             }
+
+            setState.prescription?.takeIf { it.repMode == RepMode.TOTAL }?.let { reconcileTotalBlock(exerciseIndex, it.blockIndex) }
 
             // --- AUTO-NAVIGATION FOR SUPERSETS ---
             if (newIsCompleted && exState.supersetId != null) {
@@ -1104,7 +1552,7 @@ class WorkoutViewModel @Inject constructor(
                             ordineEsercizio = executionOrder,
                             restTimerSeconds = exState.customRestSeconds,
                             durataSecondi = updatedSet.timeSeconds
-                        )
+                        ).withSnapshot(updatedSet)
                     )
                 }
             }
@@ -1143,11 +1591,26 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    private var oneRepMaxReviewDone = false
+
     fun finishWorkout() {
         val now = System.currentTimeMillis()
         if (now - lastActionTime < actionDebounce) return
         lastActionTime = now
 
+        if (_state.value.isFinishing) return
+        if (!oneRepMaxReviewDone) {
+            oneRepMaxReviewDone = true
+            val suggestions = computeOneRepMaxSuggestions()
+            if (suggestions.isNotEmpty()) {
+                _state.update { it.copy(oneRepMaxSuggestions = suggestions) }
+                return
+            }
+        }
+        performFinish()
+    }
+
+    private fun performFinish() {
         if (_state.value.isFinishing) return
         _state.update { it.copy(isFinishing = true) }
         
@@ -1162,6 +1625,7 @@ class WorkoutViewModel @Inject constructor(
                         workoutRepository.deleteUncompletedCardioLogsForSession(id)
                         workoutRepository.setSessionFinished(id, durationMs)
                     }
+                    advanceProgramWeek()
                     stopRestTimer()
                     stopWarmupTimer()
                     cardioTimerJob?.cancel()
@@ -1195,6 +1659,19 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    /** Moves a periodized plan to its next week after a finished session. */
+    private suspend fun advanceProgramWeek() {
+        val state = _state.value
+        val week = state.programWeek ?: return
+        val planId = state.planId ?: return
+        if (!state.autoAdvanceWeek || state.weeksCount <= 1) return
+        if (week < state.weeksCount) {
+            workoutRepository.setPlanCurrentWeek(planId, week + 1)
+        } else {
+            _navigationEvent.emit(WorkoutNavEvent.ProgramCompleted)
+        }
+    }
+
     private fun startRestTimer(
         seconds: Int,
         exerciseName: String? = null,
@@ -1202,7 +1679,9 @@ class WorkoutViewModel @Inject constructor(
         nextSetWeight: Float? = null,
         nextSetReps: Int? = null,
         previousReps: Int? = null,
-        weightUnit: String? = null
+        weightUnit: String? = null,
+        nextSetRepsLabel: String? = null,
+        nextSetDetail: String? = null
     ) {
         if (seconds <= 0) return
         stopRestTimer()
@@ -1210,7 +1689,12 @@ class WorkoutViewModel @Inject constructor(
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
             _state.value.sessionId?.let { sessionId ->
-                timerNotificationHelper.startOrUpdateTimerNotification(seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit, totalSeconds = seconds)
+                timerNotificationHelper.startOrUpdateTimerNotification(
+                    seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
+                    totalSeconds = seconds,
+                    nextSetRepsLabel = nextSetRepsLabel,
+                    nextSetDetail = nextSetDetail
+                )
             }
         }
         saveTimerToSession(endTime, seconds)
@@ -1218,6 +1702,10 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private fun getPlannedRepsForSet(exState: WorkoutExerciseState?, setNumber: Int): Int? {
+        if (exState?.isAdvanced == true) {
+            val set = exState.sets.firstOrNull { it.setNumber == setNumber }
+            return set?.prescription?.targetReps ?: set?.reps
+        }
         val plan = exState?.planDetails ?: return null
         val repsList = parseReps(plan.repsTarget, plan.serieTarget)
         return repsList.getOrElse(setNumber - 1) { repsList.lastOrNull() }
@@ -1235,7 +1723,9 @@ class WorkoutViewModel @Inject constructor(
                 weight = nextSet.weight,
                 reps = plannedReps,
                 weightUnit = currentState.weightUnit,
-                previousReps = nextSet.previousReps
+                previousReps = nextSet.previousReps,
+                repsLabel = repsLabelFor(nextSet),
+                detail = prescriptionDetail(nextSet)
             )
         }
         return null
@@ -1253,7 +1743,9 @@ class WorkoutViewModel @Inject constructor(
                     timerNotificationHelper.startOrUpdateTimerNotification(
                         remaining, sessionId,
                         info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
-                        totalSeconds = totalSeconds
+                        totalSeconds = totalSeconds,
+                        nextSetRepsLabel = info?.repsLabel,
+                        nextSetDetail = info?.detail
                     )
                 }
             }
@@ -1303,7 +1795,9 @@ class WorkoutViewModel @Inject constructor(
                                 previousReps = info?.previousReps,
                                 weightUnit = info?.weightUnit,
                                 totalSeconds = _state.value.totalRestSeconds,
-                                scheduleAlarm = false
+                                scheduleAlarm = false,
+                                nextSetRepsLabel = info?.repsLabel,
+                                nextSetDetail = info?.detail
                             )
                         }
                     }
@@ -1337,7 +1831,9 @@ class WorkoutViewModel @Inject constructor(
                     timerNotificationHelper.startOrUpdateTimerNotification(
                         newRemaining, sessionId,
                         info?.exerciseName, info?.setNumber, info?.weight, info?.reps, info?.previousReps, info?.weightUnit,
-                        totalSeconds = newTotal
+                        totalSeconds = newTotal,
+                        nextSetRepsLabel = info?.repsLabel,
+                        nextSetDetail = info?.detail
                     )
                 }
             }
@@ -1679,7 +2175,7 @@ class WorkoutViewModel @Inject constructor(
                                 ordineEsercizio = currentOrder,
                                 restTimerSeconds = currentEx.customRestSeconds,
                                 durataSecondi = s.timeSeconds
-                            )
+                            ).withSnapshot(s)
                         )
                     }
                 }
@@ -1702,7 +2198,7 @@ class WorkoutViewModel @Inject constructor(
                                 ordineEsercizio = nextOrder,
                                 restTimerSeconds = nextEx.customRestSeconds,
                                 durataSecondi = s.timeSeconds
-                            )
+                            ).withSnapshot(s)
                         )
                     }
                 }
@@ -1915,7 +2411,7 @@ class WorkoutViewModel @Inject constructor(
                                 ordineEsercizio = newExOrder,
                                 restTimerSeconds = exState.customRestSeconds,
                                 durataSecondi = set.timeSeconds
-                            )
+                            ).withSnapshot(set)
                         )
                     }
                 }
@@ -2036,6 +2532,17 @@ class WorkoutViewModel @Inject constructor(
         val weight = lastSet?.weight ?: 0f
         val reps = lastSet?.reps ?: 8
         val setDuration = if (exState.isTimeAndWeight) (lastSet?.timeSeconds ?: exState.timeTargetSeconds ?: 45) else lastSet?.timeSeconds
+        // On advanced exercises a new set repeats the last one's prescription (same block)
+        val prescription = lastSet?.prescription?.takeIf { it.repMode != RepMode.TOTAL }?.let { it.copy(indexInBlock = it.indexInBlock + 1) }
+        val template = WorkoutSetState(
+            setNumber = newSetNumber,
+            weight = weight,
+            reps = reps,
+            isCompleted = false,
+            timeSeconds = setDuration,
+            prescription = prescription,
+            isExtra = lastSet?.isExtra == true
+        )
 
         viewModelScope.launch {
             val executionOrder = currentState.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
@@ -2049,16 +2556,9 @@ class WorkoutViewModel @Inject constructor(
                 ordineEsercizio = executionOrder,
                 restTimerSeconds = exState.customRestSeconds,
                 durataSecondi = setDuration
-            )
+            ).withSnapshot(template)
             val logId = workoutRepository.logSet(setLog)
-            val newSet = WorkoutSetState(
-                id = logId.toInt(),
-                setNumber = newSetNumber,
-                weight = weight,
-                reps = reps,
-                isCompleted = false,
-                timeSeconds = setDuration
-            )
+            val newSet = template.copy(id = logId.toInt())
             
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
@@ -2126,7 +2626,7 @@ class WorkoutViewModel @Inject constructor(
                                 ordineEsercizio = executionOrder,
                                 restTimerSeconds = exState.customRestSeconds,
                                 durataSecondi = s.timeSeconds
-                            )
+                            ).withSnapshot(s)
                         )
                     }
                 }
@@ -2540,7 +3040,7 @@ class WorkoutViewModel @Inject constructor(
                         ordineEsercizio = _state.value.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex,
                         restTimerSeconds = exState.customRestSeconds,
                         durataSecondi = seconds
-                    )
+                    ).withSnapshot(setState)
                 )
             }
         }

@@ -28,7 +28,8 @@ fun GymInputField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
     readOnly: Boolean = false,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    textAlign: androidx.compose.ui.text.style.TextAlign = androidx.compose.ui.text.style.TextAlign.Start
 ) {
     OutlinedTextField(
         value = value,
@@ -61,6 +62,6 @@ fun GymInputField(
             disabledLeadingIconColor = OnSurfaceVariant,
             disabledTrailingIconColor = OnSurfaceVariant
         ),
-        textStyle = MaterialTheme.typography.bodyLarge
+        textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = textAlign)
     )
 }
