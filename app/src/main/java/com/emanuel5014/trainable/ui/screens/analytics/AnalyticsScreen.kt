@@ -52,6 +52,7 @@ import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
@@ -142,6 +143,7 @@ import kotlin.math.absoluteValue
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
+    onNavigateToOneRepMaxes: () -> Unit = {},
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -326,6 +328,11 @@ fun AnalyticsScreen(
                             modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
                         )
                     }
+
+                    com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxesEntryCard(
+                        onClick = onNavigateToOneRepMaxes,
+                        modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(bottom = 12.dp)
+                    )
 
                     if (!isAnalyticsEmpty) {
                     Box(modifier = Modifier.fillMaxSize()) {

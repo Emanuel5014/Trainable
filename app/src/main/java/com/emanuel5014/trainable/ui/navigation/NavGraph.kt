@@ -64,6 +64,11 @@ fun MainNavGraph(
                 onNavigateToDonors = { navController.navigate(Donors) }
             )
         }
+        composable<OneRepMaxes> {
+            com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable<Donors> {
             DonorsScreen(
                 onNavigateBack = { navController.popBackStack() }
@@ -77,7 +82,8 @@ fun MainNavGraph(
         composable<WorkoutSettings> {
             WorkoutSettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToExerciseCustomization = { navController.navigate(ExerciseCustomization) }
+                onNavigateToExerciseCustomization = { navController.navigate(ExerciseCustomization) },
+                onNavigateToOneRepMaxes = { navController.navigate(OneRepMaxes) }
             )
         }
         composable<AiSettings> {
