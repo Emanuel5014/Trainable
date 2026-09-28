@@ -61,9 +61,19 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Routine Sharing**: Export and import routines via `.trainableplan` file format.
 *   **Routine Photos**: Capture multiple photos in-app and include them in exports.
 
+### 🏋️ Powerlifting & %1RM Programming
+*   **Advanced Prescriptions**: Describe an exercise as blocks — `70% 5 · 75% 3×5 · 70% 6` — with %1RM, RPE, fixed load or bodyweight (+ added load) intensity.
+*   **Every Rep Scheme**: Sets × reps, per-set lists (`3-4-2-1-5`), AMRAP (`3×MAX`) and total-reps blocks (`20 REP ALSAP`) that add sets automatically until the target is reached.
+*   **Techniques**: Pause (`STOP 2″`), chains, bands, feet up, competition, tempo (`D4F2S4` / `3-1-0`), deficit, EMOM and custom cues, shown as chips everywhere.
+*   **Weekly Programs**: Routines can span W1…Wn with a prescription per week, skipped weeks, "copy previous week", unwritten weeks that repeat the last one, and automatic week advance after each session. Works for full PL programs and for "hybrid" sheets where only the main lift is programmed.
+*   **Notebook Notation**: Type a prescription exactly like on paper (`W1: 80% 4x4 D4F2S4 W2: 85% 4x3`) and it's parsed live into blocks.
+*   **1RM Manager**: Per-exercise 1RM with history, trend, source (tested/manual/estimated), Epley estimate from your logs and a 60–100% load table. Loads are rounded to your plate increment (kg/lb).
+*   **In-Session Tools**: Block headers, %·kg badges, AMRAP entry, extra top singles, RPE input (6–10 in half steps), per-block rest and a "New 1RM?" prompt when you beat your max.
+
 ### 🤖 On-Device AI Routine Scanner
 *   **100% On-Device & Private**: Powered locally by Google's LiteRT-LM (Gemma 4 E2B / E4B) — zero cloud dependency, no API keys, and complete data privacy.
 *   **Intelligent Sheet Extraction**: Capture or pick a picture of a paper gym sheet and automatically extract exercise names, sets, rep schemes, rest times, cardio durations, and suggested categories.
+*   **Powerlifting Sheets**: Reads %1RM notation, techniques, multi-week programs, 1RM headers like `Stacco (230kg)` and "PROGRAMMAZIONE" placeholders on hybrid sheets.
 *   **Smart Catalog Matching**: Fuzzy-matches extracted exercises with 130+ built-in movements or user-defined custom exercises.
 *   **Interactive Review & Inspector**: Collapsible photo inspector with high-resolution pinch-to-zoom, pan, fullscreen mode, and per-exercise editing before importing into the plan.
 *   **Background Model Downloader**: Dedicated Foreground Service with WakeLock and real-time progress notifications with cancel control, allowing models to download uninterrupted even when switching apps or locking the phone.
@@ -98,6 +108,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Body Weight**: Integrated weight logging and history tracking.
 *   **Body Weight History**: Dedicated module with date picker, delete functionality, collapsible UI, and configurable time range (1w/1m/6m/All).
 *   **Cardio Tracking**: Cardio counter in weekly goal overview.
+*   **Prescription-Aware History**: History, session edits, reports, CSV export, share cards and the web dashboard show the %1RM, techniques and RPE of every set.
 *   **Plans Reports**: Generate detailed HTML reports for workout plans with per-exercise history, max weight/volume, estimated 1RM, and swap tracking. Preview, save, or share reports.
 
 ### 🌍 Localization
