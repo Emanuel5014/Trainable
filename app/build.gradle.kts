@@ -150,6 +150,8 @@ implementation(libs.google.fonts)
 
 
     testImplementation(libs.junit)
+    // Real org.json for JVM unit tests (the Android stub returns defaults)
+    testImplementation("org.json:json:20250517")
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

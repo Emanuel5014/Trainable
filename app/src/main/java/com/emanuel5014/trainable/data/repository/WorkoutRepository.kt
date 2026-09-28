@@ -120,6 +120,9 @@ class WorkoutRepository @Inject constructor(
                 giorniSettimana = planWithDetails.plan.giorniSettimana,
                 dataInizio = planWithDetails.plan.dataInizio,
                 dataFine = planWithDetails.plan.dataFine,
+                weeksCount = planWithDetails.plan.weeksCount,
+                currentWeek = planWithDetails.plan.currentWeek,
+                autoAdvanceWeek = planWithDetails.plan.autoAdvanceWeek,
                 // Only keep raw URIs when blobs are not included (legacy fallback);
                 // otherwise the receiver restores images from blobs with fresh local URIs.
                 imageUri = if (includeImages) null else planWithDetails.plan.imageUri,
@@ -147,7 +150,23 @@ class WorkoutRepository @Inject constructor(
                         exerciseType = exerciseWithDetails.planExercise.exerciseType,
                         durataTargetSecondi = exerciseWithDetails.planExercise.durataTargetSecondi,
                         distanzaTargetKm = exerciseWithDetails.planExercise.distanzaTargetKm,
-                        cardioCategoria = exerciseWithDetails.planExercise.cardioCategoria
+                        cardioCategoria = exerciseWithDetails.planExercise.cardioCategoria,
+                        excludedWeeks = exerciseWithDetails.planExercise.excludedWeeks,
+                        blocks = exerciseWithDetails.blocks.sortedWith(compareBy({ it.week }, { it.ordine })).map { block ->
+                            com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto(
+                                week = block.week,
+                                ordine = block.ordine,
+                                sets = block.sets,
+                                reps = block.reps,
+                                repMode = block.repMode,
+                                totalReps = block.totalReps,
+                                intensityType = block.intensityType,
+                                intensityValue = block.intensityValue,
+                                techniques = block.techniques,
+                                restSeconds = block.restSeconds,
+                                note = block.note
+                            )
+                        }
                     )
                 }
             )
@@ -189,7 +208,11 @@ class WorkoutRepository @Inject constructor(
                     sessioniTargetSettimana = dto.sessioniTargetSettimana,
                     imageUri = null,
                     ordine = nextOrder++,
-                    giorniSettimana = dto.giorniSettimana
+                    giorniSettimana = dto.giorniSettimana,
+                    weeksCount = dto.weeksCount.coerceIn(1, 52),
+                    // An imported program always starts from its first week
+                    currentWeek = 1,
+                    autoAdvanceWeek = dto.autoAdvanceWeek
                 )
                 val planId = workoutDao.insertPlan(newPlan).toInt()
 
@@ -230,7 +253,7 @@ class WorkoutRepository @Inject constructor(
                     }
                 }
 
-                val exercisesToInsert = mutableListOf<PlanExerciseEntity>()
+                val exercisesToInsert = mutableListOf<Pair<PlanExerciseEntity, List<com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto>>>()
 
                 dto.exercises.forEach { exerciseDto ->
                     var finalExerciseId: Int? = null
@@ -279,14 +302,33 @@ class WorkoutRepository @Inject constructor(
                                 exerciseType = exerciseDto.exerciseType,
                                 durataTargetSecondi = exerciseDto.durataTargetSecondi,
                                 distanzaTargetKm = exerciseDto.distanzaTargetKm,
-                                cardioCategoria = exerciseDto.cardioCategoria
-                            )
+                                cardioCategoria = exerciseDto.cardioCategoria,
+                                excludedWeeks = exerciseDto.excludedWeeks
+                            ) to exerciseDto.blocks
                         )
                     }
                 }
 
-                if (exercisesToInsert.isNotEmpty()) {
-                    workoutDao.insertPlanExercises(exercisesToInsert)
+                exercisesToInsert.forEach { (entity, blocks) ->
+                    val planExerciseId = workoutDao.insertPlanExercise(entity).toInt()
+                    if (blocks.isNotEmpty()) {
+                        workoutDao.insertBlocks(blocks.map { b ->
+                            PlanExerciseBlockEntity(
+                                planExerciseId = planExerciseId,
+                                week = b.week.coerceAtLeast(1),
+                                ordine = b.ordine,
+                                sets = b.sets,
+                                reps = b.reps,
+                                repMode = b.repMode,
+                                totalReps = b.totalReps,
+                                intensityType = b.intensityType,
+                                intensityValue = b.intensityValue,
+                                techniques = b.techniques,
+                                restSeconds = b.restSeconds,
+                                note = b.note
+                            )
+                        })
+                    }
                 }
                 imported++
             } catch (e: Exception) {

@@ -42,13 +42,16 @@ fun ImportConfirmationDialog(
                         if (cardio > 0) append(" • $cardio cardio")
                         if (timed > 0) append(" • $timed timed")
                         if (supersets > 0) append(" • $supersets superset")
+                        val advanced = plan.exercises.count { it.blocks.isNotEmpty() }
+                        if (advanced > 0) append(" • $advanced %1RM")
                     }
+                    val weeksLabel = if (plan.weeksCount > 1) " • " + stringResource(R.string.week_of, 1, plan.weeksCount) else ""
                     Text(
                         text = "• " + stringResource(
                             R.string.import_plan_summary,
                             plan.nome,
                             plan.exercises.size
-                        ) + typeSummary,
+                        ) + typeSummary + weeksLabel,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = OnSurface

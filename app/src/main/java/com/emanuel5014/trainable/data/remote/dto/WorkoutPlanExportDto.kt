@@ -3,7 +3,7 @@ package com.emanuel5014.trainable.data.remote.dto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-const val TRAINABLEPLAN_VERSION = 2
+const val TRAINABLEPLAN_VERSION = 3
 
 @Serializable
 data class WorkoutPlanExportDto(
@@ -16,7 +16,11 @@ data class WorkoutPlanExportDto(
     val imageUri: String?, // Keep for backward compatibility
     val images: List<String> = emptyList(),
     val imageBlobs: List<String> = emptyList(),
-    val exercises: List<PlanExerciseExportDto>
+    val exercises: List<PlanExerciseExportDto>,
+    // v3: periodized plans
+    val weeksCount: Int = 1,
+    val currentWeek: Int = 1,
+    val autoAdvanceWeek: Boolean = true
 )
 
 @Serializable
@@ -32,7 +36,26 @@ data class PlanExerciseExportDto(
     val exerciseType: String = "strength",
     val durataTargetSecondi: Int? = null,
     val distanzaTargetKm: Float? = null,
-    val cardioCategoria: String? = null
+    val cardioCategoria: String? = null,
+    // v3: advanced %1RM prescriptions
+    val excludedWeeks: String? = null,
+    val blocks: List<PrescriptionBlockExportDto> = emptyList()
+)
+
+/** One advanced prescription block (v3). Techniques use the [com.emanuel5014.trainable.domain.prescription.TechniqueCodec] format. */
+@Serializable
+data class PrescriptionBlockExportDto(
+    val week: Int = 1,
+    val ordine: Int = 0,
+    val sets: Int = 1,
+    val reps: String = "",
+    val repMode: String = "fixed",
+    val totalReps: Int? = null,
+    val intensityType: String = "none",
+    val intensityValue: Float? = null,
+    val techniques: String? = null,
+    val restSeconds: Int? = null,
+    val note: String? = null
 )
 
 /**
