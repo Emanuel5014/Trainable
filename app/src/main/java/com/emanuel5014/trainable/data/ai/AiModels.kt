@@ -12,7 +12,12 @@ data class ParsedExercise(
     @SerialName("cardio_minutes") val cardioMinutes: Int? = null,
     val category: String? = null,
     @SerialName("exercise_type") val exerciseType: String? = null,
-    @SerialName("time_seconds") val timeSeconds: Int? = null
+    @SerialName("time_seconds") val timeSeconds: Int? = null,
+    /** Literal powerlifting notation for the exercise, e.g. `70% 3x3 STOP 2" 75% 3x2` or multi-week `W1: … W2: …`. */
+    val notation: String? = null,
+    @SerialName("one_rep_max_kg") val oneRepMaxKg: Float? = null,
+    /** The sheet says the prescription lives on a separate program sheet ("PROGRAMMAZIONE"). */
+    val programmed: Boolean = false
 )
 
 enum class AiModelVariant(

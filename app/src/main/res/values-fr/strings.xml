@@ -965,6 +965,9 @@
     <string name="not_now">Pas maintenant</string>
     <string name="notification_next_set_detail">Prochaine: %1$s - Série %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · prochaine série en début de minute</string>
+    <string name="scan_programmed_hint">Programmé sur une autre fiche : ajoute les blocs après l\'import ou scanne la fiche du programme.</string>
+    <string name="scan_use_simple">Utiliser séries × reps simples</string>
+    <string name="scan_one_rep_max_found">1RM sur la fiche : %1$s · il sera enregistré</string>
     <string name="one_rep_maxes">1RM</string>
     <string name="one_rep_maxes_subtitle">TES MAXIMUMS</string>
     <string name="one_rep_maxes_empty_title">Ajoute ton premier 1RM</string>

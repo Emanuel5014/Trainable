@@ -965,6 +965,9 @@
     <string name="not_now">Ahora no</string>
     <string name="notification_next_set_detail">Siguiente: %1$s - Serie %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · siguiente serie al inicio del minuto</string>
+    <string name="scan_programmed_hint">Programado en otra hoja: añade los bloques tras importar o escanea la hoja del programa.</string>
+    <string name="scan_use_simple">Usar series × reps simples</string>
+    <string name="scan_one_rep_max_found">1RM en la hoja: %1$s · se guardará</string>
     <string name="one_rep_maxes">1RM</string>
     <string name="one_rep_maxes_subtitle">TUS MÁXIMOS</string>
     <string name="one_rep_maxes_empty_title">Añade tu primer 1RM</string>

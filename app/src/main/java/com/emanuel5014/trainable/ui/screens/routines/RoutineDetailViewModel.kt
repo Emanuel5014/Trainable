@@ -284,16 +284,43 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun applyScannedExercises(entries: List<ScannedExerciseEntry>) {
+    fun applyScannedExercises(entries: List<ScannedExerciseEntry>, targetWeek: Int = 1) {
         viewModelScope.launch {
             val details = _uiState.value.planDetails ?: return@launch
             var nextOrder = (details.exercises.maxOfOrNull { it.planExercise.ordine } ?: -1) + 1
+            var weeksNeeded = details.plan.weeksCount
+            val currentMaxes = oneRepMaxRepository.currentByExercise().first()
 
             entries.forEach { entry ->
                 val exerciseId = entry.exerciseId ?: exerciseRepository.addCustomExercise(
                     nome = entry.rawName,
                     categoria = entry.suggestedCategory.ifBlank { "Custom" }
                 )
+
+                entry.oneRepMaxKg?.let { kg ->
+                    if (currentMaxes[exerciseId]?.weightKg != kg) {
+                        oneRepMaxRepository.add(exerciseId = exerciseId, weightKg = kg, source = com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity.SOURCE_MANUAL)
+                    }
+                }
+
+                if (entry.isAdvanced) {
+                    // A single unlabelled week goes to the week being viewed; "W1:…W4:" sheets keep their weeks
+                    val byWeek = if (entry.blocksByWeek.keys == setOf(1)) mapOf(targetWeek to entry.blocksByWeek.getValue(1)) else entry.blocksByWeek
+                    val planExerciseId = workoutRepository.savePlanExercise(
+                        PlanExerciseEntity(
+                            planId = details.plan.id,
+                            exerciseId = exerciseId,
+                            serieTarget = entry.sets,
+                            repsTarget = entry.reps,
+                            recuperoTarget = entry.restSeconds,
+                            ordine = nextOrder++,
+                            exerciseType = "strength"
+                        )
+                    ).toInt()
+                    workoutRepository.savePlanExerciseBlocks(planExerciseId, byWeek)
+                    weeksNeeded = maxOf(weeksNeeded, byWeek.keys.max())
+                    return@forEach
+                }
 
                 workoutRepository.savePlanExercise(
                     if (entry.isCardio) {
@@ -331,6 +358,10 @@ class RoutineDetailViewModel @Inject constructor(
                         )
                     }
                 )
+            }
+
+            if (weeksNeeded > details.plan.weeksCount) {
+                workoutRepository.updatePlan(details.plan.copy(weeksCount = weeksNeeded.coerceAtMost(MAX_WEEKS)))
             }
 
             _aiScanState.value = AiScanState.Idle

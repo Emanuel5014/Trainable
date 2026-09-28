@@ -965,6 +965,9 @@
     <string name="not_now">Not now</string>
     <string name="notification_next_set_detail">Next: %1$s - Set %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · next set at the top of the minute</string>
+    <string name="scan_programmed_hint">Programmed on a separate sheet: add its blocks after importing, or scan the program sheet.</string>
+    <string name="scan_use_simple">Use plain sets × reps</string>
+    <string name="scan_one_rep_max_found">1RM on the sheet: %1$s · it will be saved</string>
     <string name="one_rep_maxes">1RMs</string>
     <string name="one_rep_maxes_subtitle">YOUR MAXES</string>
     <string name="one_rep_maxes_empty_title">Add your first 1RM</string>

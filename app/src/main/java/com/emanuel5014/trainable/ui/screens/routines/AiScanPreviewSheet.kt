@@ -1322,7 +1322,48 @@ private fun ScanEntryCard(
             }
         }
 
-        if (entry.isCardio) {
+        if (entry.isProgrammed && !entry.isAdvanced) {
+            Text(
+                text = stringResource(R.string.scan_programmed_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = Primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        entry.oneRepMaxKg?.let { kg ->
+            Text(
+                text = stringResource(R.string.scan_one_rep_max_found, com.emanuel5014.trainable.ui.components.formatWeight(kg, "kg")),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+
+        if (entry.isAdvanced) {
+            val scanLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels("kg")
+            val weeks = entry.blocksByWeek.toSortedMap()
+            weeks.forEach { (week, blocks) ->
+                Row(verticalAlignment = Alignment.Top) {
+                    if (weeks.size > 1) {
+                        com.emanuel5014.trainable.ui.components.PrescriptionPill(
+                            text = stringResource(R.string.week_short, week),
+                            containerColor = Primary,
+                            contentColor = OnPrimary,
+                            emphasized = true
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    com.emanuel5014.trainable.ui.components.PrescriptionBlocksSummary(blocks = blocks, labels = scanLabels)
+                }
+            }
+            TextButton(onClick = { onUpdate(entry.copy(blocksByWeek = emptyMap())) }) {
+                Text(
+                    text = stringResource(R.string.scan_use_simple).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurfaceVariant
+                )
+            }
+        } else if (entry.isCardio) {
             CardioDurationSlider(
                 valueMinutes = entry.cardioMinutes ?: 20,
                 onValueChange = { onUpdate(entry.copy(cardioMinutes = it)) },

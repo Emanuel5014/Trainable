@@ -3,6 +3,10 @@ package com.emanuel5014.trainable.data.ai
 import android.net.Uri
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.PrescriptionNotationParser
+import com.emanuel5014.trainable.domain.prescription.Technique
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,10 +21,17 @@ data class ScannedExerciseEntry(
     val restSeconds: Int,
     val cardioMinutes: Int?,
     val exerciseType: String = "strength",
-    val timeSeconds: Int? = null
+    val timeSeconds: Int? = null,
+    /** Advanced %1RM prescription recognised from the sheet's notation, by week. */
+    val blocksByWeek: Map<Int, List<PrescriptionBlock>> = emptyMap(),
+    /** 1RM written on the sheet (e.g. "Stacco (230kg)"). */
+    val oneRepMaxKg: Float? = null,
+    /** "PROGRAMMAZIONE": the prescription is on a separate program sheet. */
+    val isProgrammed: Boolean = false
 ) {
     val isCardio: Boolean get() = exerciseType == "cardio" || cardioMinutes != null
     val isTimeAndWeight: Boolean get() = exerciseType == "time_and_weight"
+    val isAdvanced: Boolean get() = blocksByWeek.values.any { it.isNotEmpty() }
 }
 
 object RoutineScanPrompt {
@@ -39,7 +50,7 @@ object RoutineScanPrompt {
             }
         }
 
-        val exampleJson = buildExampleJson(languageCode.lowercase(), categories)
+        val exampleJson = withPowerliftingExample(buildExampleJson(languageCode.lowercase(), categories), languageCode.lowercase())
 
         return """
 You are an expert fitness AI specialized in reading and extracting gym workout routines / training cards from images.
@@ -70,6 +81,13 @@ EXTRACTION INSTRUCTIONS:
   * "cardio": Aerobic cardio machines (Treadmill / Tapis Roulant, Stationary Bike / Cyclette, Elliptical / Ellittica, Rower / Vogatore, Stairmaster).
 - time_seconds: For "time_and_weight" exercises, target duration in seconds as integer (e.g. 45, 60, 30); null for other types.
 - rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"", "1 min 30 s", "2'" into total seconds (e.g. 90, 120). Default to 120 if not specified.
+- notation: POWERLIFTING / PERCENTAGE PRESCRIPTIONS. If the sets/reps of an exercise are written as percentages of a max, RPE targets or with lifting techniques, copy that prescription LITERALLY, character by character, into "notation" (and still fill sets/reps as best you can). Do not reinterpret it. Examples of notation to copy as-is:
+  * "65% 6 70% 4x5 65% 8" (percent, then reps or SETSxREPS), "75% 3-4-2-1-5", "85% 3xMAX", "80% 20 REP ALSAP", "14 REP AMRAP", "@RPE8".
+  * Techniques written next to them: "STOP 2\"", "FERMO", "CATENE", "ELASTICI", "PIEDI SU", "GARA", "D4F2S4", "TEMPO 3-1-0", "EMOM", "BW", "+ 3 SINGOLE".
+  * If the sheet lists weeks for the same exercise ("W1: 80% 4x4", "W2: 85% 4x3"), put ALL weeks in one notation string keeping the "W1:", "W2:" prefixes.
+  * Use null when the exercise is a plain "3x10" with no percentages, RPE or techniques.
+- one_rep_max_kg: If the sheet states a max / 1RM for the exercise (e.g. "Stacco (230kg)", "Panca Piana (90kg)", "1RM 150"), that number in kg; otherwise null.
+- programmed: true if the sets/reps cell says "PROGRAMMAZIONE", "PROGRAMMING", "PROGRAM" or refers to a separate program sheet instead of numbers; otherwise false.
 - cardio_minutes: If the entry is a cardio activity (Treadmill / Tapis Roulant / Cinta, Bike / Cyclette / Bicicleta, Elliptical / Ellittica, Rower / Vogatore / Remo, Stairmaster), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
 - category: The target muscle group category (choose from: $categoriesStr).
 
@@ -80,6 +98,28 @@ OUTPUT FORMAT RULES:
 JSON Schema Example:
 $exampleJson
 """.trim()
+    }
+
+    /** Appends a %1RM example so the model learns to copy notation literally into "notation". */
+    private fun withPowerliftingExample(json: String, lang: String): String {
+        val name = if (lang == "it") "Stacco" else "Deadlift"
+        val example = """
+  {
+    "name": "$name",
+    "sets": 6,
+    "reps": "5",
+    "rest_seconds": 180,
+    "exercise_type": "strength",
+    "time_seconds": null,
+    "cardio_minutes": null,
+    "notation": "70% 5 75% 3x5 STOP 2\" 70% 6",
+    "one_rep_max_kg": 230,
+    "programmed": false,
+    "category": "${if (lang == "it") "Gambe" else "Legs"}"
+  }"""
+        val end = json.lastIndexOf(']')
+        if (end <= 0) return json
+        return json.substring(0, end).trimEnd() + "," + example + "\n]" + json.substring(end + 1)
     }
 
     private fun buildExampleJson(lang: String, categories: List<String>): String {
@@ -278,11 +318,35 @@ class RoutineScanner @Inject constructor(
 
             val matcher = ExerciseMatcher(catalog, languageCode)
             return parsed.map { item ->
-                val match = matcher.resolve(item.name)
+                // Technique qualifiers in the name ("Panca Piana PIEDI SU") are matched away and become techniques
+                val (baseName, nameTechniques) = splitNameQualifiers(item.name)
+                val match = matcher.resolve(baseName)
                 // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
                 val suggestedCategory = match?.categoria
                     ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
                     ?: matcher.suggestCategory(item.name, categories)
+
+                val program = item.notation?.let { PrescriptionNotationParser.parseProgram(it) }
+                val blocksByWeek = program?.weeks.orEmpty().mapValues { (_, blocks) ->
+                    blocks.map { block -> block.copy(techniques = (nameTechniques + block.techniques).distinct()) }
+                }
+                if (blocksByWeek.isNotEmpty()) {
+                    val (sets, reps) = PrescriptionExpander.legacyTargets(blocksByWeek.toSortedMap().values.first())
+                    return@map ScannedExerciseEntry(
+                        rawName = item.name,
+                        exerciseId = match?.id,
+                        matchedName = match?.nome,
+                        suggestedCategory = suggestedCategory,
+                        sets = sets.coerceIn(1, 30),
+                        reps = reps,
+                        restSeconds = item.restSeconds.coerceAtLeast(0),
+                        cardioMinutes = null,
+                        exerciseType = "strength",
+                        blocksByWeek = blocksByWeek,
+                        oneRepMaxKg = item.oneRepMaxKg ?: program?.oneRepMaxKg,
+                        isProgrammed = item.programmed
+                    )
+                }
 
                 val resolvedType = when {
                     item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
@@ -303,7 +367,9 @@ class RoutineScanner @Inject constructor(
                     restSeconds = item.restSeconds.coerceAtLeast(0),
                     cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
                     exerciseType = resolvedType,
-                    timeSeconds = resolvedTimeSeconds
+                    timeSeconds = resolvedTimeSeconds,
+                    oneRepMaxKg = item.oneRepMaxKg,
+                    isProgrammed = item.programmed
                 )
             }
         } finally {
@@ -311,6 +377,30 @@ class RoutineScanner @Inject constructor(
                 engine.release()
             }
         }
+    }
+
+    /** Splits technique qualifiers off an exercise name: "Panca Piana PIEDI SU" → ("Panca Piana", [FeetUp]). */
+    internal fun splitNameQualifiers(name: String): Pair<String, List<Technique>> {
+        var base = name
+        val techniques = mutableListOf<Technique>()
+        NAME_QUALIFIERS.forEach { (regex, technique) ->
+            if (regex.containsMatchIn(base)) {
+                techniques += technique
+                base = regex.replace(base, " ")
+            }
+        }
+        val cleaned = base.replace(Regex("""\s+"""), " ").trim(' ', '-', '(', ')', ',')
+        return (cleaned.ifBlank { name }) to techniques
+    }
+
+    private companion object {
+        val NAME_QUALIFIERS = listOf(
+            Regex("""(?i)\b(piedi\s*su|piedi\s*alti|feet\s*up)\b""") to Technique.FeetUp,
+            Regex("""(?i)\b(gara|competition|comp)\b""") to Technique.Competition,
+            Regex("""(?i)\b(catene|chains)\b""") to Technique.Chains,
+            Regex("""(?i)\b(elastici|bands)\b""") to Technique.Bands,
+            Regex("""(?i)\b(deficit)\b""") to Technique.Deficit
+        )
     }
 
     suspend fun release() {

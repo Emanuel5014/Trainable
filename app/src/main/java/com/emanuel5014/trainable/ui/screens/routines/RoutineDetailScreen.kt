@@ -2062,7 +2062,7 @@ fun RoutineDetailScreen(
                             viewModel.addPlanImage(savedPath)
                         }
                     }
-                    viewModel.applyScannedExercises(entries)
+                    viewModel.applyScannedExercises(entries, targetWeek = viewWeek)
                 },
                 onDismiss = { viewModel.dismissScanResult() }
             )

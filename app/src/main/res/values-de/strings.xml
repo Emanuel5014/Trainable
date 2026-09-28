@@ -965,6 +965,9 @@
     <string name="not_now">Nicht jetzt</string>
     <string name="notification_next_set_detail">Nächste: %1$s - Satz %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · nächster Satz zur vollen Minute</string>
+    <string name="scan_programmed_hint">Auf separatem Plan: Blöcke nach dem Import hinzufügen oder den Plan scannen.</string>
+    <string name="scan_use_simple">Einfache Sätze × Wdh. verwenden</string>
+    <string name="scan_one_rep_max_found">1RM auf dem Blatt: %1$s · wird gespeichert</string>
     <string name="one_rep_maxes">1RMs</string>
     <string name="one_rep_maxes_subtitle">DEINE MAXIMALWERTE</string>
     <string name="one_rep_maxes_empty_title">Füge dein erstes 1RM hinzu</string>

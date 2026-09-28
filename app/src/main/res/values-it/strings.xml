@@ -965,6 +965,9 @@
     <string name="not_now">Non ora</string>
     <string name="notification_next_set_detail">Prossima: %1$s - %2$dª serie: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · prossima serie allo scoccare del minuto</string>
+    <string name="scan_programmed_hint">Rimanda alla programmazione: aggiungi i blocchi dopo l\'importazione o scansiona il foglio della programmazione.</string>
+    <string name="scan_use_simple">Usa serie × rep semplici</string>
+    <string name="scan_one_rep_max_found">Massimale sul foglio: %1$s · verrà salvato</string>
     <string name="one_rep_maxes">Massimali</string>
     <string name="one_rep_maxes_subtitle">I TUOI MASSIMALI</string>
     <string name="one_rep_maxes_empty_title">Aggiungi il tuo primo massimale</string>
