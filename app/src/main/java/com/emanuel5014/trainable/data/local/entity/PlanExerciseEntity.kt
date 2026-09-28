@@ -48,5 +48,8 @@ data class PlanExerciseEntity(
     @ColumnInfo(name = "distanza_target_km")
     val distanzaTargetKm: Float? = null,
     @ColumnInfo(name = "cardio_categoria")
-    val cardioCategoria: String? = null
+    val cardioCategoria: String? = null,
+    /** Weeks in which this exercise is skipped, CSV ("4,8"). */
+    @ColumnInfo(name = "excluded_weeks")
+    val excludedWeeks: String? = null
 )

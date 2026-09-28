@@ -40,5 +40,12 @@ data class WorkoutPlanEntity(
     @ColumnInfo(name = "image_uri")
     val imageUri: String? = null,
     @ColumnInfo(name = "giorni_settimana")
-    val giorniSettimana: String? = null
+    val giorniSettimana: String? = null,
+    /** Number of weeks of a periodized plan (1 = a plain routine). */
+    @ColumnInfo(name = "weeks_count")
+    val weeksCount: Int = 1,
+    @ColumnInfo(name = "current_week")
+    val currentWeek: Int = 1,
+    @ColumnInfo(name = "auto_advance_week")
+    val autoAdvanceWeek: Boolean = true
 )

@@ -7,6 +7,7 @@ import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -20,6 +21,8 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
@@ -65,6 +68,27 @@ class WorkoutRepository @Inject constructor(
     }
 
     suspend fun updatePlanExercise(exercise: PlanExerciseEntity) = workoutDao.updatePlanExercise(exercise)
+
+    /**
+     * Replaces the advanced prescription of a plan exercise. An empty map turns it back into a
+     * plain exercise. Legacy `serieTarget`/`repsTarget` are kept in sync by the caller.
+     */
+    suspend fun savePlanExerciseBlocks(planExerciseId: Int, blocksByWeek: Map<Int, List<PrescriptionBlock>>) {
+        val entities = blocksByWeek.toSortedMap().flatMap { (week, blocks) ->
+            blocks.mapIndexed { index, block -> PlanExerciseBlockEntity.fromDomain(block, planExerciseId, week, index) }
+        }
+        workoutDao.replaceAllBlocks(planExerciseId, entities)
+    }
+
+    suspend fun setExcludedWeeks(planExerciseId: Int, weeks: Set<Int>) =
+        workoutDao.setExcludedWeeks(planExerciseId, WeekSetCodec.encode(weeks))
+
+    suspend fun setPlanCurrentWeek(planId: Int, week: Int) = workoutDao.setPlanCurrentWeek(planId, week)
+
+    /** Drops blocks of weeks beyond [weeksCount] after the plan has been shortened. */
+    suspend fun trimPlanWeeks(planId: Int, weeksCount: Int) = workoutDao.deleteBlocksBeyondWeek(planId, weeksCount)
+
+    suspend fun setSessionProgramWeek(sessionId: Int, week: Int?) = workoutDao.setSessionProgramWeek(sessionId, week)
 
     suspend fun deletePlanExercise(exercise: PlanExerciseEntity) = workoutDao.deletePlanExercise(exercise)
 

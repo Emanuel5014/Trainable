@@ -127,7 +127,7 @@ data class SetResponse(
     val pesoSollevato: Float,
     val repsEffettive: Int,
     val numeroSerie: Int,
-    val rpe: Int?,
+    val rpe: Float?,
     val note: String?
 )
 

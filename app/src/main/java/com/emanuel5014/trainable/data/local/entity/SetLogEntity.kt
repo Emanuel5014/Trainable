@@ -38,7 +38,7 @@ data class SetLogEntity(
     @ColumnInfo(name = "numero_serie")
     val numeroSerie: Int,
     @ColumnInfo(name = "rpe")
-    val rpe: Int? = null,
+    val rpe: Float? = null,
     @ColumnInfo(name = "is_warmup")
     val isWarmup: Boolean = false,
     @ColumnInfo(name = "note")
@@ -52,5 +52,25 @@ data class SetLogEntity(
     @ColumnInfo(name = "is_completed")
     val isCompleted: Boolean = true,
     @ColumnInfo(name = "durata_secondi")
-    val durataSecondi: Int? = null
+    val durataSecondi: Int? = null,
+    // Snapshot of the advanced prescription this set was performed against
+    @ColumnInfo(name = "target_percent")
+    val targetPercent: Float? = null,
+    @ColumnInfo(name = "target_rpe")
+    val targetRpe: Float? = null,
+    /** Planned reps ("5", or "MAX" for AMRAP). */
+    @ColumnInfo(name = "target_reps")
+    val targetReps: String? = null,
+    @ColumnInfo(name = "rep_mode")
+    val repMode: String? = null,
+    @ColumnInfo(name = "block_index")
+    val blockIndex: Int? = null,
+    @ColumnInfo(name = "techniques")
+    val techniques: String? = null,
+    /** Extra set added on top of the plan (e.g. top singles). */
+    @ColumnInfo(name = "is_extra")
+    val isExtra: Boolean = false,
+    /** Total-reps target of the block (ALSAP), to rebuild the block progress on resume. */
+    @ColumnInfo(name = "target_total_reps")
+    val targetTotalReps: Int? = null
 )

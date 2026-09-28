@@ -32,7 +32,7 @@ data class SetEntry(
     val setNumber: Int,
     val weight: Float,
     val reps: Int,
-    val rpe: Int?,
+    val rpe: Float?,
     val isWarmup: Boolean,
     val note: String?
 )

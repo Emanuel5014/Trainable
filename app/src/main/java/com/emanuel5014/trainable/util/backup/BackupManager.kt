@@ -235,6 +235,9 @@ class BackupManager @Inject constructor(
                 json.put("auto_stop_time_weight_at_target", prefs[UserPreferencesRepository.AUTO_STOP_TIME_WEIGHT_AT_TARGET] ?: true)
                 json.put("keep_screen_on_cardio_timer", prefs[UserPreferencesRepository.KEEP_SCREEN_ON_CARDIO_TIMER] ?: true)
                 json.put("keep_screen_on_set_timer", prefs[UserPreferencesRepository.KEEP_SCREEN_ON_SET_TIMER] ?: true)
+                prefs[UserPreferencesRepository.LOAD_ROUNDING_KG]?.let { json.put("load_rounding_kg", it.toDouble()) }
+                prefs[UserPreferencesRepository.LOAD_ROUNDING_LB]?.let { json.put("load_rounding_lb", it.toDouble()) }
+                json.put("rpe_input_mode", prefs[UserPreferencesRepository.RPE_INPUT_MODE] ?: 0)
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -367,6 +370,12 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.KEEP_SCREEN_ON_CARDIO_TIMER] = jsonObject.getBoolean("keep_screen_on_cardio_timer")
                                             if (jsonObject.has("keep_screen_on_set_timer"))
                                                 prefs[UserPreferencesRepository.KEEP_SCREEN_ON_SET_TIMER] = jsonObject.getBoolean("keep_screen_on_set_timer")
+                                            if (jsonObject.has("load_rounding_kg"))
+                                                prefs[UserPreferencesRepository.LOAD_ROUNDING_KG] = jsonObject.getDouble("load_rounding_kg").toFloat()
+                                            if (jsonObject.has("load_rounding_lb"))
+                                                prefs[UserPreferencesRepository.LOAD_ROUNDING_LB] = jsonObject.getDouble("load_rounding_lb").toFloat()
+                                            if (jsonObject.has("rpe_input_mode"))
+                                                prefs[UserPreferencesRepository.RPE_INPUT_MODE] = jsonObject.getInt("rpe_input_mode")
                                         }
                                     }
                                 } catch (e: Exception) {
