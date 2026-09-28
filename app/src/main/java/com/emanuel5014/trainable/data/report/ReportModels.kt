@@ -34,7 +34,9 @@ data class SetEntry(
     val reps: Int,
     val rpe: Float?,
     val isWarmup: Boolean,
-    val note: String?
+    val note: String?,
+    /** Planned %1RM / techniques this set was performed against, e.g. "75% · Pause 2″". */
+    val prescription: String? = null
 )
 
 data class ExerciseSummary(

@@ -561,6 +561,11 @@ fun Application.configureServer(
                                 put("isActive", pwd.plan.isActive)
                                 put("startDate", pwd.plan.dataInizio)
                                 if (pwd.plan.dataFine != null) put("endDate", pwd.plan.dataFine!!)
+                                if (pwd.plan.weeksCount > 1) {
+                                    put("weeksCount", pwd.plan.weeksCount)
+                                    put("currentWeek", pwd.plan.currentWeek)
+                                }
+                                val webLabels = com.emanuel5014.trainable.ui.components.prescriptionLabels(context, "kg")
                                 put("exercises", buildJsonArray {
                                     pwd.exercises.forEach { ex ->
                                         add(buildJsonObject {
@@ -569,6 +574,13 @@ fun Application.configureServer(
                                             put("targetSets", ex.planExercise.serieTarget)
                                             put("targetReps", ex.planExercise.repsTarget)
                                             put("targetRest", ex.planExercise.recuperoTarget)
+                                            when (val resolved = ex.resolve(pwd.plan.currentWeek)) {
+                                                is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks ->
+                                                    put("prescription", com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.summary(resolved.blocks, webLabels))
+                                                com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Excluded ->
+                                                    put("excludedThisWeek", true)
+                                                else -> Unit
+                                            }
                                         })
                                     }
                                 })
@@ -711,6 +723,7 @@ fun Application.configureServer(
                                 put("numeroSerie", swd.setLog.numeroSerie)
                                 swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
+                                com.emanuel5014.trainable.ui.components.setLogPrescriptionText(context, swd.setLog)?.let { put("prescription", it) }
                             })
                         }
                     }

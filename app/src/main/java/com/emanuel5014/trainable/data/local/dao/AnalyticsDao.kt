@@ -126,16 +126,17 @@ interface AnalyticsDao {
 
     @Query("""
         SELECT 
-            CASE 
-                WHEN MAX(s.reps_effettive) = 1 THEN MAX(s.peso_sollevato)
-                ELSE MAX(s.peso_sollevato) * (1.0 + MAX(s.reps_effettive) / 30.0)
-            END AS maxValue,
+            MAX(CASE 
+                WHEN s.reps_effettive = 1 THEN s.peso_sollevato
+                ELSE s.peso_sollevato * (1.0 + s.reps_effettive / 30.0)
+            END) AS maxValue,
             MIN(w.timestamp) AS timestamp
         FROM set_logs s
         INNER JOIN workout_sessions w ON s.session_id = w.id
         WHERE s.exercise_id = :exerciseId 
             AND w.timestamp >= :startDate
             AND s.reps_effettive > 0
+            AND s.is_warmup = 0
         GROUP BY date(w.timestamp / 1000, 'unixepoch')
         ORDER BY MIN(w.timestamp) ASC
     """)

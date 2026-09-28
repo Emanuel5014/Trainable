@@ -12,7 +12,8 @@ import javax.inject.Inject
 
 class ReportGenerator @Inject constructor(
     private val workoutRepository: WorkoutRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val localeManager: com.emanuel5014.trainable.util.AppLocaleManager
 ) {
     suspend fun generateReport(planId: Int, languageCode: String = "en"): PlanReport {
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).first()
@@ -109,7 +110,10 @@ class ReportGenerator @Inject constructor(
                     reps = setWithExercise.setLog.repsEffettive,
                     rpe = setWithExercise.setLog.rpe,
                     isWarmup = setWithExercise.setLog.isWarmup,
-                    note = setWithExercise.setLog.note
+                    note = setWithExercise.setLog.note,
+                    prescription = com.emanuel5014.trainable.ui.components.setLogPrescriptionText(
+                        localeManager.localizedContext(), setWithExercise.setLog
+                    )
                 )
 
                 exerciseDataMap.getOrPut(exerciseId) { mutableListOf() }
@@ -200,10 +204,7 @@ class ReportGenerator @Inject constructor(
 
         val bestOneRM = allSets
             .filter { !it.isWarmup && it.weight > 0 && it.reps > 0 }
-            .maxOfOrNull { set ->
-                val epley = set.weight * (1 + set.reps / 30f)
-                epley
-            }
+            .maxOfOrNull { set -> com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.weight, set.reps) }
 
         return ExerciseSummary(
             firstSessionDate = sessions.first().date,

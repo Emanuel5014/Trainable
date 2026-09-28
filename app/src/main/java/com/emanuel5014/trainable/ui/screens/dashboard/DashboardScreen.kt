@@ -654,7 +654,7 @@ fun DashboardScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = uiState.todayPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
@@ -665,6 +665,14 @@ fun DashboardScreen(
                                             text = uiState.todayPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
+                                        )
+                                    }
+                                    uiState.todayPlan!!.takeIf { it.weeksCount > 1 }?.let { plan ->
+                                        com.emanuel5014.trainable.ui.components.PrescriptionPill(
+                                            text = stringResource(R.string.week_short, plan.currentWeek) + "/" + plan.weeksCount,
+                                            containerColor = com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.12f),
+                                            contentColor = com.emanuel5014.trainable.ui.theme.Primary,
+                                            emphasized = true
                                         )
                                     }
                                 }
@@ -700,7 +708,7 @@ fun DashboardScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = uiState.suggestedPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
@@ -711,6 +719,14 @@ fun DashboardScreen(
                                             text = uiState.suggestedPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
+                                        )
+                                    }
+                                    uiState.suggestedPlan!!.takeIf { it.weeksCount > 1 }?.let { plan ->
+                                        com.emanuel5014.trainable.ui.components.PrescriptionPill(
+                                            text = stringResource(R.string.week_short, plan.currentWeek) + "/" + plan.weeksCount,
+                                            containerColor = com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.12f),
+                                            contentColor = com.emanuel5014.trainable.ui.theme.Primary,
+                                            emphasized = true
                                         )
                                     }
                                 }

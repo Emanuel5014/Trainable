@@ -643,10 +643,8 @@ private fun CompareExercisesDetailSection(
                             fun calculate1RM(sets: List<com.emanuel5014.trainable.data.local.relation.SetWithExercise>): Float {
                                 return sets.maxOfOrNull { setWithEx ->
                                     val set = setWithEx.setLog
-                                    if (set.repsEffettive > 0) {
-                                        if (set.repsEffettive == 1) set.pesoSollevato
-                                        else set.pesoSollevato * (1f + set.repsEffettive / 30f)
-                                    } else 0f
+                                    if (set.isWarmup) 0f
+                                    else com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.pesoSollevato, set.repsEffettive)
                                 } ?: 0f
                             }
                             val value1 = calculate1RM(ex1)

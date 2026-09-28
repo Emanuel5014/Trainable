@@ -2096,12 +2096,8 @@ fun ExerciseSettingsBottomSheet(
     }
 }
 
-fun calculateEpley1RM(weight: Float, reps: Int): Float {
-    return if (reps > 0) {
-        if (reps == 1) weight
-        else weight * (1f + reps / 30f)
-    } else 0f
-}
+fun calculateEpley1RM(weight: Float, reps: Int): Float =
+    com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(weight, reps)
 
 @Composable
 fun WorkoutCalendarSection(

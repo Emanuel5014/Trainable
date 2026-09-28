@@ -1135,7 +1135,7 @@ function openPlanModal(planId) {
     ${allExercises.map(ex => `
       <div class="plan-modal-exercise">
         <span class="plan-modal-exercise-name">${ex.exerciseName}</span>
-        <span class="plan-modal-exercise-detail">${ex.targetSets}x${ex.targetReps}</span>
+        <span class="plan-modal-exercise-detail">${ex.excludedThisWeek ? '—' : (ex.prescription || (ex.targetSets + 'x' + ex.targetReps))}</span>
       </div>
     `).join('')}
 
@@ -1401,8 +1401,9 @@ async function loadSessionDetail() {
             <div class="set-row">
               <div class="set-number">${set.numeroSerie}</div>
               <div>${weightText(set.pesoSollevato)}</div>
-              <div>${set.repsEffettive}</div>
+              <div>${set.repsEffettive}${set.rpe != null ? ' @' + set.rpe : ''}</div>
             </div>
+            ${set.prescription ? `<div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.75;font-size:0.8rem;"><div>${set.prescription}</div></div>` : ''}
           `).join('')}
         </div>
       </div>

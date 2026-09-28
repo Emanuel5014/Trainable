@@ -26,6 +26,14 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import com.emanuel5014.trainable.ui.theme.OnPrimary
 
 /** Localized labels for prescriptions; weights are shown in the user's [weightUnit]. */
 @Composable
@@ -115,3 +123,76 @@ fun PrescriptionBlocksSummary(
 
 @Composable
 fun weekLabel(week: Int): String = stringResource(R.string.week_short, week)
+
+/** Prescription of a logged set as plain text for exports ("75% · MAX · Pause 2″"), without RPE. */
+fun setLogPrescriptionText(context: android.content.Context, set: SetLogEntity): String? =
+    setLogPrescriptionBadges(context, set.copy(rpe = null)).takeIf { it.isNotEmpty() }?.joinToString(" · ")
+
+/** Badges describing the prescription snapshot and RPE of a logged set ("75%", "MAX", "Pause 2″", "RPE 8", "EXTRA"). */
+fun setLogPrescriptionBadges(context: android.content.Context, set: SetLogEntity): List<String> = buildList {
+    set.targetPercent?.let { add("${PrescriptionFormatter.number(it)}%") }
+    set.targetRpe?.let { add("@" + PrescriptionFormatter.number(it)) }
+    when (set.repMode) {
+        "amrap" -> add(context.getString(R.string.max_label))
+        "total" -> set.targetTotalReps?.let { add(context.getString(R.string.total_reps_label, it)) }
+    }
+    TechniqueCodec.decode(set.techniques).forEach { add(techniqueLabel(context, it)) }
+    set.rpe?.let { add(context.getString(R.string.rpe_short, PrescriptionFormatter.number(it))) }
+    if (set.isExtra) add(context.getString(R.string.extra_badge))
+}
+
+/** Pills row for a logged set; the %1RM badge (if any) is highlighted. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val badges = remember(set) { setLogPrescriptionBadges(context, set) }
+    if (badges.isEmpty()) return
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        badges.forEachIndexed { i, text ->
+            val highlight = i == 0 && set.targetPercent != null
+            PrescriptionPill(
+                text = text,
+                containerColor = if (highlight) Primary.copy(alpha = 0.12f) else SurfaceContainerHigh,
+                contentColor = if (highlight) Primary else OnSurfaceVariant,
+                emphasized = highlight
+            )
+        }
+    }
+}
+
+
+/** RPE 6–10 in half steps; tapping the selected value clears it. */
+@Composable
+fun RpeSelector(value: Float?, onValueChange: (Float?) -> Unit) {
+    val options = listOf(6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f, 9.5f, 10f)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = stringResource(R.string.rpe_optional).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant,
+            fontWeight = FontWeight.Black
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            options.forEach { option ->
+                val selected = value == option
+                androidx.compose.material3.FilterChip(
+                    selected = selected,
+                    onClick = { onValueChange(if (selected) null else option) },
+                    label = { Text(PrescriptionFormatter.number(option), fontWeight = FontWeight.ExtraBold) },
+                    colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Primary,
+                        selectedLabelColor = OnPrimary
+                    )
+                )
+            }
+        }
+    }
+}

@@ -22,6 +22,8 @@ import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
 import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
@@ -486,17 +488,48 @@ class WorkoutRepository @Inject constructor(
         val lastSession = workoutDao.getLastFinishedSessionForPlan(planId).first()
         val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
         
+        val week = planDetails.plan.currentWeek.coerceIn(1, planDetails.plan.weeksCount.coerceAtLeast(1))
         val sessionId = workoutDao.insertSession(
             WorkoutSessionEntity(
                 planId = planId,
                 timestamp = timestamp,
-                isFinished = true
+                isFinished = true,
+                programWeek = if (planDetails.plan.weeksCount > 1) week else null
             )
         )
         
         planDetails.exercises.forEach { exerciseWithDetails ->
             val planEx = exerciseWithDetails.planExercise
             val exerciseId = planEx.exerciseId
+            val resolved = exerciseWithDetails.resolve(week)
+            if (resolved is ResolvedPrescription.Excluded) return@forEach
+            if (resolved is ResolvedPrescription.Blocks) {
+                // Advanced exercise: one row per planned set, carrying the prescription snapshot
+                val prevByBlock = lastSessionSets?.filter { it.exerciseId == exerciseId && it.blockIndex != null }
+                    ?.sortedBy { it.numeroSerie }?.groupBy { it.blockIndex!! }.orEmpty()
+                PrescriptionExpander.expand(resolved.blocks).forEachIndexed { index, planned ->
+                    val prevSet = prevByBlock[planned.blockIndex]?.getOrNull(planned.indexInBlock)
+                    workoutDao.insertSet(
+                        SetLogEntity(
+                            sessionId = sessionId.toInt(),
+                            exerciseId = exerciseId,
+                            pesoSollevato = planned.fixedWeightKg ?: prevSet?.pesoSollevato ?: 0f,
+                            repsEffettive = planned.targetReps ?: prevSet?.repsEffettive ?: 0,
+                            numeroSerie = index + 1,
+                            ordineEsercizio = planEx.ordine,
+                            supersetId = planEx.supersetId,
+                            targetPercent = planned.percent,
+                            targetRpe = planned.targetRpe,
+                            targetReps = planned.targetReps?.toString() ?: if (planned.repMode == com.emanuel5014.trainable.domain.prescription.RepMode.AMRAP) "MAX" else null,
+                            repMode = planned.repMode.code,
+                            blockIndex = planned.blockIndex,
+                            techniques = com.emanuel5014.trainable.domain.prescription.TechniqueCodec.encode(planned.techniques),
+                            targetTotalReps = planned.totalReps
+                        )
+                    )
+                }
+                return@forEach
+            }
             
             // Try to find sets for this exercise in the last session
             val prevSets = lastSessionSets?.filter { it.exerciseId == exerciseId }?.sortedBy { it.numeroSerie }
@@ -602,13 +635,28 @@ class WorkoutRepository @Inject constructor(
                 val reps = if (isTimeAndWeight) "" else setLog.repsEffettive.toString()
                 val duration = setLog.durataSecondi?.toString() ?: ""
 
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note")
+                val week = session.session.programWeek?.toString() ?: ""
+                val targetPercent = setLog.targetPercent?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
+                val targetReps = when (setLog.repMode) {
+                    "total" -> setLog.targetTotalReps?.let { "$it ALSAP" } ?: ""
+                    else -> setLog.targetReps ?: ""
+                }
+                val techniques = escapeCsv(
+                    com.emanuel5014.trainable.domain.prescription.TechniqueCodec.decode(setLog.techniques)
+                        .joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
+                )
+                val rpe = setLog.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
+                val extra = if (setLog.isExtra) "1" else "0"
+                val warmup = if (setLog.isWarmup) "1" else "0"
+
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note,$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup")
             }
 
             session.cardio.forEach { cardio ->
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},")
+                val week = session.session.programWeek?.toString() ?: ""
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},,$week,,,,,0,0")
             }
         }
 
@@ -616,6 +664,18 @@ class WorkoutRepository @Inject constructor(
     }
 
     private fun csvHeader(languageCode: String, weightUnit: String): String {
+        val prescriptionColumns = when (languageCode) {
+            "it" -> "Settimana,% Massimale,Rep Target,Tecniche,RPE,Extra,Riscaldamento"
+            "es" -> "Semana,% 1RM,Reps Objetivo,Técnicas,RPE,Extra,Calentamiento"
+            "fr" -> "Semaine,% 1RM,Reps Cible,Techniques,RPE,Bonus,Échauffement"
+            "de" -> "Woche,% 1RM,Ziel-Wdh.,Techniken,RPE,Extra,Aufwärmen"
+            "pt" -> "Semana,% 1RM,Reps Alvo,Técnicas,RPE,Extra,Aquecimento"
+            else -> "Week,% 1RM,Target Reps,Techniques,RPE,Extra,Warm-up"
+        }
+        return basicCsvHeader(languageCode, weightUnit) + "," + prescriptionColumns
+    }
+
+    private fun basicCsvHeader(languageCode: String, weightUnit: String): String {
         return when (languageCode) {
             "it" -> "Data,ID Sessione,Scheda,Esercizio,Categoria,Tipo,Serie,Peso ($weightUnit),Ripetizioni,Durata (s),Distanza (km),Nota"
             "es" -> "Fecha,ID Sesión,Plan,Ejercicio,Categoría,Tipo,Serie,Peso ($weightUnit),Repeticiones,Duración (s),Distancia (km),Nota"

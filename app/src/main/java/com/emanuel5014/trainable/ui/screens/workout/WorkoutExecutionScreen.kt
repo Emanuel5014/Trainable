@@ -159,6 +159,7 @@ import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
+import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
@@ -2509,34 +2510,3 @@ fun LogSetButton(
     }
 }
 
-
-/** RPE 6–10 in half steps; tapping the selected value clears it. */
-@Composable
-private fun RpeSelector(value: Float?, onValueChange: (Float?) -> Unit) {
-    val options = listOf(6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f, 9.5f, 10f)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = stringResource(R.string.rpe_optional).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = OnSurfaceVariant,
-            fontWeight = FontWeight.Black
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            options.forEach { option ->
-                val selected = value == option
-                androidx.compose.material3.FilterChip(
-                    selected = selected,
-                    onClick = { onValueChange(if (selected) null else option) },
-                    label = { Text(PrescriptionFormatter.number(option), fontWeight = FontWeight.ExtraBold) },
-                    colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary,
-                        selectedLabelColor = OnPrimary
-                    )
-                )
-            }
-        }
-    }
-}

@@ -897,6 +897,7 @@ fun EditSetRow(
                 fontWeight = FontWeight.Bold,
                 color = OnSurface
             )
+            com.emanuel5014.trainable.ui.components.SetLogBadges(set = set, modifier = Modifier.padding(vertical = 2.dp))
             if (!set.note.isNullOrBlank()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(

@@ -1246,6 +1246,7 @@ private fun HistoryExerciseGroup(
                         color = OnSurface
                     )
                 }
+                com.emanuel5014.trainable.ui.components.SetLogBadges(set = set, modifier = Modifier.padding(top = 2.dp))
                 if (!set.note.isNullOrBlank()) {
                     Row(
                         modifier = Modifier.padding(top = 2.dp, start = 8.dp),
@@ -1651,6 +1652,7 @@ fun EditSetDialog(
     var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "45") }
     var note by remember { mutableStateOf(set.note ?: "") }
     var isTimeSet by remember { mutableStateOf(set.durataSecondi != null) }
+    var rpe by remember { mutableStateOf(set.rpe) }
 
     val isValid = weight.isNotBlank() && (if (isTimeSet) seconds.isNotBlank() else reps.isNotBlank())
 
@@ -1739,6 +1741,7 @@ fun EditSetDialog(
                         label = stringResource(R.string.reps),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
+                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
                 }
                 GymInputField(
                     value = note,
@@ -1789,7 +1792,8 @@ fun EditSetDialog(
                             pesoSollevato = storageWeight,
                             repsEffettive = if (isTimeSet) 0 else (reps.toIntOrNull() ?: 0),
                             durataSecondi = if (isTimeSet) (seconds.toIntOrNull() ?: 45) else null,
-                            note = note.ifBlank { null }
+                            note = note.ifBlank { null },
+                            rpe = if (isTimeSet) null else rpe
                         )
                         onConfirm(updatedSet)
                     },
