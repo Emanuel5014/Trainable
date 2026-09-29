@@ -1012,5 +1012,7 @@
     <string name="keep_prescription_on_swap">Die neue Übung übernimmt die Vorgabe der alten.</string>
     <string name="delete_week_message_local">Die Woche wird aus dieser Übung entfernt, die folgenden Wochen rücken auf.</string>
     <string name="add_block_short">Block</string>
+    <string name="advanced_programming">Erweiterte Programmierung</string>
+    <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und RPE</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

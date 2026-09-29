@@ -64,6 +64,8 @@ class UserPreferencesRepository @Inject constructor(
     val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
     val AUTO_STOP_CARDIO_AT_TARGET = booleanPreferencesKey("auto_stop_cardio_at_target")
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
+    /** Master switch for %1RM / technique / weekly-program features. Off by default. */
+    val ADVANCED_PROGRAMMING_ENABLED = booleanPreferencesKey("advanced_programming_enabled")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** 0 = RPE input only on advanced (%1RM) exercises, 1 = on every exercise, 2 = never. */
@@ -327,6 +329,15 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAutoStopCardioAtTarget(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[AUTO_STOP_CARDIO_AT_TARGET] = enabled
+        }
+    }
+
+    val advancedProgrammingEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[ADVANCED_PROGRAMMING_ENABLED] ?: false }
+
+    suspend fun setAdvancedProgrammingEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ADVANCED_PROGRAMMING_ENABLED] = enabled
         }
     }
 

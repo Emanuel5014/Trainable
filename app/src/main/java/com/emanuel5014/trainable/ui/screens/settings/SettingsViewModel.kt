@@ -330,6 +330,18 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val advancedProgrammingEnabled = userPrefsRepository.advancedProgrammingEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setAdvancedProgrammingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAdvancedProgrammingEnabled(enabled)
+        }
+    }
+
     val loadRoundingIncrement = userPrefsRepository.loadRoundingIncrement.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

@@ -551,6 +551,7 @@ fun Application.configureServer(
                     val plans = workoutDao.getAllPlansSorted().first()
                     val plansWithDetails = workoutDao.getPlansWithDetails(plans.map { it.id })
                     val lang = resolveLanguage(userPrefsRepo)
+                    val advanced = userPrefsRepo.advancedProgrammingEnabled.first()
 
                     val items = buildJsonArray {
                         plansWithDetails.forEach { pwd ->
@@ -561,7 +562,7 @@ fun Application.configureServer(
                                 put("isActive", pwd.plan.isActive)
                                 put("startDate", pwd.plan.dataInizio)
                                 if (pwd.plan.dataFine != null) put("endDate", pwd.plan.dataFine!!)
-                                if (pwd.plan.weeksCount > 1) {
+                                if (advanced && pwd.plan.weeksCount > 1) {
                                     put("weeksCount", pwd.plan.weeksCount)
                                     put("currentWeek", pwd.plan.currentWeek)
                                 }
@@ -574,7 +575,7 @@ fun Application.configureServer(
                                             put("targetSets", ex.planExercise.serieTarget)
                                             put("targetReps", ex.planExercise.repsTarget)
                                             put("targetRest", ex.planExercise.recuperoTarget)
-                                            when (val resolved = ex.resolve(pwd.plan.currentWeek)) {
+                                            when (val resolved = if (advanced) ex.resolve(pwd.plan.currentWeek) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy) {
                                                 is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks ->
                                                     put("prescription", com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.summary(resolved.blocks, webLabels))
                                                 com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Excluded ->
@@ -712,6 +713,7 @@ fun Application.configureServer(
                     }
 
                     val lang = resolveLanguage(userPrefsRepo)
+                    val advanced = userPrefsRepo.advancedProgrammingEnabled.first()
                     val volume = session.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
                     val setsArray = buildJsonArray {
                         session.sets.forEach { swd ->
@@ -721,9 +723,9 @@ fun Application.configureServer(
                                 put("pesoSollevato", swd.setLog.pesoSollevato)
                                 put("repsEffettive", swd.setLog.repsEffettive)
                                 put("numeroSerie", swd.setLog.numeroSerie)
-                                swd.setLog.rpe?.let { put("rpe", it) }
+                                if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
-                                com.emanuel5014.trainable.ui.components.setLogPrescriptionText(context, swd.setLog)?.let { put("prescription", it) }
+                                if (advanced) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(context, swd.setLog)?.let { put("prescription", it) }
                             })
                         }
                     }

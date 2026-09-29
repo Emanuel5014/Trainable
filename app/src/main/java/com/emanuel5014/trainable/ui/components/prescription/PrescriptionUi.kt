@@ -145,6 +145,7 @@ fun setLogPrescriptionBadges(context: android.content.Context, set: SetLogEntity
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
+    if (!LocalAdvancedProgramming.current) return
     val context = LocalContext.current
     val badges = remember(set) { setLogPrescriptionBadges(context, set) }
     if (badges.isEmpty()) return

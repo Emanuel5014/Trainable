@@ -913,7 +913,8 @@ fun EditExerciseCard(
             
             val context = LocalContext.current
             val prescriptionLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels(weightUnit)
-            val isAdvanced = exerciseState.sets.any { it.blockIndex != null }
+            val advancedOn = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
+            val isAdvanced = advancedOn && exerciseState.sets.any { it.blockIndex != null }
             val blocksByIndex = remember(exerciseState.sets) {
                 val indexes = exerciseState.sets.filter { it.blockIndex != null && !it.isExtra }.map { it.blockIndex!! }.distinct().sorted()
                 indexes.zip(exerciseState.sets.toPrescriptionBlocks()).toMap()
@@ -977,7 +978,7 @@ fun EditExerciseCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
                 }
-                if (!isTimeAndWeight) {
+                if (!isTimeAndWeight && advancedOn) {
                     GymButton(
                         onClick = onEditPrescription,
                         containerColor = if (isAdvanced) Primary else Primary.copy(alpha = 0.1f),

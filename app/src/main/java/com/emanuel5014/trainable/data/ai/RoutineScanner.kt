@@ -36,7 +36,8 @@ data class ScannedExerciseEntry(
 
 object RoutineScanPrompt {
 
-    fun build(languageCode: String, categories: List<String> = emptyList()): String {
+    /** @param advanced include the powerlifting fields (percent notation, 1RM, PROGRAMMAZIONE); off keeps the classic card-only prompt. */
+    fun build(languageCode: String, categories: List<String> = emptyList(), advanced: Boolean = true): String {
         val categoriesStr = if (categories.isNotEmpty()) {
             categories.joinToString(", ") { "\"$it\"" }
         } else {
@@ -50,7 +51,18 @@ object RoutineScanPrompt {
             }
         }
 
-        val exampleJson = withPowerliftingExample(buildExampleJson(languageCode.lowercase(), categories), languageCode.lowercase())
+        val baseExample = buildExampleJson(languageCode.lowercase(), categories)
+        val exampleJson = if (advanced) withPowerliftingExample(baseExample, languageCode.lowercase()) else baseExample
+
+        val advancedFields = """
+- notation: POWERLIFTING / PERCENTAGE PRESCRIPTIONS. If the sets/reps of an exercise are written as percentages of a max, RPE targets or with lifting techniques, copy that prescription LITERALLY, character by character, into "notation" (and still fill sets/reps as best you can). Do not reinterpret it. Examples of notation to copy as-is:
+  * "65% 6 70% 4x5 65% 8" (percent, then reps or SETSxREPS), "75% 3-4-2-1-5", "85% 3xMAX", "80% 20 REP ALSAP", "14 REP AMRAP", "@RPE8".
+  * Techniques written next to them: "STOP 2\"", "FERMO", "CATENE", "ELASTICI", "PIEDI SU", "GARA", "D4F2S4", "TEMPO 3-1-0", "EMOM", "BW", "+ 3 SINGOLE".
+  * If the sheet lists weeks for the same exercise ("W1: 80% 4x4", "W2: 85% 4x3"), put ALL weeks in one notation string keeping the "W1:", "W2:" prefixes.
+  * Use null when the exercise is a plain "3x10" with no percentages, RPE or techniques.
+- one_rep_max_kg: If the sheet states a max / 1RM for the exercise (e.g. "Stacco (230kg)", "Panca Piana (90kg)", "1RM 150"), that number in kg; otherwise null.
+- programmed: true if the sets/reps cell says "PROGRAMMAZIONE", "PROGRAMMING", "PROGRAM" or refers to a separate program sheet instead of numbers; otherwise false.
+""".trimIndent().let { it + "\n" }
 
         return """
 You are an expert fitness AI specialized in reading and extracting gym workout routines / training cards from images.
@@ -81,14 +93,7 @@ EXTRACTION INSTRUCTIONS:
   * "cardio": Aerobic cardio machines (Treadmill / Tapis Roulant, Stationary Bike / Cyclette, Elliptical / Ellittica, Rower / Vogatore, Stairmaster).
 - time_seconds: For "time_and_weight" exercises, target duration in seconds as integer (e.g. 45, 60, 30); null for other types.
 - rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"", "1 min 30 s", "2'" into total seconds (e.g. 90, 120). Default to 120 if not specified.
-- notation: POWERLIFTING / PERCENTAGE PRESCRIPTIONS. If the sets/reps of an exercise are written as percentages of a max, RPE targets or with lifting techniques, copy that prescription LITERALLY, character by character, into "notation" (and still fill sets/reps as best you can). Do not reinterpret it. Examples of notation to copy as-is:
-  * "65% 6 70% 4x5 65% 8" (percent, then reps or SETSxREPS), "75% 3-4-2-1-5", "85% 3xMAX", "80% 20 REP ALSAP", "14 REP AMRAP", "@RPE8".
-  * Techniques written next to them: "STOP 2\"", "FERMO", "CATENE", "ELASTICI", "PIEDI SU", "GARA", "D4F2S4", "TEMPO 3-1-0", "EMOM", "BW", "+ 3 SINGOLE".
-  * If the sheet lists weeks for the same exercise ("W1: 80% 4x4", "W2: 85% 4x3"), put ALL weeks in one notation string keeping the "W1:", "W2:" prefixes.
-  * Use null when the exercise is a plain "3x10" with no percentages, RPE or techniques.
-- one_rep_max_kg: If the sheet states a max / 1RM for the exercise (e.g. "Stacco (230kg)", "Panca Piana (90kg)", "1RM 150"), that number in kg; otherwise null.
-- programmed: true if the sets/reps cell says "PROGRAMMAZIONE", "PROGRAMMING", "PROGRAM" or refers to a separate program sheet instead of numbers; otherwise false.
-- cardio_minutes: If the entry is a cardio activity (Treadmill / Tapis Roulant / Cinta, Bike / Cyclette / Bicicleta, Elliptical / Ellittica, Rower / Vogatore / Remo, Stairmaster), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
+${if (advanced) advancedFields else ""}- cardio_minutes: If the entry is a cardio activity (Treadmill / Tapis Roulant / Cinta, Bike / Cyclette / Bicicleta, Elliptical / Ellittica, Rower / Vogatore / Remo, Stairmaster), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
 - category: The target muscle group category (choose from: $categoriesStr).
 
 OUTPUT FORMAT RULES:
@@ -290,6 +295,7 @@ class RoutineScanner @Inject constructor(
         val variant = AiModelVariant.fromId(variantId)
         val modelFile = modelFileManager.getModelFile(variant)
         check(modelFileManager.isDownloaded(variant)) { "AI model not downloaded" }
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         try {
             onPhase(ScanPhase.LOADING_MODEL)
@@ -298,7 +304,7 @@ class RoutineScanner @Inject constructor(
             onPhase(ScanPhase.READING_SHEET)
             val result = engine.scanRoutineSheet(
                 imageUri = imageUri,
-                prompt = RoutineScanPrompt.build(languageCode, categories),
+                prompt = RoutineScanPrompt.build(languageCode, categories, advanced),
                 onStreamUpdate = onStreamUpdate
             )
 
@@ -326,7 +332,7 @@ class RoutineScanner @Inject constructor(
                     ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
                     ?: matcher.suggestCategory(item.name, categories)
 
-                val program = item.notation?.let { PrescriptionNotationParser.parseProgram(it) }
+                val program = if (advanced) item.notation?.let { PrescriptionNotationParser.parseProgram(it) } else null
                 val blocksByWeek = program?.weeks.orEmpty().mapValues { (_, blocks) ->
                     blocks.map { block -> block.copy(techniques = (nameTechniques + block.techniques).distinct()) }
                 }
@@ -368,8 +374,8 @@ class RoutineScanner @Inject constructor(
                     cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
                     exerciseType = resolvedType,
                     timeSeconds = resolvedTimeSeconds,
-                    oneRepMaxKg = item.oneRepMaxKg,
-                    isProgrammed = item.programmed
+                    oneRepMaxKg = item.oneRepMaxKg.takeIf { advanced },
+                    isProgrammed = item.programmed && advanced
                 )
             }
         } finally {
@@ -401,14 +407,17 @@ class RoutineScanner @Inject constructor(
             onPhase(ScanPhase.READING_SHEET)
             val result = engine.scanRoutineSheet(
                 imageUri = imageUri,
-                prompt = ProgramScanPrompt.build(exerciseName),
+                prompt = ProgramScanPrompt.build(),
+                imageMode = ScanImageMode.HANDWRITING_BLOCK,
+                transcription = true,
+                maxOutputTokens = PROGRAM_MAX_OUTPUT_TOKENS,
                 onStreamUpdate = onStreamUpdate
             )
 
             onPhase(ScanPhase.PARSING)
-            return ProgramScanParser.parse(result.output)
-                ?: ProgramScanParser.parse(result.thinking)
-                ?: ProgramScanParser.parse("${result.output}\n${result.thinking}")
+            return ProgramScanParser.parse(result.output, exerciseName)
+                ?: ProgramScanParser.parse(result.thinking, exerciseName)
+                ?: ProgramScanParser.parse("${result.output}\n${result.thinking}", exerciseName)
         } finally {
             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
                 engine.release()
@@ -431,6 +440,9 @@ class RoutineScanner @Inject constructor(
     }
 
     private companion object {
+        /** A whole program page is a few dozen tokens; anything longer is the model running on. */
+        const val PROGRAM_MAX_OUTPUT_TOKENS = 768
+
         val NAME_QUALIFIERS = listOf(
             Regex("""(?i)\b(piedi\s*su|piedi\s*alti|feet\s*up)\b""") to Technique.FeetUp,
             Regex("""(?i)\b(gara|competition|comp)\b""") to Technique.Competition,

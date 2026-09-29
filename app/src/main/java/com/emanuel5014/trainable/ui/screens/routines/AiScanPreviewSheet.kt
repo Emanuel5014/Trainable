@@ -71,6 +71,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.WeekShift
 import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
+import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.OneRepMaxBinding
 import com.emanuel5014.trainable.ui.components.WeekEditing
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -1418,35 +1419,37 @@ private fun ScanEntryCard(
                         selectedLeadingIconColor = Primary
                     )
                 )
-                FilterChip(
-                    selected = entry.isAdvanced,
-                    onClick = {
-                        if (!entry.isAdvanced) {
-                            // Carry the plain sets × reps over as a first free block
-                            val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
-                            onUpdate(
-                                entry.copy(
-                                    exerciseType = "strength",
-                                    timeSeconds = null,
-                                    blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
+                if (LocalAdvancedProgramming.current) {
+                    FilterChip(
+                        selected = entry.isAdvanced,
+                        onClick = {
+                            if (!entry.isAdvanced) {
+                                // Carry the plain sets × reps over as a first free block
+                                val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                onUpdate(
+                                    entry.copy(
+                                        exerciseType = "strength",
+                                        timeSeconds = null,
+                                        blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
+                                    )
                                 )
+                            }
+                        },
+                        label = { Text(stringResource(R.string.exercise_type_advanced)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Percent,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
                             )
-                        }
-                    },
-                    label = { Text(stringResource(R.string.exercise_type_advanced)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Percent,
-                            contentDescription = null,
-                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
                         )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                        selectedLabelColor = Primary,
-                        selectedLeadingIconColor = Primary
                     )
-                )
+                }
             }
 
             if (entry.isAdvanced) {

@@ -39,6 +39,7 @@ class WorkoutRepository @Inject constructor(
     private val workoutDao: WorkoutDao,
     private val userDao: UserDao,
     private val exerciseDao: ExerciseDao,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) {
     fun getAllPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlans()
@@ -537,20 +538,21 @@ class WorkoutRepository @Inject constructor(
         val lastSession = workoutDao.getLastFinishedSessionForPlan(planId).first()
         val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
         
-        val week = planDetails.plan.currentWeek.coerceIn(1, planDetails.plan.weeksCount.coerceAtLeast(1))
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        val week = if (advanced) planDetails.plan.currentWeek.coerceIn(1, planDetails.plan.weeksCount.coerceAtLeast(1)) else 1
         val sessionId = workoutDao.insertSession(
             WorkoutSessionEntity(
                 planId = planId,
                 timestamp = timestamp,
                 isFinished = true,
-                programWeek = if (planDetails.plan.weeksCount > 1) week else null
+                programWeek = if (advanced && planDetails.plan.weeksCount > 1) week else null
             )
         )
         
         planDetails.exercises.forEach { exerciseWithDetails ->
             val planEx = exerciseWithDetails.planExercise
             val exerciseId = planEx.exerciseId
-            val resolved = exerciseWithDetails.resolve(week)
+            val resolved = if (advanced) exerciseWithDetails.resolve(week) else ResolvedPrescription.Legacy
             if (resolved is ResolvedPrescription.Excluded) return@forEach
             if (resolved is ResolvedPrescription.Blocks) {
                 // Advanced exercise: one row per planned set, carrying the prescription snapshot
@@ -655,9 +657,11 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg", languageCode: String = "en"): String {
         val sessions = workoutDao.getAllSessionsWithDetails().first()
+        // With advanced programming off the file keeps the classic columns
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine(csvHeader(languageCode, weightUnit))
+        sb.appendLine(if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -698,14 +702,16 @@ class WorkoutRepository @Inject constructor(
                 val extra = if (setLog.isExtra) "1" else "0"
                 val warmup = if (setLog.isWarmup) "1" else "0"
 
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note,$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup")
+                val prescriptionColumns = if (advanced) ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup" else ""
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns")
             }
 
             session.cardio.forEach { cardio ->
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},,$week,,,,,0,0")
+                val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},$prescriptionColumns")
             }
         }
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +40,7 @@ import com.emanuel5014.trainable.ui.components.BottomNavBar
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
 import com.emanuel5014.trainable.ui.components.UpdateDialog
+import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.navigation.MainNavGraph
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
@@ -95,6 +97,7 @@ class MainActivity : FragmentActivity() {
             val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
             val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
+            val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
 
             val context = androidx.compose.ui.platform.LocalContext.current
             val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -177,6 +180,7 @@ class MainActivity : FragmentActivity() {
                 themeStyle = themeStyle,
                 darkTheme = isDark
             ) {
+              CompositionLocalProvider(LocalAdvancedProgramming provides advancedProgramming) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()
@@ -215,7 +219,7 @@ class MainActivity : FragmentActivity() {
 
                 if (resolvedOnboardingState == null) {
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
-                    return@GymTrackingTheme
+                    return@CompositionLocalProvider
                 }
 
                 val pagerState = rememberPagerState(pageCount = { 4 })
@@ -328,6 +332,7 @@ class MainActivity : FragmentActivity() {
                         )
                     }
                 }
+              }
             }
         }
     }

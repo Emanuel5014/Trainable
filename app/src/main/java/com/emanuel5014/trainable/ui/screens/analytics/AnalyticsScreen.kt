@@ -329,10 +329,12 @@ fun AnalyticsScreen(
                         )
                     }
 
-                    com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxesEntryCard(
-                        onClick = onNavigateToOneRepMaxes,
-                        modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(bottom = 12.dp)
-                    )
+                    if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
+                        com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxesEntryCard(
+                            onClick = onNavigateToOneRepMaxes,
+                            modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(bottom = 12.dp)
+                        )
+                    }
 
                     if (!isAnalyticsEmpty) {
                     Box(modifier = Modifier.fillMaxSize()) {

@@ -62,11 +62,12 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Routine Photos**: Capture multiple photos in-app and include them in exports.
 
 ### 🏋️ Powerlifting & %1RM Programming
+*   **Optional**: Everything below is behind **Settings › Workout › Advanced programming** (off by default). With it off the app looks and behaves like a plain tracker; your programmed data stays in the database and reappears when you switch it back on.
 *   **Advanced Prescriptions**: Describe an exercise as blocks — `70% 5 · 75% 3×5 · 70% 6` — with %1RM, RPE, fixed load or bodyweight (+ added load) intensity.
 *   **Every Rep Scheme**: Sets × reps, per-set lists (`3-4-2-1-5`), AMRAP (`3×MAX`) and total-reps blocks (`20 REP ALSAP`) that add sets automatically until the target is reached.
 *   **Techniques**: Pause (`STOP 2″`), chains, bands, feet up, competition, tempo (`D4F2S4` / `3-1-0`), deficit, EMOM and custom cues, shown as chips everywhere.
 *   **Weekly Programs**: Routines can span W1…Wn with a prescription per week, skipped weeks, "copy previous week", unwritten weeks that repeat the last one, and automatic week advance after each session. Works for full PL programs and for "hybrid" sheets where only the main lift is programmed.
-*   **Notebook Notation**: Type a prescription exactly like on paper (`W1: 80% 4x4 D4F2S4 W2: 85% 4x3`) and it's parsed live into blocks.
+*   **Scan a Program Page**: With AI on, photograph the handwritten page of an exercise (`W1: 70% 6 75% 4x5 ISO 2″ …`) and the weeks, blocks and 1RM are filled in for review. The photo is straightened and cropped to the writing first so the small on-device model can read it.
 *   **1RM Manager**: Per-exercise 1RM with history, trend, source (tested/manual/estimated), Epley estimate from your logs and a 60–100% load table. Loads are rounded to your plate increment (kg/lb).
 *   **In-Session Tools**: Block headers, %·kg badges, AMRAP entry, extra top singles, RPE input (6–10 in half steps), per-block rest and a "New 1RM?" prompt when you beat your max.
 

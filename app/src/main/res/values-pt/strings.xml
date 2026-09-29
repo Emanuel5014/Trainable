@@ -1012,5 +1012,7 @@
     <string name="keep_prescription_on_swap">O novo exercício mantém a prescrição do anterior.</string>
     <string name="delete_week_message_local">A semana é removida deste exercício e as seguintes sobem uma posição.</string>
     <string name="add_block_short">Bloco</string>
+    <string name="advanced_programming">Programação avançada</string>
+    <string name="advanced_programming_desc" formatted="false">Séries em %1RM, técnicas como pausas e correntes, programas semanais, 1RM e RPE</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

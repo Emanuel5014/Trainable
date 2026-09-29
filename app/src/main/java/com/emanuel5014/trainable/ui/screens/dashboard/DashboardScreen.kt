@@ -142,6 +142,7 @@ fun DashboardScreen(
         }
     }
     val uiState by viewModel.uiState.collectAsState()
+    val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
     var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionWithPlanName?>(null) }
@@ -667,7 +668,7 @@ fun DashboardScreen(
                                             color = OnSurfaceVariant
                                         )
                                     }
-                                    uiState.todayPlan!!.takeIf { it.weeksCount > 1 }?.let { plan ->
+                                    uiState.todayPlan!!.takeIf { advancedProgramming && it.weeksCount > 1 }?.let { plan ->
                                         com.emanuel5014.trainable.ui.components.PrescriptionPill(
                                             text = stringResource(R.string.week_short, plan.currentWeek) + "/" + plan.weeksCount,
                                             containerColor = com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.12f),
@@ -721,7 +722,7 @@ fun DashboardScreen(
                                             color = OnSurfaceVariant
                                         )
                                     }
-                                    uiState.suggestedPlan!!.takeIf { it.weeksCount > 1 }?.let { plan ->
+                                    uiState.suggestedPlan!!.takeIf { advancedProgramming && it.weeksCount > 1 }?.let { plan ->
                                         com.emanuel5014.trainable.ui.components.PrescriptionPill(
                                             text = stringResource(R.string.week_short, plan.currentWeek) + "/" + plan.weeksCount,
                                             containerColor = com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.12f),

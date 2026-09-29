@@ -21,7 +21,7 @@ object PrescriptionNotationParser {
 
     private data class Intensity(val type: IntensityType, val value: Float?)
 
-    private val weekPrefix = Regex("""^\s*(?:W\s*\d+(?:\s*D\s*\d+)?|WEEK\s*\d+|SETTIMANA\s*\d+)\s*[:.)\-]?""")
+    private val weekPrefix = Regex("""^\s*(?:W\s*\d+(?:\s*D\s*\d+)?|WK\s*\d+|WEEK\s*\d+|SETT(?:IMANA)?\.?\s*\d+)\s*[:.)\-]?""")
 
     private val techniquePatterns: List<Pair<Regex, (MatchResult) -> Technique>> = listOf(
         Regex("""\bD\s*(\d{1,2})\s*F\s*(\d{1,2})\s*S\s*(\d{1,2})\b""") to { m ->
@@ -31,8 +31,12 @@ object PrescriptionNotationParser {
             val digits = m.groupValues[1].filter { it.isDigit() || it == 'X' }
             Technique.Tempo(digits.toList().joinToString("-"))
         },
-        Regex("""(\d{1,2})\s*(?:"|'')\s*(?:DI\s*)?(?:STOP|FERMO|PAUSA|PAUSE)\b""") to { m ->
+        Regex("""(\d{1,2})\s*(?:"|'')\s*(?:DI\s*)?(?:STOP|FERMO|PAUSA|PAUSE|ISO(?:M[EÉ]TR(?:IA|IC[OA]?|IE))?)\b""") to { m ->
             Technique.Pause(m.groupValues[1].toInt().coerceAtLeast(1))
+        },
+        // ISO 2" = isometric hold (a pause) of 2 seconds
+        Regex("""\bISO(?:M[EÉ]TR(?:IA|IC[OA]?|IE))?\b\s*(?:(\d{1,2})\s*(?:"|''|SEC(?:ONDI|ONDS|S)?\b|S\b)?)?""") to { m ->
+            Technique.Pause(m.groupValues[1].toIntOrNull()?.coerceAtLeast(1) ?: 1)
         },
         Regex("""\b(?:STOP|FERMO|FERMI|PAUSA|PAUSE|PAUSED|PAUSIERT|ARR[EÊ]T|PARADA)\b\s*(?:DI\s*)?(?:(\d{1,2})\s*(?:"|''|SEC(?:ONDI|ONDS|S)?\b|S\b)?)?""") to { m ->
             Technique.Pause(m.groupValues[1].toIntOrNull()?.coerceAtLeast(1) ?: 1)
@@ -176,8 +180,15 @@ object PrescriptionNotationParser {
         val weeks: Map<Int, List<PrescriptionBlock>>
     )
 
-    private val weekMarker = Regex("""(?i)\bW\s*(\d{1,2})\s*[:.)\-]""")
+    private const val WEEK_LABEL = """(?:W|WK|WEEK|SETT(?:IMANA)?|SEM(?:ANA)?|SEMAINE|WOCHE)\.?"""
+    private const val DAY_SUFFIX = """(?:\s*[-–]?\s*D\s*\d{1,2})?"""
+
+    /** "W3:", "Week 3 -", "Sett. 3)", "W3D2:" or, at the start of a line, "W3 70% 5". */
+    private val weekMarker = Regex(
+        """(?im)(?:(?<![A-Z0-9])$WEEK_LABEL\s*(\d{1,2})$DAY_SUFFIX\s*[:.)\-–]|^[ \t]*$WEEK_LABEL\s*(\d{1,2})$DAY_SUFFIX(?=[ \t]))"""
+    )
     private val headerOneRepMax = Regex("""(?i)\(\s*(\d{2,3}(?:[.,]\d{1,2})?)\s*(KG|LBS?)\s*\)""")
+    private val looseOneRepMax = Regex("""(?i)(?:\b1\s*RM\s*[:=]?\s*(\d{2,3}(?:[.,]\d{1,2})?)\s*(KG|LBS?)?|\b(\d{2,3}(?:[.,]\d{1,2})?)\s*(KG|LBS?)\b)""")
 
     /**
      * Parses a multi-week sheet such as:
@@ -190,24 +201,39 @@ object PrescriptionNotationParser {
      * Text without week markers is treated as week 1.
      */
     fun parseProgram(input: String): ParsedProgram {
+        val markers = weekMarker.findAll(input).toList()
+
+        // The max is written next to the exercise name: "(90kg)", "90 kg" or "1RM 90" before the first week
+        val headerText = if (markers.isEmpty()) input else input.substring(0, markers.first().range.first)
         val header = headerOneRepMax.find(input)
-        val oneRepMaxKg = header?.let {
-            val value = it.groupValues[1].replace(',', '.').toFloatOrNull() ?: return@let null
-            if (it.groupValues[2].uppercase(Locale.ROOT).startsWith("LB")) WeightUnitConverter.lbToKg(value) else value
-        }
+        var oneRepMaxKg = header?.let { toKg(it.groupValues[1], it.groupValues[2]) }
         val body = header?.let { input.removeRange(it.range) } ?: input
-        val markers = weekMarker.findAll(body).toList()
-        if (markers.isEmpty()) {
+        if (oneRepMaxKg == null && markers.isNotEmpty()) {
+            val loose = looseOneRepMax.find(headerText)
+            if (loose != null) {
+                val number = loose.groupValues[1].ifEmpty { loose.groupValues[3] }
+                val unit = loose.groupValues[2].ifEmpty { loose.groupValues[4] }.ifEmpty { "KG" }
+                oneRepMaxKg = toKg(number, unit)
+            }
+        }
+
+        val bodyMarkers = weekMarker.findAll(body).toList()
+        if (bodyMarkers.isEmpty()) {
             val blocks = parse(body)
             return ParsedProgram(oneRepMaxKg, if (blocks.isEmpty()) emptyMap() else mapOf(1 to blocks))
         }
-        val weeks = markers.mapIndexedNotNull { i, marker ->
-            val end = markers.getOrNull(i + 1)?.range?.first ?: body.length
+        val weeks = bodyMarkers.mapIndexedNotNull { i, marker ->
+            val end = bodyMarkers.getOrNull(i + 1)?.range?.first ?: body.length
             val blocks = parse(body.substring(marker.range.last + 1, end))
-            val week = marker.groupValues[1].toInt()
+            val week = marker.groupValues[1].ifEmpty { marker.groupValues[2] }.toInt()
             if (blocks.isEmpty() || week <= 0) null else week to blocks
         }.toMap()
         return ParsedProgram(oneRepMaxKg, weeks)
+    }
+
+    private fun toKg(number: String, unit: String): Float? {
+        val value = number.replace(',', '.').toFloatOrNull() ?: return null
+        return if (unit.uppercase(Locale.ROOT).startsWith("LB")) WeightUnitConverter.lbToKg(value) else value
     }
 
     // BW followed by a load means added weight on a bodyweight movement.
@@ -250,6 +276,14 @@ object PrescriptionNotationParser {
         return listOf(Technique.Custom(cleaned))
     }
 
+    /** Handwriting read by OCR: "70/." for "70%", a lone "150" that is really the "ISO" of `ISO 2"`. */
+    private val slashDotPercent = Regex("""(?<=\d)\s*(?:/\s*\.|°\s*/\s*[O0]|٪|％)""")
+    private val percentThenDot = Regex("""%\s*\.(?!\d)""")
+    private val percentRange = Regex("""(\d{2,3})\s*[-–]\s*\d{2,3}\s*%""")
+    private val misreadIso = Regex("""(?<![\dA-Z.,])(?:150|1S0|IS0|I50|15O|1SO|ISO)(?![\dA-Z])(?=\s*\d{1,2}\s*(?:"|''))""")
+    private val loadPreposition = Regex("""\b(?:AL|AT|AU|A\s+LA|CON|WITH|MIT|AVEC)\s+(?=\d{2,3}(?:[.,]\d)?\s*(?:%|KG|LBS?))""")
+    private val setsWord = Regex("""(\d{1,2})\s*(?:SERIE|SERIES|SETS?|S[ÉE]RIES?|S[ÄA]TZE)\s*(?:DA|X|OF|DE|VON|DE)?\s*(?=\d)""")
+
     private fun normalize(input: String): String {
         var s = input.uppercase(Locale.ROOT)
             .replace('×', 'X').replace('✕', 'X').replace('*', 'X')
@@ -257,6 +291,12 @@ object PrescriptionNotationParser {
             .replace("’’", "''").replace('’', '\'').replace('′', '\'')
             .replace('\n', ' ').replace('\t', ' ')
         s = weekPrefix.replace(s, " ")
+        s = slashDotPercent.replace(s, "%")
+        s = percentThenDot.replace(s, "% ")
+        s = percentRange.replace(s, "$1%")
+        s = misreadIso.replace(s, "ISO")
+        s = loadPreposition.replace(s, "")
+        s = setsWord.replace(s) { m -> "${m.groupValues[1]}X" }
         return s
     }
 

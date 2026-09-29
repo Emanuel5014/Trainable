@@ -39,8 +39,9 @@ class ReportGenerator @Inject constructor(
         }
 
         val weightUnit = userPreferencesRepository.weightUnit.first()
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
-        return buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit)
+        return buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced)
     }
 
     suspend fun generateReports(planIds: List<Int>, languageCode: String = "en"): List<PlanReport> {
@@ -56,7 +57,8 @@ class ReportGenerator @Inject constructor(
         sessions: List<SessionWithDetails>,
         swaps: List<SessionExerciseSwapEntity>,
         languageCode: String,
-        weightUnit: String
+        weightUnit: String,
+        advanced: Boolean
     ): PlanReport {
         val plan = planWithDetails.plan
         val currentExerciseIds = planWithDetails.exercises.map { it.exercise.id }.toSet()
@@ -108,12 +110,14 @@ class ReportGenerator @Inject constructor(
                     setNumber = setWithExercise.setLog.numeroSerie,
                     weight = convertedWeight,
                     reps = setWithExercise.setLog.repsEffettive,
-                    rpe = setWithExercise.setLog.rpe,
+                    rpe = setWithExercise.setLog.rpe.takeIf { advanced },
                     isWarmup = setWithExercise.setLog.isWarmup,
                     note = setWithExercise.setLog.note,
-                    prescription = com.emanuel5014.trainable.ui.components.setLogPrescriptionText(
-                        localeManager.localizedContext(), setWithExercise.setLog
-                    )
+                    prescription = if (advanced) {
+                        com.emanuel5014.trainable.ui.components.setLogPrescriptionText(
+                            localeManager.localizedContext(), setWithExercise.setLog
+                        )
+                    } else null
                 )
 
                 exerciseDataMap.getOrPut(exerciseId) { mutableListOf() }

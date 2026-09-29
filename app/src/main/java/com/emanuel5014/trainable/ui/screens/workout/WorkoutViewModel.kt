@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
@@ -213,7 +214,12 @@ class WorkoutViewModel @Inject constructor(
         object ProgramCompleted : WorkoutNavEvent()
     }
 
+    /** Mirrors the "advanced programming" setting for code that can't suspend (e.g. finishing a workout). */
+    private var advancedEnabled = false
+
     private companion object {
+        /** [WorkoutState.rpeInputMode] value meaning "never ask for RPE". */
+        const val RPE_INPUT_NEVER = 2
         /** Fetch every set of the previous session (advanced exercises match them per block). */
         const val ALL_SETS = 500
     }
@@ -282,9 +288,16 @@ class WorkoutViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            userPreferencesRepository.rpeInputMode.collect { mode ->
+            // With advanced programming off there is no RPE logging at all
+            combine(userPreferencesRepository.rpeInputMode, userPreferencesRepository.advancedProgrammingEnabled) { mode, advanced ->
+                if (advanced) mode else RPE_INPUT_NEVER
+            }.collect { mode ->
                 _state.update { it.copy(rpeInputMode = mode) }
             }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.advancedProgrammingEnabled.collect { advancedEnabled = it }
         }
 
         viewModelScope.launch {
@@ -432,6 +445,7 @@ class WorkoutViewModel @Inject constructor(
 
         val planExercises = planWithDetails.exercises.sortedBy { it.planExercise.ordine }
         val resumePlan = planWithDetails.plan
+        val resumeAdvanced = userPreferencesRepository.advancedProgrammingEnabled.first()
         val resumeWeek = sessionWithSets.session.programWeek
             ?: resumePlan.currentWeek.coerceIn(1, resumePlan.weeksCount.coerceAtLeast(1))
         val resumeUnit = userPreferencesRepository.weightUnit.first()
@@ -484,7 +498,7 @@ class WorkoutViewModel @Inject constructor(
             val defaultTargetSeconds = resolvedTargetSeconds ?: 45
             val resumeOneRepMaxKg = resumeOneRepMaxes[exercise.id]?.weightKg
             val planDetailWithBlocks = planDetail?.let { pd -> planExercises.find { it.planExercise.id == pd.id } }
-            val resolvedBlocks = (planDetailWithBlocks?.resolve(resumeWeek) as? ResolvedPrescription.Blocks)?.blocks
+            val resolvedBlocks = if (resumeAdvanced) (planDetailWithBlocks?.resolve(resumeWeek) as? ResolvedPrescription.Blocks)?.blocks else null
             if (resolvedBlocks != null && !isCardio && !isTimeAndWeight && !isSwapped) {
                 val previous = getPreviousSetsForExercise(planId, exercise.id, ALL_SETS)
                 return WorkoutExerciseState(
@@ -492,13 +506,13 @@ class WorkoutViewModel @Inject constructor(
                     planDetails = planDetail,
                     sets = buildAdvancedSets(resolvedBlocks, loggedSets, previous, resumeOneRepMaxKg, resumeUnit, resumeIncrement),
                     previousPerformance = previous.maxByOrNull { it.pesoSollevato }?.let { "Last: ${it.pesoSollevato}kg × ${it.repsEffettive}" },
-                    supersetId = planDetail.supersetId,
+                    supersetId = planDetail?.supersetId,
                     exerciseType = "strength",
                     blocks = resolvedBlocks,
                     oneRepMaxKg = resumeOneRepMaxKg
                 )
             }
-            if (!isCardio && !isTimeAndWeight && loggedSets.any { it.blockIndex != null }) {
+            if (resumeAdvanced && !isCardio && !isTimeAndWeight && loggedSets.any { it.blockIndex != null }) {
                 // Quick workouts and swapped exercises have no plan blocks: rebuild them from the snapshots on the logged rows
                 val rebuilt = loggedSets.toPrescriptionBlocks()
                 if (rebuilt.isNotEmpty()) {
@@ -754,9 +768,9 @@ class WorkoutViewModel @Inject constructor(
                 sessionId = sessionId,
                 exercises = exerciseStates,
                 currentExerciseIndex = finalActiveIndex,
-                programWeek = sessionWithSets.session.programWeek,
-                weeksCount = resumePlan.weeksCount,
-                autoAdvanceWeek = resumePlan.autoAdvanceWeek,
+                programWeek = sessionWithSets.session.programWeek.takeIf { resumeAdvanced },
+                weeksCount = if (resumeAdvanced) resumePlan.weeksCount else 1,
+                autoAdvanceWeek = resumePlan.autoAdvanceWeek && resumeAdvanced,
                 exerciseSwaps = swapMap,
                 remainingRestSeconds = savedRemainingSeconds,
                 totalRestSeconds = savedTotalSeconds ?: 90,
@@ -817,15 +831,16 @@ class WorkoutViewModel @Inject constructor(
         val sessionId = workoutRepository.startSession(planId, startTime).toInt()
 
         val plan = planWithDetails.plan
-        val week = plan.currentWeek.coerceIn(1, plan.weeksCount.coerceAtLeast(1))
-        val programWeek = if (plan.weeksCount > 1) week else null
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        val week = if (advanced) plan.currentWeek.coerceIn(1, plan.weeksCount.coerceAtLeast(1)) else 1
+        val programWeek = if (advanced && plan.weeksCount > 1) week else null
         if (programWeek != null) workoutRepository.setSessionProgramWeek(sessionId, programWeek)
         val unit = userPreferencesRepository.weightUnit.first()
         val increment = userPreferencesRepository.loadRoundingIncrement.first()
         val oneRepMaxes = oneRepMaxRepository.currentByExercise().first()
 
         val exerciseStates = planWithDetails.exercises.sortedBy { it.planExercise.ordine }.mapNotNull { detail ->
-            val resolved = detail.resolve(week)
+            val resolved = if (advanced) detail.resolve(week) else ResolvedPrescription.Legacy
             if (resolved is ResolvedPrescription.Excluded) return@mapNotNull null
             val oneRepMaxKg = oneRepMaxes[detail.exercise.id]?.weightKg
             if (resolved is ResolvedPrescription.Blocks && detail.planExercise.exerciseType == "strength") {
@@ -903,8 +918,8 @@ class WorkoutViewModel @Inject constructor(
                 planName = planName,
                 sessionId = sessionId,
                 programWeek = programWeek,
-                weeksCount = plan.weeksCount,
-                autoAdvanceWeek = plan.autoAdvanceWeek,
+                weeksCount = if (advanced) plan.weeksCount else 1,
+                autoAdvanceWeek = plan.autoAdvanceWeek && advanced,
                 exercises = exerciseStates,
                 currentExerciseIndex = 0,
                 exerciseExecutionOrder = emptyMap(),
@@ -1265,7 +1280,7 @@ class WorkoutViewModel @Inject constructor(
 
     /** New-1RM candidates: a single above the current 1RM, or a low-rep set whose e1RM beats it by >2.5%. */
     private fun computeOneRepMaxSuggestions(): List<OneRepMaxSuggestion> =
-        _state.value.exercises.mapNotNull { ex ->
+        if (!advancedEnabled) emptyList() else _state.value.exercises.mapNotNull { ex ->
             val current = ex.oneRepMaxKg ?: return@mapNotNull null
             if (ex.isCardio || ex.isTimeAndWeight) return@mapNotNull null
             val best = ex.sets

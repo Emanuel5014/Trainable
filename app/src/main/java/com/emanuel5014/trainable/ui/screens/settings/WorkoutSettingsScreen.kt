@@ -58,6 +58,7 @@ fun WorkoutSettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val weightUnit by viewModel.weightUnit.collectAsState()
+    val advancedProgramming by viewModel.advancedProgrammingEnabled.collectAsState()
     val loadRoundingIncrement by viewModel.loadRoundingIncrement.collectAsState()
     val rpeInputMode by viewModel.rpeInputMode.collectAsState()
     val workoutTimerEnabled by viewModel.workoutTimerEnabled.collectAsState()
@@ -360,15 +361,13 @@ fun WorkoutSettingsScreen(
             GymCard(containerColor = SurfaceContainerHigh) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigateToOneRepMaxes() },
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Icon(
-                                imageVector = Icons.Rounded.EmojiEvents,
+                                imageVector = Icons.Rounded.FitnessCenter,
                                 contentDescription = null,
                                 tint = Primary,
                                 modifier = Modifier.size(24.dp)
@@ -376,70 +375,110 @@ fun WorkoutSettingsScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(
-                                    stringResource(R.string.one_rep_maxes),
+                                    stringResource(R.string.advanced_programming),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = OnSurface,
                                     fontWeight = FontWeight.ExtraBold
                                 )
                                 Text(
-                                    stringResource(R.string.one_rep_maxes_empty_desc),
+                                    stringResource(R.string.advanced_programming_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = OnSurfaceVariant
                                 )
                             }
                         }
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = advancedProgramming,
+                            onCheckedChange = { viewModel.setAdvancedProgrammingEnabled(it) }
+                        )
                     }
 
-                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                    if (advancedProgramming) {
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text(
-                            stringResource(R.string.load_rounding),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = OnSurface,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            stringResource(R.string.load_rounding_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = OnSurfaceVariant
-                        )
-                        val increments = if (weightUnit == "lb") {
-                            com.emanuel5014.trainable.domain.prescription.LoadCalculator.INCREMENTS_LB
-                        } else {
-                            com.emanuel5014.trainable.domain.prescription.LoadCalculator.INCREMENTS_KG
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToOneRepMaxes() },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.EmojiEvents,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        stringResource(R.string.one_rep_maxes),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = OnSurface,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Text(
+                                        stringResource(R.string.one_rep_maxes_empty_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
-                        com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
-                            options = increments.map { "${com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it)} $weightUnit" },
-                            selectedIndex = increments.indexOf(loadRoundingIncrement),
-                            onSelect = { viewModel.setLoadRoundingIncrement(increments[it]) }
-                        )
-                    }
 
-                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text(
-                            stringResource(R.string.rpe_input),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = OnSurface,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            stringResource(R.string.rpe_input_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = OnSurfaceVariant
-                        )
-                        com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
-                            options = listOf(
-                                stringResource(R.string.rpe_input_advanced),
-                                stringResource(R.string.rpe_input_all),
-                                stringResource(R.string.rpe_input_never)
-                            ),
-                            selectedIndex = rpeInputMode,
-                            onSelect = { viewModel.setRpeInputMode(it) }
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                stringResource(R.string.load_rounding),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.load_rounding_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                            val increments = if (weightUnit == "lb") {
+                                com.emanuel5014.trainable.domain.prescription.LoadCalculator.INCREMENTS_LB
+                            } else {
+                                com.emanuel5014.trainable.domain.prescription.LoadCalculator.INCREMENTS_KG
+                            }
+                            com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
+                                options = increments.map { "${com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it)} $weightUnit" },
+                                selectedIndex = increments.indexOf(loadRoundingIncrement),
+                                onSelect = { viewModel.setLoadRoundingIncrement(increments[it]) }
+                            )
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                stringResource(R.string.rpe_input),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.rpe_input_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                            com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
+                                options = listOf(
+                                    stringResource(R.string.rpe_input_advanced),
+                                    stringResource(R.string.rpe_input_all),
+                                    stringResource(R.string.rpe_input_never)
+                                ),
+                                selectedIndex = rpeInputMode,
+                                onSelect = { viewModel.setRpeInputMode(it) }
+                            )
+                        }
                     }
                 }
             }

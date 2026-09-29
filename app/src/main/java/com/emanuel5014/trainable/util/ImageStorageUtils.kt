@@ -3,7 +3,6 @@ package com.emanuel5014.trainable.util
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
 import android.util.Base64
@@ -79,26 +78,8 @@ object ImageStorageUtils {
         }
     }
 
-    private fun getRotatedBitmap(bitmap: Bitmap, uri: Uri, context: Context): Bitmap {
-        return try {
-            val inputStream = context.contentResolver.openInputStream(uri) ?: return bitmap
-            val exif = ExifInterface(inputStream)
-            inputStream.close()
-
-            val rotation = when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                else -> return bitmap
-            }
-
-            val matrix = Matrix().apply { postRotate(rotation) }
-            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            bitmap
-        }
-    }
+    private fun getRotatedBitmap(bitmap: Bitmap, uri: Uri, context: Context): Bitmap =
+        ImageOrientation.applyTo(context, uri, bitmap)
 
     fun compressAndSaveImage(context: Context, uri: Uri): String? {
         return try {
@@ -214,19 +195,11 @@ object ImageStorageUtils {
                     try {
                         var bitmap = BitmapFactory.decodeFile(file.absolutePath)
                         if (bitmap != null) {
-                            val exif = try {
+                            val orientation = try {
                                 ExifInterface(file.absolutePath)
-                            } catch (e: Exception) { null }
-                            val rotation = when (exif?.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                                else -> 0f
-                            }
-                            if (rotation != 0f) {
-                                val matrix = Matrix().apply { postRotate(rotation) }
-                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                            }
+                                    .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                            } catch (e: Exception) { ExifInterface.ORIENTATION_NORMAL }
+                            bitmap = ImageOrientation.applyTo(bitmap, orientation)
                             val originalSize = file.length()
                             val newPath = compressAndSaveBitmap(context, bitmap, file.name)
                             if (newPath != null) {

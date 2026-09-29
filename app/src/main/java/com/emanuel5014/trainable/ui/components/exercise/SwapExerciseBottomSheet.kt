@@ -293,7 +293,7 @@ fun SwapExerciseBottomSheet(
                             initialSets = setsText,
                             initialReps = repsText,
                             initialBlocks = initialBlocks,
-                            advancedEnabled = onAdvancedExerciseSelected != null,
+                            advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
                                 onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
                                 onDismiss()

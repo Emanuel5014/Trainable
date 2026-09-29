@@ -49,7 +49,8 @@ fun ExerciseEntryCard(
     oneRepMaxKg: Float? = null
 ) {
     val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-    val resolved = item.resolve(week)
+    // Prescription blocks are only shown when the caller passes labels (advanced programming is on)
+    val resolved = if (labels != null) item.resolve(week) else ResolvedPrescription.Legacy
     com.emanuel5014.trainable.ui.components.GymCard(
         modifier = modifier
             .fillMaxWidth()

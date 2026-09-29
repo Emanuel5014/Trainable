@@ -196,6 +196,7 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
     val languageCode by viewModel.languageCode.collectAsState()
     val context = LocalContext.current
 
@@ -635,7 +636,8 @@ fun HistoryScreen(
                                             planName = sessionToShare!!.second,
                                             languageCode = languageCode,
                                             weightUnit = uiState.weightUnit,
-                                            planExercises = sessionToShare!!.third
+                                            planExercises = sessionToShare!!.third,
+                                            showPrescription = advancedProgramming
                                         )
                                     }
                                 }
@@ -1741,7 +1743,9 @@ fun EditSetDialog(
                         label = stringResource(R.string.reps),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
-                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
+                    if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
+                        com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
+                    }
                 }
                 GymInputField(
                     value = note,

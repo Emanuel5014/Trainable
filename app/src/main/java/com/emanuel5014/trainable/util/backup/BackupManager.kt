@@ -238,6 +238,7 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_KG]?.let { json.put("load_rounding_kg", it.toDouble()) }
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB]?.let { json.put("load_rounding_lb", it.toDouble()) }
                 json.put("rpe_input_mode", prefs[UserPreferencesRepository.RPE_INPUT_MODE] ?: 0)
+                json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -376,6 +377,8 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB] = jsonObject.getDouble("load_rounding_lb").toFloat()
                                             if (jsonObject.has("rpe_input_mode"))
                                                 prefs[UserPreferencesRepository.RPE_INPUT_MODE] = jsonObject.getInt("rpe_input_mode")
+                                            if (jsonObject.has("advanced_programming_enabled"))
+                                                prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] = jsonObject.getBoolean("advanced_programming_enabled")
                                         }
                                     }
                                 } catch (e: Exception) {
