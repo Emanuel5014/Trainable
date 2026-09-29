@@ -107,27 +107,22 @@ fun blockLoadLabel(
 
 /**
  * Editor for an advanced prescription: an ordered list of expandable block cards
- * (intensity · volume · techniques · rest), plus a free-text "notebook" field parsed live.
+ * (intensity · volume · techniques · rest). [footerActions] sit next to "Add block" (e.g. the AI scan button).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PrescriptionBlocksEditor(
     blocks: List<PrescriptionBlock>,
     onBlocksChange: (List<PrescriptionBlock>) -> Unit,
-    onApplyNotation: (PrescriptionNotationParser.ParsedProgram) -> Unit,
     oneRepMaxKg: Float?,
     weightUnit: String,
     roundingIncrement: Float,
     hapticEnabled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    footerActions: (@Composable androidx.compose.foundation.layout.RowScope.() -> Unit)? = null
 ) {
     val labels = rememberPrescriptionLabels(weightUnit)
     var expandedIndex by remember { mutableStateOf<Int?>(null) }
-    var showNotation by remember { mutableStateOf(false) }
-
-    LaunchedEffect(blocks.isEmpty()) {
-        if (blocks.isEmpty()) showNotation = true
-    }
 
     fun update(transform: (MutableList<PrescriptionBlock>) -> Unit) {
         onBlocksChange(blocks.toMutableList().also(transform))
@@ -191,74 +186,13 @@ fun PrescriptionBlocksEditor(
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.add_block).uppercase(), fontWeight = FontWeight.ExtraBold)
-            }
-            FilledTonalIconButton(
-                onClick = { showNotation = !showNotation },
-                modifier = Modifier.size(48.dp),
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = if (showNotation) Primary else SurfaceContainerHigh,
-                    contentColor = if (showNotation) OnPrimary else OnSurfaceVariant
+                Text(
+                    text = stringResource(if (footerActions != null) R.string.add_block_short else R.string.add_block).uppercase(),
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1
                 )
-            ) {
-                Icon(Icons.Rounded.EditNote, contentDescription = stringResource(R.string.notation_input_label))
             }
-        }
-
-        AnimatedVisibility(visible = showNotation) {
-            NotationInput(
-                labels = labels,
-                onApply = { program ->
-                    onApplyNotation(program)
-                    expandedIndex = null
-                    showNotation = false
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun NotationInput(
-    labels: PrescriptionLabels,
-    onApply: (PrescriptionNotationParser.ParsedProgram) -> Unit
-) {
-    var text by remember { mutableStateOf("") }
-    val program = remember(text) { PrescriptionNotationParser.parseProgram(text) }
-    val preview = remember(program, labels) {
-        when {
-            program.weeks.isEmpty() -> null
-            program.weeks.size == 1 && program.weeks.keys.first() == 1 -> PrescriptionFormatter.summary(program.weeks.values.first(), labels)
-            else -> program.weeks.toSortedMap().entries.joinToString("\n") { (week, blocks) ->
-                "W$week · ${PrescriptionFormatter.summary(blocks, labels)}"
-            }
-        }
-    }
-
-    Surface(shape = Shapes.medium, color = SurfaceContainerHigh) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            GymInputField(
-                value = text,
-                onValueChange = { text = it },
-                label = stringResource(R.string.notation_input_label),
-                placeholder = stringResource(R.string.notation_input_hint),
-                singleLine = false
-            )
-            Text(
-                text = preview?.let { stringResource(R.string.notation_recognised, it) }
-                    ?: stringResource(R.string.notation_nothing),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (preview != null) Primary else OnSurfaceVariant,
-                fontWeight = if (preview != null) FontWeight.Bold else FontWeight.Normal
-            )
-            GymButton(
-                onClick = { onApply(program) },
-                enabled = program.weeks.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
-                height = 44
-            ) {
-                Text(stringResource(R.string.notation_replace_blocks).uppercase(), fontWeight = FontWeight.ExtraBold)
-            }
+            footerActions?.invoke(this)
         }
     }
 }

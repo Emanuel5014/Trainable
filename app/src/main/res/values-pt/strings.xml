@@ -965,7 +965,7 @@
     <string name="not_now">Agora não</string>
     <string name="notification_next_set_detail">Próxima: %1$s - Série %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · próxima série no início do minuto</string>
-    <string name="scan_programmed_hint">Programado em outra folha: adicione os blocos depois de importar ou escaneie a folha do programa.</string>
+    <string name="scan_programmed_hint">A prescrição está em uma folha de programação à parte: escolha Avançado para adicionar os blocos aqui, ou escaneie a página da programação após importar.</string>
     <string name="scan_use_simple">Usar séries × reps simples</string>
     <string name="scan_one_rep_max_found">1RM na folha: %1$s · será salvo</string>
     <string name="one_rep_maxes">1RMs</string>
@@ -990,5 +990,27 @@
     <string name="rpe_input_never">Nunca</string>
     <string name="one_rep_maxes_card_desc">%1$d exercícios acompanhados</string>
     <string name="one_rep_max_current">1RM atual</string>
+    <string name="ai_program_scan_button">Escanear</string>
+    <string name="ai_program_scan_title">Escaneie a página da programação</string>
+    <string name="ai_program_scan_desc">Tire uma foto ou escolha uma: a IA preenche os blocos e você poderá revisá-los e editá-los.</string>
+    <string name="ai_program_scan_failed">Não consegui ler uma programação na foto. Tente uma imagem mais nítida e próxima.</string>
+    <string name="ai_program_review_title">Programação reconhecida</string>
+    <string name="ai_program_review_hint">Escolha as semanas a importar. Você poderá editar tudo depois.</string>
+    <string name="ai_program_review_pick_week">Escolha a semana a importar. Você poderá editá-la depois.</string>
+    <string name="ai_program_save_one_rep_max">Salvar 1RM %1$s</string>
+    <string name="ai_program_import">Importar</string>
+    <string name="delete_week">Excluir semana</string>
+    <string name="delete_week_title">Excluir S%1$d?</string>
+    <string name="delete_week_message">A semana é removida de todos os exercícios desta rotina e as seguintes sobem uma posição. Sessões passadas não mudam.</string>
+    <string name="prescription">Prescrição</string>
+    <string name="edit_prescription">Editar prescrição</string>
+    <string name="add_prescription">Adicionar prescrição</string>
+    <string name="remove_prescription">Remover prescrição</string>
+    <string name="prescription_sheet_subtitle">As séries já registradas mantêm cargas e repetições.</string>
+    <string name="prescription_remove_sets_title">Remover séries?</string>
+    <string name="prescription_remove_sets_message">%1$d séries registradas não cabem na nova prescrição e serão removidas.</string>
+    <string name="keep_prescription_on_swap">O novo exercício mantém a prescrição do anterior.</string>
+    <string name="delete_week_message_local">A semana é removida deste exercício e as seguintes sobem uma posição.</string>
+    <string name="add_block_short">Bloco</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

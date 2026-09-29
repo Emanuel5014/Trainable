@@ -379,6 +379,43 @@ class RoutineScanner @Inject constructor(
         }
     }
 
+    /**
+     * Reads the program page of a single exercise (weeks of %1RM blocks) from a photo.
+     * @return null when nothing that looks like a prescription could be read.
+     */
+    suspend fun scanProgram(
+        imageUri: Uri,
+        exerciseName: String?,
+        onPhase: (ScanPhase) -> Unit = {},
+        onStreamUpdate: (partialOutput: String, thinkingOutput: String) -> Unit = { _, _ -> }
+    ): ScannedProgram? {
+        val variantId = userPreferencesRepository.aiModelVariant.first()
+        val variant = AiModelVariant.fromId(variantId)
+        val modelFile = modelFileManager.getModelFile(variant)
+        check(modelFileManager.isDownloaded(variant)) { "AI model not downloaded" }
+
+        try {
+            onPhase(ScanPhase.LOADING_MODEL)
+            engine.ensureReady(modelFile)
+
+            onPhase(ScanPhase.READING_SHEET)
+            val result = engine.scanRoutineSheet(
+                imageUri = imageUri,
+                prompt = ProgramScanPrompt.build(exerciseName),
+                onStreamUpdate = onStreamUpdate
+            )
+
+            onPhase(ScanPhase.PARSING)
+            return ProgramScanParser.parse(result.output)
+                ?: ProgramScanParser.parse(result.thinking)
+                ?: ProgramScanParser.parse("${result.output}\n${result.thinking}")
+        } finally {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                engine.release()
+            }
+        }
+    }
+
     /** Splits technique qualifiers off an exercise name: "Panca Piana PIEDI SU" → ("Panca Piana", [FeetUp]). */
     internal fun splitNameQualifiers(name: String): Pair<String, List<Technique>> {
         var base = name

@@ -567,6 +567,14 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    /** Deletes [week] from the whole routine; every later week moves up. */
+    fun deleteWeek(week: Int) {
+        viewModelScope.launch {
+            val plan = _uiState.value.planDetails?.plan ?: return@launch
+            workoutRepository.deletePlanWeek(plan, week)
+        }
+    }
+
     fun setCurrentWeek(week: Int) {
         viewModelScope.launch {
             val plan = _uiState.value.planDetails?.plan ?: return@launch

@@ -45,6 +45,8 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.Percent
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timer
@@ -104,6 +106,9 @@ import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.ui.components.CardioInputForm
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
@@ -184,6 +189,8 @@ fun EditWorkoutScreen(
     var showAddCardio by remember { mutableStateOf(false) }
     var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
+    var exerciseToEditPrescription by remember { mutableStateOf<Int?>(null) }
+    var pendingPrescription by remember { mutableStateOf<Pair<Int, List<PrescriptionBlock>>?>(null) }
 
     val autoScrollThreshold = with(density) { 48.dp.toPx() }
     val maxAutoScrollSpeed = with(density) { 12.dp.toPx() }
@@ -419,6 +426,7 @@ fun EditWorkoutScreen(
                                             exerciseToSwap = exerciseState.exercise.id
                                             showExercisePicker = true
                                         },
+                                        onEditPrescription = { exerciseToEditPrescription = exerciseState.exercise.id },
                                         onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
                                         onMoveSetUp = { viewModel.moveSetUp(it) },
                                         onMoveSetDown = { viewModel.moveSetDown(it) },
@@ -541,6 +549,17 @@ fun EditWorkoutScreen(
                 exerciseToSwap = null
                 showExercisePicker = false
             },
+            onAdvancedExerciseSelected = { exercise, blocks, _ ->
+                val currentSwapId = exerciseToSwap
+                if (currentSwapId != null) {
+                    viewModel.swapExerciseAdvanced(currentSwapId, exercise.id, blocks)
+                } else {
+                    viewModel.addAdvancedExercise(exercise.id, blocks)
+                }
+                exerciseToSwap = null
+                showExercisePicker = false
+            },
+            initialBlocks = exerciseStateToSwap?.sets?.toPrescriptionBlocks().orEmpty(),
             onAddCustomExercise = { name, category, onCreated ->
                 viewModel.addCustomExercise(name, category, onCreated)
             },
@@ -550,6 +569,81 @@ fun EditWorkoutScreen(
                 exerciseToSwap = null
                 showExercisePicker = false
             }
+        )
+    }
+
+    exerciseToEditPrescription?.let { editingId ->
+        val target = state.exercises.find { it.exercise.id == editingId }
+        if (target == null) {
+            exerciseToEditPrescription = null
+        } else {
+            val currentBlocks = remember(target.sets) { target.sets.toPrescriptionBlocks() }
+            val seeded = remember(target.sets) {
+                // A plain exercise starts from one free block that matches its sets
+                val reps = target.sets.map { it.repsEffettive }
+                PrescriptionBlock(
+                    sets = target.sets.size.coerceAtLeast(1),
+                    reps = when {
+                        reps.isEmpty() -> "5"
+                        reps.distinct().size == 1 -> reps.first().toString()
+                        else -> reps.joinToString("-")
+                    }
+                )
+            }
+            ExercisePrescriptionSheet(
+                exerciseId = editingId,
+                exerciseName = ExerciseTranslations.translate(target.exercise.nome, languageCode),
+                initialBlocks = currentBlocks.ifEmpty { listOf(seeded) },
+                onDismiss = { exerciseToEditPrescription = null },
+                onSave = { blocks ->
+                    val removed = viewModel.removedSetsCount(editingId, blocks)
+                    if (removed > 0) {
+                        pendingPrescription = editingId to blocks
+                    } else {
+                        viewModel.applyPrescription(editingId, blocks)
+                        exerciseToEditPrescription = null
+                    }
+                },
+                onRemove = if (currentBlocks.isNotEmpty()) {
+                    {
+                        viewModel.applyPrescription(editingId, emptyList())
+                        exerciseToEditPrescription = null
+                    }
+                } else null
+            )
+        }
+    }
+
+    pendingPrescription?.let { (exerciseId, blocks) ->
+        AlertDialog(
+            onDismissRequest = { pendingPrescription = null },
+            title = { Text(stringResource(R.string.prescription_remove_sets_title), fontWeight = FontWeight.ExtraBold) },
+            text = { Text(stringResource(R.string.prescription_remove_sets_message, viewModel.removedSetsCount(exerciseId, blocks))) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.applyPrescription(exerciseId, blocks)
+                        pendingPrescription = null
+                        exerciseToEditPrescription = null
+                    },
+                    containerColor = Error.copy(alpha = 0.12f),
+                    contentColor = Error
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { pendingPrescription = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
         )
     }
 
@@ -635,6 +729,7 @@ fun EditExerciseCard(
     onEditSet: (SetLogEntity) -> Unit,
     onAddSet: () -> Unit,
     onSwapExercise: () -> Unit,
+    onEditPrescription: () -> Unit,
     onDeleteExercise: () -> Unit,
     onMoveSetUp: (SetLogEntity) -> Unit,
     onMoveSetDown: (SetLogEntity) -> Unit,
@@ -816,7 +911,38 @@ fun EditExerciseCard(
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            val context = LocalContext.current
+            val prescriptionLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels(weightUnit)
+            val isAdvanced = exerciseState.sets.any { it.blockIndex != null }
+            val blocksByIndex = remember(exerciseState.sets) {
+                val indexes = exerciseState.sets.filter { it.blockIndex != null && !it.isExtra }.map { it.blockIndex!! }.distinct().sorted()
+                indexes.zip(exerciseState.sets.toPrescriptionBlocks()).toMap()
+            }
+
             exerciseState.sets.forEachIndexed { index, set ->
+                val previous = exerciseState.sets.getOrNull(index - 1)
+                if (isAdvanced && (index == 0 || previous?.blockIndex != set.blockIndex || previous?.isExtra != set.isExtra)) {
+                    val block = if (set.isExtra) null else set.blockIndex?.let { blocksByIndex[it] }
+                    val headerText = when {
+                        block != null -> stringResource(
+                            R.string.block_header,
+                            (set.blockIndex ?: 0) + 1,
+                            (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
+                                block.techniques.map { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }).joinToString(" · ")
+                        )
+                        set.isExtra -> stringResource(R.string.extra_badge)
+                        else -> null
+                    }
+                    if (headerText != null) {
+                        Text(
+                            text = headerText.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                            color = Primary,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(top = if (index == 0) 0.dp else 10.dp, bottom = 2.dp)
+                        )
+                    }
+                }
                 EditSetRow(
                     set = set,
                     isFirst = index == 0,
@@ -837,15 +963,38 @@ fun EditExerciseCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            GymButton(
-                onClick = onAddSet,
-                containerColor = Primary.copy(alpha = 0.1f),
-                contentColor = Primary,
-                modifier = Modifier.fillMaxWidth().height(40.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+                GymButton(
+                    onClick = onAddSet,
+                    containerColor = Primary.copy(alpha = 0.1f),
+                    contentColor = Primary,
+                    modifier = Modifier.weight(1f).height(40.dp)
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+                }
+                if (!isTimeAndWeight) {
+                    GymButton(
+                        onClick = onEditPrescription,
+                        containerColor = if (isAdvanced) Primary else Primary.copy(alpha = 0.1f),
+                        contentColor = if (isAdvanced) OnPrimary else Primary,
+                        modifier = Modifier.weight(1f).height(40.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Rounded.Percent, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.prescription).uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }

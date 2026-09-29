@@ -87,6 +87,13 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun setPlanCurrentWeek(planId: Int, week: Int) = workoutDao.setPlanCurrentWeek(planId, week)
 
+    /** Removes a week from every exercise of the plan; later weeks shift down by one. */
+    suspend fun deletePlanWeek(plan: WorkoutPlanEntity, week: Int) = workoutDao.deletePlanWeek(plan, week)
+
+    /** Rewrites the rows of one session exercise after its prescription changed (see [PrescriptionSetSync]). */
+    suspend fun applySetSync(result: SetSyncResult) =
+        workoutDao.applySetChanges(result.toDelete, result.toUpdate, result.toInsert)
+
     /** Drops blocks of weeks beyond [weeksCount] after the plan has been shortened. */
     suspend fun trimPlanWeeks(planId: Int, weeksCount: Int) = workoutDao.deleteBlocksBeyondWeek(planId, weeksCount)
 

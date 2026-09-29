@@ -965,7 +965,7 @@
     <string name="not_now">Not now</string>
     <string name="notification_next_set_detail">Next: %1$s - Set %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · next set at the top of the minute</string>
-    <string name="scan_programmed_hint">Programmed on a separate sheet: add its blocks after importing, or scan the program sheet.</string>
+    <string name="scan_programmed_hint">The prescription is on a separate program sheet: choose Advanced to add its blocks here, or scan the program page after importing.</string>
     <string name="scan_use_simple">Use plain sets × reps</string>
     <string name="scan_one_rep_max_found">1RM on the sheet: %1$s · it will be saved</string>
     <string name="one_rep_maxes">1RMs</string>
@@ -990,5 +990,27 @@
     <string name="rpe_input_never">Never</string>
     <string name="one_rep_maxes_card_desc">%1$d lifts tracked</string>
     <string name="one_rep_max_current">Current 1RM</string>
+    <string name="ai_program_scan_button">Scan</string>
+    <string name="ai_program_scan_title">Scan the program page</string>
+    <string name="ai_program_scan_desc">Take a photo or pick one: the AI fills in the blocks and you can review and edit them.</string>
+    <string name="ai_program_scan_failed">Couldn\'t read a prescription from the photo. Try a sharper, closer picture.</string>
+    <string name="ai_program_review_title">Program recognised</string>
+    <string name="ai_program_review_hint">Choose the weeks to import. You can edit everything afterwards.</string>
+    <string name="ai_program_review_pick_week">Pick the week to import. You can edit it afterwards.</string>
+    <string name="ai_program_save_one_rep_max">Save 1RM %1$s</string>
+    <string name="ai_program_import">Import</string>
+    <string name="delete_week">Delete week</string>
+    <string name="delete_week_title">Delete W%1$d?</string>
+    <string name="delete_week_message">The week is removed from every exercise of this routine and the following weeks move up by one. Past sessions are not affected.</string>
+    <string name="prescription">Prescription</string>
+    <string name="edit_prescription">Edit prescription</string>
+    <string name="add_prescription">Add prescription</string>
+    <string name="remove_prescription">Remove prescription</string>
+    <string name="prescription_sheet_subtitle">Sets you already logged keep their weights and reps.</string>
+    <string name="prescription_remove_sets_title">Remove sets?</string>
+    <string name="prescription_remove_sets_message">%1$d logged sets don\'t fit the new prescription and will be removed.</string>
+    <string name="keep_prescription_on_swap">The new exercise keeps the prescription of the old one.</string>
+    <string name="delete_week_message_local">The week is removed from this exercise and the following weeks move up by one.</string>
+    <string name="add_block_short">Block</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

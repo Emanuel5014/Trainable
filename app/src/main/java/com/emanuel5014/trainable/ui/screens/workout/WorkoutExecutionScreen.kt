@@ -1598,7 +1598,13 @@ fun WorkoutExecutionScreen(
                     onCardioExerciseSelected = { newExercise, durationMinutes, rest ->
                         viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest)
                         showSwapExerciseSheet = false
-                    }
+                    },
+                    onAdvancedExerciseSelected = { newExercise, blocks, rest ->
+                        val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
+                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, blocks = blocks)
+                        showSwapExerciseSheet = false
+                    },
+                    initialBlocks = exState.blocks
                 )
             }
         }
@@ -1635,6 +1641,16 @@ fun WorkoutExecutionScreen(
                         viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes)
                     } else {
                         viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes)
+                    }
+                    isAddingAfterCurrent = false
+                    showAddExerciseSheet = false
+                },
+                onAdvancedExerciseSelected = { exercise, blocks, rest ->
+                    val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
+                    if (isAddingAfterCurrent) {
+                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, blocks = blocks)
+                    } else {
+                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, blocks = blocks)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false

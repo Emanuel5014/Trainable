@@ -64,6 +64,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.rounded.Percent
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.collectAsState
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.WeekShift
+import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
+import com.emanuel5014.trainable.ui.components.OneRepMaxBinding
+import com.emanuel5014.trainable.ui.components.WeekEditing
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -1209,6 +1218,7 @@ private fun ExerciseListSection(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun ScanEntryCard(
     entry: ScannedExerciseEntry,
@@ -1219,8 +1229,12 @@ private fun ScanEntryCard(
     onChangeExercise: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    var setsText by remember(entry.rawName, index) { mutableStateOf(entry.sets.toString()) }
-    var repsText by remember(entry.rawName, index) { mutableStateOf(entry.reps) }
+    var setsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.sets.toString()) }
+    var repsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.reps) }
+    val environment: com.emanuel5014.trainable.ui.components.PrescriptionEnvironmentViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
+    val storedMaxes by environment.oneRepMaxes.collectAsState()
+    val storedEstimates by environment.estimatedOneRepMaxes.collectAsState()
+    var advancedWeeksCount by remember(entry.rawName, index) { mutableIntStateOf(entry.blocksByWeek.keys.maxOrNull() ?: 1) }
 
     val displayTitle = if (entry.exerciseId != null) {
         ExerciseTranslations.translate(entry.matchedName ?: entry.rawName, languageCode)
@@ -1338,32 +1352,7 @@ private fun ScanEntryCard(
             )
         }
 
-        if (entry.isAdvanced) {
-            val scanLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels("kg")
-            val weeks = entry.blocksByWeek.toSortedMap()
-            weeks.forEach { (week, blocks) ->
-                Row(verticalAlignment = Alignment.Top) {
-                    if (weeks.size > 1) {
-                        com.emanuel5014.trainable.ui.components.PrescriptionPill(
-                            text = stringResource(R.string.week_short, week),
-                            containerColor = Primary,
-                            contentColor = OnPrimary,
-                            emphasized = true
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    com.emanuel5014.trainable.ui.components.PrescriptionBlocksSummary(blocks = blocks, labels = scanLabels)
-                }
-            }
-            TextButton(onClick = { onUpdate(entry.copy(blocksByWeek = emptyMap())) }) {
-                Text(
-                    text = stringResource(R.string.scan_use_simple).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnSurfaceVariant
-                )
-            }
-        } else if (entry.isCardio) {
+        if (entry.isCardio) {
             CardioDurationSlider(
                 valueMinutes = entry.cardioMinutes ?: 20,
                 onValueChange = { onUpdate(entry.copy(cardioMinutes = it)) },
@@ -1372,18 +1361,19 @@ private fun ScanEntryCard(
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            Row(
+            androidx.compose.foundation.layout.FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
-                    selected = !entry.isTimeAndWeight,
+                    selected = !entry.isTimeAndWeight && !entry.isAdvanced,
                     onClick = {
                         val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
                         onUpdate(
                             entry.copy(
                                 exerciseType = "strength",
-                                reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps
+                                reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps,
+                                blocksByWeek = emptyMap()
                             )
                         )
                     },
@@ -1409,7 +1399,8 @@ private fun ScanEntryCard(
                             entry.copy(
                                 exerciseType = "time_and_weight",
                                 timeSeconds = currentTarget,
-                                reps = "${currentTarget}s"
+                                reps = "${currentTarget}s",
+                                blocksByWeek = emptyMap()
                             )
                         )
                     },
@@ -1427,9 +1418,66 @@ private fun ScanEntryCard(
                         selectedLeadingIconColor = Primary
                     )
                 )
+                FilterChip(
+                    selected = entry.isAdvanced,
+                    onClick = {
+                        if (!entry.isAdvanced) {
+                            // Carry the plain sets × reps over as a first free block
+                            val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                            onUpdate(
+                                entry.copy(
+                                    exerciseType = "strength",
+                                    timeSeconds = null,
+                                    blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
+                                )
+                            )
+                        }
+                    },
+                    label = { Text(stringResource(R.string.exercise_type_advanced)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Percent,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Primary.copy(alpha = 0.15f),
+                        selectedLabelColor = Primary,
+                        selectedLeadingIconColor = Primary
+                    )
+                )
             }
 
-            if (entry.isTimeAndWeight) {
+            if (entry.isAdvanced) {
+                fun withBlocks(blocks: Map<Int, List<PrescriptionBlock>>): ScannedExerciseEntry {
+                    val firstWeek = blocks.filterValues { it.isNotEmpty() }.toSortedMap().values.firstOrNull()
+                    val (sets, reps) = firstWeek?.let { PrescriptionExpander.legacyTargets(it) } ?: (entry.sets to entry.reps)
+                    return entry.copy(blocksByWeek = blocks, sets = sets.coerceIn(1, 30), reps = reps)
+                }
+                AdvancedPrescriptionEditor(
+                    blocksByWeek = entry.blocksByWeek,
+                    onBlocksByWeekChange = { onUpdate(withBlocks(it)) },
+                    exerciseId = entry.exerciseId,
+                    exerciseName = displayTitle,
+                    oneRepMax = OneRepMaxBinding(
+                        kg = entry.oneRepMaxKg ?: entry.exerciseId?.let { storedMaxes[it] },
+                        estimatedKg = entry.exerciseId?.let { storedEstimates[it] },
+                        onChange = { kg, _ -> onUpdate(entry.copy(oneRepMaxKg = kg)) }
+                    ),
+                    weeks = WeekEditing(
+                        weeksCount = advancedWeeksCount,
+                        onWeeksCountChange = { advancedWeeksCount = it },
+                        onDeleteWeek = { week ->
+                            onUpdate(withBlocks(WeekShift.removeWeek(entry.blocksByWeek, week)))
+                            advancedWeeksCount = (advancedWeeksCount - 1).coerceAtLeast(1)
+                        },
+                        persistedWeeksCount = 0
+                    ),
+                    // The photo is already being reviewed with AI: no nested scan here
+                    showAiButton = false
+                )
+            } else if (entry.isTimeAndWeight) {
                 GymInputField(
                     value = setsText,
                     onValueChange = { value ->

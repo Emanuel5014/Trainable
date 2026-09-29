@@ -90,6 +90,9 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
 import com.emanuel5014.trainable.ui.components.NumberStepper
+import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
+import com.emanuel5014.trainable.ui.components.WeekEditing
+import com.emanuel5014.trainable.domain.prescription.WeekShift
 import com.emanuel5014.trainable.ui.components.OneRepMaxCard
 import com.emanuel5014.trainable.ui.components.OneRepMaxDialog
 import com.emanuel5014.trainable.ui.components.PrescriptionBlocksEditor
@@ -101,6 +104,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -278,6 +282,7 @@ fun RoutineDetailScreen(
         }
     }
 
+    var weekToDelete by remember { mutableStateOf<Int?>(null) }
     var showRoutineEditSheet by remember { mutableStateOf(false) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
@@ -299,16 +304,12 @@ fun RoutineDetailScreen(
 
     // Advanced (%1RM / blocks) prescription drafts
     val weightUnit by viewModel.weightUnit.collectAsState()
-    val roundingIncrement by viewModel.loadRoundingIncrement.collectAsState()
     val oneRepMaxes by viewModel.oneRepMaxes.collectAsState()
-    val estimatedOneRepMaxes by viewModel.estimatedOneRepMaxes.collectAsState()
     val prescriptionLabels = rememberPrescriptionLabels(weightUnit)
     val advancedWeeks = remember { mutableStateMapOf<Int, List<PrescriptionBlock>>() }
     val draftExcludedWeeks = remember { mutableStateListOf<Int>() }
     var draftWeeksCount by remember { mutableIntStateOf(1) }
     var editorWeek by remember { mutableIntStateOf(1) }
-    var showOneRepMaxDialog by remember { mutableStateOf(false) }
-    var pendingOneRepMaxKg by remember { mutableStateOf<Float?>(null) }
     val planWeeksCount = uiState.planDetails?.plan?.weeksCount ?: 1
     val planCurrentWeek = uiState.planDetails?.plan?.currentWeek ?: 1
     var viewWeek by remember { mutableIntStateOf(1) }
@@ -406,6 +407,40 @@ fun RoutineDetailScreen(
             }
             showRoutineEditSheet = true
         }
+    }
+
+    weekToDelete?.let { week ->
+        AlertDialog(
+            onDismissRequest = { weekToDelete = null },
+            title = { Text(stringResource(R.string.delete_week_title, week), fontWeight = FontWeight.ExtraBold) },
+            text = { Text(stringResource(R.string.delete_week_message)) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.deleteWeek(week)
+                        weekToDelete = null
+                    },
+                    containerColor = Error.copy(alpha = 0.12f),
+                    contentColor = Error,
+                    modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+                ) {
+                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { weekToDelete = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
     }
 
     if (existingSessionForPlan != null) {
@@ -720,19 +755,29 @@ fun RoutineDetailScreen(
                                         color = Primary,
                                         fontWeight = FontWeight.Black
                                     )
-                                    if (viewWeek == details.plan.currentWeek) {
-                                        PrescriptionPill(
-                                            text = stringResource(R.string.current_badge),
-                                            containerColor = Primary.copy(alpha = 0.12f),
-                                            contentColor = Primary
-                                        )
-                                    } else {
-                                        TextButton(onClick = { viewModel.setCurrentWeek(viewWeek) }) {
-                                            Text(
-                                                text = stringResource(R.string.set_as_current_week).uppercase(),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                color = Primary
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        if (viewWeek == details.plan.currentWeek) {
+                                            PrescriptionPill(
+                                                text = stringResource(R.string.current_badge),
+                                                containerColor = Primary.copy(alpha = 0.12f),
+                                                contentColor = Primary
+                                            )
+                                        } else {
+                                            TextButton(onClick = { viewModel.setCurrentWeek(viewWeek) }) {
+                                                Text(
+                                                    text = stringResource(R.string.set_as_current_week).uppercase(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    color = Primary
+                                                )
+                                            }
+                                        }
+                                        IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(36.dp)) {
+                                            Icon(
+                                                Icons.Rounded.Delete,
+                                                contentDescription = stringResource(R.string.delete_week),
+                                                tint = Error,
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
@@ -1219,112 +1264,38 @@ fun RoutineDetailScreen(
                         }
 
                         if (selectedExerciseType == "advanced") {
-                            val exId = selectedExerciseId
-                            OneRepMaxCard(
-                                oneRepMaxKg = exId?.let { oneRepMaxes[it] },
-                                estimatedKg = exId?.let { estimatedOneRepMaxes[it] },
-                                weightUnit = weightUnit,
-                                onEdit = {
-                                    pendingOneRepMaxKg = null
-                                    showOneRepMaxDialog = true
+                            AdvancedPrescriptionEditor(
+                                blocksByWeek = advancedWeeks.toMap(),
+                                onBlocksByWeekChange = { updated ->
+                                    advancedWeeks.clear()
+                                    advancedWeeks.putAll(updated)
                                 },
-                                onUseEstimate = { kg ->
-                                    exId?.let {
-                                        viewModel.saveOneRepMax(it, LoadCalculator.roundTo(kg, LoadCalculator.DEFAULT_INCREMENT_KG), OneRepMaxEntity.SOURCE_ESTIMATED)
-                                    }
-                                }
+                                exerciseId = selectedExerciseId,
+                                exerciseName = selectedExercise?.let { ExerciseTranslations.translate(it.nome, languageCode) },
+                                weeks = WeekEditing(
+                                    weeksCount = draftWeeksCount,
+                                    onWeeksCountChange = { draftWeeksCount = it },
+                                    persistedWeeksCount = planWeeksCount,
+                                    currentWeek = planCurrentWeek,
+                                    excludedWeeks = draftExcludedWeeks.toSet(),
+                                    onExcludedWeeksChange = { updated ->
+                                        draftExcludedWeeks.clear()
+                                        draftExcludedWeeks.addAll(updated)
+                                    },
+                                    onDeleteWeek = { week ->
+                                        // Weeks the routine already has are removed from every exercise; weeks only added in this draft just disappear
+                                        if (week <= planWeeksCount) viewModel.deleteWeek(week)
+                                        val shifted = WeekShift.removeWeek(advancedWeeks.toMap(), week)
+                                        advancedWeeks.clear()
+                                        advancedWeeks.putAll(shifted)
+                                        val excludedShifted = WeekShift.removeWeek(draftExcludedWeeks.toSet(), week)
+                                        draftExcludedWeeks.clear()
+                                        draftExcludedWeeks.addAll(excludedShifted)
+                                        draftWeeksCount = (draftWeeksCount - 1).coerceAtLeast(1)
+                                    },
+                                    initialWeek = editorWeek
+                                )
                             )
-
-                            WeekSelector(
-                                weeksCount = draftWeeksCount,
-                                selectedWeek = editorWeek,
-                                onWeekSelected = { editorWeek = it },
-                                currentWeek = if (draftWeeksCount > 1) planCurrentWeek else null,
-                                dimmedWeeks = draftExcludedWeeks.toSet(),
-                                hapticEnabled = hapticEnabled,
-                                onAddWeek = if (draftWeeksCount < RoutineDetailViewModel.MAX_WEEKS) {
-                                    {
-                                        draftWeeksCount += 1
-                                        editorWeek = draftWeeksCount
-                                    }
-                                } else null
-                            )
-
-                            val isWeekExcluded = editorWeek in draftExcludedWeeks
-                            if (draftWeeksCount > 1) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    if (editorWeek > 1 && !isWeekExcluded) {
-                                        TextButton(onClick = {
-                                            val source = PrescriptionResolver.resolve(advancedWeeks.toMap(), emptySet(), editorWeek - 1)
-                                            if (source is ResolvedPrescription.Blocks) advancedWeeks[editorWeek] = source.blocks
-                                        }) {
-                                            Text(
-                                                text = stringResource(R.string.copy_previous_week, editorWeek - 1).uppercase(),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                color = Primary
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Text(
-                                        text = stringResource(R.string.skip_this_week),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = OnSurfaceVariant,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Switch(
-                                        checked = isWeekExcluded,
-                                        onCheckedChange = { skip ->
-                                            if (skip) draftExcludedWeeks.add(editorWeek) else draftExcludedWeeks.remove(editorWeek)
-                                        },
-                                        colors = SwitchDefaults.colors(checkedTrackColor = Primary)
-                                    )
-                                }
-                            }
-
-                            if (isWeekExcluded) {
-                                PrescriptionPill(text = stringResource(R.string.not_in_week, editorWeek))
-                            } else {
-                                val weekBlocks = advancedWeeks[editorWeek].orEmpty()
-                                if (weekBlocks.isEmpty()) {
-                                    val fallback = PrescriptionResolver.resolve(advancedWeeks.toMap(), emptySet(), editorWeek)
-                                    if (fallback is ResolvedPrescription.Blocks && fallback.isFallback) {
-                                        Text(
-                                            text = stringResource(R.string.week_repeats, fallback.sourceWeek),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = OnSurfaceVariant
-                                        )
-                                    }
-                                }
-                                key(editorWeek) {
-                                    PrescriptionBlocksEditor(
-                                        blocks = weekBlocks,
-                                        onBlocksChange = { advancedWeeks[editorWeek] = it },
-                                        onApplyNotation = { program ->
-                                            if (program.weeks.keys == setOf(1)) {
-                                                advancedWeeks[editorWeek] = program.weeks.getValue(1)
-                                            } else {
-                                                program.weeks.forEach { (week, blocks) -> advancedWeeks[week] = blocks }
-                                                draftWeeksCount = maxOf(draftWeeksCount, program.weeks.keys.max())
-                                            }
-                                            val parsedMax = program.oneRepMaxKg
-                                            if (parsedMax != null && exId != null && oneRepMaxes[exId] != parsedMax) {
-                                                pendingOneRepMaxKg = parsedMax
-                                                showOneRepMaxDialog = true
-                                            }
-                                        },
-                                        oneRepMaxKg = exId?.let { oneRepMaxes[it] },
-                                        weightUnit = weightUnit,
-                                        roundingIncrement = roundingIncrement,
-                                        hapticEnabled = hapticEnabled
-                                    )
-                                }
-                            }
                         } else if (selectedExerciseType == "time_and_weight") {
                             GymInputField(
                                 value = setsText,
@@ -1609,24 +1580,6 @@ fun RoutineDetailScreen(
                 }
             }
         }
-    }
-
-    if (showOneRepMaxDialog) {
-        val exId = selectedExerciseId
-        OneRepMaxDialog(
-            title = stringResource(R.string.edit_one_rep_max),
-            initialKg = pendingOneRepMaxKg ?: exId?.let { oneRepMaxes[it] },
-            weightUnit = weightUnit,
-            onDismiss = {
-                showOneRepMaxDialog = false
-                pendingOneRepMaxKg = null
-            },
-            onConfirm = { kg, source ->
-                exId?.let { viewModel.saveOneRepMax(it, kg, source) }
-                showOneRepMaxDialog = false
-                pendingOneRepMaxKg = null
-            }
-        )
     }
 
     if (showExercisePicker) {
@@ -2071,7 +2024,7 @@ fun RoutineDetailScreen(
     }
 }
 
-private fun createScanTempImageUri(context: android.content.Context): android.net.Uri {
+internal fun createScanTempImageUri(context: android.content.Context): android.net.Uri {
     val tempFile = java.io.File(context.cacheDir, "ai_scan_temp_${System.currentTimeMillis()}.jpg")
     return FileProvider.getUriForFile(
         context,
@@ -2081,12 +2034,13 @@ private fun createScanTempImageUri(context: android.content.Context): android.ne
 }
 
 @Composable
-private fun AiScanningOverlay(
+internal fun AiScanningOverlay(
     phase: com.emanuel5014.trainable.data.ai.ScanPhase,
     stream: AiScanStreamState,
     showResourceAnalytics: Boolean = false,
     isDark: Boolean,
-    hazeState: HazeState,
+    /** Null when the overlay lives in its own window (no blurred content behind it): a plain scrim is used. */
+    hazeState: HazeState?,
     onCancel: () -> Unit
 ) {
     var showCancelConfirmation by remember { mutableStateOf(false) }
@@ -2157,11 +2111,17 @@ private fun AiScanningOverlay(
             .pointerInput(Unit) {
                 detectTapGestures { /* Consume touches to prevent triggering underlying buttons */ }
             }
-            .hazeEffect(state = hazeState) {
-                blurRadius = 24.dp
-                tints = listOf(HazeTint(scrimColor))
-                noiseFactor = 0.05f
-            }
+            .then(
+                if (hazeState != null) {
+                    Modifier.hazeEffect(state = hazeState) {
+                        blurRadius = 24.dp
+                        tints = listOf(HazeTint(scrimColor))
+                        noiseFactor = 0.05f
+                    }
+                } else {
+                    Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = if (isDark) 0.92f else 0.95f))
+                }
+            )
             .drawBehind {
                 val width = size.width
                 val height = size.height
@@ -2665,7 +2625,7 @@ private fun DeviceResourceAnalyticsCard(
 }
 
 @Composable
-private fun aiPhaseLabel(phase: com.emanuel5014.trainable.data.ai.ScanPhase): String =
+internal fun aiPhaseLabel(phase: com.emanuel5014.trainable.data.ai.ScanPhase): String =
     when (phase) {
         com.emanuel5014.trainable.data.ai.ScanPhase.LOADING_MODEL -> stringResource(R.string.ai_scan_phase_model)
         com.emanuel5014.trainable.data.ai.ScanPhase.READING_SHEET -> stringResource(R.string.ai_scan_phase_reading)
@@ -2673,7 +2633,7 @@ private fun aiPhaseLabel(phase: com.emanuel5014.trainable.data.ai.ScanPhase): St
     }
 
 @Composable
-private fun ScanOptionItem(
+internal fun ScanOptionItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     onClick: () -> Unit,

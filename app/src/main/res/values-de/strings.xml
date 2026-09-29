@@ -965,7 +965,7 @@
     <string name="not_now">Nicht jetzt</string>
     <string name="notification_next_set_detail">Nächste: %1$s - Satz %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · nächster Satz zur vollen Minute</string>
-    <string name="scan_programmed_hint">Auf separatem Plan: Blöcke nach dem Import hinzufügen oder den Plan scannen.</string>
+    <string name="scan_programmed_hint">Die Vorgabe steht auf einem separaten Programmblatt: Wähle Erweitert, um die Blöcke hier hinzuzufügen, oder scanne die Programmseite nach dem Import.</string>
     <string name="scan_use_simple">Einfache Sätze × Wdh. verwenden</string>
     <string name="scan_one_rep_max_found">1RM auf dem Blatt: %1$s · wird gespeichert</string>
     <string name="one_rep_maxes">1RMs</string>
@@ -990,5 +990,27 @@
     <string name="rpe_input_never">Nie</string>
     <string name="one_rep_maxes_card_desc">%1$d Übungen erfasst</string>
     <string name="one_rep_max_current">Aktuelles 1RM</string>
+    <string name="ai_program_scan_button">Scannen</string>
+    <string name="ai_program_scan_title">Programmseite scannen</string>
+    <string name="ai_program_scan_desc">Foto aufnehmen oder auswählen: Die KI füllt die Blöcke aus, du kannst sie prüfen und ändern.</string>
+    <string name="ai_program_scan_failed">Auf dem Foto konnte keine Vorgabe gelesen werden. Versuche ein schärferes, näheres Bild.</string>
+    <string name="ai_program_review_title">Programm erkannt</string>
+    <string name="ai_program_review_hint">Wähle die zu importierenden Wochen. Danach kannst du alles bearbeiten.</string>
+    <string name="ai_program_review_pick_week">Wähle die zu importierende Woche. Danach kannst du sie bearbeiten.</string>
+    <string name="ai_program_save_one_rep_max">1RM %1$s speichern</string>
+    <string name="ai_program_import">Importieren</string>
+    <string name="delete_week">Woche löschen</string>
+    <string name="delete_week_title">W%1$d löschen?</string>
+    <string name="delete_week_message">Die Woche wird aus allen Übungen dieser Routine entfernt, die folgenden Wochen rücken auf. Vergangene Einheiten bleiben unverändert.</string>
+    <string name="prescription">Vorgabe</string>
+    <string name="edit_prescription">Vorgabe bearbeiten</string>
+    <string name="add_prescription">Vorgabe hinzufügen</string>
+    <string name="remove_prescription">Vorgabe entfernen</string>
+    <string name="prescription_sheet_subtitle">Bereits geloggte Sätze behalten Gewicht und Wiederholungen.</string>
+    <string name="prescription_remove_sets_title">Sätze entfernen?</string>
+    <string name="prescription_remove_sets_message">%1$d geloggte Sätze passen nicht zur neuen Vorgabe und werden entfernt.</string>
+    <string name="keep_prescription_on_swap">Die neue Übung übernimmt die Vorgabe der alten.</string>
+    <string name="delete_week_message_local">Die Woche wird aus dieser Übung entfernt, die folgenden Wochen rücken auf.</string>
+    <string name="add_block_short">Block</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>
