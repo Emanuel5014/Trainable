@@ -1014,5 +1014,17 @@
     <string name="add_block_short">Block</string>
     <string name="advanced_programming">Erweiterte Programmierung</string>
     <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und RPE</string>
+    <string name="ai_program_review_summary">%1$d Wochen · %2$d Blöcke</string>
+    <string name="ai_program_found_max">1RM auf der Seite gefunden</string>
+    <string name="ai_program_save_max_short">Speichern</string>
+    <string name="ai_program_import_count">Importieren (%1$d)</string>
+    <string name="ai_program_not_matched">„%1$s“ steht nicht auf dieser Seite. Wähle die richtige Übung:</string>
+    <string name="ai_program_other_exercises">Auf der Seite gefundene Übungen</string>
+    <string name="scan_draft_title">Scan als Entwurf gespeichert</string>
+    <string name="scan_draft_subtitle">%1$d Übungen warten auf die Prüfung</string>
+    <string name="scan_draft_resume">Fortsetzen</string>
+    <string name="scan_draft_discard">Verwerfen</string>
+    <string name="scan_draft_discard_title">Scan verwerfen?</string>
+    <string name="scan_draft_discard_desc">Die gescannten Übungen gehen verloren und du musst das Blatt erneut scannen.</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

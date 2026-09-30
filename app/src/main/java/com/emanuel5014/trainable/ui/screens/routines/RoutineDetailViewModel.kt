@@ -81,6 +81,7 @@ class RoutineDetailViewModel @Inject constructor(
     private val deviceCapabilityChecker: DeviceCapabilityChecker,
     private val aiResourceTracker: AiResourceTracker,
     private val oneRepMaxRepository: OneRepMaxRepository,
+    private val scanDraftStore: com.emanuel5014.trainable.data.ai.ScanDraftStore,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -164,6 +165,29 @@ class RoutineDetailViewModel @Inject constructor(
 
     private var scanJob: kotlinx.coroutines.Job? = null
 
+    /** The last full-routine scan that wasn't imported, kept on disk until it is imported or discarded. */
+    private val _scanDraft = MutableStateFlow<com.emanuel5014.trainable.data.ai.ScanDraft?>(null)
+    val scanDraft: StateFlow<com.emanuel5014.trainable.data.ai.ScanDraft?> = _scanDraft.asStateFlow()
+
+    fun resumeScanDraft() {
+        val draft = _scanDraft.value ?: return
+        _aiScanState.value = AiScanState.Success(entries = draft.entries, imageUri = draft.imageUri)
+    }
+
+    fun discardScanDraft() {
+        _scanDraft.value = null
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) { scanDraftStore.clear(planId) }
+    }
+
+    /** Called while the review is edited; the draft always mirrors what is on screen. */
+    fun saveScanDraft(entries: List<ScannedExerciseEntry>) {
+        val draft = _scanDraft.value ?: return
+        _scanDraft.value = draft.copy(entries = entries, updatedAt = System.currentTimeMillis())
+        viewModelScope.launch(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+            scanDraftStore.save(planId, entries)
+        }
+    }
+
     fun scanRoutineSheet(imageUri: Uri) {
         if (_aiScanState.value is AiScanState.Scanning) return
         _aiScanState.value = AiScanState.Scanning()
@@ -243,9 +267,16 @@ class RoutineDetailViewModel @Inject constructor(
                 )
                 metricsJob?.cancel()
                 emit(force = true)
-                _aiScanState.value =
-                    if (entries.isEmpty()) AiScanState.Error(null)
-                    else AiScanState.Success(entries = entries, imageUri = imageUri)
+                if (entries.isEmpty()) {
+                    _aiScanState.value = AiScanState.Error(null)
+                } else {
+                    // Persist right away: from here on the scan survives closing the review or the app
+                    val draftImage = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        scanDraftStore.create(planId, entries, imageUri)
+                    }
+                    _scanDraft.value = com.emanuel5014.trainable.data.ai.ScanDraft(entries, draftImage, System.currentTimeMillis())
+                    _aiScanState.value = AiScanState.Success(entries = entries, imageUri = draftImage ?: imageUri)
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Cancelled by user
                 _aiScanState.value = AiScanState.Idle
@@ -366,10 +397,14 @@ class RoutineDetailViewModel @Inject constructor(
 
             _aiScanState.value = AiScanState.Idle
             _aiScanStream.value = AiScanStreamState()
+            discardScanDraft()
         }
     }
 
     init {
+        viewModelScope.launch {
+            _scanDraft.value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { scanDraftStore.load(planId) }
+        }
         viewModelScope.launch {
             localeManager.userSelectedLanguage.collect { _ ->
                 _languageCode.value = localeManager.getResolvedLanguage()

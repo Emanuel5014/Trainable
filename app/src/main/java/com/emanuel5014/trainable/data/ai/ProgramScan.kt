@@ -9,7 +9,13 @@ import java.util.Locale
 data class ScannedProgram(
     val weeks: Map<Int, List<PrescriptionBlock>>,
     /** 1RM written on the page, e.g. "Panca Piana (90kg)". */
-    val oneRepMaxKg: Float? = null
+    val oneRepMaxKg: Float? = null,
+    /** Exercise title as written on the page ("PANCA PIANA"), when there is one. */
+    val title: String? = null,
+    /** Other exercises found on the same page, so the user can pick another one in the review. */
+    val others: List<ScannedProgram> = emptyList(),
+    /** False when a specific exercise was requested but no title on the page resembles it. */
+    val matched: Boolean = true
 )
 
 /**
@@ -22,7 +28,7 @@ This is a photo of a strength-training program page (powerlifting style), handwr
 Copy the text exactly as it is written, line by line, in the same order. Do not explain, translate, correct or add anything.
 
 How these pages are usually laid out:
-- The first line is the exercise name, often followed by the athlete's max in brackets.
+- Each exercise starts with its name, often followed by the athlete's max in brackets. A page can list several exercises one after another (bench, squat, pull-ups...): copy all of them, each name followed by its own week lines.
 - Then one line per week. Each line starts with a week label ("W1:", "W2:", ...) followed by the blocks of that week, from left to right.
 - A block is a percentage (or a load in kg, or an RPE) followed by the reps, or by sets x reps. For example "62% 5", "68% 3x6", "74% 3-2-1", "80% 4xMAX".
 - A technique can follow a block: STOP 2", ISO 2" (an isometric pause: the handwritten letters ISO often look like the number 150), CATENE, ELASTICI, PIEDI SU, GARA, TEMPO 3-1-0.
@@ -87,17 +93,35 @@ object ProgramScanParser {
 
     private fun parsePlainText(text: String, exerciseName: String?): ScannedProgram? {
         val sections = splitSections(text)
-        val candidates = sections.filter { it.hasWeeks }
-        val chosen = pickSection(candidates, exerciseName)
-        val program = if (chosen != null) {
-            PrescriptionNotationParser.parseProgram(listOfNotNull(chosen.header).plus(chosen.lines).joinToString("\n"))
-        } else {
-            // No week labels anywhere: the whole text is one week's prescription
-            PrescriptionNotationParser.parseProgram(text)
+        val programs = sections.filter { it.hasWeeks }.mapNotNull { section ->
+            val parsed = PrescriptionNotationParser.parseProgram(listOfNotNull(section.header).plus(section.lines).joinToString("\n"))
+            if (parsed.weeks.isEmpty()) null
+            else ScannedProgram(parsed.weeks, parsed.oneRepMaxKg, title = section.header?.let(::cleanTitle))
         }
-        if (program.weeks.isEmpty()) return null
-        return ScannedProgram(program.weeks, program.oneRepMaxKg)
+        if (programs.isEmpty()) {
+            // No week labels anywhere: the whole text is one week's prescription
+            val parsed = PrescriptionNotationParser.parseProgram(text)
+            if (parsed.weeks.isEmpty()) return null
+            return ScannedProgram(parsed.weeks, parsed.oneRepMaxKg)
+        }
+
+        val wanted = exerciseName?.let(::nameTokens).orEmpty()
+        val scored = programs.map { it to overlap(wanted, nameTokens(it.title.orEmpty())) }
+        val best = if (wanted.isEmpty()) scored.first() else scored.maxByOrNull { it.second } ?: scored.first()
+        val matched = wanted.isEmpty() || best.second > 0f
+        return best.first.copy(
+            others = programs.filter { it !== best.first },
+            matched = matched
+        )
     }
+
+    /** "PANCA PIANA (90kg)" → "PANCA PIANA". */
+    private fun cleanTitle(header: String): String = header
+        .replace(Regex("""\(.*?\)"""), " ")
+        .replace(Regex("""(?i)\b1\s*RM\b.*$"""), " ")
+        .replace(Regex("""(?i)\d+([.,]\d+)?\s*(kg|lbs?)\b"""), " ")
+        .replace(Regex("""\s+"""), " ")
+        .trim(' ', ':', '-')
 
     private val weekLine = Regex("""(?i)^(?:(?:W|WK|WEEK|SETT(?:IMANA)?|SEM(?:ANA)?|SEMAINE|WOCHE)\.?\s*\d{1,2})(?![A-Z0-9])""")
     private val shortWeekLine = Regex("""(?i)^S\s*(\d{1,2})\s*([:)])""")
@@ -158,24 +182,17 @@ object ProgramScanParser {
         }
     }
 
-    private fun pickSection(candidates: List<Section>, exerciseName: String?): Section? {
-        if (candidates.isEmpty()) return null
-        val wanted = exerciseName?.let(::nameTokens)?.takeIf { it.isNotEmpty() } ?: return candidates.first()
-        val best = candidates
-            .map { it to overlap(wanted, nameTokens(it.header.orEmpty())) }
-            .maxByOrNull { it.second }
-        return if (best != null && best.second > 0f) best.first else candidates.first()
-    }
-
     private fun nameTokens(name: String): Set<String> = name.lowercase(Locale.ROOT)
         .replace(Regex("""\(.*?\)"""), " ")
         .split(Regex("""[^\p{L}]+"""))
         .filter { it.length >= 3 }
         .toSet()
 
-    private fun overlap(a: Set<String>, b: Set<String>): Float {
-        if (a.isEmpty() || b.isEmpty()) return 0f
-        return a.intersect(b).size.toFloat() / a.size
+    /** Share of the wanted words found in the title; "pan" matches "panca" so abbreviations still count. */
+    private fun overlap(wanted: Set<String>, title: Set<String>): Float {
+        if (wanted.isEmpty() || title.isEmpty()) return 0f
+        val hits = wanted.count { w -> title.any { t -> t == w || (minOf(t.length, w.length) >= 3 && (t.startsWith(w) || w.startsWith(t))) } }
+        return hits.toFloat() / wanted.size
     }
 
     /** Models like to wrap answers in fences, bold labels and bullets; none of that is part of the page. */

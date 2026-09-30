@@ -1014,5 +1014,17 @@
     <string name="add_block_short">Bloco</string>
     <string name="advanced_programming">Programação avançada</string>
     <string name="advanced_programming_desc" formatted="false">Séries em %1RM, técnicas como pausas e correntes, programas semanais, 1RM e RPE</string>
+    <string name="ai_program_review_summary">%1$d semanas · %2$d blocos</string>
+    <string name="ai_program_found_max">1RM encontrado na página</string>
+    <string name="ai_program_save_max_short">Salvar</string>
+    <string name="ai_program_import_count">Importar (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” não está na página. Escolha o exercício certo:</string>
+    <string name="ai_program_other_exercises">Exercícios encontrados na página</string>
+    <string name="scan_draft_title">Digitalização salva como rascunho</string>
+    <string name="scan_draft_subtitle">%1$d exercícios aguardando revisão</string>
+    <string name="scan_draft_resume">Continuar</string>
+    <string name="scan_draft_discard">Descartar</string>
+    <string name="scan_draft_discard_title">Descartar a digitalização?</string>
+    <string name="scan_draft_discard_desc">Os exercícios digitalizados serão perdidos e você terá de digitalizar a ficha novamente.</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

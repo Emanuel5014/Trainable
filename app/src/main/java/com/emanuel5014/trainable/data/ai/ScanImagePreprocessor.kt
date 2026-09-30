@@ -227,6 +227,29 @@ object ScanImagePreprocessor {
                 }
             }
         }
+
+        // Further exercises written underneath (same column, bigger gap): a page with bench, squat and
+        // pull-ups must keep all of them so the requested one can be picked after reading
+        val stackGapY = (d * 0.25f).toInt()
+        val stacked = clusters.values.filter { it !== main && it.letters >= 6 }.toMutableList()
+        changed = true
+        while (changed) {
+            changed = false
+            val iterator = stacked.iterator()
+            while (iterator.hasNext()) {
+                val c = iterator.next()
+                val overlapX = min(main.x1, c.x1) - max(main.x0, c.x0)
+                val narrower = min(main.x1 - main.x0, c.x1 - c.x0).coerceAtLeast(1)
+                if (overlapX >= narrower * 0.3f && c.y0 <= main.y1 + stackGapY && c.y1 >= main.y0 - stackGapY) {
+                    main.x0 = min(main.x0, c.x0); main.y0 = min(main.y0, c.y0)
+                    main.x1 = max(main.x1, c.x1); main.y1 = max(main.y1, c.y1)
+                    main.letters += c.letters
+                    main.ink += c.ink
+                    iterator.remove()
+                    changed = true
+                }
+            }
+        }
         return main
     }
 

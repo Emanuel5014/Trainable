@@ -1014,5 +1014,17 @@
     <string name="add_block_short">Blocco</string>
     <string name="advanced_programming">Programmazione avanzata</string>
     <string name="advanced_programming_desc" formatted="false">Serie in %1RM, tecniche come fermi e catene, programmi a settimane, massimali e RPE</string>
+    <string name="ai_program_review_summary">%1$d settimane · %2$d blocchi</string>
+    <string name="ai_program_found_max">Massimale letto nella pagina</string>
+    <string name="ai_program_save_max_short">Salva</string>
+    <string name="ai_program_import_count">Importa (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” non è nella pagina. Scegli l\'esercizio giusto:</string>
+    <string name="ai_program_other_exercises">Esercizi trovati nella pagina</string>
+    <string name="scan_draft_title">Scansione salvata in bozza</string>
+    <string name="scan_draft_subtitle">%1$d esercizi in attesa di revisione</string>
+    <string name="scan_draft_resume">Riprendi</string>
+    <string name="scan_draft_discard">Elimina</string>
+    <string name="scan_draft_discard_title">Eliminare la scansione?</string>
+    <string name="scan_draft_discard_desc">Gli esercizi scansionati andranno persi e dovrai rifare la scansione della scheda.</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

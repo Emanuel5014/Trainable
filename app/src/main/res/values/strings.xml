@@ -1014,5 +1014,17 @@
     <string name="add_block_short">Block</string>
     <string name="advanced_programming">Advanced programming</string>
     <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE</string>
+    <string name="ai_program_review_summary">%1$d weeks · %2$d blocks</string>
+    <string name="ai_program_found_max">1RM found on the page</string>
+    <string name="ai_program_save_max_short">Save</string>
+    <string name="ai_program_import_count">Import (%1$d)</string>
+    <string name="ai_program_not_matched">“%1$s” wasn\'t found on this page. Pick the right exercise:</string>
+    <string name="ai_program_other_exercises">Exercises found on the page</string>
+    <string name="scan_draft_title">Scan saved as a draft</string>
+    <string name="scan_draft_subtitle">%1$d exercises waiting to be reviewed</string>
+    <string name="scan_draft_resume">Resume</string>
+    <string name="scan_draft_discard">Discard</string>
+    <string name="scan_draft_discard_title">Discard the scan?</string>
+    <string name="scan_draft_discard_desc">The scanned exercises will be lost and you\'ll have to scan the sheet again.</string>
     <!-- v2.3.0 powerlifting END -->
 </resources>

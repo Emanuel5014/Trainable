@@ -81,6 +81,11 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -145,7 +150,7 @@ fun rememberZoomState(): ZoomState {
     return remember { ZoomState() }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun AiScanPreviewSheet(
     imageUri: Uri? = null,
@@ -156,10 +161,23 @@ fun AiScanPreviewSheet(
     editablePresetExercises: Boolean,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onConfirm: (List<ScannedExerciseEntry>, Boolean) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** Called (debounced) after every edit and when the sheet closes, so a draft can be kept. */
+    onEntriesChanged: (List<ScannedExerciseEntry>) -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editableEntries = remember { mutableStateListOf(*entries.toTypedArray()) }
+    // Closing the sheet (swipe, back, cancel) keeps the scan as a draft instead of losing it
+    val dismiss = {
+        onEntriesChanged(editableEntries.toList())
+        onDismiss()
+    }
+    LaunchedEffect(Unit) {
+        snapshotFlow { editableEntries.toList() }
+            .drop(1)
+            .debounce(500)
+            .collect { onEntriesChanged(it) }
+    }
     var pickingIndex by remember { mutableStateOf<Int?>(null) }
     var customEditIndex by remember { mutableStateOf<Int?>(null) }
     var isAddingNewExercise by remember { mutableStateOf(false) }
@@ -170,11 +188,11 @@ fun AiScanPreviewSheet(
     // System BackHandler ensuring the back button always dismisses cleanly
     val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise || showConfirmDialog
     BackHandler(enabled = !isChildSheetOpen) {
-        onDismiss()
+        dismiss()
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = dismiss,
         sheetState = sheetState,
         containerColor = Surface,
         contentColor = OnSurface,
@@ -312,7 +330,7 @@ fun AiScanPreviewSheet(
                         )
 
                         ActionButtonsSection(
-                            onDismiss = onDismiss,
+                            onDismiss = dismiss,
                             onConfirm = { showConfirmDialog = true },
                             canConfirm = editableEntries.isNotEmpty()
                         )
@@ -360,7 +378,7 @@ fun AiScanPreviewSheet(
                     )
 
                     ActionButtonsSection(
-                        onDismiss = onDismiss,
+                        onDismiss = dismiss,
                         onConfirm = { showConfirmDialog = true },
                         canConfirm = editableEntries.isNotEmpty()
                     )

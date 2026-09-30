@@ -441,7 +441,7 @@ class RoutineScanner @Inject constructor(
 
     private companion object {
         /** A whole program page is a few dozen tokens; anything longer is the model running on. */
-        const val PROGRAM_MAX_OUTPUT_TOKENS = 768
+        const val PROGRAM_MAX_OUTPUT_TOKENS = 1536
 
         val NAME_QUALIFIERS = listOf(
             Regex("""(?i)\b(piedi\s*su|piedi\s*alti|feet\s*up)\b""") to Technique.FeetUp,

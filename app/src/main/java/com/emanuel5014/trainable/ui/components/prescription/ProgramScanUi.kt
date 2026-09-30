@@ -9,6 +9,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.rememberModalBottomSheetState
+import com.emanuel5014.trainable.domain.prescription.IntensityType
+import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
+import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
+import com.emanuel5014.trainable.ui.theme.Error
+import com.emanuel5014.trainable.ui.theme.OnTertiaryContainer
+import com.emanuel5014.trainable.ui.theme.OutlineVariant
+import com.emanuel5014.trainable.ui.theme.TertiaryContainer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +44,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -246,11 +262,14 @@ fun AiProgramScanButton(
     }
 
     (state as? ProgramScanState.Result)?.let { result ->
+        val roundingIncrement by environment.roundingIncrement.collectAsState()
         ProgramScanReviewDialog(
             program = result.program,
+            requestedName = exerciseName,
             singleWeek = singleWeek,
             currentOneRepMaxKg = currentOneRepMaxKg,
             weightUnit = weightUnit,
+            roundingIncrement = roundingIncrement,
             onDismiss = { scanViewModel.reset() },
             onApply = {
                 scanViewModel.reset()
@@ -260,118 +279,264 @@ fun AiProgramScanButton(
     }
 }
 
-/** Shows what the model read so the user can pick what to import; everything stays editable afterwards. */
+/**
+ * Shows what the model read so the user can pick what to import; everything stays editable afterwards.
+ * A sheet rather than a small dialog: one card per week with a row per block (intensity, volume,
+ * techniques and the resulting load), in the regular text colours so it stays readable.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ProgramScanReviewDialog(
     program: ScannedProgram,
+    requestedName: String?,
     singleWeek: Boolean,
     currentOneRepMaxKg: Float?,
     weightUnit: String,
+    roundingIncrement: Float,
     onDismiss: () -> Unit,
     onApply: (ProgramScanApplication) -> Unit
 ) {
     val labels = rememberPrescriptionLabels(weightUnit)
-    val weeks = remember(program) { program.weeks.toSortedMap() }
-    val selected = remember(program) {
+    val candidates = remember(program) { listOf(program.copy(others = emptyList())) + program.others }
+    var candidateIndex by remember(program) { mutableStateOf(0) }
+    val chosen = candidates[candidateIndex]
+
+    val weeks = remember(chosen) { chosen.weeks.toSortedMap() }
+    val selected = remember(chosen) {
         mutableStateMapOf<Int, Boolean>().apply { weeks.keys.forEachIndexed { i, week -> put(week, if (singleWeek) i == 0 else true) } }
     }
-    val foundMax = program.oneRepMaxKg
-    var saveMax by remember(program) { mutableStateOf(foundMax != null && foundMax != currentOneRepMaxKg) }
+    val foundMax = chosen.oneRepMaxKg
+    var saveMax by remember(chosen) { mutableStateOf(foundMax != null && foundMax != currentOneRepMaxKg) }
     val anySelected = selected.values.any { it }
+    val selectedCount = selected.values.count { it }
+    val blockCount = weeks.values.sumOf { it.size }
+    // Loads are worked out from the max on the page, else from the one already saved for the exercise
+    val referenceMax = foundMax ?: currentOneRepMaxKg
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = SurfaceContainerHigh,
-        title = {
-            Text(stringResource(R.string.ai_program_review_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-        },
-        text = {
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Surface,
+        contentColor = OnSurface,
+        tonalElevation = 0.dp
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        modifier = Modifier.size(44.dp).clip(CircleShape).background(Primary.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = Primary, modifier = Modifier.size(22.dp))
+                    }
+                    Column {
+                        Text(
+                            stringResource(R.string.ai_program_review_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black
+                        )
+                        Text(
+                            stringResource(R.string.ai_program_review_summary, weeks.size, blockCount),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                }
+
+                if (candidates.size > 1) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = if (!program.matched && requestedName != null) {
+                                stringResource(R.string.ai_program_not_matched, requestedName)
+                            } else stringResource(R.string.ai_program_other_exercises),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (!program.matched) Error else OnSurfaceVariant,
+                            fontWeight = if (!program.matched) FontWeight.Bold else FontWeight.Normal
+                        )
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            candidates.forEachIndexed { index, candidate ->
+                                FilterChip(
+                                    selected = index == candidateIndex,
+                                    onClick = { candidateIndex = index },
+                                    label = { Text(candidate.title?.takeIf { it.isNotBlank() } ?: "#${index + 1}", fontWeight = FontWeight.Bold) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Primary,
+                                        selectedLabelColor = OnPrimary
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Text(
                     text = stringResource(if (singleWeek) R.string.ai_program_review_pick_week else R.string.ai_program_review_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
-                weeks.forEach { (week, blocks) ->
-                    val checked = selected[week] == true
+
+                if (foundMax != null) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(Shapes.medium)
-                            .background(if (checked) Primary.copy(alpha = 0.08f) else SurfaceContainer)
-                            .clickable {
-                                if (singleWeek) weeks.keys.forEach { selected[it] = it == week }
-                                else selected[week] = !checked
-                            }
-                            .padding(horizontal = 8.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .background(SurfaceContainerHigh)
+                            .clickable { saveMax = !saveMax }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (singleWeek) {
-                            RadioButton(
-                                selected = checked,
-                                onClick = { weeks.keys.forEach { selected[it] = it == week } },
-                                colors = RadioButtonDefaults.colors(selectedColor = Primary)
-                            )
-                        } else {
-                            Checkbox(
-                                checked = checked,
-                                onCheckedChange = { selected[week] = it },
-                                colors = CheckboxDefaults.colors(checkedColor = Primary)
-                            )
-                        }
+                        Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(R.string.week_n, week),
+                                stringResource(R.string.ai_program_found_max),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = Primary,
+                                color = OnSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                formatWeight(foundMax, weightUnit),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = OnSurface,
                                 fontWeight = FontWeight.Black
                             )
-                            PrescriptionBlocksSummary(blocks = blocks, labels = labels, modifier = Modifier.padding(top = 4.dp))
                         }
-                    }
-                }
-                if (foundMax != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { saveMax = !saveMax },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = saveMax,
-                            onCheckedChange = { saveMax = it },
-                            colors = CheckboxDefaults.colors(checkedColor = Primary)
-                        )
                         Text(
-                            text = stringResource(R.string.ai_program_save_one_rep_max, formatWeight(foundMax, weightUnit)),
-                            style = MaterialTheme.typography.bodyMedium,
+                            stringResource(R.string.ai_program_save_max_short),
+                            style = MaterialTheme.typography.labelLarge,
                             color = OnSurface,
                             fontWeight = FontWeight.Bold
                         )
+                        Switch(checked = saveMax, onCheckedChange = { saveMax = it })
+                    }
+                }
+
+                weeks.forEach { (week, blocks) ->
+                    val checked = selected[week] == true
+                    val toggle = {
+                        if (singleWeek) weeks.keys.forEach { selected[it] = it == week }
+                        else selected[week] = !checked
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(Shapes.medium)
+                            .background(SurfaceContainerHigh)
+                            .border(
+                                width = if (checked) 2.dp else 1.dp,
+                                color = if (checked) Primary else OutlineVariant,
+                                shape = Shapes.medium
+                            )
+                            .clickable(onClick = toggle)
+                            .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (singleWeek) {
+                                RadioButton(selected = checked, onClick = toggle, colors = RadioButtonDefaults.colors(selectedColor = Primary))
+                            } else {
+                                Checkbox(checked = checked, onCheckedChange = { toggle() }, colors = CheckboxDefaults.colors(checkedColor = Primary))
+                            }
+                            Text(
+                                text = stringResource(R.string.week_n, week).uppercase(),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = OnSurface,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        blocks.forEach { block ->
+                            ScannedBlockRow(
+                                block = block,
+                                labels = labels,
+                                weightUnit = weightUnit,
+                                oneRepMaxKg = referenceMax,
+                                roundingIncrement = roundingIncrement,
+                                modifier = Modifier.padding(start = 12.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
+                }
+                GymButton(
+                    onClick = {
+                        val picked = weeks.filterKeys { selected[it] == true }
+                        val result = if (singleWeek) mapOf(1 to picked.values.first()) else picked
+                        onApply(ProgramScanApplication(result, foundMax.takeIf { saveMax }))
+                    },
+                    enabled = anySelected,
+                    modifier = Modifier.weight(1f),
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    height = 52
+                ) {
+                    Text(
+                        stringResource(R.string.ai_program_import_count, selectedCount).uppercase(),
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** One block as a readable line: big intensity, volume, technique chips and the load it works out to. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ScannedBlockRow(
+    block: PrescriptionBlock,
+    labels: PrescriptionLabels,
+    weightUnit: String,
+    oneRepMaxKg: Float?,
+    roundingIncrement: Float,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val intensity = PrescriptionFormatter.intensity(block, labels)
+    val volume = PrescriptionFormatter.volume(block, labels)
+    val load = if (block.intensityType == IntensityType.PERCENT && block.intensityValue != null && oneRepMaxKg != null) {
+        formatWeight(LoadCalculator.weightForPercent(oneRepMaxKg, block.intensityValue, weightUnit, roundingIncrement), weightUnit)
+    } else null
+
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = intensity ?: "–",
+            style = MaterialTheme.typography.titleMedium,
+            color = OnSurface,
+            fontWeight = FontWeight.Black,
+            modifier = Modifier.width(72.dp)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = volume, style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.SemiBold)
+            if (block.techniques.isNotEmpty()) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    block.techniques.forEach { technique ->
+                        PrescriptionPill(
+                            text = techniqueLabel(context, technique),
+                            containerColor = TertiaryContainer,
+                            contentColor = OnTertiaryContainer
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            GymButton(
-                onClick = {
-                    val chosen = weeks.filterKeys { selected[it] == true }
-                    val result = if (singleWeek) mapOf(1 to chosen.values.first()) else chosen
-                    onApply(ProgramScanApplication(result, foundMax.takeIf { saveMax }))
-                },
-                enabled = anySelected,
-                containerColor = Primary,
-                contentColor = OnPrimary,
-                height = 48
-            ) {
-                Text(stringResource(R.string.ai_program_import).uppercase(), fontWeight = FontWeight.ExtraBold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
         }
-    )
+        if (load != null) {
+            Text(text = load, style = MaterialTheme.typography.titleSmall, color = Primary, fontWeight = FontWeight.ExtraBold)
+        }
+    }
 }

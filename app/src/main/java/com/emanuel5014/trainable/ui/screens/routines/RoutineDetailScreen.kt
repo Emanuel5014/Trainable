@@ -55,6 +55,7 @@ import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.BatteryStd
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DocumentScanner
@@ -226,6 +227,8 @@ fun RoutineDetailScreen(
     val aiScanAvailable by viewModel.aiScanAvailable.collectAsState()
     val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiScanState by viewModel.aiScanState.collectAsState()
+    val scanDraft by viewModel.scanDraft.collectAsState()
+    var showDiscardDraftDialog by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
@@ -625,6 +628,17 @@ fun RoutineDetailScreen(
                         titleInRow = true,
                         titleStyle = MaterialTheme.typography.headlineLarge
                     )
+                }
+
+                if (scanDraft != null && aiScanState is AiScanState.Idle) {
+                    item {
+                        ScanDraftBanner(
+                            draft = scanDraft!!,
+                            onResume = { viewModel.resumeScanDraft() },
+                            onDiscard = { showDiscardDraftDialog = true },
+                            modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding)
+                        )
+                    }
                 }
 
                 item {
@@ -1991,6 +2005,26 @@ fun RoutineDetailScreen(
         }
     }
 
+    if (showDiscardDraftDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDraftDialog = false },
+            containerColor = SurfaceContainerHigh,
+            title = { Text(stringResource(R.string.scan_draft_discard_title), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+            text = { Text(stringResource(R.string.scan_draft_discard_desc), color = OnSurfaceVariant) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDraftDialog = false
+                    viewModel.discardScanDraft()
+                }) { Text(stringResource(R.string.scan_draft_discard).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDraftDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                }
+            }
+        )
+    }
+
     when (val state = aiScanState) {
         is AiScanState.Scanning -> {
             val scanStream by viewModel.aiScanStream.collectAsState()
@@ -2023,7 +2057,8 @@ fun RoutineDetailScreen(
                     }
                     viewModel.applyScannedExercises(entries, targetWeek = viewWeek)
                 },
-                onDismiss = { viewModel.dismissScanResult() }
+                onDismiss = { viewModel.dismissScanResult() },
+                onEntriesChanged = { viewModel.saveScanDraft(it) }
             )
         }
         else -> {}
@@ -2822,4 +2857,45 @@ private fun DropMenuItem(
         },
         onClick = onClick
     )
+}
+
+/** Reminder that a scanned routine is waiting to be reviewed; shown until it is imported or discarded. */
+@Composable
+private fun ScanDraftBanner(
+    draft: com.emanuel5014.trainable.data.ai.ScanDraft,
+    onResume: () -> Unit,
+    onDiscard: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(Shapes.large)
+            .background(Primary.copy(alpha = 0.12f))
+            .clickable(onClick = onResume)
+            .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.scan_draft_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = OnSurface,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                text = stringResource(R.string.scan_draft_subtitle, draft.entries.size),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+        TextButton(onClick = onResume) {
+            Text(stringResource(R.string.scan_draft_resume).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+        }
+        IconButton(onClick = onDiscard) {
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.scan_draft_discard), tint = OnSurfaceVariant)
+        }
+    }
 }
