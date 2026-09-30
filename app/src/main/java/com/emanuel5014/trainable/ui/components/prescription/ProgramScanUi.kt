@@ -115,13 +115,15 @@ fun AiProgramScanButton(
     currentOneRepMaxKg: Float?,
     weightUnit: String,
     onApply: (ProgramScanApplication) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Distinguishes several buttons on one screen (one per scanned exercise) so each keeps its own scan state. */
+    scanKey: String? = null
 ) {
     val environment: PrescriptionEnvironmentViewModel = hiltViewModel()
     val available by environment.aiAvailable.collectAsState()
     if (!available) return
 
-    val scanViewModel: ProgramScanViewModel = hiltViewModel()
+    val scanViewModel: ProgramScanViewModel = hiltViewModel(key = scanKey)
     val state by scanViewModel.state.collectAsState()
     val stream by scanViewModel.stream.collectAsState()
     val analyticsEnabled by scanViewModel.resourceAnalyticsEnabled.collectAsState(initial = false)

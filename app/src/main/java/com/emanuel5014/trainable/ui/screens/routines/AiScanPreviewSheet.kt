@@ -1495,8 +1495,8 @@ private fun ScanEntryCard(
                         },
                         persistedWeeksCount = 0
                     ),
-                    // The photo is already being reviewed with AI: no nested scan here
-                    showAiButton = false
+                    // Each card scans on its own; the routine scan and its draft are untouched by this
+                    aiScanKey = "program_scan_$index"
                 )
             } else if (entry.isTimeAndWeight) {
                 GymInputField(

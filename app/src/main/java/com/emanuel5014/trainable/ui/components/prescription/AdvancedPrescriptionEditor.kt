@@ -84,7 +84,9 @@ fun AdvancedPrescriptionEditor(
     modifier: Modifier = Modifier,
     weeks: WeekEditing? = null,
     oneRepMax: OneRepMaxBinding? = null,
-    showAiButton: Boolean = true
+    showAiButton: Boolean = true,
+    /** See [AiProgramScanButton]: needed when several editors are on screen at once. */
+    aiScanKey: String? = null
 ) {
     val environment: PrescriptionEnvironmentViewModel = hiltViewModel()
     val weightUnit by environment.weightUnit.collectAsState()
@@ -235,6 +237,7 @@ fun AdvancedPrescriptionEditor(
                                 currentOneRepMaxKg = binding.kg,
                                 weightUnit = weightUnit,
                                 modifier = Modifier.weight(1f),
+                                scanKey = aiScanKey,
                                 onApply = { application ->
                                     val merged = if (weeks == null) {
                                         application.weeks.getValue(1).let { blocksByWeek + (1 to it) }
