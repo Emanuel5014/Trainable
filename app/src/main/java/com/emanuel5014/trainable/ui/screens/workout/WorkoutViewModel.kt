@@ -555,6 +555,11 @@ class WorkoutViewModel @Inject constructor(
             }
             val defaultPrevWeight = previousSets.firstOrNull()?.pesoSollevato ?: previousSets.lastOrNull()?.pesoSollevato ?: 0f
 
+            // While a workout runs, a weight typed on one set is copied to the following unlogged sets
+            // (quick / custom exercises, or ones with no history). Those copies only live in memory, so
+            // on resume the same rule is re-applied from the last logged set instead of falling back to 0.
+            val carriesWeight = planDetail == null || isSwapped || prevPerfStr == null
+            var carriedWeight: Float? = null
             val sets = if (isCardio) emptyList() else (1..targetSets.coerceAtLeast(loggedSets.size)).map { num ->
                 val loggedSet = loggedSets.find { it.numeroSerie == num }
                 val prevSet = previousSets.getOrNull(num - 1)
@@ -564,6 +569,7 @@ class WorkoutViewModel @Inject constructor(
                     loggedSet?.durataSecondi ?: prevSet?.durataSecondi
                 }
                 if (loggedSet != null) {
+                    if (!loggedSet.isWarmup && loggedSet.pesoSollevato > 0f) carriedWeight = loggedSet.pesoSollevato
                     WorkoutSetState(
                         id = loggedSet.id,
                         setNumber = num,
@@ -583,7 +589,7 @@ class WorkoutViewModel @Inject constructor(
                 } else {
                     WorkoutSetState(
                         setNumber = num,
-                        weight = prevSet?.pesoSollevato ?: defaultPrevWeight,
+                        weight = carriedWeight.takeIf { carriesWeight } ?: prevSet?.pesoSollevato ?: defaultPrevWeight,
                         reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
                         previousNote = prevSet?.note,
                         previousReps = prevSet?.repsEffettive,
