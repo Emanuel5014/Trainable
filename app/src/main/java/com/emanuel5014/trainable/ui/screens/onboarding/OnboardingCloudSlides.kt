@@ -77,21 +77,8 @@ internal fun AdvancedSlide(
     advancedProgramming: Boolean,
     onAdvancedProgrammingChange: (Boolean) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_advanced_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_advanced_title))
 
         CustomizeToggleItem(
             icon = Icons.Rounded.Percent,
@@ -130,7 +117,6 @@ internal fun AdvancedSlide(
             color = OnSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(140.dp))
     }
 }
 
@@ -164,22 +150,8 @@ internal fun NextcloudSlide(
 ) {
     var showPassword by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .imePadding()
-            .padding(32.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_nextcloud_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage(verticalArrangement = Arrangement.spacedBy(OnboardingMetrics.sectionSpacing * 0.75f)) {
+        OnboardingTitle(stringResource(R.string.onboarding_nextcloud_title))
         Text(
             text = stringResource(R.string.onboarding_nextcloud_desc),
             style = MaterialTheme.typography.bodyMedium,
@@ -341,7 +313,6 @@ internal fun NextcloudSlide(
             color = OnSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(140.dp))
     }
 }
 
