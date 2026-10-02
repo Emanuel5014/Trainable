@@ -1049,4 +1049,17 @@
     <string name="compare_verdict">A vorn bei %1$d · B bei %2$d</string>
     <string name="compare_reps_value">%1$d Wdh.</string>
     <string name="compare_warmup_set">Aufwärmen</string>
+    <!-- onboarding: advanced training + Nextcloud -->
+    <string name="onboarding_advanced_title">Trainiere wie\nein Powerlifter.</string>
+    <string name="onboarding_advanced_percent_title" formatted="false">%1RM &amp; Maximalwerte</string>
+    <string name="onboarding_advanced_percent_desc">Lege Lasten als Prozent deines Maximums fest und sieh sie als echte Kilos.</string>
+    <string name="onboarding_advanced_techniques_title">Techniken &amp; RPE</string>
+    <string name="onboarding_advanced_techniques_desc">Pausen, Ketten, Tempo, RPE: so verordnet, wie Trainer sie schreiben.</string>
+    <string name="onboarding_advanced_weeks_title">Wochenprogramme</string>
+    <string name="onboarding_advanced_weeks_desc">Plane die Wochen im Voraus und lass das Programm von selbst weiterlaufen.</string>
+    <string name="onboarding_advanced_scan_title">Programm scannen</string>
+    <string name="onboarding_advanced_scan_desc">Fotografiere eine handgeschriebene Seite und lass die KI auf dem Gerät sie für dich lesen.</string>
+    <string name="onboarding_nextcloud_title">Deine Cloud,\ndeine Backups.</string>
+    <string name="onboarding_nextcloud_desc">Optional: Verbinde deine eigene Nextcloud, um eine Kopie deiner Daten außerhalb dieses Telefons zu behalten oder sie auf einem neuen wiederherzustellen.</string>
+    <string name="nextcloud_connect">Verbinden</string>
 </resources>

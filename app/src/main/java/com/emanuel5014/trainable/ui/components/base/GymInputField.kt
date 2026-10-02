@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.VisualTransformation
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -26,6 +27,7 @@ fun GymInputField(
     trailingIcon: @Composable (() -> Unit)? = null,
     containerColor: Color = Color.Transparent,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     singleLine: Boolean = true,
     readOnly: Boolean = false,
     enabled: Boolean = true,
@@ -41,6 +43,7 @@ fun GymInputField(
         trailingIcon = trailingIcon,
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         singleLine = singleLine,
         readOnly = readOnly,
         enabled = enabled,

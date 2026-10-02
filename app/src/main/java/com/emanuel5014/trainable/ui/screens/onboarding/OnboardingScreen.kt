@@ -117,6 +117,8 @@ import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.AiModelStatus
 import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.theme.Error
@@ -141,7 +143,7 @@ fun OnboardingScreen(
     onFinished: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
-    val pagerState = rememberPagerState(pageCount = { 9 })
+    val pagerState = rememberPagerState(pageCount = { 11 })
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -163,6 +165,18 @@ fun OnboardingScreen(
     var autoBackupMaxCount by remember { mutableIntStateOf(5) }
     var autoBackupIncludeImages by remember { mutableStateOf(false) }
     var aiScanEnabled by remember { mutableStateOf(false) }
+    var advancedProgramming by remember { mutableStateOf(false) }
+    var nextcloudServerUrl by remember { mutableStateOf("") }
+    var nextcloudUsername by remember { mutableStateOf("") }
+    var nextcloudPassword by remember { mutableStateOf("") }
+    var nextcloudFolder by remember { mutableStateOf("Trainable/Backups") }
+    var nextcloudAutoBackupEnabled by remember { mutableStateOf(true) }
+    var nextcloudAutoBackupFrequency by remember { mutableIntStateOf(1) }
+    var nextcloudAutoBackupMaxCount by remember { mutableIntStateOf(5) }
+    var nextcloudAutoBackupIncludeImages by remember { mutableStateOf(false) }
+    var nextcloudWifiOnly by remember { mutableStateOf(true) }
+    var showNextcloudRestore by remember { mutableStateOf(false) }
+    var nextcloudBackupToRestore by remember { mutableStateOf<NextcloudBackupFile?>(null) }
     val selectedAiModelVariant by viewModel.aiModelVariant.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
     val aiModelStatus by viewModel.aiModelStatus.collectAsState()
@@ -173,6 +187,18 @@ fun OnboardingScreen(
     val themeMode by viewModel.themeMode.collectAsState(initial = 0)
 
     val backupStatus by viewModel.backupStatus.collectAsState()
+    val connectedNextcloudServer by viewModel.nextcloudServerUrl.collectAsState()
+    val connectedNextcloudUser by viewModel.nextcloudUsername.collectAsState()
+    val isConnectingNextcloud by viewModel.isConnectingNextcloud.collectAsState()
+    val nextcloudConnectState by viewModel.nextcloudConnectState.collectAsState()
+    val nextcloudBackups by viewModel.nextcloudBackups.collectAsState()
+    val isLoadingNextcloudBackups by viewModel.isLoadingNextcloudBackups.collectAsState()
+    val isNextcloudRestoring by viewModel.isNextcloudRestoring.collectAsState()
+
+    // The password is only needed to connect; don't keep it around afterwards
+    LaunchedEffect(nextcloudConnectState) {
+        if (nextcloudConnectState is NextcloudConnectionResult.Success) nextcloudPassword = ""
+    }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
@@ -181,16 +207,20 @@ fun OnboardingScreen(
         }
     }
 
+    val restartApp = {
+        val intent = Intent(context, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        context.startActivity(intent)
+        exitProcess(0)
+    }
+
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
             viewModel.importDatabase(it) {
                 Toast.makeText(context, "Import successful. Restarting app...", Toast.LENGTH_LONG).show()
-                val intent = Intent(context, MainActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                context.startActivity(intent)
-                exitProcess(0)
+                restartApp()
             }
         }
     }
@@ -265,7 +295,11 @@ fun OnboardingScreen(
                         autoStopTimeWeightAtTarget = autoStopTimeWeightAtTarget,
                         onAutoStopTimeWeightAtTargetChange = { autoStopTimeWeightAtTarget = it }
                     )
-                    6 -> LocalAiSlide(
+                    6 -> AdvancedSlide(
+                        advancedProgramming = advancedProgramming,
+                        onAdvancedProgrammingChange = { advancedProgramming = it }
+                    )
+                    7 -> LocalAiSlide(
                         aiDeviceSupported = aiDeviceSupported,
                         aiScanEnabled = aiScanEnabled,
                         onAiScanEnabledChange = { aiScanEnabled = it },
@@ -275,7 +309,7 @@ fun OnboardingScreen(
                         onDownloadModel = { viewModel.downloadAiModel() },
                         onCancelDownload = { viewModel.cancelAiModelDownload() }
                     )
-                    7 -> BackupSlide(
+                    8 -> BackupSlide(
                         autoBackupEnabled = autoBackupEnabled,
                         onAutoBackupChange = { autoBackupEnabled = it },
                         autoBackupFrequency = autoBackupFrequency,
@@ -288,7 +322,41 @@ fun OnboardingScreen(
                         onPickFolder = { folderPickerLauncher.launch(null) },
                         onImport = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }
                     )
-                    8 -> ProfileSetupSlide(
+                    9 -> NextcloudSlide(
+                        connectedAs = connectedNextcloudUser?.let { user ->
+                            stringResource(R.string.nextcloud_configured_as, user, connectedNextcloudServer.orEmpty())
+                        },
+                        serverUrl = nextcloudServerUrl,
+                        onServerUrlChange = { nextcloudServerUrl = it },
+                        username = nextcloudUsername,
+                        onUsernameChange = { nextcloudUsername = it },
+                        password = nextcloudPassword,
+                        onPasswordChange = { nextcloudPassword = it },
+                        remoteFolder = nextcloudFolder,
+                        onRemoteFolderChange = { nextcloudFolder = it },
+                        isConnecting = isConnectingNextcloud,
+                        connectState = nextcloudConnectState,
+                        onConnect = {
+                            viewModel.connectNextcloud(nextcloudServerUrl, nextcloudUsername, nextcloudPassword, nextcloudFolder)
+                        },
+                        onDisconnect = { viewModel.disconnectNextcloud() },
+                        autoBackupEnabled = nextcloudAutoBackupEnabled,
+                        onAutoBackupChange = { nextcloudAutoBackupEnabled = it },
+                        frequency = nextcloudAutoBackupFrequency,
+                        onFrequencyChange = { nextcloudAutoBackupFrequency = it },
+                        maxCount = nextcloudAutoBackupMaxCount,
+                        onMaxCountChange = { nextcloudAutoBackupMaxCount = it },
+                        includeImages = nextcloudAutoBackupIncludeImages,
+                        onIncludeImagesChange = { nextcloudAutoBackupIncludeImages = it },
+                        wifiOnly = nextcloudWifiOnly,
+                        onWifiOnlyChange = { nextcloudWifiOnly = it },
+                        onRestore = {
+                            nextcloudBackupToRestore = null
+                            showNextcloudRestore = true
+                            viewModel.loadNextcloudBackups()
+                        }
+                    )
+                    10 -> ProfileSetupSlide(
                         username = username,
                         onUsernameChange = { username = it },
                         weightInput = weightInput,
@@ -361,7 +429,13 @@ fun OnboardingScreen(
                                 themeStyle = themeStyle,
                                 themeMode = themeMode,
                                 aiScanEnabled = aiScanEnabled,
-                                aiModelVariant = selectedAiModelVariant
+                                aiModelVariant = selectedAiModelVariant,
+                                advancedProgrammingEnabled = advancedProgramming,
+                                nextcloudAutoBackupEnabled = nextcloudAutoBackupEnabled,
+                                nextcloudAutoBackupFrequency = nextcloudAutoBackupFrequency,
+                                nextcloudAutoBackupMaxCount = nextcloudAutoBackupMaxCount,
+                                nextcloudAutoBackupIncludeImages = nextcloudAutoBackupIncludeImages,
+                                nextcloudWifiOnly = nextcloudWifiOnly
                             )
                             onFinished()
                         } else {
@@ -386,6 +460,27 @@ fun OnboardingScreen(
                 )
             }
         }
+    }
+
+    if (showNextcloudRestore) {
+        NextcloudRestoreDialog(
+            backups = nextcloudBackups,
+            isLoading = isLoadingNextcloudBackups,
+            isRestoring = isNextcloudRestoring,
+            selected = nextcloudBackupToRestore,
+            onPick = { nextcloudBackupToRestore = it },
+            onConfirm = { backup ->
+                viewModel.restoreFromNextcloud(backup) {
+                    Toast.makeText(context, "Restore complete. Restarting app...", Toast.LENGTH_LONG).show()
+                    restartApp()
+                }
+            },
+            onBack = { nextcloudBackupToRestore = null },
+            onDismiss = {
+                showNextcloudRestore = false
+                nextcloudBackupToRestore = null
+            }
+        )
     }
 }
 
@@ -1404,7 +1499,7 @@ private fun ProfileSetupSlide(
 }
 
 @Composable
-private fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String) {
+internal fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String) {
     Row(verticalAlignment = Alignment.Top) {
         Box(
             modifier = Modifier
@@ -1435,7 +1530,7 @@ private fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String
 }
 
 @Composable
-private fun CustomizeToggleItem(
+internal fun CustomizeToggleItem(
     icon: ImageVector,
     title: String,
     desc: String,

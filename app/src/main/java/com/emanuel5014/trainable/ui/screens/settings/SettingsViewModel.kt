@@ -457,27 +457,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun rescheduleAutoBackup() {
         viewModelScope.launch {
-            val localEnabled = userPrefsRepository.autoBackupEnabled.first()
-            val nextcloudEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.first()
-            val localFrequency = userPrefsRepository.autoBackupFrequency.first()
-            val ncFrequency = userPrefsRepository.nextcloudAutoBackupFrequency.first()
-            val wifiOnly = userPrefsRepository.nextcloudWifiOnly.first()
-
-            if (localEnabled || nextcloudEnabled) {
-                val frequency = when {
-                    localEnabled && nextcloudEnabled -> minOf(localFrequency, ncFrequency)
-                    localEnabled -> localFrequency
-                    else -> ncFrequency
-                }
-                AutoBackupWorker.schedule(
-                    context = context,
-                    frequencyDays = frequency,
-                    requiresNetwork = nextcloudEnabled,
-                    wifiOnly = wifiOnly
-                )
-            } else {
-                AutoBackupWorker.cancel(context)
-            }
+            AutoBackupWorker.scheduleFromPreferences(context, userPrefsRepository)
         }
     }
 
