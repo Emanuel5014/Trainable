@@ -64,6 +64,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.rounded.Percent
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.collectAsState
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.WeekShift
+import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
+import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
+import com.emanuel5014.trainable.ui.components.OneRepMaxBinding
+import com.emanuel5014.trainable.ui.components.WeekEditing
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,6 +81,11 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,6 +115,9 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.SheetFormBody
+import com.emanuel5014.trainable.ui.components.SheetFormFooter
+import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -135,7 +153,7 @@ fun rememberZoomState(): ZoomState {
     return remember { ZoomState() }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun AiScanPreviewSheet(
     imageUri: Uri? = null,
@@ -146,10 +164,23 @@ fun AiScanPreviewSheet(
     editablePresetExercises: Boolean,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onConfirm: (List<ScannedExerciseEntry>, Boolean) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** Called (debounced) after every edit and when the sheet closes, so a draft can be kept. */
+    onEntriesChanged: (List<ScannedExerciseEntry>) -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editableEntries = remember { mutableStateListOf(*entries.toTypedArray()) }
+    // Closing the sheet (swipe, back, cancel) keeps the scan as a draft instead of losing it
+    val dismiss = {
+        onEntriesChanged(editableEntries.toList())
+        onDismiss()
+    }
+    LaunchedEffect(Unit) {
+        snapshotFlow { editableEntries.toList() }
+            .drop(1)
+            .debounce(500)
+            .collect { onEntriesChanged(it) }
+    }
     var pickingIndex by remember { mutableStateOf<Int?>(null) }
     var customEditIndex by remember { mutableStateOf<Int?>(null) }
     var isAddingNewExercise by remember { mutableStateOf(false) }
@@ -160,11 +191,11 @@ fun AiScanPreviewSheet(
     // System BackHandler ensuring the back button always dismisses cleanly
     val isChildSheetOpen = pickingIndex != null || customEditIndex != null || showFullscreenPhoto || isAddingNewExercise || showConfirmDialog
     BackHandler(enabled = !isChildSheetOpen) {
-        onDismiss()
+        dismiss()
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = dismiss,
         sheetState = sheetState,
         containerColor = Surface,
         contentColor = OnSurface,
@@ -302,7 +333,7 @@ fun AiScanPreviewSheet(
                         )
 
                         ActionButtonsSection(
-                            onDismiss = onDismiss,
+                            onDismiss = dismiss,
                             onConfirm = { showConfirmDialog = true },
                             canConfirm = editableEntries.isNotEmpty()
                         )
@@ -310,50 +341,46 @@ fun AiScanPreviewSheet(
                 }
             } else {
                 // Single Column (Compact Phone)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = ResponsiveSize.cardPadding)
-                        .padding(bottom = ResponsiveSize.cardPadding),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
-                ) {
-                    HeaderSection()
+                SheetFormLayout {
+                    SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.medium) {
+                        HeaderSection()
 
-                    // Collapsible Photo Inspector for Phone
-                    if (imageUri != null) {
-                        CollapsiblePhotoInspector(
-                            imageUri = imageUri,
-                            onOpenFullscreen = { showFullscreenPhoto = true }
-                        )
+                        // Collapsible Photo Inspector for Phone
+                        if (imageUri != null) {
+                            CollapsiblePhotoInspector(
+                                imageUri = imageUri,
+                                onOpenFullscreen = { showFullscreenPhoto = true }
+                            )
 
-                        SaveImageToggleCard(
-                            checked = saveImageToPlan,
-                            onCheckedChange = { saveImageToPlan = it }
+                            SaveImageToggleCard(
+                                checked = saveImageToPlan,
+                                onCheckedChange = { saveImageToPlan = it }
+                            )
+                        }
+
+                        ExerciseListSection(
+                            entries = editableEntries,
+                            languageCode = languageCode,
+                            onRemove = { editableEntries.removeAt(it) },
+                            onUpdate = { index, updated -> editableEntries[index] = updated },
+                            onChangeExercise = { index ->
+                                val entry = editableEntries.getOrNull(index)
+                                if (entry?.exerciseId == null) {
+                                    customEditIndex = index
+                                } else {
+                                    pickingIndex = index
+                                }
+                            },
+                            onAddExerciseClick = { isAddingNewExercise = true }
                         )
                     }
-
-                    ExerciseListSection(
-                        entries = editableEntries,
-                        languageCode = languageCode,
-                        onRemove = { editableEntries.removeAt(it) },
-                        onUpdate = { index, updated -> editableEntries[index] = updated },
-                        onChangeExercise = { index ->
-                            val entry = editableEntries.getOrNull(index)
-                            if (entry?.exerciseId == null) {
-                                customEditIndex = index
-                            } else {
-                                pickingIndex = index
-                            }
-                        },
-                        onAddExerciseClick = { isAddingNewExercise = true }
-                    )
-
-                    ActionButtonsSection(
-                        onDismiss = onDismiss,
-                        onConfirm = { showConfirmDialog = true },
-                        canConfirm = editableEntries.isNotEmpty()
-                    )
+                    SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
+                        ActionButtonsSection(
+                            onDismiss = dismiss,
+                            onConfirm = { showConfirmDialog = true },
+                            canConfirm = editableEntries.isNotEmpty()
+                        )
+                    }
                 }
             }
         }
@@ -975,176 +1002,172 @@ private fun EditCustomExerciseSheet(
         contentColor = OnSurface,
         tonalElevation = 0.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = ResponsiveSize.cardPadding)
-                .padding(bottom = ResponsiveSize.cardPadding)
-                .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(Spacing.medium)
-        ) {
-            // Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Primary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
+        SheetFormLayout {
+            SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.medium) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        Icons.Rounded.Edit,
-                        contentDescription = null,
-                        tint = Primary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Primary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Rounded.Edit,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.ai_scan_custom_options_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = OnSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.ai_scan_custom_options_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
+                    }
                 }
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.ai_scan_custom_options_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = OnSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.ai_scan_custom_options_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnSurfaceVariant
-                    )
-                }
-            }
-
-            // Name Input Field
-            GymInputField(
-                value = nameText,
-                onValueChange = { nameText = it },
-                label = stringResource(R.string.ai_scan_exercise_name_label),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Category Selector
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = stringResource(R.string.ai_scan_category_label),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
+                // Name Input Field
+                GymInputField(
+                    value = nameText,
+                    onValueChange = { nameText = it },
+                    label = stringResource(R.string.ai_scan_exercise_name_label),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                val availableCategories = if (categories.isNotEmpty()) categories else listOf("Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio")
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    availableCategories.forEach { cat ->
-                        val isSelected = cat.equals(selectedCat, ignoreCase = true)
-                        val translatedCat = ExerciseTranslations.translateCategory(cat, languageCode)
+                // Category Selector
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = stringResource(R.string.ai_scan_category_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = OnSurfaceVariant
+                    )
 
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedCat = cat },
-                            label = { Text(translatedCat, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                            leadingIcon = if (isSelected) {
+                    val availableCategories = if (categories.isNotEmpty()) categories else listOf("Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        availableCategories.forEach { cat ->
+                            val isSelected = cat.equals(selectedCat, ignoreCase = true)
+                            val translatedCat = ExerciseTranslations.translateCategory(cat, languageCode)
+
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { selectedCat = cat },
+                                label = { Text(translatedCat, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                                leadingIcon = if (isSelected) {
+                                    {
+                                        Icon(
+                                            Icons.Rounded.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary,
+                                    selectedLabelColor = OnPrimary,
+                                    selectedLeadingIconColor = OnPrimary,
+                                    containerColor = SurfaceContainerHigh,
+                                    labelColor = OnSurfaceVariant
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Save to reusable library switch
+                Card(
+                    shape = Shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { saveToLibrary = !saveToLibrary }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.ai_scan_save_to_library_checkbox),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = OnSurface,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = saveToLibrary,
+                            onCheckedChange = { saveToLibrary = it },
+                            thumbContent = if (saveToLibrary) {
                                 {
                                     Icon(
-                                        Icons.Rounded.Check,
+                                        imageVector = Icons.Rounded.Check,
                                         contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        tint = Primary
                                     )
                                 }
-                            } else null,
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Primary,
-                                selectedLabelColor = OnPrimary,
-                                selectedLeadingIconColor = OnPrimary,
-                                containerColor = SurfaceContainerHigh,
-                                labelColor = OnSurfaceVariant
-                            )
+                            } else null
                         )
                     }
                 }
             }
+            SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
+                // Actions: Link to catalog OR Save edits
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GymButton(
+                        onClick = {
+                            val isCardio = selectedCat.equals("Cardio", ignoreCase = true)
+                            onSave(
+                                entry.copy(
+                                    rawName = nameText.trim().ifBlank { entry.rawName },
+                                    matchedName = nameText.trim().ifBlank { entry.rawName },
+                                    suggestedCategory = selectedCat,
+                                    cardioMinutes = if (isCardio) (entry.cardioMinutes ?: 20) else null
+                                ),
+                                saveToLibrary
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.ai_scan_save_changes).uppercase(), fontWeight = FontWeight.Black)
+                    }
 
-            // Save to reusable library switch
-            Card(
-                shape = Shapes.medium,
-                colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { saveToLibrary = !saveToLibrary }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = stringResource(R.string.ai_scan_save_to_library_checkbox),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = OnSurface,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = saveToLibrary,
-                        onCheckedChange = { saveToLibrary = it },
-                        thumbContent = if (saveToLibrary) {
-                            {
-                                Icon(
-                                    imageVector = Icons.Rounded.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                    tint = Primary
-                                )
-                            }
-                        } else null
-                    )
-                }
-            }
-
-            // Actions: Link to catalog OR Save edits
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                GymButton(
-                    onClick = {
-                        val isCardio = selectedCat.equals("Cardio", ignoreCase = true)
-                        onSave(
-                            entry.copy(
-                                rawName = nameText.trim().ifBlank { entry.rawName },
-                                matchedName = nameText.trim().ifBlank { entry.rawName },
-                                suggestedCategory = selectedCat,
-                                cardioMinutes = if (isCardio) (entry.cardioMinutes ?: 20) else null
-                            ),
-                            saveToLibrary
+                    OutlinedButton(
+                        onClick = onSelectFromCatalog,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = Shapes.medium
+                    ) {
+                        Icon(
+                            Icons.Rounded.Link,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(18.dp)
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.ai_scan_save_changes).uppercase(), fontWeight = FontWeight.Black)
-                }
-
-                OutlinedButton(
-                    onClick = onSelectFromCatalog,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = Shapes.medium
-                ) {
-                    Icon(
-                        Icons.Rounded.Link,
-                        contentDescription = null,
-                        tint = Primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.ai_scan_select_from_catalog),
-                        color = Primary,
-                        fontWeight = FontWeight.Bold
-                    )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.ai_scan_select_from_catalog),
+                            color = Primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -1209,6 +1232,7 @@ private fun ExerciseListSection(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun ScanEntryCard(
     entry: ScannedExerciseEntry,
@@ -1219,8 +1243,12 @@ private fun ScanEntryCard(
     onChangeExercise: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    var setsText by remember(entry.rawName, index) { mutableStateOf(entry.sets.toString()) }
-    var repsText by remember(entry.rawName, index) { mutableStateOf(entry.reps) }
+    var setsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.sets.toString()) }
+    var repsText by remember(entry.rawName, index, entry.isAdvanced) { mutableStateOf(entry.reps) }
+    val environment: com.emanuel5014.trainable.ui.components.PrescriptionEnvironmentViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
+    val storedMaxes by environment.oneRepMaxes.collectAsState()
+    val storedEstimates by environment.estimatedOneRepMaxes.collectAsState()
+    var advancedWeeksCount by remember(entry.rawName, index) { mutableIntStateOf(entry.blocksByWeek.keys.maxOrNull() ?: 1) }
 
     val displayTitle = if (entry.exerciseId != null) {
         ExerciseTranslations.translate(entry.matchedName ?: entry.rawName, languageCode)
@@ -1322,6 +1350,22 @@ private fun ScanEntryCard(
             }
         }
 
+        if (entry.isProgrammed && !entry.isAdvanced) {
+            Text(
+                text = stringResource(R.string.scan_programmed_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = Primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        entry.oneRepMaxKg?.let { kg ->
+            Text(
+                text = stringResource(R.string.scan_one_rep_max_found, com.emanuel5014.trainable.ui.components.formatWeight(kg, "kg")),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+
         if (entry.isCardio) {
             CardioDurationSlider(
                 valueMinutes = entry.cardioMinutes ?: 20,
@@ -1331,18 +1375,19 @@ private fun ScanEntryCard(
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            Row(
+            androidx.compose.foundation.layout.FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
-                    selected = !entry.isTimeAndWeight,
+                    selected = !entry.isTimeAndWeight && !entry.isAdvanced,
                     onClick = {
                         val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
                         onUpdate(
                             entry.copy(
                                 exerciseType = "strength",
-                                reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps
+                                reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps,
+                                blocksByWeek = emptyMap()
                             )
                         )
                     },
@@ -1368,7 +1413,8 @@ private fun ScanEntryCard(
                             entry.copy(
                                 exerciseType = "time_and_weight",
                                 timeSeconds = currentTarget,
-                                reps = "${currentTarget}s"
+                                reps = "${currentTarget}s",
+                                blocksByWeek = emptyMap()
                             )
                         )
                     },
@@ -1386,9 +1432,68 @@ private fun ScanEntryCard(
                         selectedLeadingIconColor = Primary
                     )
                 )
+                if (LocalAdvancedProgramming.current) {
+                    FilterChip(
+                        selected = entry.isAdvanced,
+                        onClick = {
+                            if (!entry.isAdvanced) {
+                                // Carry the plain sets × reps over as a first free block
+                                val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                onUpdate(
+                                    entry.copy(
+                                        exerciseType = "strength",
+                                        timeSeconds = null,
+                                        blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
+                                    )
+                                )
+                            }
+                        },
+                        label = { Text(stringResource(R.string.exercise_type_advanced)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Percent,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary,
+                            selectedLeadingIconColor = Primary
+                        )
+                    )
+                }
             }
 
-            if (entry.isTimeAndWeight) {
+            if (entry.isAdvanced) {
+                fun withBlocks(blocks: Map<Int, List<PrescriptionBlock>>): ScannedExerciseEntry {
+                    val firstWeek = blocks.filterValues { it.isNotEmpty() }.toSortedMap().values.firstOrNull()
+                    val (sets, reps) = firstWeek?.let { PrescriptionExpander.legacyTargets(it) } ?: (entry.sets to entry.reps)
+                    return entry.copy(blocksByWeek = blocks, sets = sets.coerceIn(1, 30), reps = reps)
+                }
+                AdvancedPrescriptionEditor(
+                    blocksByWeek = entry.blocksByWeek,
+                    onBlocksByWeekChange = { onUpdate(withBlocks(it)) },
+                    exerciseId = entry.exerciseId,
+                    exerciseName = displayTitle,
+                    oneRepMax = OneRepMaxBinding(
+                        kg = entry.oneRepMaxKg ?: entry.exerciseId?.let { storedMaxes[it] },
+                        estimatedKg = entry.exerciseId?.let { storedEstimates[it] },
+                        onChange = { kg, _ -> onUpdate(entry.copy(oneRepMaxKg = kg)) }
+                    ),
+                    weeks = WeekEditing(
+                        weeksCount = advancedWeeksCount,
+                        onWeeksCountChange = { advancedWeeksCount = it },
+                        onDeleteWeek = { week ->
+                            onUpdate(withBlocks(WeekShift.removeWeek(entry.blocksByWeek, week)))
+                            advancedWeeksCount = (advancedWeeksCount - 1).coerceAtLeast(1)
+                        },
+                        persistedWeeksCount = 0
+                    ),
+                    // Each card scans on its own; the routine scan and its draft are untouched by this
+                    aiScanKey = "program_scan_$index"
+                )
+            } else if (entry.isTimeAndWeight) {
                 GymInputField(
                     value = setsText,
                     onValueChange = { value ->

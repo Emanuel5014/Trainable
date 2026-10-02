@@ -24,6 +24,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -112,6 +114,7 @@ import androidx.compose.ui.geometry.center
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -153,6 +156,13 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.domain.prescription.IntensityType
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
+import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.ui.components.PrescriptionPill
+import com.emanuel5014.trainable.ui.components.RpeSelector
+import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
+import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -169,7 +179,8 @@ fun WorkoutExecutionScreen(
 
     // Keep the screen on while a cardio or set timer is active (running or paused).
     // Released automatically when the timer finishes, is reset, or the screen is left.
-    val activityWindow = (LocalContext.current as? Activity)?.window
+    val context = LocalContext.current
+    val activityWindow = (context as? Activity)?.window
     val keepScreenOn = (state.keepScreenOnCardioTimer && (state.cardioTimerRunning || state.cardioTimerPaused)) ||
         (state.keepScreenOnSetTimer && (state.setTimerRunning || state.setTimerPaused))
     DisposableEffect(keepScreenOn) {
@@ -200,6 +211,7 @@ fun WorkoutExecutionScreen(
 
     if (showRenameDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showRenameDialog = false },
             title = { Text(stringResource(R.string.rename_workout)) },
             text = {
@@ -221,6 +233,44 @@ fun WorkoutExecutionScreen(
             dismissButton = {
                 TextButton(onClick = { showRenameDialog = false }) {
                     Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
+
+    val prescriptionLabels = rememberPrescriptionLabels(state.weightUnit)
+
+    state.oneRepMaxSuggestions.firstOrNull()?.let { suggestion ->
+        val fmt = { kg: Float -> WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(kg, state.weightUnit), state.weightUnit) }
+        AlertDialog(
+            onDismissRequest = { viewModel.resolveOneRepMaxSuggestion(accept = false) },
+            icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Primary) },
+            title = { Text(stringResource(R.string.new_one_rep_max_title), fontWeight = FontWeight.ExtraBold) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.new_one_rep_max_message,
+                        fmt(suggestion.weightKg), suggestion.reps, suggestion.exerciseName,
+                        fmt(suggestion.currentKg), fmt(suggestion.suggestedKg)
+                    )
+                )
+            },
+            confirmButton = {
+                GymButton(
+                    onClick = { viewModel.resolveOneRepMaxSuggestion(accept = true) },
+                    containerColor = Primary,
+                    contentColor = OnPrimary,
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    Text(stringResource(R.string.save_new_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.resolveOneRepMaxSuggestion(accept = false) }) {
+                    Text(stringResource(R.string.not_now).uppercase(), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -288,6 +338,9 @@ fun WorkoutExecutionScreen(
         viewModel.navigationEvent.collect { event ->
             when (event) {
                 is WorkoutViewModel.WorkoutNavEvent.NavigateBack -> safeNavigateBack()
+                is WorkoutViewModel.WorkoutNavEvent.ProgramCompleted -> android.widget.Toast.makeText(
+                    context, context.getString(R.string.program_completed), android.widget.Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -552,7 +605,38 @@ fun WorkoutExecutionScreen(
                                                 }
                                             }
                                         }
-                                        Text(
+                                        if (targetExState.isAdvanced) {
+                                            Row(
+                                                modifier = Modifier.weight(1f),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                state.programWeek?.let { week ->
+                                                    PrescriptionPill(
+                                                        text = stringResource(R.string.week_short, week),
+                                                        containerColor = Primary,
+                                                        contentColor = OnPrimary,
+                                                        emphasized = true
+                                                    )
+                                                }
+                                                val usesPercent = targetExState.blocks.any { it.intensityType == IntensityType.PERCENT }
+                                                if (usesPercent) {
+                                                    PrescriptionPill(
+                                                        text = targetExState.oneRepMaxKg?.let { stringResource(R.string.one_rep_max_value, prescriptionLabels.weight(it)) }
+                                                            ?: stringResource(R.string.one_rep_max_missing),
+                                                        containerColor = if (targetExState.oneRepMaxKg != null) Primary.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f),
+                                                        contentColor = if (targetExState.oneRepMaxKg != null) Primary else Error
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "$setsCount × $repsCount",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        color = Primary,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
+                                            }
+                                        } else Text(
                                             text = "$setsCount × $repsCount",
                                             style = MaterialTheme.typography.titleMedium,
                                             color = Primary,
@@ -657,7 +741,71 @@ fun WorkoutExecutionScreen(
                                         val haptic = LocalHapticFeedback.current
                                         val isExpanded = targetExState.isTimeAndWeight && (expandedSetIndex == index) && !set.isCompleted
 
+                                        if (targetExState.isAdvanced) {
+                                            val previous = targetExState.sets.getOrNull(index - 1)
+                                            val p = set.prescription
+                                            val startsGroup = index == 0 ||
+                                                previous?.isExtra != set.isExtra ||
+                                                previous?.prescription?.blockIndex != p?.blockIndex
+                                            if (startsGroup) {
+                                                val block = p?.let { targetExState.blocks.getOrNull(it.blockIndex) }
+                                                Column(
+                                                    modifier = Modifier.padding(top = if (index == 0) 0.dp else 6.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = when {
+                                                            block != null -> stringResource(
+                                                                R.string.block_header, p.blockIndex + 1,
+                                                                (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
+                                                                    block.techniques.map { techniqueLabel(context, it) }).joinToString(" · ")
+                                                            ).uppercase()
+                                                            set.isExtra -> stringResource(R.string.extra_badge)
+                                                            else -> ""
+                                                        },
+                                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                                        color = Primary,
+                                                        fontWeight = FontWeight.Black
+                                                    )
+                                                    if (block?.repMode == RepMode.TOTAL) {
+                                                        val total = block.totalReps ?: 0
+                                                        val done = targetExState.sets
+                                                            .filter { it.prescription?.blockIndex == p.blockIndex && it.isCompleted }
+                                                            .sumOf { it.reps }
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            androidx.compose.material3.LinearWavyProgressIndicator(
+                                                                progress = { if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 0f },
+                                                                modifier = Modifier.weight(1f),
+                                                                color = Primary,
+                                                                trackColor = SurfaceContainerHighest
+                                                            )
+                                                            Spacer(modifier = Modifier.width(12.dp))
+                                                            Text(
+                                                                text = stringResource(R.string.total_reps_progress, done, total),
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                color = Primary,
+                                                                fontWeight = FontWeight.ExtraBold
+                                                            )
+                                                        }
+                                                    }
+                                                    block?.note?.let { note ->
+                                                        Text(note, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        val setPrescription = set.prescription
                                         SetLogRow(
+                                            repsLabel = if (set.isAmrap) stringResource(R.string.max_label) else null,
+                                            intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
+                                                ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },
+                                            badges = buildList {
+                                                if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
+                                                setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
+                                                set.rpe?.let { add(stringResource(R.string.rpe_short, PrescriptionFormatter.number(it))) }
+                                                if (set.isExtra) add(stringResource(R.string.extra_badge))
+                                            },
                                             setNumber = set.setNumber,
                                             weight = set.weight,
                                             reps = set.reps,
@@ -665,7 +813,10 @@ fun WorkoutExecutionScreen(
                                             isWarmup = set.isWarmup,
                                             isCompleted = set.isCompleted,
                                             onToggleComplete = { 
-                                                if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                                if (set.isAmrap && !set.isCompleted && index == targetActiveSetIndex) {
+                                                    // AMRAP: reps must be entered before logging
+                                                    isEditingValues = true
+                                                } else if (targetExState.isTimeAndWeight && !set.isCompleted) {
                                                     viewModel.skipTimerAndLogSet(
                                                         targetIndex,
                                                         index,
@@ -840,6 +991,21 @@ fun WorkoutExecutionScreen(
                                                 }
                                             } else null
                                         )
+                                    }
+                                    if (targetExState.isAdvanced) {
+                                        item {
+                                            GymButton(
+                                                onClick = { viewModel.addExtraSet(targetIndex) },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                containerColor = Primary.copy(alpha = 0.1f),
+                                                contentColor = Primary,
+                                                height = 48
+                                            ) {
+                                                Icon(Icons.Rounded.Add, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(stringResource(R.string.add_extra_set).uppercase(), fontWeight = FontWeight.ExtraBold)
+                                            }
+                                        }
                                     }
                                      if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
                                         item {
@@ -1075,6 +1241,14 @@ fun WorkoutExecutionScreen(
                                                     weightUnit = state.weightUnit
                                                 )
                                             } else {
+                                                if (set.isAmrap) {
+                                                    Text(
+                                                        text = stringResource(R.string.amrap_enter_reps),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = Primary,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
                                                 WeightRepsInput(
                                                     weight = set.weight,
                                                     reps = set.reps,
@@ -1082,6 +1256,17 @@ fun WorkoutExecutionScreen(
                                                     onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
                                                     weightUnit = state.weightUnit
                                                 )
+                                                val showRpe = when (state.rpeInputMode) {
+                                                    1 -> true
+                                                    2 -> false
+                                                    else -> currentExState?.isAdvanced == true || set.isExtra
+                                                }
+                                                if (showRpe) {
+                                                    RpeSelector(
+                                                        value = set.rpe,
+                                                        onValueChange = { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
+                                                    )
+                                                }
                                             }
                                             LogSetButton(onClick = {
                                                 if (currentExState?.isTimeAndWeight == true) {
@@ -1124,6 +1309,8 @@ fun WorkoutExecutionScreen(
                                                 Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
                                                 val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
                                                     "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
+                                                } else if (set.isAmrap) {
+                                                    stringResource(R.string.max_label)
                                                 } else {
                                                     "${set.reps}"
                                                 }
@@ -1135,12 +1322,29 @@ fun WorkoutExecutionScreen(
                                                     style = MaterialTheme.typography.titleLarge, 
                                                     fontWeight = FontWeight.ExtraBold
                                                 )
+                                                val p = set.prescription
+                                                val detail = listOfNotNull(
+                                                    p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
+                                                ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
+                                                    listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
+                                                if (detail.isNotEmpty()) {
+                                                    Text(
+                                                        text = detail.joinToString(" · "),
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        color = Primary,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        maxLines = 1,
+                                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                    )
+                                                }
                                             }
                                             Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
                                             Spacer(modifier = Modifier.width(12.dp))
                                             LogSetButton(
                                                 onClick = {
-                                                    if (currentExState?.isTimeAndWeight == true) {
+                                                    if (set.isAmrap) {
+                                                        isEditingValues = true
+                                                    } else if (currentExState?.isTimeAndWeight == true) {
                                                         viewModel.skipTimerAndLogSet(
                                                             state.currentExerciseIndex,
                                                             activeSetIndex,
@@ -1396,7 +1600,13 @@ fun WorkoutExecutionScreen(
                     onCardioExerciseSelected = { newExercise, durationMinutes, rest ->
                         viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest)
                         showSwapExerciseSheet = false
-                    }
+                    },
+                    onAdvancedExerciseSelected = { newExercise, blocks, rest ->
+                        val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
+                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, blocks = blocks)
+                        showSwapExerciseSheet = false
+                    },
+                    initialBlocks = exState.blocks
                 )
             }
         }
@@ -1433,6 +1643,16 @@ fun WorkoutExecutionScreen(
                         viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes)
                     } else {
                         viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes)
+                    }
+                    isAddingAfterCurrent = false
+                    showAddExerciseSheet = false
+                },
+                onAdvancedExerciseSelected = { exercise, blocks, rest ->
+                    val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
+                    if (isAddingAfterCurrent) {
+                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, blocks = blocks)
+                    } else {
+                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, blocks = blocks)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false
@@ -1647,6 +1867,7 @@ fun CardioExerciseContent(
 
     if (showStopDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showStopDialog = false },
             title = { Text(stringResource(R.string.cardio_enter_distance)) },
             text = {
@@ -2307,3 +2528,4 @@ fun LogSetButton(
         }
     }
 }
+

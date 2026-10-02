@@ -1173,6 +1173,7 @@ nav {
 .plan-modal-exercise:last-child { border-bottom: none; }
 .plan-modal-exercise-name { font-weight: 500; font-size: 0.95rem; }
 .plan-modal-exercise-detail { font-size: 0.85rem; color: var(--md-on-surface-variant); }
+.exercise-type-icon { font-size: 18px; vertical-align: -3px; margin-right: 6px; color: var(--md-primary); }
 .plan-modal-images {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));

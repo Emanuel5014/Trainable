@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -45,6 +45,8 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.Percent
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timer
@@ -104,10 +106,16 @@ import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.ui.components.CardioInputForm
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.ui.components.SheetFormBody
+import com.emanuel5014.trainable.ui.components.SheetFormFooter
+import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
@@ -184,6 +192,8 @@ fun EditWorkoutScreen(
     var showAddCardio by remember { mutableStateOf(false) }
     var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
+    var exerciseToEditPrescription by remember { mutableStateOf<Int?>(null) }
+    var pendingPrescription by remember { mutableStateOf<Pair<Int, List<PrescriptionBlock>>?>(null) }
 
     val autoScrollThreshold = with(density) { 48.dp.toPx() }
     val maxAutoScrollSpeed = with(density) { 12.dp.toPx() }
@@ -419,6 +429,7 @@ fun EditWorkoutScreen(
                                             exerciseToSwap = exerciseState.exercise.id
                                             showExercisePicker = true
                                         },
+                                        onEditPrescription = { exerciseToEditPrescription = exerciseState.exercise.id },
                                         onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
                                         onMoveSetUp = { viewModel.moveSetUp(it) },
                                         onMoveSetDown = { viewModel.moveSetDown(it) },
@@ -541,6 +552,17 @@ fun EditWorkoutScreen(
                 exerciseToSwap = null
                 showExercisePicker = false
             },
+            onAdvancedExerciseSelected = { exercise, blocks, _ ->
+                val currentSwapId = exerciseToSwap
+                if (currentSwapId != null) {
+                    viewModel.swapExerciseAdvanced(currentSwapId, exercise.id, blocks)
+                } else {
+                    viewModel.addAdvancedExercise(exercise.id, blocks)
+                }
+                exerciseToSwap = null
+                showExercisePicker = false
+            },
+            initialBlocks = exerciseStateToSwap?.sets?.toPrescriptionBlocks().orEmpty(),
             onAddCustomExercise = { name, category, onCreated ->
                 viewModel.addCustomExercise(name, category, onCreated)
             },
@@ -550,6 +572,81 @@ fun EditWorkoutScreen(
                 exerciseToSwap = null
                 showExercisePicker = false
             }
+        )
+    }
+
+    exerciseToEditPrescription?.let { editingId ->
+        val target = state.exercises.find { it.exercise.id == editingId }
+        if (target == null) {
+            exerciseToEditPrescription = null
+        } else {
+            val currentBlocks = remember(target.sets) { target.sets.toPrescriptionBlocks() }
+            val seeded = remember(target.sets) {
+                // A plain exercise starts from one free block that matches its sets
+                val reps = target.sets.map { it.repsEffettive }
+                PrescriptionBlock(
+                    sets = target.sets.size.coerceAtLeast(1),
+                    reps = when {
+                        reps.isEmpty() -> "5"
+                        reps.distinct().size == 1 -> reps.first().toString()
+                        else -> reps.joinToString("-")
+                    }
+                )
+            }
+            ExercisePrescriptionSheet(
+                exerciseId = editingId,
+                exerciseName = ExerciseTranslations.translate(target.exercise.nome, languageCode),
+                initialBlocks = currentBlocks.ifEmpty { listOf(seeded) },
+                onDismiss = { exerciseToEditPrescription = null },
+                onSave = { blocks ->
+                    val removed = viewModel.removedSetsCount(editingId, blocks)
+                    if (removed > 0) {
+                        pendingPrescription = editingId to blocks
+                    } else {
+                        viewModel.applyPrescription(editingId, blocks)
+                        exerciseToEditPrescription = null
+                    }
+                },
+                onRemove = if (currentBlocks.isNotEmpty()) {
+                    {
+                        viewModel.applyPrescription(editingId, emptyList())
+                        exerciseToEditPrescription = null
+                    }
+                } else null
+            )
+        }
+    }
+
+    pendingPrescription?.let { (exerciseId, blocks) ->
+        AlertDialog(
+            onDismissRequest = { pendingPrescription = null },
+            title = { Text(stringResource(R.string.prescription_remove_sets_title), fontWeight = FontWeight.ExtraBold) },
+            text = { Text(stringResource(R.string.prescription_remove_sets_message, viewModel.removedSetsCount(exerciseId, blocks))) },
+            confirmButton = {
+                GymButton(
+                    onClick = {
+                        viewModel.applyPrescription(exerciseId, blocks)
+                        pendingPrescription = null
+                        exerciseToEditPrescription = null
+                    },
+                    containerColor = Error.copy(alpha = 0.12f),
+                    contentColor = Error
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                GymButton(
+                    onClick = { pendingPrescription = null },
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
         )
     }
 
@@ -635,6 +732,7 @@ fun EditExerciseCard(
     onEditSet: (SetLogEntity) -> Unit,
     onAddSet: () -> Unit,
     onSwapExercise: () -> Unit,
+    onEditPrescription: () -> Unit,
     onDeleteExercise: () -> Unit,
     onMoveSetUp: (SetLogEntity) -> Unit,
     onMoveSetDown: (SetLogEntity) -> Unit,
@@ -816,7 +914,39 @@ fun EditExerciseCard(
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            val context = LocalContext.current
+            val prescriptionLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels(weightUnit)
+            val advancedOn = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
+            val isAdvanced = advancedOn && exerciseState.sets.any { it.blockIndex != null }
+            val blocksByIndex = remember(exerciseState.sets) {
+                val indexes = exerciseState.sets.filter { it.blockIndex != null && !it.isExtra }.map { it.blockIndex!! }.distinct().sorted()
+                indexes.zip(exerciseState.sets.toPrescriptionBlocks()).toMap()
+            }
+
             exerciseState.sets.forEachIndexed { index, set ->
+                val previous = exerciseState.sets.getOrNull(index - 1)
+                if (isAdvanced && (index == 0 || previous?.blockIndex != set.blockIndex || previous?.isExtra != set.isExtra)) {
+                    val block = if (set.isExtra) null else set.blockIndex?.let { blocksByIndex[it] }
+                    val headerText = when {
+                        block != null -> stringResource(
+                            R.string.block_header,
+                            (set.blockIndex ?: 0) + 1,
+                            (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
+                                block.techniques.map { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }).joinToString(" · ")
+                        )
+                        set.isExtra -> stringResource(R.string.extra_badge)
+                        else -> null
+                    }
+                    if (headerText != null) {
+                        Text(
+                            text = headerText.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                            color = Primary,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(top = if (index == 0) 0.dp else 10.dp, bottom = 2.dp)
+                        )
+                    }
+                }
                 EditSetRow(
                     set = set,
                     isFirst = index == 0,
@@ -837,15 +967,38 @@ fun EditExerciseCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            GymButton(
-                onClick = onAddSet,
-                containerColor = Primary.copy(alpha = 0.1f),
-                contentColor = Primary,
-                modifier = Modifier.fillMaxWidth().height(40.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+                GymButton(
+                    onClick = onAddSet,
+                    containerColor = Primary.copy(alpha = 0.1f),
+                    contentColor = Primary,
+                    modifier = Modifier.weight(1f).height(40.dp)
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+                }
+                if (!isTimeAndWeight && advancedOn) {
+                    GymButton(
+                        onClick = onEditPrescription,
+                        containerColor = if (isAdvanced) Primary else Primary.copy(alpha = 0.1f),
+                        contentColor = if (isAdvanced) OnPrimary else Primary,
+                        modifier = Modifier.weight(1f).height(40.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Rounded.Percent, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.prescription).uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
     }
@@ -897,6 +1050,7 @@ fun EditSetRow(
                 fontWeight = FontWeight.Bold,
                 color = OnSurface
             )
+            com.emanuel5014.trainable.ui.components.SetLogBadges(set = set, modifier = Modifier.padding(vertical = 2.dp))
             if (!set.note.isNullOrBlank()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -1079,6 +1233,7 @@ fun EditCardioDialog(
     val isValid = categoria.isNotBlank() && (distanza.isNotBlank() || durataMinuti.isNotBlank() || durataOre.isNotBlank())
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { 
             Text(
@@ -1088,7 +1243,8 @@ fun EditCardioDialog(
             ) 
         },
         text = {
-            CardioInputForm(
+            Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+CardioInputForm(
                 categoria = categoria,
                 onCategoriaChange = { categoria = it },
                 distanza = distanza,
@@ -1101,6 +1257,7 @@ fun EditCardioDialog(
                 onDurataSecondiChange = { durataSecondi = it },
                 showCategory = false
             )
+}
         },
         confirmButton = {
             GymButton(
@@ -1283,159 +1440,154 @@ fun EditWorkoutDetailsBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-        modifier = Modifier.imePadding()
+        dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.session_details),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = OnSurface
-            )
-
-            // 1. Workout Name
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SheetFormLayout {
+            SheetFormBody(horizontalPadding = 24.dp, spacing = 20.dp) {
                 Text(
-                    text = stringResource(R.string.rename_workout),
-                    style = MaterialTheme.typography.labelMedium,
+                    text = stringResource(R.string.session_details),
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = OnSurfaceVariant
+                    color = OnSurface
                 )
-                OutlinedTextField(
-                    value = nameText,
-                    onValueChange = { nameText = it },
-                    placeholder = { Text(text = stringResource(R.string.custom_workout)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.FitnessCenter,
-                            contentDescription = null,
-                            tint = Primary
-                        )
-                    },
-                    singleLine = true,
-                    shape = Shapes.medium,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
 
-            // 2. Workout Date
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.edit_date),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurfaceVariant
-                )
-                Surface(
-                    onClick = { showDatePickerDialog = true },
-                    shape = Shapes.medium,
-                    color = SurfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // 1. Workout Name
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.rename_workout),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = nameText,
+                        onValueChange = { nameText = it },
+                        placeholder = { Text(text = stringResource(R.string.custom_workout)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                tint = Primary
+                            )
+                        },
+                        singleLine = true,
+                        shape = Shapes.medium,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // 2. Workout Date
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.edit_date),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant
+                    )
+                    Surface(
+                        onClick = { showDatePickerDialog = true },
+                        shape = Shapes.medium,
+                        color = SurfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.CalendarMonth,
-                            contentDescription = null,
-                            tint = Primary
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarMonth,
+                                contentDescription = null,
+                                tint = Primary
+                            )
+                            Text(
+                                text = remember(selectedTimestamp) {
+                                    SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault()).format(Date(selectedTimestamp))
+                                },
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = OnSurface
+                            )
+                        }
+                    }
+                }
+
+                // 3. Duration
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.workout_duration),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = hoursText,
+                            onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.hours)) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Timer, contentDescription = null, tint = Primary)
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            shape = Shapes.medium
                         )
                         Text(
-                            text = remember(selectedTimestamp) {
-                                SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault()).format(Date(selectedTimestamp))
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
+                            ":",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
                             color = OnSurface
+                        )
+                        OutlinedTextField(
+                            value = minutesText,
+                            onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.minutes)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            shape = Shapes.medium
                         )
                     }
                 }
-            }
 
-            // 3. Duration
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.workout_duration),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurfaceVariant
-                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            SheetFormFooter(horizontalPadding = 24.dp) {
+                // Action Buttons
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = hoursText,
-                        onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.hours)) },
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Timer, contentDescription = null, tint = Primary)
+                    GymButton(
+                        onClick = onDismiss,
+                        containerColor = Color.Transparent,
+                        contentColor = OnSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+
+                    GymButton(
+                        onClick = {
+                            val h = hoursText.toIntOrNull() ?: 0
+                            val m = minutesText.toIntOrNull() ?: 0
+                            val totalMs = (h * 3600L + m * 60L) * 1000L
+                            val newDuration = if (totalMs > 0) totalMs else null
+                            onConfirm(nameText, selectedTimestamp, newDuration)
                         },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = Shapes.medium
-                    )
-                    Text(
-                        ":",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        color = OnSurface
-                    )
-                    OutlinedTextField(
-                        value = minutesText,
-                        onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.minutes)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = Shapes.medium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Action Buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                GymButton(
-                    onClick = onDismiss,
-                    containerColor = Color.Transparent,
-                    contentColor = OnSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
-                }
-
-                GymButton(
-                    onClick = {
-                        val h = hoursText.toIntOrNull() ?: 0
-                        val m = minutesText.toIntOrNull() ?: 0
-                        val totalMs = (h * 3600L + m * 60L) * 1000L
-                        val newDuration = if (totalMs > 0) totalMs else null
-                        onConfirm(nameText, selectedTimestamp, newDuration)
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    }
                 }
             }
         }

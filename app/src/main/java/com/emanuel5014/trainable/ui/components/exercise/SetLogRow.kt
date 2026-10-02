@@ -10,6 +10,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,7 +58,7 @@ import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun SetLogRow(
     setNumber: Int,
@@ -76,7 +78,13 @@ fun SetLogRow(
     timeSeconds: Int? = null,
     isExpanded: Boolean = false,
     onToggleExpanded: (() -> Unit)? = null,
-    expandedContent: (@Composable () -> Unit)? = null
+    expandedContent: (@Composable () -> Unit)? = null,
+    /** Replaces the reps number while the set is pending (e.g. "MAX" for AMRAP). */
+    repsLabel: String? = null,
+    /** Highlighted prescription badge, e.g. "75%". */
+    intensityBadge: String? = null,
+    /** Secondary badges: techniques, RPE, EXTRA. */
+    badges: List<String> = emptyList()
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -161,7 +169,11 @@ fun SetLogRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val repsOrTimeText = if (timeSeconds != null) "${timeSeconds}s" else "$reps"
+                val repsOrTimeText = when {
+                    timeSeconds != null -> "${timeSeconds}s"
+                    repsLabel != null && !isCompleted -> repsLabel
+                    else -> "$reps"
+                }
                 Text(
                     text = WeightUnitConverter.formatWithUnit(
                         WeightUnitConverter.convertDisplay(weight, weightUnit),
@@ -182,6 +194,29 @@ fun SetLogRow(
                             fontWeight = FontWeight.ExtraBold,
                             color = OnSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+            if (intensityBadge != null || badges.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    intensityBadge?.let {
+                        PrescriptionPill(
+                            text = it,
+                            containerColor = if (isCompleted) Tertiary.copy(alpha = 0.3f) else Primary.copy(alpha = 0.14f),
+                            contentColor = if (isCompleted) OnTertiaryContainer else Primary,
+                            emphasized = true
+                        )
+                    }
+                    badges.forEach {
+                        PrescriptionPill(
+                            text = it,
+                            containerColor = if (isCompleted) OnTertiaryContainer.copy(alpha = 0.1f) else SurfaceContainerHighest,
+                            contentColor = if (isCompleted) OnTertiaryContainer else OnSurfaceVariant
                         )
                     }
                 }

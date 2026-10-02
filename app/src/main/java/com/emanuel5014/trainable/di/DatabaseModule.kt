@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
+import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,5 +43,8 @@ object DatabaseModule {
 
     @Provides
     fun providePhysicalCheckDao(database: GymDatabase): PhysicalCheckDao = database.physicalCheckDao()
+
+    @Provides
+    fun provideOneRepMaxDao(database: GymDatabase): OneRepMaxDao = database.oneRepMaxDao()
 }
 

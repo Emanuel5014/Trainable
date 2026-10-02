@@ -176,5 +176,36 @@ class AutoBackupWorker @AssistedInject constructor(
         fun cancel(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
         }
+
+        /**
+         * Schedules (or cancels) the single backup job from what the preferences say: it runs at the
+         * more frequent of the two destinations, and only waits for a network when Nextcloud is on.
+         */
+        suspend fun scheduleFromPreferences(
+            context: Context,
+            prefs: UserPreferencesRepository,
+            policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.UPDATE
+        ) {
+            val localEnabled = prefs.autoBackupEnabled.first()
+            val nextcloudEnabled = prefs.nextcloudAutoBackupEnabled.first()
+            if (!localEnabled && !nextcloudEnabled) {
+                cancel(context)
+                return
+            }
+            val localFrequency = prefs.autoBackupFrequency.first()
+            val nextcloudFrequency = prefs.nextcloudAutoBackupFrequency.first()
+            val frequency = when {
+                localEnabled && nextcloudEnabled -> minOf(localFrequency, nextcloudFrequency)
+                localEnabled -> localFrequency
+                else -> nextcloudFrequency
+            }
+            schedule(
+                context = context,
+                frequencyDays = frequency,
+                requiresNetwork = nextcloudEnabled,
+                wifiOnly = prefs.nextcloudWifiOnly.first(),
+                policy = policy
+            )
+        }
     }
 }

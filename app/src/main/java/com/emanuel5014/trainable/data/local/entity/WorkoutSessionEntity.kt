@@ -54,5 +54,8 @@ data class WorkoutSessionEntity(
     @ColumnInfo(name = "set_timer_paused")
     val setTimerPaused: Boolean = false,
     @ColumnInfo(name = "set_timer_started_at")
-    val setTimerStartedAt: Long? = null
+    val setTimerStartedAt: Long? = null,
+    /** Week of the plan this session was performed in (null for plain routines). */
+    @ColumnInfo(name = "program_week")
+    val programWeek: Int? = null
 )

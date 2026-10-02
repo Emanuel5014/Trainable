@@ -84,7 +84,9 @@ fun MainPagerScreen(
                 navController = navController,
                 isVisible = pagerState.currentPage == 2
             )
-            3 -> AnalyticsScreen()
+            3 -> AnalyticsScreen(
+                onNavigateToOneRepMaxes = { navController.navigate(com.emanuel5014.trainable.ui.navigation.OneRepMaxes) }
+            )
         }
     }
 }

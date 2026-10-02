@@ -73,3 +73,6 @@ data class Report(val planIdsString: String)
 @Serializable
 object Donors
 
+@Serializable
+object OneRepMaxes
+

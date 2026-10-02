@@ -19,7 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
+import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
@@ -39,12 +42,19 @@ fun ExerciseEntryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     languageCode: String = "en",
-    isSuperset: Boolean = false
+    isSuperset: Boolean = false,
+    week: Int = 1,
+    weeksCount: Int = 1,
+    labels: PrescriptionLabels? = null,
+    oneRepMaxKg: Float? = null
 ) {
     val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
+    // Prescription blocks are only shown when the caller passes labels (advanced programming is on)
+    val resolved = if (labels != null) item.resolve(week) else ResolvedPrescription.Legacy
     com.emanuel5014.trainable.ui.components.GymCard(
         modifier = modifier
             .fillMaxWidth()
+            .alpha(if (resolved is ResolvedPrescription.Excluded) 0.5f else 1f)
             .clip(Shapes.extraLarge)
             .clickable { onClick() },
         containerColor = if (isSuperset) com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.08f) else SurfaceContainer,
@@ -68,7 +78,24 @@ fun ExerciseEntryCard(
                     color = OnSurface
                 )
                 Spacer(modifier = Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                if (resolved is ResolvedPrescription.Excluded) {
+                    PrescriptionPill(text = stringResource(R.string.not_in_week, week))
+                } else if (resolved is ResolvedPrescription.Blocks && labels != null) {
+                    PrescriptionBlocksSummary(blocks = resolved.blocks, labels = labels)
+                    val meta = buildList {
+                        if (oneRepMaxKg != null && resolved.blocks.any { it.intensityType == com.emanuel5014.trainable.domain.prescription.IntensityType.PERCENT }) {
+                            add(stringResource(R.string.one_rep_max_value, labels.weight(oneRepMaxKg)))
+                        }
+                        add(stringResource(R.string.rest_label, item.planExercise.recuperoTarget))
+                        if (resolved.isFallback && weeksCount > 1) add(stringResource(R.string.week_repeats, resolved.sourceWeek))
+                    }
+                    Text(
+                        text = meta.joinToString(" • "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = OnSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                } else Row(verticalAlignment = Alignment.CenterVertically) {
                     if (item.planExercise.exerciseType == "cardio") {
                         Box(
                             modifier = Modifier
@@ -114,7 +141,7 @@ fun ExerciseEntryCard(
                         Spacer(modifier = Modifier.width(Spacing.small))
                         val durSec = item.planExercise.durataTargetSecondi ?: item.planExercise.repsTarget.filter { it.isDigit() }.toIntOrNull() ?: 45
                         Text(
-                            text = "${item.planExercise.serieTarget} × ${durSec}s • Rest: ${item.planExercise.recuperoTarget}s",
+                            text = "${item.planExercise.serieTarget} × ${durSec}s • " + stringResource(R.string.rest_label, item.planExercise.recuperoTarget),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
@@ -132,7 +159,7 @@ fun ExerciseEntryCard(
                         }
                         Spacer(modifier = Modifier.width(Spacing.small))
                         Text(
-                            text = "Rest: ${item.planExercise.recuperoTarget}s",
+                            text = stringResource(R.string.rest_label, item.planExercise.recuperoTarget),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )

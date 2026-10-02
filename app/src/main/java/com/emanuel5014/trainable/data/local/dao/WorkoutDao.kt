@@ -7,7 +7,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -19,6 +21,11 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import kotlinx.coroutines.flow.Flow
+
+data class ExcludedWeeksRow(
+    val id: Int,
+    @androidx.room.ColumnInfo(name = "excluded_weeks") val excludedWeeks: String?
+)
 
 @Dao
 interface WorkoutDao {
@@ -102,7 +109,8 @@ interface WorkoutDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlanExercise(exercise: PlanExerciseEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // Upsert, not REPLACE: REPLACE deletes the existing row first and would cascade-delete its blocks
+    @Upsert
     suspend fun insertPlanExercises(exercises: List<PlanExerciseEntity>)
 
     @Update
@@ -113,6 +121,75 @@ interface WorkoutDao {
 
     @Query("DELETE FROM plan_exercises WHERE plan_id = :planId")
     suspend fun deleteExercisesForPlan(planId: Int)
+
+    @Query("UPDATE plan_exercises SET excluded_weeks = :excludedWeeks WHERE id = :planExerciseId")
+    suspend fun setExcludedWeeks(planExerciseId: Int, excludedWeeks: String?)
+
+    // --- Plan Exercise Blocks ---
+    @Query("SELECT * FROM plan_exercise_blocks WHERE plan_exercise_id = :planExerciseId ORDER BY week ASC, ordine ASC")
+    suspend fun getBlocksForPlanExercise(planExerciseId: Int): List<PlanExerciseBlockEntity>
+
+    @Insert
+    suspend fun insertBlocks(blocks: List<PlanExerciseBlockEntity>)
+
+    @Query("DELETE FROM plan_exercise_blocks WHERE plan_exercise_id = :planExerciseId")
+    suspend fun deleteBlocksForPlanExercise(planExerciseId: Int)
+
+    @Query("DELETE FROM plan_exercise_blocks WHERE plan_exercise_id = :planExerciseId AND week = :week")
+    suspend fun deleteBlocksForWeek(planExerciseId: Int, week: Int)
+
+    @Query("DELETE FROM plan_exercise_blocks WHERE plan_exercise_id IN (SELECT id FROM plan_exercises WHERE plan_id = :planId) AND week > :maxWeek")
+    suspend fun deleteBlocksBeyondWeek(planId: Int, maxWeek: Int)
+
+    /** Replaces every week's blocks of a plan exercise in one transaction. */
+    @Transaction
+    suspend fun replaceAllBlocks(planExerciseId: Int, blocks: List<PlanExerciseBlockEntity>) {
+        deleteBlocksForPlanExercise(planExerciseId)
+        if (blocks.isNotEmpty()) insertBlocks(blocks.map { it.copy(id = 0, planExerciseId = planExerciseId) })
+    }
+
+    @Query("DELETE FROM plan_exercise_blocks WHERE week = :week AND plan_exercise_id IN (SELECT id FROM plan_exercises WHERE plan_id = :planId)")
+    suspend fun deleteBlocksOfWeek(planId: Int, week: Int)
+
+    @Query("UPDATE plan_exercise_blocks SET week = week - 1 WHERE week > :week AND plan_exercise_id IN (SELECT id FROM plan_exercises WHERE plan_id = :planId)")
+    suspend fun shiftBlocksAfterWeek(planId: Int, week: Int)
+
+    @Query("SELECT id, excluded_weeks FROM plan_exercises WHERE plan_id = :planId AND excluded_weeks IS NOT NULL")
+    suspend fun getExcludedWeeksForPlan(planId: Int): List<ExcludedWeeksRow>
+
+    /** Deletes [week] from a periodized plan: later weeks shift down, the current-week pointer follows. */
+    @Transaction
+    suspend fun deletePlanWeek(plan: WorkoutPlanEntity, week: Int) {
+        if (plan.weeksCount <= 1 || week !in 1..plan.weeksCount) return
+        deleteBlocksOfWeek(plan.id, week)
+        shiftBlocksAfterWeek(plan.id, week)
+        getExcludedWeeksForPlan(plan.id).forEach { row ->
+            val shifted = com.emanuel5014.trainable.domain.prescription.WeekShift.removeWeek(
+                com.emanuel5014.trainable.domain.prescription.WeekSetCodec.decode(row.excludedWeeks), week
+            )
+            setExcludedWeeks(row.id, com.emanuel5014.trainable.domain.prescription.WeekSetCodec.encode(shifted))
+        }
+        updatePlan(
+            plan.copy(
+                weeksCount = plan.weeksCount - 1,
+                currentWeek = com.emanuel5014.trainable.domain.prescription.WeekShift.currentAfterRemoval(plan.currentWeek, week, plan.weeksCount)
+            )
+        )
+    }
+
+    /** One transaction so observers of a session never see a half-applied prescription change. */
+    @Transaction
+    suspend fun applySetChanges(delete: List<SetLogEntity>, update: List<SetLogEntity>, insert: List<SetLogEntity>) {
+        delete.forEach { deleteSet(it) }
+        update.forEach { updateSet(it) }
+        insert.forEach { insertSet(it) }
+    }
+
+    @Query("UPDATE workout_plans SET current_week = :week WHERE id = :planId")
+    suspend fun setPlanCurrentWeek(planId: Int, week: Int)
+
+    @Query("UPDATE workout_sessions SET program_week = :week WHERE id = :sessionId")
+    suspend fun setSessionProgramWeek(sessionId: Int, week: Int?)
 
     // --- Sessions & Sets ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +42,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.rounded.Percent
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.verticalScroll
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -95,7 +101,11 @@ fun SwapExerciseBottomSheet(
     isAdding: Boolean = false,
     editablePresetExercises: Boolean = false,
     categories: List<String>? = null,
-    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?) -> Unit)? = null
+    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?) -> Unit)? = null,
+    /** When set, an "Advanced" (%1RM / blocks) type is offered. Receives the blocks and the rest in seconds. */
+    onAdvancedExerciseSelected: ((ExerciseEntity, List<PrescriptionBlock>, Int?) -> Unit)? = null,
+    /** Prescription of the exercise being swapped, so the new one can keep it. */
+    initialBlocks: List<PrescriptionBlock> = emptyList()
 ) {
     rememberResponsiveSize()
 
@@ -129,6 +139,8 @@ fun SwapExerciseBottomSheet(
         availableExercises.map { it.categoria }.distinct().sorted()
     }
 
+    val imeVisible = isKeyboardVisible
+
     when (step) {
         1 -> {
             ModalBottomSheet(
@@ -152,26 +164,31 @@ fun SwapExerciseBottomSheet(
                         .padding(horizontal = ResponsiveSize.cardPadding)
                         .padding(bottom = ResponsiveSize.cardPadding)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                    // Title and the custom-exercise button make way for the list while the keyboard is up
+                    AnimatedVisibility(visible = !imeVisible) {
+                        Column {
+                            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                                Text(
+                                    text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontSize = ResponsiveSize.labelLargeSize
+                                ),
+                                color = Primary,
+                                fontWeight = FontWeight.ExtraBold
+                            )
                             Text(
-                                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontSize = ResponsiveSize.labelLargeSize
-                            ),
-                            color = Primary,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontSize = ResponsiveSize.headlineMediumSize
-                            ),
-                            color = OnSurface,
-                            fontWeight = FontWeight.Black
-                        )
-                    }
+                                text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontSize = ResponsiveSize.headlineMediumSize
+                                ),
+                                color = OnSurface,
+                                fontWeight = FontWeight.Black
+                            )
+                            }
 
-                    Spacer(modifier = Modifier.height(Spacing.large))
+                            Spacer(modifier = Modifier.height(Spacing.large))
+                        }
+                    }
 
                     GymInputField(
                         value = searchQuery,
@@ -182,36 +199,40 @@ fun SwapExerciseBottomSheet(
 
                     Spacer(modifier = Modifier.height(Spacing.medium))
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = selectedCategory == null && !showOnlyCustom,
-                            onClick = { 
-                                selectedCategory = null
-                                showOnlyCustom = false
-                            },
-                            label = { Text(stringResource(R.string.all_categories)) }
-                        )
-                        FilterChip(
-                            selected = showOnlyCustom,
-                            onClick = { showOnlyCustom = !showOnlyCustom },
-                            label = { Text(stringResource(R.string.filter_custom)) }
-                        )
-                        allCategories.forEach { category ->
-                            val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                            FilterChip(
-                                selected = selectedCategory == category,
-                                onClick = { selectedCategory = category },
-                                label = { Text(translatedCategory) }
-                            )
+                    AnimatedVisibility(visible = !imeVisible) {
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilterChip(
+                                    selected = selectedCategory == null && !showOnlyCustom,
+                                    onClick = { 
+                                        selectedCategory = null
+                                        showOnlyCustom = false
+                                    },
+                                    label = { Text(stringResource(R.string.all_categories)) }
+                                )
+                                FilterChip(
+                                    selected = showOnlyCustom,
+                                    onClick = { showOnlyCustom = !showOnlyCustom },
+                                    label = { Text(stringResource(R.string.filter_custom)) }
+                                )
+                                allCategories.forEach { category ->
+                                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
+                                    FilterChip(
+                                        selected = selectedCategory == category,
+                                        onClick = { selectedCategory = category },
+                                        label = { Text(translatedCategory) }
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(Spacing.medium))
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(Spacing.medium))
 
                     LazyColumn(
                         modifier = Modifier
@@ -240,24 +261,28 @@ fun SwapExerciseBottomSheet(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(Spacing.medium))
+                    AnimatedVisibility(visible = !imeVisible) {
+                        Column {
+                            Spacer(modifier = Modifier.height(Spacing.medium))
 
-                    OutlinedButton(
-                        onClick = { showAddCustomDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = Shapes.large,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Primary
-                        ),
-                        border = BorderStroke(1.dp, Primary)
-                    ) {
-                        Icon(
-                            Icons.Rounded.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.small))
-                        Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                            OutlinedButton(
+                                onClick = { showAddCustomDialog = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = Shapes.large,
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Primary
+                                ),
+                                border = BorderStroke(1.dp, Primary)
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.small))
+                                Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                            }
+                        }
                     }
                 }
             }
@@ -279,13 +304,19 @@ fun SwapExerciseBottomSheet(
                     )
                 } else {
                     selectedExercise?.let { ex ->
-                        SwapExerciseConfigDialog(
+                        SwapExerciseConfigSheet(
                             exercise = ex,
                             languageCode = languageCode,
                             initialSets = setsText,
                             initialReps = repsText,
+                            initialBlocks = initialBlocks,
+                            advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
                                 onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
+                                onDismiss()
+                            },
+                            onConfirmAdvanced = { blocks, rest ->
+                                onAdvancedExerciseSelected?.invoke(ex, blocks, rest)
                                 onDismiss()
                             },
                             onBack = { step = 1 },
@@ -476,6 +507,7 @@ private fun AddCustomExerciseDialog(
     var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
             title = {
                 Text(
@@ -485,7 +517,7 @@ private fun AddCustomExerciseDialog(
                 )
             },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 GymInputField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
@@ -573,6 +605,7 @@ private fun EditCustomExerciseDialog(
     var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
             title = {
                 Text(
@@ -582,7 +615,7 @@ private fun EditCustomExerciseDialog(
                 )
             },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 GymInputField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
@@ -661,23 +694,34 @@ private fun EditCustomExerciseDialog(
     )
 }
 
+/**
+ * Step 2 of adding / swapping an exercise: sets × reps, timed sets, or an advanced (%1RM) prescription.
+ * A bottom sheet rather than a dialog so the advanced block editor has room to breathe.
+ */
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun SwapExerciseConfigDialog(
+private fun SwapExerciseConfigSheet(
     exercise: ExerciseEntity,
     languageCode: String,
     initialSets: String,
     initialReps: String,
+    initialBlocks: List<PrescriptionBlock>,
+    advancedEnabled: Boolean,
     onConfirm: (Int, String, Int?, String, Int?) -> Unit,
+    onConfirmAdvanced: (List<PrescriptionBlock>, Int?) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     isAdding: Boolean = false
 ) {
-    var selectedExerciseType by remember { mutableStateOf("strength") }
+    var selectedExerciseType by remember {
+        mutableStateOf(if (advancedEnabled && initialBlocks.isNotEmpty()) "advanced" else "strength")
+    }
     var setsText by remember { mutableStateOf(initialSets) }
     var repsText by remember { mutableStateOf(initialReps) }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var restText by remember { mutableStateOf("120") }
-    
+    var advancedBlocks by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
+
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val context = androidx.compose.ui.platform.LocalContext.current
     val hapticEnabled by remember(context) {
@@ -686,88 +730,97 @@ private fun SwapExerciseConfigDialog(
         }
     }.collectAsState(initial = true)
 
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Surface,
-        title = {
-            Text(
-                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(
-                    text = ExerciseTranslations.translate(exercise.nome, languageCode),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = OnSurface
-                )
+        contentColor = OnSurface,
+        tonalElevation = 0.dp
+    ) {
+        SheetFormLayout {
+            SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                    Text(
+                        text = (if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise)).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = ExerciseTranslations.translate(exercise.nome, languageCode),
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)
+                        ),
+                        color = OnSurface,
+                        fontWeight = FontWeight.Black
+                    )
+                    if (!isAdding && initialBlocks.isNotEmpty() && advancedEnabled) {
+                        Text(
+                            text = stringResource(R.string.keep_prescription_on_swap),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                }
 
-                Text(
-                    text = if (isAdding) stringResource(R.string.exercise_details) else "Configure the new exercise:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnSurfaceVariant
-                )
-
-                Row(
+                androidx.compose.foundation.layout.FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FilterChip(
-                        selected = selectedExerciseType == "strength",
-                        onClick = { selectedExerciseType = "strength" },
-                        label = { Text(stringResource(R.string.exercise_type_strength)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.FitnessCenter,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                    listOf(
+                        Triple("strength", R.string.exercise_type_strength, Icons.Rounded.FitnessCenter),
+                        Triple("time_and_weight", R.string.exercise_type_time_and_weight, Icons.Rounded.Timer)
+                    ).plus(
+                        if (advancedEnabled) listOf(Triple("advanced", R.string.exercise_type_advanced, Icons.Rounded.Percent)) else emptyList()
+                    ).forEach { (type, label, icon) ->
+                        FilterChip(
+                            selected = selectedExerciseType == type,
+                            onClick = {
+                                if (type == "advanced" && advancedBlocks[1].isNullOrEmpty()) {
+                                    // Carry the plain sets × reps over as a first free block
+                                    val sets = setsText.trim().toIntOrNull() ?: 3
+                                    val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                    advancedBlocks = mapOf(1 to listOf(PrescriptionBlock(sets = sets, reps = reps)))
+                                }
+                                selectedExerciseType = type
+                            },
+                            label = { Text(stringResource(label)) },
+                            leadingIcon = {
+                                Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize))
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                selectedLabelColor = Primary,
+                                selectedLeadingIconColor = Primary
                             )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
                         )
-                    )
-                    FilterChip(
-                        selected = selectedExerciseType == "time_and_weight",
-                        onClick = { selectedExerciseType = "time_and_weight" },
-                        label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Timer,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
-                        )
-                    )
+                    }
                 }
 
-                if (selectedExerciseType == "time_and_weight") {
-                    GymInputField(
-                        value = setsText,
-                        onValueChange = { setsText = it },
-                        label = stringResource(R.string.sets),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                when (selectedExerciseType) {
+                    "advanced" -> AdvancedPrescriptionEditor(
+                        blocksByWeek = advancedBlocks,
+                        onBlocksByWeekChange = { advancedBlocks = it },
+                        exerciseId = exercise.id,
+                        exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode)
                     )
-
-                    TargetSecondsSlider(
-                        valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
-                        onValueChange = { timeTargetSecondsText = it.toString() },
-                        hapticEnabled = hapticEnabled,
-                        haptic = haptic,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    Row(
+                    "time_and_weight" -> {
+                        GymInputField(
+                            value = setsText,
+                            onValueChange = { setsText = it },
+                            label = stringResource(R.string.sets),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TargetSecondsSlider(
+                            valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
+                            onValueChange = { timeTargetSecondsText = it.toString() },
+                            hapticEnabled = hapticEnabled,
+                            haptic = haptic,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    else -> Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -801,30 +854,51 @@ private fun SwapExerciseConfigDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val sets = setsText.trim().toIntOrNull() ?: return@TextButton
-                    val rest = restText.toIntOrNull()
-                    if (selectedExerciseType == "time_and_weight") {
-                        val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
-                        onConfirm(sets, "${targetSec}s", rest, "time_and_weight", targetSec)
-                    } else {
-                        val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@TextButton
-                        onConfirm(sets, reps, rest, "strength", null)
+            SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                ) {
+                    GymButton(
+                        onClick = onBack,
+                        modifier = Modifier.weight(1f),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.back).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    }
+                    GymButton(
+                        onClick = {
+                            val rest = restText.toIntOrNull()
+                            when (selectedExerciseType) {
+                                "advanced" -> {
+                                    val blocks = advancedBlocks[1].orEmpty()
+                                    if (blocks.isEmpty()) {
+                                        android.widget.Toast.makeText(context, context.getString(R.string.advanced_needs_block), android.widget.Toast.LENGTH_SHORT).show()
+                                        return@GymButton
+                                    }
+                                    onConfirmAdvanced(blocks, rest)
+                                }
+                                "time_and_weight" -> {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
+                                    onConfirm(sets, "${targetSec}s", rest, "time_and_weight", targetSec)
+                                }
+                                else -> {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@GymButton
+                                    onConfirm(sets, reps, rest, "strength", null)
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Black)
                     }
                 }
-            ) {
-                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onBack) {
-                Text(stringResource(R.string.back), color = OnSurfaceVariant)
             }
         }
-    )
+    }
 }
 
 @Composable

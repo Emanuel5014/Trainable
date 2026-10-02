@@ -116,6 +116,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.Card
@@ -402,6 +403,7 @@ fun SettingsScreen(
         var showPassword by remember { mutableStateOf(false) }
 
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = {
                 showNextcloudSetupDialog = false
                 viewModel.clearNextcloudTestState()
@@ -1306,6 +1308,7 @@ fun SettingsScreen(
                 if (showEditUsernameDialog) {
                     var newUsername by remember { mutableStateOf(currentUser?.username ?: "") }
                     AlertDialog(
+                        modifier = Modifier.imePadding(),
                         onDismissRequest = { showEditUsernameDialog = false },
                         containerColor = SurfaceContainerHigh,
                         title = { Text(stringResource(R.string.edit_username), fontWeight = FontWeight.ExtraBold, color = OnSurface) },

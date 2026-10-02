@@ -16,8 +16,8 @@ android {
         applicationId = "com.emanuel5014.trainable"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "2.2.0"
+        versionCode = 2
+        versionName = "2.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -150,6 +150,8 @@ implementation(libs.google.fonts)
 
 
     testImplementation(libs.junit)
+    // Real org.json for JVM unit tests (the Android stub returns defaults)
+    testImplementation("org.json:json:20250517")
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

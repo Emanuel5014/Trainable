@@ -35,24 +35,39 @@ fun ImportConfirmationDialog(
                     color = OnSurfaceVariant
                 )
                 plans.forEach { plan ->
+                    val cardioLabel = stringResource(R.string.compare_cardio)
+                    val timedLabel = stringResource(R.string.exercise_type_time_and_weight)
+                    val supersetLabel = stringResource(R.string.superset).lowercase()
+                    val advancedLabel = stringResource(R.string.exercise_type_advanced)
                     val typeSummary = buildString {
                         val cardio = plan.exercises.count { it.exerciseType == "cardio" }
                         val timed = plan.exercises.count { it.exerciseType == "time_and_weight" }
                         val supersets = plan.exercises.mapNotNull { it.supersetId }.distinct().size
-                        if (cardio > 0) append(" • $cardio cardio")
-                        if (timed > 0) append(" • $timed timed")
-                        if (supersets > 0) append(" • $supersets superset")
+                        val advanced = plan.exercises.count { it.blocks.isNotEmpty() }
+                        if (cardio > 0) append(" • $cardio $cardioLabel")
+                        if (timed > 0) append(" • $timed $timedLabel")
+                        if (supersets > 0) append(" • $supersets $supersetLabel")
+                        if (advanced > 0) append(" • $advanced $advancedLabel")
                     }
+                    val weeksLabel = if (plan.weeksCount > 1) " • " + stringResource(R.string.week_of, 1, plan.weeksCount) else ""
                     Text(
                         text = "• " + stringResource(
                             R.string.import_plan_summary,
                             plan.nome,
                             plan.exercises.size
-                        ) + typeSummary,
+                        ) + typeSummary + weeksLabel,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = OnSurface
                     )
+                    val maximums = plan.exercises.count { it.oneRepMaxKg != null }
+                    if (maximums > 0) {
+                        Text(
+                            text = stringResource(R.string.import_includes_maximums, maximums),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
                     if (plan.giorniSettimana != null) {
                         Text(
                             text = stringResource(R.string.schedule_days) + ": " + plan.giorniSettimana,

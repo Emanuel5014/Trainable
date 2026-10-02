@@ -68,7 +68,16 @@ object RoutineScanParser {
         val cleanName = cleanExerciseName(rawName)
         if (cleanName.isBlank()) return null
 
-        val reps = parseReps(obj)
+        val rawReps = parseReps(obj)
+        // Powerlifting notation: from the explicit field, or when the reps cell itself is notation
+        // (it must not be mistaken for a timed hold because of STOP 2" nor for a pyramid).
+        val notation = obj.optString("notation").ifBlank { obj.optString("prescription") }.trim()
+            .takeIf { it.isNotBlank() && !it.equals("null", ignoreCase = true) }
+            ?: uncleanedReps(obj)?.takeIf { looksLikeNotation(it) }
+        val programmed = obj.optBoolean("programmed", false) ||
+            listOf(rawReps, obj.optString("sets")).any { it.contains("PROGRAMM", ignoreCase = true) }
+        val oneRepMax = obj.optDouble("one_rep_max_kg").takeIf { !it.isNaN() && it > 0 }?.toFloat()
+        val reps = if (notation != null && notation == uncleanedReps(obj)) "8-12" else rawReps
         val sets = parseSets(obj, reps)
         val rest = parseRest(obj)
         val cardio = parseCardioMinutes(obj, cleanName)
@@ -87,6 +96,20 @@ object RoutineScanParser {
             explicitTimeSeconds = obj.optInt("time_seconds").takeIf { it > 0 }
         } else if (obj.has("seconds")) {
             explicitTimeSeconds = obj.optInt("seconds").takeIf { it > 0 }
+        }
+
+        if (notation != null) {
+            return ParsedExercise(
+                name = cleanName,
+                sets = sets,
+                reps = reps,
+                restSeconds = rest,
+                category = category,
+                exerciseType = "strength",
+                notation = notation,
+                oneRepMaxKg = oneRepMax,
+                programmed = programmed
+            )
         }
 
         val isTimed = explicitType == "time_and_weight" ||
@@ -115,8 +138,22 @@ object RoutineScanParser {
             cardioMinutes = cardio,
             category = category,
             exerciseType = detectedType,
-            timeSeconds = parsedTimeSeconds
+            timeSeconds = parsedTimeSeconds,
+            oneRepMaxKg = oneRepMax,
+            programmed = programmed
         )
+    }
+
+    /** True for strings like `70% 3x3 STOP 2"`, `85% 3xMAX`, `20 REP ALSAP`, `@RPE8`, `BW 5x4 EMOM`. */
+    fun looksLikeNotation(value: String): Boolean {
+        val v = value.uppercase()
+        return Regex("""\d\s*%""").containsMatchIn(v) ||
+            Regex("""\bRPE\b|@\s*\d""").containsMatchIn(v) ||
+            Regex("""\b(ALSAP|AMRAP)\b""").containsMatchIn(v) ||
+            Regex("""\d\s*X\s*MAX\b""").containsMatchIn(v) ||
+            Regex("""\b(STOP|FERMO|CATENE|ELASTICI|PIEDI\s*SU|GARA|EMOM|SINGOL[EI])\b""").containsMatchIn(v) ||
+            Regex("""\bD\d\s*F\d\s*S\d\b""").containsMatchIn(v) ||
+            Regex("""\bW\d+\s*:""").containsMatchIn(v)
     }
 
     private fun cleanExerciseName(name: String): String {
@@ -157,6 +194,11 @@ object RoutineScanParser {
 
         return (explicitSets ?: 3).coerceIn(1, 30)
     }
+
+    private fun uncleanedReps(obj: JSONObject): String? =
+        listOf("reps", "ripetizioni").firstNotNullOfOrNull { key ->
+            (obj.opt(key) as? String)?.trim()?.takeIf { it.isNotBlank() }
+        }
 
     private fun parseReps(obj: JSONObject): String {
         val raw = if (obj.has("reps")) {

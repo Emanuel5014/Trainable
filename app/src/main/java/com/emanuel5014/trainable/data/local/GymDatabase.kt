@@ -12,6 +12,9 @@ import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
+import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
+import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
+import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
@@ -29,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [ // 11 Entities
+    entities = [ // 14 Entities
         UserEntity::class,
         WeightLogEntity::class,
         ExerciseEntity::class,
@@ -41,9 +44,11 @@ import kotlinx.coroutines.launch
         SessionExerciseSwapEntity::class,
         CardioLogEntity::class,
         PhysicalCheckEntity::class,
-        CustomCategoryEntity::class
+        CustomCategoryEntity::class,
+        PlanExerciseBlockEntity::class,
+        OneRepMaxEntity::class
     ],
-    version = 25,
+    version = 26,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -54,6 +59,7 @@ abstract class GymDatabase : RoomDatabase() {
     abstract fun analyticsDao(): AnalyticsDao
     abstract fun weightLogDao(): WeightLogDao
     abstract fun physicalCheckDao(): PhysicalCheckDao
+    abstract fun oneRepMaxDao(): OneRepMaxDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -277,6 +283,67 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Periodized plans (weeks)
+                db.execSQL("ALTER TABLE workout_plans ADD COLUMN weeks_count INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE workout_plans ADD COLUMN current_week INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE workout_plans ADD COLUMN auto_advance_week INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN excluded_weeks TEXT")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN program_week INTEGER")
+
+                // Advanced prescription blocks (%1RM, techniques, ...)
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `plan_exercise_blocks` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `plan_exercise_id` INTEGER NOT NULL, `week` INTEGER NOT NULL, `ordine` INTEGER NOT NULL,
+                        `sets` INTEGER NOT NULL, `reps` TEXT NOT NULL, `rep_mode` TEXT NOT NULL, `total_reps` INTEGER,
+                        `intensity_type` TEXT NOT NULL, `intensity_value` REAL, `techniques` TEXT,
+                        `rest_seconds` INTEGER, `note` TEXT,
+                        FOREIGN KEY(`plan_exercise_id`) REFERENCES `plan_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"""
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_plan_exercise_blocks_plan_exercise_id` ON `plan_exercise_blocks` (`plan_exercise_id`)")
+
+                // 1RM history
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `one_rep_maxes` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `exercise_id` INTEGER NOT NULL, `weight_kg` REAL NOT NULL, `date` INTEGER NOT NULL,
+                        `source` TEXT NOT NULL, `note` TEXT,
+                        FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"""
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_one_rep_maxes_exercise_id` ON `one_rep_maxes` (`exercise_id`)")
+
+                // set_logs: rpe INTEGER -> REAL (RPE 7.5) requires a table rebuild, plus prescription snapshot columns
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `set_logs_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `session_id` INTEGER NOT NULL, `exercise_id` INTEGER NOT NULL,
+                        `peso_sollevato` REAL NOT NULL, `reps_effettive` INTEGER NOT NULL, `numero_serie` INTEGER NOT NULL,
+                        `rpe` REAL, `is_warmup` INTEGER NOT NULL, `note` TEXT, `ordine_esercizio` INTEGER NOT NULL,
+                        `superset_id` TEXT, `rest_timer_seconds` INTEGER, `is_completed` INTEGER NOT NULL,
+                        `durata_secondi` INTEGER,
+                        `target_percent` REAL, `target_rpe` REAL, `target_reps` TEXT, `rep_mode` TEXT,
+                        `block_index` INTEGER, `techniques` TEXT, `is_extra` INTEGER NOT NULL DEFAULT 0,
+                        `target_total_reps` INTEGER,
+                        FOREIGN KEY(`session_id`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"""
+                )
+                db.execSQL(
+                    """INSERT INTO `set_logs_new` (`id`, `session_id`, `exercise_id`, `peso_sollevato`, `reps_effettive`,
+                        `numero_serie`, `rpe`, `is_warmup`, `note`, `ordine_esercizio`, `superset_id`,
+                        `rest_timer_seconds`, `is_completed`, `durata_secondi`)
+                        SELECT `id`, `session_id`, `exercise_id`, `peso_sollevato`, `reps_effettive`,
+                        `numero_serie`, `rpe`, `is_warmup`, `note`, `ordine_esercizio`, `superset_id`,
+                        `rest_timer_seconds`, `is_completed`, `durata_secondi` FROM `set_logs`"""
+                )
+                db.execSQL("DROP TABLE `set_logs`")
+                db.execSQL("ALTER TABLE `set_logs_new` RENAME TO `set_logs`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_set_logs_session_id` ON `set_logs` (`session_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_set_logs_exercise_id` ON `set_logs` (`exercise_id`)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -294,7 +361,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-                        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25
+                        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {

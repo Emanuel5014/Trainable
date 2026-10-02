@@ -2,8 +2,11 @@ package com.emanuel5014.trainable.ui.screens.physicalcheck
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.imePadding
 import com.emanuel5014.trainable.R
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -169,11 +172,12 @@ fun PhysicalCheckSettingsScreen(
         var confirmPasswordVisible by remember { mutableStateOf(false) }
 
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showEnableEncryptionDialog = false },
             title = { Text(stringResource(R.string.physical_check_enable_encryption), fontWeight = FontWeight.Bold) },
             text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
@@ -294,11 +298,12 @@ fun PhysicalCheckSettingsScreen(
         var passwordConfirmVisible by remember { mutableStateOf(false) }
 
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showDisableEncryptionDialog = false },
             title = { Text(stringResource(R.string.physical_check_disable_encryption), fontWeight = FontWeight.Bold) },
             text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(

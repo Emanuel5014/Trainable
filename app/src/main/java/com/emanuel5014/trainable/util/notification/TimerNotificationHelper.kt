@@ -186,7 +186,9 @@ class TimerNotificationHelper @Inject constructor(
         previousReps: Int? = null,
         weightUnit: String? = null,
         totalSeconds: Int? = null,
-        scheduleAlarm: Boolean = true
+        scheduleAlarm: Boolean = true,
+        nextSetRepsLabel: String? = null,
+        nextSetDetail: String? = null
     ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         
@@ -210,13 +212,21 @@ class TimerNotificationHelper @Inject constructor(
         }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && nextSetReps != null && weightUnit != null) {
+        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
             val formattedWeight = WeightUnitConverter.formatWithUnit(
                 WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
                 weightUnit
             )
-            val base = context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
-            if (previousReps != null && previousReps != nextSetReps) {
+            val base = if (nextSetRepsLabel != null || nextSetDetail != null) {
+                // Advanced prescription: string reps ("MAX") plus e.g. "75% · Pause 2″"
+                context.getString(
+                    R.string.notification_next_set_detail,
+                    exerciseName, nextSetNumber, formattedWeight, nextSetRepsLabel ?: nextSetReps.toString()
+                ) + (nextSetDetail?.let { " · $it" } ?: "")
+            } else {
+                context.getString(R.string.notification_next_set, exerciseName, nextSetNumber, formattedWeight, nextSetReps)
+            }
+            if (previousReps != null && previousReps != nextSetReps && nextSetRepsLabel == null) {
                 "$base ${context.getString(R.string.notification_last_reps, previousReps)}"
             } else base
         } else null

@@ -113,21 +113,38 @@ class RoutinesViewModel @Inject constructor(
         _uiState.update { it.copy(selectedPlanIds = emptySet(), isSelectionMode = false) }
     }
 
-    fun hasImagesInSelection(): Boolean {
-        val selectedIds = _uiState.value.selectedPlanIds
-        val allPlans = _uiState.value.plans + _uiState.value.archivedPlans
-        return allPlans.filter { it.plan.id in selectedIds }.any { 
-            it.plan.imageUri != null || it.images.isNotEmpty() 
+    /** What the share dialog should offer for the current selection; null while nothing is being asked. */
+    data class ExportPrompt(val hasImages: Boolean, val hasMaximums: Boolean)
+
+    private val _exportPrompt = MutableStateFlow<ExportPrompt?>(null)
+    val exportPrompt: StateFlow<ExportPrompt?> = _exportPrompt.asStateFlow()
+
+    /** Shares the selection right away, or first asks about photos / maximums when it has any to include. */
+    fun shareSelectedPlans(context: Context) {
+        viewModelScope.launch {
+            val ids = _uiState.value.selectedPlanIds.toList()
+            if (ids.isEmpty()) return@launch
+            val options = workoutRepository.exportOptionsFor(ids)
+            if (options.hasImages || options.hasMaximums) {
+                _exportPrompt.value = ExportPrompt(hasImages = options.hasImages, hasMaximums = options.hasMaximums)
+            } else {
+                exportSelectedPlans(context, includeImages = false, includeMaximums = false)
+            }
         }
     }
 
-    fun exportSelectedPlans(context: Context, includeImages: Boolean = true) {
+    fun dismissExportPrompt() {
+        _exportPrompt.value = null
+    }
+
+    fun exportSelectedPlans(context: Context, includeImages: Boolean = true, includeMaximums: Boolean = false) {
+        _exportPrompt.value = null
         viewModelScope.launch {
             val ids = _uiState.value.selectedPlanIds.toList()
             if (ids.isNotEmpty()) {
                 val allPlans = _uiState.value.plans + _uiState.value.archivedPlans
                 val selected = allPlans.filter { it.plan.id in ids }
-                val json = workoutRepository.exportPlans(ids, includeImages)
+                val json = workoutRepository.exportPlans(ids, includeImages, includeMaximums)
                 ShareUtils.shareWorkoutPlans(context, json, buildExportFileName(selected.map { it.plan.nome }))
                 clearSelection()
             }

@@ -208,6 +208,48 @@ function formatDateTime(timestamp) {
   });
 }
 
+// "1h 05m", "32m 10s", "45s"
+function durationText(totalSeconds) {
+  const sec = Math.max(0, Math.round(totalSeconds || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const r = sec % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+  if (m > 0) return r > 0 ? `${m}m ${String(r).padStart(2, '0')}s` : `${m}m`;
+  return `${r}s`;
+}
+
+function distanceText(km) {
+  if (km == null) return '-';
+  return `${parseFloat(Number(km).toFixed(2))} km`;
+}
+
+function cardioSummary(distanceKm, durationSeconds) {
+  const parts = [];
+  if (distanceKm > 0) parts.push(distanceText(distanceKm));
+  if (durationSeconds > 0) parts.push(durationText(durationSeconds));
+  return parts.join(' · ') || '-';
+}
+
+function exerciseTypeIcon(type) {
+  if (type === 'cardio') return '<span class="material-symbols-outlined exercise-type-icon">directions_run</span>';
+  if (type === 'time_and_weight') return '<span class="material-symbols-outlined exercise-type-icon">timer</span>';
+  return '';
+}
+
+// What a plan exercise asks for, by exercise type
+function planExerciseDetail(ex) {
+  if (ex.excludedThisWeek) return '—';
+  if (ex.type === 'cardio') {
+    return cardioSummary(ex.targetDistanceKm, ex.targetDurationSeconds);
+  }
+  if (ex.type === 'time_and_weight') {
+    const seconds = ex.targetDurationSeconds || parseInt(ex.targetReps, 10) || 0;
+    return `${ex.targetSets}x ${durationText(seconds)}`;
+  }
+  return ex.prescription || (ex.targetSets + 'x' + ex.targetReps);
+}
+
 // ============================================================
 // DASHBOARD
 // ============================================================
@@ -1134,8 +1176,8 @@ function openPlanModal(planId) {
     ${allExercises.length === 0 ? '<div style="color:var(--md-on-surface-variant);font-size:0.85rem;">' + t('noExercisesPlan') + '</div>' : ''}
     ${allExercises.map(ex => `
       <div class="plan-modal-exercise">
-        <span class="plan-modal-exercise-name">${ex.exerciseName}</span>
-        <span class="plan-modal-exercise-detail">${ex.targetSets}x${ex.targetReps}</span>
+        <span class="plan-modal-exercise-name">${exerciseTypeIcon(ex.type)}${ex.exerciseName}</span>
+        <span class="plan-modal-exercise-detail">${planExerciseDetail(ex)}</span>
       </div>
     `).join('')}
 
@@ -1311,6 +1353,7 @@ function resetFilters() {
 function createSessionCard(session) {
   const volume = session.totalVolume || 0;
   const setCount = session.totalSets || 0;
+  const cardioCount = session.cardioCount || 0;
   return `
     <div class="session-card" onclick="window.location.href='/session/${session.id}'">
       <div class="session-card-header">
@@ -1318,6 +1361,7 @@ function createSessionCard(session) {
         <span class="session-card-plan-name">${session.planName || t('session')}</span>
       </div>
       <div class="session-card-stats">
+        ${setCount > 0 || !cardioCount ? `
         <span class="session-card-stat">
           <span class="material-symbols-outlined">fitness_center</span>
           ${weightText(volume)}
@@ -1325,7 +1369,12 @@ function createSessionCard(session) {
         <span class="session-card-stat">
           <span class="material-symbols-outlined">replay</span>
           ${setCount} ${t('setShort')}
-        </span>
+        </span>` : ''}
+        ${cardioCount > 0 ? `
+        <span class="session-card-stat">
+          <span class="material-symbols-outlined">directions_run</span>
+          ${cardioSummary(session.cardioKm, session.cardioSeconds)}
+        </span>` : ''}
         ${session.noteSessione ? `
           <span class="session-card-stat">
             <span class="material-symbols-outlined">note</span>
@@ -1364,50 +1413,92 @@ async function loadSessionDetail() {
   if (planEl) planEl.textContent = session.planName || t('session');
 
   const volume = session.totalVolume || 0;
-  const setCount = (session.sets || []).length;
+  const sets = session.sets || [];
+  const cardio = session.cardio || [];
+  const setCount = sets.length;
   if (volEl) volEl.textContent = weightText(volume);
   if (setsEl) setsEl.textContent = setCount + ' ' + t('setShort');
   if (planBadgeEl) planBadgeEl.textContent = session.planName || '';
 
-  if (!session.sets || session.sets.length === 0) {
-    const el = document.getElementById('exercises-container');
-    if (el) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">' + t('noSetsRecorded') + '</div></div>';
-    }
+  const badgeRow = setsEl?.parentElement;
+  if (cardio.length > 0 && badgeRow) {
+    const totalKm = cardio.reduce((sum, c) => sum + (c.distanceKm || 0), 0);
+    const totalSeconds = cardio.reduce((sum, c) => sum + (c.durationSeconds || 0), 0);
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-neutral';
+    badge.textContent = t('cardio') + ' ' + cardioSummary(totalKm, totalSeconds);
+    badgeRow.insertBefore(badge, document.getElementById('session-plan-badge'));
+  }
+  // A session made only of cardio has no weight or sets to show
+  if (setCount === 0 && cardio.length > 0) {
+    volEl?.remove();
+    setsEl?.remove();
+  }
+
+  const el = document.getElementById('exercises-container');
+  if (!el) return;
+
+  if (setCount === 0 && cardio.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">' + t('noSetsRecorded') + '</div></div>';
     return;
   }
 
   const grouped = {};
-  session.sets.forEach(set => {
+  sets.forEach(set => {
     if (!grouped[set.exerciseName]) grouped[set.exerciseName] = [];
     grouped[set.exerciseName].push(set);
   });
 
-  const el = document.getElementById('exercises-container');
-  if (el) {
-    el.innerHTML = Object.entries(grouped).map(([name, sets]) => `
+  const exerciseBlocks = Object.entries(grouped).map(([name, exerciseSets]) => {
+    const hasTimedSets = exerciseSets.some(set => set.durataSecondi != null);
+    return `
       <div class="exercise-block">
         <div class="exercise-block-header">
-          <div class="exercise-block-name">${name}</div>
-          <span class="badge badge-neutral">${sets.length} ${t('setShort')}</span>
+          <div class="exercise-block-name">${hasTimedSets ? exerciseTypeIcon('time_and_weight') : ''}${name}</div>
+          <span class="badge badge-neutral">${exerciseSets.length} ${t('setShort')}</span>
         </div>
         <div class="sets-list">
           <div class="set-row set-row-header">
             <div>${t('series')}</div>
             <div>${t('weight')}</div>
-            <div>${t('reps')}</div>
+            <div>${hasTimedSets ? t('repsOrTime') : t('reps')}</div>
           </div>
-          ${sets.map(set => `
+          ${exerciseSets.map(set => `
             <div class="set-row">
               <div class="set-number">${set.numeroSerie}</div>
               <div>${weightText(set.pesoSollevato)}</div>
-              <div>${set.repsEffettive}</div>
+              <div>${set.durataSecondi != null ? durationText(set.durataSecondi) : set.repsEffettive}${set.rpe != null ? ' @' + set.rpe : ''}</div>
             </div>
+            ${set.prescription ? `<div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.75;font-size:0.8rem;"><div>${set.prescription}</div></div>` : ''}
           `).join('')}
         </div>
       </div>
-    `).join('');
-  }
+    `;
+  });
+
+  const cardioBlock = cardio.length === 0 ? '' : `
+      <div class="exercise-block">
+        <div class="exercise-block-header">
+          <div class="exercise-block-name">${exerciseTypeIcon('cardio')}${t('cardio')}</div>
+          <span class="badge badge-neutral">${cardio.length}</span>
+        </div>
+        <div class="sets-list">
+          <div class="set-row set-row-header">
+            <div></div>
+            <div>${t('distance')}</div>
+            <div>${t('duration')}</div>
+          </div>
+          ${cardio.map(c => `
+            <div class="set-row">
+              <div class="set-number"><span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;">directions_run</span></div>
+              <div>${c.category}${c.distanceKm > 0 ? ' · ' + distanceText(c.distanceKm) : ''}</div>
+              <div>${durationText(c.durationSeconds)}${c.targetDurationSeconds ? ' / ' + durationText(c.targetDurationSeconds) : ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+
+  el.innerHTML = exerciseBlocks.join('') + cardioBlock;
 }
 
 // ============================================================

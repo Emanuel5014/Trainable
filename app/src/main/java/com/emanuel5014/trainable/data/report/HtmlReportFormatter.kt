@@ -79,6 +79,8 @@ class HtmlReportFormatter @Inject constructor() {
                     val allSets = exercise.sessions.flatMap { it.sets }.filter { !it.isWarmup }
                     if (allSets.isNotEmpty()) {
                         val hasNotes = exercise.sessions.any { it.sets.any { s -> !s.note.isNullOrBlank() } }
+                        val hasRpeColumn = exercise.sessions.any { it.sets.any { s -> s.rpe != null } }
+                        val hasPrescription = exercise.sessions.any { it.sets.any { s -> !s.prescription.isNullOrBlank() } }
                         
                         append("<div class=\"data-table-wrapper\">\n")
                         append("<table class=\"data-table\">\n")
@@ -87,8 +89,11 @@ class HtmlReportFormatter @Inject constructor() {
                         append("<th>${strings["set"] ?: "Set"}</th>\n")
                         append("<th>${strings["weight"] ?: "Weight"}</th>\n")
                         append("<th>${strings["reps"] ?: "Reps"}</th>\n")
+                        if (hasPrescription) {
+                            append("<th>${strings["prescription"] ?: "Prescription"}</th>\n")
+                        }
                         append("<th>${strings["volume"] ?: "Volume"}</th>\n")
-                        if (exercise.sessions.any { it.sets.any { s -> s.rpe != null } }) {
+                        if (hasRpeColumn) {
                             append("<th>RPE</th>\n")
                         }
                         if (hasNotes) {
@@ -98,7 +103,7 @@ class HtmlReportFormatter @Inject constructor() {
 
                         exercise.sessions.forEach { session ->
                             val sessionVolume = session.sets.filter { !it.isWarmup }.sumOf { (it.weight * it.reps).toDouble() }.toFloat()
-                            val hasRpe = session.sets.any { it.rpe != null }
+                            val hasRpe = hasRpeColumn
                             val sessionHasNotes = session.sets.any { !it.note.isNullOrBlank() }
 
                             session.sets.filter { !it.isWarmup }.forEachIndexed { setIndex, set ->
@@ -114,6 +119,9 @@ class HtmlReportFormatter @Inject constructor() {
                                 append("<td><span class=\"set-number\">${set.setNumber}</span></td>\n")
                                 append("<td>${formatWeight(set.weight)} ${report.weightUnit}</td>\n")
                                 append("<td>${set.reps}</td>\n")
+                                if (hasPrescription) {
+                                    append("<td>${set.prescription?.let { escapeHtml(it) } ?: "-"}</td>\n")
+                                }
                                 if (setIndex == 0) {
                                     val rowSpan = session.sets.count { !it.isWarmup }
                                     if (rowSpan > 1) {
@@ -123,7 +131,7 @@ class HtmlReportFormatter @Inject constructor() {
                                     }
                                 }
                                 if (hasRpe) {
-                                    append("<td>${set.rpe ?: "-"}</td>\n")
+                                    append("<td>${set.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: "-"}</td>\n")
                                 }
                                 if (hasNotes) {
                                     append("<td>${set.note?.let { escapeHtml(it) } ?: ""}</td>\n")
@@ -232,6 +240,7 @@ class HtmlReportFormatter @Inject constructor() {
                 "reps" to "Reps",
                 "volume" to "Volume",
                 "notes" to "Note",
+                "prescription" to "Prescrizione",
                 "swap_history" to "Cambi Esercizi",
                 "generated_by" to "Generato da Trainable il"
             )
@@ -252,6 +261,7 @@ class HtmlReportFormatter @Inject constructor() {
                 "reps" to "Reps",
                 "volume" to "Volumen",
                 "notes" to "Notas",
+                "prescription" to "Prescripción",
                 "swap_history" to "Cambios de Ejercicios",
                 "generated_by" to "Generado por Trainable el"
             )
@@ -272,6 +282,7 @@ class HtmlReportFormatter @Inject constructor() {
                 "reps" to "Reps",
                 "volume" to "Volume",
                 "notes" to "Notes",
+                "prescription" to "Prescription",
                 "swap_history" to "Changements d'Exercices",
                 "generated_by" to "Généré par Trainable le"
             )
@@ -292,6 +303,7 @@ class HtmlReportFormatter @Inject constructor() {
                 "reps" to "Wdh",
                 "volume" to "Volumen",
                 "notes" to "Notizen",
+                "prescription" to "Vorgabe",
                 "swap_history" to "Übungswechsel",
                 "generated_by" to "Erstellt von Trainable am"
             )
@@ -312,6 +324,7 @@ class HtmlReportFormatter @Inject constructor() {
                 "reps" to "Reps",
                 "volume" to "Volume",
                 "notes" to "Notas",
+                "prescription" to "Prescrição",
                 "swap_history" to "Trocas de Exercícios",
                 "generated_by" to "Gerado pelo Trainable em"
             )

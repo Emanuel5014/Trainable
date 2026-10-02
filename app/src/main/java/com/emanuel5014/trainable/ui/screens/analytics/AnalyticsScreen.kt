@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.rounded.BarChart
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
@@ -52,6 +53,7 @@ import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
@@ -142,6 +144,7 @@ import kotlin.math.absoluteValue
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
+    onNavigateToOneRepMaxes: () -> Unit = {},
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -324,6 +327,13 @@ fun AnalyticsScreen(
                                 fabMenuExpanded = false
                             },
                             modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
+                        )
+                    }
+
+                    if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
+                        com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxesEntryCard(
+                            onClick = onNavigateToOneRepMaxes,
+                            modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(bottom = 12.dp)
                         )
                     }
 
@@ -1505,7 +1515,8 @@ fun ExercisePickerBottomSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(if (onConfirmAdd != null) 300.dp else 350.dp)
+                    .weight(1f, fill = false)
+                    .heightIn(min = 160.dp, max = if (onConfirmAdd != null) 300.dp else 350.dp)
             ) {
                 items(filteredExercises) { exercise ->
                     val isSelected = exercise.exerciseId in selectedIds
@@ -2089,12 +2100,8 @@ fun ExerciseSettingsBottomSheet(
     }
 }
 
-fun calculateEpley1RM(weight: Float, reps: Int): Float {
-    return if (reps > 0) {
-        if (reps == 1) weight
-        else weight * (1f + reps / 30f)
-    } else 0f
-}
+fun calculateEpley1RM(weight: Float, reps: Int): Float =
+    com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(weight, reps)
 
 @Composable
 fun WorkoutCalendarSection(

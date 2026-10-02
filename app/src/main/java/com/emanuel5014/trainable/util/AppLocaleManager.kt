@@ -176,4 +176,7 @@ class AppLocaleManager @Inject constructor(
     fun getString(id: Int): String {
         return context.getString(id)
     }
+
+    /** Context whose resources follow the in-app language, for building localized labels outside Compose. */
+    fun localizedContext(): Context = context
 }

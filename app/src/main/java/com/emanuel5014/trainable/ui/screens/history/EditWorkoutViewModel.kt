@@ -6,7 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.withoutPrescription
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.data.repository.PrescriptionSetSync
+import com.emanuel5014.trainable.data.repository.SetSyncResult
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
@@ -49,6 +54,7 @@ class EditWorkoutViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
+    private val oneRepMaxRepository: OneRepMaxRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -313,7 +319,8 @@ class EditWorkoutViewModel @Inject constructor(
             val exerciseOrder = exerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = exerciseState?.sets?.firstOrNull()?.supersetId
 
-            val newSet = SetLogEntity(
+            val lastSet = exerciseState?.sets?.lastOrNull()
+            var newSet = SetLogEntity(
                 sessionId = sessionId,
                 exerciseId = exerciseId,
                 pesoSollevato = lastWeight,
@@ -323,6 +330,18 @@ class EditWorkoutViewModel @Inject constructor(
                 supersetId = supersetId,
                 durataSecondi = lastDuration
             )
+            if (lastSet != null && lastSet.blockIndex != null && lastSet.repMode != "total") {
+                // A set added to an advanced exercise repeats the prescription of the one before it
+                newSet = newSet.copy(
+                    targetPercent = lastSet.targetPercent,
+                    targetRpe = lastSet.targetRpe,
+                    targetReps = lastSet.targetReps,
+                    repMode = lastSet.repMode,
+                    blockIndex = lastSet.blockIndex,
+                    techniques = lastSet.techniques,
+                    isExtra = lastSet.isExtra
+                )
+            }
 
             // Optimistic update to prevent duplicates on rapid clicks
             _state.update { curr ->
@@ -379,7 +398,8 @@ class EditWorkoutViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
-            val sets = oldExerciseState.sets
+            // The percentages referred to the old exercise's 1RM, so a plain swap drops the prescription
+            val sets = oldExerciseState.sets.map { it.withoutPrescription() }
             val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = sets.firstOrNull()?.supersetId
             val isTimeAndWeight = exerciseType == "time_and_weight"
@@ -442,6 +462,86 @@ class EditWorkoutViewModel @Inject constructor(
             }
         }
     }
+
+    /** Swaps the exercise keeping the logged rows and giving them the advanced prescription [blocks]. */
+    fun swapExerciseAdvanced(oldExerciseId: Int, newExerciseId: Int, blocks: List<PrescriptionBlock>) {
+        viewModelScope.launch {
+            val old = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
+            val first = old.sets.firstOrNull()
+            val (unit, increment) = prescriptionEnvironment()
+            val result = PrescriptionSetSync.apply(
+                existing = old.sets,
+                blocks = blocks,
+                sessionId = sessionId,
+                exerciseId = newExerciseId,
+                order = first?.ordineEsercizio ?: 0,
+                supersetId = first?.supersetId,
+                restSeconds = first?.restTimerSeconds,
+                oneRepMaxKg = oneRepMaxRepository.currentOnce(newExerciseId)?.weightKg,
+                unit = unit,
+                increment = increment
+            )
+            val deleted = result.toDelete.map { it.id }.toSet()
+            val updates = result.toUpdate.associateBy { it.id }
+            val moved = old.sets.filter { it.id !in deleted }.map { (updates[it.id] ?: it).copy(exerciseId = newExerciseId, durataSecondi = null) }
+            workoutRepository.applySetSync(SetSyncResult(result.toInsert, moved, result.toDelete))
+        }
+    }
+
+    /** Adds an exercise at the end of the session, already carrying the advanced prescription [blocks]. */
+    fun addAdvancedExercise(exerciseId: Int, blocks: List<PrescriptionBlock>) {
+        viewModelScope.launch {
+            val nextOrder = (_state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: -1) + 1
+            val (unit, increment) = prescriptionEnvironment()
+            val result = PrescriptionSetSync.apply(
+                existing = emptyList(),
+                blocks = blocks,
+                sessionId = sessionId,
+                exerciseId = exerciseId,
+                order = nextOrder,
+                supersetId = null,
+                restSeconds = null,
+                oneRepMaxKg = oneRepMaxRepository.currentOnce(exerciseId)?.weightKg,
+                unit = unit,
+                increment = increment
+            )
+            workoutRepository.applySetSync(result)
+        }
+    }
+
+    /**
+     * Gives an exercise of this session a new prescription (or removes it with empty [blocks]).
+     * Weights, reps, RPE and notes that were logged are kept; the session list refreshes from the database.
+     */
+    fun applyPrescription(exerciseId: Int, blocks: List<PrescriptionBlock>) {
+        viewModelScope.launch {
+            val exercise = _state.value.exercises.find { it.exercise.id == exerciseId } ?: return@launch
+            val first = exercise.sets.firstOrNull()
+            val (unit, increment) = prescriptionEnvironment()
+            val result = PrescriptionSetSync.apply(
+                existing = exercise.sets,
+                blocks = blocks,
+                sessionId = sessionId,
+                exerciseId = exerciseId,
+                order = first?.ordineEsercizio ?: 0,
+                supersetId = first?.supersetId,
+                restSeconds = first?.restTimerSeconds,
+                oneRepMaxKg = oneRepMaxRepository.currentOnce(exerciseId)?.weightKg,
+                unit = unit,
+                increment = increment
+            )
+            workoutRepository.applySetSync(result)
+        }
+    }
+
+    /** How many logged rows a new prescription would delete, so the screen can ask before applying it. */
+    fun removedSetsCount(exerciseId: Int, blocks: List<PrescriptionBlock>): Int {
+        val exercise = _state.value.exercises.find { it.exercise.id == exerciseId } ?: return 0
+        return PrescriptionSetSync.removedCount(exercise.sets, blocks)
+    }
+
+    private suspend fun prescriptionEnvironment(): Pair<String, Float> =
+        userPreferencesRepository.weightUnit.first() to userPreferencesRepository.loadRoundingIncrement.first()
 
     fun swapExerciseWithCardio(oldExerciseId: Int, cardioCategory: String, durationMinutes: Int) {
         viewModelScope.launch {

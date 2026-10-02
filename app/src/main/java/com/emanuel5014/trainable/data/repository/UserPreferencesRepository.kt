@@ -5,10 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -62,6 +64,12 @@ class UserPreferencesRepository @Inject constructor(
     val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
     val AUTO_STOP_CARDIO_AT_TARGET = booleanPreferencesKey("auto_stop_cardio_at_target")
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
+    /** Master switch for %1RM / technique / weekly-program features. Off by default. */
+    val ADVANCED_PROGRAMMING_ENABLED = booleanPreferencesKey("advanced_programming_enabled")
+    val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
+    val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
+    /** 0 = RPE input only on advanced (%1RM) exercises, 1 = on every exercise, 2 = never. */
+    val RPE_INPUT_MODE = intPreferencesKey("rpe_input_mode")
     val KEEP_SCREEN_ON_CARDIO_TIMER = booleanPreferencesKey("keep_screen_on_cardio_timer")
     val KEEP_SCREEN_ON_SET_TIMER = booleanPreferencesKey("keep_screen_on_set_timer")
     val NEXTCLOUD_BACKUP_ENABLED = booleanPreferencesKey("nextcloud_backup_enabled")
@@ -321,6 +329,40 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAutoStopCardioAtTarget(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[AUTO_STOP_CARDIO_AT_TARGET] = enabled
+        }
+    }
+
+    val advancedProgrammingEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[ADVANCED_PROGRAMMING_ENABLED] ?: false }
+
+    suspend fun setAdvancedProgrammingEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ADVANCED_PROGRAMMING_ENABLED] = enabled
+        }
+    }
+
+    /** Plate increment used to round %1RM loads, expressed in the current weight unit. */
+    val loadRoundingIncrement: Flow<Float> = dataStore.data
+        .map { preferences ->
+            if ((preferences[WEIGHT_UNIT] ?: "kg") == "lb") {
+                preferences[LOAD_ROUNDING_LB] ?: LoadCalculator.DEFAULT_INCREMENT_LB
+            } else {
+                preferences[LOAD_ROUNDING_KG] ?: LoadCalculator.DEFAULT_INCREMENT_KG
+            }
+        }
+
+    suspend fun setLoadRoundingIncrement(unit: String, increment: Float) {
+        dataStore.edit { preferences ->
+            preferences[if (unit == "lb") LOAD_ROUNDING_LB else LOAD_ROUNDING_KG] = increment
+        }
+    }
+
+    val rpeInputMode: Flow<Int> = dataStore.data
+        .map { preferences -> preferences[RPE_INPUT_MODE] ?: 0 }
+
+    suspend fun setRpeInputMode(mode: Int) {
+        dataStore.edit { preferences ->
+            preferences[RPE_INPUT_MODE] = mode
         }
     }
 

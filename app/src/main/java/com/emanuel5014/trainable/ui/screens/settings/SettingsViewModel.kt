@@ -330,6 +330,42 @@ class SettingsViewModel @Inject constructor(
         initialValue = true
     )
 
+    val advancedProgrammingEnabled = userPrefsRepository.advancedProgrammingEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setAdvancedProgrammingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setAdvancedProgrammingEnabled(enabled)
+        }
+    }
+
+    val loadRoundingIncrement = userPrefsRepository.loadRoundingIncrement.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = com.emanuel5014.trainable.domain.prescription.LoadCalculator.DEFAULT_INCREMENT_KG
+    )
+
+    val rpeInputMode = userPrefsRepository.rpeInputMode.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    fun setLoadRoundingIncrement(increment: Float) {
+        viewModelScope.launch {
+            userPrefsRepository.setLoadRoundingIncrement(weightUnit.value, increment)
+        }
+    }
+
+    fun setRpeInputMode(mode: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setRpeInputMode(mode)
+        }
+    }
+
     val autoStopTimeWeightAtTarget = userPrefsRepository.autoStopTimeWeightAtTarget.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -421,27 +457,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun rescheduleAutoBackup() {
         viewModelScope.launch {
-            val localEnabled = userPrefsRepository.autoBackupEnabled.first()
-            val nextcloudEnabled = userPrefsRepository.nextcloudAutoBackupEnabled.first()
-            val localFrequency = userPrefsRepository.autoBackupFrequency.first()
-            val ncFrequency = userPrefsRepository.nextcloudAutoBackupFrequency.first()
-            val wifiOnly = userPrefsRepository.nextcloudWifiOnly.first()
-
-            if (localEnabled || nextcloudEnabled) {
-                val frequency = when {
-                    localEnabled && nextcloudEnabled -> minOf(localFrequency, ncFrequency)
-                    localEnabled -> localFrequency
-                    else -> ncFrequency
-                }
-                AutoBackupWorker.schedule(
-                    context = context,
-                    frequencyDays = frequency,
-                    requiresNetwork = nextcloudEnabled,
-                    wifiOnly = wifiOnly
-                )
-            } else {
-                AutoBackupWorker.cancel(context)
-            }
+            AutoBackupWorker.scheduleFromPreferences(context, userPrefsRepository)
         }
     }
 

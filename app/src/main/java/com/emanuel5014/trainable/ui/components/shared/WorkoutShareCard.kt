@@ -57,11 +57,15 @@ fun WorkoutShareCard(
     languageCode: String,
     weightUnit: String,
     planExercises: List<PlanExerciseWithDetails>? = null,
+    /** Show %1RM blocks and set badges (advanced programming on). Passed in because the card is rendered in its own ComposeView. */
+    showPrescription: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = Primary
     
     val planExerciseMap = planExercises?.associateBy { it.planExercise.exerciseId }
+    val shareContext = androidx.compose.ui.platform.LocalContext.current
+    val shareLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels(weightUnit)
 
     // Curated dark obsidian brand palette
     val obsidianBackground = Brush.verticalGradient(
@@ -447,12 +451,23 @@ fun WorkoutShareCard(
                                         val planExercise = planExerciseMap?.get(item.exercise.id)
                                         if (planExercise != null) {
                                             val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
-                                            val targetDisplay = if (isTime) "${planExercise.planExercise.repsTarget}s" else planExercise.planExercise.repsTarget
+                                            val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
+                                            val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
+                                                resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
+                                            } else {
+                                                val targetDisplay = if (isTime) {
+                                                    planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
+                                                } else planExercise.planExercise.repsTarget
+                                                "${planExercise.planExercise.serieTarget}×$targetDisplay"
+                                            }
                                             Text(
-                                                text = "${planExercise.planExercise.serieTarget}×$targetDisplay",
+                                                text = targetText,
                                                 style = MaterialTheme.typography.bodySmall,
                                                 fontWeight = FontWeight.Bold,
-                                                color = textSecondary
+                                                color = textSecondary,
+                                                maxLines = 1,
+                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                                modifier = Modifier.padding(start = 8.dp)
                                             )
                                         }
                                     }
@@ -495,6 +510,17 @@ fun WorkoutShareCard(
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
                                             )
+                                            val shareBadges = if (showPrescription) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(shareContext, set) else null
+                                            if (shareBadges != null) {
+                                                Text(
+                                                    text = "  $shareBadges",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = primaryColor,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                            }
                                         }
 
                                         if (!set.note.isNullOrBlank()) {
@@ -536,12 +562,23 @@ fun WorkoutShareCard(
                                         val planExercise = planExerciseMap?.get(item.exercise.id)
                                         if (planExercise != null) {
                                             val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
-                                            val targetDisplay = if (isTime) "${planExercise.planExercise.repsTarget}s" else planExercise.planExercise.repsTarget
+                                            val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
+                                            val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
+                                                resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
+                                            } else {
+                                                val targetDisplay = if (isTime) {
+                                                    planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
+                                                } else planExercise.planExercise.repsTarget
+                                                "${planExercise.planExercise.serieTarget}×$targetDisplay"
+                                            }
                                             Text(
-                                                text = "${planExercise.planExercise.serieTarget}×$targetDisplay",
+                                                text = targetText,
                                                 style = MaterialTheme.typography.bodySmall,
                                                 fontWeight = FontWeight.Bold,
-                                                color = textSecondary
+                                                color = textSecondary,
+                                                maxLines = 1,
+                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                                modifier = Modifier.padding(start = 8.dp)
                                             )
                                         }
                                     }
@@ -584,6 +621,17 @@ fun WorkoutShareCard(
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
                                             )
+                                            val shareBadges = if (showPrescription) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(shareContext, set) else null
+                                            if (shareBadges != null) {
+                                                Text(
+                                                    text = "  $shareBadges",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = primaryColor,
+                                                    maxLines = 1,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                            }
                                         }
 
                                         if (!set.note.isNullOrBlank()) {

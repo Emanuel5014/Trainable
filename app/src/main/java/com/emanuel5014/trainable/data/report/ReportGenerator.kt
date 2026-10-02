@@ -12,7 +12,8 @@ import javax.inject.Inject
 
 class ReportGenerator @Inject constructor(
     private val workoutRepository: WorkoutRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val localeManager: com.emanuel5014.trainable.util.AppLocaleManager
 ) {
     suspend fun generateReport(planId: Int, languageCode: String = "en"): PlanReport {
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).first()
@@ -38,8 +39,9 @@ class ReportGenerator @Inject constructor(
         }
 
         val weightUnit = userPreferencesRepository.weightUnit.first()
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
-        return buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit)
+        return buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced)
     }
 
     suspend fun generateReports(planIds: List<Int>, languageCode: String = "en"): List<PlanReport> {
@@ -55,7 +57,8 @@ class ReportGenerator @Inject constructor(
         sessions: List<SessionWithDetails>,
         swaps: List<SessionExerciseSwapEntity>,
         languageCode: String,
-        weightUnit: String
+        weightUnit: String,
+        advanced: Boolean
     ): PlanReport {
         val plan = planWithDetails.plan
         val currentExerciseIds = planWithDetails.exercises.map { it.exercise.id }.toSet()
@@ -107,9 +110,14 @@ class ReportGenerator @Inject constructor(
                     setNumber = setWithExercise.setLog.numeroSerie,
                     weight = convertedWeight,
                     reps = setWithExercise.setLog.repsEffettive,
-                    rpe = setWithExercise.setLog.rpe,
+                    rpe = setWithExercise.setLog.rpe.takeIf { advanced },
                     isWarmup = setWithExercise.setLog.isWarmup,
-                    note = setWithExercise.setLog.note
+                    note = setWithExercise.setLog.note,
+                    prescription = if (advanced) {
+                        com.emanuel5014.trainable.ui.components.setLogPrescriptionText(
+                            localeManager.localizedContext(), setWithExercise.setLog
+                        )
+                    } else null
                 )
 
                 exerciseDataMap.getOrPut(exerciseId) { mutableListOf() }
@@ -200,10 +208,7 @@ class ReportGenerator @Inject constructor(
 
         val bestOneRM = allSets
             .filter { !it.isWarmup && it.weight > 0 && it.reps > 0 }
-            .maxOfOrNull { set ->
-                val epley = set.weight * (1 + set.reps / 30f)
-                epley
-            }
+            .maxOfOrNull { set -> com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.weight, set.reps) }
 
         return ExerciseSummary(
             firstSessionDate = sessions.first().date,

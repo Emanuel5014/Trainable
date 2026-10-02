@@ -3,10 +3,13 @@ package com.emanuel5014.trainable.data.repository
 import android.content.Context
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
+import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -20,6 +23,10 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
@@ -34,6 +41,8 @@ class WorkoutRepository @Inject constructor(
     private val workoutDao: WorkoutDao,
     private val userDao: UserDao,
     private val exerciseDao: ExerciseDao,
+    private val oneRepMaxDao: OneRepMaxDao,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) {
     fun getAllPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlans()
@@ -66,6 +75,34 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun updatePlanExercise(exercise: PlanExerciseEntity) = workoutDao.updatePlanExercise(exercise)
 
+    /**
+     * Replaces the advanced prescription of a plan exercise. An empty map turns it back into a
+     * plain exercise. Legacy `serieTarget`/`repsTarget` are kept in sync by the caller.
+     */
+    suspend fun savePlanExerciseBlocks(planExerciseId: Int, blocksByWeek: Map<Int, List<PrescriptionBlock>>) {
+        val entities = blocksByWeek.toSortedMap().flatMap { (week, blocks) ->
+            blocks.mapIndexed { index, block -> PlanExerciseBlockEntity.fromDomain(block, planExerciseId, week, index) }
+        }
+        workoutDao.replaceAllBlocks(planExerciseId, entities)
+    }
+
+    suspend fun setExcludedWeeks(planExerciseId: Int, weeks: Set<Int>) =
+        workoutDao.setExcludedWeeks(planExerciseId, WeekSetCodec.encode(weeks))
+
+    suspend fun setPlanCurrentWeek(planId: Int, week: Int) = workoutDao.setPlanCurrentWeek(planId, week)
+
+    /** Removes a week from every exercise of the plan; later weeks shift down by one. */
+    suspend fun deletePlanWeek(plan: WorkoutPlanEntity, week: Int) = workoutDao.deletePlanWeek(plan, week)
+
+    /** Rewrites the rows of one session exercise after its prescription changed (see [PrescriptionSetSync]). */
+    suspend fun applySetSync(result: SetSyncResult) =
+        workoutDao.applySetChanges(result.toDelete, result.toUpdate, result.toInsert)
+
+    /** Drops blocks of weeks beyond [weeksCount] after the plan has been shortened. */
+    suspend fun trimPlanWeeks(planId: Int, weeksCount: Int) = workoutDao.deleteBlocksBeyondWeek(planId, weeksCount)
+
+    suspend fun setSessionProgramWeek(sessionId: Int, week: Int?) = workoutDao.setSessionProgramWeek(sessionId, week)
+
     suspend fun deletePlanExercise(exercise: PlanExerciseEntity) = workoutDao.deletePlanExercise(exercise)
 
     suspend fun savePlanImage(image: WorkoutPlanImageEntity) = workoutDao.insertPlanImage(image)
@@ -84,7 +121,23 @@ class WorkoutRepository @Inject constructor(
         workoutDao.clearPlanCoverImage(planId)
     }
     
-    suspend fun exportPlans(planIds: List<Int>, includeImages: Boolean = true): String {
+    /** What a share of [planIds] could carry beyond the plain routine, so the user can be asked about it. */
+    data class ExportOptions(val hasImages: Boolean, val hasMaximums: Boolean)
+
+    suspend fun exportOptionsFor(planIds: List<Int>): ExportOptions {
+        val plans = workoutDao.getPlansWithDetails(planIds)
+        val hasImages = plans.any { it.plan.imageUri != null || it.images.isNotEmpty() }
+        val hasMaximums = plans.any { plan ->
+            plan.exercises.any { it.isAdvanced && oneRepMaxDao.getCurrentOnce(it.exercise.id) != null }
+        }
+        return ExportOptions(hasImages = hasImages, hasMaximums = hasMaximums)
+    }
+
+    /**
+     * @param includeMaximums also writes the sender's current 1RM of every advanced exercise, so %1RM
+     * prescriptions resolve to kg on the receiving device (which only uses them where it has no 1RM yet).
+     */
+    suspend fun exportPlans(planIds: List<Int>, includeImages: Boolean = true, includeMaximums: Boolean = false): String {
         val plans = workoutDao.getPlansWithDetails(planIds)
         val exportDtos = plans.map { planWithDetails ->
             WorkoutPlanExportDto(
@@ -94,6 +147,9 @@ class WorkoutRepository @Inject constructor(
                 giorniSettimana = planWithDetails.plan.giorniSettimana,
                 dataInizio = planWithDetails.plan.dataInizio,
                 dataFine = planWithDetails.plan.dataFine,
+                weeksCount = planWithDetails.plan.weeksCount,
+                currentWeek = planWithDetails.plan.currentWeek,
+                autoAdvanceWeek = planWithDetails.plan.autoAdvanceWeek,
                 // Only keep raw URIs when blobs are not included (legacy fallback);
                 // otherwise the receiver restores images from blobs with fresh local URIs.
                 imageUri = if (includeImages) null else planWithDetails.plan.imageUri,
@@ -121,7 +177,26 @@ class WorkoutRepository @Inject constructor(
                         exerciseType = exerciseWithDetails.planExercise.exerciseType,
                         durataTargetSecondi = exerciseWithDetails.planExercise.durataTargetSecondi,
                         distanzaTargetKm = exerciseWithDetails.planExercise.distanzaTargetKm,
-                        cardioCategoria = exerciseWithDetails.planExercise.cardioCategoria
+                        cardioCategoria = exerciseWithDetails.planExercise.cardioCategoria,
+                        excludedWeeks = exerciseWithDetails.planExercise.excludedWeeks,
+                        oneRepMaxKg = if (includeMaximums && exerciseWithDetails.isAdvanced) {
+                            oneRepMaxDao.getCurrentOnce(exerciseWithDetails.exercise.id)?.weightKg
+                        } else null,
+                        blocks = exerciseWithDetails.blocks.sortedWith(compareBy({ it.week }, { it.ordine })).map { block ->
+                            com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto(
+                                week = block.week,
+                                ordine = block.ordine,
+                                sets = block.sets,
+                                reps = block.reps,
+                                repMode = block.repMode,
+                                totalReps = block.totalReps,
+                                intensityType = block.intensityType,
+                                intensityValue = block.intensityValue,
+                                techniques = block.techniques,
+                                restSeconds = block.restSeconds,
+                                note = block.note
+                            )
+                        }
                     )
                 }
             )
@@ -144,6 +219,7 @@ class WorkoutRepository @Inject constructor(
         var imported = 0
 
         importDtos.forEach { dto ->
+            var insertedPlan: WorkoutPlanEntity? = null
             try {
                 // Remap superset ids per imported plan so they never collide
                 // with existing plans nor across imported plans.
@@ -163,9 +239,14 @@ class WorkoutRepository @Inject constructor(
                     sessioniTargetSettimana = dto.sessioniTargetSettimana,
                     imageUri = null,
                     ordine = nextOrder++,
-                    giorniSettimana = dto.giorniSettimana
+                    giorniSettimana = dto.giorniSettimana,
+                    weeksCount = dto.weeksCount.coerceIn(1, 52),
+                    // An imported program always starts from its first week
+                    currentWeek = 1,
+                    autoAdvanceWeek = dto.autoAdvanceWeek
                 )
                 val planId = workoutDao.insertPlan(newPlan).toInt()
+                insertedPlan = newPlan.copy(id = planId)
 
                 val imagesToInsert = mutableListOf<WorkoutPlanImageEntity>()
 
@@ -204,68 +285,92 @@ class WorkoutRepository @Inject constructor(
                     }
                 }
 
-                val exercisesToInsert = mutableListOf<PlanExerciseEntity>()
+                val exercisesToInsert = mutableListOf<Triple<PlanExerciseEntity, List<com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto>, Float?>>()
 
                 dto.exercises.forEach { exerciseDto ->
-                    var finalExerciseId: Int? = null
-
-                    // 1. Try to find by ID
-                    val exerciseById = knownExercises.find { it.id == exerciseDto.exerciseId }
-                    if (exerciseById != null) {
-                        finalExerciseId = exerciseById.id
-                    } else if (exerciseDto.exerciseName != null) {
-                        // 2. Try to find by Name
-                        val exerciseByName = knownExercises.find {
-                            it.nome.equals(exerciseDto.exerciseName, ignoreCase = true)
-                        }
-                        if (exerciseByName != null) {
-                            finalExerciseId = exerciseByName.id
-                        } else {
-                            // 3. Create new custom exercise if we have name info
-                            try {
-                                val maxId = knownExercises.maxOfOrNull { it.id }
-                                    ?: exerciseDao.getMaxId()
-                                val newId = if (maxId < 1000) 1000 else maxId + 1
-                                val newExercise = ExerciseEntity(
-                                    id = newId,
-                                    nome = exerciseDto.exerciseName,
-                                    categoria = exerciseDto.exerciseCategory ?: "Custom"
-                                )
-                                exerciseDao.insertExercise(newExercise)
-                                knownExercises.add(newExercise)
-                                finalExerciseId = newId
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+                    val finalExerciseId: Int? = when (
+                        val match = ImportedExerciseMatcher.match(knownExercises, exerciseDto.exerciseId, exerciseDto.exerciseName)
+                    ) {
+                        is ImportedExerciseMatcher.Match.Existing -> match.exercise.id
+                        ImportedExerciseMatcher.Match.Unresolvable -> null
+                        ImportedExerciseMatcher.Match.CreateCustom -> try {
+                            val maxId = knownExercises.maxOfOrNull { it.id } ?: exerciseDao.getMaxId()
+                            val newId = if (maxId < ImportedExerciseMatcher.FIRST_CUSTOM_ID) ImportedExerciseMatcher.FIRST_CUSTOM_ID else maxId + 1
+                            val newExercise = ExerciseEntity(
+                                id = newId,
+                                nome = exerciseDto.exerciseName!!.trim(),
+                                categoria = exerciseDto.exerciseCategory ?: "Custom"
+                            )
+                            exerciseDao.insertExercise(newExercise)
+                            knownExercises.add(newExercise)
+                            newId
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            null
                         }
                     }
 
                     if (finalExerciseId != null) {
                         exercisesToInsert.add(
-                            PlanExerciseEntity(
-                                planId = planId,
-                                exerciseId = finalExerciseId,
-                                serieTarget = exerciseDto.serieTarget,
-                                repsTarget = exerciseDto.repsTarget,
-                                recuperoTarget = exerciseDto.recuperoTarget,
-                                ordine = exerciseDto.ordine,
-                                supersetId = remapSuperset(exerciseDto.supersetId),
-                                exerciseType = exerciseDto.exerciseType,
-                                durataTargetSecondi = exerciseDto.durataTargetSecondi,
-                                distanzaTargetKm = exerciseDto.distanzaTargetKm,
-                                cardioCategoria = exerciseDto.cardioCategoria
+                            Triple(
+                                PlanExerciseEntity(
+                                    planId = planId,
+                                    exerciseId = finalExerciseId,
+                                    serieTarget = exerciseDto.serieTarget,
+                                    repsTarget = exerciseDto.repsTarget,
+                                    recuperoTarget = exerciseDto.recuperoTarget,
+                                    ordine = exerciseDto.ordine,
+                                    supersetId = remapSuperset(exerciseDto.supersetId),
+                                    exerciseType = exerciseDto.exerciseType,
+                                    durataTargetSecondi = exerciseDto.durataTargetSecondi,
+                                    distanzaTargetKm = exerciseDto.distanzaTargetKm,
+                                    cardioCategoria = exerciseDto.cardioCategoria,
+                                    excludedWeeks = exerciseDto.excludedWeeks
+                                ),
+                                exerciseDto.blocks,
+                                exerciseDto.oneRepMaxKg
                             )
                         )
                     }
                 }
 
-                if (exercisesToInsert.isNotEmpty()) {
-                    workoutDao.insertPlanExercises(exercisesToInsert)
+                exercisesToInsert.forEach { (entity, blocks, sharedMaximumKg) ->
+                    val planExerciseId = workoutDao.insertPlanExercise(entity).toInt()
+                    // Someone else's 1RM only fills a gap: it never replaces one the user already has
+                    if (sharedMaximumKg != null && sharedMaximumKg > 0f && oneRepMaxDao.getCurrentOnce(entity.exerciseId) == null) {
+                        oneRepMaxDao.insert(
+                            OneRepMaxEntity(
+                                exerciseId = entity.exerciseId,
+                                weightKg = sharedMaximumKg,
+                                date = System.currentTimeMillis(),
+                                source = OneRepMaxEntity.SOURCE_IMPORTED
+                            )
+                        )
+                    }
+                    if (blocks.isNotEmpty()) {
+                        workoutDao.insertBlocks(blocks.map { b ->
+                            PlanExerciseBlockEntity(
+                                planExerciseId = planExerciseId,
+                                week = b.week.coerceAtLeast(1),
+                                ordine = b.ordine,
+                                sets = b.sets,
+                                reps = b.reps,
+                                repMode = b.repMode,
+                                totalReps = b.totalReps,
+                                intensityType = b.intensityType,
+                                intensityValue = b.intensityValue,
+                                techniques = b.techniques,
+                                restSeconds = b.restSeconds,
+                                note = b.note
+                            )
+                        })
+                    }
                 }
                 imported++
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Skip the broken plan and continue with the rest.
+                // Skip the broken plan and continue with the rest, without leaving a half-imported one behind
+                insertedPlan?.let { runCatching { workoutDao.deletePlan(it) } }
             }
         }
         return imported
@@ -462,17 +567,49 @@ class WorkoutRepository @Inject constructor(
         val lastSession = workoutDao.getLastFinishedSessionForPlan(planId).first()
         val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
         
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        val week = if (advanced) planDetails.plan.currentWeek.coerceIn(1, planDetails.plan.weeksCount.coerceAtLeast(1)) else 1
         val sessionId = workoutDao.insertSession(
             WorkoutSessionEntity(
                 planId = planId,
                 timestamp = timestamp,
-                isFinished = true
+                isFinished = true,
+                programWeek = if (advanced && planDetails.plan.weeksCount > 1) week else null
             )
         )
         
         planDetails.exercises.forEach { exerciseWithDetails ->
             val planEx = exerciseWithDetails.planExercise
             val exerciseId = planEx.exerciseId
+            val resolved = if (advanced) exerciseWithDetails.resolve(week) else ResolvedPrescription.Legacy
+            if (resolved is ResolvedPrescription.Excluded) return@forEach
+            if (resolved is ResolvedPrescription.Blocks) {
+                // Advanced exercise: one row per planned set, carrying the prescription snapshot
+                val prevByBlock = lastSessionSets?.filter { it.exerciseId == exerciseId && it.blockIndex != null }
+                    ?.sortedBy { it.numeroSerie }?.groupBy { it.blockIndex!! }.orEmpty()
+                PrescriptionExpander.expand(resolved.blocks).forEachIndexed { index, planned ->
+                    val prevSet = prevByBlock[planned.blockIndex]?.getOrNull(planned.indexInBlock)
+                    workoutDao.insertSet(
+                        SetLogEntity(
+                            sessionId = sessionId.toInt(),
+                            exerciseId = exerciseId,
+                            pesoSollevato = planned.fixedWeightKg ?: prevSet?.pesoSollevato ?: 0f,
+                            repsEffettive = planned.targetReps ?: prevSet?.repsEffettive ?: 0,
+                            numeroSerie = index + 1,
+                            ordineEsercizio = planEx.ordine,
+                            supersetId = planEx.supersetId,
+                            targetPercent = planned.percent,
+                            targetRpe = planned.targetRpe,
+                            targetReps = planned.targetReps?.toString() ?: if (planned.repMode == com.emanuel5014.trainable.domain.prescription.RepMode.AMRAP) "MAX" else null,
+                            repMode = planned.repMode.code,
+                            blockIndex = planned.blockIndex,
+                            techniques = com.emanuel5014.trainable.domain.prescription.TechniqueCodec.encode(planned.techniques),
+                            targetTotalReps = planned.totalReps
+                        )
+                    )
+                }
+                return@forEach
+            }
             
             // Try to find sets for this exercise in the last session
             val prevSets = lastSessionSets?.filter { it.exerciseId == exerciseId }?.sortedBy { it.numeroSerie }
@@ -549,9 +686,11 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun exportAllWorkoutsToCsv(weightUnit: String = "kg", languageCode: String = "en"): String {
         val sessions = workoutDao.getAllSessionsWithDetails().first()
+        // With advanced programming off the file keeps the classic columns
+        val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine(csvHeader(languageCode, weightUnit))
+        sb.appendLine(if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -578,13 +717,30 @@ class WorkoutRepository @Inject constructor(
                 val reps = if (isTimeAndWeight) "" else setLog.repsEffettive.toString()
                 val duration = setLog.durataSecondi?.toString() ?: ""
 
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note")
+                val week = session.session.programWeek?.toString() ?: ""
+                val targetPercent = setLog.targetPercent?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
+                val targetReps = when (setLog.repMode) {
+                    "total" -> setLog.targetTotalReps?.let { "$it ALSAP" } ?: ""
+                    else -> setLog.targetReps ?: ""
+                }
+                val techniques = escapeCsv(
+                    com.emanuel5014.trainable.domain.prescription.TechniqueCodec.decode(setLog.techniques)
+                        .joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
+                )
+                val rpe = setLog.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
+                val extra = if (setLog.isExtra) "1" else "0"
+                val warmup = if (setLog.isWarmup) "1" else "0"
+
+                val prescriptionColumns = if (advanced) ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup" else ""
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns")
             }
 
             session.cardio.forEach { cardio ->
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},")
+                val week = session.session.programWeek?.toString() ?: ""
+                val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},$prescriptionColumns")
             }
         }
 
@@ -592,6 +748,18 @@ class WorkoutRepository @Inject constructor(
     }
 
     private fun csvHeader(languageCode: String, weightUnit: String): String {
+        val prescriptionColumns = when (languageCode) {
+            "it" -> "Settimana,% Massimale,Rep Target,Tecniche,RPE,Extra,Riscaldamento"
+            "es" -> "Semana,% 1RM,Reps Objetivo,Técnicas,RPE,Extra,Calentamiento"
+            "fr" -> "Semaine,% 1RM,Reps Cible,Techniques,RPE,Bonus,Échauffement"
+            "de" -> "Woche,% 1RM,Ziel-Wdh.,Techniken,RPE,Extra,Aufwärmen"
+            "pt" -> "Semana,% 1RM,Reps Alvo,Técnicas,RPE,Extra,Aquecimento"
+            else -> "Week,% 1RM,Target Reps,Techniques,RPE,Extra,Warm-up"
+        }
+        return basicCsvHeader(languageCode, weightUnit) + "," + prescriptionColumns
+    }
+
+    private fun basicCsvHeader(languageCode: String, weightUnit: String): String {
         return when (languageCode) {
             "it" -> "Data,ID Sessione,Scheda,Esercizio,Categoria,Tipo,Serie,Peso ($weightUnit),Ripetizioni,Durata (s),Distanza (km),Nota"
             "es" -> "Fecha,ID Sesión,Plan,Ejercicio,Categoría,Tipo,Serie,Peso ($weightUnit),Repeticiones,Duración (s),Distancia (km),Nota"

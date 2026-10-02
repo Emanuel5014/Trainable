@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -142,6 +143,7 @@ fun DashboardScreen(
         }
     }
     val uiState by viewModel.uiState.collectAsState()
+    val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
     var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionWithPlanName?>(null) }
@@ -188,6 +190,7 @@ fun DashboardScreen(
 
     if (showQuickWorkoutDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showQuickWorkoutDialog = false },
             title = { Text(stringResource(R.string.quick_workout)) },
             text = {
@@ -654,7 +657,7 @@ fun DashboardScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = uiState.todayPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
@@ -665,6 +668,14 @@ fun DashboardScreen(
                                             text = uiState.todayPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
+                                        )
+                                    }
+                                    uiState.todayPlan!!.takeIf { advancedProgramming && it.weeksCount > 1 }?.let { plan ->
+                                        com.emanuel5014.trainable.ui.components.PrescriptionPill(
+                                            text = stringResource(R.string.week_short, plan.currentWeek) + "/" + plan.weeksCount,
+                                            containerColor = com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.12f),
+                                            contentColor = com.emanuel5014.trainable.ui.theme.Primary,
+                                            emphasized = true
                                         )
                                     }
                                 }
@@ -700,7 +711,7 @@ fun DashboardScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = uiState.suggestedPlan!!.nome,
                                             style = MaterialTheme.typography.titleLarge,
@@ -711,6 +722,14 @@ fun DashboardScreen(
                                             text = uiState.suggestedPlan!!.note ?: stringResource(R.string.select_routine),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = OnSurfaceVariant
+                                        )
+                                    }
+                                    uiState.suggestedPlan!!.takeIf { advancedProgramming && it.weeksCount > 1 }?.let { plan ->
+                                        com.emanuel5014.trainable.ui.components.PrescriptionPill(
+                                            text = stringResource(R.string.week_short, plan.currentWeek) + "/" + plan.weeksCount,
+                                            containerColor = com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.12f),
+                                            contentColor = com.emanuel5014.trainable.ui.theme.Primary,
+                                            emphasized = true
                                         )
                                     }
                                 }

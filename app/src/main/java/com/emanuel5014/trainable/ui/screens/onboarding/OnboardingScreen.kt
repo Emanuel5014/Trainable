@@ -4,6 +4,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -25,10 +26,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -116,8 +119,11 @@ import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.AiModelStatus
 import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
+import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.isKeyboardVisible
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -140,7 +146,7 @@ fun OnboardingScreen(
     onFinished: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
-    val pagerState = rememberPagerState(pageCount = { 9 })
+    val pagerState = rememberPagerState(pageCount = { 11 })
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -162,6 +168,18 @@ fun OnboardingScreen(
     var autoBackupMaxCount by remember { mutableIntStateOf(5) }
     var autoBackupIncludeImages by remember { mutableStateOf(false) }
     var aiScanEnabled by remember { mutableStateOf(false) }
+    var advancedProgramming by remember { mutableStateOf(false) }
+    var nextcloudServerUrl by remember { mutableStateOf("") }
+    var nextcloudUsername by remember { mutableStateOf("") }
+    var nextcloudPassword by remember { mutableStateOf("") }
+    var nextcloudFolder by remember { mutableStateOf("Trainable/Backups") }
+    var nextcloudAutoBackupEnabled by remember { mutableStateOf(true) }
+    var nextcloudAutoBackupFrequency by remember { mutableIntStateOf(1) }
+    var nextcloudAutoBackupMaxCount by remember { mutableIntStateOf(5) }
+    var nextcloudAutoBackupIncludeImages by remember { mutableStateOf(false) }
+    var nextcloudWifiOnly by remember { mutableStateOf(true) }
+    var showNextcloudRestore by remember { mutableStateOf(false) }
+    var nextcloudBackupToRestore by remember { mutableStateOf<NextcloudBackupFile?>(null) }
     val selectedAiModelVariant by viewModel.aiModelVariant.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
     val aiModelStatus by viewModel.aiModelStatus.collectAsState()
@@ -172,6 +190,18 @@ fun OnboardingScreen(
     val themeMode by viewModel.themeMode.collectAsState(initial = 0)
 
     val backupStatus by viewModel.backupStatus.collectAsState()
+    val connectedNextcloudServer by viewModel.nextcloudServerUrl.collectAsState()
+    val connectedNextcloudUser by viewModel.nextcloudUsername.collectAsState()
+    val isConnectingNextcloud by viewModel.isConnectingNextcloud.collectAsState()
+    val nextcloudConnectState by viewModel.nextcloudConnectState.collectAsState()
+    val nextcloudBackups by viewModel.nextcloudBackups.collectAsState()
+    val isLoadingNextcloudBackups by viewModel.isLoadingNextcloudBackups.collectAsState()
+    val isNextcloudRestoring by viewModel.isNextcloudRestoring.collectAsState()
+
+    // The password is only needed to connect; don't keep it around afterwards
+    LaunchedEffect(nextcloudConnectState) {
+        if (nextcloudConnectState is NextcloudConnectionResult.Success) nextcloudPassword = ""
+    }
 
     LaunchedEffect(backupStatus) {
         backupStatus?.let {
@@ -180,16 +210,20 @@ fun OnboardingScreen(
         }
     }
 
+    val restartApp = {
+        val intent = Intent(context, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        context.startActivity(intent)
+        exitProcess(0)
+    }
+
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
             viewModel.importDatabase(it) {
                 Toast.makeText(context, "Import successful. Restarting app...", Toast.LENGTH_LONG).show()
-                val intent = Intent(context, MainActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                context.startActivity(intent)
-                exitProcess(0)
+                restartApp()
             }
         }
     }
@@ -222,169 +256,254 @@ fun OnboardingScreen(
                 )
         )
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            beyondViewportPageCount = 1
-        ) { page ->
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                when (page) {
-                    0 -> WelcomeSlide()
-                    1 -> FeaturesSlide()
-                    2 -> ConnectivitySlide()
-                    3 -> ThemeSlide(
-                        dynamicColor = dynamicColorEnabled,
-                        onDynamicColorChange = { viewModel.setDynamicColor(it) },
-                        dynamicColorSeed = dynamicColorSeed,
-                        onDynamicColorSeedChange = { viewModel.setDynamicColorSeed(it) },
-                        themePalette = themePalette,
-                        onThemePaletteChange = { viewModel.setThemePalette(it) },
-                        themeStyle = themeStyle,
-                        onThemeStyleChange = { viewModel.setThemeStyle(it) },
-                        themeMode = themeMode,
-                        onThemeModeChange = { viewModel.setThemeMode(it) }
-                    )
-                    4 -> NotificationsSlide(
-                        timerNotificationsEnabled = timerNotificationsEnabled,
-                        onTimerNotificationsChange = { timerNotificationsEnabled = it },
-                        gymMembershipExpiryNotificationsEnabled = gymMembershipExpiryNotificationsEnabled,
-                        onGymMembershipExpiryNotificationsChange = { gymMembershipExpiryNotificationsEnabled = it },
-                        gymMembershipExpiryNotificationDaysBefore = gymMembershipExpiryNotificationDaysBefore,
-                        onGymMembershipExpiryNotificationDaysBeforeChange = { gymMembershipExpiryNotificationDaysBefore = it },
-                        timerFinishedLockscreenVibrationDuration = timerFinishedLockscreenVibrationDuration,
-                        onTimerFinishedLockscreenVibrationDurationChange = { timerFinishedLockscreenVibrationDuration = it },
-                        hapticEnabled = hapticEnabled,
-                        onHapticChange = { hapticEnabled = it }
-                    )
-                    5 -> WorkoutSlide(
-                        swipeActionsEnabled = swipeActionsEnabled,
-                        onSwipeActionsChange = { swipeActionsEnabled = it },
-                        autoStopCardioAtTarget = autoStopCardioAtTarget,
-                        onAutoStopCardioAtTargetChange = { autoStopCardioAtTarget = it },
-                        autoStopTimeWeightAtTarget = autoStopTimeWeightAtTarget,
-                        onAutoStopTimeWeightAtTargetChange = { autoStopTimeWeightAtTarget = it }
-                    )
-                    6 -> LocalAiSlide(
-                        aiDeviceSupported = aiDeviceSupported,
-                        aiScanEnabled = aiScanEnabled,
-                        onAiScanEnabledChange = { aiScanEnabled = it },
-                        selectedVariant = AiModelVariant.fromId(selectedAiModelVariant),
-                        onVariantSelected = { viewModel.setAiModelVariant(it.id) },
-                        aiModelStatus = aiModelStatus,
-                        onDownloadModel = { viewModel.downloadAiModel() },
-                        onCancelDownload = { viewModel.cancelAiModelDownload() }
-                    )
-                    7 -> BackupSlide(
-                        autoBackupEnabled = autoBackupEnabled,
-                        onAutoBackupChange = { autoBackupEnabled = it },
-                        autoBackupFrequency = autoBackupFrequency,
-                        onAutoBackupFrequencyChange = { autoBackupFrequency = it },
-                        autoBackupFolderUri = autoBackupFolderUri,
-                        autoBackupMaxCount = autoBackupMaxCount,
-                        onAutoBackupMaxCountChange = { autoBackupMaxCount = it },
-                        autoBackupIncludeImages = autoBackupIncludeImages,
-                        onAutoBackupIncludeImagesChange = { autoBackupIncludeImages = it },
-                        onPickFolder = { folderPickerLauncher.launch(null) },
-                        onImport = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }
-                    )
-                    8 -> ProfileSetupSlide(
-                        username = username,
-                        onUsernameChange = { username = it },
-                        weightInput = weightInput,
-                        onWeightChange = { weightInput = it },
-                        weightUnit = weightUnit,
-                        onWeightUnitChange = { weightUnit = it },
-                        weeklyGoalInput = weeklyGoalInput,
-                        onWeeklyGoalChange = { weeklyGoalInput = it }
-                    )
-                }
-            }
-        }
-
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                repeat(pagerState.pageCount) { iteration ->
-                    val isSelected = pagerState.currentPage == iteration
-                    val width by animateDpAsState(if (isSelected) 24.dp else 8.dp, label = "indicator_width")
-                    val color by animateColorAsState(if (isSelected) Primary else OnSurfaceVariant.copy(alpha = 0.3f), label = "indicator_color")
-
-                    Box(
-                        modifier = Modifier
-                            .height(8.dp)
-                            .width(width)
-                            .clip(CircleShape)
-                            .background(color)
-                    )
-                }
-            }
-
-            val isLastPage = pagerState.currentPage == pagerState.pageCount - 1
-            GymButton(
-                onClick = {
-                    coroutineScope.launch {
-                        if (isLastPage) {
-                            val weight = weightInput.replace(',', '.').toFloatOrNull() ?: 0f
-                            val goal = weeklyGoalInput.toIntOrNull() ?: 3
-                            viewModel.completeOnboarding(
-                                username = username,
-                                initialWeight = weight,
-                                weeklyGoal = goal,
-                                weightUnit = weightUnit,
-                                hapticEnabled = hapticEnabled,
-                                swipeActionsEnabled = swipeActionsEnabled,
+            // The pages end above the controls, so nothing ever scrolls underneath the indicator or the button
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 1
+                ) { page ->
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                        when (page) {
+                            0 -> WelcomeSlide()
+                            1 -> FeaturesSlide()
+                            2 -> ConnectivitySlide()
+                            3 -> ThemeSlide(
+                                dynamicColor = dynamicColorEnabled,
+                                onDynamicColorChange = { viewModel.setDynamicColor(it) },
+                                dynamicColorSeed = dynamicColorSeed,
+                                onDynamicColorSeedChange = { viewModel.setDynamicColorSeed(it) },
+                                themePalette = themePalette,
+                                onThemePaletteChange = { viewModel.setThemePalette(it) },
+                                themeStyle = themeStyle,
+                                onThemeStyleChange = { viewModel.setThemeStyle(it) },
+                                themeMode = themeMode,
+                                onThemeModeChange = { viewModel.setThemeMode(it) }
+                            )
+                            4 -> NotificationsSlide(
                                 timerNotificationsEnabled = timerNotificationsEnabled,
+                                onTimerNotificationsChange = { timerNotificationsEnabled = it },
                                 gymMembershipExpiryNotificationsEnabled = gymMembershipExpiryNotificationsEnabled,
+                                onGymMembershipExpiryNotificationsChange = { gymMembershipExpiryNotificationsEnabled = it },
                                 gymMembershipExpiryNotificationDaysBefore = gymMembershipExpiryNotificationDaysBefore,
+                                onGymMembershipExpiryNotificationDaysBeforeChange = { gymMembershipExpiryNotificationDaysBefore = it },
                                 timerFinishedLockscreenVibrationDuration = timerFinishedLockscreenVibrationDuration,
+                                onTimerFinishedLockscreenVibrationDurationChange = { timerFinishedLockscreenVibrationDuration = it },
+                                hapticEnabled = hapticEnabled,
+                                onHapticChange = { hapticEnabled = it }
+                            )
+                            5 -> WorkoutSlide(
+                                swipeActionsEnabled = swipeActionsEnabled,
+                                onSwipeActionsChange = { swipeActionsEnabled = it },
                                 autoStopCardioAtTarget = autoStopCardioAtTarget,
+                                onAutoStopCardioAtTargetChange = { autoStopCardioAtTarget = it },
                                 autoStopTimeWeightAtTarget = autoStopTimeWeightAtTarget,
+                                onAutoStopTimeWeightAtTargetChange = { autoStopTimeWeightAtTarget = it }
+                            )
+                            6 -> AdvancedSlide(
+                                advancedProgramming = advancedProgramming,
+                                onAdvancedProgrammingChange = { advancedProgramming = it }
+                            )
+                            7 -> LocalAiSlide(
+                                aiDeviceSupported = aiDeviceSupported,
+                                aiScanEnabled = aiScanEnabled,
+                                onAiScanEnabledChange = { aiScanEnabled = it },
+                                selectedVariant = AiModelVariant.fromId(selectedAiModelVariant),
+                                onVariantSelected = { viewModel.setAiModelVariant(it.id) },
+                                aiModelStatus = aiModelStatus,
+                                onDownloadModel = { viewModel.downloadAiModel() },
+                                onCancelDownload = { viewModel.cancelAiModelDownload() }
+                            )
+                            8 -> BackupSlide(
                                 autoBackupEnabled = autoBackupEnabled,
+                                onAutoBackupChange = { autoBackupEnabled = it },
                                 autoBackupFrequency = autoBackupFrequency,
+                                onAutoBackupFrequencyChange = { autoBackupFrequency = it },
                                 autoBackupFolderUri = autoBackupFolderUri,
                                 autoBackupMaxCount = autoBackupMaxCount,
+                                onAutoBackupMaxCountChange = { autoBackupMaxCount = it },
                                 autoBackupIncludeImages = autoBackupIncludeImages,
-                                dynamicColor = dynamicColorEnabled,
-                                dynamicColorSeed = dynamicColorSeed,
-                                themePalette = themePalette,
-                                themeStyle = themeStyle,
-                                themeMode = themeMode,
-                                aiScanEnabled = aiScanEnabled,
-                                aiModelVariant = selectedAiModelVariant
+                                onAutoBackupIncludeImagesChange = { autoBackupIncludeImages = it },
+                                onPickFolder = { folderPickerLauncher.launch(null) },
+                                onImport = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) }
                             )
-                            onFinished()
-                        } else {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            9 -> NextcloudSlide(
+                                connectedAs = connectedNextcloudUser?.let { user ->
+                                    stringResource(R.string.nextcloud_configured_as, user, connectedNextcloudServer.orEmpty())
+                                },
+                                serverUrl = nextcloudServerUrl,
+                                onServerUrlChange = { nextcloudServerUrl = it },
+                                username = nextcloudUsername,
+                                onUsernameChange = { nextcloudUsername = it },
+                                password = nextcloudPassword,
+                                onPasswordChange = { nextcloudPassword = it },
+                                remoteFolder = nextcloudFolder,
+                                onRemoteFolderChange = { nextcloudFolder = it },
+                                isConnecting = isConnectingNextcloud,
+                                connectState = nextcloudConnectState,
+                                onConnect = {
+                                    viewModel.connectNextcloud(nextcloudServerUrl, nextcloudUsername, nextcloudPassword, nextcloudFolder)
+                                },
+                                onDisconnect = { viewModel.disconnectNextcloud() },
+                                autoBackupEnabled = nextcloudAutoBackupEnabled,
+                                onAutoBackupChange = { nextcloudAutoBackupEnabled = it },
+                                frequency = nextcloudAutoBackupFrequency,
+                                onFrequencyChange = { nextcloudAutoBackupFrequency = it },
+                                maxCount = nextcloudAutoBackupMaxCount,
+                                onMaxCountChange = { nextcloudAutoBackupMaxCount = it },
+                                includeImages = nextcloudAutoBackupIncludeImages,
+                                onIncludeImagesChange = { nextcloudAutoBackupIncludeImages = it },
+                                wifiOnly = nextcloudWifiOnly,
+                                onWifiOnlyChange = { nextcloudWifiOnly = it },
+                                onRestore = {
+                                    nextcloudBackupToRestore = null
+                                    showNextcloudRestore = true
+                                    viewModel.loadNextcloudBackups()
+                                }
+                            )
+                            10 -> ProfileSetupSlide(
+                                username = username,
+                                onUsernameChange = { username = it },
+                                weightInput = weightInput,
+                                onWeightChange = { weightInput = it },
+                                weightUnit = weightUnit,
+                                onWeightUnitChange = { weightUnit = it },
+                                weeklyGoalInput = weeklyGoalInput,
+                                onWeeklyGoalChange = { weeklyGoalInput = it }
+                            )
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = if (isLastPage) stringResource(R.string.finish_setup) else stringResource(R.string.continue_text),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 1.sp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = if (isLastPage) Icons.Rounded.Check else Icons.AutoMirrored.Rounded.ArrowForward,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                }
+
+                // Soft edge where the content is cut off, so it reads as "scroll for more"
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(28.dp)
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, Surface)))
                 )
             }
+
+            // The keyboard covers the controls anyway: give the page the whole screen while typing
+            AnimatedVisibility(visible = !isKeyboardVisible) {
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = OnboardingMetrics.maxContentWidth)
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = OnboardingMetrics.horizontalPadding, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(pagerState.pageCount) { iteration ->
+                            val isSelected = pagerState.currentPage == iteration
+                            val width by animateDpAsState(if (isSelected) 24.dp else 8.dp, label = "indicator_width")
+                            val color by animateColorAsState(if (isSelected) Primary else OnSurfaceVariant.copy(alpha = 0.3f), label = "indicator_color")
+
+                            Box(
+                                modifier = Modifier
+                                    .height(8.dp)
+                                    .width(width)
+                                    .clip(CircleShape)
+                                    .background(color)
+                            )
+                        }
+                    }
+
+                    val isLastPage = pagerState.currentPage == pagerState.pageCount - 1
+                    GymButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                if (isLastPage) {
+                                    val weight = weightInput.replace(',', '.').toFloatOrNull() ?: 0f
+                                    val goal = weeklyGoalInput.toIntOrNull() ?: 3
+                                    viewModel.completeOnboarding(
+                                        username = username,
+                                        initialWeight = weight,
+                                        weeklyGoal = goal,
+                                        weightUnit = weightUnit,
+                                        hapticEnabled = hapticEnabled,
+                                        swipeActionsEnabled = swipeActionsEnabled,
+                                        timerNotificationsEnabled = timerNotificationsEnabled,
+                                        gymMembershipExpiryNotificationsEnabled = gymMembershipExpiryNotificationsEnabled,
+                                        gymMembershipExpiryNotificationDaysBefore = gymMembershipExpiryNotificationDaysBefore,
+                                        timerFinishedLockscreenVibrationDuration = timerFinishedLockscreenVibrationDuration,
+                                        autoStopCardioAtTarget = autoStopCardioAtTarget,
+                                        autoStopTimeWeightAtTarget = autoStopTimeWeightAtTarget,
+                                        autoBackupEnabled = autoBackupEnabled,
+                                        autoBackupFrequency = autoBackupFrequency,
+                                        autoBackupFolderUri = autoBackupFolderUri,
+                                        autoBackupMaxCount = autoBackupMaxCount,
+                                        autoBackupIncludeImages = autoBackupIncludeImages,
+                                        dynamicColor = dynamicColorEnabled,
+                                        dynamicColorSeed = dynamicColorSeed,
+                                        themePalette = themePalette,
+                                        themeStyle = themeStyle,
+                                        themeMode = themeMode,
+                                        aiScanEnabled = aiScanEnabled,
+                                        aiModelVariant = selectedAiModelVariant,
+                                        advancedProgrammingEnabled = advancedProgramming,
+                                        nextcloudAutoBackupEnabled = nextcloudAutoBackupEnabled,
+                                        nextcloudAutoBackupFrequency = nextcloudAutoBackupFrequency,
+                                        nextcloudAutoBackupMaxCount = nextcloudAutoBackupMaxCount,
+                                        nextcloudAutoBackupIncludeImages = nextcloudAutoBackupIncludeImages,
+                                        nextcloudWifiOnly = nextcloudWifiOnly
+                                    )
+                                    onFinished()
+                                } else {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (isLastPage) stringResource(R.string.finish_setup) else stringResource(R.string.continue_text),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = if (isLastPage) Icons.Rounded.Check else Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
         }
+    }
+
+    if (showNextcloudRestore) {
+        NextcloudRestoreDialog(
+            backups = nextcloudBackups,
+            isLoading = isLoadingNextcloudBackups,
+            isRestoring = isNextcloudRestoring,
+            selected = nextcloudBackupToRestore,
+            onPick = { nextcloudBackupToRestore = it },
+            onConfirm = { backup ->
+                viewModel.restoreFromNextcloud(backup) {
+                    Toast.makeText(context, "Restore complete. Restarting app...", Toast.LENGTH_LONG).show()
+                    restartApp()
+                }
+            },
+            onBack = { nextcloudBackupToRestore = null },
+            onDismiss = {
+                showNextcloudRestore = false
+                nextcloudBackupToRestore = null
+            }
+        )
     }
 }
 
@@ -421,36 +540,35 @@ private fun WelcomeSlide() {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    val scale = OnboardingMetrics.artworkScale
+
+    OnboardingPage(centered = true, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
-                    .size(190.dp)
+                    .size(190.dp * scale)
                     .graphicsLayer { rotationZ = cookieRotation.value }
                     .background(Primary.copy(alpha = 0.1f), cookieShape)
             )
             Icon(
                 painter = painterResource(id = R.drawable.ic_app_logo),
                 contentDescription = null,
-                modifier = Modifier.size(130.dp),
+                modifier = Modifier.size(130.dp * scale),
                 tint = Primary
             )
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(48.dp * scale))
 
         Text(
             text = stringResource(R.string.onboarding_welcome_title),
             style = MaterialTheme.typography.displayMedium,
             color = OnSurface,
             fontWeight = FontWeight.Black,
+            fontSize = OnboardingMetrics.welcomeTitleSize,
             letterSpacing = 2.sp,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -467,20 +585,8 @@ private fun WelcomeSlide() {
 
 @Composable
 private fun FeaturesSlide() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_features_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_features_title))
 
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             FeatureItemExpressive(
@@ -504,20 +610,8 @@ private fun FeaturesSlide() {
 
 @Composable
 private fun ConnectivitySlide() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_connectivity_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_connectivity_title))
 
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             FeatureItemExpressive(
@@ -553,23 +647,9 @@ private fun ThemeSlide(
     onThemeModeChange: (Int) -> Unit
 ) {
     var showCustomColorDialog by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_theme_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_theme_title))
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             var showThemeModeDialog by remember { mutableStateOf(false) }
@@ -900,23 +980,9 @@ private fun NotificationsSlide(
     onHapticChange: (Boolean) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 32.dp, end = 32.dp, top = 32.dp, bottom = if (timerNotificationsEnabled) 140.dp else 0.dp)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_notifications_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_notifications_title))
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             // Timer Notifications + Lockscreen Vibration Duration
@@ -1058,20 +1124,8 @@ private fun WorkoutSlide(
     autoStopTimeWeightAtTarget: Boolean,
     onAutoStopTimeWeightAtTargetChange: (Boolean) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.workout_settings),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.workout_settings))
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             // Swipe Actions
@@ -1130,23 +1184,9 @@ private fun BackupSlide(
     onPickFolder: () -> Unit,
     onImport: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_backup_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_backup_title))
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             // Auto Backup Toggle
@@ -1271,7 +1311,6 @@ private fun BackupSlide(
             color = OnSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(140.dp))
     }
 }
 
@@ -1286,22 +1325,9 @@ private fun ProfileSetupSlide(
     weeklyGoalInput: String,
     onWeeklyGoalChange: (String) -> Unit
 ) {
-    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_setup_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage(verticalArrangement = Arrangement.Top) {
+        OnboardingTitle(stringResource(R.string.onboarding_setup_title))
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -1402,7 +1428,7 @@ private fun ProfileSetupSlide(
 }
 
 @Composable
-private fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String) {
+internal fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String) {
     Row(verticalAlignment = Alignment.Top) {
         Box(
             modifier = Modifier
@@ -1433,7 +1459,7 @@ private fun FeatureItemExpressive(icon: ImageVector, title: String, desc: String
 }
 
 @Composable
-private fun CustomizeToggleItem(
+internal fun CustomizeToggleItem(
     icon: ImageVector,
     title: String,
     desc: String,
@@ -1707,23 +1733,9 @@ private fun LocalAiSlide(
     onDownloadModel: () -> Unit,
     onCancelDownload: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.onboarding_ai_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = OnSurface,
-            fontWeight = FontWeight.Black,
-            lineHeight = 44.sp
-        )
+    OnboardingPage {
+        OnboardingTitle(stringResource(R.string.onboarding_ai_title))
 
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             if (!aiDeviceSupported) {
@@ -1972,7 +1984,6 @@ private fun LocalAiSlide(
             }
         }
 
-        Spacer(modifier = Modifier.height(140.dp))
     }
 }
 
