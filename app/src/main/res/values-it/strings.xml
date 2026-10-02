@@ -1035,4 +1035,18 @@
     <string name="share_option_maximums">Includi i miei massimali</string>
     <string name="share_option_maximums_desc" formatted="false">Permette alle serie in %1RM di diventare kg sull\'altro dispositivo. Vengono usati solo dove chi riceve non ha ancora un massimale.</string>
     <string name="import_includes_maximums">Include i massimali di %1$d esercizi</string>
+    <!-- compare sessions v2 -->
+    <string name="compare_summary">Riepilogo</string>
+    <string name="compare_duration">Durata</string>
+    <string name="compare_working_sets">Serie di lavoro</string>
+    <string name="compare_total_reps">Ripetizioni totali</string>
+    <string name="compare_best_1rm" formatted="false">1RM stimato</string>
+    <string name="compare_avg_rpe">RPE medio</string>
+    <string name="compare_time_under_tension">Tempo sotto tensione</string>
+    <string name="compare_distance">Distanza</string>
+    <string name="compare_pace">Passo</string>
+    <string name="compare_swap_sessions">Inverti sessioni</string>
+    <string name="compare_verdict">A in vantaggio su %1$d · B su %2$d</string>
+    <string name="compare_reps_value">%1$d rip.</string>
+    <string name="compare_warmup_set">Riscaldamento</string>
 </resources>

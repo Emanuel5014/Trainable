@@ -1035,4 +1035,18 @@
     <string name="share_option_maximums">Include my maximums</string>
     <string name="share_option_maximums_desc" formatted="false">Lets %1RM sets turn into kg on the other device. They only fill in where the receiver has no maximum yet.</string>
     <string name="import_includes_maximums">Includes the maximums of %1$d exercises</string>
+    <!-- compare sessions v2 -->
+    <string name="compare_summary">Summary</string>
+    <string name="compare_duration">Duration</string>
+    <string name="compare_working_sets">Working sets</string>
+    <string name="compare_total_reps">Total reps</string>
+    <string name="compare_best_1rm" formatted="false">Est. 1RM</string>
+    <string name="compare_avg_rpe">Avg RPE</string>
+    <string name="compare_time_under_tension">Time under tension</string>
+    <string name="compare_distance">Distance</string>
+    <string name="compare_pace">Pace</string>
+    <string name="compare_swap_sessions">Swap sessions</string>
+    <string name="compare_verdict">A ahead on %1$d · B ahead on %2$d</string>
+    <string name="compare_reps_value">%1$d reps</string>
+    <string name="compare_warmup_set">Warm-up</string>
 </resources>

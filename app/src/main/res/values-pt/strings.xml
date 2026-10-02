@@ -1035,4 +1035,18 @@
     <string name="share_option_maximums">Incluir meus 1RM</string>
     <string name="share_option_maximums_desc" formatted="false">Permite que as séries em %1RM virem kg no outro dispositivo. Só são usados onde quem recebe ainda não tem um 1RM.</string>
     <string name="import_includes_maximums">Inclui os 1RM de %1$d exercícios</string>
+    <!-- compare sessions v2 -->
+    <string name="compare_summary">Resumo</string>
+    <string name="compare_duration">Duração</string>
+    <string name="compare_working_sets">Séries de trabalho</string>
+    <string name="compare_total_reps">Repetições totais</string>
+    <string name="compare_best_1rm" formatted="false">1RM estimado</string>
+    <string name="compare_avg_rpe">RPE médio</string>
+    <string name="compare_time_under_tension">Tempo sob tensão</string>
+    <string name="compare_distance">Distância</string>
+    <string name="compare_pace">Ritmo</string>
+    <string name="compare_swap_sessions">Trocar sessões</string>
+    <string name="compare_verdict">A à frente em %1$d · B em %2$d</string>
+    <string name="compare_reps_value">%1$d reps</string>
+    <string name="compare_warmup_set">Aquecimento</string>
 </resources>
