@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -168,6 +169,7 @@ fun WeightRepsInput(
 
     if (showCustomWeightDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomWeightDialog = false },
             title = { Text(stringResource(R.string.custom_weight), color = OnSurface) },
             text = {
@@ -210,6 +212,7 @@ fun WeightRepsInput(
 
     if (showCustomRepsDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomRepsDialog = false },
             title = { Text(stringResource(R.string.custom_reps), color = OnSurface) },
             text = {
@@ -494,6 +497,7 @@ fun WeightTimeInput(
 
     if (showCustomWeightDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomWeightDialog = false },
             title = { Text(stringResource(R.string.custom_weight), color = OnSurface) },
             text = {
@@ -536,6 +540,7 @@ fun WeightTimeInput(
 
     if (showCustomSecondsDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showCustomSecondsDialog = false },
             title = { Text(stringResource(R.string.set_duration_label), color = OnSurface) },
             text = {

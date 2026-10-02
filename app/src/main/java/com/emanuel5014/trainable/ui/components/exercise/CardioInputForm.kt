@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
@@ -338,6 +341,7 @@ fun AddCardioDialog(
     val isValid = categoria.isNotBlank() && (distanza.isNotBlank() || durataMinuti.isNotBlank() || durataOre.isNotBlank())
 
     androidx.compose.material3.AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { 
             Text(
@@ -347,7 +351,8 @@ fun AddCardioDialog(
             ) 
         },
         text = {
-            CardioInputForm(
+            Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+CardioInputForm(
                 categoria = categoria,
                 onCategoriaChange = { categoria = it },
                 distanza = distanza,
@@ -359,6 +364,7 @@ fun AddCardioDialog(
                 durataSecondi = durataSecondi,
                 onDurataSecondiChange = { durataSecondi = it }
             )
+}
         },
         confirmButton = {
             com.emanuel5014.trainable.ui.components.GymButton(

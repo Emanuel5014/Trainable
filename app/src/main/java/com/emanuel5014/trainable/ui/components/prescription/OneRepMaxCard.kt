@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EmojiEvents
@@ -116,10 +119,11 @@ fun OneRepMaxDialog(
     val parsed = text.replace(',', '.').toFloatOrNull()?.takeIf { it > 0f }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { Text(title, fontWeight = FontWeight.ExtraBold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 GymInputField(
                     value = text,
                     onValueChange = { text = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },

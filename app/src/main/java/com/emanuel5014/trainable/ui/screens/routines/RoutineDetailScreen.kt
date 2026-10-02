@@ -167,6 +167,9 @@ import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.SheetFormBody
+import com.emanuel5014.trainable.ui.components.SheetFormFooter
+import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
@@ -1127,147 +1130,97 @@ fun RoutineDetailScreen(
                 )
             }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = ResponsiveSize.cardPadding)
-                    .padding(top = Spacing.medium, bottom = ResponsiveSize.cardPadding)
-                    .navigationBarsPadding(),
-                verticalArrangement = Arrangement.spacedBy(Spacing.large)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
-                    Text(
-                        text = if (editingExercise == null) stringResource(R.string.add_exercise) else stringResource(R.string.edit_exercise),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Primary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = if (editingExercise == null) stringResource(R.string.exercise_details) else stringResource(R.string.update_exercise),
-                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
-                        color = OnSurface,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                    OutlinedButton(
-                        onClick = {
-                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
-                                if (!exerciseSheetState.isVisible) {
-                                    showExerciseSheet = false
-                                    showExercisePicker = true
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = Shapes.large,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = OnSurface
-                        ),
-                        border = BorderStroke(1.dp, OnSurfaceVariant.copy(alpha = 0.5f))
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(horizontalAlignment = Alignment.Start) {
-                                Text(
-                                    text = selectedExercise?.let {
-                                        ExerciseTranslations.translate(it.nome, languageCode)
-                                    } ?: stringResource(R.string.select_exercise),
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
-                                    color = OnSurface
-                                )
-                                selectedExercise?.let {
-                                    Text(
-                                        text = ExerciseTranslations.translateCategory(it.categoria, languageCode),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-                            Icon(
-                                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = OnSurfaceVariant
-                            )
-                        }
+            SheetFormLayout {
+                SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                        Text(
+                            text = if (editingExercise == null) stringResource(R.string.add_exercise) else stringResource(R.string.edit_exercise),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Primary,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = if (editingExercise == null) stringResource(R.string.exercise_details) else stringResource(R.string.update_exercise),
+                            style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black
+                        )
                     }
 
-                    if (isSelectedCardio) {
-                        CardioDurationSlider(
-                            valueMinutes = cardioDurationText.toIntOrNull() ?: 20,
-                            onValueChange = { cardioDurationText = it.toString() },
-                            hapticEnabled = hapticEnabled,
-                            haptic = haptic,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        RestSlider(
-                            value = restText.toIntOrNull() ?: 120,
-                            onValueChange = { restText = it.toString() },
-                            hapticEnabled = hapticEnabled,
-                            haptic = haptic,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    } else {
-                        androidx.compose.foundation.layout.FlowRow(
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                    if (!exerciseSheetState.isVisible) {
+                                        showExerciseSheet = false
+                                        showExercisePicker = true
+                                    }
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            shape = Shapes.large,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = OnSurface
+                            ),
+                            border = BorderStroke(1.dp, OnSurfaceVariant.copy(alpha = 0.5f))
                         ) {
-                            FilterChip(
-                                selected = selectedExerciseType == "strength",
-                                onClick = { selectedExerciseType = "strength" },
-                                label = { Text(stringResource(R.string.exercise_type_strength)) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.FitnessCenter,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(horizontalAlignment = Alignment.Start) {
+                                    Text(
+                                        text = selectedExercise?.let {
+                                            ExerciseTranslations.translate(it.nome, languageCode)
+                                        } ?: stringResource(R.string.select_exercise),
+                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
+                                        color = OnSurface
                                     )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
-                                    selectedLabelColor = Primary,
-                                    selectedLeadingIconColor = Primary
+                                    selectedExercise?.let {
+                                        Text(
+                                            text = ExerciseTranslations.translateCategory(it.categoria, languageCode),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    tint = OnSurfaceVariant
                                 )
+                            }
+                        }
+
+                        if (isSelectedCardio) {
+                            CardioDurationSlider(
+                                valueMinutes = cardioDurationText.toIntOrNull() ?: 20,
+                                onValueChange = { cardioDurationText = it.toString() },
+                                hapticEnabled = hapticEnabled,
+                                haptic = haptic,
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            FilterChip(
-                                selected = selectedExerciseType == "time_and_weight",
-                                onClick = { selectedExerciseType = "time_and_weight" },
-                                label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Timer,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Primary.copy(alpha = 0.15f),
-                                    selectedLabelColor = Primary,
-                                    selectedLeadingIconColor = Primary
-                                )
+
+                            RestSlider(
+                                value = restText.toIntOrNull() ?: 120,
+                                onValueChange = { restText = it.toString() },
+                                hapticEnabled = hapticEnabled,
+                                haptic = haptic,
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            if (advancedOn) {
+                        } else {
+                            androidx.compose.foundation.layout.FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 FilterChip(
-                                    selected = selectedExerciseType == "advanced",
-                                    onClick = {
-                                        if (selectedExerciseType != "advanced" && advancedWeeks.values.none { it.isNotEmpty() }) {
-                                            // Carry the simple sets × reps over as a first free block
-                                            val sets = setsText.trim().toIntOrNull() ?: 3
-                                            val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
-                                            advancedWeeks[editorWeek] = listOf(PrescriptionBlock(sets = sets, reps = reps))
-                                        }
-                                        selectedExerciseType = "advanced"
-                                    },
-                                    label = { Text(stringResource(R.string.exercise_type_advanced)) },
+                                    selected = selectedExerciseType == "strength",
+                                    onClick = { selectedExerciseType = "strength" },
+                                    label = { Text(stringResource(R.string.exercise_type_strength)) },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = Icons.Rounded.Percent,
+                                            imageVector = Icons.Rounded.FitnessCenter,
                                             contentDescription = null,
                                             modifier = Modifier.size(FilterChipDefaults.IconSize)
                                         )
@@ -1278,322 +1231,367 @@ fun RoutineDetailScreen(
                                         selectedLeadingIconColor = Primary
                                     )
                                 )
-                            }
-                        }
-
-                        if (selectedExerciseType == "advanced") {
-                            AdvancedPrescriptionEditor(
-                                blocksByWeek = advancedWeeks.toMap(),
-                                onBlocksByWeekChange = { updated ->
-                                    advancedWeeks.clear()
-                                    advancedWeeks.putAll(updated)
-                                },
-                                exerciseId = selectedExerciseId,
-                                exerciseName = selectedExercise?.let { ExerciseTranslations.translate(it.nome, languageCode) },
-                                weeks = WeekEditing(
-                                    weeksCount = draftWeeksCount,
-                                    onWeeksCountChange = { draftWeeksCount = it },
-                                    persistedWeeksCount = planWeeksCount,
-                                    currentWeek = planCurrentWeek,
-                                    excludedWeeks = draftExcludedWeeks.toSet(),
-                                    onExcludedWeeksChange = { updated ->
-                                        draftExcludedWeeks.clear()
-                                        draftExcludedWeeks.addAll(updated)
+                                FilterChip(
+                                    selected = selectedExerciseType == "time_and_weight",
+                                    onClick = { selectedExerciseType = "time_and_weight" },
+                                    label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Timer,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                        )
                                     },
-                                    onDeleteWeek = { week ->
-                                        // Weeks the routine already has are removed from every exercise; weeks only added in this draft just disappear
-                                        if (week <= planWeeksCount) viewModel.deleteWeek(week)
-                                        val shifted = WeekShift.removeWeek(advancedWeeks.toMap(), week)
-                                        advancedWeeks.clear()
-                                        advancedWeeks.putAll(shifted)
-                                        val excludedShifted = WeekShift.removeWeek(draftExcludedWeeks.toSet(), week)
-                                        draftExcludedWeeks.clear()
-                                        draftExcludedWeeks.addAll(excludedShifted)
-                                        draftWeeksCount = (draftWeeksCount - 1).coerceAtLeast(1)
-                                    },
-                                    initialWeek = editorWeek
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                        selectedLabelColor = Primary,
+                                        selectedLeadingIconColor = Primary
+                                    )
                                 )
-                            )
-                        } else if (selectedExerciseType == "time_and_weight") {
-                            GymInputField(
-                                value = setsText,
-                                onValueChange = { setsText = it },
-                                label = stringResource(R.string.sets),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                                if (advancedOn) {
+                                    FilterChip(
+                                        selected = selectedExerciseType == "advanced",
+                                        onClick = {
+                                            if (selectedExerciseType != "advanced" && advancedWeeks.values.none { it.isNotEmpty() }) {
+                                                // Carry the simple sets × reps over as a first free block
+                                                val sets = setsText.trim().toIntOrNull() ?: 3
+                                                val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                                advancedWeeks[editorWeek] = listOf(PrescriptionBlock(sets = sets, reps = reps))
+                                            }
+                                            selectedExerciseType = "advanced"
+                                        },
+                                        label = { Text(stringResource(R.string.exercise_type_advanced)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Percent,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                            )
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                            selectedLabelColor = Primary,
+                                            selectedLeadingIconColor = Primary
+                                        )
+                                    )
+                                }
+                            }
 
-                            TargetSecondsSlider(
-                                valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
-                                onValueChange = { timeTargetSecondsText = it.toString() },
-                                hapticEnabled = hapticEnabled,
-                                haptic = haptic,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                            ) {
+                            if (selectedExerciseType == "advanced") {
+                                AdvancedPrescriptionEditor(
+                                    blocksByWeek = advancedWeeks.toMap(),
+                                    onBlocksByWeekChange = { updated ->
+                                        advancedWeeks.clear()
+                                        advancedWeeks.putAll(updated)
+                                    },
+                                    exerciseId = selectedExerciseId,
+                                    exerciseName = selectedExercise?.let { ExerciseTranslations.translate(it.nome, languageCode) },
+                                    weeks = WeekEditing(
+                                        weeksCount = draftWeeksCount,
+                                        onWeeksCountChange = { draftWeeksCount = it },
+                                        persistedWeeksCount = planWeeksCount,
+                                        currentWeek = planCurrentWeek,
+                                        excludedWeeks = draftExcludedWeeks.toSet(),
+                                        onExcludedWeeksChange = { updated ->
+                                            draftExcludedWeeks.clear()
+                                            draftExcludedWeeks.addAll(updated)
+                                        },
+                                        onDeleteWeek = { week ->
+                                            // Weeks the routine already has are removed from every exercise; weeks only added in this draft just disappear
+                                            if (week <= planWeeksCount) viewModel.deleteWeek(week)
+                                            val shifted = WeekShift.removeWeek(advancedWeeks.toMap(), week)
+                                            advancedWeeks.clear()
+                                            advancedWeeks.putAll(shifted)
+                                            val excludedShifted = WeekShift.removeWeek(draftExcludedWeeks.toSet(), week)
+                                            draftExcludedWeeks.clear()
+                                            draftExcludedWeeks.addAll(excludedShifted)
+                                            draftWeeksCount = (draftWeeksCount - 1).coerceAtLeast(1)
+                                        },
+                                        initialWeek = editorWeek
+                                    )
+                                )
+                            } else if (selectedExerciseType == "time_and_weight") {
                                 GymInputField(
                                     value = setsText,
                                     onValueChange = { setsText = it },
                                     label = stringResource(R.string.sets),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()
                                 )
-                                GymInputField(
-                                    value = repsText,
-                                    onValueChange = {
-                                        repsText = it
-                                        val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                        if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                            setsText = repCount.toString()
-                                        }
-                                    },
-                                    label = stringResource(R.string.reps),
-                                    supportingText = stringResource(R.string.reps_hint),
-                                    modifier = Modifier.weight(1f)
+
+                                TargetSecondsSlider(
+                                    valueSeconds = timeTargetSecondsText.toIntOrNull() ?: 45,
+                                    onValueChange = { timeTargetSecondsText = it.toString() },
+                                    hapticEnabled = hapticEnabled,
+                                    haptic = haptic,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                                ) {
+                                    GymInputField(
+                                        value = setsText,
+                                        onValueChange = { setsText = it },
+                                        label = stringResource(R.string.sets),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    GymInputField(
+                                        value = repsText,
+                                        onValueChange = {
+                                            repsText = it
+                                            val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
+                                            if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
+                                                setsText = repCount.toString()
+                                            }
+                                        },
+                                        label = stringResource(R.string.reps),
+                                        supportingText = stringResource(R.string.reps_hint),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
+
+                            RestSlider(
+                                value = restText.toIntOrNull() ?: 120,
+                                onValueChange = { restText = it.toString() },
+                                hapticEnabled = hapticEnabled,
+                                haptic = haptic,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
 
-                        RestSlider(
-                            value = restText.toIntOrNull() ?: 120,
-                            onValueChange = { restText = it.toString() },
-                            hapticEnabled = hapticEnabled,
-                            haptic = haptic,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                        if (advancedOn && planWeeksCount > 1 && selectedExerciseType != "advanced") {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(
-                                    text = stringResource(R.string.skip_this_week),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = OnSurfaceVariant,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                                Row(
-                                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    (1..planWeeksCount).forEach { week ->
-                                        val skipped = week in draftExcludedWeeks
-                                        FilterChip(
-                                            selected = skipped,
-                                            onClick = { if (skipped) draftExcludedWeeks.remove(week) else draftExcludedWeeks.add(week) },
-                                            label = { Text(stringResource(R.string.week_short, week)) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = Error.copy(alpha = 0.15f),
-                                                selectedLabelColor = Error
+                            if (advancedOn && planWeeksCount > 1 && selectedExerciseType != "advanced") {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = stringResource(R.string.skip_this_week),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = OnSurfaceVariant,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Row(
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        (1..planWeeksCount).forEach { week ->
+                                            val skipped = week in draftExcludedWeeks
+                                            FilterChip(
+                                                selected = skipped,
+                                                onClick = { if (skipped) draftExcludedWeeks.remove(week) else draftExcludedWeeks.add(week) },
+                                                label = { Text(stringResource(R.string.week_short, week)) },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = Error.copy(alpha = 0.15f),
+                                                    selectedLabelColor = Error
+                                                )
                                             )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
+                                val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
+                                val isLinked = editingExercise.planExercise.supersetId != null && editingExercise.planExercise.supersetId == nextItem?.planExercise?.supersetId
+                            
+                                GymButton(
+                                    onClick = {
+                                        editingExercise.let { current ->
+                                            val index = localExercises.indexOfFirst { it.planExercise.id == current.planExercise.id }
+                                            if (index != -1 && index < localExercises.size - 1) {
+                                                val nextIndex = index + 1
+                                                val nextItem = localExercises[nextIndex]
+                                                val newSid = if (isLinked) null else (current.planExercise.supersetId ?: nextItem.planExercise.supersetId ?: java.util.UUID.randomUUID().toString())
+                                            
+                                                // Update local list for instant feedback
+                                                val updatedCurrent = current.copy(planExercise = current.planExercise.copy(supersetId = newSid))
+                                                val updatedNext = nextItem.copy(planExercise = nextItem.planExercise.copy(supersetId = newSid))
+                                            
+                                                localExercises[index] = updatedCurrent
+                                                localExercises[nextIndex] = updatedNext
+                                            
+                                                viewModel.toggleSupersetWithNext(current.planExercise, newSid)
+                                            }
+                                        }
+                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    containerColor = if (isLinked) Error.copy(alpha = 0.12f) else Primary.copy(alpha = 0.12f),
+                                    contentColor = if (isLinked) Error else Primary
+                                ) {
+                                    Icon(
+                                        imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isLinked) stringResource(R.string.unlink_superset).uppercase() else stringResource(R.string.link_with_next).uppercase(),
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
+                        }
+                }
+                SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
+                        Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                         GymButton(
+                            onClick = {
+                                scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                    if (!exerciseSheetState.isVisible) {
+                                        showExerciseSheet = false
+                                    }
+                                }
+                                editingExercise?.let {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.removeExercise(it.planExercise)
+                                }
+                            },
+                            modifier = Modifier.size(60.dp),
+                            height = 56,
+                            containerColor = Error.copy(alpha = 0.15f),
+                            contentColor = Error,
+                            shape = CircleShape,
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(28.dp))
+                        }
+
+                        GymButton(
+                            onClick = {
+                                scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                    if (!exerciseSheetState.isVisible) {
+                                        showExerciseSheet = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = OnSurfaceVariant
+                        ) {
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        }
+                    
+                        GymButton(
+                            onClick = {
+                                val exerciseId = selectedExerciseId ?: return@GymButton
+                                val current = editingExercise
+                                if (isSelectedCardio) {
+                                    val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
+                                    val rest = restText.trim().toIntOrNull() ?: 0
+                                    val category = selectedExercise?.categoria ?: "Cardio"
+
+                                    if (current == null) {
+                                        viewModel.addCardioExercise(
+                                            exerciseId = exerciseId,
+                                            cardioCategoria = category,
+                                            durataTargetSecondi = durSec,
+                                            recuperoTarget = rest
+                                        )
+                                    } else {
+                                        viewModel.updateExercise(
+                                            original = current.planExercise.copy(
+                                                exerciseType = "cardio",
+                                                cardioCategoria = category,
+                                                durataTargetSecondi = durSec
+                                            ),
+                                            exerciseId = exerciseId,
+                                            serieTarget = 1,
+                                            repsTarget = "1",
+                                            recuperoTarget = rest,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            clearAdvanced = current.isAdvanced && advancedOn
+                                        )
+                                    }
+                                } else if (selectedExerciseType == "advanced") {
+                                    val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                    if (advancedWeeks.values.none { it.isNotEmpty() }) {
+                                        Toast.makeText(context, context.getString(R.string.advanced_needs_block), Toast.LENGTH_SHORT).show()
+                                        return@GymButton
+                                    }
+                                    viewModel.saveAdvancedExercise(
+                                        original = current?.planExercise,
+                                        exerciseId = exerciseId,
+                                        recuperoTarget = rest,
+                                        blocksByWeek = advancedWeeks.toMap(),
+                                        excludedWeeks = draftExcludedWeeks.toSet(),
+                                        weeksCount = draftWeeksCount
+                                    )
+                                } else if (selectedExerciseType == "time_and_weight") {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                    val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
+
+                                    if (current == null) {
+                                        viewModel.addExercise(
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = "${targetSec}s",
+                                            recuperoTarget = rest,
+                                            exerciseType = "time_and_weight",
+                                            durataTargetSecondi = targetSec,
+                                            excludedWeeks = draftExcludedWeeks.toSet()
+                                        )
+                                    } else {
+                                        viewModel.updateExercise(
+                                            original = current.planExercise,
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = "${targetSec}s",
+                                            recuperoTarget = rest,
+                                            exerciseType = "time_and_weight",
+                                            durataTargetSecondi = targetSec,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            clearAdvanced = current.isAdvanced && advancedOn
+                                        )
+                                    }
+                                } else {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                    val reps = repsText.trim().ifBlank { return@GymButton }
+
+                                    if (current == null) {
+                                        viewModel.addExercise(
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = reps,
+                                            recuperoTarget = rest,
+                                            exerciseType = "strength",
+                                            durataTargetSecondi = null,
+                                            excludedWeeks = draftExcludedWeeks.toSet()
+                                        )
+                                    } else {
+                                        viewModel.updateExercise(
+                                            original = current.planExercise,
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = reps,
+                                            recuperoTarget = rest,
+                                            exerciseType = "strength",
+                                            durataTargetSecondi = null,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            clearAdvanced = current.isAdvanced && advancedOn
                                         )
                                     }
                                 }
-                            }
-                        }
-
-                        if (editingExercise != null && localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } < localExercises.size - 1) {
-                            val nextItem = localExercises.getOrNull(localExercises.indexOfFirst { it.planExercise.id == editingExercise.planExercise.id } + 1)
-                            val isLinked = editingExercise.planExercise.supersetId != null && editingExercise.planExercise.supersetId == nextItem?.planExercise?.supersetId
-                            
-                            GymButton(
-                                onClick = {
-                                    editingExercise.let { current ->
-                                        val index = localExercises.indexOfFirst { it.planExercise.id == current.planExercise.id }
-                                        if (index != -1 && index < localExercises.size - 1) {
-                                            val nextIndex = index + 1
-                                            val nextItem = localExercises[nextIndex]
-                                            val newSid = if (isLinked) null else (current.planExercise.supersetId ?: nextItem.planExercise.supersetId ?: java.util.UUID.randomUUID().toString())
-                                            
-                                            // Update local list for instant feedback
-                                            val updatedCurrent = current.copy(planExercise = current.planExercise.copy(supersetId = newSid))
-                                            val updatedNext = nextItem.copy(planExercise = nextItem.planExercise.copy(supersetId = newSid))
-                                            
-                                            localExercises[index] = updatedCurrent
-                                            localExercises[nextIndex] = updatedNext
-                                            
-                                            viewModel.toggleSupersetWithNext(current.planExercise, newSid)
-                                        }
+                                scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
+                                    if (!exerciseSheetState.isVisible) {
+                                        showExerciseSheet = false
                                     }
-                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                containerColor = if (isLinked) Error.copy(alpha = 0.12f) else Primary.copy(alpha = 0.12f),
-                                contentColor = if (isLinked) Error else Primary
-                            ) {
-                                Icon(
-                                    imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (isLinked) stringResource(R.string.unlink_superset).uppercase() else stringResource(R.string.link_with_next).uppercase(),
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = if (editingExercise == null) stringResource(R.string.add).uppercase() else stringResource(R.string.save).uppercase(),
+                                fontWeight = FontWeight.Black
+                            )
                         }
-                    }
-
-                    Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                     GymButton(
-                        onClick = {
-                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
-                                if (!exerciseSheetState.isVisible) {
-                                    showExerciseSheet = false
-                                }
-                            }
-                            editingExercise?.let {
-                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                viewModel.removeExercise(it.planExercise)
-                            }
-                        },
-                        modifier = Modifier.size(60.dp),
-                        height = 56,
-                        containerColor = Error.copy(alpha = 0.15f),
-                        contentColor = Error,
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(28.dp))
-                    }
-
-                    GymButton(
-                        onClick = {
-                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
-                                if (!exerciseSheetState.isVisible) {
-                                    showExerciseSheet = false
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurfaceVariant
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                    
-                    GymButton(
-                        onClick = {
-                            val exerciseId = selectedExerciseId ?: return@GymButton
-                            val current = editingExercise
-                            if (isSelectedCardio) {
-                                val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
-                                val rest = restText.trim().toIntOrNull() ?: 0
-                                val category = selectedExercise?.categoria ?: "Cardio"
-
-                                if (current == null) {
-                                    viewModel.addCardioExercise(
-                                        exerciseId = exerciseId,
-                                        cardioCategoria = category,
-                                        durataTargetSecondi = durSec,
-                                        recuperoTarget = rest
-                                    )
-                                } else {
-                                    viewModel.updateExercise(
-                                        original = current.planExercise.copy(
-                                            exerciseType = "cardio",
-                                            cardioCategoria = category,
-                                            durataTargetSecondi = durSec
-                                        ),
-                                        exerciseId = exerciseId,
-                                        serieTarget = 1,
-                                        repsTarget = "1",
-                                        recuperoTarget = rest,
-                                        excludedWeeks = draftExcludedWeeks.toSet(),
-                                        clearAdvanced = current.isAdvanced && advancedOn
-                                    )
-                                }
-                            } else if (selectedExerciseType == "advanced") {
-                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
-                                if (advancedWeeks.values.none { it.isNotEmpty() }) {
-                                    Toast.makeText(context, context.getString(R.string.advanced_needs_block), Toast.LENGTH_SHORT).show()
-                                    return@GymButton
-                                }
-                                viewModel.saveAdvancedExercise(
-                                    original = current?.planExercise,
-                                    exerciseId = exerciseId,
-                                    recuperoTarget = rest,
-                                    blocksByWeek = advancedWeeks.toMap(),
-                                    excludedWeeks = draftExcludedWeeks.toSet(),
-                                    weeksCount = draftWeeksCount
-                                )
-                            } else if (selectedExerciseType == "time_and_weight") {
-                                val sets = setsText.trim().toIntOrNull() ?: return@GymButton
-                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
-                                val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
-
-                                if (current == null) {
-                                    viewModel.addExercise(
-                                        exerciseId = exerciseId,
-                                        serieTarget = sets,
-                                        repsTarget = "${targetSec}s",
-                                        recuperoTarget = rest,
-                                        exerciseType = "time_and_weight",
-                                        durataTargetSecondi = targetSec,
-                                        excludedWeeks = draftExcludedWeeks.toSet()
-                                    )
-                                } else {
-                                    viewModel.updateExercise(
-                                        original = current.planExercise,
-                                        exerciseId = exerciseId,
-                                        serieTarget = sets,
-                                        repsTarget = "${targetSec}s",
-                                        recuperoTarget = rest,
-                                        exerciseType = "time_and_weight",
-                                        durataTargetSecondi = targetSec,
-                                        excludedWeeks = draftExcludedWeeks.toSet(),
-                                        clearAdvanced = current.isAdvanced && advancedOn
-                                    )
-                                }
-                            } else {
-                                val sets = setsText.trim().toIntOrNull() ?: return@GymButton
-                                val rest = restText.trim().toIntOrNull() ?: return@GymButton
-                                val reps = repsText.trim().ifBlank { return@GymButton }
-
-                                if (current == null) {
-                                    viewModel.addExercise(
-                                        exerciseId = exerciseId,
-                                        serieTarget = sets,
-                                        repsTarget = reps,
-                                        recuperoTarget = rest,
-                                        exerciseType = "strength",
-                                        durataTargetSecondi = null,
-                                        excludedWeeks = draftExcludedWeeks.toSet()
-                                    )
-                                } else {
-                                    viewModel.updateExercise(
-                                        original = current.planExercise,
-                                        exerciseId = exerciseId,
-                                        serieTarget = sets,
-                                        repsTarget = reps,
-                                        recuperoTarget = rest,
-                                        exerciseType = "strength",
-                                        durataTargetSecondi = null,
-                                        excludedWeeks = draftExcludedWeeks.toSet(),
-                                        clearAdvanced = current.isAdvanced && advancedOn
-                                    )
-                                }
-                            }
-                            scope.launch { exerciseSheetState.hide() }.invokeOnCompletion {
-                                if (!exerciseSheetState.isVisible) {
-                                    showExerciseSheet = false
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = if (editingExercise == null) stringResource(R.string.add).uppercase() else stringResource(R.string.save).uppercase(),
-                            fontWeight = FontWeight.Black
-                        )
                     }
                 }
             }
@@ -1641,244 +1639,240 @@ fun RoutineDetailScreen(
                 )
             }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = ResponsiveSize.cardPadding)
-                    .padding(bottom = ResponsiveSize.cardPadding),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(R.string.edit_routine),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Primary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = stringResource(R.string.update_plan),
-                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
-                        color = OnSurface,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    GymInputField(
-                        value = routineName,
-                        onValueChange = { routineName = it },
-                        label = stringResource(R.string.routine_name),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(modifier = Modifier.weight(1f).clickable { showStartDatePicker = true }) {
-                            GymInputField(
-                                value = com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
-                                onValueChange = {},
-                                label = stringResource(R.string.start_date).replace(":", ""),
-                                modifier = Modifier.fillMaxWidth(),
-                                readOnly = true,
-                                enabled = false,
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.CalendarMonth,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            )
-                        }
-
-                        Box(modifier = Modifier.weight(1f).clickable { showEndDatePicker = true }) {
-                            GymInputField(
-                                value = endDate?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.tap_to_set),
-                                onValueChange = {},
-                                label = stringResource(R.string.expiration_date),
-                                modifier = Modifier.fillMaxWidth(),
-                                readOnly = true,
-                                enabled = false,
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.CalendarMonth,
-                                        contentDescription = null,
-                                        tint = if (endDate != null) Primary else OnSurfaceVariant.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            )
-                        }
-                    }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SheetFormLayout {
+                SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = 24.dp) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = stringResource(R.string.schedule_days),
+                            text = stringResource(R.string.edit_routine),
                             style = MaterialTheme.typography.labelMedium,
-                            color = OnSurfaceVariant,
+                            color = Primary,
                             fontWeight = FontWeight.ExtraBold
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                        ) {
-                            DayOfWeek.entries.forEachIndexed { index, day ->
-                                val isSelected = selectedDays.contains(day)
-                                ToggleButton(
-                                    checked = isSelected,
-                                    onCheckedChange = {
-                                        if (isSelected) selectedDays.remove(day)
-                                        else selectedDays.add(day)
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shapes = when (index) {
-                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                        DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                    }
-                                ) {
-                                    Text(
-                                        text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                }
-                            }
-                        }
+                        Text(
+                            text = stringResource(R.string.update_plan),
+                            style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black
+                        )
                     }
 
-                    if (advancedOn) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(R.string.weekly_program),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = OnSurfaceVariant,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.weekly_program_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant.copy(alpha = 0.8f)
-                                    )
-                                }
-                                Switch(
-                                    checked = routineWeeksCount > 1,
-                                    onCheckedChange = { enabled ->
-                                        routineWeeksCount = if (enabled) maxOf(4, planWeeksCount) else 1
-                                        routineCurrentWeek = routineCurrentWeek.coerceAtMost(routineWeeksCount)
-                                    },
-                                    colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        GymInputField(
+                            value = routineName,
+                            onValueChange = { routineName = it },
+                            label = stringResource(R.string.routine_name),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(modifier = Modifier.weight(1f).clickable { showStartDatePicker = true }) {
+                                GymInputField(
+                                    value = com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
+                                    onValueChange = {},
+                                    label = stringResource(R.string.start_date).replace(":", ""),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    readOnly = true,
+                                    enabled = false,
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.CalendarMonth,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 )
                             }
-                            AnimatedVisibility(visible = routineWeeksCount > 1) {
-                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    NumberStepper(
-                                        value = routineWeeksCount.toFloat(),
-                                        step = 1f,
-                                        range = 2f..RoutineDetailViewModel.MAX_WEEKS.toFloat(),
-                                        label = stringResource(R.string.weeks_count),
-                                        onValueChange = {
-                                            routineWeeksCount = it.toInt()
-                                            routineCurrentWeek = routineCurrentWeek.coerceAtMost(routineWeeksCount)
+
+                            Box(modifier = Modifier.weight(1f).clickable { showEndDatePicker = true }) {
+                                GymInputField(
+                                    value = endDate?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.tap_to_set),
+                                    onValueChange = {},
+                                    label = stringResource(R.string.expiration_date),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    readOnly = true,
+                                    enabled = false,
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.CalendarMonth,
+                                            contentDescription = null,
+                                            tint = if (endDate != null) Primary else OnSurfaceVariant.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = stringResource(R.string.schedule_days),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = OnSurfaceVariant,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                            ) {
+                                DayOfWeek.entries.forEachIndexed { index, day ->
+                                    val isSelected = selectedDays.contains(day)
+                                    ToggleButton(
+                                        checked = isSelected,
+                                        onCheckedChange = {
+                                            if (isSelected) selectedDays.remove(day)
+                                            else selectedDays.add(day)
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shapes = when (index) {
+                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                                         }
-                                    )
-                                    NumberStepper(
-                                        value = routineCurrentWeek.toFloat(),
-                                        step = 1f,
-                                        range = 1f..routineWeeksCount.toFloat().coerceAtLeast(1f),
-                                        label = stringResource(R.string.program_current_week),
-                                        onValueChange = { routineCurrentWeek = it.toInt() }
-                                    )
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = stringResource(R.string.auto_advance_week),
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = OnSurface,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                            Text(
-                                                text = stringResource(R.string.auto_advance_week_desc),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = OnSurfaceVariant
-                                            )
-                                        }
-                                        Switch(
-                                            checked = routineAutoAdvance,
-                                            onCheckedChange = { routineAutoAdvance = it },
-                                            colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                                    ) {
+                                        Text(
+                                            text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
+                                            fontWeight = FontWeight.ExtraBold
                                         )
                                     }
                                 }
                             }
                         }
-}
 
-                    GymInputField(
-                        value = routineNote,
-                        onValueChange = { routineNote = it },
-                        label = stringResource(R.string.routine_notes),
-                        singleLine = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    GymButton(
-                        onClick = {
-                            scope.launch { routineSheetState.hide() }.invokeOnCompletion {
-                                if (!routineSheetState.isVisible) {
-                                    showRoutineEditSheet = false
+                        if (advancedOn) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.weekly_program),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = OnSurfaceVariant,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.weekly_program_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant.copy(alpha = 0.8f)
+                                        )
+                                    }
+                                    Switch(
+                                        checked = routineWeeksCount > 1,
+                                        onCheckedChange = { enabled ->
+                                            routineWeeksCount = if (enabled) maxOf(4, planWeeksCount) else 1
+                                            routineCurrentWeek = routineCurrentWeek.coerceAtMost(routineWeeksCount)
+                                        },
+                                        colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                                    )
+                                }
+                                AnimatedVisibility(visible = routineWeeksCount > 1) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        NumberStepper(
+                                            value = routineWeeksCount.toFloat(),
+                                            step = 1f,
+                                            range = 2f..RoutineDetailViewModel.MAX_WEEKS.toFloat(),
+                                            label = stringResource(R.string.weeks_count),
+                                            onValueChange = {
+                                                routineWeeksCount = it.toInt()
+                                                routineCurrentWeek = routineCurrentWeek.coerceAtMost(routineWeeksCount)
+                                            }
+                                        )
+                                        NumberStepper(
+                                            value = routineCurrentWeek.toFloat(),
+                                            step = 1f,
+                                            range = 1f..routineWeeksCount.toFloat().coerceAtLeast(1f),
+                                            label = stringResource(R.string.program_current_week),
+                                            onValueChange = { routineCurrentWeek = it.toInt() }
+                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = stringResource(R.string.auto_advance_week),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = OnSurface,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.auto_advance_week_desc),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = OnSurfaceVariant
+                                                )
+                                            }
+                                            Switch(
+                                                checked = routineAutoAdvance,
+                                                onCheckedChange = { routineAutoAdvance = it },
+                                                colors = SwitchDefaults.colors(checkedTrackColor = Primary)
+                                            )
+                                        }
+                                    }
                                 }
                             }
-                        },
-                        modifier = Modifier.weight(1f),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurfaceVariant
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+    }
+
+                        GymInputField(
+                            value = routineNote,
+                            onValueChange = { routineNote = it },
+                            label = stringResource(R.string.routine_notes),
+                            singleLine = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
-                    
-                    GymButton(
-                        onClick = {
-                            val trimmedName = routineName.trim()
-                            if (trimmedName.isNotEmpty()) {
-                                val note = routineNote.trim().takeIf { it.isNotBlank() }
-                                val daysString = if (selectedDays.isEmpty()) null 
-                                               else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
-                                viewModel.updatePlan(
-                                    nome = trimmedName,
-                                    note = note,
-                                    giorniSettimana = daysString,
-                                    dataInizio = startDate,
-                                    dataFine = endDate,
-                                    weeksCount = routineWeeksCount,
-                                    currentWeek = routineCurrentWeek,
-                                    autoAdvanceWeek = routineAutoAdvance
-                                )
+                }
+                SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        GymButton(
+                            onClick = {
                                 scope.launch { routineSheetState.hide() }.invokeOnCompletion {
                                     if (!routineSheetState.isVisible) {
                                         showRoutineEditSheet = false
                                     }
                                 }
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.save).uppercase(),
-                            fontWeight = FontWeight.Black
-                        )
+                            },
+                            modifier = Modifier.weight(1f),
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = OnSurfaceVariant
+                        ) {
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        }
+                    
+                        GymButton(
+                            onClick = {
+                                val trimmedName = routineName.trim()
+                                if (trimmedName.isNotEmpty()) {
+                                    val note = routineNote.trim().takeIf { it.isNotBlank() }
+                                    val daysString = if (selectedDays.isEmpty()) null 
+                                                   else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
+                                    viewModel.updatePlan(
+                                        nome = trimmedName,
+                                        note = note,
+                                        giorniSettimana = daysString,
+                                        dataInizio = startDate,
+                                        dataFine = endDate,
+                                        weeksCount = routineWeeksCount,
+                                        currentWeek = routineCurrentWeek,
+                                        autoAdvanceWeek = routineAutoAdvance
+                                    )
+                                    scope.launch { routineSheetState.hide() }.invokeOnCompletion {
+                                        if (!routineSheetState.isVisible) {
+                                            showRoutineEditSheet = false
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.save).uppercase(),
+                                fontWeight = FontWeight.Black
+                            )
+                        }
                     }
                 }
             }

@@ -118,6 +118,9 @@ import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.ScreenHeader
+import com.emanuel5014.trainable.ui.components.SheetFormBody
+import com.emanuel5014.trainable.ui.components.SheetFormFooter
+import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -622,161 +625,158 @@ fun RoutineListScreen(
                 )
             }
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = ResponsiveSize.horizontalPadding)
-                    .padding(bottom = 48.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(R.string.create_routine),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Primary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = stringResource(R.string.new_routine),
-                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
-                        color = OnSurface,
-                        fontWeight = FontWeight.Black
-                    )
+            SheetFormLayout {
+                SheetFormBody(horizontalPadding = ResponsiveSize.horizontalPadding, spacing = 24.dp) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = stringResource(R.string.create_routine),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Primary,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = stringResource(R.string.new_routine),
+                            style = MaterialTheme.typography.headlineMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)),
+                            color = OnSurface,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        GymInputField(
+                            value = routineName,
+                            onValueChange = { routineName = it },
+                            label = stringResource(R.string.routine_name),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(modifier = Modifier.weight(1f).clickable { showStartDatePicker = true }) {
+                                GymInputField(
+                                    value = com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
+                                    onValueChange = {},
+                                    label = stringResource(R.string.start_date).replace(":", ""),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    readOnly = true,
+                                    enabled = false,
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.CalendarMonth,
+                                            contentDescription = null,
+                                            tint = Primary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                )
+                            }
+
+                            Box(modifier = Modifier.weight(1f).clickable { showEndDatePicker = true }) {
+                                GymInputField(
+                                    value = endDate?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.tap_to_set),
+                                    onValueChange = {},
+                                    label = stringResource(R.string.expiration_date),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    readOnly = true,
+                                    enabled = false,
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.CalendarMonth,
+                                            contentDescription = null,
+                                            tint = if (endDate != null) Primary else OnSurfaceVariant.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = stringResource(R.string.schedule_days),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = OnSurfaceVariant,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                            ) {
+                                DayOfWeek.entries.forEachIndexed { index, day ->
+                                    val isSelected = selectedDays.contains(day)
+                                    ToggleButton(
+                                        checked = isSelected,
+                                        onCheckedChange = {
+                                            if (isSelected) selectedDays.remove(day)
+                                            else selectedDays.add(day)
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shapes = when (index) {
+                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                        }
+                                    ) {
+                                        Text(
+                                            text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        GymInputField(
+                            value = routineNote,
+                            onValueChange = { routineNote = it },
+                            label = stringResource(R.string.routine_notes),
+                            singleLine = false,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
-
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    GymInputField(
-                        value = routineName,
-                        onValueChange = { routineName = it },
-                        label = stringResource(R.string.routine_name),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
+                SheetFormFooter(horizontalPadding = ResponsiveSize.horizontalPadding) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Box(modifier = Modifier.weight(1f).clickable { showStartDatePicker = true }) {
-                            GymInputField(
-                                value = com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
-                                onValueChange = {},
-                                label = stringResource(R.string.start_date).replace(":", ""),
-                                modifier = Modifier.fillMaxWidth(),
-                                readOnly = true,
-                                enabled = false,
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.CalendarMonth,
-                                        contentDescription = null,
-                                        tint = Primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            )
-                        }
-
-                        Box(modifier = Modifier.weight(1f).clickable { showEndDatePicker = true }) {
-                            GymInputField(
-                                value = endDate?.let { com.emanuel5014.trainable.ui.util.DateFormatter.format(it) } ?: stringResource(R.string.tap_to_set),
-                                onValueChange = {},
-                                label = stringResource(R.string.expiration_date),
-                                modifier = Modifier.fillMaxWidth(),
-                                readOnly = true,
-                                enabled = false,
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.CalendarMonth,
-                                        contentDescription = null,
-                                        tint = if (endDate != null) Primary else OnSurfaceVariant.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            )
-                        }
-                    }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = stringResource(R.string.schedule_days),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                        GymButton(
+                            onClick = { showSheet = false },
+                            modifier = Modifier.weight(1f),
+                            containerColor = SurfaceContainerHigh,
+                            contentColor = OnSurfaceVariant
                         ) {
-                            DayOfWeek.entries.forEachIndexed { index, day ->
-                                val isSelected = selectedDays.contains(day)
-                                ToggleButton(
-                                    checked = isSelected,
-                                    onCheckedChange = {
-                                        if (isSelected) selectedDays.remove(day)
-                                        else selectedDays.add(day)
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shapes = when (index) {
-                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                        DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                    }
-                                ) {
-                                    Text(
-                                        text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                }
-                            }
+                            Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
-                    }
-
-                    GymInputField(
-                        value = routineNote,
-                        onValueChange = { routineNote = it },
-                        label = stringResource(R.string.routine_notes),
-                        singleLine = false,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    GymButton(
-                        onClick = { showSheet = false },
-                        modifier = Modifier.weight(1f),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurfaceVariant
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
                     
-                    GymButton(
-                        onClick = {
-                            val trimmedName = routineName.trim()
-                            if (trimmedName.isNotEmpty()) {
-                                val note = routineNote.trim().takeIf { it.isNotBlank() }
-                                val daysString = if (selectedDays.isEmpty()) null 
-                                               else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
-                                viewModel.createEmptyPlan(
-                                    name = trimmedName,
-                                    note = note,
-                                    giorniSettimana = daysString,
-                                    dataInizio = startDate,
-                                    dataFine = endDate
-                                )
-                                showSheet = false
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.create).uppercase(),
-                            fontWeight = FontWeight.Black
-                        )
+                        GymButton(
+                            onClick = {
+                                val trimmedName = routineName.trim()
+                                if (trimmedName.isNotEmpty()) {
+                                    val note = routineNote.trim().takeIf { it.isNotBlank() }
+                                    val daysString = if (selectedDays.isEmpty()) null 
+                                                   else selectedDays.sortedBy { it.value }.joinToString(",") { it.value.toString() }
+                                    viewModel.createEmptyPlan(
+                                        name = trimmedName,
+                                        note = note,
+                                        giorniSettimana = daysString,
+                                        dataInizio = startDate,
+                                        dataFine = endDate
+                                    )
+                                    showSheet = false
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.create).uppercase(),
+                                fontWeight = FontWeight.Black
+                            )
+                        }
                     }
                 }
             }

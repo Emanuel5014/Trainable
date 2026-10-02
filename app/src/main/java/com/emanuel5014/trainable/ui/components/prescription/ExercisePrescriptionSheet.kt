@@ -65,82 +65,77 @@ fun ExercisePrescriptionSheet(
         contentColor = OnSurface,
         tonalElevation = 0.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = ResponsiveSize.cardPadding)
-                .padding(top = Spacing.small, bottom = ResponsiveSize.cardPadding)
-                .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(Spacing.large)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
-                Text(
-                    text = stringResource(R.string.prescription).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Primary,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    text = exerciseName,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)
-                    ),
-                    color = OnSurface,
-                    fontWeight = FontWeight.Black
-                )
-                Text(
-                    text = stringResource(R.string.prescription_sheet_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OnSurfaceVariant
+        SheetFormLayout {
+            SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
+                    Text(
+                        text = stringResource(R.string.prescription).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = exerciseName,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.headlineMedium.fontSize)
+                        ),
+                        color = OnSurface,
+                        fontWeight = FontWeight.Black
+                    )
+                    Text(
+                        text = stringResource(R.string.prescription_sheet_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = OnSurfaceVariant
+                    )
+                }
+
+                AdvancedPrescriptionEditor(
+                    blocksByWeek = blocksByWeek,
+                    onBlocksByWeekChange = { blocksByWeek = it },
+                    exerciseId = exerciseId,
+                    exerciseName = exerciseName
                 )
             }
-
-            AdvancedPrescriptionEditor(
-                blocksByWeek = blocksByWeek,
-                onBlocksByWeekChange = { blocksByWeek = it },
-                exerciseId = exerciseId,
-                exerciseName = exerciseName
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                if (onRemove != null) {
-                    GymButton(
-                        onClick = onRemove,
-                        modifier = Modifier.size(60.dp),
-                        height = 56,
-                        containerColor = Error.copy(alpha = 0.15f),
-                        contentColor = Error,
-                        shape = CircleShape,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-                    ) {
-                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.remove_prescription), modifier = Modifier.size(28.dp))
-                    }
-                }
-                GymButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    containerColor = SurfaceContainerHigh,
-                    contentColor = OnSurfaceVariant
+            SheetFormFooter(horizontalPadding = ResponsiveSize.cardPadding) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
-                }
-                GymButton(
-                    onClick = {
-                        val blocks = blocksByWeek[1].orEmpty()
-                        if (blocks.isEmpty()) {
-                            Toast.makeText(context, context.getString(R.string.advanced_needs_block), Toast.LENGTH_SHORT).show()
-                        } else {
-                            onSave(blocks)
+                    if (onRemove != null) {
+                        GymButton(
+                            onClick = onRemove,
+                            modifier = Modifier.size(60.dp),
+                            height = 56,
+                            containerColor = Error.copy(alpha = 0.15f),
+                            contentColor = Error,
+                            shape = CircleShape,
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.remove_prescription), modifier = Modifier.size(28.dp))
                         }
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Black)
+                    }
+                    GymButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurfaceVariant
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    }
+                    GymButton(
+                        onClick = {
+                            val blocks = blocksByWeek[1].orEmpty()
+                            if (blocks.isEmpty()) {
+                                Toast.makeText(context, context.getString(R.string.advanced_needs_block), Toast.LENGTH_SHORT).show()
+                            } else {
+                                onSave(blocks)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Black)
+                    }
                 }
             }
         }

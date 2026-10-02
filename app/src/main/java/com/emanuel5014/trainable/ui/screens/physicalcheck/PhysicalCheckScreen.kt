@@ -16,6 +16,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -26,6 +27,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -291,6 +294,7 @@ fun PhysicalCheckScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
+                    .imePadding()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -1304,11 +1308,12 @@ fun AddPhysicalCheckDialog(
     }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.physical_check_new_check), fontWeight = FontWeight.Bold) },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
@@ -1820,11 +1825,12 @@ private fun EditPhysicalCheckDialog(
     }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.physical_check_edit_check), fontWeight = FontWeight.Bold) },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(

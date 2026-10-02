@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -118,6 +119,7 @@ fun ExerciseCustomizationScreen(
         val categoryNameEmptyText = stringResource(R.string.category_name_empty)
 
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showAddCategoryDialog = false },
             containerColor = SurfaceContainerHigh,
             title = {
@@ -207,6 +209,7 @@ fun ExerciseCustomizationScreen(
         val categoryNameEmptyText = stringResource(R.string.category_name_empty)
 
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { categoryToEdit = null },
             containerColor = SurfaceContainerHigh,
             title = {

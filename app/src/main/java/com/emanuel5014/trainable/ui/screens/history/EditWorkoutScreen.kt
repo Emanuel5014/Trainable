@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -113,6 +113,9 @@ import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.ui.components.CardioInputForm
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.ui.components.SheetFormBody
+import com.emanuel5014.trainable.ui.components.SheetFormFooter
+import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
@@ -1230,6 +1233,7 @@ fun EditCardioDialog(
     val isValid = categoria.isNotBlank() && (distanza.isNotBlank() || durataMinuti.isNotBlank() || durataOre.isNotBlank())
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { 
             Text(
@@ -1239,7 +1243,8 @@ fun EditCardioDialog(
             ) 
         },
         text = {
-            CardioInputForm(
+            Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+CardioInputForm(
                 categoria = categoria,
                 onCategoriaChange = { categoria = it },
                 distanza = distanza,
@@ -1252,6 +1257,7 @@ fun EditCardioDialog(
                 onDurataSecondiChange = { durataSecondi = it },
                 showCategory = false
             )
+}
         },
         confirmButton = {
             GymButton(
@@ -1434,159 +1440,154 @@ fun EditWorkoutDetailsBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-        modifier = Modifier.imePadding()
+        dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.session_details),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = OnSurface
-            )
-
-            // 1. Workout Name
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SheetFormLayout {
+            SheetFormBody(horizontalPadding = 24.dp, spacing = 20.dp) {
                 Text(
-                    text = stringResource(R.string.rename_workout),
-                    style = MaterialTheme.typography.labelMedium,
+                    text = stringResource(R.string.session_details),
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = OnSurfaceVariant
+                    color = OnSurface
                 )
-                OutlinedTextField(
-                    value = nameText,
-                    onValueChange = { nameText = it },
-                    placeholder = { Text(text = stringResource(R.string.custom_workout)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.FitnessCenter,
-                            contentDescription = null,
-                            tint = Primary
-                        )
-                    },
-                    singleLine = true,
-                    shape = Shapes.medium,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
 
-            // 2. Workout Date
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.edit_date),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurfaceVariant
-                )
-                Surface(
-                    onClick = { showDatePickerDialog = true },
-                    shape = Shapes.medium,
-                    color = SurfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // 1. Workout Name
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.rename_workout),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = nameText,
+                        onValueChange = { nameText = it },
+                        placeholder = { Text(text = stringResource(R.string.custom_workout)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                tint = Primary
+                            )
+                        },
+                        singleLine = true,
+                        shape = Shapes.medium,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // 2. Workout Date
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.edit_date),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant
+                    )
+                    Surface(
+                        onClick = { showDatePickerDialog = true },
+                        shape = Shapes.medium,
+                        color = SurfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.CalendarMonth,
-                            contentDescription = null,
-                            tint = Primary
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.CalendarMonth,
+                                contentDescription = null,
+                                tint = Primary
+                            )
+                            Text(
+                                text = remember(selectedTimestamp) {
+                                    SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault()).format(Date(selectedTimestamp))
+                                },
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = OnSurface
+                            )
+                        }
+                    }
+                }
+
+                // 3. Duration
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.workout_duration),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = hoursText,
+                            onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.hours)) },
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Timer, contentDescription = null, tint = Primary)
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            shape = Shapes.medium
                         )
                         Text(
-                            text = remember(selectedTimestamp) {
-                                SimpleDateFormat("dd MMMM yyyy", java.util.Locale.getDefault()).format(Date(selectedTimestamp))
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
+                            ":",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
                             color = OnSurface
+                        )
+                        OutlinedTextField(
+                            value = minutesText,
+                            onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.minutes)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            shape = Shapes.medium
                         )
                     }
                 }
-            }
 
-            // 3. Duration
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.workout_duration),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurfaceVariant
-                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            SheetFormFooter(horizontalPadding = 24.dp) {
+                // Action Buttons
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = hoursText,
-                        onValueChange = { hoursText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.hours)) },
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Timer, contentDescription = null, tint = Primary)
+                    GymButton(
+                        onClick = onDismiss,
+                        containerColor = Color.Transparent,
+                        contentColor = OnSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
+                    }
+
+                    GymButton(
+                        onClick = {
+                            val h = hoursText.toIntOrNull() ?: 0
+                            val m = minutesText.toIntOrNull() ?: 0
+                            val totalMs = (h * 3600L + m * 60L) * 1000L
+                            val newDuration = if (totalMs > 0) totalMs else null
+                            onConfirm(nameText, selectedTimestamp, newDuration)
                         },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = Shapes.medium
-                    )
-                    Text(
-                        ":",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        color = OnSurface
-                    )
-                    OutlinedTextField(
-                        value = minutesText,
-                        onValueChange = { minutesText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.minutes)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = Shapes.medium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Action Buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                GymButton(
-                    onClick = onDismiss,
-                    containerColor = Color.Transparent,
-                    contentColor = OnSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.Bold)
-                }
-
-                GymButton(
-                    onClick = {
-                        val h = hoursText.toIntOrNull() ?: 0
-                        val m = minutesText.toIntOrNull() ?: 0
-                        val totalMs = (h * 3600L + m * 60L) * 1000L
-                        val newDuration = if (totalMs > 0) totalMs else null
-                        onConfirm(nameText, selectedTimestamp, newDuration)
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    }
                 }
             }
         }

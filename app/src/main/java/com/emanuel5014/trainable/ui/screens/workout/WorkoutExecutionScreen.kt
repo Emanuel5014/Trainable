@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -210,6 +211,7 @@ fun WorkoutExecutionScreen(
 
     if (showRenameDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showRenameDialog = false },
             title = { Text(stringResource(R.string.rename_workout)) },
             text = {
@@ -1865,6 +1867,7 @@ fun CardioExerciseContent(
 
     if (showStopDialog) {
         AlertDialog(
+            modifier = Modifier.imePadding(),
             onDismissRequest = { showStopDialog = false },
             title = { Text(stringResource(R.string.cardio_enter_distance)) },
             text = {

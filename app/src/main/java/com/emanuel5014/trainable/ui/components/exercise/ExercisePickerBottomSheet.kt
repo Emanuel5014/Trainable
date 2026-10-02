@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,10 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
@@ -109,6 +112,8 @@ fun ExercisePickerBottomSheet(
         }
     }
 
+    val imeVisible = isKeyboardVisible
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -130,25 +135,30 @@ fun ExercisePickerBottomSheet(
                 .padding(horizontal = ResponsiveSize.cardPadding)
                 .padding(bottom = ResponsiveSize.cardPadding)
         ) {
-            Text(
-                text = stringResource(R.string.select_exercise).uppercase(),
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontSize = ResponsiveSize.labelLargeSize
-                ),
-                color = Primary,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Spacer(modifier = Modifier.height(Spacing.xtraSmall))
-            Text(
-                text = stringResource(R.string.choose_from_library),
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = ResponsiveSize.headlineMediumSize
-                ),
-                color = OnSurface,
-                fontWeight = FontWeight.Black
-            )
+            // Title and the custom-exercise button make way for the list while the keyboard is up
+            AnimatedVisibility(visible = !imeVisible) {
+                Column {
+                Text(
+                    text = stringResource(R.string.select_exercise).uppercase(),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontSize = ResponsiveSize.labelLargeSize
+                    ),
+                    color = Primary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Spacer(modifier = Modifier.height(Spacing.xtraSmall))
+                Text(
+                    text = stringResource(R.string.choose_from_library),
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = ResponsiveSize.headlineMediumSize
+                    ),
+                    color = OnSurface,
+                    fontWeight = FontWeight.Black
+                )
 
-            Spacer(modifier = Modifier.height(Spacing.large))
+                Spacer(modifier = Modifier.height(Spacing.large))
+                }
+            }
 
             OutlinedTextField(
                 value = searchQuery,
@@ -177,48 +187,52 @@ fun ExercisePickerBottomSheet(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-            ) {
-                FilterChip(
-                    selected = selectedCategory == null && !showOnlyCustom,
-                    onClick = {
-                        selectedCategory = null
-                        showOnlyCustom = false
-                    },
-                    label = { Text(stringResource(R.string.all_categories)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary,
-                        selectedLabelColor = OnPrimary
-                    )
-                )
-                FilterChip(
-                    selected = showOnlyCustom,
-                    onClick = { showOnlyCustom = !showOnlyCustom },
-                    label = { Text(stringResource(R.string.filter_custom)) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary,
-                        selectedLabelColor = OnPrimary
-                    )
-                )
-                categories.forEach { category ->
-                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                    FilterChip(
-                        selected = selectedCategory == category,
-                        onClick = { selectedCategory = category },
-                        label = { Text(translatedCategory) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary,
-                            selectedLabelColor = OnPrimary
+            AnimatedVisibility(visible = !imeVisible) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                    ) {
+                        FilterChip(
+                            selected = selectedCategory == null && !showOnlyCustom,
+                            onClick = {
+                                selectedCategory = null
+                                showOnlyCustom = false
+                            },
+                            label = { Text(stringResource(R.string.all_categories)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = OnPrimary
+                            )
                         )
-                    )
+                        FilterChip(
+                            selected = showOnlyCustom,
+                            onClick = { showOnlyCustom = !showOnlyCustom },
+                            label = { Text(stringResource(R.string.filter_custom)) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary,
+                                selectedLabelColor = OnPrimary
+                            )
+                        )
+                        categories.forEach { category ->
+                            val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
+                            FilterChip(
+                                selected = selectedCategory == category,
+                                onClick = { selectedCategory = category },
+                                label = { Text(translatedCategory) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary,
+                                    selectedLabelColor = OnPrimary
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(Spacing.medium))
                 }
             }
-
-            Spacer(modifier = Modifier.height(Spacing.medium))
 
             LazyColumn(
                 modifier = Modifier
@@ -244,24 +258,28 @@ fun ExercisePickerBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.medium))
+            AnimatedVisibility(visible = !imeVisible) {
+                Column {
+                Spacer(modifier = Modifier.height(Spacing.medium))
 
-            OutlinedButton(
-                onClick = { showAddCustomDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-                shape = Shapes.large,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Primary
-                ),
-                border = BorderStroke(1.dp, Primary)
-            ) {
-                Icon(
-                    Icons.Rounded.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(Spacing.small))
-                Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                OutlinedButton(
+                    onClick = { showAddCustomDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = Shapes.large,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Primary
+                    ),
+                    border = BorderStroke(1.dp, Primary)
+                ) {
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.small))
+                    Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                }
+                }
             }
         }
     }
@@ -419,6 +437,7 @@ private fun AddCustomExerciseDialog(
     var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -428,7 +447,7 @@ private fun AddCustomExerciseDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 OutlinedTextField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },
@@ -522,6 +541,7 @@ private fun EditCustomExerciseDialog(
     var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -531,7 +551,7 @@ private fun EditCustomExerciseDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 OutlinedTextField(
                     value = exerciseName,
                     onValueChange = { exerciseName = it },

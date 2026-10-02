@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.rounded.BarChart
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
@@ -1514,7 +1515,8 @@ fun ExercisePickerBottomSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(if (onConfirmAdd != null) 300.dp else 350.dp)
+                    .weight(1f, fill = false)
+                    .heightIn(min = 160.dp, max = if (onConfirmAdd != null) 300.dp else 350.dp)
             ) {
                 items(filteredExercises) { exercise ->
                     val isSelected = exercise.exerciseId in selectedIds

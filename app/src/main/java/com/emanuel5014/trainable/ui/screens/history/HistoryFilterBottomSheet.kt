@@ -48,6 +48,7 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.SheetFormFooter
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -167,123 +168,192 @@ fun HistoryFilterBottomSheet(
             }
         }
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 600.dp)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.filters).uppercase(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        color = onSurfaceColor,
-                        letterSpacing = (-0.5).sp
-                    )
-                    
-                    if (selectedPlanId != null || startDate != null) {
-                        Text(
-                            text = stringResource(R.string.clear_all),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = errorColor,
-                            fontWeight = FontWeight.ExtraBold,
-                            modifier = Modifier.clickable { onClearAll() }
-                        )
-                    }
-                }
-            }
-
-            // Routines Section
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .heightIn(max = 600.dp)
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.routines),
+                            text = stringResource(R.string.filters).uppercase(),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = onSurfaceColor,
+                            letterSpacing = (-0.5).sp
+                        )
+                    
+                        if (selectedPlanId != null || startDate != null) {
+                            Text(
+                                text = stringResource(R.string.clear_all),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = errorColor,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.clickable { onClearAll() }
+                            )
+                        }
+                    }
+                }
+
+                // Routines Section
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.routines),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = primaryColor,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 1.sp
+                            )
+                        
+                            val selectedPlanName = remember(selectedPlanId, availablePlans) {
+                                availablePlans.find { it.id == selectedPlanId }?.nome
+                            }
+                        
+                            if (selectedPlanName != null) {
+                                Text(
+                                    text = "• $selectedPlanName",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = onSurfaceVariantColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    
+                        GymInputField(
+                            value = routineSearchQuery,
+                            onValueChange = { routineSearchQuery = it },
+                            label = stringResource(R.string.search_routines),
+                            placeholder = stringResource(R.string.search_routines),
+                            leadingIcon = {
+                                Icon(Icons.Rounded.Search, contentDescription = null, tint = onSurfaceVariantColor, modifier = Modifier.size(20.dp))
+                            },
+                            containerColor = surfaceContainerHighestColor
+                        )
+
+                        // Tabs (All, Active, Archived)
+                        val tabLabels = listOf(
+                            stringResource(R.string.active_routines),
+                            stringResource(R.string.archived_routines_header),
+                            stringResource(R.string.all)
+                        )
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            itemsIndexed(tabLabels) { index, label ->
+                                FilterChip(
+                                    selected = routineTab == index,
+                                    onClick = { routineTab = index },
+                                    label = { Text(label) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                        selectedLabelColor = primaryColor,
+                                        labelColor = onSurfaceVariantColor
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = routineTab == index,
+                                        borderColor = surfaceContainerHighestColor,
+                                        selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                    )
+                                )
+                            }
+                        }
+
+                        // Routine Chips
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // "All" chip for current selection
+                            if (routineTab == 2 && routineSearchQuery.isBlank()) {
+                                item {
+                                    FilterChip(
+                                        selected = selectedPlanId == null,
+                                        onClick = { onPlanSelected(null) },
+                                        label = { Text(stringResource(R.string.all)) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                            selectedLabelColor = primaryColor,
+                                            labelColor = onSurfaceVariantColor
+                                        ),
+                                        border = FilterChipDefaults.filterChipBorder(
+                                            enabled = true,
+                                            selected = selectedPlanId == null,
+                                            borderColor = surfaceContainerHighestColor,
+                                            selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                        )
+                                    )
+                                }
+                            }
+
+                            items(filteredPlans) { plan ->
+                                FilterChip(
+                                    selected = selectedPlanId == plan.id,
+                                    onClick = { onPlanSelected(plan.id) },
+                                    label = { Text(plan.nome) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                        selectedLabelColor = primaryColor,
+                                        labelColor = onSurfaceVariantColor
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = selectedPlanId == plan.id,
+                                        borderColor = surfaceContainerHighestColor,
+                                        selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                    )
+                                )
+                            }
+                        }
+                    
+                        if (filteredPlans.isEmpty() && (routineTab != 0 || routineSearchQuery.isNotBlank())) {
+                            Text(
+                                text = stringResource(R.string.no_results_filters),
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = onSurfaceVariantColor
+                            )
+                        }
+                    }
+                }
+
+                // Date Filter Section
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            text = stringResource(R.string.date_range),
                             style = MaterialTheme.typography.labelMedium,
                             color = primaryColor,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.sp
                         )
-                        
-                        val selectedPlanName = remember(selectedPlanId, availablePlans) {
-                            availablePlans.find { it.id == selectedPlanId }?.nome
-                        }
-                        
-                        if (selectedPlanName != null) {
-                            Text(
-                                text = "• $selectedPlanName",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = onSurfaceVariantColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                    
-                    GymInputField(
-                        value = routineSearchQuery,
-                        onValueChange = { routineSearchQuery = it },
-                        label = stringResource(R.string.search_routines),
-                        placeholder = stringResource(R.string.search_routines),
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null, tint = onSurfaceVariantColor, modifier = Modifier.size(20.dp))
-                        },
-                        containerColor = surfaceContainerHighestColor
-                    )
 
-                    // Tabs (All, Active, Archived)
-                    val tabLabels = listOf(
-                        stringResource(R.string.active_routines),
-                        stringResource(R.string.archived_routines_header),
-                        stringResource(R.string.all)
-                    )
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        itemsIndexed(tabLabels) { index, label ->
-                            FilterChip(
-                                selected = routineTab == index,
-                                onClick = { routineTab = index },
-                                label = { Text(label) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-                                    selectedLabelColor = primaryColor,
-                                    labelColor = onSurfaceVariantColor
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = routineTab == index,
-                                    borderColor = surfaceContainerHighestColor,
-                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
-                                )
-                            )
-                        }
-                    }
-
-                    // Routine Chips
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // "All" chip for current selection
-                        if (routineTab == 2 && routineSearchQuery.isBlank()) {
+                        // Quick Presets
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             item {
                                 FilterChip(
-                                    selected = selectedPlanId == null,
-                                    onClick = { onPlanSelected(null) },
+                                    selected = startDate == null,
+                                    onClick = { onDateRangeSelected(null, null) },
                                     label = { Text(stringResource(R.string.all)) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = primaryColor.copy(alpha = 0.15f),
@@ -292,7 +362,51 @@ fun HistoryFilterBottomSheet(
                                     ),
                                     border = FilterChipDefaults.filterChipBorder(
                                         enabled = true,
-                                        selected = selectedPlanId == null,
+                                        selected = startDate == null,
+                                        borderColor = surfaceContainerHighestColor,
+                                        selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                    )
+                                )
+                            }
+
+                            item {
+                                val range = getMonthRange(currentMonth)
+                                val isSelected = startDate == range.first && endDate == range.second
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { onDateRangeSelected(range.first, range.second) },
+                                    label = { Text(stringResource(R.string.this_month)) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                        selectedLabelColor = primaryColor,
+                                        labelColor = onSurfaceVariantColor
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = isSelected,
+                                        borderColor = surfaceContainerHighestColor,
+                                        selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                    )
+                                )
+                            }
+
+                            item {
+                                val lastMonthIndex = if (currentMonth == 0) 11 else currentMonth - 1
+                                val lastMonthYear = if (currentMonth == 0) currentYear - 1 else currentYear
+                                val range = getMonthRange(lastMonthIndex, lastMonthYear)
+                                val isSelected = startDate == range.first && endDate == range.second
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { onDateRangeSelected(range.first, range.second) },
+                                    label = { Text(stringResource(R.string.last_month)) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                        selectedLabelColor = primaryColor,
+                                        labelColor = onSurfaceVariantColor
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = isSelected,
                                         borderColor = surfaceContainerHighestColor,
                                         selectedBorderColor = primaryColor.copy(alpha = 0.3f)
                                     )
@@ -300,190 +414,80 @@ fun HistoryFilterBottomSheet(
                             }
                         }
 
-                        items(filteredPlans) { plan ->
-                            FilterChip(
-                                selected = selectedPlanId == plan.id,
-                                onClick = { onPlanSelected(plan.id) },
-                                label = { Text(plan.nome) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-                                    selectedLabelColor = primaryColor,
-                                    labelColor = onSurfaceVariantColor
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = selectedPlanId == plan.id,
-                                    borderColor = surfaceContainerHighestColor,
-                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                        // Month Selector
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            itemsIndexed(monthNames) { index, month ->
+                                val isSelected = isMonthSelected(index)
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        val range = getMonthRange(index)
+                                        onDateRangeSelected(range.first, range.second)
+                                    },
+                                    label = { Text(month) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+                                        selectedLabelColor = primaryColor,
+                                        labelColor = onSurfaceVariantColor
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = isSelected,
+                                        borderColor = surfaceContainerHighestColor,
+                                        selectedBorderColor = primaryColor.copy(alpha = 0.3f)
+                                    )
                                 )
-                            )
+                            }
                         }
-                    }
-                    
-                    if (filteredPlans.isEmpty() && (routineTab != 0 || routineSearchQuery.isNotBlank())) {
-                        Text(
-                            text = stringResource(R.string.no_results_filters),
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = onSurfaceVariantColor
-                        )
+
+                        // Custom Range Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(Shapes.medium)
+                                .background(surfaceContainerHighestColor)
+                                .clickable { onDateClick() }
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Rounded.CalendarMonth,
+                                    contentDescription = null,
+                                    tint = primaryColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = if (startDate != null && endDate != null) {
+                                        "${DateFormatter.formatShort(startDate)} - ${DateFormatter.formatShort(endDate)}"
+                                    } else {
+                                        stringResource(R.string.select_date_range)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = onSurfaceColor
+                                )
+                            }
+                            if (startDate != null) {
+                                Icon(
+                                    Icons.Rounded.Close,
+                                    contentDescription = "Clear Date",
+                                    tint = onSurfaceVariantColor,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable { onClearDate() }
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // Date Filter Section
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = stringResource(R.string.date_range),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = primaryColor,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
-                    )
-
-                    // Quick Presets
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        item {
-                            FilterChip(
-                                selected = startDate == null,
-                                onClick = { onDateRangeSelected(null, null) },
-                                label = { Text(stringResource(R.string.all)) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-                                    selectedLabelColor = primaryColor,
-                                    labelColor = onSurfaceVariantColor
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = startDate == null,
-                                    borderColor = surfaceContainerHighestColor,
-                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
-                                )
-                            )
-                        }
-
-                        item {
-                            val range = getMonthRange(currentMonth)
-                            val isSelected = startDate == range.first && endDate == range.second
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { onDateRangeSelected(range.first, range.second) },
-                                label = { Text(stringResource(R.string.this_month)) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-                                    selectedLabelColor = primaryColor,
-                                    labelColor = onSurfaceVariantColor
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = isSelected,
-                                    borderColor = surfaceContainerHighestColor,
-                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
-                                )
-                            )
-                        }
-
-                        item {
-                            val lastMonthIndex = if (currentMonth == 0) 11 else currentMonth - 1
-                            val lastMonthYear = if (currentMonth == 0) currentYear - 1 else currentYear
-                            val range = getMonthRange(lastMonthIndex, lastMonthYear)
-                            val isSelected = startDate == range.first && endDate == range.second
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { onDateRangeSelected(range.first, range.second) },
-                                label = { Text(stringResource(R.string.last_month)) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-                                    selectedLabelColor = primaryColor,
-                                    labelColor = onSurfaceVariantColor
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = isSelected,
-                                    borderColor = surfaceContainerHighestColor,
-                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
-                                )
-                            )
-                        }
-                    }
-
-                    // Month Selector
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        itemsIndexed(monthNames) { index, month ->
-                            val isSelected = isMonthSelected(index)
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    val range = getMonthRange(index)
-                                    onDateRangeSelected(range.first, range.second)
-                                },
-                                label = { Text(month) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-                                    selectedLabelColor = primaryColor,
-                                    labelColor = onSurfaceVariantColor
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = isSelected,
-                                    borderColor = surfaceContainerHighestColor,
-                                    selectedBorderColor = primaryColor.copy(alpha = 0.3f)
-                                )
-                            )
-                        }
-                    }
-
-                    // Custom Range Row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(Shapes.medium)
-                            .background(surfaceContainerHighestColor)
-                            .clickable { onDateClick() }
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Rounded.CalendarMonth,
-                                contentDescription = null,
-                                tint = primaryColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = if (startDate != null && endDate != null) {
-                                    "${DateFormatter.formatShort(startDate)} - ${DateFormatter.formatShort(endDate)}"
-                                } else {
-                                    stringResource(R.string.select_date_range)
-                                },
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = onSurfaceColor
-                            )
-                        }
-                        if (startDate != null) {
-                            Icon(
-                                Icons.Rounded.Close,
-                                contentDescription = "Clear Date",
-                                tint = onSurfaceVariantColor,
-                                modifier = Modifier
-                                    .size(20.dp)
-                                    .clickable { onClearDate() }
-                            )
-                        }
-                    }
-                }
-            }
-            
-            item {
+            SheetFormFooter(horizontalPadding = 24.dp) {
                 GymButton(
                     onClick = {
                         scope.launch {
@@ -499,8 +503,6 @@ fun HistoryFilterBottomSheet(
                     Text(stringResource(R.string.done).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
-            
-            item { Spacer(modifier = Modifier.height(12.dp)) }
         }
     }
 }
