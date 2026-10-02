@@ -575,6 +575,10 @@ fun Application.configureServer(
                                             put("targetSets", ex.planExercise.serieTarget)
                                             put("targetReps", ex.planExercise.repsTarget)
                                             put("targetRest", ex.planExercise.recuperoTarget)
+                                            put("type", ex.planExercise.exerciseType)
+                                            ex.planExercise.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
+                                            ex.planExercise.distanzaTargetKm?.let { put("targetDistanceKm", it) }
+                                            ex.planExercise.cardioCategoria?.let { put("cardioCategory", it) }
                                             when (val resolved = if (advanced) ex.resolve(pwd.plan.currentWeek) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy) {
                                                 is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks ->
                                                     put("prescription", com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.summary(resolved.blocks, webLabels))
@@ -690,6 +694,9 @@ fun Application.configureServer(
                                 swd.session.noteSessione?.let { put("noteSessione", it) }
                                 put("totalVolume", volume)
                                 put("totalSets", swd.sets.size)
+                                put("cardioCount", swd.cardio.size)
+                                put("cardioSeconds", swd.cardio.sumOf { it.durataSecondi })
+                                put("cardioKm", swd.cardio.sumOf { it.distanza.toDouble() }.toFloat())
                             })
                         }
                     }
@@ -723,6 +730,9 @@ fun Application.configureServer(
                                 put("pesoSollevato", swd.setLog.pesoSollevato)
                                 put("repsEffettive", swd.setLog.repsEffettive)
                                 put("numeroSerie", swd.setLog.numeroSerie)
+                                // Time & Weight sets log how long the set lasted instead of reps
+                                swd.setLog.durataSecondi?.let { put("durataSecondi", it) }
+                                if (swd.setLog.isWarmup) put("isWarmup", true)
                                 if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
                                 if (advanced) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(context, swd.setLog)?.let { put("prescription", it) }
@@ -739,6 +749,16 @@ fun Application.configureServer(
                         put("totalVolume", volume)
                         put("totalSets", session.sets.size)
                         put("sets", setsArray)
+                        put("cardio", buildJsonArray {
+                            session.cardio.sortedBy { it.ordineEsercizio }.forEach { c ->
+                                add(buildJsonObject {
+                                    put("category", c.categoria)
+                                    put("distanceKm", c.distanza)
+                                    put("durationSeconds", c.durataSecondi)
+                                    c.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
+                                })
+                            }
+                        })
                     })), ContentType.Application.Json)
                 } catch (e: Exception) {
                     call.respondText(json.encodeToString(errorJson(e.message ?: "Unknown error")), ContentType.Application.Json)
