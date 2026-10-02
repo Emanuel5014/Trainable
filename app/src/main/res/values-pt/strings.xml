@@ -1027,4 +1027,12 @@
     <string name="scan_draft_discard_title">Descartar a digitalização?</string>
     <string name="scan_draft_discard_desc">Os exercícios digitalizados serão perdidos e você terá de digitalizar a ficha novamente.</string>
     <!-- v2.3.0 powerlifting END -->
+    <!-- share options + imported maximums -->
+    <string name="source_imported">Importado</string>
+    <string name="share_options_title">Compartilhar rotinas</string>
+    <string name="share_option_photos">Incluir fotos</string>
+    <string name="share_option_photos_desc">Anexar ao arquivo as fotos das rotinas</string>
+    <string name="share_option_maximums">Incluir meus 1RM</string>
+    <string name="share_option_maximums_desc" formatted="false">Permite que as séries em %1RM virem kg no outro dispositivo. Só são usados onde quem recebe ainda não tem um 1RM.</string>
+    <string name="import_includes_maximums">Inclui os 1RM de %1$d exercícios</string>
 </resources>

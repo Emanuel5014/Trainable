@@ -37,5 +37,7 @@ data class OneRepMaxEntity(
         const val SOURCE_MANUAL = "manual"
         const val SOURCE_TESTED = "tested"
         const val SOURCE_ESTIMATED = "estimated"
+        /** Came with a shared .trainableplan file; the receiver can overwrite it with their own. */
+        const val SOURCE_IMPORTED = "imported"
     }
 }

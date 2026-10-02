@@ -1027,4 +1027,12 @@
     <string name="scan_draft_discard_title">¿Descartar el escaneo?</string>
     <string name="scan_draft_discard_desc">Se perderán los ejercicios escaneados y tendrás que volver a escanear la hoja.</string>
     <!-- v2.3.0 powerlifting END -->
+    <!-- share options + imported maximums -->
+    <string name="source_imported">Importado</string>
+    <string name="share_options_title">Compartir rutinas</string>
+    <string name="share_option_photos">Incluir fotos</string>
+    <string name="share_option_photos_desc">Adjuntar al archivo las fotos de las rutinas</string>
+    <string name="share_option_maximums">Incluir mis 1RM</string>
+    <string name="share_option_maximums_desc" formatted="false">Permite que las series en %1RM se conviertan en kg en el otro dispositivo. Solo se usan donde quien recibe aún no tiene un 1RM.</string>
+    <string name="import_includes_maximums">Incluye los 1RM de %1$d ejercicios</string>
 </resources>

@@ -39,7 +39,9 @@ data class PlanExerciseExportDto(
     val cardioCategoria: String? = null,
     // v3: advanced %1RM prescriptions
     val excludedWeeks: String? = null,
-    val blocks: List<PrescriptionBlockExportDto> = emptyList()
+    val blocks: List<PrescriptionBlockExportDto> = emptyList(),
+    /** The sender's current 1RM of the exercise, only written when they chose to share their maximums. */
+    val oneRepMaxKg: Float? = null
 )
 
 /** One advanced prescription block (v3). Techniques use the [com.emanuel5014.trainable.domain.prescription.TechniqueCodec] format. */

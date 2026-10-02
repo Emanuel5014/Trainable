@@ -67,6 +67,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Surface
@@ -147,6 +148,7 @@ fun RoutineListScreen(
     viewModel: RoutinesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val exportPrompt by viewModel.exportPrompt.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
 
     // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
@@ -174,7 +176,6 @@ fun RoutineListScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var showSheet by remember { mutableStateOf(false) }
-    var showExportDialog by remember { mutableStateOf(false) }
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
     var showBulkArchiveDialog by remember { mutableStateOf(false) }
     var planToDelete by remember { mutableStateOf<WorkoutPlanEntity?>(null) }
@@ -205,13 +206,7 @@ fun RoutineListScreen(
             
             if (uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
-                    onClick = { 
-                        if (viewModel.hasImagesInSelection()) {
-                            showExportDialog = true
-                        } else {
-                            viewModel.exportSelectedPlans(context, includeImages = false)
-                        }
-                    },
+                    onClick = { viewModel.shareSelectedPlans(context) },
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     shape = Shapes.large,
@@ -847,49 +842,91 @@ fun RoutineListScreen(
         }
     }
 
-    if (showExportDialog) {
-        AlertDialog(
-            onDismissRequest = { showExportDialog = false },
-            title = { Text(stringResource(R.string.share_include_images_title)) },
-            text = { Text(stringResource(R.string.share_include_images_message)) },
-            confirmButton = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GymButton(
-                        onClick = {
-                            viewModel.exportSelectedPlans(context, includeImages = true)
-                            showExportDialog = false
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.share_with_images).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                    GymButton(
-                        onClick = {
-                            viewModel.exportSelectedPlans(context, includeImages = false)
-                            showExportDialog = false
-                        },
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurface,
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.share_without_images).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                }
+    exportPrompt?.let { prompt ->
+        ExportOptionsDialog(
+            prompt = prompt,
+            onConfirm = { includeImages, includeMaximums ->
+                viewModel.exportSelectedPlans(context, includeImages, includeMaximums)
             },
-            dismissButton = {
-                GymButton(
-                    onClick = { showExportDialog = false },
-                    containerColor = Color.Transparent,
-                    contentColor = OnSurfaceVariant,
-                    modifier = Modifier.height(48.dp)
-                ) {
-                    Text(stringResource(R.string.cancel).uppercase())
-                }
-            },
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
+            onDismiss = { viewModel.dismissExportPrompt() }
         )
+    }
+}
+
+/** Asks what to put in the shared file besides the routine itself. */
+@Composable
+private fun ExportOptionsDialog(
+    prompt: RoutinesViewModel.ExportPrompt,
+    onConfirm: (includeImages: Boolean, includeMaximums: Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var includeImages by remember { mutableStateOf(prompt.hasImages) }
+    var includeMaximums by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.share_options_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (prompt.hasImages) {
+                    ExportOptionRow(
+                        title = stringResource(R.string.share_option_photos),
+                        description = stringResource(R.string.share_option_photos_desc),
+                        checked = includeImages,
+                        onCheckedChange = { includeImages = it }
+                    )
+                }
+                if (prompt.hasMaximums) {
+                    ExportOptionRow(
+                        title = stringResource(R.string.share_option_maximums),
+                        description = stringResource(R.string.share_option_maximums_desc),
+                        checked = includeMaximums,
+                        onCheckedChange = { includeMaximums = it }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            GymButton(
+                onClick = { onConfirm(includeImages && prompt.hasImages, includeMaximums && prompt.hasMaximums) },
+                modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
+            ) {
+                Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
+            }
+        },
+        dismissButton = {
+            GymButton(
+                onClick = onDismiss,
+                containerColor = Color.Transparent,
+                contentColor = OnSurfaceVariant,
+                modifier = Modifier.height(48.dp)
+            ) {
+                Text(stringResource(R.string.cancel).uppercase())
+            }
+        },
+        containerColor = SurfaceContainerHigh,
+        titleContentColor = OnSurface,
+        textContentColor = OnSurfaceVariant
+    )
+}
+
+@Composable
+private fun ExportOptionRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

@@ -1027,4 +1027,12 @@
     <string name="scan_draft_discard_title">Discard the scan?</string>
     <string name="scan_draft_discard_desc">The scanned exercises will be lost and you\'ll have to scan the sheet again.</string>
     <!-- v2.3.0 powerlifting END -->
+    <!-- share options + imported maximums -->
+    <string name="source_imported">Imported</string>
+    <string name="share_options_title">Share routines</string>
+    <string name="share_option_photos">Include photos</string>
+    <string name="share_option_photos_desc">Attach the photos of the routines to the file</string>
+    <string name="share_option_maximums">Include my maximums</string>
+    <string name="share_option_maximums_desc" formatted="false">Lets %1RM sets turn into kg on the other device. They only fill in where the receiver has no maximum yet.</string>
+    <string name="import_includes_maximums">Includes the maximums of %1$d exercises</string>
 </resources>

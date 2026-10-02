@@ -1027,4 +1027,12 @@
     <string name="scan_draft_discard_title">Eliminare la scansione?</string>
     <string name="scan_draft_discard_desc">Gli esercizi scansionati andranno persi e dovrai rifare la scansione della scheda.</string>
     <!-- v2.3.0 powerlifting END -->
+    <!-- share options + imported maximums -->
+    <string name="source_imported">Importato</string>
+    <string name="share_options_title">Condividi schede</string>
+    <string name="share_option_photos">Includi le foto</string>
+    <string name="share_option_photos_desc">Allega al file le foto delle schede</string>
+    <string name="share_option_maximums">Includi i miei massimali</string>
+    <string name="share_option_maximums_desc" formatted="false">Permette alle serie in %1RM di diventare kg sull\'altro dispositivo. Vengono usati solo dove chi riceve non ha ancora un massimale.</string>
+    <string name="import_includes_maximums">Include i massimali di %1$d esercizi</string>
 </resources>

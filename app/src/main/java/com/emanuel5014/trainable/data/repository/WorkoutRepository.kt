@@ -3,9 +3,11 @@ package com.emanuel5014.trainable.data.repository
 import android.content.Context
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
+import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
+import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
@@ -39,6 +41,7 @@ class WorkoutRepository @Inject constructor(
     private val workoutDao: WorkoutDao,
     private val userDao: UserDao,
     private val exerciseDao: ExerciseDao,
+    private val oneRepMaxDao: OneRepMaxDao,
     private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) {
@@ -118,7 +121,23 @@ class WorkoutRepository @Inject constructor(
         workoutDao.clearPlanCoverImage(planId)
     }
     
-    suspend fun exportPlans(planIds: List<Int>, includeImages: Boolean = true): String {
+    /** What a share of [planIds] could carry beyond the plain routine, so the user can be asked about it. */
+    data class ExportOptions(val hasImages: Boolean, val hasMaximums: Boolean)
+
+    suspend fun exportOptionsFor(planIds: List<Int>): ExportOptions {
+        val plans = workoutDao.getPlansWithDetails(planIds)
+        val hasImages = plans.any { it.plan.imageUri != null || it.images.isNotEmpty() }
+        val hasMaximums = plans.any { plan ->
+            plan.exercises.any { it.isAdvanced && oneRepMaxDao.getCurrentOnce(it.exercise.id) != null }
+        }
+        return ExportOptions(hasImages = hasImages, hasMaximums = hasMaximums)
+    }
+
+    /**
+     * @param includeMaximums also writes the sender's current 1RM of every advanced exercise, so %1RM
+     * prescriptions resolve to kg on the receiving device (which only uses them where it has no 1RM yet).
+     */
+    suspend fun exportPlans(planIds: List<Int>, includeImages: Boolean = true, includeMaximums: Boolean = false): String {
         val plans = workoutDao.getPlansWithDetails(planIds)
         val exportDtos = plans.map { planWithDetails ->
             WorkoutPlanExportDto(
@@ -160,6 +179,9 @@ class WorkoutRepository @Inject constructor(
                         distanzaTargetKm = exerciseWithDetails.planExercise.distanzaTargetKm,
                         cardioCategoria = exerciseWithDetails.planExercise.cardioCategoria,
                         excludedWeeks = exerciseWithDetails.planExercise.excludedWeeks,
+                        oneRepMaxKg = if (includeMaximums && exerciseWithDetails.isAdvanced) {
+                            oneRepMaxDao.getCurrentOnce(exerciseWithDetails.exercise.id)?.weightKg
+                        } else null,
                         blocks = exerciseWithDetails.blocks.sortedWith(compareBy({ it.week }, { it.ordine })).map { block ->
                             com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto(
                                 week = block.week,
@@ -197,6 +219,7 @@ class WorkoutRepository @Inject constructor(
         var imported = 0
 
         importDtos.forEach { dto ->
+            var insertedPlan: WorkoutPlanEntity? = null
             try {
                 // Remap superset ids per imported plan so they never collide
                 // with existing plans nor across imported plans.
@@ -223,6 +246,7 @@ class WorkoutRepository @Inject constructor(
                     autoAdvanceWeek = dto.autoAdvanceWeek
                 )
                 val planId = workoutDao.insertPlan(newPlan).toInt()
+                insertedPlan = newPlan.copy(id = planId)
 
                 val imagesToInsert = mutableListOf<WorkoutPlanImageEntity>()
 
@@ -261,64 +285,68 @@ class WorkoutRepository @Inject constructor(
                     }
                 }
 
-                val exercisesToInsert = mutableListOf<Pair<PlanExerciseEntity, List<com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto>>>()
+                val exercisesToInsert = mutableListOf<Triple<PlanExerciseEntity, List<com.emanuel5014.trainable.data.remote.dto.PrescriptionBlockExportDto>, Float?>>()
 
                 dto.exercises.forEach { exerciseDto ->
-                    var finalExerciseId: Int? = null
-
-                    // 1. Try to find by ID
-                    val exerciseById = knownExercises.find { it.id == exerciseDto.exerciseId }
-                    if (exerciseById != null) {
-                        finalExerciseId = exerciseById.id
-                    } else if (exerciseDto.exerciseName != null) {
-                        // 2. Try to find by Name
-                        val exerciseByName = knownExercises.find {
-                            it.nome.equals(exerciseDto.exerciseName, ignoreCase = true)
-                        }
-                        if (exerciseByName != null) {
-                            finalExerciseId = exerciseByName.id
-                        } else {
-                            // 3. Create new custom exercise if we have name info
-                            try {
-                                val maxId = knownExercises.maxOfOrNull { it.id }
-                                    ?: exerciseDao.getMaxId()
-                                val newId = if (maxId < 1000) 1000 else maxId + 1
-                                val newExercise = ExerciseEntity(
-                                    id = newId,
-                                    nome = exerciseDto.exerciseName,
-                                    categoria = exerciseDto.exerciseCategory ?: "Custom"
-                                )
-                                exerciseDao.insertExercise(newExercise)
-                                knownExercises.add(newExercise)
-                                finalExerciseId = newId
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+                    val finalExerciseId: Int? = when (
+                        val match = ImportedExerciseMatcher.match(knownExercises, exerciseDto.exerciseId, exerciseDto.exerciseName)
+                    ) {
+                        is ImportedExerciseMatcher.Match.Existing -> match.exercise.id
+                        ImportedExerciseMatcher.Match.Unresolvable -> null
+                        ImportedExerciseMatcher.Match.CreateCustom -> try {
+                            val maxId = knownExercises.maxOfOrNull { it.id } ?: exerciseDao.getMaxId()
+                            val newId = if (maxId < ImportedExerciseMatcher.FIRST_CUSTOM_ID) ImportedExerciseMatcher.FIRST_CUSTOM_ID else maxId + 1
+                            val newExercise = ExerciseEntity(
+                                id = newId,
+                                nome = exerciseDto.exerciseName!!.trim(),
+                                categoria = exerciseDto.exerciseCategory ?: "Custom"
+                            )
+                            exerciseDao.insertExercise(newExercise)
+                            knownExercises.add(newExercise)
+                            newId
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            null
                         }
                     }
 
                     if (finalExerciseId != null) {
                         exercisesToInsert.add(
-                            PlanExerciseEntity(
-                                planId = planId,
-                                exerciseId = finalExerciseId,
-                                serieTarget = exerciseDto.serieTarget,
-                                repsTarget = exerciseDto.repsTarget,
-                                recuperoTarget = exerciseDto.recuperoTarget,
-                                ordine = exerciseDto.ordine,
-                                supersetId = remapSuperset(exerciseDto.supersetId),
-                                exerciseType = exerciseDto.exerciseType,
-                                durataTargetSecondi = exerciseDto.durataTargetSecondi,
-                                distanzaTargetKm = exerciseDto.distanzaTargetKm,
-                                cardioCategoria = exerciseDto.cardioCategoria,
-                                excludedWeeks = exerciseDto.excludedWeeks
-                            ) to exerciseDto.blocks
+                            Triple(
+                                PlanExerciseEntity(
+                                    planId = planId,
+                                    exerciseId = finalExerciseId,
+                                    serieTarget = exerciseDto.serieTarget,
+                                    repsTarget = exerciseDto.repsTarget,
+                                    recuperoTarget = exerciseDto.recuperoTarget,
+                                    ordine = exerciseDto.ordine,
+                                    supersetId = remapSuperset(exerciseDto.supersetId),
+                                    exerciseType = exerciseDto.exerciseType,
+                                    durataTargetSecondi = exerciseDto.durataTargetSecondi,
+                                    distanzaTargetKm = exerciseDto.distanzaTargetKm,
+                                    cardioCategoria = exerciseDto.cardioCategoria,
+                                    excludedWeeks = exerciseDto.excludedWeeks
+                                ),
+                                exerciseDto.blocks,
+                                exerciseDto.oneRepMaxKg
+                            )
                         )
                     }
                 }
 
-                exercisesToInsert.forEach { (entity, blocks) ->
+                exercisesToInsert.forEach { (entity, blocks, sharedMaximumKg) ->
                     val planExerciseId = workoutDao.insertPlanExercise(entity).toInt()
+                    // Someone else's 1RM only fills a gap: it never replaces one the user already has
+                    if (sharedMaximumKg != null && sharedMaximumKg > 0f && oneRepMaxDao.getCurrentOnce(entity.exerciseId) == null) {
+                        oneRepMaxDao.insert(
+                            OneRepMaxEntity(
+                                exerciseId = entity.exerciseId,
+                                weightKg = sharedMaximumKg,
+                                date = System.currentTimeMillis(),
+                                source = OneRepMaxEntity.SOURCE_IMPORTED
+                            )
+                        )
+                    }
                     if (blocks.isNotEmpty()) {
                         workoutDao.insertBlocks(blocks.map { b ->
                             PlanExerciseBlockEntity(
@@ -341,7 +369,8 @@ class WorkoutRepository @Inject constructor(
                 imported++
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Skip the broken plan and continue with the rest.
+                // Skip the broken plan and continue with the rest, without leaving a half-imported one behind
+                insertedPlan?.let { runCatching { workoutDao.deletePlan(it) } }
             }
         }
         return imported

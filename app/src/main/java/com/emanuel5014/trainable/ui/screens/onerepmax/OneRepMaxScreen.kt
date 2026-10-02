@@ -390,6 +390,7 @@ private fun sourceLabel(source: String): String = stringResource(
     when (source) {
         OneRepMaxEntity.SOURCE_TESTED -> R.string.source_tested
         OneRepMaxEntity.SOURCE_ESTIMATED -> R.string.source_estimated
+        OneRepMaxEntity.SOURCE_IMPORTED -> R.string.source_imported
         else -> R.string.source_manual
     }
 )

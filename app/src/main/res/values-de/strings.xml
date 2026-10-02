@@ -1027,4 +1027,12 @@
     <string name="scan_draft_discard_title">Scan verwerfen?</string>
     <string name="scan_draft_discard_desc">Die gescannten Übungen gehen verloren und du musst das Blatt erneut scannen.</string>
     <!-- v2.3.0 powerlifting END -->
+    <!-- share options + imported maximums -->
+    <string name="source_imported">Importiert</string>
+    <string name="share_options_title">Routinen teilen</string>
+    <string name="share_option_photos">Fotos einbeziehen</string>
+    <string name="share_option_photos_desc">Die Fotos der Routinen an die Datei anhängen</string>
+    <string name="share_option_maximums">Meine Maximalwerte einbeziehen</string>
+    <string name="share_option_maximums_desc" formatted="false">Damit %1RM-Sätze auf dem anderen Gerät in kg umgerechnet werden. Sie werden nur dort übernommen, wo der Empfänger noch keinen Maximalwert hat.</string>
+    <string name="import_includes_maximums">Enthält die Maximalwerte von %1$d Übungen</string>
 </resources>
