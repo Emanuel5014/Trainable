@@ -1,6 +1,8 @@
 package com.emanuel5014.trainable
 
 import android.os.Bundle
+import android.os.SystemClock
+import android.view.animation.AccelerateInterpolator
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
@@ -78,7 +80,20 @@ class MainActivity : FragmentActivity() {
     lateinit var timerNotificationHelper: TimerNotificationHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        installSplashScreen().setOnExitAnimationListener { splash ->
+            // Let the logo finish its animation (Android 12+), then fade the splash out over the app
+            val iconAnimationLeft = splash.iconAnimationDurationMillis -
+                (SystemClock.uptimeMillis() - splash.iconAnimationStartMillis)
+            splash.view.animate()
+                .alpha(0f)
+                .scaleX(1.08f)
+                .scaleY(1.08f)
+                .setStartDelay(iconAnimationLeft.coerceIn(0L, 700L))
+                .setDuration(280L)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction { splash.remove() }
+                .start()
+        }
         super.onCreate(savedInstanceState)
         workoutIntentState = intent
 
