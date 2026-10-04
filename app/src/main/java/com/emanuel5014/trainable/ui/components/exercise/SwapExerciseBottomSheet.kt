@@ -33,8 +33,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -42,7 +40,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material.icons.rounded.Percent
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
@@ -763,39 +760,20 @@ private fun SwapExerciseConfigSheet(
                     }
                 }
 
-                androidx.compose.foundation.layout.FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
-                        Triple("strength", R.string.exercise_type_strength, Icons.Rounded.FitnessCenter),
-                        Triple("time_and_weight", R.string.exercise_type_time_and_weight, Icons.Rounded.Timer)
-                    ).plus(
-                        if (advancedEnabled) listOf(Triple("advanced", R.string.exercise_type_advanced, Icons.Rounded.Percent)) else emptyList()
-                    ).forEach { (type, label, icon) ->
-                        FilterChip(
-                            selected = selectedExerciseType == type,
-                            onClick = {
-                                if (type == "advanced" && advancedBlocks[1].isNullOrEmpty()) {
-                                    // Carry the plain sets × reps over as a first free block
-                                    val sets = setsText.trim().toIntOrNull() ?: 3
-                                    val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
-                                    advancedBlocks = mapOf(1 to listOf(PrescriptionBlock(sets = sets, reps = reps)))
-                                }
-                                selectedExerciseType = type
-                            },
-                            label = { Text(stringResource(label)) },
-                            leadingIcon = {
-                                Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize))
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Primary.copy(alpha = 0.15f),
-                                selectedLabelColor = Primary,
-                                selectedLeadingIconColor = Primary
-                            )
-                        )
-                    }
-                }
+                ExerciseTypeSelector(
+                    selectedType = selectedExerciseType,
+                    showAdvanced = advancedEnabled,
+                    onTypeSelected = { type ->
+                        if (type == "advanced" && advancedBlocks[1].isNullOrEmpty()) {
+                            // Carry the plain sets × reps over as a first free block
+                            val sets = setsText.trim().toIntOrNull() ?: 3
+                            val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                            advancedBlocks = mapOf(1 to listOf(PrescriptionBlock(sets = sets, reps = reps)))
+                        }
+                        selectedExerciseType = type
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 when (selectedExerciseType) {
                     "advanced" -> AdvancedPrescriptionEditor(

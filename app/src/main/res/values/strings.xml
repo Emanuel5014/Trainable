@@ -872,6 +872,8 @@
     <!-- Exercise Types -->
     <string name="exercise_type_strength">Weight &amp; Reps</string>
     <string name="exercise_type_time_and_weight">Time &amp; Weight</string>
+    <string name="exercise_type_strength_hint">Sets and reps with a load</string>
+    <string name="exercise_type_time_and_weight_hint">Timed sets, with or without weight</string>
     <string name="target_time">Target Time</string>
     <string name="target_seconds">Target (seconds)</string>
     <string name="seconds_short">sec</string>

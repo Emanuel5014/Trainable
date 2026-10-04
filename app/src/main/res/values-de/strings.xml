@@ -872,6 +872,8 @@
     <!-- Exercise Types -->
     <string name="exercise_type_strength">Gewicht &amp; Wdh.</string>
     <string name="exercise_type_time_and_weight">Zeit &amp; Gewicht</string>
+    <string name="exercise_type_strength_hint">Sätze und Wiederholungen mit Gewicht</string>
+    <string name="exercise_type_time_and_weight_hint">Zeitbasierte Sätze, mit oder ohne Gewicht</string>
     <string name="target_time">Zielzeit</string>
     <string name="target_seconds">Ziel (Sekunden)</string>
     <string name="seconds_short">Sek.</string>
