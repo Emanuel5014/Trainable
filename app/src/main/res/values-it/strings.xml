@@ -584,6 +584,11 @@
     <string name="no_results_filters">Nessun Risultato con questi Filtri</string>
     <string name="try_adjust_filters">Prova a modificare la selezione o a cancellare tutti i filtri.</string>
     <string name="search_routines">Cerca schede…</string>
+    <string name="routine_archived_badge">Archiviata</string>
+    <string name="clear_date">Cancella data</string>
+    <string name="clear_routine_filter">Rimuovi filtro scheda</string>
+    <string name="no_routine">Senza scheda</string>
+    <string name="routine_group_other">Altri</string>
 
     <!-- Sharing -->
     <string name="sharing_options">OPZIONI CONDIVISIONE</string>

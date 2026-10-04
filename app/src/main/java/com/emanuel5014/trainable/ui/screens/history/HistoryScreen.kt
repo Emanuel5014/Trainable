@@ -55,6 +55,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddBox
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
@@ -146,6 +147,8 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.entity.isArchived
+import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -553,6 +556,7 @@ fun HistoryScreen(
                                 SessionHistoryCard(
                                     session = session,
                                     planName = planName,
+                                    isPlanArchived = sessionDetails.plan.isArchived,
                                     isExpanded = isExpanded,
                                     details = if (isExpanded) uiState.selectedSession else null,
                                     languageCode = languageCode,
@@ -917,6 +921,7 @@ fun HistoryScreen(
             HistoryFilterBottomSheet(
                 selectedPlanId = uiState.selectedPlanId,
                 availablePlans = uiState.availablePlans,
+                hasUnassignedSessions = uiState.sessions.any { it.plan.isSystemPlan },
                 startDate = uiState.startDate,
                 endDate = uiState.endDate,
                 onPlanSelected = { planId ->
@@ -1284,6 +1289,7 @@ fun SessionHistoryCard(
     planName: String,
     isExpanded: Boolean,
     details: SessionWithDetails?,
+    isPlanArchived: Boolean = false,
     languageCode: String = "en",
     weightUnit: String = "kg",
     onShareClick: (SessionWithDetails) -> Unit = {},
@@ -1320,7 +1326,12 @@ fun SessionHistoryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val mainIcon = if (planName == "Cardio") Icons.AutoMirrored.Rounded.DirectionsRun else Icons.Rounded.FitnessCenter
                     Box(
                         modifier = Modifier
@@ -1337,7 +1348,7 @@ fun SessionHistoryCard(
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = DateFormatter.format(session.timestamp),
@@ -1362,16 +1373,27 @@ fun SessionHistoryCard(
                                 )
                             }
                         }
-                        Text(
-                            text = when (planName) {
-                                "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-                                "Custom Workout" -> stringResource(R.string.custom_workout)
-                                else -> planName
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Primary,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = when (planName) {
+                                    "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                                    "Custom Workout" -> stringResource(R.string.custom_workout)
+                                    else -> planName
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Primary,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            if (isPlanArchived) {
+                                ArchivedRoutineBadge()
+                            }
+                        }
                     }
                 }
                 
@@ -1635,6 +1657,34 @@ fun SessionHistoryCard(
                 }
             }
         }
+    }
+}
+
+/** Marks a workout whose routine has been archived since. */
+@Composable
+private fun ArchivedRoutineBadge(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(SurfaceContainerHighest)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Archive,
+            contentDescription = null,
+            tint = OnSurfaceVariant,
+            modifier = Modifier.size(12.dp)
+        )
+        Text(
+            text = stringResource(R.string.routine_archived_badge).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 0.5.sp,
+            maxLines = 1
+        )
     }
 }
 

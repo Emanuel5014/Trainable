@@ -584,6 +584,11 @@
     <string name="no_results_filters">Aucun résultat avec ces filtres</string>
     <string name="try_adjust_filters">Essaie d\'ajuster ta sélection ou d\'effacer tous les filtres.</string>
     <string name="search_routines">Rechercher des routines…</string>
+    <string name="routine_archived_badge">Archivée</string>
+    <string name="clear_date">Effacer la date</string>
+    <string name="clear_routine_filter">Retirer le filtre de routine</string>
+    <string name="no_routine">Sans routine</string>
+    <string name="routine_group_other">Autres</string>
 
     <!-- Sharing -->
     <string name="sharing_options">OPTIONS DE PARTAGE</string>

@@ -49,3 +49,13 @@ data class WorkoutPlanEntity(
     @ColumnInfo(name = "auto_advance_week")
     val autoAdvanceWeek: Boolean = true
 )
+
+/** Note that tags the plans the app creates for itself (Cardio, Quick/Custom Workout): they hold sessions but are not routines. */
+const val SYSTEM_PLAN_NOTE = "SYSTEM_PLAN"
+
+val WorkoutPlanEntity.isSystemPlan: Boolean
+    get() = note == SYSTEM_PLAN_NOTE
+
+/** A routine the user archived. System plans are stored as inactive too, but they are not archived routines. */
+val WorkoutPlanEntity.isArchived: Boolean
+    get() = !isActive && !isSystemPlan
