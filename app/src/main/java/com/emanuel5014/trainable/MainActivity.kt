@@ -1,10 +1,19 @@
 package com.emanuel5014.trainable
 
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
+import android.content.res.ColorStateList
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.animation.AccelerateInterpolator
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.animation.doOnEnd
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
@@ -28,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -48,12 +58,15 @@ import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
 import com.emanuel5014.trainable.ui.screens.onboarding.OnboardingScreen
 import com.emanuel5014.trainable.ui.theme.GymTrackingTheme
+import com.emanuel5014.trainable.ui.theme.SplashColors
+import com.emanuel5014.trainable.ui.theme.loadSplashColors
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
@@ -80,19 +93,75 @@ class MainActivity : FragmentActivity() {
     lateinit var timerNotificationHelper: TimerNotificationHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The system splash screen is drawn before any of the app runs, so it can only use the system's own
+        // colours. The colours of the app theme are resolved off the main thread meanwhile and the splash screen
+        // takes them on its way out.
+        lifecycleScope.launch(Dispatchers.Default) {
+            splashColors = runCatching { loadSplashColors(applicationContext) }.getOrNull()
+        }
         installSplashScreen().setOnExitAnimationListener { splash ->
             // Let the logo finish its animation (Android 12+), then fade the splash out over the app
-            val iconAnimationLeft = splash.iconAnimationDurationMillis -
-                (SystemClock.uptimeMillis() - splash.iconAnimationStartMillis)
-            splash.view.animate()
-                .alpha(0f)
-                .scaleX(1.08f)
-                .scaleY(1.08f)
-                .setStartDelay(iconAnimationLeft.coerceIn(0L, 700L))
-                .setDuration(280L)
-                .setInterpolator(AccelerateInterpolator())
-                .withEndAction { splash.remove() }
-                .start()
+            val iconAnimationLeft = (splash.iconAnimationDurationMillis -
+                (SystemClock.uptimeMillis() - splash.iconAnimationStartMillis)).coerceIn(0L, 700L)
+
+            fun fadeOut() {
+                splash.view.animate()
+                    .alpha(0f)
+                    .scaleX(1.08f)
+                    .scaleY(1.08f)
+                    .setDuration(280L)
+                    .setInterpolator(AccelerateInterpolator())
+                    .withEndAction { splash.remove() }
+                    .start()
+            }
+
+            val colors = splashColors
+            if (colors == null) {
+                splash.view.postDelayed(::fadeOut, iconAnimationLeft)
+            } else {
+                val argb = ArgbEvaluator()
+                val view = splash.view as ViewGroup
+                val icon = splash.iconView
+                val fromBackground = (view.background as? ColorDrawable)?.color ?: getColor(R.color.splash_background)
+
+                // Android 12+ draws the icon on a surface of its own that can't be recoloured, so the logo in the
+                // colour of the theme is laid over it and cross-faded in. The system draws the 288dp icon behind a
+                // 192dp mask, hence the 1.5 around the centre of the icon view. Before Android 12 the icon is an
+                // ImageView and is simply tinted.
+                val themedLogo = if (icon is ImageView) null else ImageView(this).apply {
+                    setImageResource(R.drawable.ic_splash_logo)
+                    imageTintList = ColorStateList.valueOf(colors.logo.toArgb())
+                    scaleType = ImageView.ScaleType.FIT_XY
+                    alpha = 0f
+                    val iconLocation = IntArray(2).also(icon::getLocationInWindow)
+                    val viewLocation = IntArray(2).also(view::getLocationInWindow)
+                    val width = (icon.width * 1.5f).toInt()
+                    val height = (icon.height * 1.5f).toInt()
+                    layoutParams = FrameLayout.LayoutParams(width, height)
+                    translationX = (iconLocation[0] - viewLocation[0]) - (width - icon.width) / 2f
+                    translationY = (iconLocation[1] - viewLocation[1]) - (height - icon.height) / 2f
+                }
+                themedLogo?.let(view::addView)
+
+                ValueAnimator.ofFloat(0f, 1f).apply {
+                    startDelay = iconAnimationLeft
+                    duration = 250L
+                    addUpdateListener {
+                        val fraction = it.animatedFraction
+                        view.setBackgroundColor(argb.evaluate(fraction, fromBackground, colors.background.toArgb()) as Int)
+                        if (themedLogo != null) {
+                            themedLogo.alpha = fraction
+                            icon.alpha = 1f - fraction
+                        } else if (icon is ImageView) {
+                            icon.imageTintList = ColorStateList.valueOf(
+                                argb.evaluate(fraction, getColor(R.color.splash_logo), colors.logo.toArgb()) as Int
+                            )
+                        }
+                    }
+                    doOnEnd { fadeOut() }
+                    start()
+                }
+            }
         }
         super.onCreate(savedInstanceState)
         workoutIntentState = intent
@@ -350,6 +419,12 @@ class MainActivity : FragmentActivity() {
               }
             }
         }
+    }
+
+    private companion object {
+        /** Colours of the app theme for the splash screen; null until resolved (or if that failed). */
+        @Volatile
+        var splashColors: SplashColors? = null
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
