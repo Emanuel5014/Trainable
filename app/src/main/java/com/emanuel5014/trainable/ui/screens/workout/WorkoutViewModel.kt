@@ -15,6 +15,7 @@ import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.domain.emom.EmomClock
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.prescription.PlannedSet
@@ -89,6 +90,8 @@ data class WorkoutState(
     val setTimerPaused: Boolean = false,
     val setTimerStartedAt: Long? = null,
     val setTimerBaseSeconds: Int = 0,
+    /** The EMOM run on the set timer (running or paused), null when none is. */
+    val emomRun: EmomRun? = null,
     val autoStopCardioAtTarget: Boolean = false,
     val autoStopTimeWeightAtTarget: Boolean = false,
     val keepScreenOnCardioTimer: Boolean = true,
@@ -116,6 +119,16 @@ data class WorkoutState(
         get() = exercises.size
 }
 
+/**
+ * An EMOM run: [roundCount] consecutive EMOM sets of one exercise, starting at [startSetIndex],
+ * one per minute of the set timer.
+ */
+data class EmomRun(
+    val exerciseIndex: Int,
+    val startSetIndex: Int,
+    val roundCount: Int
+)
+
 data class WorkoutExerciseState(
     val exercise: ExerciseEntity,
     val planDetails: PlanExerciseEntity?,
@@ -140,6 +153,10 @@ data class WorkoutExerciseState(
     val oneRepMaxKg: Float? = null
 ) {
     val isAdvanced: Boolean get() = blocks.isNotEmpty()
+
+    /** Index of the next set to do when it is an EMOM set, i.e. where an EMOM run would start. */
+    val emomStartIndex: Int?
+        get() = sets.indexOfFirst { !it.isCompleted }.takeIf { it >= 0 && sets[it].isEmom }
 
     val isTimeAndWeight: Boolean
         get() = exerciseType == "time_and_weight" || 
@@ -167,6 +184,8 @@ data class WorkoutSetState(
     val isExtra: Boolean = false
 ) {
     val isAmrap: Boolean get() = prescription?.repMode == RepMode.AMRAP
+
+    val isEmom: Boolean get() = prescription?.techniques?.contains(Technique.Emom) == true
 }
 
 data class OneRepMaxSuggestion(
@@ -823,6 +842,8 @@ class WorkoutViewModel @Inject constructor(
                 if (savedSetRunning) {
                     startSetTimer()
                 }
+            } else if (targetExState?.emomStartIndex != null) {
+                parkEmomRun(finalActiveIndex, targetExState)
             } else {
                 clearSetTimerInSession()
             }
@@ -1517,7 +1538,8 @@ class WorkoutViewModel @Inject constructor(
                 val isLastExercise = exerciseIndex == currentState.exercises.size - 1
                 val isLastSet = setIndex == exState.sets.size - 1
                 
-                var shouldStartTimer = true
+                // An EMOM run on the minute clock already paces the rest: no rest timer on top of it.
+                var shouldStartTimer = !(currentState.emomRun != null && setState.isEmom)
                 if (exState.supersetId != null) {
                     val setNumber = setState.setNumber
                     val supersetId = exState.supersetId
@@ -1645,8 +1667,8 @@ class WorkoutViewModel @Inject constructor(
         if (now - lastActionTime < actionDebounce) return
         lastActionTime = now
 
-        if (_state.value.isNavigating || _state.value.isFinishing) return
-        
+        if (_state.value.isNavigating || _state.value.isFinishing || _state.value.emomRun != null) return
+
         val currentIndex = _state.value.currentExerciseIndex
         if (currentIndex > 0) {
             _state.update { it.copy(isNavigating = true) }
@@ -1659,8 +1681,8 @@ class WorkoutViewModel @Inject constructor(
         if (now - lastActionTime < actionDebounce) return
         lastActionTime = now
 
-        if (_state.value.isNavigating || _state.value.isFinishing) return
-        
+        if (_state.value.isNavigating || _state.value.isFinishing || _state.value.emomRun != null) return
+
         val currentIndex = _state.value.currentExerciseIndex
         val maxIndex = _state.value.exercises.size - 1
         if (currentIndex < maxIndex) {
@@ -1724,7 +1746,8 @@ class WorkoutViewModel @Inject constructor(
                         setTimerPaused = false,
                         setTimerSeconds = 0,
                         setTimerStartedAt = null,
-                        setTimerBaseSeconds = 0
+                        setTimerBaseSeconds = 0,
+                        emomRun = null
                     ) }
                     _navigationEvent.emit(WorkoutNavEvent.NavigateBack)
                 } ?: run {
@@ -3045,7 +3068,7 @@ class WorkoutViewModel @Inject constructor(
         setTimerJob?.cancel()
         setTimerJob = viewModelScope.launch {
             while (true) {
-                delay(1000L)
+                delay(setTimerTickDelay())
                 val state = _state.value
                 if (state.setTimerRunning && !state.setTimerPaused) {
                     val startedAt = state.setTimerStartedAt ?: continue
@@ -3054,9 +3077,23 @@ class WorkoutViewModel @Inject constructor(
                     _state.update { s ->
                         s.copy(setTimerSeconds = elapsed)
                     }
+                    val emomRun = _state.value.emomRun
+                    if (emomRun != null && handleEmomTick(emomRun, elapsed)) break
                 }
             }
         }
+    }
+
+    /**
+     * A plain one-second tick. An EMOM run needs its rounds to start on the dot, so its ticks
+     * are aligned to the whole seconds of the clock instead.
+     */
+    private fun setTimerTickDelay(): Long {
+        val state = _state.value
+        val startedAt = state.setTimerStartedAt
+        if (state.emomRun == null || startedAt == null) return 1000L
+        val intoSecond = (System.currentTimeMillis() - startedAt).mod(1000L)
+        return 1000L - intoSecond + 5L
     }
 
     private fun activeTimeWeightTargetSeconds(): Int? {
@@ -3120,6 +3157,127 @@ class WorkoutViewModel @Inject constructor(
         resetSetTimer()
         updateSetState(exerciseIndex, setIndex) { it.copy(weight = weight, timeSeconds = durationSeconds) }
         toggleSetComplete(exerciseIndex, setIndex)
+    }
+
+    // ---- EMOM ----
+    // An EMOM run lives on the set timer: it counts up from EmomClock.START_ELAPSED (a get-ready
+    // countdown) and every 60 s from zero a new round starts. Pause, resume, persistence and
+    // keeping the screen on all come from the set timer; the run only adds what each minute means.
+
+    /** Last minute of the clock whose boundary was handled; -1 is the lead-in. */
+    private var emomLastMinute = EmomClock.minuteIndex(EmomClock.START_ELAPSED)
+    private var emomLastCueElapsed: Int? = null
+    /** Sets of the run already sent to be logged, so a round is never logged twice. */
+    private val emomRequested = mutableSetOf<Int>()
+
+    /** Starts the EMOM run at the next set, or resumes a paused one. */
+    fun startEmom() {
+        val state = _state.value
+        if (state.emomRun != null) {
+            startSetTimer()
+            return
+        }
+        val exerciseIndex = state.currentExerciseIndex
+        val exercise = state.currentExercise ?: return
+        val startIndex = exercise.emomStartIndex ?: return
+        val rounds = EmomClock.runLength(exercise.sets.map { it.isEmom }, startIndex)
+        stopRestTimer()
+        resetEmomTracking()
+        _state.update {
+            it.copy(
+                emomRun = EmomRun(exerciseIndex, startIndex, rounds),
+                setTimerSeconds = EmomClock.START_ELAPSED,
+                setTimerBaseSeconds = EmomClock.START_ELAPSED
+            )
+        }
+        startSetTimer()
+    }
+
+    fun pauseEmom() = pauseSetTimer()
+
+    /** Ends the run, leaving the sets not logged yet to do. */
+    fun stopEmom() = endEmomRun(completed = false)
+
+    /** The lifter is done with the round on the clock: log it and rest until the next minute. */
+    fun completeEmomRound() {
+        val state = _state.value
+        val run = state.emomRun ?: return
+        if (!state.setTimerRunning) return
+        val minute = EmomClock.minuteIndex(state.setTimerSeconds)
+        if (minute !in 0 until run.roundCount) return
+        logEmomSet(run, run.startSetIndex + minute)
+        // Nothing is left to wait for after the last round.
+        if (minute == run.roundCount - 1) endEmomRun(completed = true)
+    }
+
+    /**
+     * After the workout is reopened an EMOM run that was on the clock comes back paused before the
+     * next set, ready to start again with a fresh get-ready countdown.
+     */
+    private fun parkEmomRun(exerciseIndex: Int, exercise: WorkoutExerciseState) {
+        val startIndex = exercise.emomStartIndex ?: return
+        val rounds = EmomClock.runLength(exercise.sets.map { it.isEmom }, startIndex)
+        resetEmomTracking()
+        _state.update {
+            it.copy(
+                emomRun = EmomRun(exerciseIndex, startIndex, rounds),
+                setTimerRunning = false,
+                setTimerPaused = true,
+                setTimerSeconds = EmomClock.START_ELAPSED,
+                setTimerBaseSeconds = EmomClock.START_ELAPSED,
+                setTimerStartedAt = null
+            )
+        }
+        saveSetTimerToSession(EmomClock.START_ELAPSED, false, true, null)
+    }
+
+    private fun resetEmomTracking() {
+        emomLastMinute = EmomClock.minuteIndex(EmomClock.START_ELAPSED)
+        emomLastCueElapsed = null
+        emomRequested.clear()
+    }
+
+    /**
+     * Applies what the clock reading [elapsed] means for the run: the minute that just ended gets
+     * its round logged when the lifter did not, the next round is announced, and the last seconds
+     * before a round tick. Returns true when the run is over.
+     */
+    private fun handleEmomTick(run: EmomRun, elapsed: Int): Boolean {
+        val minute = EmomClock.minuteIndex(elapsed)
+        var roundStarted = false
+        while (emomLastMinute < minute) {
+            emomLastMinute++
+            if (emomLastMinute >= 1) logEmomSet(run, run.startSetIndex + emomLastMinute - 1)
+            if (emomLastMinute >= run.roundCount) {
+                endEmomRun(completed = true)
+                return true
+            }
+            roundStarted = true
+        }
+        when {
+            roundStarted -> emomCue(TimerNotificationHelper.EmomCue.GO)
+            EmomClock.isCountdownTick(elapsed) && elapsed != emomLastCueElapsed ->
+                emomCue(TimerNotificationHelper.EmomCue.TICK)
+        }
+        emomLastCueElapsed = elapsed
+        return false
+    }
+
+    private fun logEmomSet(run: EmomRun, setIndex: Int) {
+        val set = _state.value.exercises.getOrNull(run.exerciseIndex)?.sets?.getOrNull(setIndex) ?: return
+        if (set.isCompleted || !emomRequested.add(setIndex)) return
+        toggleSetComplete(run.exerciseIndex, setIndex)
+    }
+
+    private fun endEmomRun(completed: Boolean) {
+        resetEmomTracking()
+        resetSetTimer()
+        _state.update { it.copy(emomRun = null) }
+        if (completed) emomCue(TimerNotificationHelper.EmomCue.DONE)
+    }
+
+    private fun emomCue(cue: TimerNotificationHelper.EmomCue) {
+        if (_state.value.hapticEnabled) timerNotificationHelper.vibrateEmomCue(cue)
     }
 
     fun updateSetTimeSeconds(exerciseIndex: Int, setIndex: Int, seconds: Int) {

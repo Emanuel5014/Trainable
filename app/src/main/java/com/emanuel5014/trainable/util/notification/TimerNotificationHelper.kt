@@ -91,6 +91,24 @@ class TimerNotificationHelper @Inject constructor(
         getVibrator()?.cancel()
     }
 
+    /** Haptic signals of an EMOM run: a tick before each round, GO when it starts, and the finish. */
+    enum class EmomCue { TICK, GO, DONE }
+
+    fun vibrateEmomCue(cue: EmomCue) {
+        val v = getVibrator()?.takeIf { it.hasVibrator() } ?: return
+        val effect = when (cue) {
+            EmomCue.TICK -> VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE)
+            EmomCue.GO -> VibrationEffect.createWaveform(longArrayOf(0, 260, 90, 260), -1)
+            EmomCue.DONE -> VibrationEffect.createWaveform(longArrayOf(0, 160, 90, 160, 90, 420), -1)
+        }
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .build()
+        @Suppress("DEPRECATION")
+        v.vibrate(effect, audioAttributes)
+    }
+
     init {
         createNotificationChannels()
     }

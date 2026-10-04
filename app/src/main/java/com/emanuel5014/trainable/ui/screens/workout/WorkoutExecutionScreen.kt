@@ -203,6 +203,11 @@ fun WorkoutExecutionScreen(
     var newSessionName by remember { mutableStateOf(state.planName) }
     var showWarmupTimerDialog by remember { mutableStateOf(false) }
     var warmupTimerDuration by remember { mutableStateOf(120) }
+    // Exercises whose EMOM sets the lifter logs by hand instead of with the minute clock.
+    var emomManualExercises by remember { mutableStateOf(emptySet<Int>()) }
+    val usesEmomClock = { exercise: WorkoutExerciseState ->
+        !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in emomManualExercises
+    }
     var cardioDistanceInput by remember(state.currentExercise?.exercise?.id) {
         mutableStateOf(
             if ((state.currentExercise?.cardioDistanceKm ?: 0f) > 0f) state.currentExercise?.cardioDistanceKm.toString() else ""
@@ -573,6 +578,31 @@ fun WorkoutExecutionScreen(
                                     onDistanceChange = { cardioDistanceInput = it },
                                     bottomPadding = cardioBottomPadding
                                 )
+                            } else if (usesEmomClock(targetExState)) {
+                                val emomIdle = state.emomRun == null
+                                val emomBottomPadding by animateDpAsState(
+                                    targetValue = when {
+                                        !emomIdle -> 32.dp
+                                        state.remainingRestSeconds > 0 -> 230.dp
+                                        state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> 190.dp
+                                        else -> 140.dp
+                                    },
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
+                                    ),
+                                    label = "emomBottomPadding"
+                                )
+                                EmomExerciseContent(
+                                    exerciseIndex = targetIndex,
+                                    exerciseState = targetExState,
+                                    languageCode = languageCode,
+                                    state = state,
+                                    viewModel = viewModel,
+                                    onSwap = { showSwapExerciseSheet = true },
+                                    onLogManually = { emomManualExercises = emomManualExercises + targetExState.exercise.id },
+                                    bottomPadding = emomBottomPadding
+                                )
                             } else {
                                 var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
                                 LaunchedEffect(targetActiveSetIndex) {
@@ -672,7 +702,35 @@ fun WorkoutExecutionScreen(
                                         color = OnSurface,
                                         fontWeight = FontWeight.Black
                                     )
-                                    
+
+                                    if (targetExState.emomStartIndex != null && targetExState.exercise.id in emomManualExercises) {
+                                        Surface(
+                                            onClick = { emomManualExercises = emomManualExercises - targetExState.exercise.id },
+                                            color = Tertiary.copy(alpha = 0.15f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.padding(top = 8.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Timer,
+                                                    contentDescription = null,
+                                                    tint = Tertiary,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = stringResource(R.string.emom_use_timer),
+                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                                    color = Tertiary,
+                                                    fontWeight = FontWeight.Black
+                                                )
+                                            }
+                                        }
+                                    }
+
                                     if (targetExState.supersetId != null) {
                                         Surface(
                                             color = Primary.copy(alpha = 0.1f),
@@ -1069,7 +1127,10 @@ fun WorkoutExecutionScreen(
                 // DYNAMIC INTERACTION HUB
                 val currentExState = state.currentExercise
                 val isCardioActive = currentExState?.isCardio == true
-                val showBottomHub = !isCardioActive || currentExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
+                val isEmomActive = currentExState != null && usesEmomClock(currentExState)
+                // While the minute clock runs, its screen has everything the lifter needs.
+                val showBottomHub = (!isCardioActive || currentExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)) &&
+                    !(isEmomActive && state.emomRun != null)
 
                 AnimatedVisibility(
                     visible = showBottomHub,
@@ -1179,7 +1240,8 @@ fun WorkoutExecutionScreen(
                         AnimatedContent(
                             targetState = when {
                                 isResting -> HubMode.Resting
-                                isCardioActive -> HubMode.Cardio
+                                // Cardio and the EMOM clock have their own screens: the hub only navigates.
+                                isCardioActive || isEmomActive -> HubMode.Cardio
                                 activeSet == null || activeSet.isCompleted -> HubMode.Completed
                                 isEditingValues -> HubMode.Editing
                                 else -> HubMode.Logging
@@ -1498,7 +1560,7 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
-                        if (!isExerciseCompleted || isResting) {
+                        if ((!isExerciseCompleted && !isEmomActive) || isResting) {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             ExerciseNavigation(
