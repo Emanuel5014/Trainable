@@ -76,7 +76,6 @@ import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
-import com.emanuel5014.trainable.util.WeightUnitConverter
 
 /**
  * The execution screen of an EMOM exercise: a minute clock built on the timer of the cardio and
@@ -113,11 +112,7 @@ fun EmomExerciseContent(
     val snapshot = EmomClock.snapshot(elapsed, started = run != null, roundsLogged = roundsLogged, totalRounds = roundCount)
 
     // The set that matters now: the round on the clock, or the one coming up while resting.
-    val focusIndex = when (snapshot.phase) {
-        EmomPhase.Work -> startIndex + snapshot.round - 1
-        EmomPhase.Rest -> startIndex + snapshot.round
-        else -> startIndex
-    }
+    val focusIndex = startIndex + EmomClock.focusOffset(snapshot)
     val runEnd = startIndex + roundCount
     val focusSet = sets.getOrNull(focusIndex)?.takeIf { focusIndex < runEnd }
     val thenSet = sets.getOrNull(focusIndex + 1)?.takeIf { focusIndex + 1 < runEnd }
@@ -298,7 +293,7 @@ fun EmomExerciseContent(
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = emomSetLoad(focusSet, state.weightUnit, maxLabel),
+                                text = focusSet.loadText(state.weightUnit, maxLabel),
                                 style = MaterialTheme.typography.headlineMedium,
                                 color = OnSurface,
                                 fontWeight = FontWeight.Black,
@@ -317,7 +312,7 @@ fun EmomExerciseContent(
                             }
                             if (thenSet != null) {
                                 Text(
-                                    text = stringResource(R.string.emom_then, emomSetLoad(thenSet, state.weightUnit, maxLabel)),
+                                    text = stringResource(R.string.emom_then, thenSet.loadText(state.weightUnit, maxLabel)),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = OnSurfaceVariant,
                                     fontWeight = FontWeight.Bold,
@@ -474,9 +469,4 @@ fun EmomExerciseContent(
             }
         }
     }
-}
-
-private fun emomSetLoad(set: WorkoutSetState, weightUnit: String, maxLabel: String): String {
-    val weight = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(set.weight, weightUnit), weightUnit)
-    return "$weight × ${if (set.isAmrap) maxLabel else set.reps.toString()}"
 }

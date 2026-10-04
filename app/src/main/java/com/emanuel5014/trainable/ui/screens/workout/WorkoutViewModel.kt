@@ -16,6 +16,7 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.domain.emom.EmomClock
+import com.emanuel5014.trainable.domain.emom.EmomPhase
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.prescription.PlannedSet
@@ -31,6 +32,9 @@ import com.emanuel5014.trainable.ui.components.techniqueLabel
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
+import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.util.notification.EmomNotificationAction
+import com.emanuel5014.trainable.util.notification.EmomNotificationInfo
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -186,6 +190,12 @@ data class WorkoutSetState(
     val isAmrap: Boolean get() = prescription?.repMode == RepMode.AMRAP
 
     val isEmom: Boolean get() = prescription?.techniques?.contains(Technique.Emom) == true
+
+    /** The load as shown to the lifter, e.g. "100 kg × 3" ([maxLabel] stands in for the reps of an AMRAP set). */
+    fun loadText(weightUnit: String, maxLabel: String): String {
+        val load = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(weight, weightUnit), weightUnit)
+        return "$load × ${if (isAmrap) maxLabel else reps.toString()}"
+    }
 }
 
 data class OneRepMaxSuggestion(
@@ -268,6 +278,7 @@ class WorkoutViewModel @Inject constructor(
                 if (!enabled) {
                     timerNotificationHelper.cancelTimer()
                     timerNotificationHelper.cancelWarmupTimer()
+                    timerNotificationHelper.cancelEmom()
                 }
             }
         }
@@ -279,6 +290,18 @@ class WorkoutViewModel @Inject constructor(
                     TimerNotificationReceiver.TimerAction.ADD_30S -> addRestTime(30)
                     TimerNotificationReceiver.TimerAction.DISMISS -> timerNotificationHelper.cancelTimer()
                     TimerNotificationReceiver.TimerAction.FINISHED -> handleTimerFinished()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            TimerNotificationReceiver.emomEvents.collect { action ->
+                when (action) {
+                    TimerNotificationReceiver.EmomAction.BOUNDARY -> syncEmomClock()
+                    TimerNotificationReceiver.EmomAction.DONE -> completeEmomRound()
+                    TimerNotificationReceiver.EmomAction.PAUSE -> pauseEmom()
+                    TimerNotificationReceiver.EmomAction.RESUME -> if (_state.value.emomRun != null) startEmom()
+                    TimerNotificationReceiver.EmomAction.STOP -> stopEmom()
                 }
             }
         }
@@ -3043,6 +3066,8 @@ class WorkoutViewModel @Inject constructor(
                 ) 
             }
             saveSetTimerToSession(elapsed, true, false, now)
+            val emomRun = _state.value.emomRun
+            if (emomRun != null && handleEmomTick(emomRun, elapsed)) return
             if (setTimerJob?.isActive != true) {
                 startSetTimer()
             }
@@ -3078,7 +3103,13 @@ class WorkoutViewModel @Inject constructor(
                         s.copy(setTimerSeconds = elapsed)
                     }
                     val emomRun = _state.value.emomRun
-                    if (emomRun != null && handleEmomTick(emomRun, elapsed)) break
+                    if (emomRun != null) {
+                        if (handleEmomTick(emomRun, elapsed)) break
+                        // The live bar fills second by second; older versions count down on their own.
+                        if (timerNotificationHelper.isLiveNotificationSupported() && emomLastNotifiedElapsed != elapsed) {
+                            refreshEmomNotification(scheduleAlarm = false)
+                        }
+                    }
                 }
             }
         }
@@ -3163,10 +3194,13 @@ class WorkoutViewModel @Inject constructor(
     // An EMOM run lives on the set timer: it counts up from EmomClock.START_ELAPSED (a get-ready
     // countdown) and every 60 s from zero a new round starts. Pause, resume, persistence and
     // keeping the screen on all come from the set timer; the run only adds what each minute means.
+    // An ongoing notification (a live update from Android 16) counts down to the next round, and an
+    // exact alarm per round keeps the run on time while the screen is off.
 
     /** Last minute of the clock whose boundary was handled; -1 is the lead-in. */
     private var emomLastMinute = EmomClock.minuteIndex(EmomClock.START_ELAPSED)
     private var emomLastCueElapsed: Int? = null
+    private var emomLastNotifiedElapsed: Int? = null
     /** Sets of the run already sent to be logged, so a round is never logged twice. */
     private val emomRequested = mutableSetOf<Int>()
 
@@ -3175,6 +3209,7 @@ class WorkoutViewModel @Inject constructor(
         val state = _state.value
         if (state.emomRun != null) {
             startSetTimer()
+            refreshEmomNotification()
             return
         }
         val exerciseIndex = state.currentExerciseIndex
@@ -3191,12 +3226,20 @@ class WorkoutViewModel @Inject constructor(
             )
         }
         startSetTimer()
+        refreshEmomNotification()
     }
 
-    fun pauseEmom() = pauseSetTimer()
+    fun pauseEmom() {
+        if (_state.value.emomRun == null) return
+        pauseSetTimer()
+        timerNotificationHelper.cancelEmomBoundaryAlarm()
+        refreshEmomNotification(scheduleAlarm = false)
+    }
 
     /** Ends the run, leaving the sets not logged yet to do. */
-    fun stopEmom() = endEmomRun(completed = false)
+    fun stopEmom() {
+        if (_state.value.emomRun != null) endEmomRun(completed = false)
+    }
 
     /** The lifter is done with the round on the clock: log it and rest until the next minute. */
     fun completeEmomRound() {
@@ -3206,8 +3249,12 @@ class WorkoutViewModel @Inject constructor(
         val minute = EmomClock.minuteIndex(state.setTimerSeconds)
         if (minute !in 0 until run.roundCount) return
         logEmomSet(run, run.startSetIndex + minute)
-        // Nothing is left to wait for after the last round.
-        if (minute == run.roundCount - 1) endEmomRun(completed = true)
+        if (minute == run.roundCount - 1) {
+            // Nothing is left to wait for after the last round.
+            endEmomRun(completed = true, byClock = false)
+        } else {
+            refreshEmomNotification(phaseOverride = EmomPhase.Rest, scheduleAlarm = false)
+        }
     }
 
     /**
@@ -3234,6 +3281,7 @@ class WorkoutViewModel @Inject constructor(
     private fun resetEmomTracking() {
         emomLastMinute = EmomClock.minuteIndex(EmomClock.START_ELAPSED)
         emomLastCueElapsed = null
+        emomLastNotifiedElapsed = null
         emomRequested.clear()
     }
 
@@ -3255,12 +3303,30 @@ class WorkoutViewModel @Inject constructor(
             roundStarted = true
         }
         when {
-            roundStarted -> emomCue(TimerNotificationHelper.EmomCue.GO)
+            roundStarted -> {
+                emomCue(TimerNotificationHelper.EmomCue.GO)
+                refreshEmomNotification()
+            }
             EmomClock.isCountdownTick(elapsed) && elapsed != emomLastCueElapsed ->
                 emomCue(TimerNotificationHelper.EmomCue.TICK)
         }
         emomLastCueElapsed = elapsed
         return false
+    }
+
+    /**
+     * Catches the run up with the wall clock, for when a round alarm wakes the app while the screen
+     * is off and the one-second ticks are not running.
+     */
+    private fun syncEmomClock() {
+        val state = _state.value
+        val run = state.emomRun ?: return
+        val startedAt = state.setTimerStartedAt ?: return
+        if (!state.setTimerRunning || state.setTimerPaused) return
+        // A little tolerance: the alarm may land a few milliseconds before the clock reads the boundary.
+        val elapsed = state.setTimerBaseSeconds + ((System.currentTimeMillis() - startedAt + 250L) / 1000).toInt().coerceAtLeast(0)
+        _state.update { it.copy(setTimerSeconds = elapsed) }
+        handleEmomTick(run, elapsed)
     }
 
     private fun logEmomSet(run: EmomRun, setIndex: Int) {
@@ -3269,15 +3335,114 @@ class WorkoutViewModel @Inject constructor(
         toggleSetComplete(run.exerciseIndex, setIndex)
     }
 
-    private fun endEmomRun(completed: Boolean) {
+    /** Ends the run. [byClock] tells whether the minutes ran out, in which case the lifter is told in a notification. */
+    private fun endEmomRun(completed: Boolean, byClock: Boolean = completed) {
+        val state = _state.value
+        val exercise = state.emomRun?.let { state.exercises.getOrNull(it.exerciseIndex) }
         resetEmomTracking()
         resetSetTimer()
         _state.update { it.copy(emomRun = null) }
+        if (completed && byClock && exercise != null && emomNotificationsAllowed()) {
+            val context = localeManager.localizedContext()
+            timerNotificationHelper.showEmomFinished(
+                context.getString(R.string.emom_notification_finished_title),
+                context.getString(
+                    R.string.emom_notification_finished_text,
+                    ExerciseTranslations.translate(exercise.exercise.nome, _languageCode.value)
+                )
+            )
+        } else {
+            timerNotificationHelper.cancelEmom()
+        }
         if (completed) emomCue(TimerNotificationHelper.EmomCue.DONE)
     }
 
     private fun emomCue(cue: TimerNotificationHelper.EmomCue) {
         if (_state.value.hapticEnabled) timerNotificationHelper.vibrateEmomCue(cue)
+    }
+
+    private fun emomNotificationsAllowed(): Boolean =
+        _state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()
+
+    /**
+     * Posts the EMOM notification for the run as it stands and, unless told otherwise, schedules the
+     * alarm for the next round. [phaseOverride] covers the instant after DONE, before the logged
+     * set shows up in the state.
+     */
+    private fun refreshEmomNotification(phaseOverride: EmomPhase? = null, scheduleAlarm: Boolean = true) {
+        if (!emomNotificationsAllowed()) return
+        val state = _state.value
+        val run = state.emomRun ?: return
+        val exercise = state.exercises.getOrNull(run.exerciseIndex) ?: return
+        val elapsed = state.setTimerSeconds
+        emomLastNotifiedElapsed = elapsed
+
+        val roundsLogged = (run.startSetIndex until run.startSetIndex + run.roundCount)
+            .count { exercise.sets.getOrNull(it)?.isCompleted == true }
+        val snapshot = EmomClock.snapshot(elapsed, started = true, roundsLogged = roundsLogged, totalRounds = run.roundCount)
+        val phase = phaseOverride ?: snapshot.phase
+        val paused = !state.setTimerRunning
+
+        val context = localeManager.localizedContext()
+        val unit = state.weightUnit
+        val maxLabel = context.getString(R.string.max_label)
+        val offset = EmomClock.focusOffset(snapshot.copy(phase = phase))
+        val focus = exercise.sets.getOrNull(run.startSetIndex + offset)?.takeIf { offset < run.roundCount }
+        val following = exercise.sets.getOrNull(run.startSetIndex + offset + 1)?.takeIf { offset + 1 < run.roundCount }
+        val name = ExerciseTranslations.translate(exercise.exercise.nome, _languageCode.value)
+        val round = (offset + 1).coerceIn(1, run.roundCount)
+
+        val title = when {
+            paused -> context.getString(R.string.emom_notification_title_paused, round, run.roundCount)
+            phase == EmomPhase.LeadIn -> context.getString(R.string.emom_notification_title_get_ready)
+            phase == EmomPhase.Rest -> context.getString(R.string.emom_notification_title_rest, round, run.roundCount)
+            else -> context.getString(R.string.emom_notification_title_work, round, run.roundCount)
+        }
+        val text = when {
+            focus == null -> name
+            phase == EmomPhase.Rest ->
+                context.getString(R.string.emom_notification_next, name, focus.setNumber, focus.loadText(unit, maxLabel))
+            else ->
+                context.getString(R.string.emom_notification_set, name, focus.setNumber, focus.loadText(unit, maxLabel))
+        }
+        val detail = following?.let { context.getString(R.string.emom_then, it.loadText(unit, maxLabel)) }
+
+        fun button(action: TimerNotificationReceiver.EmomAction, label: Int) =
+            EmomNotificationAction(action, context.getString(label))
+        val actions = when {
+            paused -> listOf(
+                button(TimerNotificationReceiver.EmomAction.RESUME, R.string.emom_action_resume),
+                button(TimerNotificationReceiver.EmomAction.STOP, R.string.emom_action_stop)
+            )
+            phase == EmomPhase.Work -> listOf(
+                button(TimerNotificationReceiver.EmomAction.DONE, R.string.emom_action_done),
+                button(TimerNotificationReceiver.EmomAction.PAUSE, R.string.emom_action_pause)
+            )
+            else -> listOf(button(TimerNotificationReceiver.EmomAction.PAUSE, R.string.emom_action_pause))
+        }
+
+        val startedAt = state.setTimerStartedAt
+        val countdownEndsAt = if (paused || startedAt == null) null else {
+            startedAt + (EmomClock.nextRoundAt(elapsed) - state.setTimerBaseSeconds) * 1000L
+        }
+        timerNotificationHelper.showEmomNotification(
+            EmomNotificationInfo(
+                title = title,
+                text = text,
+                detail = detail,
+                countdownEndsAt = countdownEndsAt,
+                runElapsedSeconds = elapsed.coerceAtLeast(0),
+                rounds = run.roundCount,
+                actions = actions
+            )
+        )
+        if (scheduleAlarm && countdownEndsAt != null) timerNotificationHelper.scheduleEmomBoundaryAlarm(countdownEndsAt)
+    }
+
+    override fun onCleared() {
+        // A run left behind no longer ticks, so its notification and round alarm must not outlive the screen.
+        timerNotificationHelper.cancelEmom()
+        super.onCleared()
     }
 
     fun updateSetTimeSeconds(exerciseIndex: Int, setIndex: Int, seconds: Int) {

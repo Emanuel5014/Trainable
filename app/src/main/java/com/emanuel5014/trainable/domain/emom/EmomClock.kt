@@ -48,6 +48,16 @@ object EmomClock {
     /** Seconds until the next round starts, counting the lead-in as a short minute of its own. */
     fun secondsLeft(elapsed: Int): Int = MINUTE_SECONDS - secondsIntoMinute(elapsed)
 
+    /** Clock reading at which the next round starts: zero during the lead-in, then every minute. */
+    fun nextRoundAt(elapsed: Int): Int = (minuteIndex(elapsed) + 1) * MINUTE_SECONDS
+
+    /** Offset from the run's first set to the set the lifter should be looking at: the round now, or the next one while resting. */
+    fun focusOffset(snapshot: EmomSnapshot): Int = when (snapshot.phase) {
+        EmomPhase.Work -> snapshot.round - 1
+        EmomPhase.Rest -> snapshot.round
+        EmomPhase.Idle, EmomPhase.LeadIn -> 0
+    }
+
     /** True while [elapsed] sits in the last [COUNTDOWN_CUE_SECONDS] seconds before a round. */
     fun isCountdownTick(elapsed: Int): Boolean = secondsLeft(elapsed) in 1..COUNTDOWN_CUE_SECONDS
 
