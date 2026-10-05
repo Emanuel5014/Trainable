@@ -112,12 +112,18 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
+import com.emanuel5014.trainable.ui.components.NavBarAction
+import com.emanuel5014.trainable.ui.components.NavBarActionEffect
+import com.emanuel5014.trainable.ui.components.NavBarPage
+import com.emanuel5014.trainable.ui.components.navBarBottomClearance
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.SheetFormBody
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
@@ -197,6 +203,19 @@ fun RoutineListScreen(
         showSheet = true
     }
 
+    // With the expressive navbar the main action lives next to it instead of floating here
+    val showOwnFab = LocalNavBarStyle.current != NavBarStyle.Expressive
+    val shareLabel = stringResource(R.string.share)
+    val createLabel = stringResource(R.string.create_routine)
+    NavBarActionEffect(
+        page = NavBarPage.Routines,
+        action = if (uiState.isSelectionMode) {
+            NavBarAction.Click(Icons.Rounded.Share, shareLabel) { viewModel.shareSelectedPlans(context) }
+        } else {
+            NavBarAction.Click(Icons.Default.Add, createLabel) { openCreateSheet() }
+        }
+    )
+
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
@@ -204,7 +223,7 @@ fun RoutineListScreen(
                 if (ResponsiveSize.isCompact) 2.dp else 8.dp
             } else 0.dp
             
-            if (uiState.isSelectionMode) {
+            if (showOwnFab && uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
                     onClick = { viewModel.shareSelectedPlans(context) },
                     containerColor = Primary,
@@ -218,7 +237,7 @@ fun RoutineListScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.share).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
-            } else {
+            } else if (showOwnFab) {
                 ExtendedFloatingActionButton(
                     onClick = { openCreateSheet() },
                     containerColor = Primary,
@@ -947,6 +966,7 @@ private fun RoutineListPage(
     isLast: Boolean = false,
     languageCode: String = "en"
 ) {
+    val bottomClearance = navBarBottomClearance()
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
@@ -1080,7 +1100,7 @@ private fun RoutineListPage(
                     )
                 }
             }
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+            item { Spacer(modifier = Modifier.height(bottomClearance)) }
         }
     }
 }

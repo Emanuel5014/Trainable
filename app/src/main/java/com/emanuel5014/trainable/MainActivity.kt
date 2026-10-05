@@ -42,6 +42,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
@@ -49,10 +50,12 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.BottomNavBar
+import com.emanuel5014.trainable.ui.components.BottomNavBarExpressive
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
 import com.emanuel5014.trainable.ui.components.UpdateDialog
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
+import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.navigation.MainNavGraph
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
@@ -257,6 +260,9 @@ class MainActivity : FragmentActivity() {
                 else -> androidx.compose.foundation.isSystemInDarkTheme()
             }
 
+            // Null until read, so the first frame never shows the wrong navbar
+            val navBarStyle by userPreferencesRepository.navBarStyle.collectAsState(initial = null)
+
             GymTrackingTheme(
                 dynamicColor = dynamicColor,
                 paletteIndex = themePalette,
@@ -264,7 +270,10 @@ class MainActivity : FragmentActivity() {
                 themeStyle = themeStyle,
                 darkTheme = isDark
             ) {
-              CompositionLocalProvider(LocalAdvancedProgramming provides advancedProgramming) {
+              CompositionLocalProvider(
+                  LocalAdvancedProgramming provides advancedProgramming,
+                  LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating)
+              ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()
@@ -301,7 +310,7 @@ class MainActivity : FragmentActivity() {
 
                 val resolvedOnboardingState = onboardingCompletedOverride.value ?: hasCompletedOnboarding
 
-                if (resolvedOnboardingState == null) {
+                if (resolvedOnboardingState == null || navBarStyle == null) {
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
                     return@CompositionLocalProvider
                 }
@@ -330,23 +339,24 @@ class MainActivity : FragmentActivity() {
                             currentDestination.hasRoute(WorkoutExecution::class) == false &&
                             BottomBarManager.isVisibleOverride
 
-                        val floatingNavBar by userPreferencesRepository.floatingNavBar.collectAsState(initial = false)
-
                         AnimatedVisibility(
                             visible = showBottomBar,
                             modifier = Modifier.align(Alignment.BottomCenter),
                             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                         ) {
-                            if (floatingNavBar) {
-                                BottomNavBarFlo(
+                            when (navBarStyle) {
+                                NavBarStyle.Floating -> BottomNavBarFlo(
                                     navController = navController,
                                     pagerState = pagerState,
                                     hazeState = hazeState,
                                     isDark = isDark
                                 )
-                            } else {
-                                BottomNavBar(
+                                NavBarStyle.Expressive -> BottomNavBarExpressive(
+                                    navController = navController,
+                                    pagerState = pagerState
+                                )
+                                else -> BottomNavBar(
                                     navController = navController,
                                     pagerState = pagerState
                                 )

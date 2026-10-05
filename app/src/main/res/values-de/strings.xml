@@ -10,8 +10,13 @@
     <string name="nav_history">Verlauf</string>
     <string name="nav_analytics">Statistiken</string>
     <string name="nav_settings">Einstellungen</string>
-    <string name="floating_nav_bar">Klassische Navigation</string>
-    <string name="floating_nav_bar_desc">Standard Material 3 untere Navigationsleiste</string>
+    <string name="nav_bar_style">Navigationsleiste</string>
+    <string name="nav_bar_style_classic">Klassisch</string>
+    <string name="nav_bar_style_classic_desc">Standard Material 3 untere Navigationsleiste</string>
+    <string name="nav_bar_style_floating">Schwebend</string>
+    <string name="nav_bar_style_floating_desc">Unscharfe Leiste, die über dem Inhalt schwebt</string>
+    <string name="nav_bar_style_expressive">Expressive</string>
+    <string name="nav_bar_style_expressive_desc">Material 3 Expressive Toolbar, mit der Hauptaktion jedes Tabs daneben</string>
 
     <!-- Common Actions -->
     <string name="save">Speichern</string>

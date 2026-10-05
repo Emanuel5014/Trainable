@@ -10,8 +10,13 @@
     <string name="nav_history">History</string>
     <string name="nav_analytics">Analytics</string>
     <string name="nav_settings">Settings</string>
-    <string name="floating_nav_bar">Classic Navigation</string>
-    <string name="floating_nav_bar_desc">Standard Material 3 bottom navigation</string>
+    <string name="nav_bar_style">Navigation bar</string>
+    <string name="nav_bar_style_classic">Classic</string>
+    <string name="nav_bar_style_classic_desc">Standard Material 3 bottom navigation</string>
+    <string name="nav_bar_style_floating">Floating</string>
+    <string name="nav_bar_style_floating_desc">Blurred bar floating above the content</string>
+    <string name="nav_bar_style_expressive">Expressive</string>
+    <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 
     <!-- Common Actions -->
     <string name="save">Save</string>

@@ -107,6 +107,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.navBarBottomClearance
 import com.emanuel5014.trainable.ui.components.rememberLazyListReorderState
 import com.emanuel5014.trainable.ui.components.reorderGestures
 import com.emanuel5014.trainable.ui.components.reorderableItem
@@ -143,6 +144,7 @@ fun AnalyticsScreen(
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val bottomClearance = navBarBottomClearance()
     var showExercisePicker by remember { mutableStateOf(false) }
     var showChartPicker by remember { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -317,7 +319,7 @@ fun AnalyticsScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .reorderGestures(reorderState),
-                        contentPadding = PaddingValues(bottom = 100.dp)
+                        contentPadding = PaddingValues(bottom = bottomClearance)
                     ) {
                         if (uiState.showProgressCards) {
                             item {

@@ -216,6 +216,7 @@ class BackupManager @Inject constructor(
                 json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
                 json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
                 json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
+                prefs[UserPreferencesRepository.NAV_BAR_STYLE]?.let { json.put("nav_bar_style", it) }
                 json.put("theme_mode", prefs[UserPreferencesRepository.THEME_MODE] ?: 0)
                 json.put("timer_notifications_enabled", prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] ?: true)
                 json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
@@ -343,6 +344,11 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.WEEKLY_GOAL] = jsonObject.getInt("weekly_goal")
                                             if (jsonObject.has("floating_nav_bar"))
                                                 prefs[UserPreferencesRepository.FLOATING_NAV_BAR] = jsonObject.getBoolean("floating_nav_bar")
+                                            if (jsonObject.has("nav_bar_style"))
+                                                prefs[UserPreferencesRepository.NAV_BAR_STYLE] = jsonObject.getInt("nav_bar_style")
+                                            else if (jsonObject.has("floating_nav_bar"))
+                                                // Backup from before the third style: let the restored switch decide
+                                                prefs.remove(UserPreferencesRepository.NAV_BAR_STYLE)
                                             if (jsonObject.has("theme_mode"))
                                                 prefs[UserPreferencesRepository.THEME_MODE] = jsonObject.getInt("theme_mode")
                                             if (jsonObject.has("timer_notifications_enabled"))

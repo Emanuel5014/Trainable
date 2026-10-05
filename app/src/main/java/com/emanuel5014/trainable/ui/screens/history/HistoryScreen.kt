@@ -154,6 +154,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -161,6 +162,12 @@ import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
+import com.emanuel5014.trainable.ui.components.NavBarAction
+import com.emanuel5014.trainable.ui.components.NavBarActionEffect
+import com.emanuel5014.trainable.ui.components.NavBarMenuItem
+import com.emanuel5014.trainable.ui.components.NavBarPage
+import com.emanuel5014.trainable.ui.components.navBarBottomClearance
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.WorkoutShareCard
 import com.emanuel5014.trainable.ui.components.captureViewToBitmap
@@ -309,11 +316,29 @@ fun HistoryScreen(
     BackHandler(capturedBitmapToPreview != null) { capturedBitmapToPreview = null }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
+    // With the expressive navbar the add menu opens from the button next to it instead of floating here
+    val showOwnFab = LocalNavBarStyle.current != NavBarStyle.Expressive
+    val bottomClearance = navBarBottomClearance()
+    val addLabel = stringResource(R.string.add)
+    val addCardioLabel = stringResource(R.string.add_cardio)
+    val addWorkoutLabel = stringResource(R.string.add_workout)
+    NavBarActionEffect(
+        page = NavBarPage.History,
+        action = if (uiState.isSelectionMode) null else NavBarAction.Menu(
+            icon = Icons.Rounded.Add,
+            label = addLabel,
+            items = listOf(
+                NavBarMenuItem(Icons.AutoMirrored.Rounded.DirectionsRun, addCardioLabel) { showCardioDialog = true },
+                NavBarMenuItem(Icons.AutoMirrored.Rounded.Assignment, addWorkoutLabel) { showAddWorkoutSheet = true }
+            )
+        )
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = surfaceColor,
             floatingActionButton = {
-                if (!uiState.isSelectionMode) {
+                if (showOwnFab && !uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
                         modifier = Modifier.padding(bottom = 60.dp).offset(x = 12.dp).zIndex(10f),
                         expanded = fabMenuExpanded,
@@ -590,7 +615,7 @@ fun HistoryScreen(
                             }
                         }
                         
-                        item { Spacer(modifier = Modifier.height(100.dp)) }
+                        item { Spacer(modifier = Modifier.height(bottomClearance)) }
                     }
                 }
                 

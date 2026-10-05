@@ -10,8 +10,13 @@
     <string name="nav_history">Historique</string>
     <string name="nav_analytics">Statistiques</string>
     <string name="nav_settings">Paramètres</string>
-    <string name="floating_nav_bar">Navigation Classique</string>
-    <string name="floating_nav_bar_desc">Barre de navigation inférieure Material 3</string>
+    <string name="nav_bar_style">Barre de navigation</string>
+    <string name="nav_bar_style_classic">Classique</string>
+    <string name="nav_bar_style_classic_desc">Barre de navigation inférieure Material 3</string>
+    <string name="nav_bar_style_floating">Flottante</string>
+    <string name="nav_bar_style_floating_desc">Barre floutée qui flotte au-dessus du contenu</string>
+    <string name="nav_bar_style_expressive">Expressive</string>
+    <string name="nav_bar_style_expressive_desc">Barre d\'outils Material 3 Expressive, avec l\'action principale de chaque onglet à côté</string>
 
     <!-- Common Actions -->
     <string name="save">Enregistrer</string>

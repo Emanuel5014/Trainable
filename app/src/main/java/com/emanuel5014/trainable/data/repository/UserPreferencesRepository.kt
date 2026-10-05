@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -36,6 +37,7 @@ class UserPreferencesRepository @Inject constructor(
         val USER_LANGUAGE = stringPreferencesKey("user_language")
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
+        val NAV_BAR_STYLE = intPreferencesKey("nav_bar_style")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")
         val THEME_PALETTE = intPreferencesKey("theme_palette")
@@ -190,10 +192,14 @@ class UserPreferencesRepository @Inject constructor(
             preferences[WEIGHT_UNIT] ?: "kg"
         }
 
-    val floatingNavBar: Flow<Boolean> = dataStore.data
+    /** Falls back to the old floating/classic switch until the user picks one of the three styles. */
+    val navBarStyle: Flow<NavBarStyle> = dataStore.data
         .map { preferences ->
-            preferences[FLOATING_NAV_BAR] ?: true
+            NavBarStyle.fromId(preferences[NAV_BAR_STYLE])
+                ?: if (preferences[FLOATING_NAV_BAR] ?: true) NavBarStyle.Floating else NavBarStyle.Classic
         }
+
+    val floatingNavBar: Flow<Boolean> = navBarStyle.map { it == NavBarStyle.Floating }
 
     val dynamicColor: Flow<Boolean> = dataStore.data
         .map { preferences ->
@@ -440,9 +446,11 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
-    suspend fun setFloatingNavBar(enabled: Boolean) {
+    suspend fun setNavBarStyle(style: NavBarStyle) {
         dataStore.edit { preferences ->
-            preferences[FLOATING_NAV_BAR] = enabled
+            preferences[NAV_BAR_STYLE] = style.id
+            // Kept in sync for versions and backups that only know the floating/classic switch
+            preferences[FLOATING_NAV_BAR] = style == NavBarStyle.Floating
         }
     }
 

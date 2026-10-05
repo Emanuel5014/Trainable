@@ -16,6 +16,7 @@ import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -198,10 +199,10 @@ class SettingsViewModel @Inject constructor(
         initialValue = null
     )
 
-    val floatingNavBar = userPrefsRepository.floatingNavBar.stateIn(
+    val navBarStyle = userPrefsRepository.navBarStyle.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
+        initialValue = NavBarStyle.Floating
     )
 
     val dynamicColor = userPrefsRepository.dynamicColor.stateIn(
@@ -735,9 +736,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setFloatingNavBar(enabled: Boolean) {
+    fun setNavBarStyle(style: NavBarStyle) {
         viewModelScope.launch {
-            userPrefsRepository.setFloatingNavBar(enabled)
+            userPrefsRepository.setNavBarStyle(style)
         }
     }
 

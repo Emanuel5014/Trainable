@@ -10,8 +10,13 @@
     <string name="nav_history">Storico</string>
     <string name="nav_analytics">Statistiche</string>
     <string name="nav_settings">Impostazioni</string>
-    <string name="floating_nav_bar">Navigazione Classica</string>
-    <string name="floating_nav_bar_desc">Barra di navigazione standard Material 3</string>
+    <string name="nav_bar_style">Barra di navigazione</string>
+    <string name="nav_bar_style_classic">Classica</string>
+    <string name="nav_bar_style_classic_desc">Barra di navigazione standard Material 3</string>
+    <string name="nav_bar_style_floating">Fluttuante</string>
+    <string name="nav_bar_style_floating_desc">Barra sfocata che fluttua sopra i contenuti</string>
+    <string name="nav_bar_style_expressive">Expressive</string>
+    <string name="nav_bar_style_expressive_desc">Toolbar Material 3 Expressive, con l\'azione principale di ogni scheda accanto</string>
 
     <!-- Common Actions -->
     <string name="save">Salva</string>

@@ -94,10 +94,16 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
+import com.emanuel5014.trainable.ui.components.NavBarAction
+import com.emanuel5014.trainable.ui.components.NavBarActionEffect
+import com.emanuel5014.trainable.ui.components.NavBarPage
+import com.emanuel5014.trainable.ui.components.navBarBottomClearance
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -151,6 +157,17 @@ fun DashboardScreen(
     var showQuickWorkoutDialog by remember { mutableStateOf(false) }
     var quickWorkoutName by remember { mutableStateOf("") }
     var existingSessionForPlan by remember { mutableStateOf<SessionWithPlanName?>(null) }
+
+    // With the expressive navbar the quick workout button lives next to it instead of floating here
+    val showOwnFab = LocalNavBarStyle.current != NavBarStyle.Expressive
+    val bottomClearance = navBarBottomClearance()
+    val quickWorkoutLabel = stringResource(R.string.quick_workout)
+    NavBarActionEffect(
+        page = NavBarPage.Dashboard,
+        action = if (uiState.isLoading) null else NavBarAction.Click(Icons.Rounded.Bolt, quickWorkoutLabel) {
+            showQuickWorkoutDialog = true
+        }
+    )
 
     if (existingSessionForPlan != null) {
         AlertDialog(
@@ -483,7 +500,7 @@ fun DashboardScreen(
             Scaffold(
                 containerColor = Surface,
                 floatingActionButton = {
-                    ExtendedFloatingActionButton(
+                    if (showOwnFab) ExtendedFloatingActionButton(
                         onClick = { showQuickWorkoutDialog = true },
                         containerColor = Primary,
                         contentColor = OnPrimary,
@@ -749,7 +766,7 @@ fun DashboardScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(modifier = Modifier.height(bottomClearance))
                 }
             }
         }
