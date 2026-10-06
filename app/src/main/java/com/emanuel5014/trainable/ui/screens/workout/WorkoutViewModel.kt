@@ -3247,7 +3247,11 @@ class WorkoutViewModel @Inject constructor(
         saveCardioTimerToSession(elapsed, false, true, null)
     }
 
-    fun stopCardioTimer(distanzaKm: Float) {
+    /** Marks the current cardio exercise as done without running its timer, logging [durationSeconds] and the distance. */
+    fun completeCardio(distanzaKm: Float, durationSeconds: Int) = stopCardioTimer(distanzaKm, durationSeconds)
+
+    /** Saves the cardio log with the time on the timer, or with [durationSeconds] when it is given. */
+    fun stopCardioTimer(distanzaKm: Float, durationSeconds: Int? = null) {
         cardioTimerJob?.cancel()
         cardioTimerJob = null
         val currState = _state.value
@@ -3255,7 +3259,7 @@ class WorkoutViewModel @Inject constructor(
         val currentEx = currState.currentExercise ?: return
         val logId = currentEx.cardioLogId
 
-        val elapsed = currState.cardioTimerSeconds
+        val elapsed = durationSeconds ?: currState.cardioTimerSeconds
         _state.update { state ->
             val updatedExercises = state.exercises.toMutableList()
             val idx = state.currentExerciseIndex

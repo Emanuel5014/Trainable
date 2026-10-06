@@ -1155,4 +1155,8 @@
     <string name="timer_add_time">Ajouter du temps</string>
     <string name="timer_subtract_time">Retirer du temps</string>
     <string name="warmup_label">Échauffement</string>
+    <string name="cardio_mark_completed">Marquer comme terminé</string>
+    <string name="cardio_complete_logs_time">Enregistre la durée prévue : %1$s</string>
+    <string name="cardio_complete_duration">Durée (min)</string>
+    <string name="optional_suffix">(facultatif)</string>
 </resources>

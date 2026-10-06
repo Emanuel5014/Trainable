@@ -1155,4 +1155,8 @@
     <string name="timer_add_time">Add time</string>
     <string name="timer_subtract_time">Remove time</string>
     <string name="warmup_label">Warmup</string>
+    <string name="cardio_mark_completed">Mark as completed</string>
+    <string name="cardio_complete_logs_time">Logs the planned time: %1$s</string>
+    <string name="cardio_complete_duration">Duration (min)</string>
+    <string name="optional_suffix">(optional)</string>
 </resources>

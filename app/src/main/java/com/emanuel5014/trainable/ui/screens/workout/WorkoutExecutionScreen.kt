@@ -2210,7 +2210,75 @@ fun CardioExerciseContent(
     bottomPadding: androidx.compose.ui.unit.Dp = 120.dp
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
+    var showCompleteDialog by remember { mutableStateOf(false) }
+    var completeMinutes by remember { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
+
+    // Marking the exercise as done without the timer logs the time it was planned with. Without a planned time
+    // there is nothing to log, so the minutes are asked for.
+    val plannedSeconds = exerciseState.cardioDurataTargetSeconds?.takeIf { it > 0 }
+    if (showCompleteDialog) {
+        val typedSeconds = ((completeMinutes.replace(',', '.').toFloatOrNull() ?: 0f) * 60).toInt()
+        val secondsToLog = plannedSeconds ?: typedSeconds
+        AlertDialog(
+            modifier = Modifier.imePadding(),
+            onDismissRequest = { showCompleteDialog = false },
+            title = { Text(stringResource(R.string.cardio_mark_completed)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (plannedSeconds != null) {
+                        val planned = if (plannedSeconds % 60 == 0) {
+                            stringResource(R.string.cardio_min_format, plannedSeconds / 60)
+                        } else {
+                            String.format("%d:%02d", plannedSeconds / 60, plannedSeconds % 60)
+                        }
+                        Text(
+                            text = stringResource(R.string.cardio_complete_logs_time, planned),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        OutlinedTextField(
+                            value = completeMinutes,
+                            onValueChange = { completeMinutes = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
+                            label = { Text(stringResource(R.string.cardio_complete_duration)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = distanceInput,
+                        onValueChange = onDistanceChange,
+                        label = { Text(stringResource(R.string.cardio_distance_label) + " " + stringResource(R.string.optional_suffix)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = secondsToLog > 0,
+                    onClick = {
+                        viewModel.completeCardio(distanceInput.replace(',', '.').toFloatOrNull() ?: 0f, secondsToLog)
+                        showCompleteDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCompleteDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 
     if (showStopDialog) {
         AlertDialog(
@@ -2221,7 +2289,7 @@ fun CardioExerciseContent(
                 OutlinedTextField(
                     value = distanceInput,
                     onValueChange = onDistanceChange,
-                    label = { Text(stringResource(R.string.cardio_distance_label) + " (optional)") },
+                    label = { Text(stringResource(R.string.cardio_distance_label) + " " + stringResource(R.string.optional_suffix)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -2256,10 +2324,17 @@ fun CardioExerciseContent(
     ) {
         // Responsive scale: width-based so short/landscape heights don't collapse the UI.
         // Clamped to avoid glitches on extreme DPI / smallest-width settings.
-        val scale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
+        // The height counts too: the circle gives way when the content (about 260 dp besides the circle) would not fit
+        val widthScale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
+        val heightScale = ((maxHeight - 260.dp) / 200.dp).coerceIn(0.4f, 1.15f)
+        val scale = minOf(widthScale, heightScale)
         val cIndicatorSize = (200f * scale).dp
         val cButtonSize = (135f * scale).dp
-        val cTimerFontSize = (46f * scale).sp
+        // The time stays readable when the rest has to shrink a lot
+        val cTimerFontSize = (46f * scale.coerceAtLeast(0.7f)).sp
+        // Gaps and the action buttons give way a little too on a short screen
+        val cRowGap = (12f * scale.coerceIn(0.6f, 1f)).dp
+        val cActionHeight = if (scale < 0.7f) 40 else 48
         val cCookieSize = (130f * scale).dp
         val cCookieIconSize = (50f * scale).dp
         val cGapSize = (10f * scale).dp
@@ -2312,7 +2387,7 @@ fun CardioExerciseContent(
                 .fillMaxWidth()
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(cRowGap)
         ) {
             Text(
                 text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
@@ -2411,7 +2486,8 @@ fun CardioExerciseContent(
 
                 Text(
                     text = timeFormatted,
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = cTimerFontSize),
+                    // The line height follows the size, or the text keeps taking the room of the big one
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = cTimerFontSize, lineHeight = cTimerFontSize * 1.15f),
                     fontWeight = FontWeight.Black,
                     color = if (state.cardioTimerRunning) Primary else OnSurface
                 )
@@ -2428,6 +2504,30 @@ fun CardioExerciseContent(
                     letterSpacing = 1.5.sp
                 )
 
+                // Done without the timer: only while it is idle (a running or paused timer has its own stop and save)
+                AnimatedVisibility(
+                    visible = !state.cardioTimerRunning && !state.cardioTimerPaused,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    GymButton(
+                        onClick = {
+                            completeMinutes = ""
+                            showCompleteDialog = true
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .padding(top = 4.dp),
+                        height = cActionHeight,
+                        containerColor = Tertiary.copy(alpha = 0.15f),
+                        contentColor = Tertiary
+                    ) {
+                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.cardio_mark_completed), fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+
                 // Stop button shown inline when paused — no layout jump, just appears below status label
                 AnimatedVisibility(
                     visible = state.cardioTimerPaused,
@@ -2439,7 +2539,7 @@ fun CardioExerciseContent(
                         modifier = Modifier
                             .fillMaxWidth(0.6f)
                             .padding(top = 4.dp),
-                        height = 48,
+                        height = cActionHeight,
                         containerColor = Error.copy(alpha = 0.15f),
                         contentColor = Error
                     ) {
