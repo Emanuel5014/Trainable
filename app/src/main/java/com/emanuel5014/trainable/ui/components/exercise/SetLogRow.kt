@@ -72,6 +72,10 @@ fun SetLogRow(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     onEditValues: (() -> Unit)? = null,
+    /** Opens a completed set for editing. Without it a tap on a completed row unchecks it, as before. */
+    onEdit: (() -> Unit)? = null,
+    /** This completed set is the one being edited. */
+    isEditing: Boolean = false,
     isActive: Boolean = false,
     weightUnit: String = "kg",
     previousNote: String? = null,
@@ -118,17 +122,19 @@ fun SetLogRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .then(
-                if (isActive && !isCompleted) {
-                    Modifier.border(2.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                } else Modifier
+                when {
+                    isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                    isEditing && isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
+                    else -> Modifier
+                }
             )
             .background(backgroundColor)
             .combinedClickable(
-                onClick = { 
-                    if (isActive && onEditValues != null) {
-                        onEditValues()
-                    } else {
-                        onToggleComplete()
+                onClick = {
+                    when {
+                        isActive && onEditValues != null -> onEditValues()
+                        isCompleted && onEdit != null -> onEdit()
+                        else -> onToggleComplete()
                     }
                 },
                 onLongClick = onLongClick

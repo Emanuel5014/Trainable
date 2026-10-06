@@ -1645,6 +1645,34 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    // ---- Editing a set that is already logged ----
+    // These only rewrite the saved values of that one set. They never touch whether it is completed, the rest
+    // timer, the order the sets were done in or the weights of the other sets, which is what unchecking a set,
+    // editing it and checking it again used to disturb.
+
+    fun editCompletedSetWeight(exerciseIndex: Int, setIndex: Int, weightKg: Float) =
+        editCompletedSet(exerciseIndex, setIndex) { it.copy(weight = weightKg) }
+
+    fun editCompletedSetReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
+        editCompletedSet(exerciseIndex, setIndex) { it.copy(reps = reps) }
+        // The reps of a logged set count towards a total-reps block, whose pending sets follow what is left to do
+        _state.value.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex)?.prescription
+            ?.takeIf { it.repMode == RepMode.TOTAL }
+            ?.let { reconcileTotalBlock(exerciseIndex, it.blockIndex) }
+    }
+
+    fun editCompletedSetRpe(exerciseIndex: Int, setIndex: Int, rpe: Float?) =
+        editCompletedSet(exerciseIndex, setIndex) { it.copy(rpe = rpe) }
+
+    fun editCompletedSetSeconds(exerciseIndex: Int, setIndex: Int, seconds: Int) =
+        editCompletedSet(exerciseIndex, setIndex) { it.copy(timeSeconds = seconds) }
+
+    private fun editCompletedSet(exerciseIndex: Int, setIndex: Int, update: (WorkoutSetState) -> WorkoutSetState) {
+        val set = _state.value.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex) ?: return
+        if (!set.isCompleted) return
+        updateSetState(exerciseIndex, setIndex) { update(it).copy(isCompleted = true) }
+    }
+
     fun toggleSetComplete(exerciseIndex: Int, setIndex: Int) {
         val currentState = _state.value
         val exState = currentState.exercises.getOrNull(exerciseIndex) ?: return

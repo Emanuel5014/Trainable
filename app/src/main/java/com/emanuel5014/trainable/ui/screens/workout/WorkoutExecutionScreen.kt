@@ -144,6 +144,8 @@ import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
 import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
 import com.emanuel5014.trainable.ui.components.PlateChip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
@@ -212,6 +214,9 @@ fun WorkoutExecutionScreen(
         }
     }
     var isEditingValues by remember { mutableStateOf(false) }
+    // Index of an already logged set being edited in the bottom hub (none by default); it resets with the exercise
+    var editingCompletedIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
+    var lastEditedIndex by remember { mutableIntStateOf(0) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
     val plateExercises by viewModel.plateCalculatorExercises.collectAsState()
@@ -343,6 +348,17 @@ fun WorkoutExecutionScreen(
     }
     val isExerciseCompleted = remember(activeSet) {
         activeSet == null || activeSet.isCompleted
+    }
+    val editedCompletedSet = remember(currentExState?.sets, editingCompletedIndex) {
+        editingCompletedIndex?.let { currentExState?.sets?.getOrNull(it) }?.takeIf { it.isCompleted }
+    }
+    // The set stops being editable once it is unchecked or removed
+    LaunchedEffect(editedCompletedSet == null) {
+        if (editedCompletedSet == null) editingCompletedIndex = null
+    }
+    // Kept so the hub still has something to show while it animates away
+    LaunchedEffect(editingCompletedIndex) {
+        editingCompletedIndex?.let { lastEditedIndex = it }
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -557,6 +573,14 @@ fun WorkoutExecutionScreen(
                         LaunchedEffect(targetActiveSetIndex) {
                             if (targetActiveSetIndex != -1 && targetExState.sets.isNotEmpty()) {
                                 exerciseListState.animateScrollToItem(targetActiveSetIndex)
+                            }
+                        }
+
+                        // Bring the set being edited above the hub that opens under it
+                        LaunchedEffect(editingCompletedIndex) {
+                            val editing = editingCompletedIndex
+                            if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
+                                exerciseListState.animateScrollToItem(editing)
                             }
                         }
 
@@ -876,6 +900,7 @@ fun WorkoutExecutionScreen(
                                                 text = { Text(stringResource(R.string.remove_set_confirm)) },
                                                 confirmButton = {
                                                     TextButton(onClick = {
+                                                        editingCompletedIndex = null
                                                         viewModel.removeSetFromExercise(targetIndex, index)
                                                         showDeleteConfirm = false
                                                     }) {
@@ -989,7 +1014,19 @@ fun WorkoutExecutionScreen(
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 showDeleteConfirm = true
                                             },
-                                            onEditValues = { isEditingValues = !isEditingValues },
+                                            onEditValues = {
+                                                editingCompletedIndex = null
+                                                isEditingValues = !isEditingValues
+                                            },
+                                            // A tap on a logged set edits it in place; the checkbox is still what unchecks it
+                                            onEdit = if (set.isCompleted) {
+                                                {
+                                                    editingCompletedIndex = if (editingCompletedIndex == index) null else index
+                                                    isEditingValues = false
+                                                }
+                                            } else null,
+                                            isEditing = set.isCompleted && editingCompletedIndex == index &&
+                                                targetIndex == state.currentExerciseIndex,
                                             isActive = isActive,
                                             weightUnit = state.weightUnit,
                                             previousNote = set.previousNote,
@@ -1359,6 +1396,8 @@ fun WorkoutExecutionScreen(
 
                         AnimatedContent(
                             targetState = when {
+                                // A logged set being edited wins over the rest card, which stays visible in a slim form
+                                editedCompletedSet != null && !isCardioActive && !isEmomActive -> HubMode.EditingCompleted
                                 isResting -> HubMode.Resting
                                 // Cardio and the EMOM clock have their own screens: the hub only navigates.
                                 isCardioActive || isEmomActive -> HubMode.Cardio
@@ -1386,6 +1425,69 @@ fun WorkoutExecutionScreen(
                                                 showAddExerciseSheet = true
                                             }
                                         )
+                                    }
+                                }
+                                HubMode.EditingCompleted -> {
+                                    val editedIndex = editingCompletedIndex ?: lastEditedIndex
+                                    val exercise = currentExState
+                                    val editedSet = exercise?.sets?.getOrNull(editedIndex)
+                                    if (exercise != null && editedSet != null) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    stringResource(R.string.adjust_set_number, editedSet.setNumber),
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    color = Primary,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    // The rest card is hidden while editing: keep the countdown in sight
+                                                    if (isResting) RestTimerPill(state.remainingRestSeconds)
+                                                    IconButton(onClick = { editingCompletedIndex = null }) {
+                                                        Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
+                                                    }
+                                                }
+                                            }
+                                            if (exercise.isTimeAndWeight) {
+                                                WeightTimeInput(
+                                                    weight = editedSet.weight,
+                                                    seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: 45,
+                                                    onWeightChange = { viewModel.editCompletedSetWeight(state.currentExerciseIndex, editedIndex, it) },
+                                                    onSecondsChange = { viewModel.editCompletedSetSeconds(state.currentExerciseIndex, editedIndex, it) },
+                                                    weightUnit = state.weightUnit
+                                                )
+                                            } else {
+                                                WeightRepsInput(
+                                                    weight = editedSet.weight,
+                                                    reps = editedSet.reps,
+                                                    onWeightChange = { viewModel.editCompletedSetWeight(state.currentExerciseIndex, editedIndex, it) },
+                                                    onRepsChange = { viewModel.editCompletedSetReps(state.currentExerciseIndex, editedIndex, it) },
+                                                    weightUnit = state.weightUnit
+                                                )
+                                                if (rpeInputShown(state.rpeInputMode, exercise, editedSet)) {
+                                                    RpeSelector(
+                                                        value = editedSet.rpe,
+                                                        onValueChange = { viewModel.editCompletedSetRpe(state.currentExerciseIndex, editedIndex, it) }
+                                                    )
+                                                }
+                                            }
+                                            GymButton(
+                                                onClick = { editingCompletedIndex = null },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Icon(Icons.Rounded.Check, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    stringResource(R.string.done).uppercase(),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                                 HubMode.Resting -> {
@@ -1459,11 +1561,7 @@ fun WorkoutExecutionScreen(
                                                         })
                                                     }
                                                 }
-                                                val showRpe = when (state.rpeInputMode) {
-                                                    1 -> true
-                                                    2 -> false
-                                                    else -> currentExState?.isAdvanced == true || set.isExtra
-                                                }
+                                                val showRpe = rpeInputShown(state.rpeInputMode, currentExState, set)
                                                 if (showRpe) {
                                                     RpeSelector(
                                                         value = set.rpe,
@@ -1953,7 +2051,7 @@ fun WorkoutExecutionScreen(
     }
 }
 
-enum class HubMode { Logging, Editing, Resting, Completed, Cardio }
+enum class HubMode { Logging, Editing, EditingCompleted, Resting, Completed, Cardio }
 
 @Composable
 fun rememberAnimatedShape(
@@ -2518,6 +2616,38 @@ fun CardioExerciseContent(
                 }
             }
         }
+    }
+}
+
+/** Whether the RPE selector goes with a set: on every exercise, on none, or only on advanced ones and extra sets. */
+private fun rpeInputShown(rpeInputMode: Int, exercise: WorkoutExerciseState?, set: WorkoutSetState): Boolean =
+    when (rpeInputMode) {
+        1 -> true
+        2 -> false
+        else -> exercise?.isAdvanced == true || set.isExtra
+    }
+
+/** The rest countdown in a small pill, for when the bottom hub is busy with something else. */
+@Composable
+private fun RestTimerPill(remainingSeconds: Int, modifier: Modifier = Modifier) {
+    val time = String.format("%d:%02d", remainingSeconds / 60, remainingSeconds % 60)
+    val description = stringResource(R.string.rest_timer_remaining, time)
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Tertiary)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .semantics { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(Icons.Rounded.Timer, contentDescription = null, tint = OnTertiary, modifier = Modifier.size(16.dp))
+        Text(
+            text = time,
+            style = MaterialTheme.typography.labelLarge,
+            color = OnTertiary,
+            fontWeight = FontWeight.ExtraBold
+        )
     }
 }
 
