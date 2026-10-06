@@ -172,6 +172,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.IntensityType
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
@@ -718,12 +719,17 @@ fun WorkoutExecutionScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        val setsCount = targetExState.sets.size
+                                        // An advanced exercise reads what the current week prescribes: the plan's own
+                                        // sets and reps targets are only kept in step with the first week
+                                        val weekTargets = if (targetExState.isAdvanced) {
+                                            PrescriptionExpander.legacyTargets(targetExState.blocks)
+                                        } else null
+                                        val setsCount = weekTargets?.first ?: targetExState.sets.size
                                         val repsCount = if (targetExState.isTimeAndWeight) {
                                             val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
                                             "${sec}s"
                                         } else {
-                                            targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
+                                            weekTargets?.second ?: targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
                                                 if (targetExState.sets.isEmpty()) "0"
                                                 else {
                                                     val allReps = targetExState.sets.map { it.reps }
