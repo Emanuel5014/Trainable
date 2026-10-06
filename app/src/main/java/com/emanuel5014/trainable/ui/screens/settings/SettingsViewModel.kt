@@ -24,6 +24,7 @@ import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.UpdateManager
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
@@ -341,6 +342,78 @@ class SettingsViewModel @Inject constructor(
     fun setAdvancedProgrammingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setAdvancedProgrammingEnabled(enabled)
+        }
+    }
+
+    val timerAddSeconds = userPrefsRepository.timerAddSeconds.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = TimerAdjustment.DEFAULT_ADD_SECONDS
+    )
+
+    fun setTimerAddSeconds(seconds: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerAddSeconds(seconds)
+        }
+    }
+
+    val timerSubtractSeconds = userPrefsRepository.timerSubtractSeconds.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = TimerAdjustment.DEFAULT_SUBTRACT_SECONDS
+    )
+
+    fun setTimerSubtractSeconds(seconds: Int) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerSubtractSeconds(seconds)
+        }
+    }
+
+    val timerAddEnabled = userPrefsRepository.timerAddEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setTimerAddEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerAddEnabled(enabled)
+        }
+    }
+
+    val timerSubtractEnabled = userPrefsRepository.timerSubtractEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setTimerSubtractEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerSubtractEnabled(enabled)
+        }
+    }
+
+    val timerShowTimeButtons = userPrefsRepository.timerShowTimeButtons.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setTimerShowTimeButtons(show: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerShowTimeButtons(show)
+        }
+    }
+
+    val timerShowSkipButton = userPrefsRepository.timerShowSkipButton.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setTimerShowSkipButton(show: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setTimerShowSkipButton(show)
         }
     }
 

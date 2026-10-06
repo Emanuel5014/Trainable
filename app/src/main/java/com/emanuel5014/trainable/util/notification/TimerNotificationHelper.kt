@@ -18,6 +18,7 @@ import android.os.VibratorManager
 import android.os.VibrationEffect
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.domain.emom.EmomClock
+import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
@@ -69,6 +70,25 @@ class TimerNotificationHelper @Inject constructor(
     private val emomNotificationId = 1003
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /** What the + and - buttons of the timer notifications move the countdown by (Workout settings). */
+    @Volatile private var addSeconds = TimerAdjustment.DEFAULT_ADD_SECONDS
+    @Volatile private var subtractSeconds = TimerAdjustment.DEFAULT_SUBTRACT_SECONDS
+
+    /** Which buttons the timer notifications carry (Workout settings). */
+    @Volatile private var showTimeButtons = true
+    @Volatile private var showSkipButton = true
+    @Volatile private var addEnabled = true
+    @Volatile private var subtractEnabled = true
+
+    init {
+        scope.launch { userPrefsRepository.timerAddSeconds.collect { addSeconds = it } }
+        scope.launch { userPrefsRepository.timerSubtractSeconds.collect { subtractSeconds = it } }
+        scope.launch { userPrefsRepository.timerShowTimeButtons.collect { showTimeButtons = it } }
+        scope.launch { userPrefsRepository.timerShowSkipButton.collect { showSkipButton = it } }
+        scope.launch { userPrefsRepository.timerAddEnabled.collect { addEnabled = it } }
+        scope.launch { userPrefsRepository.timerSubtractEnabled.collect { subtractEnabled = it } }
+    }
     private var vibrationJob: kotlinx.coroutines.Job? = null
     private var vibrator: Vibrator? = null
 
@@ -381,6 +401,12 @@ class TimerNotificationHelper @Inject constructor(
         }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        val subtractIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_SUBTRACT
+            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+        }
+        val subtractPendingIntent = PendingIntent.getBroadcast(context, 5, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
         val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
             val formattedWeight = WeightUnitConverter.formatWithUnit(
                 WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
@@ -419,8 +445,11 @@ class TimerNotificationHelper @Inject constructor(
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
             .setContentText(nextSetLabel)
-            .addAction(0, "+30s", addPendingIntent)
-            .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .apply {
+                if (showTimeButtons && subtractEnabled) addAction(0, "−${subtractSeconds}s", subtractPendingIntent)
+                if (showTimeButtons && addEnabled) addAction(0, "+${addSeconds}s", addPendingIntent)
+                if (showSkipButton) addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            }
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
                     val progressStyle = NotificationCompat.ProgressStyle()
@@ -556,6 +585,13 @@ class TimerNotificationHelper @Inject constructor(
             context, 12, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val subtractIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_SUBTRACT
+        }
+        val subtractPendingIntent = PendingIntent.getBroadcast(
+            context, 15, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val warmupDesc = context.getString(R.string.warmup_timer_description)
 
         val total = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
@@ -576,8 +612,11 @@ class TimerNotificationHelper @Inject constructor(
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
-            .addAction(0, "+30s", addPendingIntent)
-            .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .apply {
+                if (showTimeButtons && subtractEnabled) addAction(0, "−${subtractSeconds}s", subtractPendingIntent)
+                if (showTimeButtons && addEnabled) addAction(0, "+${addSeconds}s", addPendingIntent)
+                if (showSkipButton) addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            }
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
                     val progressStyle = NotificationCompat.ProgressStyle()

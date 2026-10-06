@@ -1150,4 +1150,9 @@
     <string name="plate_remove">Scheibe entfernen</string>
     <string name="plate_apply">%1$s übernehmen</string>
     <string name="plate_turn_off">Für diese Übung deaktivieren</string>
+    <string name="timer_buttons">Timer-Tasten</string>
+    <string name="timer_buttons_desc">Wähle, welche der Tasten + und − der Erholungs- und der Aufwärmtimer in der App und in der Benachrichtigung zeigen, und um wie viel sie den Countdown verschieben.</string>
+    <string name="timer_add_time">Zeit hinzufügen</string>
+    <string name="timer_subtract_time">Zeit abziehen</string>
+    <string name="warmup_label">Aufwärmen</string>
 </resources>

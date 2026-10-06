@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -78,6 +79,15 @@ class UserPreferencesRepository @Inject constructor(
     /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
     val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
     val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
+    /** Seconds the + and - buttons of the rest and warmup timers move the countdown by. */
+    val TIMER_ADD_SECONDS = intPreferencesKey("timer_add_seconds")
+    val TIMER_SUBTRACT_SECONDS = intPreferencesKey("timer_subtract_seconds")
+    /** Whether the rest and warmup timers (and their notifications) show the - / + buttons and the skip button. */
+    val TIMER_SHOW_TIME_BUTTONS = booleanPreferencesKey("timer_show_time_buttons")
+    val TIMER_SHOW_SKIP_BUTTON = booleanPreferencesKey("timer_show_skip_button")
+    /** Each of the two time buttons on its own: with both off the timers carry neither. On by default. */
+    val TIMER_ADD_ENABLED = booleanPreferencesKey("timer_add_enabled")
+    val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** 0 = RPE input only on advanced (%1RM) exercises, 1 = on every exercise, 2 = never. */
@@ -372,6 +382,60 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setExerciseMediaLarge(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[EXERCISE_MEDIA_LARGE] = enabled
+        }
+    }
+
+    val timerAddSeconds: Flow<Int> = dataStore.data
+        .map { preferences -> TimerAdjustment.sanitizeAdd(preferences[TIMER_ADD_SECONDS]) }
+
+    suspend fun setTimerAddSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_ADD_SECONDS] = TimerAdjustment.sanitizeAdd(seconds)
+        }
+    }
+
+    val timerSubtractSeconds: Flow<Int> = dataStore.data
+        .map { preferences -> TimerAdjustment.sanitizeSubtract(preferences[TIMER_SUBTRACT_SECONDS]) }
+
+    suspend fun setTimerSubtractSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SUBTRACT_SECONDS] = TimerAdjustment.sanitizeSubtract(seconds)
+        }
+    }
+
+    val timerAddEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_ADD_ENABLED] ?: true }
+
+    suspend fun setTimerAddEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_ADD_ENABLED] = enabled
+        }
+    }
+
+    val timerSubtractEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SUBTRACT_ENABLED] ?: true }
+
+    suspend fun setTimerSubtractEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SUBTRACT_ENABLED] = enabled
+        }
+    }
+
+    val timerShowTimeButtons: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SHOW_TIME_BUTTONS] ?: true }
+
+    suspend fun setTimerShowTimeButtons(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SHOW_TIME_BUTTONS] = show
+        }
+    }
+
+    val timerShowSkipButton: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SHOW_SKIP_BUTTON] ?: true }
+
+    suspend fun setTimerShowSkipButton(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SHOW_SKIP_BUTTON] = show
         }
     }
 

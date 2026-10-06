@@ -1150,4 +1150,9 @@
     <string name="plate_remove">Rimuovi disco</string>
     <string name="plate_apply">Imposta %1$s</string>
     <string name="plate_turn_off">Disattiva per questo esercizio</string>
+    <string name="timer_buttons">Pulsanti del timer</string>
+    <string name="timer_buttons_desc">Scegli quali pulsanti + e − mostrano il timer di recupero e di riscaldamento, nell\'app e nella notifica, e di quanto spostano il conto alla rovescia.</string>
+    <string name="timer_add_time">Aggiungi tempo</string>
+    <string name="timer_subtract_time">Togli tempo</string>
+    <string name="warmup_label">Riscaldamento</string>
 </resources>

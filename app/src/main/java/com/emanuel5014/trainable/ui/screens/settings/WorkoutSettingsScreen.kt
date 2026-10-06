@@ -54,6 +54,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -74,6 +75,10 @@ fun WorkoutSettingsScreen(
     val autoStopTimeWeightAtTarget by viewModel.autoStopTimeWeightAtTarget.collectAsState()
     val keepScreenOnCardioTimer by viewModel.keepScreenOnCardioTimer.collectAsState()
     val keepScreenOnSetTimer by viewModel.keepScreenOnSetTimer.collectAsState()
+    val timerAddSeconds by viewModel.timerAddSeconds.collectAsState()
+    val timerSubtractSeconds by viewModel.timerSubtractSeconds.collectAsState()
+    val timerAddEnabled by viewModel.timerAddEnabled.collectAsState()
+    val timerSubtractEnabled by viewModel.timerSubtractEnabled.collectAsState()
     val plateCalculatorEnabled by viewModel.plateCalculatorEnabled.collectAsState()
     val plateCalculatorPlates by viewModel.plateCalculatorPlates.collectAsState()
 
@@ -362,6 +367,91 @@ fun WorkoutSettingsScreen(
                             }
                         }
                         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                    }
+                }
+            }
+
+            // How far the + and - buttons of the rest and warmup timers move the countdown
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Rounded.Timer,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                stringResource(R.string.timer_buttons),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.timer_buttons_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    // Each button has its own switch: only -, only +, both or neither
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.timer_add_time),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SettingsSwitch(
+                                checked = timerAddEnabled,
+                                onCheckedChange = { viewModel.setTimerAddEnabled(it) }
+                            )
+                        }
+                        if (timerAddEnabled) {
+                            com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
+                                options = TimerAdjustment.ADD_OPTIONS.map { "+${it}s" },
+                                selectedIndex = TimerAdjustment.ADD_OPTIONS.indexOf(timerAddSeconds),
+                                onSelect = { viewModel.setTimerAddSeconds(TimerAdjustment.ADD_OPTIONS[it]) }
+                            )
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.timer_subtract_time),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SettingsSwitch(
+                                checked = timerSubtractEnabled,
+                                onCheckedChange = { viewModel.setTimerSubtractEnabled(it) }
+                            )
+                        }
+                        if (timerSubtractEnabled) {
+                            com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
+                                options = TimerAdjustment.SUBTRACT_OPTIONS.map { "−${it}s" },
+                                selectedIndex = TimerAdjustment.SUBTRACT_OPTIONS.indexOf(timerSubtractSeconds),
+                                onSelect = { viewModel.setTimerSubtractSeconds(TimerAdjustment.SUBTRACT_OPTIONS[it]) }
+                            )
+                        }
                     }
                 }
             }

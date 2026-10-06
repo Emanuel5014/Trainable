@@ -40,6 +40,7 @@ import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +85,15 @@ data class WorkoutState(
     val swipeActionsEnabled: Boolean = true,
     val exerciseMediaEnabled: Boolean = false,
     val exerciseMediaLarge: Boolean = true,
+    /** Seconds the + and - buttons of the rest and warmup timers move the countdown by. */
+    val timerAddSeconds: Int = TimerAdjustment.DEFAULT_ADD_SECONDS,
+    val timerSubtractSeconds: Int = TimerAdjustment.DEFAULT_SUBTRACT_SECONDS,
+    /** Which buttons the rest and warmup timers show: the - / + pair and the skip button. */
+    val timerShowTimeButtons: Boolean = true,
+    val timerShowSkipButton: Boolean = true,
+    /** Each time button on its own; a button shows only while both this and [timerShowTimeButtons] are on. */
+    val timerAddEnabled: Boolean = true,
+    val timerSubtractEnabled: Boolean = true,
     val plateCalculatorEnabled: Boolean = false,
     /** Plates the gym has, in [weightUnit], heaviest first. */
     val availablePlates: List<Float> = PlateCalculator.DEFAULT_PLATES_KG,
@@ -135,6 +145,13 @@ data class WorkoutState(
 
     val totalExercises: Int
         get() = exercises.size
+
+    /** The time buttons the rest and warmup timers actually show. */
+    val showTimerAdd: Boolean
+        get() = timerShowTimeButtons && timerAddEnabled
+
+    val showTimerSubtract: Boolean
+        get() = timerShowTimeButtons && timerSubtractEnabled
 }
 
 /**
@@ -331,7 +348,8 @@ class WorkoutViewModel @Inject constructor(
             TimerNotificationReceiver.timerEvents.collect { action ->
                 when (action) {
                     TimerNotificationReceiver.TimerAction.SKIP -> skipRestTimer()
-                    TimerNotificationReceiver.TimerAction.ADD_30S -> addRestTime(30)
+                    TimerNotificationReceiver.TimerAction.ADD -> adjustRestTime(_state.value.timerAddSeconds)
+                    TimerNotificationReceiver.TimerAction.SUBTRACT -> adjustRestTime(-_state.value.timerSubtractSeconds)
                     TimerNotificationReceiver.TimerAction.DISMISS -> timerNotificationHelper.cancelTimer()
                     TimerNotificationReceiver.TimerAction.FINISHED -> handleTimerFinished()
                 }
@@ -354,7 +372,8 @@ class WorkoutViewModel @Inject constructor(
             TimerNotificationReceiver.warmupTimerEvents.collect { action ->
                 when (action) {
                     TimerNotificationReceiver.WarmupTimerAction.SKIP -> skipWarmupTimer()
-                    TimerNotificationReceiver.WarmupTimerAction.ADD_30S -> addWarmupTime(30)
+                    TimerNotificationReceiver.WarmupTimerAction.ADD -> adjustWarmupTime(_state.value.timerAddSeconds)
+                    TimerNotificationReceiver.WarmupTimerAction.SUBTRACT -> adjustWarmupTime(-_state.value.timerSubtractSeconds)
                     TimerNotificationReceiver.WarmupTimerAction.DISMISS -> timerNotificationHelper.cancelWarmupTimer()
                     TimerNotificationReceiver.WarmupTimerAction.FINISHED -> handleWarmupTimerFinished()
                 }
@@ -401,6 +420,42 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.exerciseMediaLarge.collect { large ->
                 _state.update { it.copy(exerciseMediaLarge = large) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerAddSeconds.collect { seconds ->
+                _state.update { it.copy(timerAddSeconds = seconds) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerSubtractSeconds.collect { seconds ->
+                _state.update { it.copy(timerSubtractSeconds = seconds) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerAddEnabled.collect { enabled ->
+                _state.update { it.copy(timerAddEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerSubtractEnabled.collect { enabled ->
+                _state.update { it.copy(timerSubtractEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerShowTimeButtons.collect { show ->
+                _state.update { it.copy(timerShowTimeButtons = show) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.timerShowSkipButton.collect { show ->
+                _state.update { it.copy(timerShowSkipButton = show) }
             }
         }
 
@@ -1990,6 +2045,9 @@ class WorkoutViewModel @Inject constructor(
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(remainingRestSeconds = seconds, totalRestSeconds = seconds, restTimerEndTime = endTime) }
         if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
+            // The rest timer takes the place of a "warmup finished" notification still on screen; a warmup that is
+            // still counting down keeps its own
+            if (_state.value.warmupTimerEndTime == null) timerNotificationHelper.cancelWarmupTimer()
             _state.value.sessionId?.let { sessionId ->
                 timerNotificationHelper.startOrUpdateTimerNotification(
                     seconds, sessionId, exerciseName, nextSetNumber, nextSetWeight, nextSetReps, previousReps, weightUnit,
@@ -2120,12 +2178,17 @@ class WorkoutViewModel @Inject constructor(
         saveTimerToSession(null, null)
     }
 
-    fun addRestTime(seconds: Int) {
+    /** Moves the rest countdown by [seconds] (negative takes time off); taking off all that is left ends it. */
+    fun adjustRestTime(seconds: Int) {
         val currentEnd = _state.value.restTimerEndTime
         if (currentEnd != null) {
             val newEnd = currentEnd + (seconds * 1000L)
             val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
-            val newTotal = _state.value.totalRestSeconds + seconds
+            if (seconds < 0 && newRemaining <= 0) {
+                skipRestTimer()
+                return
+            }
+            val newTotal = (_state.value.totalRestSeconds + seconds).coerceAtLeast(newRemaining)
             _state.update { it.copy(restTimerEndTime = newEnd, remainingRestSeconds = newRemaining, totalRestSeconds = newTotal) }
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
                 _state.value.sessionId?.let { sessionId ->
@@ -2167,12 +2230,17 @@ class WorkoutViewModel @Inject constructor(
         clearWarmupTimerInSession()
     }
 
-    fun addWarmupTime(seconds: Int) {
+    /** Moves the warmup countdown by [seconds] (negative takes time off); taking off all that is left ends it. */
+    fun adjustWarmupTime(seconds: Int) {
         val currentEnd = _state.value.warmupTimerEndTime
         if (currentEnd != null) {
             val newEnd = currentEnd + (seconds * 1000L)
             val newRemaining = ((newEnd - System.currentTimeMillis()) / 1000).toInt().coerceAtLeast(0)
-            val newTotal = _state.value.warmupTimerTotalSeconds + seconds
+            if (seconds < 0 && newRemaining <= 0) {
+                skipWarmupTimer()
+                return
+            }
+            val newTotal = (_state.value.warmupTimerTotalSeconds + seconds).coerceAtLeast(newRemaining)
             _state.update { it.copy(warmupTimerEndTime = newEnd, warmupTimerRemaining = newRemaining, warmupTimerTotalSeconds = newTotal) }
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
                 timerNotificationHelper.startOrUpdateWarmupTimerNotification(newRemaining, totalSeconds = newTotal)

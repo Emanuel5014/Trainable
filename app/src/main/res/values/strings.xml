@@ -1150,4 +1150,9 @@
     <string name="plate_remove">Remove plate</string>
     <string name="plate_apply">Set %1$s</string>
     <string name="plate_turn_off">Turn off for this exercise</string>
+    <string name="timer_buttons">Timer buttons</string>
+    <string name="timer_buttons_desc">Choose which of the + and − buttons the rest and warmup timers show, in the app and in the notification, and how much they move the countdown.</string>
+    <string name="timer_add_time">Add time</string>
+    <string name="timer_subtract_time">Remove time</string>
+    <string name="warmup_label">Warmup</string>
 </resources>

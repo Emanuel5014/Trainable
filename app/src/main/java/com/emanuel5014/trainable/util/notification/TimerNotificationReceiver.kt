@@ -27,12 +27,15 @@ class TimerNotificationReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_SKIP = "com.emanuel5014.trainable.ACTION_SKIP"
+        // The value keeps its old name because the manifest filter lists it; it adds whatever the settings say
         const val ACTION_ADD_30S = "com.emanuel5014.trainable.ACTION_ADD_30S"
+        const val ACTION_SUBTRACT = "com.emanuel5014.trainable.ACTION_SUBTRACT"
         const val ACTION_DISMISS = "com.emanuel5014.trainable.ACTION_DISMISS"
         const val ACTION_TIMER_FINISHED = "com.emanuel5014.trainable.ACTION_TIMER_FINISHED"
 
         const val ACTION_WARMUP_SKIP = "com.emanuel5014.trainable.ACTION_WARMUP_SKIP"
         const val ACTION_WARMUP_ADD_30S = "com.emanuel5014.trainable.ACTION_WARMUP_ADD_30S"
+        const val ACTION_WARMUP_SUBTRACT = "com.emanuel5014.trainable.ACTION_WARMUP_SUBTRACT"
         const val ACTION_WARMUP_DISMISS = "com.emanuel5014.trainable.ACTION_WARMUP_DISMISS"
         const val ACTION_WARMUP_FINISHED = "com.emanuel5014.trainable.ACTION_WARMUP_FINISHED"
 
@@ -52,8 +55,8 @@ class TimerNotificationReceiver : BroadcastReceiver() {
         val emomEvents = MutableSharedFlow<EmomAction>(extraBufferCapacity = 4)
     }
 
-    enum class TimerAction { SKIP, ADD_30S, DISMISS, FINISHED }
-    enum class WarmupTimerAction { SKIP, ADD_30S, DISMISS, FINISHED }
+    enum class TimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED }
+    enum class WarmupTimerAction { SKIP, ADD, SUBTRACT, DISMISS, FINISHED }
 
     /** What the EMOM notification or its round alarm asks of the workout. */
     enum class EmomAction { BOUNDARY, DONE, PAUSE, RESUME, STOP }
@@ -79,7 +82,10 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                 }
             }
             ACTION_ADD_30S -> {
-                timerEvents.tryEmit(TimerAction.ADD_30S)
+                timerEvents.tryEmit(TimerAction.ADD)
+            }
+            ACTION_SUBTRACT -> {
+                timerEvents.tryEmit(TimerAction.SUBTRACT)
             }
             ACTION_DISMISS -> {
                 timerEvents.tryEmit(TimerAction.DISMISS)
@@ -105,7 +111,10 @@ class TimerNotificationReceiver : BroadcastReceiver() {
                 timerNotificationHelper.cancelWarmupTimer()
             }
             ACTION_WARMUP_ADD_30S -> {
-                warmupTimerEvents.tryEmit(WarmupTimerAction.ADD_30S)
+                warmupTimerEvents.tryEmit(WarmupTimerAction.ADD)
+            }
+            ACTION_WARMUP_SUBTRACT -> {
+                warmupTimerEvents.tryEmit(WarmupTimerAction.SUBTRACT)
             }
             ACTION_WARMUP_DISMISS -> {
                 warmupTimerEvents.tryEmit(WarmupTimerAction.DISMISS)

@@ -1150,4 +1150,9 @@
     <string name="plate_remove">Retirer le disque</string>
     <string name="plate_apply">Définir %1$s</string>
     <string name="plate_turn_off">Désactiver pour cet exercice</string>
+    <string name="timer_buttons">Boutons du minuteur</string>
+    <string name="timer_buttons_desc">Choisis lesquels des boutons + et − affichent le minuteur de repos et d\'échauffement, dans l\'appli et dans la notification, et de combien ils déplacent le décompte.</string>
+    <string name="timer_add_time">Ajouter du temps</string>
+    <string name="timer_subtract_time">Retirer du temps</string>
+    <string name="warmup_label">Échauffement</string>
 </resources>

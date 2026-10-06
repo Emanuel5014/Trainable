@@ -1150,4 +1150,9 @@
     <string name="plate_remove">Quitar disco</string>
     <string name="plate_apply">Establecer %1$s</string>
     <string name="plate_turn_off">Desactivar para este ejercicio</string>
+    <string name="timer_buttons">Botones del temporizador</string>
+    <string name="timer_buttons_desc">Elige cuáles de los botones + y − muestran el temporizador de descanso y el de calentamiento, en la app y en la notificación, y cuánto mueven la cuenta atrás.</string>
+    <string name="timer_add_time">Añadir tiempo</string>
+    <string name="timer_subtract_time">Quitar tiempo</string>
+    <string name="warmup_label">Calentamiento</string>
 </resources>

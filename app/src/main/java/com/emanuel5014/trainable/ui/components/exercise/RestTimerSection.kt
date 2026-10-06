@@ -43,7 +43,14 @@ fun RestTimerSection(
     totalRestSeconds: Int = 90,
     onAddTime: () -> Unit,
     onSkip: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSubtractTime: () -> Unit = {},
+    /** Which of the two time buttons to show (Workout settings). */
+    showAdd: Boolean = true,
+    showSubtract: Boolean = true,
+    /** Seconds the two time buttons move the countdown by (Workout settings), only used for their labels. */
+    addSeconds: Int = 30,
+    subtractSeconds: Int = 10
 ) {
     val isVisible = remainingSeconds > 0
     val progress = if (totalRestSeconds > 0) 1f - (remainingSeconds.toFloat() / totalRestSeconds.toFloat()) else 0f
@@ -106,18 +113,11 @@ fun RestTimerSection(
                 }
                 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    FilledIconButton(
-                        onClick = onAddTime,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = OnTertiary.copy(alpha = 0.1f),
-                            contentColor = OnTertiary
-                        )
-                    ) {
-                        Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
-                    }
-                    
+                    if (showSubtract) TimerAdjustButton(label = "−${subtractSeconds}s", onClick = onSubtractTime)
+                    if (showAdd) TimerAdjustButton(label = "+${addSeconds}s", onClick = onAddTime)
+
                     FilledIconButton(
                         onClick = onSkip,
                         colors = IconButtonDefaults.filledIconButtonColors(
@@ -133,5 +133,20 @@ fun RestTimerSection(
                 }
             }
         }
+    }
+}
+
+/** A small text button on a timer card that moves the countdown, e.g. "+30s" or "−10s". */
+@Composable
+fun TimerAdjustButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    FilledIconButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = OnTertiary.copy(alpha = 0.1f),
+            contentColor = OnTertiary
+        )
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
     }
 }

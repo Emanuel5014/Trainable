@@ -1150,4 +1150,9 @@
     <string name="plate_remove">Remover anilha</string>
     <string name="plate_apply">Definir %1$s</string>
     <string name="plate_turn_off">Desativar para este exercício</string>
+    <string name="timer_buttons">Botões do temporizador</string>
+    <string name="timer_buttons_desc">Escolha quais dos botões + e − o temporizador de descanso e o de aquecimento mostram, no app e na notificação, e quanto eles movem a contagem regressiva.</string>
+    <string name="timer_add_time">Adicionar tempo</string>
+    <string name="timer_subtract_time">Remover tempo</string>
+    <string name="warmup_label">Aquecimento</string>
 </resources>

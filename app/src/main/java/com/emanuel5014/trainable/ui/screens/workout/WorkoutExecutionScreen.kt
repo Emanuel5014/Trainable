@@ -149,6 +149,7 @@ import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
+import com.emanuel5014.trainable.ui.components.TimerAdjustButton
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.rounded.FastForward
@@ -1352,10 +1353,12 @@ fun WorkoutExecutionScreen(
                                         Spacer(modifier = Modifier.width(14.dp))
                                         Column {
                                             Text(
-                                                text = stringResource(R.string.warmup_timer).uppercase(),
+                                                text = stringResource(R.string.warmup_label).uppercase(),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = OnTertiary.copy(alpha = 0.7f),
-                                                fontWeight = FontWeight.ExtraBold
+                                                fontWeight = FontWeight.ExtraBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             val wMinutes = state.warmupTimerRemaining / 60
                                             val wSeconds = state.warmupTimerRemaining % 60
@@ -1367,15 +1370,18 @@ fun WorkoutExecutionScreen(
                                             )
                                         }
                                     }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        FilledIconButton(
-                                            onClick = { viewModel.addWarmupTime(30) },
-                                            colors = IconButtonDefaults.filledIconButtonColors(
-                                                containerColor = OnTertiary.copy(alpha = 0.1f),
-                                                contentColor = OnTertiary
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        if (state.showTimerSubtract) {
+                                            TimerAdjustButton(
+                                                label = "−${state.timerSubtractSeconds}s",
+                                                onClick = { viewModel.adjustWarmupTime(-state.timerSubtractSeconds) }
                                             )
-                                        ) {
-                                            Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
+                                        }
+                                        if (state.showTimerAdd) {
+                                            TimerAdjustButton(
+                                                label = "+${state.timerAddSeconds}s",
+                                                onClick = { viewModel.adjustWarmupTime(state.timerAddSeconds) }
+                                            )
                                         }
                                         FilledIconButton(
                                             onClick = { viewModel.skipWarmupTimer() },
@@ -1495,7 +1501,12 @@ fun WorkoutExecutionScreen(
                                         RestTimerSection(
                                             remainingSeconds = state.remainingRestSeconds,
                                             totalRestSeconds = state.totalRestSeconds,
-                                            onAddTime = { viewModel.addRestTime(30) },
+                                            onAddTime = { viewModel.adjustRestTime(state.timerAddSeconds) },
+                                            onSubtractTime = { viewModel.adjustRestTime(-state.timerSubtractSeconds) },
+                                            addSeconds = state.timerAddSeconds,
+                                            subtractSeconds = state.timerSubtractSeconds,
+                                            showAdd = state.showTimerAdd,
+                                            showSubtract = state.showTimerSubtract,
                                             onSkip = { viewModel.skipRestTimer() }
                                         )
                                         // The rest is the time to load the bar for the next set

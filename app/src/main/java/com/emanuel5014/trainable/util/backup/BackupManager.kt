@@ -9,6 +9,7 @@ import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
+import com.emanuel5014.trainable.util.TimerAdjustment
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -254,6 +255,12 @@ class BackupManager @Inject constructor(
                 json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
                 json.put("exercise_media_enabled", prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] ?: false)
                 json.put("exercise_media_large", prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] ?: true)
+                json.put("timer_add_seconds", TimerAdjustment.sanitizeAdd(prefs[UserPreferencesRepository.TIMER_ADD_SECONDS]))
+                json.put("timer_subtract_seconds", TimerAdjustment.sanitizeSubtract(prefs[UserPreferencesRepository.TIMER_SUBTRACT_SECONDS]))
+                json.put("timer_add_enabled", prefs[UserPreferencesRepository.TIMER_ADD_ENABLED] ?: true)
+                json.put("timer_subtract_enabled", prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] ?: true)
+                json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
+                json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
                 json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB]?.let { json.put("plate_calculator_plates_lb", it) }
@@ -406,6 +413,18 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] = jsonObject.getBoolean("exercise_media_enabled")
                                             if (jsonObject.has("exercise_media_large"))
                                                 prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] = jsonObject.getBoolean("exercise_media_large")
+                                            if (jsonObject.has("timer_add_seconds"))
+                                                prefs[UserPreferencesRepository.TIMER_ADD_SECONDS] = TimerAdjustment.sanitizeAdd(jsonObject.getInt("timer_add_seconds"))
+                                            if (jsonObject.has("timer_subtract_seconds"))
+                                                prefs[UserPreferencesRepository.TIMER_SUBTRACT_SECONDS] = TimerAdjustment.sanitizeSubtract(jsonObject.getInt("timer_subtract_seconds"))
+                                            if (jsonObject.has("timer_add_enabled"))
+                                                prefs[UserPreferencesRepository.TIMER_ADD_ENABLED] = jsonObject.getBoolean("timer_add_enabled")
+                                            if (jsonObject.has("timer_subtract_enabled"))
+                                                prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] = jsonObject.getBoolean("timer_subtract_enabled")
+                                            if (jsonObject.has("timer_show_time_buttons"))
+                                                prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] = jsonObject.getBoolean("timer_show_time_buttons")
+                                            if (jsonObject.has("timer_show_skip_button"))
+                                                prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] = jsonObject.getBoolean("timer_show_skip_button")
                                             if (jsonObject.has("plate_calculator_enabled"))
                                                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] = jsonObject.getBoolean("plate_calculator_enabled")
                                             if (jsonObject.has("plate_calculator_plates_kg"))
