@@ -72,9 +72,9 @@ fun SetLogRow(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     onEditValues: (() -> Unit)? = null,
-    /** Opens a completed set for editing. Without it a tap on a completed row unchecks it, as before. */
+    /** Opens a set that is not the active one for editing, done or still to do. Without it a tap on the row checks it. */
     onEdit: (() -> Unit)? = null,
-    /** This completed set is the one being edited. */
+    /** This set is the one being edited. */
     isEditing: Boolean = false,
     isActive: Boolean = false,
     weightUnit: String = "kg",
@@ -124,7 +124,7 @@ fun SetLogRow(
             .then(
                 when {
                     isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                    isEditing && isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
+                    isEditing -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
                     else -> Modifier
                 }
             )
@@ -133,7 +133,7 @@ fun SetLogRow(
                 onClick = {
                     when {
                         isActive && onEditValues != null -> onEditValues()
-                        isCompleted && onEdit != null -> onEdit()
+                        onEdit != null -> onEdit()
                         else -> onToggleComplete()
                     }
                 },

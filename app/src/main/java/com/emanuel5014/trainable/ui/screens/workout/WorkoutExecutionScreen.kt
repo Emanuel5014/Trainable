@@ -216,8 +216,8 @@ fun WorkoutExecutionScreen(
         }
     }
     var isEditingValues by remember { mutableStateOf(false) }
-    // Index of an already logged set being edited in the bottom hub (none by default); it resets with the exercise
-    var editingCompletedIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
+    // Index of a set being edited in place in the bottom hub, done or still to do (none by default); it resets with the exercise
+    var editingSetIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
     var lastEditedIndex by remember { mutableIntStateOf(0) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
@@ -351,16 +351,25 @@ fun WorkoutExecutionScreen(
     val isExerciseCompleted = remember(activeSet) {
         activeSet == null || activeSet.isCompleted
     }
-    val editedCompletedSet = remember(currentExState?.sets, editingCompletedIndex) {
-        editingCompletedIndex?.let { currentExState?.sets?.getOrNull(it) }?.takeIf { it.isCompleted }
+    val setBeingEdited = remember(currentExState?.sets, editingSetIndex) {
+        editingSetIndex?.let { currentExState?.sets?.getOrNull(it) }
     }
-    // The set stops being editable once it is unchecked or removed
-    LaunchedEffect(editedCompletedSet == null) {
-        if (editedCompletedSet == null) editingCompletedIndex = null
+    LaunchedEffect(setBeingEdited, activeSetIndex) {
+        val editing = setBeingEdited
+        when {
+            // The set is gone (removed)
+            editing == null -> editingSetIndex = null
+            // The set being edited came up next: it moves to the panel of the active set, which can also log it
+            // (while a rest is running that panel waits for the rest to end, so it is not opened behind it)
+            editingSetIndex == activeSetIndex && !editing.isCompleted -> {
+                editingSetIndex = null
+                isEditingValues = state.remainingRestSeconds <= 0
+            }
+        }
     }
     // Kept so the hub still has something to show while it animates away
-    LaunchedEffect(editingCompletedIndex) {
-        editingCompletedIndex?.let { lastEditedIndex = it }
+    LaunchedEffect(editingSetIndex) {
+        editingSetIndex?.let { lastEditedIndex = it }
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -579,8 +588,8 @@ fun WorkoutExecutionScreen(
                         }
 
                         // Bring the set being edited above the hub that opens under it
-                        LaunchedEffect(editingCompletedIndex) {
-                            val editing = editingCompletedIndex
+                        LaunchedEffect(editingSetIndex) {
+                            val editing = editingSetIndex
                             if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
                                 exerciseListState.animateScrollToItem(editing)
                             }
@@ -907,7 +916,7 @@ fun WorkoutExecutionScreen(
                                                 text = { Text(stringResource(R.string.remove_set_confirm)) },
                                                 confirmButton = {
                                                     TextButton(onClick = {
-                                                        editingCompletedIndex = null
+                                                        editingSetIndex = null
                                                         viewModel.removeSetFromExercise(targetIndex, index)
                                                         showDeleteConfirm = false
                                                     }) {
@@ -1022,18 +1031,16 @@ fun WorkoutExecutionScreen(
                                                 showDeleteConfirm = true
                                             },
                                             onEditValues = {
-                                                editingCompletedIndex = null
+                                                editingSetIndex = null
                                                 isEditingValues = !isEditingValues
                                             },
-                                            // A tap on a logged set edits it in place; the checkbox is still what unchecks it
-                                            onEdit = if (set.isCompleted) {
-                                                {
-                                                    editingCompletedIndex = if (editingCompletedIndex == index) null else index
-                                                    isEditingValues = false
-                                                }
-                                            } else null,
-                                            isEditing = set.isCompleted && editingCompletedIndex == index &&
-                                                targetIndex == state.currentExerciseIndex,
+                                            // A tap on the card edits that set in place, done or still to do; the square
+                                            // on the right is what checks and unchecks it
+                                            onEdit = {
+                                                editingSetIndex = if (editingSetIndex == index) null else index
+                                                isEditingValues = false
+                                            },
+                                            isEditing = editingSetIndex == index && targetIndex == state.currentExerciseIndex,
                                             isActive = isActive,
                                             weightUnit = state.weightUnit,
                                             previousNote = set.previousNote,
@@ -1408,8 +1415,8 @@ fun WorkoutExecutionScreen(
 
                         AnimatedContent(
                             targetState = when {
-                                // A logged set being edited wins over the rest card, which stays visible in a slim form
-                                editedCompletedSet != null && !isCardioActive && !isEmomActive -> HubMode.EditingCompleted
+                                // A set being edited wins over the rest card, which stays visible in a slim form
+                                setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
                                 isResting -> HubMode.Resting
                                 // Cardio and the EMOM clock have their own screens: the hub only navigates.
                                 isCardioActive || isEmomActive -> HubMode.Cardio
@@ -1439,8 +1446,8 @@ fun WorkoutExecutionScreen(
                                         )
                                     }
                                 }
-                                HubMode.EditingCompleted -> {
-                                    val editedIndex = editingCompletedIndex ?: lastEditedIndex
+                                HubMode.EditingSet -> {
+                                    val editedIndex = editingSetIndex ?: lastEditedIndex
                                     val exercise = currentExState
                                     val editedSet = exercise?.sets?.getOrNull(editedIndex)
                                     if (exercise != null && editedSet != null) {
@@ -1459,7 +1466,7 @@ fun WorkoutExecutionScreen(
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     // The rest card is hidden while editing: keep the countdown in sight
                                                     if (isResting) RestTimerPill(state.remainingRestSeconds)
-                                                    IconButton(onClick = { editingCompletedIndex = null }) {
+                                                    IconButton(onClick = { editingSetIndex = null }) {
                                                         Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
                                                     }
                                                 }
@@ -1468,27 +1475,27 @@ fun WorkoutExecutionScreen(
                                                 WeightTimeInput(
                                                     weight = editedSet.weight,
                                                     seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: 45,
-                                                    onWeightChange = { viewModel.editCompletedSetWeight(state.currentExerciseIndex, editedIndex, it) },
-                                                    onSecondsChange = { viewModel.editCompletedSetSeconds(state.currentExerciseIndex, editedIndex, it) },
+                                                    onWeightChange = { viewModel.editSetWeight(state.currentExerciseIndex, editedIndex, it) },
+                                                    onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
                                                     weightUnit = state.weightUnit
                                                 )
                                             } else {
                                                 WeightRepsInput(
                                                     weight = editedSet.weight,
                                                     reps = editedSet.reps,
-                                                    onWeightChange = { viewModel.editCompletedSetWeight(state.currentExerciseIndex, editedIndex, it) },
-                                                    onRepsChange = { viewModel.editCompletedSetReps(state.currentExerciseIndex, editedIndex, it) },
+                                                    onWeightChange = { viewModel.editSetWeight(state.currentExerciseIndex, editedIndex, it) },
+                                                    onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) },
                                                     weightUnit = state.weightUnit
                                                 )
                                                 if (rpeInputShown(state.rpeInputMode, exercise, editedSet)) {
                                                     RpeSelector(
                                                         value = editedSet.rpe,
-                                                        onValueChange = { viewModel.editCompletedSetRpe(state.currentExerciseIndex, editedIndex, it) }
+                                                        onValueChange = { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                                     )
                                                 }
                                             }
                                             GymButton(
-                                                onClick = { editingCompletedIndex = null },
+                                                onClick = { editingSetIndex = null },
                                                 modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 Icon(Icons.Rounded.Check, contentDescription = null)
@@ -2068,7 +2075,7 @@ fun WorkoutExecutionScreen(
     }
 }
 
-enum class HubMode { Logging, Editing, EditingCompleted, Resting, Completed, Cardio }
+enum class HubMode { Logging, Editing, EditingSet, Resting, Completed, Cardio }
 
 @Composable
 fun rememberAnimatedShape(

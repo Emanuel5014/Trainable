@@ -1722,6 +1722,33 @@ class WorkoutViewModel @Inject constructor(
     fun editCompletedSetSeconds(exerciseIndex: Int, setIndex: Int, seconds: Int) =
         editCompletedSet(exerciseIndex, setIndex) { it.copy(timeSeconds = seconds) }
 
+    // Editing a set in place, whether it is done or still to do. A done set only rewrites its own values; a set
+    // still to do goes through the same paths as the panel of the active set (a new weight also carries to the
+    // sets after it that have nothing to go by).
+
+    fun editSetWeight(exerciseIndex: Int, setIndex: Int, weightKg: Float) {
+        if (isSetCompleted(exerciseIndex, setIndex)) editCompletedSetWeight(exerciseIndex, setIndex, weightKg)
+        else updateSetWeight(exerciseIndex, setIndex, weightKg)
+    }
+
+    fun editSetReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
+        if (isSetCompleted(exerciseIndex, setIndex)) editCompletedSetReps(exerciseIndex, setIndex, reps)
+        else updateSetReps(exerciseIndex, setIndex, reps)
+    }
+
+    fun editSetRpe(exerciseIndex: Int, setIndex: Int, rpe: Float?) {
+        if (isSetCompleted(exerciseIndex, setIndex)) editCompletedSetRpe(exerciseIndex, setIndex, rpe)
+        else updateSetRpe(exerciseIndex, setIndex, rpe)
+    }
+
+    fun editSetSeconds(exerciseIndex: Int, setIndex: Int, seconds: Int) {
+        if (isSetCompleted(exerciseIndex, setIndex)) editCompletedSetSeconds(exerciseIndex, setIndex, seconds)
+        else updateSetTimeSeconds(exerciseIndex, setIndex, seconds)
+    }
+
+    private fun isSetCompleted(exerciseIndex: Int, setIndex: Int): Boolean =
+        _state.value.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex)?.isCompleted == true
+
     private fun editCompletedSet(exerciseIndex: Int, setIndex: Int, update: (WorkoutSetState) -> WorkoutSetState) {
         val set = _state.value.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex) ?: return
         if (!set.isCompleted) return
