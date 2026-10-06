@@ -1389,12 +1389,16 @@ fun WorkoutExecutionScreen(
                                     }
                                 }
                                 HubMode.Resting -> {
-                                    RestTimerSection(
-                                        remainingSeconds = state.remainingRestSeconds,
-                                        totalRestSeconds = state.totalRestSeconds,
-                                        onAddTime = { viewModel.addRestTime(30) },
-                                        onSkip = { viewModel.skipRestTimer() }
-                                    )
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        RestTimerSection(
+                                            remainingSeconds = state.remainingRestSeconds,
+                                            totalRestSeconds = state.totalRestSeconds,
+                                            onAddTime = { viewModel.addRestTime(30) },
+                                            onSkip = { viewModel.skipRestTimer() }
+                                        )
+                                        // The rest is the time to load the bar for the next set
+                                        ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
+                                    }
                                 }
                                 HubMode.Editing -> {
                                     activeSet?.let { set ->
@@ -1559,17 +1563,7 @@ fun WorkoutExecutionScreen(
                                                     compact = true
                                                 )
                                             }
-                                            if (state.plateCalculatorEnabled && currentExState != null && !currentExState.isTimeAndWeight &&
-                                                currentExState.exercise.id in plateExercises
-                                            ) {
-                                                PlateChip(
-                                                    weightKg = set.weight,
-                                                    barKg = plateExercises[currentExState.exercise.id],
-                                                    weightUnit = state.weightUnit,
-                                                    plates = state.availablePlates,
-                                                    onClick = { showPlateSheet = true }
-                                                )
-                                            }
+                                            ActiveSetPlateChip(currentExState, set, state, plateExercises) { showPlateSheet = true }
                                         }
                                     }
                                 }
@@ -2525,6 +2519,26 @@ fun CardioExerciseContent(
             }
         }
     }
+}
+
+/** The plate calculator line for the set about to be done, when this exercise uses the calculator. */
+@Composable
+private fun ActiveSetPlateChip(
+    exercise: WorkoutExerciseState?,
+    set: WorkoutSetState?,
+    state: WorkoutState,
+    plateExercises: Map<Int, Float?>,
+    onClick: () -> Unit
+) {
+    if (!state.plateCalculatorEnabled || exercise == null || set == null || set.isCompleted) return
+    if (exercise.isTimeAndWeight || exercise.isCardio || exercise.exercise.id !in plateExercises) return
+    PlateChip(
+        weightKg = set.weight,
+        barKg = plateExercises[exercise.exercise.id],
+        weightUnit = state.weightUnit,
+        plates = state.availablePlates,
+        onClick = onClick
+    )
 }
 
 @Composable
