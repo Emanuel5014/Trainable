@@ -41,6 +41,18 @@ interface ExerciseDao {
     @Query("UPDATE exercises SET nome = :nome WHERE id = :id")
     suspend fun updateExerciseName(id: Int, nome: String)
 
+    @Query("SELECT media_path FROM exercises WHERE id = :id")
+    suspend fun getExerciseMedia(id: Int): String?
+
+    @Query("UPDATE exercises SET media_path = :mediaPath WHERE id = :id")
+    suspend fun updateExerciseMedia(id: Int, mediaPath: String?)
+
+    @Query("SELECT media_path FROM exercises WHERE media_path IS NOT NULL")
+    suspend fun getAllExerciseMedia(): List<String>
+
+    @Query("UPDATE exercises SET media_path = NULL WHERE media_path IS NOT NULL")
+    suspend fun clearAllExerciseMedia()
+
     @Query("SELECT * FROM custom_categories ORDER BY name ASC")
     fun getAllCustomCategories(): Flow<List<CustomCategoryEntity>>
 

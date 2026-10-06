@@ -15,5 +15,8 @@ data class ExerciseEntity(
     @ColumnInfo(name = "descrizione")
     val descrizione: String? = null,
     @ColumnInfo(name = "video_url")
-    val videoUrl: String? = null
+    val videoUrl: String? = null,
+    /** File name (not a path) of the user's own image/GIF inside `ExerciseMediaStorage.dir`. */
+    @ColumnInfo(name = "media_path")
+    val mediaPath: String? = null
 )

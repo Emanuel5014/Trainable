@@ -4,14 +4,21 @@ import com.emanuel5014.trainable.data.local.ExerciseData
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import android.content.Context
+import android.net.Uri
+import com.emanuel5014.trainable.util.ExerciseMediaStorage
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ExerciseRepository @Inject constructor(
-    private val exerciseDao: ExerciseDao
+    private val exerciseDao: ExerciseDao,
+    @ApplicationContext private val context: Context
 ) {
     fun getAllExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAllExercises()
     
@@ -44,7 +51,34 @@ class ExerciseRepository @Inject constructor(
     }
 
     suspend fun deleteExercise(exercise: ExerciseEntity) {
+        val mediaFile = exerciseDao.getExerciseMedia(exercise.id)
         exerciseDao.deleteExerciseById(exercise.id)
+        withContext(Dispatchers.IO) { ExerciseMediaStorage.delete(context, mediaFile) }
+    }
+
+    /** Stores the picked image/GIF as the media of [exerciseId], replacing (and deleting) any previous one. */
+    suspend fun attachExerciseMedia(exerciseId: Int, uri: Uri): ExerciseMediaStorage.ImportResult =
+        withContext(Dispatchers.IO) {
+            val result = ExerciseMediaStorage.import(context, uri, exerciseId)
+            if (result is ExerciseMediaStorage.ImportResult.Saved) {
+                val previous = exerciseDao.getExerciseMedia(exerciseId)
+                exerciseDao.updateExerciseMedia(exerciseId, result.fileName)
+                ExerciseMediaStorage.delete(context, previous)
+            }
+            result
+        }
+
+    /** Drops the media of every exercise and deletes the files. */
+    suspend fun removeAllExerciseMedia() = withContext(Dispatchers.IO) {
+        val files = exerciseDao.getAllExerciseMedia()
+        exerciseDao.clearAllExerciseMedia()
+        files.forEach { ExerciseMediaStorage.delete(context, it) }
+    }
+
+    suspend fun removeExerciseMedia(exerciseId: Int) = withContext(Dispatchers.IO) {
+        val previous = exerciseDao.getExerciseMedia(exerciseId)
+        exerciseDao.updateExerciseMedia(exerciseId, null)
+        ExerciseMediaStorage.delete(context, previous)
     }
 
     fun isCustomExercise(exercise: ExerciseEntity): Boolean = exercise.id >= 1000

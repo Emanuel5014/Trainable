@@ -244,6 +244,27 @@
     <string name="keep_screen_on_set_timer_desc">Prevent the screen from turning off while the set timer is running</string>
     <string name="inline_exercise_modifications">Inline Modifications</string>
     <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
+    <string name="exercise_media">Exercise Media</string>
+    <string name="exercise_media_desc">Show your own image or GIF of each exercise during workouts</string>
+    <string name="exercise_media_large">Large Preview</string>
+    <string name="exercise_media_large_desc">Fill the free space under the sets with a big image when there is room</string>
+    <string name="exercise_media_manage_desc">Add, replace or remove the image or GIF of each exercise</string>
+    <string name="exercise_media_show">Show in Workouts</string>
+    <string name="exercise_media_filter_with">With media</string>
+    <string name="exercise_media_filter_without">Without media</string>
+    <string name="exercise_media_count">%1$d of %2$d exercises have media</string>
+    <string name="exercise_media_remove_all">Remove all</string>
+    <string name="exercise_media_remove_all_title">Remove all media?</string>
+    <string name="exercise_media_remove_all_message">All exercise images and GIFs will be deleted from this device.</string>
+    <string name="exercise_media_add">Add image or GIF</string>
+    <string name="exercise_media_open">Exercise image, tap to enlarge</string>
+    <string name="exercise_media_replace">Replace</string>
+    <string name="exercise_media_remove">Remove</string>
+    <string name="exercise_media_remove_title">Remove image?</string>
+    <string name="exercise_media_remove_message">The image or GIF of this exercise will be deleted from this device.</string>
+    <string name="exercise_media_too_large">That file is too large. Choose one under %1$d MB.</string>
+    <string name="exercise_media_unsupported">Couldn\'t open that file. Choose an image or GIF.</string>
+    <string name="exercise_media_play_pause">Play or pause</string>
     <string name="workout_settings">Workout</string>
     <string name="workout_settings_desc">Timer, auto-stop and exercise options</string>
     <string name="ai_settings_desc">Offline sheet scan and model</string>
@@ -488,7 +509,7 @@
     <string name="error_writing_file">Error writing file: %s</string>
     <string name="database_imported">Database imported. Restarting app...</string>
     <string name="include_images">Include Images?</string>
-    <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
+    <string name="include_images_description">Would you like to include routine photos and exercise images in your backup? This will increase the file size.</string>
     <string name="preparing_share">Preparing your workout card...</string>
     <string name="edit_backup">EDIT</string>
 

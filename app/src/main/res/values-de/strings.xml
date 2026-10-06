@@ -244,6 +244,27 @@
     <string name="keep_screen_on_set_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Satz-Timer läuft</string>
     <string name="inline_exercise_modifications">Inline-Änderungen</string>
     <string name="inline_exercise_modifications_desc">Sätze und Übungen während normaler Workouts hinzufügen</string>
+    <string name="exercise_media">Übungsmedien</string>
+    <string name="exercise_media_desc">Zeige beim Training dein eigenes Bild oder GIF zu jeder Übung</string>
+    <string name="exercise_media_large">Große Vorschau</string>
+    <string name="exercise_media_large_desc">Füllt den freien Platz unter den Sätzen mit einem großen Bild, wenn genug Platz ist</string>
+    <string name="exercise_media_manage_desc">Bild oder GIF jeder Übung hinzufügen, ersetzen oder entfernen</string>
+    <string name="exercise_media_show">Im Training anzeigen</string>
+    <string name="exercise_media_filter_with">Mit Medien</string>
+    <string name="exercise_media_filter_without">Ohne Medien</string>
+    <string name="exercise_media_count">%1$d von %2$d Übungen haben Medien</string>
+    <string name="exercise_media_remove_all">Alle entfernen</string>
+    <string name="exercise_media_remove_all_title">Alle Medien entfernen?</string>
+    <string name="exercise_media_remove_all_message">Alle Übungsbilder und GIFs werden von diesem Gerät gelöscht.</string>
+    <string name="exercise_media_add">Bild oder GIF hinzufügen</string>
+    <string name="exercise_media_open">Übungsbild, zum Vergrößern tippen</string>
+    <string name="exercise_media_replace">Ersetzen</string>
+    <string name="exercise_media_remove">Entfernen</string>
+    <string name="exercise_media_remove_title">Bild entfernen?</string>
+    <string name="exercise_media_remove_message">Das Bild oder GIF dieser Übung wird von diesem Gerät gelöscht.</string>
+    <string name="exercise_media_too_large">Die Datei ist zu groß. Wähle eine unter %1$d MB.</string>
+    <string name="exercise_media_unsupported">Die Datei konnte nicht geöffnet werden. Wähle ein Bild oder GIF.</string>
+    <string name="exercise_media_play_pause">Wiedergabe oder Pause</string>
     <string name="workout_settings">Training</string>
     <string name="workout_settings_desc">Timer, Auto-Stopp und Übungsoptionen</string>
     <string name="ai_settings_desc">Offline-Scan und Modell</string>
@@ -488,7 +509,7 @@
     <string name="error_writing_file">Fehler beim Schreiben der Datei: %s</string>
     <string name="database_imported">Datenbank importiert. App wird neu gestartet...</string>
     <string name="include_images">Bilder einfügen?</string>
-    <string name="include_images_description">Möchtest du Routinefotos in dein Backup aufnehmen? Dies erhöht die Dateigröße.</string>
+    <string name="include_images_description">Möchtest du Routinefotos und Übungsbilder in dein Backup aufnehmen? Dies erhöht die Dateigröße.</string>
     <string name="preparing_share">Trainingskarte wird vorbereitet...</string>
     <string name="edit_backup">BEARBEITEN</string>
 

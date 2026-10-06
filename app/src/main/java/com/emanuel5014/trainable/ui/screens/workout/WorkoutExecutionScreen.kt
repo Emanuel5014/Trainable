@@ -11,6 +11,11 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
+import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
+import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -94,6 +99,8 @@ import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -128,6 +135,8 @@ import androidx.graphics.shapes.toPath
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
+import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
 import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -164,6 +173,12 @@ import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
+
+/** Key of the large exercise media item in the sets list, used to read where the sets end. */
+private const val MEDIA_CARD_KEY = "exercise_media_card"
+
+/** The large media card only appears when at least this much room is left under the sets. */
+private val MEDIA_CARD_MIN_HEIGHT = 140.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -208,10 +223,32 @@ fun WorkoutExecutionScreen(
     val usesEmomClock = { exercise: WorkoutExerciseState ->
         !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in emomManualExercises
     }
+    // The user's own image/GIF of each exercise (optional, see Workout settings -> Exercise media)
+    val exerciseMedia by viewModel.exerciseMedia.collectAsState()
+    var mediaViewer by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    // Height of the bottom interaction hub, so the large media card only takes the room left above it
+    var hubHeightPx by remember { mutableIntStateOf(0) }
+    val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
+    ExerciseMediaMessageToasts(viewModel.mediaMessages)
     var cardioDistanceInput by remember(state.currentExercise?.exercise?.id) {
         mutableStateOf(
             if ((state.currentExercise?.cardioDistanceKm ?: 0f) > 0f) state.currentExercise?.cardioDistanceKm.toString() else ""
         )
+    }
+
+    mediaViewer?.let { (exerciseId, exerciseName) ->
+        val mediaFile = exerciseMedia[exerciseId]
+        // The file disappears when the user removes it from the viewer: close it then
+        LaunchedEffect(mediaFile) { if (mediaFile == null) mediaViewer = null }
+        if (mediaFile != null) {
+            ExerciseMediaViewer(
+                fileName = mediaFile,
+                exerciseName = exerciseName,
+                onDismiss = { mediaViewer = null },
+                onReplace = { pickMedia(exerciseId) },
+                onRemove = { viewModel.removeExerciseMedia(exerciseId) }
+            )
+        }
     }
 
     if (showRenameDialog) {
@@ -610,6 +647,35 @@ fun WorkoutExecutionScreen(
                                         expandedSetIndex = targetActiveSetIndex
                                     }
                                 }
+
+                                // Large exercise media: fills the room left between the last set and the hub, and
+                                // gives way (header thumbnail only) as soon as the sets or the hub need that room.
+                                val localDensity = LocalDensity.current
+                                val largeMediaFile = exerciseMedia[targetExState.exercise.id]
+                                    ?.takeIf { state.exerciseMediaEnabled && state.exerciseMediaLarge }
+                                var freeMediaPx by remember(targetIndex) { mutableIntStateOf(0) }
+                                val largeMediaVisible = largeMediaFile != null &&
+                                    freeMediaPx >= with(localDensity) { MEDIA_CARD_MIN_HEIGHT.roundToPx() }
+                                LaunchedEffect(largeMediaFile != null, hubHeightPx) {
+                                    if (largeMediaFile == null || hubHeightPx <= 0) {
+                                        freeMediaPx = 0
+                                        return@LaunchedEffect
+                                    }
+                                    val bottomGapPx = with(localDensity) { 16.dp.roundToPx() }
+                                    snapshotFlow {
+                                        // While the list is scrolled the sets' position says nothing about free room: keep the last value
+                                        if (exerciseListState.firstVisibleItemIndex != 0 || exerciseListState.firstVisibleItemScrollOffset != 0) {
+                                            null
+                                        } else {
+                                            val info = exerciseListState.layoutInfo
+                                            info.visibleItemsInfo.firstOrNull { it.key == MEDIA_CARD_KEY }
+                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx }
+                                                ?.coerceAtLeast(0)
+                                                ?: 0
+                                        }
+                                    }.collect { free -> if (free != null) freeMediaPx = free }
+                                }
+
                                 // Exercise Header
                                 Column(
                                     modifier = Modifier
@@ -696,12 +762,37 @@ fun WorkoutExecutionScreen(
                                             )
                                         }
                                     }
-                                    Text(
-                                        text = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode),
-                                        style = MaterialTheme.typography.displaySmall,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.Black
-                                    )
+                                    val exerciseDisplayName = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
+                                    if (state.exerciseMediaEnabled) {
+                                        // The thumbnail takes width from the name, so the name steps down one size
+                                        // to wrap onto the same number of lines it did at full width.
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.Top,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Text(
+                                                text = exerciseDisplayName,
+                                                style = MaterialTheme.typography.headlineMedium,
+                                                color = OnSurface,
+                                                fontWeight = FontWeight.Black,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            ExerciseMediaSlot(
+                                                fileName = exerciseMedia[targetExState.exercise.id],
+                                                onOpen = { mediaViewer = targetExState.exercise.id to exerciseDisplayName },
+                                                onAdd = { pickMedia(targetExState.exercise.id) },
+                                                playing = !largeMediaVisible
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = exerciseDisplayName,
+                                            style = MaterialTheme.typography.displaySmall,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
 
                                     if (targetExState.emomStartIndex != null && targetExState.exercise.id in emomManualExercises) {
                                         Surface(
@@ -1114,8 +1205,29 @@ fun WorkoutExecutionScreen(
                                             }
                                         }
                                     }
-                                    item {
-                                        val hubSpacer = if (com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight) 220.dp else 280.dp
+                                    if (largeMediaFile != null) {
+                                        item(key = MEDIA_CARD_KEY) {
+                                            val targetHeight = if (largeMediaVisible) with(localDensity) { freeMediaPx.toDp() } else 0.dp
+                                            val cardHeight by animateDpAsState(targetHeight, label = "exerciseMediaCardHeight")
+                                            if (cardHeight > 0.dp) {
+                                                ExerciseMediaCard(
+                                                    fileName = largeMediaFile,
+                                                    onOpen = {
+                                                        mediaViewer = targetExState.exercise.id to
+                                                            ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
+                                                    },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(cardHeight)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    item(key = "hub_spacer") {
+                                        // With the large media card the list already ends exactly above the hub
+                                        val hubSpacer = if (largeMediaVisible) {
+                                            with(localDensity) { hubHeightPx.toDp() }
+                                        } else if (com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight) 220.dp else 280.dp
                                         Spacer(modifier = Modifier.height(hubSpacer)) // Space for the dynamic hub
                                     }
                                 }
@@ -1139,7 +1251,9 @@ fun WorkoutExecutionScreen(
                     modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onSizeChanged { hubHeightPx = it.height },
                         color = Surface,
                         tonalElevation = 8.dp,
                         shadowElevation = 16.dp

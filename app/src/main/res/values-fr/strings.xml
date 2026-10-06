@@ -244,6 +244,27 @@
     <string name="keep_screen_on_set_timer_desc">Empêche l\'extinction automatique de l\'écran pendant le minuteur de série</string>
     <string name="inline_exercise_modifications">Modifications en ligne</string>
     <string name="inline_exercise_modifications_desc">Ajouter des séries et exercices pendant les entraînements normaux</string>
+    <string name="exercise_media">Médias des exercices</string>
+    <string name="exercise_media_desc">Afficher pendant l\'entraînement ta propre image ou GIF de chaque exercice</string>
+    <string name="exercise_media_large">Grand aperçu</string>
+    <string name="exercise_media_large_desc">Remplir l\'espace libre sous les séries avec une grande image quand il y a de la place</string>
+    <string name="exercise_media_manage_desc">Ajouter, remplacer ou retirer l\'image ou le GIF de chaque exercice</string>
+    <string name="exercise_media_show">Afficher pendant les entraînements</string>
+    <string name="exercise_media_filter_with">Avec média</string>
+    <string name="exercise_media_filter_without">Sans média</string>
+    <string name="exercise_media_count">%1$d exercices sur %2$d ont un média</string>
+    <string name="exercise_media_remove_all">Tout retirer</string>
+    <string name="exercise_media_remove_all_title">Retirer tous les médias ?</string>
+    <string name="exercise_media_remove_all_message">Toutes les images et tous les GIF des exercices seront supprimés de cet appareil.</string>
+    <string name="exercise_media_add">Ajouter une image ou un GIF</string>
+    <string name="exercise_media_open">Image de l\'exercice, appuyer pour agrandir</string>
+    <string name="exercise_media_replace">Remplacer</string>
+    <string name="exercise_media_remove">Retirer</string>
+    <string name="exercise_media_remove_title">Retirer l\'image ?</string>
+    <string name="exercise_media_remove_message">L\'image ou le GIF de cet exercice sera supprimé de cet appareil.</string>
+    <string name="exercise_media_too_large">Ce fichier est trop volumineux. Choisis-en un de moins de %1$d Mo.</string>
+    <string name="exercise_media_unsupported">Impossible d\'ouvrir ce fichier. Choisis une image ou un GIF.</string>
+    <string name="exercise_media_play_pause">Lecture ou pause</string>
     <string name="workout_settings">Entraînement</string>
     <string name="workout_settings_desc">Minuteur, arrêts auto et options d\'exercices</string>
     <string name="ai_settings_desc">Scan hors ligne et modèle</string>
@@ -488,7 +509,7 @@
     <string name="error_writing_file">Erreur lors de l\'écriture du fichier : %s</string>
     <string name="database_imported">Base de données importée. Redémarrage de l\'app...</string>
     <string name="include_images">Inclure les Images ?</string>
-    <string name="include_images_description">Souhaites-tu inclure les photos des routines dans ta sauvegarde ? Cela augmentera la taille du fichier.</string>
+    <string name="include_images_description">Souhaites-tu inclure les photos des routines et les images des exercices dans ta sauvegarde ? Cela augmentera la taille du fichier.</string>
     <string name="preparing_share">Préparation de ta carte d\'entraînement...</string>
     <string name="edit_backup">MODIFIER</string>
 

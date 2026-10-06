@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.util.ExerciseMediaStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -119,6 +120,17 @@ class BackupManager @Inject constructor(
                         }
                     }
 
+
+                    // Export the user's own exercise images / GIFs
+                    ExerciseMediaStorage.dir(context).listFiles()?.forEach { file ->
+                        if (file.isFile) {
+                            FileInputStream(file).use { fis ->
+                                zos.putNextEntry(ZipEntry("${ExerciseMediaStorage.DIR_NAME}/${file.name}"))
+                                fis.copyTo(zos)
+                                zos.closeEntry()
+                            }
+                        }
+                    }
 
                     // Export physical check images
                     val physicalChecksDir = File(context.filesDir, "physical_checks")
@@ -240,6 +252,8 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB]?.let { json.put("load_rounding_lb", it.toDouble()) }
                 json.put("rpe_input_mode", prefs[UserPreferencesRepository.RPE_INPUT_MODE] ?: 0)
                 json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
+                json.put("exercise_media_enabled", prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] ?: false)
+                json.put("exercise_media_large", prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] ?: true)
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -385,6 +399,10 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.RPE_INPUT_MODE] = jsonObject.getInt("rpe_input_mode")
                                             if (jsonObject.has("advanced_programming_enabled"))
                                                 prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] = jsonObject.getBoolean("advanced_programming_enabled")
+                                            if (jsonObject.has("exercise_media_enabled"))
+                                                prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] = jsonObject.getBoolean("exercise_media_enabled")
+                                            if (jsonObject.has("exercise_media_large"))
+                                                prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] = jsonObject.getBoolean("exercise_media_large")
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -398,6 +416,14 @@ class BackupManager @Inject constructor(
                                     if (!physicalChecksDir.exists()) physicalChecksDir.mkdirs()
                                     val outFile = File(physicalChecksDir, imageName)
                                     FileOutputStream(outFile).use { fos ->
+                                        zis.copyTo(fos)
+                                    }
+                                }
+                            }
+                            entry.name.startsWith("${ExerciseMediaStorage.DIR_NAME}/") -> {
+                                val mediaName = File(entry.name).name
+                                if (mediaName.isNotEmpty()) {
+                                    FileOutputStream(File(ExerciseMediaStorage.dir(context), mediaName)).use { fos ->
                                         zis.copyTo(fos)
                                     }
                                 }

@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
@@ -37,6 +38,8 @@ import com.emanuel5014.trainable.util.notification.EmomNotificationAction
 import com.emanuel5014.trainable.util.notification.EmomNotificationInfo
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
+import com.emanuel5014.trainable.util.ExerciseMediaMessage
+import com.emanuel5014.trainable.util.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,12 +47,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,6 +79,8 @@ data class WorkoutState(
     val timerNotificationsEnabled: Boolean = true,
     val isQuickWorkout: Boolean = false,
     val swipeActionsEnabled: Boolean = true,
+    val exerciseMediaEnabled: Boolean = false,
+    val exerciseMediaLarge: Boolean = true,
     val warmupTimerEnabled: Boolean = false,
     val warmupTimerRemaining: Int = 0,
     val warmupTimerEndTime: Long? = null,
@@ -259,6 +267,24 @@ class WorkoutViewModel @Inject constructor(
     private val _availableExercises = MutableStateFlow<List<ExerciseEntity>>(emptyList())
     val availableExercises: StateFlow<List<ExerciseEntity>> = _availableExercises.asStateFlow()
 
+    /** Exercise id -> file name of the user's own image/GIF, for the exercises that have one. */
+    val exerciseMedia: StateFlow<Map<Int, String>> = _availableExercises
+        .map { exercises -> exercises.mapNotNull { exercise -> exercise.mediaPath?.let { exercise.id to it } }.toMap() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    private val _mediaMessages = MutableSharedFlow<ExerciseMediaMessage>(extraBufferCapacity = 1)
+    val mediaMessages: SharedFlow<ExerciseMediaMessage> = _mediaMessages.asSharedFlow()
+
+    fun setExerciseMedia(exerciseId: Int, uri: Uri) {
+        viewModelScope.launch {
+            exerciseRepository.attachExerciseMedia(exerciseId, uri).toMessage()?.let { _mediaMessages.emit(it) }
+        }
+    }
+
+    fun removeExerciseMedia(exerciseId: Int) {
+        viewModelScope.launch { exerciseRepository.removeExerciseMedia(exerciseId) }
+    }
+
     private val _categories = MutableStateFlow<List<String>>(emptyList())
     val categories: StateFlow<List<String>> = _categories.asStateFlow()
 
@@ -345,6 +371,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.swipeActionsEnabled.collect { enabled ->
                 _state.update { it.copy(swipeActionsEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.exerciseMediaEnabled.collect { enabled ->
+                _state.update { it.copy(exerciseMediaEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.exerciseMediaLarge.collect { large ->
+                _state.update { it.copy(exerciseMediaLarge = large) }
             }
         }
 
