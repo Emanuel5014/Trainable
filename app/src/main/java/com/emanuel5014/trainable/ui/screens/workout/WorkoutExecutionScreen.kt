@@ -141,6 +141,9 @@ import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
+import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
+import com.emanuel5014.trainable.ui.components.PlateChip
 import com.emanuel5014.trainable.ui.components.RestTimerSection
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
@@ -210,6 +213,9 @@ fun WorkoutExecutionScreen(
     }
     var isEditingValues by remember { mutableStateOf(false) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
+    // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
+    val plateExercises by viewModel.plateCalculatorExercises.collectAsState()
+    var showPlateSheet by remember { mutableStateOf(false) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }
     var isAddingAfterCurrent by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
@@ -1432,6 +1438,23 @@ fun WorkoutExecutionScreen(
                                                     onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
                                                     weightUnit = state.weightUnit
                                                 )
+                                                if (state.plateCalculatorEnabled && currentExState != null) {
+                                                    val exerciseId = currentExState.exercise.id
+                                                    if (exerciseId in plateExercises) {
+                                                        PlateChip(
+                                                            weightKg = set.weight,
+                                                            barKg = plateExercises[exerciseId],
+                                                            weightUnit = state.weightUnit,
+                                                            plates = state.availablePlates,
+                                                            onClick = { showPlateSheet = true }
+                                                        )
+                                                    } else {
+                                                        PlateCalculatorEnableChip(onClick = {
+                                                            viewModel.setPlateCalculator(exerciseId, true, null)
+                                                            showPlateSheet = true
+                                                        })
+                                                    }
+                                                }
                                                 val showRpe = when (state.rpeInputMode) {
                                                     1 -> true
                                                     2 -> false
@@ -1462,78 +1485,91 @@ fun WorkoutExecutionScreen(
                                 }
                                 HubMode.Logging -> {
                                     activeSet?.let { set ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(24.dp))
-                                                .background(SurfaceContainerHigh)
-                                                .clickable { isEditingValues = true }
-                                                .padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Row(
                                                 modifier = Modifier
-                                                    .size(48.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Primary.copy(alpha = 0.1f)),
-                                                contentAlignment = Alignment.Center
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(24.dp))
+                                                    .background(SurfaceContainerHigh)
+                                                    .clickable { isEditingValues = true }
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
-                                            }
-                                            Spacer(modifier = Modifier.width(16.dp))
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-                                                val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
-                                                    "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
-                                                } else if (set.isAmrap) {
-                                                    stringResource(R.string.max_label)
-                                                } else {
-                                                    "${set.reps}"
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(48.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Primary.copy(alpha = 0.1f)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
                                                 }
-                                                Text(
-                                                    text = WeightUnitConverter.formatWithUnit(
-                                                        WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
-                                                        state.weightUnit
-                                                    ) + " × $repsOrTime", 
-                                                    style = MaterialTheme.typography.titleLarge, 
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                                val p = set.prescription
-                                                val detail = listOfNotNull(
-                                                    p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
-                                                ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
-                                                    listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
-                                                if (detail.isNotEmpty()) {
-                                                    Text(
-                                                        text = detail.joinToString(" · "),
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.ExtraBold,
-                                                        maxLines = 1,
-                                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                                    )
-                                                }
-                                            }
-                                            Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            LogSetButton(
-                                                onClick = {
-                                                    if (set.isAmrap) {
-                                                        isEditingValues = true
-                                                    } else if (currentExState?.isTimeAndWeight == true) {
-                                                        viewModel.skipTimerAndLogSet(
-                                                            state.currentExerciseIndex,
-                                                            activeSetIndex,
-                                                            set.weight,
-                                                            set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
-                                                        )
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                                                    val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
+                                                        "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
+                                                    } else if (set.isAmrap) {
+                                                        stringResource(R.string.max_label)
                                                     } else {
-                                                        viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
+                                                        "${set.reps}"
                                                     }
-                                                },
-                                                modifier = Modifier.width(120.dp),
-                                                compact = true
-                                            )
+                                                    Text(
+                                                        text = WeightUnitConverter.formatWithUnit(
+                                                            WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
+                                                            state.weightUnit
+                                                        ) + " × $repsOrTime", 
+                                                        style = MaterialTheme.typography.titleLarge, 
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                    val p = set.prescription
+                                                    val detail = listOfNotNull(
+                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
+                                                    ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
+                                                        listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
+                                                    if (detail.isNotEmpty()) {
+                                                        Text(
+                                                            text = detail.joinToString(" · "),
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            color = Primary,
+                                                            fontWeight = FontWeight.ExtraBold,
+                                                            maxLines = 1,
+                                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                }
+                                                Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                LogSetButton(
+                                                    onClick = {
+                                                        if (set.isAmrap) {
+                                                            isEditingValues = true
+                                                        } else if (currentExState?.isTimeAndWeight == true) {
+                                                            viewModel.skipTimerAndLogSet(
+                                                                state.currentExerciseIndex,
+                                                                activeSetIndex,
+                                                                set.weight,
+                                                                set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
+                                                            )
+                                                        } else {
+                                                            viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.width(120.dp),
+                                                    compact = true
+                                                )
+                                            }
+                                            if (state.plateCalculatorEnabled && currentExState != null && !currentExState.isTimeAndWeight &&
+                                                currentExState.exercise.id in plateExercises
+                                            ) {
+                                                PlateChip(
+                                                    weightKg = set.weight,
+                                                    barKg = plateExercises[currentExState.exercise.id],
+                                                    weightUnit = state.weightUnit,
+                                                    plates = state.availablePlates,
+                                                    onClick = { showPlateSheet = true }
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -1748,6 +1784,25 @@ fun WorkoutExecutionScreen(
                 titleContentColor = OnSurface,
                 textContentColor = OnSurfaceVariant
             )
+        }
+
+        if (showPlateSheet && activeSet != null) {
+            currentExState?.let { exState ->
+                val exerciseId = exState.exercise.id
+                PlateCalculatorSheet(
+                    exerciseName = ExerciseTranslations.translate(exState.exercise.nome, languageCode),
+                    weightKg = activeSet.weight,
+                    barKg = plateExercises[exerciseId],
+                    weightUnit = state.weightUnit,
+                    plates = state.availablePlates,
+                    onApply = { newWeightKg ->
+                        viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newWeightKg)
+                    },
+                    onBarChange = { barKg -> viewModel.setPlateCalculator(exerciseId, true, barKg) },
+                    onDisable = { viewModel.setPlateCalculator(exerciseId, false, plateExercises[exerciseId]) },
+                    onDismiss = { showPlateSheet = false }
+                )
+            }
         }
 
         if (showSwapExerciseSheet) {

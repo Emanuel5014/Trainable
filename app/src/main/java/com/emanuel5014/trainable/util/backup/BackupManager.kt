@@ -254,6 +254,9 @@ class BackupManager @Inject constructor(
                 json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
                 json.put("exercise_media_enabled", prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] ?: false)
                 json.put("exercise_media_large", prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] ?: true)
+                json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
+                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
+                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB]?.let { json.put("plate_calculator_plates_lb", it) }
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -403,6 +406,12 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] = jsonObject.getBoolean("exercise_media_enabled")
                                             if (jsonObject.has("exercise_media_large"))
                                                 prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] = jsonObject.getBoolean("exercise_media_large")
+                                            if (jsonObject.has("plate_calculator_enabled"))
+                                                prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] = jsonObject.getBoolean("plate_calculator_enabled")
+                                            if (jsonObject.has("plate_calculator_plates_kg"))
+                                                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG] = jsonObject.getString("plate_calculator_plates_kg")
+                                            if (jsonObject.has("plate_calculator_plates_lb"))
+                                                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB] = jsonObject.getString("plate_calculator_plates_lb")
                                         }
                                     }
                                 } catch (e: Exception) {

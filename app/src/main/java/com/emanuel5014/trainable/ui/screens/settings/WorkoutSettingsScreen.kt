@@ -3,6 +3,8 @@ package com.emanuel5014.trainable.ui.screens.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,8 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,8 +53,10 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.WeightUnitConverter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WorkoutSettingsScreen(
     onNavigateBack: () -> Unit,
@@ -68,6 +74,8 @@ fun WorkoutSettingsScreen(
     val autoStopTimeWeightAtTarget by viewModel.autoStopTimeWeightAtTarget.collectAsState()
     val keepScreenOnCardioTimer by viewModel.keepScreenOnCardioTimer.collectAsState()
     val keepScreenOnSetTimer by viewModel.keepScreenOnSetTimer.collectAsState()
+    val plateCalculatorEnabled by viewModel.plateCalculatorEnabled.collectAsState()
+    val plateCalculatorPlates by viewModel.plateCalculatorPlates.collectAsState()
 
     Scaffold(
         containerColor = Surface,
@@ -354,6 +362,84 @@ fun WorkoutSettingsScreen(
                             }
                         }
                         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                    }
+                }
+            }
+
+            // Plate calculator
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.plate_calculator),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.plate_calculator_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = plateCalculatorEnabled,
+                            onCheckedChange = { viewModel.setPlateCalculatorEnabled(it) }
+                        )
+                    }
+
+                    if (plateCalculatorEnabled) {
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                stringResource(R.string.plate_calculator_plates),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.plate_calculator_plates_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                PlateCalculator.plateChoices(weightUnit).forEach { plate ->
+                                    val selected = plate in plateCalculatorPlates
+                                    FilterChip(
+                                        selected = selected,
+                                        onClick = {
+                                            // The calculator needs at least one plate to work with
+                                            val updated = if (selected) plateCalculatorPlates - plate else plateCalculatorPlates + plate
+                                            if (updated.isNotEmpty()) viewModel.setPlateCalculatorPlates(updated)
+                                        },
+                                        label = { Text("${WeightUnitConverter.format(plate)} $weightUnit", maxLines = 1) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                            selectedLabelColor = Primary
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

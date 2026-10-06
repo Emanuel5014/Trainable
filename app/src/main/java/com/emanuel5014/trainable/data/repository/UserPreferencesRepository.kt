@@ -12,6 +12,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.util.PlateCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -72,6 +73,11 @@ class UserPreferencesRepository @Inject constructor(
     val EXERCISE_MEDIA_ENABLED = booleanPreferencesKey("exercise_media_enabled")
     /** With exercise media on: also fill the free space under the sets with a large preview when there is room. */
     val EXERCISE_MEDIA_LARGE = booleanPreferencesKey("exercise_media_large")
+    /** Master switch for the plate calculator (which plates go on each side of the bar). Off by default. */
+    val PLATE_CALCULATOR_ENABLED = booleanPreferencesKey("plate_calculator_enabled")
+    /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
+    val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
+    val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** 0 = RPE input only on advanced (%1RM) exercises, 1 = on every exercise, 2 = never. */
@@ -368,6 +374,40 @@ class UserPreferencesRepository @Inject constructor(
             preferences[EXERCISE_MEDIA_LARGE] = enabled
         }
     }
+
+    val plateCalculatorEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[PLATE_CALCULATOR_ENABLED] ?: false }
+
+    suspend fun setPlateCalculatorEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PLATE_CALCULATOR_ENABLED] = enabled
+        }
+    }
+
+    /** Plates available in the current weight unit, heaviest first. */
+    val plateCalculatorPlates: Flow<List<Float>> = dataStore.data
+        .map { preferences ->
+            val unit = preferences[WEIGHT_UNIT] ?: "kg"
+            decodePlates(preferences[plateKey(unit)], unit)
+        }
+
+    suspend fun setPlateCalculatorPlates(unit: String, plates: List<Float>) {
+        dataStore.edit { preferences ->
+            preferences[plateKey(unit)] = encodePlates(plates)
+        }
+    }
+
+    private fun plateKey(unit: String) =
+        if (unit == "lb") PLATE_CALCULATOR_PLATES_LB else PLATE_CALCULATOR_PLATES_KG
+
+    /** Plate lists are stored as text; anything unreadable or empty falls back to the usual plates. */
+    private fun decodePlates(raw: String?, unit: String): List<Float> {
+        val plates = raw.orEmpty().split(',').mapNotNull { it.trim().toFloatOrNull() }.filter { it > 0f }
+        return plates.distinct().sortedDescending().ifEmpty { PlateCalculator.defaultPlates(unit) }
+    }
+
+    private fun encodePlates(plates: List<Float>): String =
+        plates.distinct().sortedDescending().joinToString(",")
 
     /** Plate increment used to round %1RM loads, expressed in the current weight unit. */
     val loadRoundingIncrement: Flow<Float> = dataStore.data

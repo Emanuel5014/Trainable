@@ -81,6 +81,11 @@ class ExerciseRepository @Inject constructor(
         ExerciseMediaStorage.delete(context, previous)
     }
 
+    /** Turns the plate calculator on or off for [exerciseId]; [barKg] is the bar weight in storage units (kg). */
+    suspend fun setPlateCalculator(exerciseId: Int, enabled: Boolean, barKg: Float?) {
+        exerciseDao.updateExercisePlateCalculator(exerciseId, enabled, barKg)
+    }
+
     fun isCustomExercise(exercise: ExerciseEntity): Boolean = exercise.id >= 1000
 
     suspend fun resetPresetExerciseNames() {

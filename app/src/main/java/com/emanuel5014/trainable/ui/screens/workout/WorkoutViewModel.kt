@@ -39,6 +39,7 @@ import com.emanuel5014.trainable.util.notification.EmomNotificationInfo
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
+import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +84,9 @@ data class WorkoutState(
     val swipeActionsEnabled: Boolean = true,
     val exerciseMediaEnabled: Boolean = false,
     val exerciseMediaLarge: Boolean = true,
+    val plateCalculatorEnabled: Boolean = false,
+    /** Plates the gym has, in [weightUnit], heaviest first. */
+    val availablePlates: List<Float> = PlateCalculator.DEFAULT_PLATES_KG,
     val warmupTimerEnabled: Boolean = false,
     val warmupTimerRemaining: Int = 0,
     val warmupTimerEndTime: Long? = null,
@@ -277,6 +281,15 @@ class WorkoutViewModel @Inject constructor(
         .map { exercises -> exercises.mapNotNull { exercise -> exercise.mediaPath?.let { exercise.id to it } }.toMap() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
+    /** Exercise id -> bar weight in kg (null = the default bar), for the exercises that use the plate calculator. */
+    val plateCalculatorExercises: StateFlow<Map<Int, Float?>> = _availableExercises
+        .map { exercises -> exercises.filter { it.plateCalculator }.associate { it.id to it.plateBarKg } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
+    fun setPlateCalculator(exerciseId: Int, enabled: Boolean, barKg: Float?) {
+        viewModelScope.launch { exerciseRepository.setPlateCalculator(exerciseId, enabled, barKg) }
+    }
+
     private val _mediaMessages = MutableSharedFlow<ExerciseMediaMessage>(extraBufferCapacity = 1)
     val mediaMessages: SharedFlow<ExerciseMediaMessage> = _mediaMessages.asSharedFlow()
 
@@ -388,6 +401,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.exerciseMediaLarge.collect { large ->
                 _state.update { it.copy(exerciseMediaLarge = large) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.plateCalculatorEnabled.collect { enabled ->
+                _state.update { it.copy(plateCalculatorEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.plateCalculatorPlates.collect { plates ->
+                _state.update { it.copy(availablePlates = plates) }
             }
         }
 

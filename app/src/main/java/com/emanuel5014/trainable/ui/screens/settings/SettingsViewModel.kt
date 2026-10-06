@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
+import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.UpdateManager
 import com.emanuel5014.trainable.util.backup.AutoBackupWorker
 import com.emanuel5014.trainable.util.backup.BackupManager
@@ -340,6 +341,31 @@ class SettingsViewModel @Inject constructor(
     fun setAdvancedProgrammingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setAdvancedProgrammingEnabled(enabled)
+        }
+    }
+
+    val plateCalculatorEnabled = userPrefsRepository.plateCalculatorEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setPlateCalculatorEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setPlateCalculatorEnabled(enabled)
+        }
+    }
+
+    /** Plates the gym has, in the current weight unit. */
+    val plateCalculatorPlates = userPrefsRepository.plateCalculatorPlates.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = PlateCalculator.DEFAULT_PLATES_KG
+    )
+
+    fun setPlateCalculatorPlates(plates: List<Float>) {
+        viewModelScope.launch {
+            userPrefsRepository.setPlateCalculatorPlates(weightUnit.value, plates)
         }
     }
 
