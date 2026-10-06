@@ -58,6 +58,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -245,6 +247,9 @@ class WorkoutViewModel @Inject constructor(
 
     private var lastActionTime = 0L
     private val actionDebounce = 400L // 400ms hard debounce for physical clicks
+
+    /** Serialises the creation of set rows so a set is never inserted twice (draft rows vs. completing it). */
+    private val setRowsLock = Mutex()
 
     sealed class WorkoutNavEvent {
         object NavigateBack : WorkoutNavEvent()
@@ -1091,14 +1096,17 @@ class WorkoutViewModel @Inject constructor(
         increment: Float
     ): List<WorkoutSetState> {
         val planned = PrescriptionExpander.expand(blocks)
-        val previousByBlock = previous.filter { it.blockIndex != null && !it.isExtra }
-            .sortedBy { it.numeroSerie }.groupBy { it.blockIndex!! }
+        val previousPlain = previous.filter { !it.isExtra }.sortedBy { it.numeroSerie }
+        val previousByBlock = previousPlain.filter { it.blockIndex != null }.groupBy { it.blockIndex!! }
+        // A session logged before the exercise had blocks has no block on its rows: match those by position instead
+        val previousWithoutBlock = previousPlain.filter { it.blockIndex == null }
         val loggedSorted = logged.sortedBy { it.numeroSerie }
         val loggedByBlock = loggedSorted.filter { it.blockIndex != null && !it.isExtra }.groupBy { it.blockIndex!! }
         val result = mutableListOf<WorkoutSetState>()
 
         fun plannedState(p: PlannedSet, lastWeightInBlock: Float?): WorkoutSetState {
             val prev = previousByBlock[p.blockIndex]?.getOrNull(p.indexInBlock)
+                ?: previousWithoutBlock.getOrNull(planned.count { it.blockIndex < p.blockIndex } + p.indexInBlock)
             val target = LoadCalculator.targetWeightKg(p, oneRepMaxKg, unit, increment)
             val reps = when (p.repMode) {
                 RepMode.FIXED -> p.targetReps ?: prev?.repsEffettive ?: 5
@@ -1107,7 +1115,8 @@ class WorkoutViewModel @Inject constructor(
             }
             return WorkoutSetState(
                 setNumber = 0,
-                weight = target ?: lastWeightInBlock ?: prev?.pesoSollevato ?: 0f,
+                // The load of the same set last time wins over the one just before it, so ramps keep their steps
+                weight = target ?: prev?.pesoSollevato ?: lastWeightInBlock ?: 0f,
                 reps = reps,
                 previousNote = prev?.note,
                 previousReps = prev?.repsEffettive,
@@ -1442,34 +1451,39 @@ class WorkoutViewModel @Inject constructor(
             }
             
             val isQuickOrCustom = curr.isQuickWorkout || exState.swappedExerciseId != null || exState.planDetails == null
-            val shouldPropagate = (isQuickOrCustom || exState.previousPerformance == null) && !exState.isAdvanced
+            // A weight typed on a set is copied to the following sets that have no history to show. Advanced
+            // exercises decide that per set and stay inside the block: a back-off block must not inherit the top sets.
+            fun followsEdit(next: WorkoutSetState): Boolean = when {
+                next.isCompleted -> false
+                exState.isAdvanced ->
+                    next.prescription?.blockIndex == set.prescription?.blockIndex && (isQuickOrCustom || next.previousWeight == null)
+                else -> isQuickOrCustom || exState.previousPerformance == null
+            }
 
-            if (shouldPropagate) {
-                for (i in (setIndex + 1) until mutableSets.size) {
-                    if (!mutableSets[i].isCompleted) {
-                        val propSet = mutableSets[i].copy(weight = weight)
-                        mutableSets[i] = propSet
-                        if (propSet.id != null && curr.sessionId != null) {
-                            val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
-                            viewModelScope.launch {
-                                workoutRepository.updateSet(
-                                    SetLogEntity(
-                                        id = propSet.id,
-                                        sessionId = curr.sessionId,
-                                        exerciseId = exState.exercise.id,
-                                        pesoSollevato = propSet.weight,
-                                        repsEffettive = propSet.reps,
-                                        numeroSerie = propSet.setNumber,
-                                        isWarmup = propSet.isWarmup,
-                                        note = propSet.note,
-                                        supersetId = exState.supersetId,
-                                        isCompleted = propSet.isCompleted,
-                                        ordineEsercizio = executionOrder,
-                                        restTimerSeconds = exState.customRestSeconds,
-                                        durataSecondi = propSet.timeSeconds
-                                    ).withSnapshot(propSet)
-                                )
-                            }
+            for (i in (setIndex + 1) until mutableSets.size) {
+                if (followsEdit(mutableSets[i])) {
+                    val propSet = mutableSets[i].copy(weight = weight)
+                    mutableSets[i] = propSet
+                    if (propSet.id != null && curr.sessionId != null) {
+                        val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
+                        viewModelScope.launch {
+                            workoutRepository.updateSet(
+                                SetLogEntity(
+                                    id = propSet.id,
+                                    sessionId = curr.sessionId,
+                                    exerciseId = exState.exercise.id,
+                                    pesoSollevato = propSet.weight,
+                                    repsEffettive = propSet.reps,
+                                    numeroSerie = propSet.setNumber,
+                                    isWarmup = propSet.isWarmup,
+                                    note = propSet.note,
+                                    supersetId = exState.supersetId,
+                                    isCompleted = propSet.isCompleted,
+                                    ordineEsercizio = executionOrder,
+                                    restTimerSeconds = exState.customRestSeconds,
+                                    durataSecondi = propSet.timeSeconds
+                                ).withSnapshot(propSet)
+                            )
                         }
                     }
                 }
@@ -1478,7 +1492,64 @@ class WorkoutViewModel @Inject constructor(
             mutableExercises[exerciseIndex] = exState.copy(sets = mutableSets)
             curr.copy(exercises = mutableExercises)
         }
+        persistPendingSets(exerciseIndex)
     }
+
+    /**
+     * Plan sets only get a log row once they are completed, so a weight typed before that would be gone after
+     * leaving and re-entering the workout. The first weight edit of an exercise therefore saves its pending sets
+     * as uncompleted rows (finishing the workout drops them), which is what the resume rebuilds the sets from.
+     */
+    private fun persistPendingSets(exerciseIndex: Int) {
+        val hasPending = _state.value.exercises.getOrNull(exerciseIndex)?.sets?.any { it.id == null } ?: false
+        if (!hasPending) return
+        viewModelScope.launch {
+            setRowsLock.withLock {
+                val curr = _state.value
+                val sessionId = curr.sessionId ?: return@withLock
+                val exState = curr.exercises.getOrNull(exerciseIndex) ?: return@withLock
+                val pending = exState.sets.filter { it.id == null }
+                if (exState.isCardio || pending.isEmpty()) return@withLock
+                val executionOrder = curr.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
+                val inserted = pending.associate { set ->
+                    set.setNumber to set.copy(id = workoutRepository.logSet(set.toLogEntity(sessionId, exState, executionOrder)).toInt())
+                }
+                _state.update { state ->
+                    val exercises = state.exercises.toMutableList()
+                    val inner = exercises.getOrNull(exerciseIndex) ?: return@update state
+                    if (inner.exercise.id != exState.exercise.id) return@update state
+                    exercises[exerciseIndex] = inner.copy(sets = inner.sets.map { set ->
+                        if (set.id == null) inserted[set.setNumber]?.let { set.copy(id = it.id) } ?: set else set
+                    })
+                    state.copy(exercises = exercises)
+                }
+                // Weights typed while the rows were being inserted had no id to be saved with yet
+                _state.value.exercises.getOrNull(exerciseIndex)?.sets?.forEach { set ->
+                    val saved = inserted[set.setNumber] ?: return@forEach
+                    if (set.id == saved.id && (set.weight != saved.weight || set.reps != saved.reps)) {
+                        workoutRepository.updateSet(set.toLogEntity(sessionId, exState, executionOrder))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun WorkoutSetState.toLogEntity(sessionId: Int, exState: WorkoutExerciseState, executionOrder: Int): SetLogEntity =
+        SetLogEntity(
+            id = id ?: 0,
+            sessionId = sessionId,
+            exerciseId = exState.exercise.id,
+            pesoSollevato = weight,
+            repsEffettive = reps,
+            numeroSerie = setNumber,
+            isWarmup = isWarmup,
+            note = note,
+            supersetId = exState.supersetId,
+            isCompleted = isCompleted,
+            ordineEsercizio = executionOrder,
+            restTimerSeconds = exState.customRestSeconds,
+            durataSecondi = timeSeconds
+        ).withSnapshot(this)
 
     fun updateSetReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
         _state.update { curr ->
@@ -1577,23 +1648,39 @@ class WorkoutViewModel @Inject constructor(
 
             if (currentState.sessionId != null) {
                 val executionOrder = _state.value.exerciseExecutionOrder[exState.exercise.id] ?: exerciseIndex
-                val logId = workoutRepository.logSet(
-                    SetLogEntity(
-                        id = setState.id ?: 0,
-                        sessionId = currentState.sessionId,
-                        exerciseId = exState.exercise.id,
-                        pesoSollevato = setState.weight,
-                        repsEffettive = setState.reps,
-                        numeroSerie = setState.setNumber,
-                        isWarmup = setState.isWarmup,
-                        note = setState.note,
-                        supersetId = exState.supersetId,
-                        isCompleted = newIsCompleted,
-                        ordineEsercizio = executionOrder,
-                        restTimerSeconds = exState.customRestSeconds,
-                        durataSecondi = setState.timeSeconds
-                    ).withSnapshot(setState)
-                )
+                val logId = setRowsLock.withLock {
+                    // A draft row may have been saved for this set since the tap: reuse it instead of inserting another
+                    val rowId = setState.id
+                        ?: _state.value.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex)?.id
+                    val id = workoutRepository.logSet(
+                        SetLogEntity(
+                            id = rowId ?: 0,
+                            sessionId = currentState.sessionId,
+                            exerciseId = exState.exercise.id,
+                            pesoSollevato = setState.weight,
+                            repsEffettive = setState.reps,
+                            numeroSerie = setState.setNumber,
+                            isWarmup = setState.isWarmup,
+                            note = setState.note,
+                            supersetId = exState.supersetId,
+                            isCompleted = newIsCompleted,
+                            ordineEsercizio = executionOrder,
+                            restTimerSeconds = exState.customRestSeconds,
+                            durataSecondi = setState.timeSeconds
+                        ).withSnapshot(setState)
+                    )
+                    // Hand the id to the state before the lock is released, or a draft save could insert it again
+                    _state.update { state ->
+                        val exercises = state.exercises.toMutableList()
+                        val inner = exercises.getOrNull(exerciseIndex) ?: return@update state
+                        val sets = inner.sets.toMutableList()
+                        val current = sets.getOrNull(setIndex) ?: return@update state
+                        sets[setIndex] = current.copy(id = id.toInt())
+                        exercises[exerciseIndex] = inner.copy(sets = sets)
+                        state.copy(exercises = exercises)
+                    }
+                    id
+                }
                 newSetId = logId.toInt()
                 
                 val isLastExercise = exerciseIndex == currentState.exercises.size - 1
