@@ -72,14 +72,11 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -157,6 +154,7 @@ import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.EmptyState
+import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -1745,48 +1743,14 @@ fun EditSetDialog(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = !isTimeSet,
-                        onClick = { isTimeSet = false },
-                        label = { Text(stringResource(R.string.exercise_type_strength)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.FitnessCenter,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
-                        )
-                    )
-                    FilterChip(
-                        selected = isTimeSet,
-                        onClick = {
-                            isTimeSet = true
-                            if (seconds.isBlank()) seconds = "45"
-                        },
-                        label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Timer,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
-                        )
-                    )
-                }
+                ExerciseTypeSelector(
+                    selectedType = if (isTimeSet) "time_and_weight" else "strength",
+                    onTypeSelected = { type ->
+                        isTimeSet = type == "time_and_weight"
+                        if (isTimeSet && seconds.isBlank()) seconds = "45"
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 GymInputField(
                     value = weight,
