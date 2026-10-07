@@ -102,7 +102,9 @@ fun SwapExerciseBottomSheet(
     /** When set, an "Advanced" (%1RM / blocks) type is offered. Receives the blocks and the rest in seconds. */
     onAdvancedExerciseSelected: ((ExerciseEntity, List<PrescriptionBlock>, Int?) -> Unit)? = null,
     /** Prescription of the exercise being swapped, so the new one can keep it. */
-    initialBlocks: List<PrescriptionBlock> = emptyList()
+    initialBlocks: List<PrescriptionBlock> = emptyList(),
+    /** The exercise being replaced, marked in the list; none when an exercise is being added. */
+    currentExerciseId: Int? = null
 ) {
     rememberResponsiveSize()
 
@@ -253,7 +255,7 @@ fun SwapExerciseBottomSheet(
                                     { exerciseToDelete = exercise }
                                 } else null,
                                 isSelected = isSelected,
-                                showCurrent = exercise.id == availableExercises.firstOrNull()?.id
+                                showCurrent = exercise.id == currentExerciseId
                             )
                         }
                     }
@@ -480,7 +482,7 @@ private fun ExerciseListItem(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "Current",
+                        text = stringResource(R.string.current_badge),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)

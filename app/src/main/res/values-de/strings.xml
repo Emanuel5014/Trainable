@@ -285,6 +285,7 @@
     <string name="finish_workout">Beenden</string>
     <string name="finish_workout_title">Training beenden?</string>
     <string name="finish_workout_message">Bist du sicher, dass du dieses Training beenden möchtest? Alle Übungen wurden abgeschlossen.</string>
+    <string name="finish_workout_message_incomplete">Bist du sicher, dass du dieses Training beenden möchtest? Nicht abgeschlossene Übungen und Sätze werden nicht gespeichert.</string>
     <string name="finish_confirm">Beenden</string>
     <string name="quick_workout">SCHNELLES TRAINING</string>
     <string name="quick_workout_name_hint">Trainingsname (optional)</string>

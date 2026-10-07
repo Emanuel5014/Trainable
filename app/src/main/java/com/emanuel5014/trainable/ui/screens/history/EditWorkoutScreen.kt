@@ -451,6 +451,7 @@ fun EditWorkoutScreen(
             availableExercises = state.availableExercises,
             languageCode = languageCode,
             isAdding = exerciseToSwap == null,
+            currentExerciseId = exerciseStateToSwap?.exercise?.id,
             editablePresetExercises = editablePresetExercises,
             categories = state.categories,
             onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->

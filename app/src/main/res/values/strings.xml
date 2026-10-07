@@ -285,6 +285,7 @@
     <string name="finish_workout">Finish</string>
     <string name="finish_workout_title">Finish Workout?</string>
     <string name="finish_workout_message">Are you sure you want to finish this workout? All exercises have been completed.</string>
+    <string name="finish_workout_message_incomplete">Are you sure you want to finish this workout? Exercises and sets you haven\'t completed will not be saved.</string>
     <string name="finish_confirm">Finish</string>
     <string name="quick_workout">QUICK WORKOUT</string>
     <string name="quick_workout_name_hint">Workout Name (optional)</string>

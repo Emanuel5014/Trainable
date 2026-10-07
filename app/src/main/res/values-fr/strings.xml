@@ -285,6 +285,7 @@
     <string name="finish_workout">Terminer</string>
     <string name="finish_workout_title">Terminer l\'Entraînement ?</string>
     <string name="finish_workout_message">Es-tu sûr de vouloir terminer cet entraînement ? Tous les exercices ont été complétés.</string>
+    <string name="finish_workout_message_incomplete">Es-tu sûr de vouloir terminer cet entraînement ? Les exercices et séries non complétés ne seront pas enregistrés.</string>
     <string name="finish_confirm">Terminer</string>
     <string name="quick_workout">ENTRAÎNEMENT RAPIDE</string>
     <string name="quick_workout_name_hint">Nom de l\'Entraînement (optionnel)</string>

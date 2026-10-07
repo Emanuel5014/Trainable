@@ -1924,8 +1924,9 @@ fun WorkoutExecutionScreen(
         if (showSwapExerciseSheet) {
             currentExState?.let { exState ->
                 SwapExerciseBottomSheet(
-                    currentSets = exState.sets.size,
-                    currentReps = exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
+                    // A cardio exercise has no sets or reps to carry over
+                    currentSets = exState.sets.size.takeIf { it > 0 } ?: 3,
+                    currentReps = if (exState.isCardio) "8" else exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
                     availableExercises = availableExercises,
                     languageCode = languageCode,
                     onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
@@ -1953,7 +1954,8 @@ fun WorkoutExecutionScreen(
                         viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, blocks = blocks)
                         showSwapExerciseSheet = false
                     },
-                    initialBlocks = exState.blocks
+                    initialBlocks = exState.blocks,
+                    currentExerciseId = exState.exercise.id
                 )
             }
         }
@@ -2045,7 +2047,14 @@ fun WorkoutExecutionScreen(
             AlertDialog(
                 onDismissRequest = { showFinishDialog = false },
                 title = { Text(stringResource(R.string.finish_workout_title)) },
-                text = { Text(stringResource(R.string.finish_workout_message)) },
+                text = {
+                    Text(
+                        stringResource(
+                            if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
+                            else R.string.finish_workout_message_incomplete
+                        )
+                    )
+                },
                 confirmButton = {
                     GymButton(
                         onClick = {
