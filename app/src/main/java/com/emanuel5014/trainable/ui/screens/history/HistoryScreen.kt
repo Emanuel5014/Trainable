@@ -55,6 +55,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddBox
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
@@ -71,14 +72,11 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -146,18 +144,28 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.entity.isArchived
+import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.EmptyState
+import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
+import com.emanuel5014.trainable.ui.components.NavBarAction
+import com.emanuel5014.trainable.ui.components.NavBarActionEffect
+import com.emanuel5014.trainable.ui.components.NavBarMenuItem
+import com.emanuel5014.trainable.ui.components.NavBarPage
+import com.emanuel5014.trainable.ui.components.navBarBottomClearance
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.WorkoutShareCard
 import com.emanuel5014.trainable.ui.components.captureViewToBitmap
@@ -306,11 +314,29 @@ fun HistoryScreen(
     BackHandler(capturedBitmapToPreview != null) { capturedBitmapToPreview = null }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
+    // With the expressive navbar the add menu opens from the button next to it instead of floating here
+    val showOwnFab = LocalNavBarStyle.current != NavBarStyle.Expressive
+    val bottomClearance = navBarBottomClearance()
+    val addLabel = stringResource(R.string.add)
+    val addCardioLabel = stringResource(R.string.add_cardio)
+    val addWorkoutLabel = stringResource(R.string.add_workout)
+    NavBarActionEffect(
+        page = NavBarPage.History,
+        action = if (uiState.isSelectionMode) null else NavBarAction.Menu(
+            icon = Icons.Rounded.Add,
+            label = addLabel,
+            items = listOf(
+                NavBarMenuItem(Icons.AutoMirrored.Rounded.DirectionsRun, addCardioLabel) { showCardioDialog = true },
+                NavBarMenuItem(Icons.AutoMirrored.Rounded.Assignment, addWorkoutLabel) { showAddWorkoutSheet = true }
+            )
+        )
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = surfaceColor,
             floatingActionButton = {
-                if (!uiState.isSelectionMode) {
+                if (showOwnFab && !uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
                         modifier = Modifier.padding(bottom = 60.dp).offset(x = 12.dp).zIndex(10f),
                         expanded = fabMenuExpanded,
@@ -553,6 +579,7 @@ fun HistoryScreen(
                                 SessionHistoryCard(
                                     session = session,
                                     planName = planName,
+                                    isPlanArchived = sessionDetails.plan.isArchived,
                                     isExpanded = isExpanded,
                                     details = if (isExpanded) uiState.selectedSession else null,
                                     languageCode = languageCode,
@@ -586,7 +613,7 @@ fun HistoryScreen(
                             }
                         }
                         
-                        item { Spacer(modifier = Modifier.height(100.dp)) }
+                        item { Spacer(modifier = Modifier.height(bottomClearance)) }
                     }
                 }
                 
@@ -917,6 +944,7 @@ fun HistoryScreen(
             HistoryFilterBottomSheet(
                 selectedPlanId = uiState.selectedPlanId,
                 availablePlans = uiState.availablePlans,
+                hasUnassignedSessions = uiState.sessions.any { it.plan.isSystemPlan },
                 startDate = uiState.startDate,
                 endDate = uiState.endDate,
                 onPlanSelected = { planId ->
@@ -1284,6 +1312,7 @@ fun SessionHistoryCard(
     planName: String,
     isExpanded: Boolean,
     details: SessionWithDetails?,
+    isPlanArchived: Boolean = false,
     languageCode: String = "en",
     weightUnit: String = "kg",
     onShareClick: (SessionWithDetails) -> Unit = {},
@@ -1320,7 +1349,12 @@ fun SessionHistoryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val mainIcon = if (planName == "Cardio") Icons.AutoMirrored.Rounded.DirectionsRun else Icons.Rounded.FitnessCenter
                     Box(
                         modifier = Modifier
@@ -1337,7 +1371,7 @@ fun SessionHistoryCard(
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = DateFormatter.format(session.timestamp),
@@ -1362,16 +1396,27 @@ fun SessionHistoryCard(
                                 )
                             }
                         }
-                        Text(
-                            text = when (planName) {
-                                "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-                                "Custom Workout" -> stringResource(R.string.custom_workout)
-                                else -> planName
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Primary,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = when (planName) {
+                                    "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
+                                    "Custom Workout" -> stringResource(R.string.custom_workout)
+                                    else -> planName
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Primary,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            if (isPlanArchived) {
+                                ArchivedRoutineBadge()
+                            }
+                        }
                     }
                 }
                 
@@ -1638,6 +1683,34 @@ fun SessionHistoryCard(
     }
 }
 
+/** Marks a workout whose routine has been archived since. */
+@Composable
+private fun ArchivedRoutineBadge(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(SurfaceContainerHighest)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Archive,
+            contentDescription = null,
+            tint = OnSurfaceVariant,
+            modifier = Modifier.size(12.dp)
+        )
+        Text(
+            text = stringResource(R.string.routine_archived_badge).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = OnSurfaceVariant,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 0.5.sp,
+            maxLines = 1
+        )
+    }
+}
+
 @Composable
 fun EditSetDialog(
     set: SetLogEntity,
@@ -1670,48 +1743,14 @@ fun EditSetDialog(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = !isTimeSet,
-                        onClick = { isTimeSet = false },
-                        label = { Text(stringResource(R.string.exercise_type_strength)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.FitnessCenter,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
-                        )
-                    )
-                    FilterChip(
-                        selected = isTimeSet,
-                        onClick = {
-                            isTimeSet = true
-                            if (seconds.isBlank()) seconds = "45"
-                        },
-                        label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Timer,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
-                        )
-                    )
-                }
+                ExerciseTypeSelector(
+                    selectedType = if (isTimeSet) "time_and_weight" else "strength",
+                    onTypeSelected = { type ->
+                        isTimeSet = type == "time_and_weight"
+                        if (isTimeSet && seconds.isBlank()) seconds = "45"
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 GymInputField(
                     value = weight,

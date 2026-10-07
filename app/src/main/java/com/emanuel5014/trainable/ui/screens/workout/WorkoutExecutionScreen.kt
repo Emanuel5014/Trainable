@@ -11,6 +11,11 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
+import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
+import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -94,6 +99,8 @@ import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -128,13 +135,21 @@ import androidx.graphics.shapes.toPath
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
+import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
 import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
+import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
+import com.emanuel5014.trainable.ui.components.PlateChip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
+import com.emanuel5014.trainable.ui.components.TimerAdjustButton
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.rounded.FastForward
@@ -157,6 +172,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.IntensityType
+import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
@@ -164,6 +180,12 @@ import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
+
+/** Key of the large exercise media item in the sets list, used to read where the sets end. */
+private const val MEDIA_CARD_KEY = "exercise_media_card"
+
+/** The large media card only appears when at least this much room is left under the sets. */
+private val MEDIA_CARD_MIN_HEIGHT = 140.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -194,7 +216,13 @@ fun WorkoutExecutionScreen(
         }
     }
     var isEditingValues by remember { mutableStateOf(false) }
+    // Index of a set being edited in place in the bottom hub, done or still to do (none by default); it resets with the exercise
+    var editingSetIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
+    var lastEditedIndex by remember { mutableIntStateOf(0) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
+    // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
+    val plateExercises by viewModel.plateCalculatorExercises.collectAsState()
+    var showPlateSheet by remember { mutableStateOf(false) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }
     var isAddingAfterCurrent by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
@@ -203,10 +231,37 @@ fun WorkoutExecutionScreen(
     var newSessionName by remember { mutableStateOf(state.planName) }
     var showWarmupTimerDialog by remember { mutableStateOf(false) }
     var warmupTimerDuration by remember { mutableStateOf(120) }
+    // Exercises whose EMOM sets the lifter logs by hand instead of with the minute clock.
+    var emomManualExercises by remember { mutableStateOf(emptySet<Int>()) }
+    val usesEmomClock = { exercise: WorkoutExerciseState ->
+        !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in emomManualExercises
+    }
+    // The user's own image/GIF of each exercise (optional, see Workout settings -> Exercise media)
+    val exerciseMedia by viewModel.exerciseMedia.collectAsState()
+    var mediaViewer by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    // Height of the bottom interaction hub, so the large media card only takes the room left above it
+    var hubHeightPx by remember { mutableIntStateOf(0) }
+    val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
+    ExerciseMediaMessageToasts(viewModel.mediaMessages)
     var cardioDistanceInput by remember(state.currentExercise?.exercise?.id) {
         mutableStateOf(
             if ((state.currentExercise?.cardioDistanceKm ?: 0f) > 0f) state.currentExercise?.cardioDistanceKm.toString() else ""
         )
+    }
+
+    mediaViewer?.let { (exerciseId, exerciseName) ->
+        val mediaFile = exerciseMedia[exerciseId]
+        // The file disappears when the user removes it from the viewer: close it then
+        LaunchedEffect(mediaFile) { if (mediaFile == null) mediaViewer = null }
+        if (mediaFile != null) {
+            ExerciseMediaViewer(
+                fileName = mediaFile,
+                exerciseName = exerciseName,
+                onDismiss = { mediaViewer = null },
+                onReplace = { pickMedia(exerciseId) },
+                onRemove = { viewModel.removeExerciseMedia(exerciseId) }
+            )
+        }
     }
 
     if (showRenameDialog) {
@@ -295,6 +350,26 @@ fun WorkoutExecutionScreen(
     }
     val isExerciseCompleted = remember(activeSet) {
         activeSet == null || activeSet.isCompleted
+    }
+    val setBeingEdited = remember(currentExState?.sets, editingSetIndex) {
+        editingSetIndex?.let { currentExState?.sets?.getOrNull(it) }
+    }
+    LaunchedEffect(setBeingEdited, activeSetIndex) {
+        val editing = setBeingEdited
+        when {
+            // The set is gone (removed)
+            editing == null -> editingSetIndex = null
+            // The set being edited came up next: it moves to the panel of the active set, which can also log it
+            // (while a rest is running that panel waits for the rest to end, so it is not opened behind it)
+            editingSetIndex == activeSetIndex && !editing.isCompleted -> {
+                editingSetIndex = null
+                isEditingValues = state.remainingRestSeconds <= 0
+            }
+        }
+    }
+    // Kept so the hub still has something to show while it animates away
+    LaunchedEffect(editingSetIndex) {
+        editingSetIndex?.let { lastEditedIndex = it }
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -512,6 +587,14 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
+                        // Bring the set being edited above the hub that opens under it
+                        LaunchedEffect(editingSetIndex) {
+                            val editing = editingSetIndex
+                            if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
+                                exerciseListState.animateScrollToItem(editing)
+                            }
+                        }
+
                         val swipeOffset = remember { Animatable(0f) }
 
                         Column(
@@ -573,6 +656,31 @@ fun WorkoutExecutionScreen(
                                     onDistanceChange = { cardioDistanceInput = it },
                                     bottomPadding = cardioBottomPadding
                                 )
+                            } else if (usesEmomClock(targetExState)) {
+                                val emomIdle = state.emomRun == null
+                                val emomBottomPadding by animateDpAsState(
+                                    targetValue = when {
+                                        !emomIdle -> 32.dp
+                                        state.remainingRestSeconds > 0 -> 230.dp
+                                        state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> 190.dp
+                                        else -> 140.dp
+                                    },
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
+                                    ),
+                                    label = "emomBottomPadding"
+                                )
+                                EmomExerciseContent(
+                                    exerciseIndex = targetIndex,
+                                    exerciseState = targetExState,
+                                    languageCode = languageCode,
+                                    state = state,
+                                    viewModel = viewModel,
+                                    onSwap = { showSwapExerciseSheet = true },
+                                    onLogManually = { emomManualExercises = emomManualExercises + targetExState.exercise.id },
+                                    bottomPadding = emomBottomPadding
+                                )
                             } else {
                                 var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
                                 LaunchedEffect(targetActiveSetIndex) {
@@ -580,6 +688,35 @@ fun WorkoutExecutionScreen(
                                         expandedSetIndex = targetActiveSetIndex
                                     }
                                 }
+
+                                // Large exercise media: fills the room left between the last set and the hub, and
+                                // gives way (header thumbnail only) as soon as the sets or the hub need that room.
+                                val localDensity = LocalDensity.current
+                                val largeMediaFile = exerciseMedia[targetExState.exercise.id]
+                                    ?.takeIf { state.exerciseMediaEnabled && state.exerciseMediaLarge }
+                                var freeMediaPx by remember(targetIndex) { mutableIntStateOf(0) }
+                                val largeMediaVisible = largeMediaFile != null &&
+                                    freeMediaPx >= with(localDensity) { MEDIA_CARD_MIN_HEIGHT.roundToPx() }
+                                LaunchedEffect(largeMediaFile != null, hubHeightPx) {
+                                    if (largeMediaFile == null || hubHeightPx <= 0) {
+                                        freeMediaPx = 0
+                                        return@LaunchedEffect
+                                    }
+                                    val bottomGapPx = with(localDensity) { 16.dp.roundToPx() }
+                                    snapshotFlow {
+                                        // While the list is scrolled the sets' position says nothing about free room: keep the last value
+                                        if (exerciseListState.firstVisibleItemIndex != 0 || exerciseListState.firstVisibleItemScrollOffset != 0) {
+                                            null
+                                        } else {
+                                            val info = exerciseListState.layoutInfo
+                                            info.visibleItemsInfo.firstOrNull { it.key == MEDIA_CARD_KEY }
+                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx }
+                                                ?.coerceAtLeast(0)
+                                                ?: 0
+                                        }
+                                    }.collect { free -> if (free != null) freeMediaPx = free }
+                                }
+
                                 // Exercise Header
                                 Column(
                                     modifier = Modifier
@@ -591,12 +728,17 @@ fun WorkoutExecutionScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        val setsCount = targetExState.sets.size
+                                        // An advanced exercise reads what the current week prescribes: the plan's own
+                                        // sets and reps targets are only kept in step with the first week
+                                        val weekTargets = if (targetExState.isAdvanced) {
+                                            PrescriptionExpander.legacyTargets(targetExState.blocks)
+                                        } else null
+                                        val setsCount = weekTargets?.first ?: targetExState.sets.size
                                         val repsCount = if (targetExState.isTimeAndWeight) {
                                             val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
                                             "${sec}s"
                                         } else {
-                                            targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
+                                            weekTargets?.second ?: targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
                                                 if (targetExState.sets.isEmpty()) "0"
                                                 else {
                                                     val allReps = targetExState.sets.map { it.reps }
@@ -666,13 +808,66 @@ fun WorkoutExecutionScreen(
                                             )
                                         }
                                     }
-                                    Text(
-                                        text = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode),
-                                        style = MaterialTheme.typography.displaySmall,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.Black
-                                    )
-                                    
+                                    val exerciseDisplayName = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
+                                    if (state.exerciseMediaEnabled) {
+                                        // The thumbnail takes width from the name, so the name steps down one size
+                                        // to wrap onto the same number of lines it did at full width.
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.Top,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Text(
+                                                text = exerciseDisplayName,
+                                                style = MaterialTheme.typography.headlineMedium,
+                                                color = OnSurface,
+                                                fontWeight = FontWeight.Black,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            ExerciseMediaSlot(
+                                                fileName = exerciseMedia[targetExState.exercise.id],
+                                                onOpen = { mediaViewer = targetExState.exercise.id to exerciseDisplayName },
+                                                onAdd = { pickMedia(targetExState.exercise.id) },
+                                                playing = !largeMediaVisible
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = exerciseDisplayName,
+                                            style = MaterialTheme.typography.displaySmall,
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+
+                                    if (targetExState.emomStartIndex != null && targetExState.exercise.id in emomManualExercises) {
+                                        Surface(
+                                            onClick = { emomManualExercises = emomManualExercises - targetExState.exercise.id },
+                                            color = Tertiary.copy(alpha = 0.15f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.padding(top = 8.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Timer,
+                                                    contentDescription = null,
+                                                    tint = Tertiary,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = stringResource(R.string.emom_use_timer),
+                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                                    color = Tertiary,
+                                                    fontWeight = FontWeight.Black
+                                                )
+                                            }
+                                        }
+                                    }
+
                                     if (targetExState.supersetId != null) {
                                         Surface(
                                             color = Primary.copy(alpha = 0.1f),
@@ -721,6 +916,7 @@ fun WorkoutExecutionScreen(
                                                 text = { Text(stringResource(R.string.remove_set_confirm)) },
                                                 confirmButton = {
                                                     TextButton(onClick = {
+                                                        editingSetIndex = null
                                                         viewModel.removeSetFromExercise(targetIndex, index)
                                                         showDeleteConfirm = false
                                                     }) {
@@ -834,7 +1030,17 @@ fun WorkoutExecutionScreen(
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 showDeleteConfirm = true
                                             },
-                                            onEditValues = { isEditingValues = !isEditingValues },
+                                            onEditValues = {
+                                                editingSetIndex = null
+                                                isEditingValues = !isEditingValues
+                                            },
+                                            // A tap on the card edits that set in place, done or still to do; the square
+                                            // on the right is what checks and unchecks it
+                                            onEdit = {
+                                                editingSetIndex = if (editingSetIndex == index) null else index
+                                                isEditingValues = false
+                                            },
+                                            isEditing = editingSetIndex == index && targetIndex == state.currentExerciseIndex,
                                             isActive = isActive,
                                             weightUnit = state.weightUnit,
                                             previousNote = set.previousNote,
@@ -1056,8 +1262,29 @@ fun WorkoutExecutionScreen(
                                             }
                                         }
                                     }
-                                    item {
-                                        val hubSpacer = if (com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight) 220.dp else 280.dp
+                                    if (largeMediaFile != null) {
+                                        item(key = MEDIA_CARD_KEY) {
+                                            val targetHeight = if (largeMediaVisible) with(localDensity) { freeMediaPx.toDp() } else 0.dp
+                                            val cardHeight by animateDpAsState(targetHeight, label = "exerciseMediaCardHeight")
+                                            if (cardHeight > 0.dp) {
+                                                ExerciseMediaCard(
+                                                    fileName = largeMediaFile,
+                                                    onOpen = {
+                                                        mediaViewer = targetExState.exercise.id to
+                                                            ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
+                                                    },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(cardHeight)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    item(key = "hub_spacer") {
+                                        // With the large media card the list already ends exactly above the hub
+                                        val hubSpacer = if (largeMediaVisible) {
+                                            with(localDensity) { hubHeightPx.toDp() }
+                                        } else if (com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight) 220.dp else 280.dp
                                         Spacer(modifier = Modifier.height(hubSpacer)) // Space for the dynamic hub
                                     }
                                 }
@@ -1069,7 +1296,10 @@ fun WorkoutExecutionScreen(
                 // DYNAMIC INTERACTION HUB
                 val currentExState = state.currentExercise
                 val isCardioActive = currentExState?.isCardio == true
-                val showBottomHub = !isCardioActive || currentExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
+                val isEmomActive = currentExState != null && usesEmomClock(currentExState)
+                // While the minute clock runs, its screen has everything the lifter needs.
+                val showBottomHub = (!isCardioActive || currentExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)) &&
+                    !(isEmomActive && state.emomRun != null)
 
                 AnimatedVisibility(
                     visible = showBottomHub,
@@ -1078,7 +1308,9 @@ fun WorkoutExecutionScreen(
                     modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onSizeChanged { hubHeightPx = it.height },
                         color = Surface,
                         tonalElevation = 8.dp,
                         shadowElevation = 16.dp
@@ -1134,10 +1366,12 @@ fun WorkoutExecutionScreen(
                                         Spacer(modifier = Modifier.width(14.dp))
                                         Column {
                                             Text(
-                                                text = stringResource(R.string.warmup_timer).uppercase(),
+                                                text = stringResource(R.string.warmup_label).uppercase(),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = OnTertiary.copy(alpha = 0.7f),
-                                                fontWeight = FontWeight.ExtraBold
+                                                fontWeight = FontWeight.ExtraBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             val wMinutes = state.warmupTimerRemaining / 60
                                             val wSeconds = state.warmupTimerRemaining % 60
@@ -1149,15 +1383,18 @@ fun WorkoutExecutionScreen(
                                             )
                                         }
                                     }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        FilledIconButton(
-                                            onClick = { viewModel.addWarmupTime(30) },
-                                            colors = IconButtonDefaults.filledIconButtonColors(
-                                                containerColor = OnTertiary.copy(alpha = 0.1f),
-                                                contentColor = OnTertiary
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        if (state.showTimerSubtract) {
+                                            TimerAdjustButton(
+                                                label = "−${state.timerSubtractSeconds}s",
+                                                onClick = { viewModel.adjustWarmupTime(-state.timerSubtractSeconds) }
                                             )
-                                        ) {
-                                            Text("+30s", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
+                                        }
+                                        if (state.showTimerAdd) {
+                                            TimerAdjustButton(
+                                                label = "+${state.timerAddSeconds}s",
+                                                onClick = { viewModel.adjustWarmupTime(state.timerAddSeconds) }
+                                            )
                                         }
                                         FilledIconButton(
                                             onClick = { viewModel.skipWarmupTimer() },
@@ -1178,8 +1415,11 @@ fun WorkoutExecutionScreen(
 
                         AnimatedContent(
                             targetState = when {
+                                // A set being edited wins over the rest card, which stays visible in a slim form
+                                setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
                                 isResting -> HubMode.Resting
-                                isCardioActive -> HubMode.Cardio
+                                // Cardio and the EMOM clock have their own screens: the hub only navigates.
+                                isCardioActive || isEmomActive -> HubMode.Cardio
                                 activeSet == null || activeSet.isCompleted -> HubMode.Completed
                                 isEditingValues -> HubMode.Editing
                                 else -> HubMode.Logging
@@ -1206,13 +1446,85 @@ fun WorkoutExecutionScreen(
                                         )
                                     }
                                 }
+                                HubMode.EditingSet -> {
+                                    val editedIndex = editingSetIndex ?: lastEditedIndex
+                                    val exercise = currentExState
+                                    val editedSet = exercise?.sets?.getOrNull(editedIndex)
+                                    if (exercise != null && editedSet != null) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    stringResource(R.string.adjust_set_number, editedSet.setNumber),
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    color = Primary,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    // The rest card is hidden while editing: keep the countdown in sight
+                                                    if (isResting) RestTimerPill(state.remainingRestSeconds)
+                                                    IconButton(onClick = { editingSetIndex = null }) {
+                                                        Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
+                                                    }
+                                                }
+                                            }
+                                            if (exercise.isTimeAndWeight) {
+                                                WeightTimeInput(
+                                                    weight = editedSet.weight,
+                                                    seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: 45,
+                                                    onWeightChange = { viewModel.editSetWeight(state.currentExerciseIndex, editedIndex, it) },
+                                                    onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
+                                                    weightUnit = state.weightUnit
+                                                )
+                                            } else {
+                                                WeightRepsInput(
+                                                    weight = editedSet.weight,
+                                                    reps = editedSet.reps,
+                                                    onWeightChange = { viewModel.editSetWeight(state.currentExerciseIndex, editedIndex, it) },
+                                                    onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) },
+                                                    weightUnit = state.weightUnit
+                                                )
+                                                if (rpeInputShown(state.rpeInputMode, exercise, editedSet)) {
+                                                    RpeSelector(
+                                                        value = editedSet.rpe,
+                                                        onValueChange = { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
+                                                    )
+                                                }
+                                            }
+                                            GymButton(
+                                                onClick = { editingSetIndex = null },
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Icon(Icons.Rounded.Check, contentDescription = null)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    stringResource(R.string.done).uppercase(),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.ExtraBold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                                 HubMode.Resting -> {
-                                    RestTimerSection(
-                                        remainingSeconds = state.remainingRestSeconds,
-                                        totalRestSeconds = state.totalRestSeconds,
-                                        onAddTime = { viewModel.addRestTime(30) },
-                                        onSkip = { viewModel.skipRestTimer() }
-                                    )
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        RestTimerSection(
+                                            remainingSeconds = state.remainingRestSeconds,
+                                            totalRestSeconds = state.totalRestSeconds,
+                                            onAddTime = { viewModel.adjustRestTime(state.timerAddSeconds) },
+                                            onSubtractTime = { viewModel.adjustRestTime(-state.timerSubtractSeconds) },
+                                            addSeconds = state.timerAddSeconds,
+                                            subtractSeconds = state.timerSubtractSeconds,
+                                            showAdd = state.showTimerAdd,
+                                            showSubtract = state.showTimerSubtract,
+                                            onSkip = { viewModel.skipRestTimer() }
+                                        )
+                                        // The rest is the time to load the bar for the next set
+                                        ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
+                                    }
                                 }
                                 HubMode.Editing -> {
                                     activeSet?.let { set ->
@@ -1256,11 +1568,24 @@ fun WorkoutExecutionScreen(
                                                     onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
                                                     weightUnit = state.weightUnit
                                                 )
-                                                val showRpe = when (state.rpeInputMode) {
-                                                    1 -> true
-                                                    2 -> false
-                                                    else -> currentExState?.isAdvanced == true || set.isExtra
+                                                if (state.plateCalculatorEnabled && currentExState != null) {
+                                                    val exerciseId = currentExState.exercise.id
+                                                    if (exerciseId in plateExercises) {
+                                                        PlateChip(
+                                                            weightKg = set.weight,
+                                                            barKg = plateExercises[exerciseId],
+                                                            weightUnit = state.weightUnit,
+                                                            plates = state.availablePlates,
+                                                            onClick = { showPlateSheet = true }
+                                                        )
+                                                    } else {
+                                                        PlateCalculatorEnableChip(onClick = {
+                                                            viewModel.setPlateCalculator(exerciseId, true, null)
+                                                            showPlateSheet = true
+                                                        })
+                                                    }
                                                 }
+                                                val showRpe = rpeInputShown(state.rpeInputMode, currentExState, set)
                                                 if (showRpe) {
                                                     RpeSelector(
                                                         value = set.rpe,
@@ -1286,78 +1611,81 @@ fun WorkoutExecutionScreen(
                                 }
                                 HubMode.Logging -> {
                                     activeSet?.let { set ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(24.dp))
-                                                .background(SurfaceContainerHigh)
-                                                .clickable { isEditingValues = true }
-                                                .padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Row(
                                                 modifier = Modifier
-                                                    .size(48.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Primary.copy(alpha = 0.1f)),
-                                                contentAlignment = Alignment.Center
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(24.dp))
+                                                    .background(SurfaceContainerHigh)
+                                                    .clickable { isEditingValues = true }
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
-                                            }
-                                            Spacer(modifier = Modifier.width(16.dp))
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-                                                val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
-                                                    "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
-                                                } else if (set.isAmrap) {
-                                                    stringResource(R.string.max_label)
-                                                } else {
-                                                    "${set.reps}"
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(48.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Primary.copy(alpha = 0.1f)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
                                                 }
-                                                Text(
-                                                    text = WeightUnitConverter.formatWithUnit(
-                                                        WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
-                                                        state.weightUnit
-                                                    ) + " × $repsOrTime", 
-                                                    style = MaterialTheme.typography.titleLarge, 
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                                val p = set.prescription
-                                                val detail = listOfNotNull(
-                                                    p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
-                                                ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
-                                                    listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
-                                                if (detail.isNotEmpty()) {
-                                                    Text(
-                                                        text = detail.joinToString(" · "),
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.ExtraBold,
-                                                        maxLines = 1,
-                                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                                    )
-                                                }
-                                            }
-                                            Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
-                                            Spacer(modifier = Modifier.width(12.dp))
-                                            LogSetButton(
-                                                onClick = {
-                                                    if (set.isAmrap) {
-                                                        isEditingValues = true
-                                                    } else if (currentExState?.isTimeAndWeight == true) {
-                                                        viewModel.skipTimerAndLogSet(
-                                                            state.currentExerciseIndex,
-                                                            activeSetIndex,
-                                                            set.weight,
-                                                            set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
-                                                        )
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                                                    val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
+                                                        "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
+                                                    } else if (set.isAmrap) {
+                                                        stringResource(R.string.max_label)
                                                     } else {
-                                                        viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
+                                                        "${set.reps}"
                                                     }
-                                                },
-                                                modifier = Modifier.width(120.dp),
-                                                compact = true
-                                            )
+                                                    Text(
+                                                        text = WeightUnitConverter.formatWithUnit(
+                                                            WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
+                                                            state.weightUnit
+                                                        ) + " × $repsOrTime", 
+                                                        style = MaterialTheme.typography.titleLarge, 
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                    val p = set.prescription
+                                                    val detail = listOfNotNull(
+                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
+                                                    ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
+                                                        listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
+                                                    if (detail.isNotEmpty()) {
+                                                        Text(
+                                                            text = detail.joinToString(" · "),
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            color = Primary,
+                                                            fontWeight = FontWeight.ExtraBold,
+                                                            maxLines = 1,
+                                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                        )
+                                                    }
+                                                }
+                                                Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                LogSetButton(
+                                                    onClick = {
+                                                        if (set.isAmrap) {
+                                                            isEditingValues = true
+                                                        } else if (currentExState?.isTimeAndWeight == true) {
+                                                            viewModel.skipTimerAndLogSet(
+                                                                state.currentExerciseIndex,
+                                                                activeSetIndex,
+                                                                set.weight,
+                                                                set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
+                                                            )
+                                                        } else {
+                                                            viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
+                                                        }
+                                                    },
+                                                    modifier = Modifier.width(120.dp),
+                                                    compact = true
+                                                )
+                                            }
+                                            ActiveSetPlateChip(currentExState, set, state, plateExercises) { showPlateSheet = true }
                                         }
                                     }
                                 }
@@ -1498,7 +1826,7 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
-                        if (!isExerciseCompleted || isResting) {
+                        if ((!isExerciseCompleted && !isEmomActive) || isResting) {
                             Spacer(modifier = Modifier.height(16.dp))
 
                             ExerciseNavigation(
@@ -1574,11 +1902,31 @@ fun WorkoutExecutionScreen(
             )
         }
 
+        if (showPlateSheet && activeSet != null) {
+            currentExState?.let { exState ->
+                val exerciseId = exState.exercise.id
+                PlateCalculatorSheet(
+                    exerciseName = ExerciseTranslations.translate(exState.exercise.nome, languageCode),
+                    weightKg = activeSet.weight,
+                    barKg = plateExercises[exerciseId],
+                    weightUnit = state.weightUnit,
+                    plates = state.availablePlates,
+                    onApply = { newWeightKg ->
+                        viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newWeightKg)
+                    },
+                    onBarChange = { barKg -> viewModel.setPlateCalculator(exerciseId, true, barKg) },
+                    onDisable = { viewModel.setPlateCalculator(exerciseId, false, plateExercises[exerciseId]) },
+                    onDismiss = { showPlateSheet = false }
+                )
+            }
+        }
+
         if (showSwapExerciseSheet) {
             currentExState?.let { exState ->
                 SwapExerciseBottomSheet(
-                    currentSets = exState.sets.size,
-                    currentReps = exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
+                    // A cardio exercise has no sets or reps to carry over
+                    currentSets = exState.sets.size.takeIf { it > 0 } ?: 3,
+                    currentReps = if (exState.isCardio) "8" else exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
                     availableExercises = availableExercises,
                     languageCode = languageCode,
                     onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
@@ -1606,7 +1954,8 @@ fun WorkoutExecutionScreen(
                         viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, blocks = blocks)
                         showSwapExerciseSheet = false
                     },
-                    initialBlocks = exState.blocks
+                    initialBlocks = exState.blocks,
+                    currentExerciseId = exState.exercise.id
                 )
             }
         }
@@ -1698,7 +2047,14 @@ fun WorkoutExecutionScreen(
             AlertDialog(
                 onDismissRequest = { showFinishDialog = false },
                 title = { Text(stringResource(R.string.finish_workout_title)) },
-                text = { Text(stringResource(R.string.finish_workout_message)) },
+                text = {
+                    Text(
+                        stringResource(
+                            if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
+                            else R.string.finish_workout_message_incomplete
+                        )
+                    )
+                },
                 confirmButton = {
                     GymButton(
                         onClick = {
@@ -1728,7 +2084,7 @@ fun WorkoutExecutionScreen(
     }
 }
 
-enum class HubMode { Logging, Editing, Resting, Completed, Cardio }
+enum class HubMode { Logging, Editing, EditingSet, Resting, Completed, Cardio }
 
 @Composable
 fun rememberAnimatedShape(
@@ -1863,7 +2219,75 @@ fun CardioExerciseContent(
     bottomPadding: androidx.compose.ui.unit.Dp = 120.dp
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
+    var showCompleteDialog by remember { mutableStateOf(false) }
+    var completeMinutes by remember { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
+
+    // Marking the exercise as done without the timer logs the time it was planned with. Without a planned time
+    // there is nothing to log, so the minutes are asked for.
+    val plannedSeconds = exerciseState.cardioDurataTargetSeconds?.takeIf { it > 0 }
+    if (showCompleteDialog) {
+        val typedSeconds = ((completeMinutes.replace(',', '.').toFloatOrNull() ?: 0f) * 60).toInt()
+        val secondsToLog = plannedSeconds ?: typedSeconds
+        AlertDialog(
+            modifier = Modifier.imePadding(),
+            onDismissRequest = { showCompleteDialog = false },
+            title = { Text(stringResource(R.string.cardio_mark_completed)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (plannedSeconds != null) {
+                        val planned = if (plannedSeconds % 60 == 0) {
+                            stringResource(R.string.cardio_min_format, plannedSeconds / 60)
+                        } else {
+                            String.format("%d:%02d", plannedSeconds / 60, plannedSeconds % 60)
+                        }
+                        Text(
+                            text = stringResource(R.string.cardio_complete_logs_time, planned),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        OutlinedTextField(
+                            value = completeMinutes,
+                            onValueChange = { completeMinutes = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
+                            label = { Text(stringResource(R.string.cardio_complete_duration)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                    OutlinedTextField(
+                        value = distanceInput,
+                        onValueChange = onDistanceChange,
+                        label = { Text(stringResource(R.string.cardio_distance_label) + " " + stringResource(R.string.optional_suffix)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = secondsToLog > 0,
+                    onClick = {
+                        viewModel.completeCardio(distanceInput.replace(',', '.').toFloatOrNull() ?: 0f, secondsToLog)
+                        showCompleteDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCompleteDialog = false }) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
+            },
+            containerColor = SurfaceContainerHigh,
+            titleContentColor = OnSurface,
+            textContentColor = OnSurfaceVariant
+        )
+    }
 
     if (showStopDialog) {
         AlertDialog(
@@ -1874,7 +2298,7 @@ fun CardioExerciseContent(
                 OutlinedTextField(
                     value = distanceInput,
                     onValueChange = onDistanceChange,
-                    label = { Text(stringResource(R.string.cardio_distance_label) + " (optional)") },
+                    label = { Text(stringResource(R.string.cardio_distance_label) + " " + stringResource(R.string.optional_suffix)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -1909,10 +2333,17 @@ fun CardioExerciseContent(
     ) {
         // Responsive scale: width-based so short/landscape heights don't collapse the UI.
         // Clamped to avoid glitches on extreme DPI / smallest-width settings.
-        val scale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
+        // The height counts too: the circle gives way when the content (about 260 dp besides the circle) would not fit
+        val widthScale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
+        val heightScale = ((maxHeight - 260.dp) / 200.dp).coerceIn(0.4f, 1.15f)
+        val scale = minOf(widthScale, heightScale)
         val cIndicatorSize = (200f * scale).dp
         val cButtonSize = (135f * scale).dp
-        val cTimerFontSize = (46f * scale).sp
+        // The time stays readable when the rest has to shrink a lot
+        val cTimerFontSize = (46f * scale.coerceAtLeast(0.7f)).sp
+        // Gaps and the action buttons give way a little too on a short screen
+        val cRowGap = (12f * scale.coerceIn(0.6f, 1f)).dp
+        val cActionHeight = if (scale < 0.7f) 40 else 48
         val cCookieSize = (130f * scale).dp
         val cCookieIconSize = (50f * scale).dp
         val cGapSize = (10f * scale).dp
@@ -1965,7 +2396,7 @@ fun CardioExerciseContent(
                 .fillMaxWidth()
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(cRowGap)
         ) {
             Text(
                 text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
@@ -2064,7 +2495,8 @@ fun CardioExerciseContent(
 
                 Text(
                     text = timeFormatted,
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = cTimerFontSize),
+                    // The line height follows the size, or the text keeps taking the room of the big one
+                    style = MaterialTheme.typography.displayLarge.copy(fontSize = cTimerFontSize, lineHeight = cTimerFontSize * 1.15f),
                     fontWeight = FontWeight.Black,
                     color = if (state.cardioTimerRunning) Primary else OnSurface
                 )
@@ -2081,6 +2513,30 @@ fun CardioExerciseContent(
                     letterSpacing = 1.5.sp
                 )
 
+                // Done without the timer: only while it is idle (a running or paused timer has its own stop and save)
+                AnimatedVisibility(
+                    visible = !state.cardioTimerRunning && !state.cardioTimerPaused,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    GymButton(
+                        onClick = {
+                            completeMinutes = ""
+                            showCompleteDialog = true
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .padding(top = 4.dp),
+                        height = cActionHeight,
+                        containerColor = Tertiary.copy(alpha = 0.15f),
+                        contentColor = Tertiary
+                    ) {
+                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.cardio_mark_completed), fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+
                 // Stop button shown inline when paused — no layout jump, just appears below status label
                 AnimatedVisibility(
                     visible = state.cardioTimerPaused,
@@ -2092,7 +2548,7 @@ fun CardioExerciseContent(
                         modifier = Modifier
                             .fillMaxWidth(0.6f)
                             .padding(top = 4.dp),
-                        height = 48,
+                        height = cActionHeight,
                         containerColor = Error.copy(alpha = 0.15f),
                         contentColor = Error
                     ) {
@@ -2294,6 +2750,58 @@ fun CardioExerciseContent(
             }
         }
     }
+}
+
+/** Whether the RPE selector goes with a set: on every exercise, on none, or only on advanced ones and extra sets. */
+private fun rpeInputShown(rpeInputMode: Int, exercise: WorkoutExerciseState?, set: WorkoutSetState): Boolean =
+    when (rpeInputMode) {
+        1 -> true
+        2 -> false
+        else -> exercise?.isAdvanced == true || set.isExtra
+    }
+
+/** The rest countdown in a small pill, for when the bottom hub is busy with something else. */
+@Composable
+private fun RestTimerPill(remainingSeconds: Int, modifier: Modifier = Modifier) {
+    val time = String.format("%d:%02d", remainingSeconds / 60, remainingSeconds % 60)
+    val description = stringResource(R.string.rest_timer_remaining, time)
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Tertiary)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .semantics { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(Icons.Rounded.Timer, contentDescription = null, tint = OnTertiary, modifier = Modifier.size(16.dp))
+        Text(
+            text = time,
+            style = MaterialTheme.typography.labelLarge,
+            color = OnTertiary,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
+
+/** The plate calculator line for the set about to be done, when this exercise uses the calculator. */
+@Composable
+private fun ActiveSetPlateChip(
+    exercise: WorkoutExerciseState?,
+    set: WorkoutSetState?,
+    state: WorkoutState,
+    plateExercises: Map<Int, Float?>,
+    onClick: () -> Unit
+) {
+    if (!state.plateCalculatorEnabled || exercise == null || set == null || set.isCompleted) return
+    if (exercise.isTimeAndWeight || exercise.isCardio || exercise.exercise.id !in plateExercises) return
+    PlateChip(
+        weightKg = set.weight,
+        barKg = plateExercises[exercise.exercise.id],
+        weightUnit = state.weightUnit,
+        plates = state.availablePlates,
+        onClick = onClick
+    )
 }
 
 @Composable

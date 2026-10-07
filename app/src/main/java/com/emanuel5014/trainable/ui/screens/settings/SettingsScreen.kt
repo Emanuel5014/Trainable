@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.CloudUpload
@@ -78,6 +79,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import java.text.SimpleDateFormat
@@ -133,6 +135,7 @@ import kotlin.system.exitProcess
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToWorkoutSettings: () -> Unit,
+    onNavigateToExerciseMedia: () -> Unit,
     onNavigateToAiSettings: () -> Unit,
     onNavigateToPersonalizationSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
@@ -164,7 +167,7 @@ fun SettingsScreen(
     val isLoadingNextcloudBackups by viewModel.isLoadingNextcloudBackups.collectAsState()
 
     val backupStatus by viewModel.backupStatus.collectAsState()
-    val floatingNavBar by viewModel.floatingNavBar.collectAsState()
+    val navBarStyle by viewModel.navBarStyle.collectAsState()
     val swipeActionsEnabled by viewModel.swipeActionsEnabled.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val webServerState by viewModel.webServerState.collectAsState()
@@ -1628,8 +1631,56 @@ fun SettingsScreen(
                         }
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
+                        var showNavBarStyleDialog by remember { mutableStateOf(false) }
+
+                        if (showNavBarStyleDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showNavBarStyleDialog = false },
+                                containerColor = SurfaceContainerHigh,
+                                title = { Text(stringResource(R.string.nav_bar_style), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+                                text = {
+                                    Column {
+                                        SettingsChoiceOption(
+                                            title = stringResource(R.string.nav_bar_style_expressive),
+                                            description = stringResource(R.string.nav_bar_style_expressive_desc),
+                                            isSelected = navBarStyle == NavBarStyle.Expressive,
+                                            onClick = {
+                                                viewModel.setNavBarStyle(NavBarStyle.Expressive)
+                                                showNavBarStyleDialog = false
+                                            }
+                                        )
+                                        SettingsChoiceOption(
+                                            title = stringResource(R.string.nav_bar_style_floating),
+                                            description = stringResource(R.string.nav_bar_style_floating_desc),
+                                            isSelected = navBarStyle == NavBarStyle.Floating,
+                                            onClick = {
+                                                viewModel.setNavBarStyle(NavBarStyle.Floating)
+                                                showNavBarStyleDialog = false
+                                            }
+                                        )
+                                        SettingsChoiceOption(
+                                            title = stringResource(R.string.nav_bar_style_classic),
+                                            description = stringResource(R.string.nav_bar_style_classic_desc),
+                                            isSelected = navBarStyle == NavBarStyle.Classic,
+                                            onClick = {
+                                                viewModel.setNavBarStyle(NavBarStyle.Classic)
+                                                showNavBarStyleDialog = false
+                                            }
+                                        )
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = { showNavBarStyleDialog = false }) {
+                                        Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                                    }
+                                }
+                            )
+                        }
+
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showNavBarStyleDialog = true },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -1637,15 +1688,18 @@ fun SettingsScreen(
                                 Icon(Icons.Rounded.Dashboard, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.floating_nav_bar), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.floating_nav_bar_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(R.string.nav_bar_style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(
+                                        when (navBarStyle) {
+                                            NavBarStyle.Classic -> stringResource(R.string.nav_bar_style_classic)
+                                            NavBarStyle.Floating -> stringResource(R.string.nav_bar_style_floating)
+                                            NavBarStyle.Expressive -> stringResource(R.string.nav_bar_style_expressive)
+                                        },
+                                        style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
+                                    )
                                 }
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = !floatingNavBar,
-                                onCheckedChange = { viewModel.setFloatingNavBar(!it) }
-                            )
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                         }
 
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
@@ -1695,6 +1749,31 @@ fun SettingsScreen(
                                 Column {
                                     Text(stringResource(R.string.workout_settings), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                     Text(stringResource(R.string.workout_settings_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                }
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                        }
+
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToExerciseMedia() },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Collections,
+                                    contentDescription = null,
+                                    tint = Primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(stringResource(R.string.exercise_media), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.exercise_media_manage_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)

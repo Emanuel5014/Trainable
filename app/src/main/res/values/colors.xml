@@ -7,8 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    
-    <!-- Monolithic Colors -->
-    <color name="monolithic_surface">#0E0E11</color>
-    <color name="monolithic_primary">#3A59D1</color>
+    <!-- Surface of the splash screen and of the window before the UI is drawn (light); values-night has the dark one -->
+    <color name="splash_background">#FBF8FF</color>
+    <color name="splash_logo">#3A59D1</color>
 </resources>

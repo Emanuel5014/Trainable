@@ -8,6 +8,8 @@ import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.util.ExerciseMediaStorage
+import com.emanuel5014.trainable.util.TimerAdjustment
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -120,6 +122,17 @@ class BackupManager @Inject constructor(
                     }
 
 
+                    // Export the user's own exercise images / GIFs
+                    ExerciseMediaStorage.dir(context).listFiles()?.forEach { file ->
+                        if (file.isFile) {
+                            FileInputStream(file).use { fis ->
+                                zos.putNextEntry(ZipEntry("${ExerciseMediaStorage.DIR_NAME}/${file.name}"))
+                                fis.copyTo(zos)
+                                zos.closeEntry()
+                            }
+                        }
+                    }
+
                     // Export physical check images
                     val physicalChecksDir = File(context.filesDir, "physical_checks")
                     if (physicalChecksDir.exists()) {
@@ -216,6 +229,7 @@ class BackupManager @Inject constructor(
                 json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
                 json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
                 json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
+                prefs[UserPreferencesRepository.NAV_BAR_STYLE]?.let { json.put("nav_bar_style", it) }
                 json.put("theme_mode", prefs[UserPreferencesRepository.THEME_MODE] ?: 0)
                 json.put("timer_notifications_enabled", prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] ?: true)
                 json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
@@ -239,6 +253,17 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB]?.let { json.put("load_rounding_lb", it.toDouble()) }
                 json.put("rpe_input_mode", prefs[UserPreferencesRepository.RPE_INPUT_MODE] ?: 0)
                 json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
+                json.put("exercise_media_enabled", prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] ?: false)
+                json.put("exercise_media_large", prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] ?: true)
+                json.put("timer_add_seconds", TimerAdjustment.sanitizeAdd(prefs[UserPreferencesRepository.TIMER_ADD_SECONDS]))
+                json.put("timer_subtract_seconds", TimerAdjustment.sanitizeSubtract(prefs[UserPreferencesRepository.TIMER_SUBTRACT_SECONDS]))
+                json.put("timer_add_enabled", prefs[UserPreferencesRepository.TIMER_ADD_ENABLED] ?: true)
+                json.put("timer_subtract_enabled", prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] ?: true)
+                json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
+                json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
+                json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
+                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
+                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB]?.let { json.put("plate_calculator_plates_lb", it) }
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -343,6 +368,11 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.WEEKLY_GOAL] = jsonObject.getInt("weekly_goal")
                                             if (jsonObject.has("floating_nav_bar"))
                                                 prefs[UserPreferencesRepository.FLOATING_NAV_BAR] = jsonObject.getBoolean("floating_nav_bar")
+                                            if (jsonObject.has("nav_bar_style"))
+                                                prefs[UserPreferencesRepository.NAV_BAR_STYLE] = jsonObject.getInt("nav_bar_style")
+                                            else if (jsonObject.has("floating_nav_bar"))
+                                                // Backup from before the third style: let the restored switch decide
+                                                prefs.remove(UserPreferencesRepository.NAV_BAR_STYLE)
                                             if (jsonObject.has("theme_mode"))
                                                 prefs[UserPreferencesRepository.THEME_MODE] = jsonObject.getInt("theme_mode")
                                             if (jsonObject.has("timer_notifications_enabled"))
@@ -379,6 +409,28 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.RPE_INPUT_MODE] = jsonObject.getInt("rpe_input_mode")
                                             if (jsonObject.has("advanced_programming_enabled"))
                                                 prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] = jsonObject.getBoolean("advanced_programming_enabled")
+                                            if (jsonObject.has("exercise_media_enabled"))
+                                                prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] = jsonObject.getBoolean("exercise_media_enabled")
+                                            if (jsonObject.has("exercise_media_large"))
+                                                prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] = jsonObject.getBoolean("exercise_media_large")
+                                            if (jsonObject.has("timer_add_seconds"))
+                                                prefs[UserPreferencesRepository.TIMER_ADD_SECONDS] = TimerAdjustment.sanitizeAdd(jsonObject.getInt("timer_add_seconds"))
+                                            if (jsonObject.has("timer_subtract_seconds"))
+                                                prefs[UserPreferencesRepository.TIMER_SUBTRACT_SECONDS] = TimerAdjustment.sanitizeSubtract(jsonObject.getInt("timer_subtract_seconds"))
+                                            if (jsonObject.has("timer_add_enabled"))
+                                                prefs[UserPreferencesRepository.TIMER_ADD_ENABLED] = jsonObject.getBoolean("timer_add_enabled")
+                                            if (jsonObject.has("timer_subtract_enabled"))
+                                                prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] = jsonObject.getBoolean("timer_subtract_enabled")
+                                            if (jsonObject.has("timer_show_time_buttons"))
+                                                prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] = jsonObject.getBoolean("timer_show_time_buttons")
+                                            if (jsonObject.has("timer_show_skip_button"))
+                                                prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] = jsonObject.getBoolean("timer_show_skip_button")
+                                            if (jsonObject.has("plate_calculator_enabled"))
+                                                prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] = jsonObject.getBoolean("plate_calculator_enabled")
+                                            if (jsonObject.has("plate_calculator_plates_kg"))
+                                                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG] = jsonObject.getString("plate_calculator_plates_kg")
+                                            if (jsonObject.has("plate_calculator_plates_lb"))
+                                                prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB] = jsonObject.getString("plate_calculator_plates_lb")
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -392,6 +444,14 @@ class BackupManager @Inject constructor(
                                     if (!physicalChecksDir.exists()) physicalChecksDir.mkdirs()
                                     val outFile = File(physicalChecksDir, imageName)
                                     FileOutputStream(outFile).use { fos ->
+                                        zis.copyTo(fos)
+                                    }
+                                }
+                            }
+                            entry.name.startsWith("${ExerciseMediaStorage.DIR_NAME}/") -> {
+                                val mediaName = File(entry.name).name
+                                if (mediaName.isNotEmpty()) {
+                                    FileOutputStream(File(ExerciseMediaStorage.dir(context), mediaName)).use { fos ->
                                         zis.copyTo(fos)
                                     }
                                 }

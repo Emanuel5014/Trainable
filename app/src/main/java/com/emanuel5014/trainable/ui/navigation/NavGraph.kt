@@ -22,6 +22,7 @@ import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailScreen
 import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseCustomizationScreen
+import com.emanuel5014.trainable.ui.screens.settings.ExerciseMediaScreen
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.AiSettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsScreen
@@ -58,6 +59,7 @@ fun MainNavGraph(
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToWorkoutSettings = { navController.navigate(WorkoutSettings) },
+                onNavigateToExerciseMedia = { navController.navigate(ExerciseMediaSettings) },
                 onNavigateToAiSettings = { navController.navigate(AiSettings) },
                 onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                 onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
@@ -84,6 +86,11 @@ fun MainNavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToExerciseCustomization = { navController.navigate(ExerciseCustomization) },
                 onNavigateToOneRepMaxes = { navController.navigate(OneRepMaxes) }
+            )
+        }
+        composable<ExerciseMediaSettings> {
+            ExerciseMediaScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable<AiSettings> {

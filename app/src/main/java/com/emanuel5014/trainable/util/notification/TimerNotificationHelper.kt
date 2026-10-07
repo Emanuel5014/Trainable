@@ -17,6 +17,8 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.os.VibrationEffect
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.domain.emom.EmomClock
+import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,23 @@ import android.media.AudioAttributes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** One button of the EMOM notification; [label] is already in the app language. */
+data class EmomNotificationAction(val action: TimerNotificationReceiver.EmomAction, val label: String)
+
+/** What the ongoing EMOM notification shows, all text already in the app language. */
+data class EmomNotificationInfo(
+    val title: String,
+    val text: String,
+    /** Extra line for the expanded notification where the system has no richer layout. */
+    val detail: String?,
+    /** Epoch millis at which the countdown reaches zero; null while the run is paused. */
+    val countdownEndsAt: Long?,
+    /** Seconds of the whole run already elapsed, for the live progress bar. */
+    val runElapsedSeconds: Int,
+    val rounds: Int,
+    val actions: List<EmomNotificationAction>
+)
 
 @Singleton
 class TimerNotificationHelper @Inject constructor(
@@ -46,7 +65,30 @@ class TimerNotificationHelper @Inject constructor(
     private val warmupFinishedChannelId = "warmup_timer_finished_channel_v1"
     private val warmupNotificationId = 1002
 
+    private val emomRunningChannelId = "emom_running_channel_v1"
+    private val emomFinishedChannelId = "emom_finished_channel_v1"
+    private val emomNotificationId = 1003
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /** What the + and - buttons of the timer notifications move the countdown by (Workout settings). */
+    @Volatile private var addSeconds = TimerAdjustment.DEFAULT_ADD_SECONDS
+    @Volatile private var subtractSeconds = TimerAdjustment.DEFAULT_SUBTRACT_SECONDS
+
+    /** Which buttons the timer notifications carry (Workout settings). */
+    @Volatile private var showTimeButtons = true
+    @Volatile private var showSkipButton = true
+    @Volatile private var addEnabled = true
+    @Volatile private var subtractEnabled = true
+
+    init {
+        scope.launch { userPrefsRepository.timerAddSeconds.collect { addSeconds = it } }
+        scope.launch { userPrefsRepository.timerSubtractSeconds.collect { subtractSeconds = it } }
+        scope.launch { userPrefsRepository.timerShowTimeButtons.collect { showTimeButtons = it } }
+        scope.launch { userPrefsRepository.timerShowSkipButton.collect { showSkipButton = it } }
+        scope.launch { userPrefsRepository.timerAddEnabled.collect { addEnabled = it } }
+        scope.launch { userPrefsRepository.timerSubtractEnabled.collect { subtractEnabled = it } }
+    }
     private var vibrationJob: kotlinx.coroutines.Job? = null
     private var vibrator: Vibrator? = null
 
@@ -89,6 +131,129 @@ class TimerNotificationHelper @Inject constructor(
         vibrationJob?.cancel()
         vibrationJob = null
         getVibrator()?.cancel()
+    }
+
+    /** Haptic signals of an EMOM run: a tick before each round, GO when it starts, and the finish. */
+    enum class EmomCue { TICK, GO, DONE }
+
+    fun vibrateEmomCue(cue: EmomCue) {
+        val v = getVibrator()?.takeIf { it.hasVibrator() } ?: return
+        val effect = when (cue) {
+            EmomCue.TICK -> VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE)
+            EmomCue.GO -> VibrationEffect.createWaveform(longArrayOf(0, 260, 90, 260), -1)
+            EmomCue.DONE -> VibrationEffect.createWaveform(longArrayOf(0, 160, 90, 160, 90, 420), -1)
+        }
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .build()
+        @Suppress("DEPRECATION")
+        v.vibrate(effect, audioAttributes)
+    }
+
+    // ---- EMOM ----
+
+    private fun emomPendingIntent(action: TimerNotificationReceiver.EmomAction): PendingIntent {
+        val (name, requestCode) = when (action) {
+            TimerNotificationReceiver.EmomAction.DONE -> TimerNotificationReceiver.ACTION_EMOM_DONE to 21
+            TimerNotificationReceiver.EmomAction.PAUSE -> TimerNotificationReceiver.ACTION_EMOM_PAUSE to 22
+            TimerNotificationReceiver.EmomAction.RESUME -> TimerNotificationReceiver.ACTION_EMOM_RESUME to 23
+            TimerNotificationReceiver.EmomAction.STOP -> TimerNotificationReceiver.ACTION_EMOM_STOP to 24
+            TimerNotificationReceiver.EmomAction.BOUNDARY -> TimerNotificationReceiver.ACTION_EMOM_BOUNDARY to 25
+        }
+        val intent = Intent(context, TimerNotificationReceiver::class.java).apply { this.action = name }
+        return PendingIntent.getBroadcast(
+            context, requestCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun emomContentIntent(): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_SINGLE_TOP }
+        return PendingIntent.getActivity(
+            context, 20, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    /**
+     * Shows or updates the ongoing EMOM notification. The system counts the countdown down on its
+     * own (chronometer), so it only needs posting when the round, the phase or the buttons change;
+     * from Android 16 it is a live update whose bar has one segment per round.
+     */
+    fun showEmomNotification(info: EmomNotificationInfo) {
+        val builder = NotificationCompat.Builder(context, emomRunningChannelId)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(info.title)
+            .setContentText(info.text)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(emomContentIntent())
+
+        if (info.countdownEndsAt != null) {
+            builder.setUsesChronometer(true)
+                .setChronometerCountDown(true)
+                .setWhen(info.countdownEndsAt)
+        } else {
+            builder.setUsesChronometer(false).setShowWhen(false)
+        }
+        info.actions.forEach { builder.addAction(0, it.label, emomPendingIntent(it.action)) }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            val rounds = info.rounds.coerceAtLeast(1)
+            val progressStyle = NotificationCompat.ProgressStyle()
+                .setStyledByProgress(true)
+                .setProgressSegments(List(rounds) { NotificationCompat.ProgressStyle.Segment(EmomClock.MINUTE_SECONDS) })
+                .setProgress(info.runElapsedSeconds.coerceIn(0, rounds * EmomClock.MINUTE_SECONDS))
+            builder.setStyle(progressStyle).setRequestPromotedOngoing(true)
+        } else {
+            val expanded = listOfNotNull(info.text, info.detail).joinToString("\n")
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(expanded))
+        }
+
+        notificationManager.notify(emomNotificationId, builder.build())
+    }
+
+    /** Replaces the ongoing EMOM notification with an alerting one saying the run is over. */
+    fun showEmomFinished(title: String, text: String) {
+        cancelEmomBoundaryAlarm()
+        val notification = NotificationCompat.Builder(context, emomFinishedChannelId)
+            .setSmallIcon(R.drawable.ic_app_logo)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setOngoing(false)
+            .setAutoCancel(true)
+            .setContentIntent(emomContentIntent())
+            .build()
+        notificationManager.notify(emomNotificationId, notification)
+    }
+
+    /** Wakes the workout when the next round starts, even with the screen off. */
+    fun scheduleEmomBoundaryAlarm(triggerAtMillis: Long) {
+        val pendingIntent = emomPendingIntent(TimerNotificationReceiver.EmomAction.BOUNDARY)
+        try {
+            AlarmManagerCompat.setExactAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        } catch (_: SecurityException) {
+            AlarmManagerCompat.setAndAllowWhileIdle(alarmManager, AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        }
+    }
+
+    fun cancelEmomBoundaryAlarm() {
+        alarmManager.cancel(emomPendingIntent(TimerNotificationReceiver.EmomAction.BOUNDARY))
+    }
+
+    fun cancelEmom() {
+        notificationManager.cancel(emomNotificationId)
+        cancelEmomBoundaryAlarm()
     }
 
     init {
@@ -168,6 +333,30 @@ class TimerNotificationHelper @Inject constructor(
             }
             notificationManager.createNotificationChannel(warmupRunningChannel)
             notificationManager.createNotificationChannel(warmupFinishedChannel)
+
+            // EMOM channels: the live countdown stays silent (the haptic cues do the alerting), the finish alerts
+            val emomName = context.getString(R.string.emom_notification_channel)
+            val emomRunningChannel = NotificationChannel(
+                emomRunningChannelId,
+                emomName,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = context.getString(R.string.timer_notifications_desc)
+                setShowBadge(false)
+                setSound(null, null)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            val emomFinishedChannel = NotificationChannel(
+                emomFinishedChannelId,
+                emomName,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(R.string.timer_notifications_desc)
+                setShowBadge(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            notificationManager.createNotificationChannel(emomRunningChannel)
+            notificationManager.createNotificationChannel(emomFinishedChannel)
         }
     }
 
@@ -212,6 +401,12 @@ class TimerNotificationHelper @Inject constructor(
         }
         val addPendingIntent = PendingIntent.getBroadcast(context, 2, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        val subtractIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_SUBTRACT
+            putExtra(TimerNotificationReceiver.EXTRA_SESSION_ID, sessionId)
+        }
+        val subtractPendingIntent = PendingIntent.getBroadcast(context, 5, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
         val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
             val formattedWeight = WeightUnitConverter.formatWithUnit(
                 WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
@@ -250,8 +445,11 @@ class TimerNotificationHelper @Inject constructor(
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
             .setContentText(nextSetLabel)
-            .addAction(0, "+30s", addPendingIntent)
-            .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .apply {
+                if (showTimeButtons && subtractEnabled) addAction(0, "−${subtractSeconds}s", subtractPendingIntent)
+                if (showTimeButtons && addEnabled) addAction(0, "+${addSeconds}s", addPendingIntent)
+                if (showSkipButton) addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            }
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
                     val progressStyle = NotificationCompat.ProgressStyle()
@@ -387,6 +585,13 @@ class TimerNotificationHelper @Inject constructor(
             context, 12, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val subtractIntent = Intent(context, TimerNotificationReceiver::class.java).apply {
+            action = TimerNotificationReceiver.ACTION_WARMUP_SUBTRACT
+        }
+        val subtractPendingIntent = PendingIntent.getBroadcast(
+            context, 15, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val warmupDesc = context.getString(R.string.warmup_timer_description)
 
         val total = if (totalSeconds != null && totalSeconds > 0) totalSeconds else remainingSeconds
@@ -407,8 +612,11 @@ class TimerNotificationHelper @Inject constructor(
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setWhen(triggerTime)
-            .addAction(0, "+30s", addPendingIntent)
-            .addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            .apply {
+                if (showTimeButtons && subtractEnabled) addAction(0, "−${subtractSeconds}s", subtractPendingIntent)
+                if (showTimeButtons && addEnabled) addAction(0, "+${addSeconds}s", addPendingIntent)
+                if (showSkipButton) addAction(0, context.getString(R.string.skip_rest), skipPendingIntent)
+            }
             .apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
                     val progressStyle = NotificationCompat.ProgressStyle()

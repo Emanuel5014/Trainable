@@ -10,7 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -36,6 +39,7 @@ class UserPreferencesRepository @Inject constructor(
         val USER_LANGUAGE = stringPreferencesKey("user_language")
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
+        val NAV_BAR_STYLE = intPreferencesKey("nav_bar_style")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")
         val THEME_PALETTE = intPreferencesKey("theme_palette")
@@ -66,6 +70,24 @@ class UserPreferencesRepository @Inject constructor(
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
     /** Master switch for %1RM / technique / weekly-program features. Off by default. */
     val ADVANCED_PROGRAMMING_ENABLED = booleanPreferencesKey("advanced_programming_enabled")
+    /** Shows the user's own image/GIF of each exercise during a workout. Off by default. */
+    val EXERCISE_MEDIA_ENABLED = booleanPreferencesKey("exercise_media_enabled")
+    /** With exercise media on: also fill the free space under the sets with a large preview when there is room. */
+    val EXERCISE_MEDIA_LARGE = booleanPreferencesKey("exercise_media_large")
+    /** Master switch for the plate calculator (which plates go on each side of the bar). Off by default. */
+    val PLATE_CALCULATOR_ENABLED = booleanPreferencesKey("plate_calculator_enabled")
+    /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
+    val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
+    val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
+    /** Seconds the + and - buttons of the rest and warmup timers move the countdown by. */
+    val TIMER_ADD_SECONDS = intPreferencesKey("timer_add_seconds")
+    val TIMER_SUBTRACT_SECONDS = intPreferencesKey("timer_subtract_seconds")
+    /** Whether the rest and warmup timers (and their notifications) show the - / + buttons and the skip button. */
+    val TIMER_SHOW_TIME_BUTTONS = booleanPreferencesKey("timer_show_time_buttons")
+    val TIMER_SHOW_SKIP_BUTTON = booleanPreferencesKey("timer_show_skip_button")
+    /** Each of the two time buttons on its own: with both off the timers carry neither. On by default. */
+    val TIMER_ADD_ENABLED = booleanPreferencesKey("timer_add_enabled")
+    val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** 0 = RPE input only on advanced (%1RM) exercises, 1 = on every exercise, 2 = never. */
@@ -190,10 +212,14 @@ class UserPreferencesRepository @Inject constructor(
             preferences[WEIGHT_UNIT] ?: "kg"
         }
 
-    val floatingNavBar: Flow<Boolean> = dataStore.data
+    /** Falls back to the old floating/classic switch until the user picks one of the three styles. */
+    val navBarStyle: Flow<NavBarStyle> = dataStore.data
         .map { preferences ->
-            preferences[FLOATING_NAV_BAR] ?: true
+            NavBarStyle.fromId(preferences[NAV_BAR_STYLE])
+                ?: if (preferences[FLOATING_NAV_BAR] ?: true) NavBarStyle.Floating else NavBarStyle.Classic
         }
+
+    val floatingNavBar: Flow<Boolean> = navBarStyle.map { it == NavBarStyle.Floating }
 
     val dynamicColor: Flow<Boolean> = dataStore.data
         .map { preferences ->
@@ -341,6 +367,112 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    val exerciseMediaEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[EXERCISE_MEDIA_ENABLED] ?: false }
+
+    suspend fun setExerciseMediaEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[EXERCISE_MEDIA_ENABLED] = enabled
+        }
+    }
+
+    val exerciseMediaLarge: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[EXERCISE_MEDIA_LARGE] ?: true }
+
+    suspend fun setExerciseMediaLarge(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[EXERCISE_MEDIA_LARGE] = enabled
+        }
+    }
+
+    val timerAddSeconds: Flow<Int> = dataStore.data
+        .map { preferences -> TimerAdjustment.sanitizeAdd(preferences[TIMER_ADD_SECONDS]) }
+
+    suspend fun setTimerAddSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_ADD_SECONDS] = TimerAdjustment.sanitizeAdd(seconds)
+        }
+    }
+
+    val timerSubtractSeconds: Flow<Int> = dataStore.data
+        .map { preferences -> TimerAdjustment.sanitizeSubtract(preferences[TIMER_SUBTRACT_SECONDS]) }
+
+    suspend fun setTimerSubtractSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SUBTRACT_SECONDS] = TimerAdjustment.sanitizeSubtract(seconds)
+        }
+    }
+
+    val timerAddEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_ADD_ENABLED] ?: true }
+
+    suspend fun setTimerAddEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_ADD_ENABLED] = enabled
+        }
+    }
+
+    val timerSubtractEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SUBTRACT_ENABLED] ?: true }
+
+    suspend fun setTimerSubtractEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SUBTRACT_ENABLED] = enabled
+        }
+    }
+
+    val timerShowTimeButtons: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SHOW_TIME_BUTTONS] ?: true }
+
+    suspend fun setTimerShowTimeButtons(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SHOW_TIME_BUTTONS] = show
+        }
+    }
+
+    val timerShowSkipButton: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[TIMER_SHOW_SKIP_BUTTON] ?: true }
+
+    suspend fun setTimerShowSkipButton(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TIMER_SHOW_SKIP_BUTTON] = show
+        }
+    }
+
+    val plateCalculatorEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[PLATE_CALCULATOR_ENABLED] ?: false }
+
+    suspend fun setPlateCalculatorEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PLATE_CALCULATOR_ENABLED] = enabled
+        }
+    }
+
+    /** Plates available in the current weight unit, heaviest first. */
+    val plateCalculatorPlates: Flow<List<Float>> = dataStore.data
+        .map { preferences ->
+            val unit = preferences[WEIGHT_UNIT] ?: "kg"
+            decodePlates(preferences[plateKey(unit)], unit)
+        }
+
+    suspend fun setPlateCalculatorPlates(unit: String, plates: List<Float>) {
+        dataStore.edit { preferences ->
+            preferences[plateKey(unit)] = encodePlates(plates)
+        }
+    }
+
+    private fun plateKey(unit: String) =
+        if (unit == "lb") PLATE_CALCULATOR_PLATES_LB else PLATE_CALCULATOR_PLATES_KG
+
+    /** Plate lists are stored as text; anything unreadable or empty falls back to the usual plates. */
+    private fun decodePlates(raw: String?, unit: String): List<Float> {
+        val plates = raw.orEmpty().split(',').mapNotNull { it.trim().toFloatOrNull() }.filter { it > 0f }
+        return plates.distinct().sortedDescending().ifEmpty { PlateCalculator.defaultPlates(unit) }
+    }
+
+    private fun encodePlates(plates: List<Float>): String =
+        plates.distinct().sortedDescending().joinToString(",")
+
     /** Plate increment used to round %1RM loads, expressed in the current weight unit. */
     val loadRoundingIncrement: Flow<Float> = dataStore.data
         .map { preferences ->
@@ -440,9 +572,11 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
-    suspend fun setFloatingNavBar(enabled: Boolean) {
+    suspend fun setNavBarStyle(style: NavBarStyle) {
         dataStore.edit { preferences ->
-            preferences[FLOATING_NAV_BAR] = enabled
+            preferences[NAV_BAR_STYLE] = style.id
+            // Kept in sync for versions and backups that only know the floating/classic switch
+            preferences[FLOATING_NAV_BAR] = style == NavBarStyle.Floating
         }
     }
 

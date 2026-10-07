@@ -3,10 +3,13 @@ package com.emanuel5014.trainable.ui.screens.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +26,8 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,8 +53,11 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.TimerAdjustment
+import com.emanuel5014.trainable.util.WeightUnitConverter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WorkoutSettingsScreen(
     onNavigateBack: () -> Unit,
@@ -67,6 +75,12 @@ fun WorkoutSettingsScreen(
     val autoStopTimeWeightAtTarget by viewModel.autoStopTimeWeightAtTarget.collectAsState()
     val keepScreenOnCardioTimer by viewModel.keepScreenOnCardioTimer.collectAsState()
     val keepScreenOnSetTimer by viewModel.keepScreenOnSetTimer.collectAsState()
+    val timerAddSeconds by viewModel.timerAddSeconds.collectAsState()
+    val timerSubtractSeconds by viewModel.timerSubtractSeconds.collectAsState()
+    val timerAddEnabled by viewModel.timerAddEnabled.collectAsState()
+    val timerSubtractEnabled by viewModel.timerSubtractEnabled.collectAsState()
+    val plateCalculatorEnabled by viewModel.plateCalculatorEnabled.collectAsState()
+    val plateCalculatorPlates by viewModel.plateCalculatorPlates.collectAsState()
 
     Scaffold(
         containerColor = Surface,
@@ -353,6 +367,169 @@ fun WorkoutSettingsScreen(
                             }
                         }
                         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
+                    }
+                }
+            }
+
+            // How far the + and - buttons of the rest and warmup timers move the countdown
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Rounded.Timer,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                stringResource(R.string.timer_buttons),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.timer_buttons_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                    // Each button has its own switch: only -, only +, both or neither
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.timer_add_time),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SettingsSwitch(
+                                checked = timerAddEnabled,
+                                onCheckedChange = { viewModel.setTimerAddEnabled(it) }
+                            )
+                        }
+                        if (timerAddEnabled) {
+                            com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
+                                options = TimerAdjustment.ADD_OPTIONS.map { "+${it}s" },
+                                selectedIndex = TimerAdjustment.ADD_OPTIONS.indexOf(timerAddSeconds),
+                                onSelect = { viewModel.setTimerAddSeconds(TimerAdjustment.ADD_OPTIONS[it]) }
+                            )
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.timer_subtract_time),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SettingsSwitch(
+                                checked = timerSubtractEnabled,
+                                onCheckedChange = { viewModel.setTimerSubtractEnabled(it) }
+                            )
+                        }
+                        if (timerSubtractEnabled) {
+                            com.emanuel5014.trainable.ui.components.ConnectedToggleRow(
+                                options = TimerAdjustment.SUBTRACT_OPTIONS.map { "−${it}s" },
+                                selectedIndex = TimerAdjustment.SUBTRACT_OPTIONS.indexOf(timerSubtractSeconds),
+                                onSelect = { viewModel.setTimerSubtractSeconds(TimerAdjustment.SUBTRACT_OPTIONS[it]) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Plate calculator
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Rounded.FitnessCenter,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.plate_calculator),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.plate_calculator_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = plateCalculatorEnabled,
+                            onCheckedChange = { viewModel.setPlateCalculatorEnabled(it) }
+                        )
+                    }
+
+                    if (plateCalculatorEnabled) {
+                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                stringResource(R.string.plate_calculator_plates),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.plate_calculator_plates_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                PlateCalculator.plateChoices(weightUnit).forEach { plate ->
+                                    val selected = plate in plateCalculatorPlates
+                                    FilterChip(
+                                        selected = selected,
+                                        onClick = {
+                                            // The calculator needs at least one plate to work with
+                                            val updated = if (selected) plateCalculatorPlates - plate else plateCalculatorPlates + plate
+                                            if (updated.isNotEmpty()) viewModel.setPlateCalculatorPlates(updated)
+                                        },
+                                        label = { Text("${WeightUnitConverter.format(plate)} $weightUnit", maxLines = 1) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                            selectedLabelColor = Primary
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

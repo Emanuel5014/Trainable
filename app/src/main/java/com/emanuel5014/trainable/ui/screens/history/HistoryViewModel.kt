@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -22,6 +23,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/**
+ * Value of [HistoryUiState.selectedPlanId] that keeps the workouts without a routine of their own: cardio,
+ * custom and quick workouts, and those of routines that were deleted. Plan ids start at 1, so it never
+ * collides with a real one.
+ */
+const val NO_ROUTINE_PLAN_ID = -1
 
 data class HistoryUiState(
     val sessions: List<SessionWithDetails> = emptyList(),
@@ -104,7 +112,11 @@ class HistoryViewModel @Inject constructor(
     private fun applyFilters() {
         val state = _uiState.value
         val filtered = state.sessions.filter { sessionDetails ->
-            val matchesPlan = state.selectedPlanId == null || sessionDetails.session.planId == state.selectedPlanId
+            val matchesPlan = when (state.selectedPlanId) {
+                null -> true
+                NO_ROUTINE_PLAN_ID -> sessionDetails.plan.isSystemPlan
+                else -> sessionDetails.session.planId == state.selectedPlanId
+            }
             val matchesDate = (state.startDate == null || sessionDetails.session.timestamp >= state.startDate) &&
                     (state.endDate == null || sessionDetails.session.timestamp <= (state.endDate + 86399999)) // Include the whole end day
             matchesPlan && matchesDate

@@ -38,14 +38,12 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -64,13 +62,13 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.rounded.Percent
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.collectAsState
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.WeekShift
 import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
+import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.OneRepMaxBinding
 import com.emanuel5014.trainable.ui.components.WeekEditing
@@ -1375,41 +1373,24 @@ private fun ScanEntryCard(
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
-            androidx.compose.foundation.layout.FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = !entry.isTimeAndWeight && !entry.isAdvanced,
-                    onClick = {
-                        val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
-                        onUpdate(
+            ExerciseTypeSelector(
+                selectedType = when {
+                    entry.isAdvanced -> "advanced"
+                    entry.isTimeAndWeight -> "time_and_weight"
+                    else -> "strength"
+                },
+                showAdvanced = LocalAdvancedProgramming.current,
+                onTypeSelected = { type ->
+                    val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                    when (type) {
+                        "strength" -> onUpdate(
                             entry.copy(
                                 exerciseType = "strength",
                                 reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps,
                                 blocksByWeek = emptyMap()
                             )
                         )
-                    },
-                    label = { Text(stringResource(R.string.exercise_type_strength)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.FitnessCenter,
-                            contentDescription = null,
-                            modifier = Modifier.size(FilterChipDefaults.IconSize)
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                        selectedLabelColor = Primary,
-                        selectedLeadingIconColor = Primary
-                    )
-                )
-                FilterChip(
-                    selected = entry.isTimeAndWeight,
-                    onClick = {
-                        val currentTarget = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
-                        onUpdate(
+                        "time_and_weight" -> onUpdate(
                             entry.copy(
                                 exerciseType = "time_and_weight",
                                 timeSeconds = currentTarget,
@@ -1417,53 +1398,21 @@ private fun ScanEntryCard(
                                 blocksByWeek = emptyMap()
                             )
                         )
-                    },
-                    label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Timer,
-                            contentDescription = null,
-                            modifier = Modifier.size(FilterChipDefaults.IconSize)
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                        selectedLabelColor = Primary,
-                        selectedLeadingIconColor = Primary
-                    )
-                )
-                if (LocalAdvancedProgramming.current) {
-                    FilterChip(
-                        selected = entry.isAdvanced,
-                        onClick = {
-                            if (!entry.isAdvanced) {
-                                // Carry the plain sets × reps over as a first free block
-                                val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
-                                onUpdate(
-                                    entry.copy(
-                                        exerciseType = "strength",
-                                        timeSeconds = null,
-                                        blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
-                                    )
+                        "advanced" -> if (!entry.isAdvanced) {
+                            // Carry the plain sets × reps over as a first free block
+                            val reps = entry.reps.takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                            onUpdate(
+                                entry.copy(
+                                    exerciseType = "strength",
+                                    timeSeconds = null,
+                                    blocksByWeek = mapOf(1 to listOf(PrescriptionBlock(sets = entry.sets, reps = reps)))
                                 )
-                            }
-                        },
-                        label = { Text(stringResource(R.string.exercise_type_advanced)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Percent,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
                             )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                            selectedLabelColor = Primary,
-                            selectedLeadingIconColor = Primary
-                        )
-                    )
-                }
-            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             if (entry.isAdvanced) {
                 fun withBlocks(blocks: Map<Int, List<PrescriptionBlock>>): ScannedExerciseEntry {

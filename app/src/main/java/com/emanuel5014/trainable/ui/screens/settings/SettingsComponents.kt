@@ -92,6 +92,41 @@ internal fun LanguageOption(
 }
 
 @Composable
+internal fun SettingsChoiceOption(
+    title: String,
+    description: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isSelected) Primary else OnSurface,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+        if (isSelected) {
+            androidx.compose.material3.Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
+        }
+    }
+}
+
+@Composable
 internal fun SettingsSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,

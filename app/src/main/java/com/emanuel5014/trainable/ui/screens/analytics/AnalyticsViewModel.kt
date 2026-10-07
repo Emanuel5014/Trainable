@@ -522,16 +522,19 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
-    fun moveWidget(id: String, up: Boolean) {
+    /**
+     * Applies the order the user dropped the shown widgets in. Ids that are saved but not shown
+     * keep their place; the shown ones are laid back into the slots the shown ones used to hold.
+     */
+    fun reorderWidgets(orderedIds: List<String>) {
         widgetOrder.update { current ->
-            val index = current.indexOf(id)
-            if (index == -1) return@update current
-            val newIndex = if (up) index - 1 else index + 1
-            if (newIndex !in current.indices) return@update current
-            
+            val shown = orderedIds.filter { it in current }
+            val slots = current.indices.filter { current[it] in shown }
+            if (slots.size != shown.size) return@update current
+
             val newList = current.toMutableList()
-            val item = newList.removeAt(index)
-            newList.add(newIndex, item)
+            slots.forEachIndexed { i, slot -> newList[slot] = shown[i] }
+            if (newList == current) return@update current
             saveWidgetOrder(newList)
             newList
         }

@@ -10,8 +10,13 @@
     <string name="nav_history">History</string>
     <string name="nav_analytics">Analytics</string>
     <string name="nav_settings">Settings</string>
-    <string name="floating_nav_bar">Classic Navigation</string>
-    <string name="floating_nav_bar_desc">Standard Material 3 bottom navigation</string>
+    <string name="nav_bar_style">Navigation bar</string>
+    <string name="nav_bar_style_classic">Classic</string>
+    <string name="nav_bar_style_classic_desc">Standard Material 3 bottom navigation</string>
+    <string name="nav_bar_style_floating">Floating</string>
+    <string name="nav_bar_style_floating_desc">Blurred bar floating above the content</string>
+    <string name="nav_bar_style_expressive">Expressive</string>
+    <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 
     <!-- Common Actions -->
     <string name="save">Save</string>
@@ -239,6 +244,27 @@
     <string name="keep_screen_on_set_timer_desc">Prevent the screen from turning off while the set timer is running</string>
     <string name="inline_exercise_modifications">Inline Modifications</string>
     <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
+    <string name="exercise_media">Exercise Media</string>
+    <string name="exercise_media_desc">Show your own image or GIF of each exercise during workouts</string>
+    <string name="exercise_media_large">Large Preview</string>
+    <string name="exercise_media_large_desc">Fill the free space under the sets with a big image when there is room</string>
+    <string name="exercise_media_manage_desc">Add, replace or remove the image or GIF of each exercise</string>
+    <string name="exercise_media_show">Show in Workouts</string>
+    <string name="exercise_media_filter_with">With media</string>
+    <string name="exercise_media_filter_without">Without media</string>
+    <string name="exercise_media_count">%1$d of %2$d exercises have media</string>
+    <string name="exercise_media_remove_all">Remove all</string>
+    <string name="exercise_media_remove_all_title">Remove all media?</string>
+    <string name="exercise_media_remove_all_message">All exercise images and GIFs will be deleted from this device.</string>
+    <string name="exercise_media_add">Add image or GIF</string>
+    <string name="exercise_media_open">Exercise image, tap to enlarge</string>
+    <string name="exercise_media_replace">Replace</string>
+    <string name="exercise_media_remove">Remove</string>
+    <string name="exercise_media_remove_title">Remove image?</string>
+    <string name="exercise_media_remove_message">The image or GIF of this exercise will be deleted from this device.</string>
+    <string name="exercise_media_too_large">That file is too large. Choose one under %1$d MB.</string>
+    <string name="exercise_media_unsupported">Couldn\'t open that file. Choose an image or GIF.</string>
+    <string name="exercise_media_play_pause">Play or pause</string>
     <string name="workout_settings">Workout</string>
     <string name="workout_settings_desc">Timer, auto-stop and exercise options</string>
     <string name="ai_settings_desc">Offline sheet scan and model</string>
@@ -259,6 +285,7 @@
     <string name="finish_workout">Finish</string>
     <string name="finish_workout_title">Finish Workout?</string>
     <string name="finish_workout_message">Are you sure you want to finish this workout? All exercises have been completed.</string>
+    <string name="finish_workout_message_incomplete">Are you sure you want to finish this workout? Exercises and sets you haven\'t completed will not be saved.</string>
     <string name="finish_confirm">Finish</string>
     <string name="quick_workout">QUICK WORKOUT</string>
     <string name="quick_workout_name_hint">Workout Name (optional)</string>
@@ -418,7 +445,7 @@
     <string name="system_default">System Default</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
-    <string name="timer_notifications_desc">Show rest timer in system notifications</string>
+    <string name="timer_notifications_desc">Show the rest timer and EMOM rounds in system notifications</string>
     <string name="lockscreen_vibration">Lock Screen Vibration</string>
     <string name="lockscreen_vibration_desc">Continuous vibration for rest ended when locked</string>
     <string name="vibration_default">Default</string>
@@ -483,7 +510,7 @@
     <string name="error_writing_file">Error writing file: %s</string>
     <string name="database_imported">Database imported. Restarting app...</string>
     <string name="include_images">Include Images?</string>
-    <string name="include_images_description">Would you like to include routine photos in your backup? This will increase the file size.</string>
+    <string name="include_images_description">Would you like to include routine photos and exercise images in your backup? This will increase the file size.</string>
     <string name="preparing_share">Preparing your workout card...</string>
     <string name="edit_backup">EDIT</string>
 
@@ -584,6 +611,11 @@
     <string name="no_results_filters">No results for these filters</string>
     <string name="try_adjust_filters">Try adjusting your selection or clearing all filters.</string>
     <string name="search_routines">Search routines…</string>
+    <string name="routine_archived_badge">Archived</string>
+    <string name="clear_date">Clear date</string>
+    <string name="clear_routine_filter">Remove routine filter</string>
+    <string name="no_routine">No routine</string>
+    <string name="routine_group_other">Other</string>
 
     <!-- Filters -->
     <string name="sharing_options">SHARING OPTIONS</string>
@@ -867,6 +899,8 @@
     <!-- Exercise Types -->
     <string name="exercise_type_strength">Weight &amp; Reps</string>
     <string name="exercise_type_time_and_weight">Time &amp; Weight</string>
+    <string name="exercise_type_strength_hint">Sets and reps with a load</string>
+    <string name="exercise_type_time_and_weight_hint">Timed sets, with or without weight</string>
     <string name="target_time">Target Time</string>
     <string name="target_seconds">Target (seconds)</string>
     <string name="seconds_short">sec</string>
@@ -965,6 +999,36 @@
     <string name="not_now">Not now</string>
     <string name="notification_next_set_detail">Next: %1$s - Set %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · next set at the top of the minute</string>
+    <string name="emom_round_progress">ROUND %1$d/%2$d</string>
+    <string name="emom_status_ready">READY</string>
+    <string name="emom_status_get_ready">GET READY</string>
+    <string name="emom_status_go">GO!</string>
+    <string name="emom_status_work">WORK</string>
+    <string name="emom_status_rest">REST</string>
+    <string name="emom_status_paused">PAUSED</string>
+    <string name="emom_label_now">NOW · SET %1$d</string>
+    <string name="emom_label_next">NEXT · SET %1$d</string>
+    <string name="emom_label_first">FIRST · SET %1$d</string>
+    <string name="emom_then">Then %1$s</string>
+    <string name="emom_done">DONE</string>
+    <string name="emom_stop">STOP EMOM</string>
+    <string name="emom_log_manually">Log the sets by hand</string>
+    <string name="emom_use_timer">EMOM TIMER</string>
+    <string name="emom_hint_work">Tap DONE when you finish, or the round is logged at the top of the minute.</string>
+    <string name="emom_hint_idle">%1$d-second countdown, then a new round every minute.</string>
+    <string name="emom_notification_channel">EMOM timer</string>
+    <string name="emom_notification_title_get_ready">EMOM · Get ready</string>
+    <string name="emom_notification_title_work">Round %1$d/%2$d · Go</string>
+    <string name="emom_notification_title_rest">Round %1$d/%2$d · Rest</string>
+    <string name="emom_notification_title_paused">EMOM paused · Round %1$d/%2$d</string>
+    <string name="emom_notification_set">%1$s · Set %2$d: %3$s</string>
+    <string name="emom_notification_next">Next: %1$s · Set %2$d: %3$s</string>
+    <string name="emom_notification_finished_title">EMOM complete</string>
+    <string name="emom_notification_finished_text">%1$s · all rounds done</string>
+    <string name="emom_action_done">Done</string>
+    <string name="emom_action_pause">Pause</string>
+    <string name="emom_action_resume">Resume</string>
+    <string name="emom_action_stop">Stop</string>
     <string name="scan_programmed_hint">The prescription is on a separate program sheet: choose Advanced to add its blocks here, or scan the program page after importing.</string>
     <string name="scan_use_simple">Use plain sets × reps</string>
     <string name="scan_one_rep_max_found">1RM on the sheet: %1$s · it will be saved</string>
@@ -1062,4 +1126,38 @@
     <string name="onboarding_nextcloud_title">Your cloud,\nyour backups.</string>
     <string name="onboarding_nextcloud_desc">Optional: connect your own Nextcloud to keep a copy of your data off this phone, or to restore it on a new one.</string>
     <string name="nextcloud_connect">Connect</string>
+    <string name="plate_calculator">Plate calculator</string>
+    <string name="plate_calculator_desc">Shows which plates go on each side of the bar. Turn it on for an exercise from the weight editor during a workout.</string>
+    <string name="plate_calculator_plates">Available plates</string>
+    <string name="plate_calculator_plates_desc">The plates your gym has. They are used to work out the load.</string>
+    <string name="plate_calculator_use">Use plate calculator</string>
+    <string name="plate_chip_per_side">%1$s per side · bar %2$s</string>
+    <string name="plate_chip_per_side_plain">%1$s per side</string>
+    <string name="plate_chip_bar_only">Bar only · %1$s</string>
+    <string name="plate_chip_below_bar">Lighter than the bar (%1$s)</string>
+    <string name="plate_chip_short">%1$s per side · %2$s short</string>
+    <string name="plate_total_weight">Total weight</string>
+    <string name="plate_bar">Bar</string>
+    <string name="plate_bar_other">Other</string>
+    <string name="plate_bar_dialog_title">Bar weight</string>
+    <string name="plate_per_side">Per side: %1$s</string>
+    <string name="plate_no_plates">No plates, just the bar</string>
+    <string name="plate_lighter_than_bar">Lighter than the bar. Raise the weight or pick a lighter bar.</string>
+    <string name="plate_cannot_load">%1$s can\'t be loaded with your plates.</string>
+    <string name="plate_edited">Edited by hand</string>
+    <string name="plate_reset">Reset to suggested</string>
+    <string name="plate_add_hint">Add a plate to each side</string>
+    <string name="plate_tap_to_remove">Tap a plate on the bar to remove it.</string>
+    <string name="plate_remove">Remove plate</string>
+    <string name="plate_apply">Set %1$s</string>
+    <string name="plate_turn_off">Turn off for this exercise</string>
+    <string name="timer_buttons">Timer buttons</string>
+    <string name="timer_buttons_desc">Choose which of the + and − buttons the rest and warmup timers show, in the app and in the notification, and how much they move the countdown.</string>
+    <string name="timer_add_time">Add time</string>
+    <string name="timer_subtract_time">Remove time</string>
+    <string name="warmup_label">Warmup</string>
+    <string name="cardio_mark_completed">Mark as completed</string>
+    <string name="cardio_complete_logs_time">Logs the planned time: %1$s</string>
+    <string name="cardio_complete_duration">Duration (min)</string>
+    <string name="optional_suffix">(optional)</string>
 </resources>

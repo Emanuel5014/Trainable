@@ -12,8 +12,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,33 +78,28 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import kotlin.math.abs
 import com.emanuel5014.trainable.R
@@ -114,6 +107,10 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.navBarBottomClearance
+import com.emanuel5014.trainable.ui.components.rememberLazyListReorderState
+import com.emanuel5014.trainable.ui.components.reorderGestures
+import com.emanuel5014.trainable.ui.components.reorderableItem
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -131,7 +128,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
@@ -148,21 +144,12 @@ fun AnalyticsScreen(
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val bottomClearance = navBarBottomClearance()
     var showExercisePicker by remember { mutableStateOf(false) }
     var showChartPicker by remember { mutableStateOf(false) }
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    val scope = rememberCoroutineScope()
-    val haptic = LocalHapticFeedback.current
     val lazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val dragDropState = rememberDragDropState(
-        lazyListState = lazyListState,
-        haptic = haptic,
-        scope = scope,
-        onMove = { id, up ->
-            viewModel.moveWidget(id, up)
-        }
-    )
     val context = LocalContext.current
     val themeMode by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.THEME_MODE] ?: 0 }
@@ -172,6 +159,15 @@ fun AnalyticsScreen(
         2 -> true
         else -> isSystemInDarkTheme()
     }
+    val hapticEnabled by remember(context) {
+        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
+    }.collectAsState(initial = true)
+    val reorderState = rememberLazyListReorderState(
+        lazyListState = lazyListState,
+        keys = { uiState.widgets.map { it.id } },
+        hapticEnabled = hapticEnabled,
+        onCommit = { newOrder -> viewModel.reorderWidgets(newOrder.filterIsInstance<String>()) }
+    )
 
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
     val hasCalendarWidget = uiState.widgets.any { it is AnalyticsWidget.Calendar }
@@ -188,42 +184,20 @@ fun AnalyticsScreen(
     var showAddCategoryVolumeDialog by remember { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
 
-    val autoScrollThreshold = with(LocalDensity.current) { 80.dp.toPx() }
-    val autoScrollSpeed = 15f
-    
-    // Hide navbar during drag
-    LaunchedEffect(dragDropState.draggedWidgetId != null) {
-        BottomBarManager.isVisibleOverride = dragDropState.draggedWidgetId == null
+    // Hide the navbar and lock the tab pager while a widget is being dragged
+    DisposableEffect(reorderState.isDragging) {
+        if (reorderState.isDragging) {
+            BottomBarManager.isVisibleOverride = false
+            BottomBarManager.swipeLocked = true
+        }
+        onDispose {
+            BottomBarManager.isVisibleOverride = true
+            BottomBarManager.swipeLocked = false
+        }
     }
 
-    LaunchedEffect(dragDropState.draggedWidgetId) {
-        val draggedId = dragDropState.draggedWidgetId
-        if (draggedId != null) {
-            while (true) {
-                val viewportHeight = lazyListState.layoutInfo.viewportSize.height.toFloat()
-                if (viewportHeight > 0f) {
-                    val fingerY = dragDropState.fingerY
-                    
-                    if (fingerY < autoScrollThreshold) {
-                        val ratio = (1f - (fingerY / autoScrollThreshold)).coerceIn(0f, 1f)
-                        val speed = autoScrollSpeed * ratio
-                        if (speed > 0.5f) {
-                            lazyListState.scrollBy(-speed)
-                            dragDropState.onDrag(fingerY)
-                        }
-                    } else if (fingerY > viewportHeight - autoScrollThreshold) {
-                        val distanceToBottom = viewportHeight - fingerY
-                        val ratio = (1f - (distanceToBottom / autoScrollThreshold)).coerceIn(0f, 1f)
-                        val speed = autoScrollSpeed * ratio
-                        if (speed > 0.5f) {
-                            lazyListState.scrollBy(speed)
-                            dragDropState.onDrag(fingerY)
-                        }
-                    }
-                }
-                delay(16)
-            }
-        }
+    LaunchedEffect(reorderState.isDragging) {
+        if (reorderState.isDragging) reorderState.driveWhileDragging()
     }
 
     Scaffold(containerColor = Surface) { paddingValues ->
@@ -341,37 +315,11 @@ fun AnalyticsScreen(
                     Box(modifier = Modifier.fillMaxSize()) {
                     LazyColumn(
                         state = lazyListState,
+                        userScrollEnabled = !reorderState.isDragging,
                         modifier = Modifier
                             .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = { offset ->
-                                        val item = lazyListState.layoutInfo.visibleItemsInfo.find { info ->
-                                            info.index > 0 && offset.y >= info.offset && offset.y <= info.offset + info.size
-                                        }
-                                        if (item != null) {
-                                            val widgetId = item.key as String
-                                            val itemRelativeOffset = offset - Offset(0f, item.offset.toFloat())
-                                            dragDropState.onDragStart(
-                                                absoluteInitialY = offset.y,
-                                                itemRelativeY = itemRelativeOffset.y,
-                                                widgetId = widgetId
-                                            )
-                                        }
-                                    },
-                                    onDragEnd = {
-                                        dragDropState.onDragEnd()
-                                    },
-                                    onDragCancel = {
-                                        dragDropState.onDragEnd()
-                                    },
-                                    onDrag = { change, _ ->
-                                        change.consume()
-                                        dragDropState.onDrag(change.position.y)
-                                    }
-                                )
-                            },
-                        contentPadding = PaddingValues(bottom = 100.dp)
+                            .reorderGestures(reorderState),
+                        contentPadding = PaddingValues(bottom = bottomClearance)
                     ) {
                         if (uiState.showProgressCards) {
                             item {
@@ -384,39 +332,18 @@ fun AnalyticsScreen(
                             }
                         }
                         
-                        items(uiState.widgets, key = { it.id }) { widget ->
-                            val isDragging = dragDropState.draggedWidgetId == widget.id
-                            val isRecentlyDropped = dragDropState.recentlyDroppedWidgetId == widget.id
-                            
-                            val translationY = if (isDragging) {
-                                dragDropState.dragTranslationY(widget.id)
-                            } else if (isRecentlyDropped) {
-                                dragDropState.dropAnimatable.value
-                            } else {
-                                0f
-                            }
-                            
-                            val animatedScale by animateFloatAsState(
-                                targetValue = if (isDragging) 1.05f else 1f,
-                                animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                                label = "widget_drag_scale"
+                        val displayedWidgets = reorderState.ordered(uiState.widgets) { it.id }
+                        items(displayedWidgets, key = { it.id }) { widget ->
+                            val isDragging = reorderState.isDragged(widget.id)
+                            val isRecentlyDropped = reorderState.isSettling(widget.id)
+                            // The sections draw their own card elevation and border while held
+                            val dragModifier = reorderableItem(
+                                state = reorderState,
+                                key = widget.id,
+                                shape = RoundedCornerShape(20.dp),
+                                ghostInsetX = ResponsiveSize.cardPadding,
+                                ghostInsetY = Spacing.medium
                             )
-                            val animatedAlpha by animateFloatAsState(
-                                targetValue = if (dragDropState.draggedWidgetId != null && !isDragging) 0.6f else 1f,
-                                label = "widget_drag_alpha"
-                            )
-
-                            val dragModifier = Modifier
-                                .then(if (isDragging) Modifier else Modifier.animateItem())
-                                .zIndex(if (isDragging) 10f else 1f)
-                                .graphicsLayer {
-                                    this.translationY = translationY
-                                    scaleX = animatedScale
-                                    scaleY = animatedScale
-                                    alpha = animatedAlpha
-                                    shadowElevation = if (isDragging && isDark) 16.dp.toPx() else 0f
-                                    clip = false
-                                }
 
                             when (widget) {
                                 is AnalyticsWidget.BodyWeight -> {

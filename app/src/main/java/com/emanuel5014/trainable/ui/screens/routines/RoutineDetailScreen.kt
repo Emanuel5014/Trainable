@@ -78,9 +78,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material.icons.rounded.Percent
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.key
@@ -99,6 +96,7 @@ import com.emanuel5014.trainable.ui.components.OneRepMaxDialog
 import com.emanuel5014.trainable.ui.components.PrescriptionBlocksEditor
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.WeekSelector
+import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import androidx.compose.material3.FilterChip
@@ -1210,72 +1208,20 @@ fun RoutineDetailScreen(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
-                            androidx.compose.foundation.layout.FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                FilterChip(
-                                    selected = selectedExerciseType == "strength",
-                                    onClick = { selectedExerciseType = "strength" },
-                                    label = { Text(stringResource(R.string.exercise_type_strength)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Rounded.FitnessCenter,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                                        selectedLabelColor = Primary,
-                                        selectedLeadingIconColor = Primary
-                                    )
-                                )
-                                FilterChip(
-                                    selected = selectedExerciseType == "time_and_weight",
-                                    onClick = { selectedExerciseType = "time_and_weight" },
-                                    label = { Text(stringResource(R.string.exercise_type_time_and_weight)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Timer,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                                        selectedLabelColor = Primary,
-                                        selectedLeadingIconColor = Primary
-                                    )
-                                )
-                                if (advancedOn) {
-                                    FilterChip(
-                                        selected = selectedExerciseType == "advanced",
-                                        onClick = {
-                                            if (selectedExerciseType != "advanced" && advancedWeeks.values.none { it.isNotEmpty() }) {
-                                                // Carry the simple sets × reps over as a first free block
-                                                val sets = setsText.trim().toIntOrNull() ?: 3
-                                                val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
-                                                advancedWeeks[editorWeek] = listOf(PrescriptionBlock(sets = sets, reps = reps))
-                                            }
-                                            selectedExerciseType = "advanced"
-                                        },
-                                        label = { Text(stringResource(R.string.exercise_type_advanced)) },
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Percent,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                            )
-                                        },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = Primary.copy(alpha = 0.15f),
-                                            selectedLabelColor = Primary,
-                                            selectedLeadingIconColor = Primary
-                                        )
-                                    )
-                                }
-                            }
+                            ExerciseTypeSelector(
+                                selectedType = selectedExerciseType,
+                                showAdvanced = advancedOn,
+                                onTypeSelected = { type ->
+                                    if (type == "advanced" && selectedExerciseType != "advanced" && advancedWeeks.values.none { it.isNotEmpty() }) {
+                                        // Carry the simple sets × reps over as a first free block
+                                        val sets = setsText.trim().toIntOrNull() ?: 3
+                                        val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                        advancedWeeks[editorWeek] = listOf(PrescriptionBlock(sets = sets, reps = reps))
+                                    }
+                                    selectedExerciseType = type
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
 
                             if (selectedExerciseType == "advanced") {
                                 AdvancedPrescriptionEditor(

@@ -668,6 +668,18 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun updateExerciseOrderInSession(sessionId: Int, exerciseId: Int, order: Int) = workoutDao.updateExerciseOrderInSession(sessionId, exerciseId, order)
 
+    suspend fun moveExerciseRows(sessionId: Int, exerciseId: Int, from: Int, to: Int) =
+        workoutDao.moveExerciseRows(sessionId, exerciseId, from, to)
+
+    suspend fun moveCardioRows(sessionId: Int, categoria: String, from: Int, to: Int) =
+        workoutDao.moveCardioRows(sessionId, categoria, from, to)
+
+    suspend fun deleteExerciseRows(sessionId: Int, exerciseId: Int, order: Int) =
+        workoutDao.deleteExerciseRows(sessionId, exerciseId, order)
+
+    suspend fun deleteCardioRows(sessionId: Int, categoria: String, order: Int) =
+        workoutDao.deleteCardioRows(sessionId, categoria, order)
+
     suspend fun deleteUncompletedSetsForSession(sessionId: Int) = workoutDao.deleteUncompletedSetsForSession(sessionId)
 
     suspend fun deleteUncompletedCardioLogsForSession(sessionId: Int) = workoutDao.deleteUncompletedCardioLogsForSession(sessionId)

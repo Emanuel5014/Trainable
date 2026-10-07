@@ -10,8 +10,13 @@
     <string name="nav_history">Historial</string>
     <string name="nav_analytics">Estadísticas</string>
     <string name="nav_settings">Ajustes</string>
-    <string name="floating_nav_bar">Navegación Clásica</string>
-    <string name="floating_nav_bar_desc">Barra de navegación inferior Material 3</string>
+    <string name="nav_bar_style">Barra de navegación</string>
+    <string name="nav_bar_style_classic">Clásica</string>
+    <string name="nav_bar_style_classic_desc">Barra de navegación inferior Material 3</string>
+    <string name="nav_bar_style_floating">Flotante</string>
+    <string name="nav_bar_style_floating_desc">Barra difuminada que flota sobre el contenido</string>
+    <string name="nav_bar_style_expressive">Expressive</string>
+    <string name="nav_bar_style_expressive_desc">Barra de herramientas Material 3 Expressive, con la acción principal de cada pestaña al lado</string>
 
     <!-- Common Actions -->
     <string name="save">Guardar</string>
@@ -239,6 +244,27 @@
     <string name="keep_screen_on_set_timer_desc">Evita que la pantalla se apague mientras el temporizador de la serie está en marcha</string>
     <string name="inline_exercise_modifications">Modificaciones en línea</string>
     <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
+    <string name="exercise_media">Multimedia de ejercicios</string>
+    <string name="exercise_media_desc">Muestra tu propia imagen o GIF de cada ejercicio durante el entrenamiento</string>
+    <string name="exercise_media_large">Vista previa grande</string>
+    <string name="exercise_media_large_desc">Rellena el espacio libre bajo las series con una imagen grande cuando hay sitio</string>
+    <string name="exercise_media_manage_desc">Añade, reemplaza o quita la imagen o el GIF de cada ejercicio</string>
+    <string name="exercise_media_show">Mostrar en los entrenamientos</string>
+    <string name="exercise_media_filter_with">Con multimedia</string>
+    <string name="exercise_media_filter_without">Sin multimedia</string>
+    <string name="exercise_media_count">%1$d de %2$d ejercicios tienen multimedia</string>
+    <string name="exercise_media_remove_all">Quitar todos</string>
+    <string name="exercise_media_remove_all_title">¿Quitar toda la multimedia?</string>
+    <string name="exercise_media_remove_all_message">Todas las imágenes y GIF de los ejercicios se eliminarán de este dispositivo.</string>
+    <string name="exercise_media_add">Añadir imagen o GIF</string>
+    <string name="exercise_media_open">Imagen del ejercicio, toca para ampliar</string>
+    <string name="exercise_media_replace">Reemplazar</string>
+    <string name="exercise_media_remove">Quitar</string>
+    <string name="exercise_media_remove_title">¿Quitar la imagen?</string>
+    <string name="exercise_media_remove_message">La imagen o el GIF de este ejercicio se eliminará de este dispositivo.</string>
+    <string name="exercise_media_too_large">El archivo es demasiado grande. Elige uno de menos de %1$d MB.</string>
+    <string name="exercise_media_unsupported">No se pudo abrir el archivo. Elige una imagen o un GIF.</string>
+    <string name="exercise_media_play_pause">Reproducir o pausar</string>
     <string name="workout_settings">Entrenamiento</string>
     <string name="workout_settings_desc">Temporizador, paradas automáticas y opciones de ejercicios</string>
     <string name="ai_settings_desc">Escaneo sin conexión y modelo</string>
@@ -259,6 +285,7 @@
     <string name="finish_workout">Finalizar</string>
     <string name="finish_workout_title">¿Finalizar Entrenamiento?</string>
     <string name="finish_workout_message">¿Seguro que quieres finalizar este entrenamiento? Todos los ejercicios han sido completados.</string>
+    <string name="finish_workout_message_incomplete">¿Seguro que quieres finalizar este entrenamiento? Los ejercicios y series sin completar no se guardarán.</string>
     <string name="finish_confirm">Finalizar</string>
     <string name="quick_workout">ENTRENAMIENTO RÁPIDO</string>
     <string name="quick_workout_name_hint">Nombre del Entrenamiento (opcional)</string>
@@ -418,7 +445,7 @@
     <string name="system_default">Predeterminado del sistema</string>
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
-    <string name="timer_notifications_desc">Mostrar temporizador de descanso en notificaciones</string>
+    <string name="timer_notifications_desc">Mostrar temporizador de descanso y rondas EMOM en notificaciones</string>
     <string name="lockscreen_vibration">Vibración en pantalla de bloqueo</string>
     <string name="lockscreen_vibration_desc">Vibración continua para el final del descanso cuando está bloqueado</string>
     <string name="vibration_default">Predeterminada</string>
@@ -483,7 +510,7 @@
     <string name="error_writing_file">Error al escribir archivo: %s</string>
     <string name="database_imported">Base de datos importada. Reiniciando app...</string>
     <string name="include_images">¿Incluir Imágenes?</string>
-    <string name="include_images_description">¿Quieres incluir las fotos de las rutinas en tu copia? Esto aumentará el tamaño del archivo.</string>
+    <string name="include_images_description">¿Quieres incluir las fotos de las rutinas y las imágenes de los ejercicios en tu copia? Esto aumentará el tamaño del archivo.</string>
     <string name="preparing_share">Preparando tarjeta de entrenamiento...</string>
     <string name="edit_backup">EDITAR</string>
 
@@ -584,6 +611,11 @@
     <string name="no_results_filters">Sin resultados con estos filtros</string>
     <string name="try_adjust_filters">Intenta ajustar tu selección o limpiar todos los filtros.</string>
     <string name="search_routines">Buscar rutinas…</string>
+    <string name="routine_archived_badge">Archivada</string>
+    <string name="clear_date">Borrar fecha</string>
+    <string name="clear_routine_filter">Quitar filtro de rutina</string>
+    <string name="no_routine">Sin rutina</string>
+    <string name="routine_group_other">Otros</string>
 
     <!-- Sharing -->
     <string name="sharing_options">OPCIONES DE COMPARTICIÓN</string>
@@ -867,6 +899,8 @@
     <!-- Exercise Types -->
     <string name="exercise_type_strength">Peso y Repeticiones</string>
     <string name="exercise_type_time_and_weight">Tiempo y Peso</string>
+    <string name="exercise_type_strength_hint">Series y repeticiones con carga</string>
+    <string name="exercise_type_time_and_weight_hint">Series por tiempo, con o sin peso</string>
     <string name="target_time">Tiempo objetivo</string>
     <string name="target_seconds">Objetivo (segundos)</string>
     <string name="seconds_short">seg</string>
@@ -965,6 +999,36 @@
     <string name="not_now">Ahora no</string>
     <string name="notification_next_set_detail">Siguiente: %1$s - Serie %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · siguiente serie al inicio del minuto</string>
+    <string name="emom_round_progress">RONDA %1$d/%2$d</string>
+    <string name="emom_status_ready">LISTO</string>
+    <string name="emom_status_get_ready">PREPÁRATE</string>
+    <string name="emom_status_go">¡YA!</string>
+    <string name="emom_status_work">TRABAJO</string>
+    <string name="emom_status_rest">DESCANSO</string>
+    <string name="emom_status_paused">EN PAUSA</string>
+    <string name="emom_label_now">AHORA · SERIE %1$d</string>
+    <string name="emom_label_next">SIGUIENTE · SERIE %1$d</string>
+    <string name="emom_label_first">PRIMERA · SERIE %1$d</string>
+    <string name="emom_then">Luego %1$s</string>
+    <string name="emom_done">HECHO</string>
+    <string name="emom_stop">PARAR EMOM</string>
+    <string name="emom_log_manually">Registrar las series a mano</string>
+    <string name="emom_use_timer">TEMPORIZADOR EMOM</string>
+    <string name="emom_hint_work">Toca HECHO al terminar; si no, la ronda se registra al inicio del minuto.</string>
+    <string name="emom_hint_idle">Cuenta atrás de %1$d segundos y después una ronda nueva cada minuto.</string>
+    <string name="emom_notification_channel">Temporizador EMOM</string>
+    <string name="emom_notification_title_get_ready">EMOM · Prepárate</string>
+    <string name="emom_notification_title_work">Ronda %1$d/%2$d · ¡Ya!</string>
+    <string name="emom_notification_title_rest">Ronda %1$d/%2$d · Descanso</string>
+    <string name="emom_notification_title_paused">EMOM en pausa · Ronda %1$d/%2$d</string>
+    <string name="emom_notification_set">%1$s · Serie %2$d: %3$s</string>
+    <string name="emom_notification_next">Siguiente: %1$s · Serie %2$d: %3$s</string>
+    <string name="emom_notification_finished_title">EMOM completado</string>
+    <string name="emom_notification_finished_text">%1$s · todas las rondas hechas</string>
+    <string name="emom_action_done">Hecho</string>
+    <string name="emom_action_pause">Pausa</string>
+    <string name="emom_action_resume">Reanudar</string>
+    <string name="emom_action_stop">Parar</string>
     <string name="scan_programmed_hint">La prescripción está en una hoja de programación aparte: elige Avanzado para añadir aquí los bloques, o escanea la página de la programación tras importar.</string>
     <string name="scan_use_simple">Usar series × reps simples</string>
     <string name="scan_one_rep_max_found">1RM en la hoja: %1$s · se guardará</string>
@@ -1062,4 +1126,38 @@
     <string name="onboarding_nextcloud_title">Tu nube,\ntus copias.</string>
     <string name="onboarding_nextcloud_desc">Opcional: conecta tu propio Nextcloud para guardar una copia de tus datos fuera de este teléfono o restaurarla en uno nuevo.</string>
     <string name="nextcloud_connect">Conectar</string>
+    <string name="plate_calculator">Calculadora de discos</string>
+    <string name="plate_calculator_desc">Muestra qué discos poner en cada lado de la barra. Se activa por ejercicio desde el editor de peso durante un entrenamiento.</string>
+    <string name="plate_calculator_plates">Discos disponibles</string>
+    <string name="plate_calculator_plates_desc">Los discos que tiene tu gimnasio. Se usan para calcular la carga.</string>
+    <string name="plate_calculator_use">Usar calculadora de discos</string>
+    <string name="plate_chip_per_side">%1$s por lado · barra %2$s</string>
+    <string name="plate_chip_per_side_plain">%1$s por lado</string>
+    <string name="plate_chip_bar_only">Solo la barra · %1$s</string>
+    <string name="plate_chip_below_bar">Menos que la barra (%1$s)</string>
+    <string name="plate_chip_short">%1$s por lado · faltan %2$s</string>
+    <string name="plate_total_weight">Peso total</string>
+    <string name="plate_bar">Barra</string>
+    <string name="plate_bar_other">Otra</string>
+    <string name="plate_bar_dialog_title">Peso de la barra</string>
+    <string name="plate_per_side">Por lado: %1$s</string>
+    <string name="plate_no_plates">Sin discos, solo la barra</string>
+    <string name="plate_lighter_than_bar">Menos que la barra. Sube el peso o elige una barra más ligera.</string>
+    <string name="plate_cannot_load">%1$s no se pueden cargar con tus discos.</string>
+    <string name="plate_edited">Editado a mano</string>
+    <string name="plate_reset">Restablecer sugerido</string>
+    <string name="plate_add_hint">Añadir un disco por lado</string>
+    <string name="plate_tap_to_remove">Toca un disco de la barra para quitarlo.</string>
+    <string name="plate_remove">Quitar disco</string>
+    <string name="plate_apply">Establecer %1$s</string>
+    <string name="plate_turn_off">Desactivar para este ejercicio</string>
+    <string name="timer_buttons">Botones del temporizador</string>
+    <string name="timer_buttons_desc">Elige cuáles de los botones + y − muestran el temporizador de descanso y el de calentamiento, en la app y en la notificación, y cuánto mueven la cuenta atrás.</string>
+    <string name="timer_add_time">Añadir tiempo</string>
+    <string name="timer_subtract_time">Quitar tiempo</string>
+    <string name="warmup_label">Calentamiento</string>
+    <string name="cardio_mark_completed">Marcar como completado</string>
+    <string name="cardio_complete_logs_time">Registra el tiempo previsto: %1$s</string>
+    <string name="cardio_complete_duration">Duración (min)</string>
+    <string name="optional_suffix">(opcional)</string>
 </resources>

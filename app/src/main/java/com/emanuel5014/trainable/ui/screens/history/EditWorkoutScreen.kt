@@ -1,13 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -76,21 +70,14 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -98,7 +85,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
@@ -119,6 +105,9 @@ import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.rememberLazyListReorderState
+import com.emanuel5014.trainable.ui.components.reorderGestures
+import com.emanuel5014.trainable.ui.components.reorderableItem
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -132,9 +121,15 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
+
+/** Stable lazy-list key of a row in the edit screen: exercises and cardio logs share one list. */
+internal fun getWorkoutItemKey(item: Any): String = when (item) {
+    is EditExerciseState -> "exercise_${item.exercise.id}"
+    is CardioLogEntity -> "cardio_${item.id}"
+    else -> item.toString()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,43 +140,39 @@ fun EditWorkoutScreen(
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
-    val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
 
-    val localMergedItems = remember { mutableStateListOf<Any>() }
     val listState = rememberLazyListState()
-    val density = LocalDensity.current
-    val scope = rememberCoroutineScope()
-    val dragDropState = rememberEditWorkoutDragDropState(
-        lazyListState = listState,
-        items = localMergedItems,
-        haptic = haptic,
-        hapticEnabled = hapticEnabled,
-        scope = scope,
-        onOrderChanged = { newOrder ->
-            viewModel.updateItemsOrder(newOrder)
+    val mergedItems = remember(state.exercises, state.cardioLogs) {
+        val items = mutableListOf<Pair<Int, Any>>()
+        state.exercises.forEach { ex ->
+            items.add(Pair(ex.sets.firstOrNull()?.ordineEsercizio ?: 0, ex as Any))
         }
-    )
-
-    LaunchedEffect(state.exercises, state.cardioLogs) {
-        if (!dragDropState.isDragging) {
-            val items = mutableListOf<Pair<Int, Any>>()
-            state.exercises.forEach { ex ->
-                val order = ex.sets.firstOrNull()?.ordineEsercizio ?: 0
-                items.add(Pair(order, ex as Any))
-            }
-            state.cardioLogs.forEach { cardio ->
-                val order = cardio.ordineEsercizio
-                items.add(Pair(order, cardio as Any))
-            }
-            items.sortBy { it.first }
-            localMergedItems.clear()
-            localMergedItems.addAll(items.map { it.second })
+        state.cardioLogs.forEach { cardio ->
+            items.add(Pair(cardio.ordineEsercizio, cardio as Any))
+        }
+        items.sortBy { it.first }
+        items.map { it.second }
+    }
+    // Exercises in the same superset are dragged and dropped as one block
+    val supersetGroups = remember(mergedItems) {
+        mergedItems.associate<Any, Any, String?> { item ->
+            getWorkoutItemKey(item) to (item as? EditExerciseState)?.sets?.firstOrNull()?.supersetId
         }
     }
+    val reorderState = rememberLazyListReorderState(
+        lazyListState = listState,
+        keys = { mergedItems.map(::getWorkoutItemKey) },
+        groupOf = { supersetGroups[it] },
+        hapticEnabled = hapticEnabled,
+        onCommit = { newOrder ->
+            val byKey = mergedItems.associateBy<Any, Any>(::getWorkoutItemKey)
+            viewModel.updateItemsOrder(newOrder.mapNotNull { byKey[it] })
+        }
+    )
 
     var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
     var editingCardio by remember { mutableStateOf<CardioLogEntity?>(null) }
@@ -195,37 +186,8 @@ fun EditWorkoutScreen(
     var exerciseToEditPrescription by remember { mutableStateOf<Int?>(null) }
     var pendingPrescription by remember { mutableStateOf<Pair<Int, List<PrescriptionBlock>>?>(null) }
 
-    val autoScrollThreshold = with(density) { 48.dp.toPx() }
-    val maxAutoScrollSpeed = with(density) { 12.dp.toPx() }
-
-    LaunchedEffect(dragDropState.isDragging) {
-        if (dragDropState.isDragging) {
-            while (true) {
-                val viewportHeight = listState.layoutInfo.viewportSize.height.toFloat()
-                if (viewportHeight > 0f) {
-                    val fingerY = dragDropState.fingerY
-                    if (fingerY < autoScrollThreshold) {
-                        val ratio = (1f - (fingerY / autoScrollThreshold)).coerceIn(0f, 1f)
-                        val speed = maxAutoScrollSpeed * ratio
-                        if (speed > 0.5f) {
-                            listState.scrollBy(-speed)
-                            dragDropState.onScroll(-speed)
-                            dragDropState.onDrag(fingerY)
-                        }
-                    } else if (fingerY > viewportHeight - autoScrollThreshold) {
-                        val distanceToBottom = viewportHeight - fingerY
-                        val ratio = (1f - (distanceToBottom / autoScrollThreshold)).coerceIn(0f, 1f)
-                        val speed = maxAutoScrollSpeed * ratio
-                        if (speed > 0.5f) {
-                            listState.scrollBy(speed)
-                            dragDropState.onScroll(speed)
-                            dragDropState.onDrag(fingerY)
-                        }
-                    }
-                }
-                delay(16)
-            }
-        }
+    LaunchedEffect(reorderState.isDragging) {
+        if (reorderState.isDragging) reorderState.driveWhileDragging()
     }
 
     Scaffold(
@@ -295,7 +257,7 @@ fun EditWorkoutScreen(
                 WorkoutSessionHeaderCard(
                     sessionTimestamp = state.sessionTimestamp,
                     sessionDurationMs = state.sessionDurationMs,
-                    exerciseCount = localMergedItems.size,
+                    exerciseCount = mergedItems.size,
                     onEditClick = { showEditDetailsSheet = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
@@ -340,85 +302,44 @@ fun EditWorkoutScreen(
                 } else {
                     LazyColumn(
                         state = listState,
+                        userScrollEnabled = !reorderState.isDragging,
                         modifier = Modifier
                             .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = { offset ->
-                                        dragDropState.onDragStart(offset)
-                                    },
-                                    onDrag = { change, _ ->
-                                        change.consume()
-                                        dragDropState.onDrag(change.position.y)
-                                    },
-                                    onDragEnd = {
-                                        dragDropState.onDragEnd()
-                                    },
-                                    onDragCancel = {
-                                        dragDropState.onDragEnd()
-                                    }
-                                )
-                            },
+                            .reorderGestures(reorderState),
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                    itemsIndexed(localMergedItems, key = { _, item -> getWorkoutItemKey(item) }) { index, item ->
+                    val displayedItems = reorderState.ordered(mergedItems, ::getWorkoutItemKey)
+                    itemsIndexed(displayedItems, key = { _, item -> getWorkoutItemKey(item) }) { index, item ->
                         val itemKey = getWorkoutItemKey(item)
-                        val isDragging = itemKey in dragDropState.draggedItemKeys
-                        val translationY = dragDropState.dragTranslationY(itemKey)
-
-                        val animatedScale by animateFloatAsState(
-                            targetValue = if (isDragging) 1.04f else 1f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                            label = "exercise_drag_scale"
-                        )
-                        val animatedAlpha by animateFloatAsState(
-                            targetValue = if (dragDropState.isDragging && !isDragging) 0.65f else 1f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                            label = "exercise_drag_alpha"
-                        )
-                        val elevation by animateDpAsState(
-                            targetValue = if (isDragging) 16.dp else 0.dp,
-                            animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                            label = "exercise_drag_elevation"
-                        )
+                        val isDragging = reorderState.isDragged(itemKey)
 
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .then(
-                                    if (isDragging) Modifier
-                                    else Modifier.animateItem(
-                                        placementSpec = spring(
-                                            stiffness = Spring.StiffnessMediumLow,
-                                            dampingRatio = 0.85f
-                                        )
+                                    reorderableItem(
+                                        state = reorderState,
+                                        key = itemKey,
+                                        shape = Shapes.extraLarge,
+                                        liftedScale = 1.03f,
+                                        liftedElevation = 16.dp
                                     )
                                 )
-                                .zIndex(if (isDragging) 100f else 1f)
-                                .graphicsLayer {
-                                    this.translationY = translationY
-                                    scaleX = animatedScale
-                                    scaleY = animatedScale
-                                    alpha = animatedAlpha
-                                    shadowElevation = elevation.toPx()
-                                    shape = Shapes.extraLarge
-                                    clip = false
-                                }
                         ) {
                             when (item) {
                                 is EditExerciseState -> {
                                     val exerciseState = item
                                     val currentSid = exerciseState.sets.firstOrNull()?.supersetId
                                     val isSuperset = currentSid != null
-                                    val isLinked = isSuperset && index < localMergedItems.lastIndex &&
-                                            (localMergedItems[index + 1] as? EditExerciseState)?.sets?.firstOrNull()?.supersetId == currentSid
+                                    val isLinked = isSuperset && index < displayedItems.lastIndex &&
+                                            (displayedItems[index + 1] as? EditExerciseState)?.sets?.firstOrNull()?.supersetId == currentSid
 
                                     EditExerciseCard(
                                         exerciseState = exerciseState,
                                         languageCode = languageCode,
                                         isFirst = index == 0,
-                                        isLast = index == localMergedItems.lastIndex,
+                                        isLast = index == displayedItems.lastIndex,
                                         isSuperset = isSuperset,
                                         isLinked = isLinked,
                                         isDragging = isDragging,
@@ -442,7 +363,7 @@ fun EditWorkoutScreen(
                                     CardioEditCard(
                                         cardioLog = item,
                                         isFirst = index == 0,
-                                        isLast = index == localMergedItems.lastIndex,
+                                        isLast = index == displayedItems.lastIndex,
                                         isDragging = isDragging,
                                         onEdit = { editingCardio = it },
                                         onDelete = { viewModel.deleteCardioLog(it) },
@@ -530,6 +451,7 @@ fun EditWorkoutScreen(
             availableExercises = state.availableExercises,
             languageCode = languageCode,
             isAdding = exerciseToSwap == null,
+            currentExerciseId = exerciseStateToSwap?.exercise?.id,
             editablePresetExercises = editablePresetExercises,
             categories = state.categories,
             onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
