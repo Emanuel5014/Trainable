@@ -152,7 +152,7 @@ fun ExerciseEntryCard(
                                 .padding(horizontal = Spacing.small, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "${item.planExercise.serieTarget} × ${item.planExercise.repsTarget}",
+                                text = "${item.planExercise.serieTarget} × ${item.planExercise.repsDisplay}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnSurfaceVariant
                             )

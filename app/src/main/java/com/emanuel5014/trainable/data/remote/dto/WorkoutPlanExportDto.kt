@@ -30,6 +30,8 @@ data class PlanExerciseExportDto(
     val exerciseCategory: String? = null,
     val serieTarget: Int,
     val repsTarget: String,
+    /** Top of a rep range: [repsTarget] is then its bottom. The starting weight is personal and never exported. */
+    val repsMax: Int? = null,
     val recuperoTarget: Int,
     val ordine: Int,
     val supersetId: String? = null,

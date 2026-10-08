@@ -142,6 +142,7 @@ import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
+import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
 import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
@@ -738,7 +739,7 @@ fun WorkoutExecutionScreen(
                                             val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
                                             "${sec}s"
                                         } else {
-                                            weekTargets?.second ?: targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
+                                            weekTargets?.second ?: targetExState.planDetails?.repsDisplay ?: targetExState.customRepsTarget ?: run {
                                                 if (targetExState.sets.isEmpty()) "0"
                                                 else {
                                                     val allReps = targetExState.sets.map { it.reps }
@@ -896,6 +897,18 @@ fun WorkoutExecutionScreen(
                                     }
                                 }
                                 
+                                targetExState.progressionToShow?.let { suggestion ->
+                                    ProgressionSuggestionCard(
+                                        suggestion = suggestion,
+                                        weightUnit = state.weightUnit,
+                                        onApply = { viewModel.applyProgression(targetIndex) },
+                                        onDismiss = { viewModel.dismissProgression(targetIndex) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
+                                    )
+                                }
+
                                 // Sets List
                                 LazyColumn(
                                     state = exerciseListState,
@@ -997,6 +1010,8 @@ fun WorkoutExecutionScreen(
                                             intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
                                                 ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },
                                             badges = buildList {
+                                                // The goal of a rep range stays visible until the set is done
+                                                if (!set.isCompleted) set.repsRange?.let { add(it.text) }
                                                 if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
                                                 setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
                                                 set.rpe?.let { add(stringResource(R.string.rpe_short, PrescriptionFormatter.number(it))) }
@@ -1561,6 +1576,14 @@ fun WorkoutExecutionScreen(
                                                         fontWeight = FontWeight.Bold
                                                     )
                                                 }
+                                                set.repsRange?.let { range ->
+                                                    Text(
+                                                        text = stringResource(R.string.reps_goal, range.text),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = Primary,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
                                                 WeightRepsInput(
                                                     weight = set.weight,
                                                     reps = set.reps,
@@ -1650,7 +1673,8 @@ fun WorkoutExecutionScreen(
                                                     )
                                                     val p = set.prescription
                                                     val detail = listOfNotNull(
-                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
+                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) },
+                                                        set.repsRange?.let { stringResource(R.string.reps_goal, it.text) }
                                                     ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
                                                         listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
                                                     if (detail.isNotEmpty()) {

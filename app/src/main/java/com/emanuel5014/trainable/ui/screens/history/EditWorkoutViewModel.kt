@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.PrescriptionSetSync
 import com.emanuel5014.trainable.data.repository.SetSyncResult
+import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -580,15 +581,16 @@ class EditWorkoutViewModel @Inject constructor(
             val exercise = _state.value.availableExercises.find { it.id == exerciseId }
             val isTimeAndWeight = exerciseType == "time_and_weight"
             val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
-            val repsNum = if (isTimeAndWeight) 0 else (repsTarget.toIntOrNull() ?: 8)
             val setsCount = targetSets.coerceAtLeast(1)
+            // One number for every set, or a list ("8-6-4") that goes set by set like in a live workout
+            val plannedReps = LegacyReps.parse(repsTarget, setsCount)
 
             val newSets = (1..setsCount).map { setNum ->
                 SetLogEntity(
                     sessionId = sessionId,
                     exerciseId = exerciseId,
                     pesoSollevato = 0f,
-                    repsEffettive = repsNum,
+                    repsEffettive = if (isTimeAndWeight) 0 else plannedReps[setNum - 1],
                     numeroSerie = setNum,
                     ordineEsercizio = nextOrder,
                     supersetId = null,

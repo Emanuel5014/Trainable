@@ -299,6 +299,23 @@ interface WorkoutDao {
     """)
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>>
 
+    /**
+     * Weight (kg) of the first working set of the exercise in its most recent finished workout, in any routine.
+     * Null when it was never lifted with a weight.
+     */
+    @Query("""
+        SELECT sl.peso_sollevato FROM set_logs sl
+        INNER JOIN workout_sessions ws ON sl.session_id = ws.id
+        WHERE sl.exercise_id = :exerciseId
+        AND ws.is_finished = 1
+        AND sl.is_completed = 1
+        AND sl.is_warmup = 0
+        AND sl.peso_sollevato > 0
+        ORDER BY ws.timestamp DESC, ws.id DESC, sl.numero_serie ASC
+        LIMIT 1
+    """)
+    suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float?
+
     @Query("""
         SELECT sl.* FROM set_logs sl
         INNER JOIN workout_sessions ws ON sl.session_id = ws.id

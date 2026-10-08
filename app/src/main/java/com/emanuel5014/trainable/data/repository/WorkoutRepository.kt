@@ -23,9 +23,12 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.StartingWeight
 import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
@@ -171,6 +174,7 @@ class WorkoutRepository @Inject constructor(
                         exerciseCategory = exerciseWithDetails.exercise.categoria,
                         serieTarget = exerciseWithDetails.planExercise.serieTarget,
                         repsTarget = exerciseWithDetails.planExercise.repsTarget,
+                        repsMax = exerciseWithDetails.planExercise.repsMax,
                         recuperoTarget = exerciseWithDetails.planExercise.recuperoTarget,
                         ordine = exerciseWithDetails.planExercise.ordine,
                         supersetId = exerciseWithDetails.planExercise.supersetId,
@@ -318,6 +322,8 @@ class WorkoutRepository @Inject constructor(
                                     exerciseId = finalExerciseId,
                                     serieTarget = exerciseDto.serieTarget,
                                     repsTarget = exerciseDto.repsTarget,
+                                    // A range only counts next to a plain bottom number, never next to a per-set list
+                                    repsMax = exerciseDto.repsMax?.takeIf { RepRange.of(exerciseDto.repsTarget.trim().toIntOrNull(), it) != null },
                                     recuperoTarget = exerciseDto.recuperoTarget,
                                     ordine = exerciseDto.ordine,
                                     supersetId = remapSuperset(exerciseDto.supersetId),
@@ -622,14 +628,20 @@ class WorkoutRepository @Inject constructor(
                 3
             }
             
+            // A routine's first workout has nothing to copy: start from the exercise's starting weight (if on)
+            val startWeight = if (prevSets.isNullOrEmpty()) startingWeightFor(planEx, exerciseId) else 0f
+            // Planned reps per set: a single number for every set, a range starts at its bottom, "8-6-4-2" goes set by set
+            val plannedReps = if (planEx.repsTarget.split("-").any { it.trim().toIntOrNull() != null }) {
+                LegacyReps.parse(planEx.repsTarget, numSets)
+            } else emptyList()
             for (i in 1..numSets) {
                 val prevSet = prevSets?.getOrNull(i - 1)
                 workoutDao.insertSet(
                     SetLogEntity(
                         sessionId = sessionId.toInt(),
                         exerciseId = exerciseId,
-                        pesoSollevato = prevSet?.pesoSollevato ?: 0f,
-                        repsEffettive = prevSet?.repsEffettive ?: planEx.repsTarget.toIntOrNull() ?: 10,
+                        pesoSollevato = prevSet?.pesoSollevato ?: startWeight,
+                        repsEffettive = prevSet?.repsEffettive ?: plannedReps.getOrNull(i - 1) ?: 10,
                         numeroSerie = i,
                         ordineEsercizio = planEx.ordine,
                         supersetId = planEx.supersetId
@@ -650,6 +662,20 @@ class WorkoutRepository @Inject constructor(
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getLastFinishedSetsForExercise(exerciseId)
+
+    /** Weight in kg the exercise was last lifted with in any routine, null if never. */
+    suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float? = workoutDao.getLastWorkingWeightForExercise(exerciseId)
+
+    /**
+     * The weight (kg) the sets of an exercise start from when its routine has no workout to copy them from:
+     * the one set on the exercise, else the last one used for it in any routine. 0 with starting weights off.
+     */
+    suspend fun startingWeightFor(planExercise: PlanExerciseEntity?, exerciseId: Int): Float {
+        if (!userPreferencesRepository.startingWeightEnabled.first()) return 0f
+        val preset = planExercise?.weightPreset
+        val lastUsed = if (preset != null && preset > 0f) null else workoutDao.getLastWorkingWeightForExercise(exerciseId)
+        return StartingWeight.resolve(enabled = true, presetKg = preset, lastUsedKg = lastUsed)
+    }
 
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>> = 
         workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets)

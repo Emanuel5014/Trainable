@@ -261,6 +261,7 @@ class BackupManager @Inject constructor(
                 json.put("timer_subtract_enabled", prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] ?: true)
                 json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
                 json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
+                json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
                 json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB]?.let { json.put("plate_calculator_plates_lb", it) }
@@ -425,6 +426,8 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] = jsonObject.getBoolean("timer_show_time_buttons")
                                             if (jsonObject.has("timer_show_skip_button"))
                                                 prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] = jsonObject.getBoolean("timer_show_skip_button")
+                                            if (jsonObject.has("starting_weight_enabled"))
+                                                prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] = jsonObject.getBoolean("starting_weight_enabled")
                                             if (jsonObject.has("plate_calculator_enabled"))
                                                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] = jsonObject.getBoolean("plate_calculator_enabled")
                                             if (jsonObject.has("plate_calculator_plates_kg"))

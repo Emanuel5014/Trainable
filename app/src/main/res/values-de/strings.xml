@@ -1160,4 +1160,23 @@
     <string name="cardio_complete_logs_time">Erfasst die geplante Zeit: %1$s</string>
     <string name="cardio_complete_duration">Dauer (Min.)</string>
     <string name="optional_suffix">(optional)</string>
+
+    <!-- Starting weight, rep ranges and double progression -->
+    <string name="starting_weight">Startgewicht</string>
+    <string name="starting_weight_desc">Gib jeder Übung einer Routine ein Gewicht zum Starten. Solange die Routine noch kein Training zum Übernehmen hat, beginnen die Sätze dort oder beim zuletzt genutzten Gewicht dieser Übung.</string>
+    <string name="starting_weight_field">Startgewicht (%1$s)</string>
+    <string name="starting_weight_hint">Optional · gilt bis zum ersten erfassten Training</string>
+    <string name="reps_mode_fixed">Fest</string>
+    <string name="reps_mode_range">Bereich</string>
+    <string name="reps_mode_per_set">Pro Satz</string>
+    <string name="reps_min">Min</string>
+    <string name="reps_max">Max</string>
+    <string name="reps_range_hint">Behalte das Gewicht, bis du in jedem Satz das Maximum schaffst, dann steigere es</string>
+    <string name="reps_range_error">Das Maximum muss höher als das Minimum sein</string>
+    <string name="reps_number_error">Gib eine ganze Zahl von 1 bis 100 ein</string>
+    <string name="reps_list_error">Zahlen mit Bindestrichen trennen, z. B. 8-6-4-2</string>
+    <string name="reps_goal">Ziel: %1$s</string>
+    <string name="progression_hit_max">%1$d Wdh. in jedem Satz beim letzten Mal</string>
+    <string name="progression_try_weight">Probiere %1$s</string>
+    <string name="progression_dismiss">Aktuelles Gewicht behalten</string>
 </resources>

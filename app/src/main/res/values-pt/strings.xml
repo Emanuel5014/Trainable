@@ -1160,4 +1160,23 @@
     <string name="cardio_complete_logs_time">Registra o tempo previsto: %1$s</string>
     <string name="cardio_complete_duration">Duração (min)</string>
     <string name="optional_suffix">(opcional)</string>
+
+    <!-- Starting weight, rep ranges and double progression -->
+    <string name="starting_weight">Peso inicial</string>
+    <string name="starting_weight_desc">Dê a cada exercício de uma rotina um peso para começar. Enquanto a rotina não tiver um treino para copiar, as séries começam aí, ou no último peso que você usou nesse exercício.</string>
+    <string name="starting_weight_field">Peso inicial (%1$s)</string>
+    <string name="starting_weight_hint">Opcional · usado até o primeiro treino registrado</string>
+    <string name="reps_mode_fixed">Fixo</string>
+    <string name="reps_mode_range">Intervalo</string>
+    <string name="reps_mode_per_set">Por série</string>
+    <string name="reps_min">Mín</string>
+    <string name="reps_max">Máx</string>
+    <string name="reps_range_hint">Mantenha o peso até chegar ao máximo em todas as séries, depois suba</string>
+    <string name="reps_range_error">O máximo deve ser maior que o mínimo</string>
+    <string name="reps_number_error">Digite um número inteiro de 1 a 100</string>
+    <string name="reps_list_error">Use números separados por hífens, como 8-6-4-2</string>
+    <string name="reps_goal">Meta: %1$s</string>
+    <string name="progression_hit_max">%1$d reps em todas as séries da última vez</string>
+    <string name="progression_try_weight">Tente %1$s</string>
+    <string name="progression_dismiss">Manter o peso atual</string>
 </resources>

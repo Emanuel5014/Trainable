@@ -573,7 +573,7 @@ fun Application.configureServer(
                                             put("exerciseName", ExerciseTranslations.translate(ex.exercise.nome, lang))
                                             put("category", ExerciseTranslations.translateCategory(ex.exercise.categoria, lang))
                                             put("targetSets", ex.planExercise.serieTarget)
-                                            put("targetReps", ex.planExercise.repsTarget)
+                                            put("targetReps", ex.planExercise.repsDisplay)
                                             put("targetRest", ex.planExercise.recuperoTarget)
                                             put("type", ex.planExercise.exerciseType)
                                             ex.planExercise.durataTargetSecondi?.let { put("targetDurationSeconds", it) }

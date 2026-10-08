@@ -129,6 +129,13 @@ class RoutineDetailViewModel @Inject constructor(
         initialValue = "kg"
     )
 
+    /** With starting weights on, the exercise editor offers a weight field. */
+    val startingWeightEnabled = userPreferencesRepository.startingWeightEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val loadRoundingIncrement = userPreferencesRepository.loadRoundingIncrement.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -521,7 +528,11 @@ class RoutineDetailViewModel @Inject constructor(
         recuperoTarget: Int,
         exerciseType: String = "strength",
         durataTargetSecondi: Int? = null,
-        excludedWeeks: Set<Int> = emptySet()
+        excludedWeeks: Set<Int> = emptySet(),
+        /** Top of a rep range; [repsTarget] is then its bottom. */
+        repsMax: Int? = null,
+        /** Weight in kg the sets start from until the routine has a workout to copy it from. */
+        weightPreset: Float? = null
     ) {
         viewModelScope.launch {
             val current = _uiState.value.planDetails ?: return@launch
@@ -533,11 +544,13 @@ class RoutineDetailViewModel @Inject constructor(
                     exerciseId = exerciseId,
                     serieTarget = serieTarget,
                     repsTarget = repsTarget,
+                    repsMax = repsMax,
                     recuperoTarget = recuperoTarget,
                     ordine = nextOrder,
                     exerciseType = exerciseType,
                     durataTargetSecondi = durataTargetSecondi,
-                    excludedWeeks = com.emanuel5014.trainable.domain.prescription.WeekSetCodec.encode(excludedWeeks)
+                    excludedWeeks = com.emanuel5014.trainable.domain.prescription.WeekSetCodec.encode(excludedWeeks),
+                    weightPreset = weightPreset
                 )
             )
         }
@@ -586,6 +599,7 @@ class RoutineDetailViewModel @Inject constructor(
                         exerciseId = exerciseId,
                         serieTarget = sets,
                         repsTarget = reps,
+                        repsMax = null,
                         recuperoTarget = recuperoTarget,
                         exerciseType = "strength",
                         durataTargetSecondi = null,
@@ -654,7 +668,11 @@ class RoutineDetailViewModel @Inject constructor(
         exerciseType: String = original.exerciseType,
         durataTargetSecondi: Int? = original.durataTargetSecondi,
         excludedWeeks: Set<Int>? = null,
-        clearAdvanced: Boolean = false
+        clearAdvanced: Boolean = false,
+        /** Top of a rep range; [repsTarget] is then its bottom. Anything but a plain strength exercise leaves it null. */
+        repsMax: Int? = null,
+        /** Weight in kg the sets start from; unchanged unless passed. */
+        weightPreset: Float? = original.weightPreset
     ) {
         viewModelScope.launch {
             workoutRepository.updatePlanExercise(
@@ -662,6 +680,8 @@ class RoutineDetailViewModel @Inject constructor(
                     exerciseId = exerciseId,
                     serieTarget = serieTarget,
                     repsTarget = repsTarget,
+                    repsMax = repsMax,
+                    weightPreset = weightPreset,
                     recuperoTarget = recuperoTarget,
                     exerciseType = exerciseType,
                     durataTargetSecondi = durataTargetSecondi,

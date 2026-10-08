@@ -457,7 +457,7 @@ fun WorkoutShareCard(
                                             } else {
                                                 val targetDisplay = if (isTime) {
                                                     planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
-                                                } else planExercise.planExercise.repsTarget
+                                                } else planExercise.planExercise.repsDisplay
                                                 "${planExercise.planExercise.serieTarget}×$targetDisplay"
                                             }
                                             Text(
@@ -568,7 +568,7 @@ fun WorkoutShareCard(
                                             } else {
                                                 val targetDisplay = if (isTime) {
                                                     planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
-                                                } else planExercise.planExercise.repsTarget
+                                                } else planExercise.planExercise.repsDisplay
                                                 "${planExercise.planExercise.serieTarget}×$targetDisplay"
                                             }
                                             Text(

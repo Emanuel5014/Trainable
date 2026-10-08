@@ -417,6 +417,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    val startingWeightEnabled = userPrefsRepository.startingWeightEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setStartingWeightEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setStartingWeightEnabled(enabled)
+        }
+    }
+
     val plateCalculatorEnabled = userPrefsRepository.plateCalculatorEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
