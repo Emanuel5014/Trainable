@@ -92,6 +92,7 @@ import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
@@ -441,13 +442,18 @@ fun EditWorkoutScreen(
     if (showExercisePicker) {
         val exerciseStateToSwap = exerciseToSwap?.let { swapId -> state.exercises.find { it.exercise.id == swapId } }
         val currentSets = exerciseStateToSwap?.sets?.size ?: 3
-        val currentReps = exerciseStateToSwap?.sets?.firstOrNull()?.let {
+        // A range the exercise was done against is offered again (its bottom and top), otherwise the first set's reps
+        val currentRange = exerciseStateToSwap?.sets?.firstNotNullOfOrNull { it.repsRange }
+        val currentReps = currentRange?.min?.toString() ?: exerciseStateToSwap?.sets?.firstOrNull()?.let {
             if (it.durataSecondi != null) "${it.durataSecondi}" else "${it.repsEffettive}"
         } ?: "8"
 
         SwapExerciseBottomSheet(
             currentSets = currentSets,
             currentReps = currentReps,
+            currentRepsMax = currentRange?.max,
+            // The list is keyed by exercise: one that is already in the workout cannot be added or swapped in a second time
+            excludedExerciseIds = state.exercises.map { it.exercise.id }.toSet() - setOfNotNull(exerciseStateToSwap?.exercise?.id),
             availableExercises = state.availableExercises,
             languageCode = languageCode,
             isAdding = exerciseToSwap == null,
@@ -457,9 +463,9 @@ fun EditWorkoutScreen(
             onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
                 val currentSwapId = exerciseToSwap
                 if (currentSwapId != null) {
-                    viewModel.swapExercise(currentSwapId, exercise.id, exerciseType, durataTargetSec)
+                    viewModel.swapExercise(currentSwapId, exercise.id, exerciseType, durataTargetSec, repsRange = reps.range.takeIf { exerciseType == "strength" })
                 } else {
-                    viewModel.addExercise(exercise.id, sets, reps, exerciseType, durataTargetSec)
+                    viewModel.addExercise(exercise.id, sets, reps.repsTarget, exerciseType, durataTargetSec, repsMax = reps.repsMax)
                 }
                 exerciseToSwap = null
                 showExercisePicker = false

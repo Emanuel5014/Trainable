@@ -13,6 +13,13 @@ data class RepRange(val min: Int, val max: Int) {
         const val SEPARATOR = '–'
         const val MAX_REPS = 100
 
+        /** Reads a range back from its [text] ("10–15"), null for anything else (a number, a per-set list "8-6-4", garbage). */
+        fun parse(text: String?): RepRange? {
+            val parts = text?.split(SEPARATOR) ?: return null
+            if (parts.size != 2) return null
+            return of(parts[0].trim().toIntOrNull(), parts[1].trim().toIntOrNull())
+        }
+
         /** The range of a plan exercise, or null when [min] / [max] do not describe one (fixed reps, per-set list). */
         fun of(min: Int?, max: Int?): RepRange? =
             if (min != null && max != null && min >= 1 && max > min && max <= MAX_REPS) RepRange(min, max) else null

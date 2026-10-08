@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.repsRange
+import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.data.local.entity.withoutPrescription
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
@@ -13,6 +15,7 @@ import com.emanuel5014.trainable.data.repository.PrescriptionSetSync
 import com.emanuel5014.trainable.data.repository.SetSyncResult
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
@@ -331,6 +334,10 @@ class EditWorkoutViewModel @Inject constructor(
                 supersetId = supersetId,
                 durataSecondi = lastDuration
             )
+            if (lastSet != null && lastSet.blockIndex == null) {
+                // A set added to a plain exercise done against a rep range keeps that range
+                newSet = newSet.withRepsRange(lastSet.repsRange)
+            }
             if (lastSet != null && lastSet.blockIndex != null && lastSet.repMode != "total") {
                 // A set added to an advanced exercise repeats the prescription of the one before it
                 newSet = newSet.copy(
@@ -395,12 +402,14 @@ class EditWorkoutViewModel @Inject constructor(
         oldExerciseId: Int,
         newExerciseId: Int,
         exerciseType: String = "strength",
-        durataTargetSecondi: Int? = null
+        durataTargetSecondi: Int? = null,
+        /** The rep range the replacement was done against; the logged reps themselves are kept. */
+        repsRange: RepRange? = null
     ) {
         viewModelScope.launch {
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
             // The percentages referred to the old exercise's 1RM, so a plain swap drops the prescription
-            val sets = oldExerciseState.sets.map { it.withoutPrescription() }
+            val sets = oldExerciseState.sets.map { it.withoutPrescription().withRepsRange(repsRange) }
             val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = sets.firstOrNull()?.supersetId
             val isTimeAndWeight = exerciseType == "time_and_weight"
@@ -574,7 +583,9 @@ class EditWorkoutViewModel @Inject constructor(
         targetSets: Int = 1,
         repsTarget: String = "8",
         exerciseType: String = "strength",
-        durataTargetSecondi: Int? = null
+        durataTargetSecondi: Int? = null,
+        /** Top of a rep range; [repsTarget] is then its bottom. */
+        repsMax: Int? = null
     ) {
         viewModelScope.launch {
             val nextOrder = (_state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: -1) + 1
@@ -582,6 +593,8 @@ class EditWorkoutViewModel @Inject constructor(
             val isTimeAndWeight = exerciseType == "time_and_weight"
             val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
             val setsCount = targetSets.coerceAtLeast(1)
+            // A range goes on every row, so the history (and the next edit) know what the exercise was done against
+            val repsRange = if (exerciseType == "strength") RepRange.of(repsTarget.trim().toIntOrNull(), repsMax) else null
             // One number for every set, or a list ("8-6-4") that goes set by set like in a live workout
             val plannedReps = LegacyReps.parse(repsTarget, setsCount)
 
@@ -595,7 +608,7 @@ class EditWorkoutViewModel @Inject constructor(
                     ordineEsercizio = nextOrder,
                     supersetId = null,
                     durataSecondi = targetSec
-                )
+                ).withRepsRange(repsRange)
             }
 
             // Optimistic update

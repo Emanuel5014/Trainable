@@ -27,6 +27,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
@@ -141,19 +142,26 @@ fun setLogPrescriptionBadges(context: android.content.Context, set: SetLogEntity
     if (set.isExtra) add(context.getString(R.string.extra_badge))
 }
 
-/** Pills row for a logged set; the %1RM badge (if any) is highlighted. */
+/**
+ * Pills row for a logged set: the rep range it was done against ("10–15", for any set that has one) and, with
+ * advanced programming on, its prescription; the %1RM badge (if any) is highlighted.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
-    if (!LocalAdvancedProgramming.current) return
+    val advanced = LocalAdvancedProgramming.current
     val context = LocalContext.current
-    val badges = remember(set) { setLogPrescriptionBadges(context, set) }
-    if (badges.isEmpty()) return
+    val badges = remember(set, advanced) { if (advanced) setLogPrescriptionBadges(context, set) else emptyList() }
+    val range = set.repsRange?.text
+    if (badges.isEmpty() && range == null) return
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        range?.let {
+            PrescriptionPill(text = it, containerColor = SurfaceContainerHigh, contentColor = OnSurfaceVariant)
+        }
         badges.forEachIndexed { i, text ->
             val highlight = i == 0 && set.targetPercent != null
             PrescriptionPill(

@@ -7,7 +7,10 @@ enum class RepsMode { FIXED, RANGE, PER_SET }
 enum class RepsError { NOT_A_NUMBER, MAX_NOT_ABOVE_MIN, BAD_LIST }
 
 /** The reps of an exercise as stored: `reps_target` and, for a range, its upper end. */
-data class RepsTarget(val repsTarget: String, val repsMax: Int?)
+data class RepsTarget(val repsTarget: String, val repsMax: Int?) {
+    /** The rep range, null for fixed reps and per-set lists. */
+    val range: RepRange? get() = RepRange.of(repsTarget.trim().toIntOrNull(), repsMax)
+}
 
 /**
  * The reps fields of the exercise editor while they are being typed. Keeps what each mode needs apart so

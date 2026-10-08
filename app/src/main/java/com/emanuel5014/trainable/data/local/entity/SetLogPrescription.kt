@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PlannedSet
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
 
 /** True when the row carries an advanced-prescription snapshot. */
@@ -21,6 +22,16 @@ fun SetLogEntity.withPrescription(planned: PlannedSet?): SetLogEntity = copy(
 )
 
 fun SetLogEntity.withoutPrescription(): SetLogEntity = withPrescription(null).copy(isExtra = false)
+
+/**
+ * The rep range a plain set was done against ("10–15"), kept in `target_reps` which plain sets never used. It lets a
+ * workout that is left and re-entered, a swapped or added exercise and the history all know the range without a plan.
+ */
+val SetLogEntity.repsRange: RepRange? get() = if (blockIndex == null) RepRange.parse(targetReps) else null
+
+/** Stores [range] as the rep range snapshot of a plain set (null clears it); advanced sets keep their own snapshot. */
+fun SetLogEntity.withRepsRange(range: RepRange?): SetLogEntity =
+    if (blockIndex != null) this else copy(targetReps = range?.text)
 
 /**
  * Rebuilds the blocks a session exercise was performed against from the snapshots on its set

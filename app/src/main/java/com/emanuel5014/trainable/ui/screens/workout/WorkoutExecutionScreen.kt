@@ -739,7 +739,7 @@ fun WorkoutExecutionScreen(
                                             val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
                                             "${sec}s"
                                         } else {
-                                            weekTargets?.second ?: targetExState.planDetails?.repsDisplay ?: targetExState.customRepsTarget ?: run {
+                                            weekTargets?.second ?: targetExState.repsDisplay.takeIf { it.isNotBlank() } ?: run {
                                                 if (targetExState.sets.isEmpty()) "0"
                                                 else {
                                                     val allReps = targetExState.sets.map { it.reps }
@@ -1950,11 +1950,15 @@ fun WorkoutExecutionScreen(
                 SwapExerciseBottomSheet(
                     // A cardio exercise has no sets or reps to carry over
                     currentSets = exState.sets.size.takeIf { it > 0 } ?: 3,
-                    currentReps = if (exState.isCardio) "8" else exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
+                    currentReps = if (exState.isCardio) "8" else exState.currentReps.repsTarget,
+                    currentRepsMax = if (exState.isCardio) null else exState.currentReps.repsMax,
                     availableExercises = availableExercises,
                     languageCode = languageCode,
                     onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, exerciseType, durataTargetSec)
+                        viewModel.swapExercise(
+                            state.currentExerciseIndex, newExercise.id, sets, reps.repsTarget, rest, exerciseType, durataTargetSec,
+                            repsMax = reps.repsMax
+                        )
                         showSwapExerciseSheet = false
                     },
                     onAddCustomExercise = { nome, categoria, onCreated ->
@@ -1992,9 +1996,9 @@ fun WorkoutExecutionScreen(
                 languageCode = languageCode,
                 onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
                     if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec)
+                        viewModel.addExerciseAfterCurrent(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
                     } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec)
+                        viewModel.addExerciseToActiveSession(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false

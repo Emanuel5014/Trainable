@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
@@ -645,7 +646,7 @@ class WorkoutRepository @Inject constructor(
                         numeroSerie = i,
                         ordineEsercizio = planEx.ordine,
                         supersetId = planEx.supersetId
-                    )
+                    ).withRepsRange(planEx.repsRange.takeIf { planEx.exerciseType == "strength" })
                 )
             }
         }

@@ -116,10 +116,9 @@ fun RepsEditor(
                     onValueChange = { text ->
                         val updated = draft.withList(text)
                         onDraftChange(updated)
-                        // A list spells out how many sets there are
-                        updated.perSetCount?.let { count ->
-                            if (count != (setsText.toIntOrNull() ?: 0)) onSetsChange(count.toString())
-                        }
+                        // A list spells out how many sets there are. Set it every time rather than comparing with
+                        // setsText: fast typing can arrive before that value was refreshed and the sets would stay behind.
+                        updated.perSetCount?.let { count -> onSetsChange(count.toString()) }
                     },
                     label = stringResource(R.string.reps),
                     isError = error != null,
