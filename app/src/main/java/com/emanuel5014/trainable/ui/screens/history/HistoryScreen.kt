@@ -209,6 +209,12 @@ fun HistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
     val languageCode by viewModel.languageCode.collectAsState()
+    // When each routine was last done, to tell routines apart in the add-workout sheet
+    val lastDoneByPlan = remember(uiState.sessions) {
+        AddWorkoutPlans.lastDoneByPlan(
+            uiState.sessions.filter { it.session.isFinished }.map { it.session.planId to it.session.timestamp }
+        )
+    }
     val context = LocalContext.current
 
     // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
@@ -1054,8 +1060,11 @@ fun HistoryScreen(
                 )
             }
         ) {
-            AddWorkoutFromPlanContent(
+            AddWorkoutSheetContent(
                 plans = uiState.availablePlans,
+                summaries = uiState.planSummaries,
+                lastDoneByPlan = lastDoneByPlan,
+                languageCode = languageCode,
                 onPlanSelected = { planId ->
                     viewModel.addManualWorkout(planId)
                     showAddWorkoutSheet = false
@@ -1081,158 +1090,6 @@ fun HistoryScreen(
 }
 
 // AddCardioDialog was moved to CardioInputForm.kt as a reusable component
-
-@Composable
-fun AddWorkoutFromPlanContent(
-    plans: List<WorkoutPlanEntity>,
-    onPlanSelected: (Int) -> Unit,
-    onEmptyWorkoutClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.add_workout),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Black,
-            color = OnSurface
-        )
-        
-        Text(
-            text = stringResource(R.string.select_plan_to_add),
-            style = MaterialTheme.typography.bodyMedium,
-            color = OnSurfaceVariant
-        )
-        
-        val filteredPlans = remember(plans) { 
-            plans.filter { it.note != "SYSTEM_PLAN" } 
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                GymCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onEmptyWorkoutClick() }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Primary.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Rounded.AddBox,
-                                contentDescription = null,
-                                tint = Primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.add_empty_workout),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.custom_workout),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
-            items(filteredPlans) { plan ->
-                GymCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onPlanSelected(plan.id) }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Primary.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (plan.imageUri != null) {
-                                val context = LocalContext.current
-                                val model = remember(plan.imageUri) {
-                                    UriMigrationHelper.fixPath(plan.imageUri, context) ?: plan.imageUri
-                                }
-                                AsyncImage(
-                                    model = model,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.Notes,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = plan.nome,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnSurface
-                            )
-                            if (!plan.note.isNullOrBlank()) {
-                                Text(
-                                    text = plan.note,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                        
-                        Icon(
-                            Icons.Rounded.ChevronRight,
-                            contentDescription = null,
-                            tint = OnSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun HistoryExerciseGroup(

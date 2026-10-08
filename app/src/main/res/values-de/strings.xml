@@ -1179,4 +1179,13 @@
     <string name="progression_hit_max">%1$d Wdh. in jedem Satz beim letzten Mal</string>
     <string name="progression_try_weight">Probiere %1$s</string>
     <string name="progression_dismiss">Aktuelles Gewicht behalten</string>
+
+    <!-- Add workout sheet: routines grouped by active / archived -->
+    <plurals name="add_workout_exercise_count">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
+    <string name="add_workout_last_done">Zuletzt: %1$s</string>
+    <string name="show_archived_routines">Archivierte Routinen anzeigen</string>
+    <string name="hide_archived_routines">Archivierte Routinen ausblenden</string>
 </resources>

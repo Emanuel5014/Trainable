@@ -35,6 +35,8 @@ data class HistoryUiState(
     val sessions: List<SessionWithDetails> = emptyList(),
     val filteredSessions: List<SessionWithDetails> = emptyList(),
     val availablePlans: List<WorkoutPlanEntity> = emptyList(),
+    /** What each routine in [availablePlans] contains, by plan id. */
+    val planSummaries: Map<Int, PlanSummary> = emptyMap(),
     val selectedSession: SessionWithDetails? = null,
     val isLoading: Boolean = false,
     val isSelectionMode: Boolean = false,
@@ -82,9 +84,20 @@ class HistoryViewModel @Inject constructor(
 
     private fun loadPlans() {
         viewModelScope.launch {
-            repository.getAllPlans().collect { plans ->
-                val filtered = plans.filter { it.note != "SYSTEM_PLAN" }
-                _uiState.update { it.copy(availablePlans = filtered) }
+            repository.getAllPlansWithDetails().collect { plans ->
+                // Routines only: the plans the app makes for cardio / quick / custom workouts are not listed
+                val routines = plans.filter { !it.plan.isSystemPlan }
+                val summaries = routines.associate { details ->
+                    details.plan.id to PlanSummary(
+                        exerciseCount = details.exercises.size,
+                        muscleGroups = details.exercises
+                            .sortedBy { it.planExercise.ordine }
+                            .map { it.exercise.categoria }
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                    )
+                }
+                _uiState.update { it.copy(availablePlans = routines.map { details -> details.plan }, planSummaries = summaries) }
             }
         }
     }
