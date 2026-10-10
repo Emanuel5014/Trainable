@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.data.ai
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import android.net.Uri
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -31,6 +33,7 @@ data class ScannedExerciseEntry(
 ) {
     val isCardio: Boolean get() = exerciseType == "cardio" || cardioMinutes != null
     val isTimeAndWeight: Boolean get() = exerciseType == "time_and_weight"
+    val isTimeAndReps: Boolean get() = exerciseType == "time_and_reps"
     val isAdvanced: Boolean get() = blocksByWeek.values.any { it.isNotEmpty() }
 }
 
@@ -90,8 +93,9 @@ EXTRACTION INSTRUCTIONS:
 - exercise_type: The exercise type:
   * "strength": Standard weight & repetition exercises (default).
   * "time_and_weight": Isometric, timed, or hold exercises where performance is measured by seconds / time (e.g. Plank, Wall Sit, Barbell Hold, Farmer's Walk, or exercises with duration in seconds like "45s", "60\"").
+  * "time_and_reps": Reps done within a timed interval, with no weight: the sheet gives a time AND a number of reps or asks for max reps in a time (e.g. "Burpees 3x 60s", "20 reps in 45s", "Battle Ropes 30s intervals", "Jumping Jacks 1 min max reps"). For these, reps is the reps goal as a single number (e.g. "20"; "10" if no number is written), NOT the duration.
   * "cardio": Aerobic cardio machines (Treadmill / Tapis Roulant, Stationary Bike / Cyclette, Elliptical / Ellittica, Rower / Vogatore, Stairmaster).
-- time_seconds: For "time_and_weight" exercises, target duration in seconds as integer (e.g. 45, 60, 30); null for other types.
+- time_seconds: For "time_and_weight" and "time_and_reps" exercises, target duration in seconds as integer (e.g. 45, 60, 30); null for other types.
 - rest_seconds: Rest time in seconds (integer). Convert "90s", "1'30\"", "2 min", "90\"", "1 min 30 s", "2'" into total seconds (e.g. 90, 120). Default to 120 if not specified.
 ${if (advanced) advancedFields else ""}- cardio_minutes: If the entry is a cardio activity (Treadmill / Tapis Roulant / Cinta, Bike / Cyclette / Bicicleta, Elliptical / Ellittica, Rower / Vogatore / Remo, Stairmaster), duration in minutes (e.g. 20) and set reps to "1"; otherwise null.
 - category: The target muscle group category (choose from: $categoriesStr).
@@ -356,11 +360,14 @@ class RoutineScanner @Inject constructor(
 
                 val resolvedType = when {
                     item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
+                    item.exerciseType == TIME_AND_REPS -> TIME_AND_REPS
                     item.exerciseType == "time_and_weight" || item.timeSeconds != null || item.reps.endsWith("s", ignoreCase = true) -> "time_and_weight"
                     else -> "strength"
                 }
                 val resolvedTimeSeconds = if (resolvedType == "time_and_weight") {
                     item.timeSeconds ?: item.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+                } else if (resolvedType == TIME_AND_REPS) {
+                    item.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS
                 } else null
 
                 ScannedExerciseEntry(
@@ -369,7 +376,12 @@ class RoutineScanner @Inject constructor(
                     matchedName = match?.nome,
                     suggestedCategory = suggestedCategory,
                     sets = item.sets.coerceIn(1, 30),
-                    reps = if (resolvedType == "time_and_weight" && !item.reps.endsWith("s")) "${resolvedTimeSeconds ?: 45}s" else item.reps.ifBlank { "8-12" },
+                    reps = when {
+                        resolvedType == "time_and_weight" && !item.reps.endsWith("s") -> "${resolvedTimeSeconds ?: 45}s"
+                        // The goal only: a duration slipped into the reps ("45s") is not one
+                        resolvedType == TIME_AND_REPS -> TimeAndReps.goalOf(item.reps.takeUnless { it.endsWith("s", ignoreCase = true) }).toString()
+                        else -> item.reps.ifBlank { "8-12" }
+                    },
                     restSeconds = item.restSeconds.coerceAtLeast(0),
                     cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
                     exerciseType = resolvedType,

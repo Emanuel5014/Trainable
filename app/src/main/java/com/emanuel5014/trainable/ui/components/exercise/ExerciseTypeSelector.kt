@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Percent
+import androidx.compose.material.icons.rounded.Timelapse
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +68,12 @@ private val TimeAndWeightOption = ExerciseTypeOption(
     hint = R.string.exercise_type_time_and_weight_hint,
     icon = Icons.Rounded.Timer
 )
+private val TimeAndRepsOption = ExerciseTypeOption(
+    type = "time_and_reps",
+    label = R.string.exercise_type_time_and_reps,
+    hint = R.string.exercise_type_time_and_reps_hint,
+    icon = Icons.Rounded.Timelapse
+)
 private val AdvancedOption = ExerciseTypeOption(
     type = "advanced",
     label = R.string.exercise_type_advanced,
@@ -72,10 +81,13 @@ private val AdvancedOption = ExerciseTypeOption(
     icon = Icons.Rounded.Percent
 )
 
+private val MIN_TILE_WIDTH = 116.dp
+
 /**
- * Picks how an exercise is prescribed: weight & reps, time & weight, or (with advanced programming on) an
+ * Picks how an exercise is prescribed: weight & reps, time & weight, time & reps, or (with advanced programming on) an
  * advanced block prescription. [selectedType] and [onTypeSelected] use the `exerciseType` ids
- * (`strength`, `time_and_weight`, `advanced`); the line under the tiles says what the selected one means.
+ * (`strength`, `time_and_weight`, `time_and_reps`, `advanced`); the line under the tiles says what the selected one
+ * means. Tiles too narrow for their names go two by two.
  */
 @Composable
 fun ExerciseTypeSelector(
@@ -85,28 +97,40 @@ fun ExerciseTypeSelector(
     showAdvanced: Boolean = false
 ) {
     val options = remember(showAdvanced) {
-        if (showAdvanced) listOf(StrengthOption, TimeAndWeightOption, AdvancedOption)
-        else listOf(StrengthOption, TimeAndWeightOption)
+        if (showAdvanced) listOf(StrengthOption, TimeAndWeightOption, TimeAndRepsOption, AdvancedOption)
+        else listOf(StrengthOption, TimeAndWeightOption, TimeAndRepsOption)
     }
+    val fontScale = LocalDensity.current.fontScale
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min)
-                .selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        // One row while every tile keeps room for a long name ("Ripetizioni"), two by two otherwise
+        val tileWidth = (maxWidth - 8.dp * (options.size - 1)) / options.size
+        val rows = if (options.size > 2 && tileWidth < MIN_TILE_WIDTH * fontScale.coerceAtLeast(1f)) options.chunked(2) else listOf(options)
+        Column(
+            modifier = Modifier.selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            options.forEach { option ->
-                ExerciseTypeTile(
-                    option = option,
-                    selected = option.type == selectedType,
-                    onClick = { onTypeSelected(option.type) },
+            rows.forEach { row ->
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                )
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    row.forEach { option ->
+                        ExerciseTypeTile(
+                            option = option,
+                            selected = option.type == selectedType,
+                            onClick = { onTypeSelected(option.type) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+                    }
+                }
             }
+        }
         }
 
         AnimatedContent(

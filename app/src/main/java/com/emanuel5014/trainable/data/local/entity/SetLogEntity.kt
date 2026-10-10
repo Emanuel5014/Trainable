@@ -72,5 +72,11 @@ data class SetLogEntity(
     val isExtra: Boolean = false,
     /** Total-reps target of the block (ALSAP), to rebuild the block progress on resume. */
     @ColumnInfo(name = "target_total_reps")
-    val targetTotalReps: Int? = null
+    val targetTotalReps: Int? = null,
+    /**
+     * [TIME_AND_REPS] for a set of a Time & Reps exercise, null for every other set: a Time & Weight set is told by its
+     * duration alone and a plain one by having none (see [SetLogKind]).
+     */
+    @ColumnInfo(name = "exercise_type")
+    val exerciseType: String? = null
 )

@@ -37,15 +37,18 @@ fun ImportConfirmationDialog(
                 plans.forEach { plan ->
                     val cardioLabel = stringResource(R.string.compare_cardio)
                     val timedLabel = stringResource(R.string.exercise_type_time_and_weight)
+                    val timedRepsLabel = stringResource(R.string.exercise_type_time_and_reps)
                     val supersetLabel = stringResource(R.string.superset).lowercase()
                     val advancedLabel = stringResource(R.string.exercise_type_advanced)
                     val typeSummary = buildString {
                         val cardio = plan.exercises.count { it.exerciseType == "cardio" }
                         val timed = plan.exercises.count { it.exerciseType == "time_and_weight" }
+                        val timedReps = plan.exercises.count { it.exerciseType == "time_and_reps" }
                         val supersets = plan.exercises.mapNotNull { it.supersetId }.distinct().size
                         val advanced = plan.exercises.count { it.blocks.isNotEmpty() }
                         if (cardio > 0) append(" • $cardio $cardioLabel")
                         if (timed > 0) append(" • $timed $timedLabel")
+                        if (timedReps > 0) append(" • $timedReps $timedRepsLabel")
                         if (supersets > 0) append(" • $supersets $supersetLabel")
                         if (advanced > 0) append(" • $advanced $advancedLabel")
                     }

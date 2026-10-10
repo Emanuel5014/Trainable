@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import android.graphics.Bitmap
 import android.view.View
 import androidx.compose.foundation.BorderStroke
@@ -455,7 +457,13 @@ fun WorkoutShareCard(
                                             val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
                                                 resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
                                             } else {
-                                                val targetDisplay = if (isTime) {
+                                                val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
+                                                    stringResource(
+                                                        com.emanuel5014.trainable.R.string.time_reps_value,
+                                                        planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
+                                                        TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
+                                                    )
+                                                } else if (isTime) {
                                                     planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
                                                 } else planExercise.planExercise.repsDisplay
                                                 "${planExercise.planExercise.serieTarget}×$targetDisplay"
@@ -476,7 +484,6 @@ fun WorkoutShareCard(
 
                                     item.sets.forEach { setWithEx ->
                                         val set = setWithEx.setLog
-                                        val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -502,10 +509,7 @@ fun WorkoutShareCard(
                                             Spacer(modifier = Modifier.width(8.dp))
 
                                             Text(
-                                                text = WeightUnitConverter.formatWithUnit(
-                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                                    weightUnit
-                                                ) + " × $repsOrTime",
+                                                text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
@@ -566,7 +570,13 @@ fun WorkoutShareCard(
                                             val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
                                                 resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
                                             } else {
-                                                val targetDisplay = if (isTime) {
+                                                val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
+                                                    stringResource(
+                                                        com.emanuel5014.trainable.R.string.time_reps_value,
+                                                        planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
+                                                        TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
+                                                    )
+                                                } else if (isTime) {
                                                     planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
                                                 } else planExercise.planExercise.repsDisplay
                                                 "${planExercise.planExercise.serieTarget}×$targetDisplay"
@@ -587,7 +597,6 @@ fun WorkoutShareCard(
 
                                     item.sets.forEach { setWithEx ->
                                         val set = setWithEx.setLog
-                                        val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -613,10 +622,7 @@ fun WorkoutShareCard(
                                             Spacer(modifier = Modifier.width(8.dp))
 
                                             Text(
-                                                text = WeightUnitConverter.formatWithUnit(
-                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                                    weightUnit
-                                                ) + " × $repsOrTime",
+                                                text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary

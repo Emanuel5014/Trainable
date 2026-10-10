@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -47,6 +49,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.RepsDraft
 import com.emanuel5014.trainable.domain.prescription.RepsTarget
 import com.emanuel5014.trainable.ui.components.exercise.RepsEditor
+import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -726,6 +729,7 @@ private fun SwapExerciseConfigSheet(
     // What the exercise had before ("45s" of a timed one is no reps: start from the usual 8)
     var repsDraft by remember { mutableStateOf(RepsDraft.from(initialReps, initialRepsMax).takeIf { it.isValid } ?: RepsDraft()) }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
+    var repsGoalText by remember { mutableStateOf(TimeAndReps.goalOf(initialReps).toString()) }
     var restText by remember { mutableStateOf("120") }
     var advancedBlocks by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
 
@@ -808,6 +812,17 @@ private fun SwapExerciseConfigSheet(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+                    TIME_AND_REPS -> TimeAndRepsEditor(
+                        setsText = setsText,
+                        onSetsChange = { setsText = it },
+                        repsGoalText = repsGoalText,
+                        onRepsGoalChange = { repsGoalText = it },
+                        seconds = timeTargetSecondsText.toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS,
+                        onSecondsChange = { timeTargetSecondsText = it.toString() },
+                        hapticEnabled = hapticEnabled,
+                        haptic = haptic,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     else -> RepsEditor(
                         draft = repsDraft,
                         onDraftChange = { repsDraft = it },
@@ -855,6 +870,12 @@ private fun SwapExerciseConfigSheet(
                                     val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
                                     onConfirm(sets, RepsTarget("${targetSec}s", null), rest, "time_and_weight", targetSec)
                                 }
+                                TIME_AND_REPS -> {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val goal = TimeAndReps.parseGoal(repsGoalText) ?: return@GymButton
+                                    val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS
+                                    onConfirm(sets, RepsTarget(goal.toString(), null), rest, TIME_AND_REPS, targetSec)
+                                }
                                 else -> {
                                     val sets = setsText.trim().toIntOrNull() ?: return@GymButton
                                     val reps = repsDraft.target ?: return@GymButton
@@ -864,7 +885,11 @@ private fun SwapExerciseConfigSheet(
                         },
                         modifier = Modifier.weight(1f),
                         // Plain exercises need valid reps (a range with its top above its bottom, a list of numbers...)
-                        enabled = selectedExerciseType != "strength" || repsDraft.isValid
+                        enabled = when (selectedExerciseType) {
+                            "strength" -> repsDraft.isValid
+                            TIME_AND_REPS -> TimeAndReps.parseGoal(repsGoalText) != null
+                            else -> true
+                        }
                     ) {
                         Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Black)
                     }

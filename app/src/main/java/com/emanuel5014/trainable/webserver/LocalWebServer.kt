@@ -732,6 +732,8 @@ fun Application.configureServer(
                                 put("numeroSerie", swd.setLog.numeroSerie)
                                 // Time & Weight sets log how long the set lasted instead of reps
                                 swd.setLog.durataSecondi?.let { put("durataSecondi", it) }
+                                // Time & Reps sets have a duration too, and their reps are what counts
+                                if (swd.setLog.exerciseType == com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS) put("exerciseType", swd.setLog.exerciseType)
                                 if (swd.setLog.isWarmup) put("isWarmup", true)
                                 if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }

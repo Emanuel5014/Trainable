@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.lifecycle.SavedStateHandle
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -371,6 +373,17 @@ class RoutineDetailViewModel @Inject constructor(
                             ordine = nextOrder++,
                             exerciseType = "cardio",
                             durataTargetSecondi = entry.cardioMinutes?.let { it * 60 }
+                        )
+                    } else if (entry.isTimeAndReps) {
+                        PlanExerciseEntity(
+                            planId = details.plan.id,
+                            exerciseId = exerciseId,
+                            serieTarget = entry.sets,
+                            repsTarget = TimeAndReps.goalOf(entry.reps).toString(),
+                            recuperoTarget = entry.restSeconds,
+                            ordine = nextOrder++,
+                            exerciseType = TIME_AND_REPS,
+                            durataTargetSecondi = entry.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS
                         )
                     } else if (entry.isTimeAndWeight) {
                         val sec = entry.timeSeconds ?: entry.reps.filter { it.isDigit() }.toIntOrNull() ?: 45

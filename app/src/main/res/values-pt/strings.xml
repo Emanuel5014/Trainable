@@ -916,6 +916,16 @@
     <string name="time_weight_reset_timer">Repor temporizador</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Avançado</string>
+    <string name="exercise_type_time_and_reps">Tempo &amp; Repetições</string>
+    <string name="exercise_type_time_and_reps_hint">Repetições feitas num intervalo cronometrado, sem peso</string>
+    <string name="time_and_reps_badge">TEMPO &amp; REPS</string>
+    <string name="time_reps_value">%1$ds · %2$d reps</string>
+    <string name="reps_goal_label">Meta de reps</string>
+    <string name="reps_goal_error">Insira um número inteiro de 1 a 999</string>
+    <string name="reps_done_label">Reps feitas</string>
+    <string name="reps_decrease">Uma repetição a menos</string>
+    <string name="reps_increase">Uma repetição a mais</string>
+    <string name="notification_next_set_text">Próxima: %1$s - Série %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">Blocos %1RM, RPE e técnicas</string>
     <string name="one_rep_max">1RM</string>
     <string name="one_rep_max_value">1RM %1$s</string>

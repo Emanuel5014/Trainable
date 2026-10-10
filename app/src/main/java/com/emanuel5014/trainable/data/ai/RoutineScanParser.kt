@@ -112,6 +112,21 @@ object RoutineScanParser {
             )
         }
 
+        if (explicitType == "time_and_reps") {
+            // Reps in a timed interval: the reps are the goal, the time comes apart
+            return ParsedExercise(
+                name = cleanName,
+                sets = sets,
+                reps = reps,
+                restSeconds = rest,
+                category = category,
+                exerciseType = "time_and_reps",
+                timeSeconds = explicitTimeSeconds,
+                oneRepMaxKg = oneRepMax,
+                programmed = programmed
+            )
+        }
+
         val isTimed = explicitType == "time_and_weight" ||
             reps.endsWith("s", ignoreCase = true) ||
             reps.endsWith("sec", ignoreCase = true) ||

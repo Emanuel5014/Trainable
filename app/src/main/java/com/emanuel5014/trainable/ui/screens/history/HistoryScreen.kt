@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
+import com.emanuel5014.trainable.data.local.entity.asKind
+import com.emanuel5014.trainable.data.local.entity.kind
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -1125,12 +1130,8 @@ private fun HistoryExerciseGroup(
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )
-                    val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                     Text(
-                        text = WeightUnitConverter.formatWithUnit(
-                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                            weightUnit
-                        ) + " × $repsOrTime",
+                        text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = OnSurface
@@ -1586,10 +1587,15 @@ fun EditSetDialog(
     var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
     var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "45") }
     var note by remember { mutableStateOf(set.note ?: "") }
-    var isTimeSet by remember { mutableStateOf(set.durataSecondi != null) }
+    var kind by remember { mutableStateOf(set.kind) }
     var rpe by remember { mutableStateOf(set.rpe) }
 
-    val isValid = weight.isNotBlank() && (if (isTimeSet) seconds.isNotBlank() else reps.isNotBlank())
+    // A Time & Reps set has no weight to fill in
+    val isValid = (kind == SetLogKind.TIME_AND_REPS || weight.isNotBlank()) && when (kind) {
+        SetLogKind.STRENGTH -> reps.isNotBlank()
+        SetLogKind.TIME_AND_WEIGHT -> seconds.isNotBlank()
+        SetLogKind.TIME_AND_REPS -> seconds.isNotBlank() && reps.isNotBlank()
+    }
 
     AlertDialog(
         modifier = Modifier.imePadding(),
@@ -1601,15 +1607,19 @@ fun EditSetDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ExerciseTypeSelector(
-                    selectedType = if (isTimeSet) "time_and_weight" else "strength",
+                    selectedType = when (kind) {
+                        SetLogKind.STRENGTH -> "strength"
+                        SetLogKind.TIME_AND_WEIGHT -> TIME_AND_WEIGHT
+                        SetLogKind.TIME_AND_REPS -> TIME_AND_REPS
+                    },
                     onTypeSelected = { type ->
-                        isTimeSet = type == "time_and_weight"
-                        if (isTimeSet && seconds.isBlank()) seconds = "45"
+                        kind = SetLogKind.ofExerciseType(type)
+                        if (kind.isTimed && seconds.isBlank()) seconds = "45"
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                GymInputField(
+                if (kind != SetLogKind.TIME_AND_REPS) GymInputField(
                     value = weight,
                     onValueChange = { newValue ->
                         weight = newValue.replace(",", ".")
@@ -1629,14 +1639,22 @@ fun EditSetDialog(
                         }
                     } else null
                 )
-                if (isTimeSet) {
+                if (kind.isTimed) {
                     GymInputField(
                         value = seconds,
                         onValueChange = { seconds = it.filter { char -> char.isDigit() } },
                         label = stringResource(R.string.set_duration_label),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
-                } else {
+                }
+                if (kind == SetLogKind.TIME_AND_REPS) {
+                    GymInputField(
+                        value = reps,
+                        onValueChange = { reps = it.filter { char -> char.isDigit() } },
+                        label = stringResource(R.string.reps),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                } else if (!kind.isTimed) {
                     GymInputField(
                         value = reps,
                         onValueChange = { reps = it },
@@ -1694,11 +1712,11 @@ fun EditSetDialog(
                         val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
-                            repsEffettive = if (isTimeSet) 0 else (reps.toIntOrNull() ?: 0),
-                            durataSecondi = if (isTimeSet) (seconds.toIntOrNull() ?: 45) else null,
+                            repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else (reps.toIntOrNull() ?: 0),
+                            durataSecondi = if (kind.isTimed) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null },
-                            rpe = if (isTimeSet) null else rpe
-                        )
+                            rpe = if (kind.isTimed) null else rpe
+                        ).asKind(kind)
                         onConfirm(updatedSet)
                     },
                     enabled = isValid,

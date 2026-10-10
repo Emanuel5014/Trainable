@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.data.repository
 
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
+import com.emanuel5014.trainable.data.local.entity.kind
 import android.content.Context
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
@@ -635,17 +639,27 @@ class WorkoutRepository @Inject constructor(
             val plannedReps = if (planEx.repsTarget.split("-").any { it.trim().toIntOrNull() != null }) {
                 LegacyReps.parse(planEx.repsTarget, numSets)
             } else emptyList()
+            // Timed exercises keep their kind: the hold or interval of the routine (a hold copies last time's)
+            val kind = SetLogKind.ofExerciseType(planEx.exerciseType)
+            val planSeconds = planEx.durataTargetSecondi ?: 45
             for (i in 1..numSets) {
                 val prevSet = prevSets?.getOrNull(i - 1)
+                val seconds = when (kind) {
+                    SetLogKind.TIME_AND_WEIGHT -> prevSet?.durataSecondi ?: planSeconds
+                    SetLogKind.TIME_AND_REPS -> planSeconds
+                    SetLogKind.STRENGTH -> null
+                }
                 workoutDao.insertSet(
                     SetLogEntity(
                         sessionId = sessionId.toInt(),
                         exerciseId = exerciseId,
-                        pesoSollevato = prevSet?.pesoSollevato ?: startWeight,
-                        repsEffettive = prevSet?.repsEffettive ?: plannedReps.getOrNull(i - 1) ?: 10,
+                        pesoSollevato = if (kind == SetLogKind.TIME_AND_REPS) 0f else prevSet?.pesoSollevato ?: startWeight,
+                        repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else prevSet?.repsEffettive ?: plannedReps.getOrNull(i - 1) ?: 10,
                         numeroSerie = i,
                         ordineEsercizio = planEx.ordine,
-                        supersetId = planEx.supersetId
+                        supersetId = planEx.supersetId,
+                        durataSecondi = seconds,
+                        exerciseType = kind.rowType
                     ).withRepsRange(planEx.repsRange.takeIf { planEx.exerciseType == "strength" })
                 )
             }
@@ -751,9 +765,13 @@ class WorkoutRepository @Inject constructor(
                 val note = escapeCsv(setLog.note ?: "")
                 val weight = WeightUnitConverter.convertDisplay(setLog.pesoSollevato, weightUnit)
 
-                val isTimeAndWeight = setLog.durataSecondi != null
-                val type = if (isTimeAndWeight) "time_and_weight" else "strength"
-                val reps = if (isTimeAndWeight) "" else setLog.repsEffettive.toString()
+                val kind = setLog.kind
+                val type = when (kind) {
+                    SetLogKind.STRENGTH -> "strength"
+                    SetLogKind.TIME_AND_WEIGHT -> TIME_AND_WEIGHT
+                    SetLogKind.TIME_AND_REPS -> TIME_AND_REPS
+                }
+                val reps = if (kind == SetLogKind.TIME_AND_WEIGHT) "" else setLog.repsEffettive.toString()
                 val duration = setLog.durataSecondi?.toString() ?: ""
 
                 val week = session.session.programWeek?.toString() ?: ""

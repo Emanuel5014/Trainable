@@ -377,7 +377,9 @@ class TimerNotificationHelper @Inject constructor(
         totalSeconds: Int? = null,
         scheduleAlarm: Boolean = true,
         nextSetRepsLabel: String? = null,
-        nextSetDetail: String? = null
+        nextSetDetail: String? = null,
+        /** Replaces weight × reps for a timed set ("45s · 20 reps"). */
+        nextSetText: String? = null
     ) {
         val triggerTime = System.currentTimeMillis() + (remainingSeconds * 1000L)
         
@@ -407,7 +409,9 @@ class TimerNotificationHelper @Inject constructor(
         }
         val subtractPendingIntent = PendingIntent.getBroadcast(context, 5, subtractIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
+        val nextSetLabel = if (exerciseName != null && nextSetNumber != null && nextSetText != null) {
+            context.getString(R.string.notification_next_set_text, exerciseName, nextSetNumber, nextSetText)
+        } else if (exerciseName != null && nextSetNumber != null && nextSetWeight != null && (nextSetReps != null || nextSetRepsLabel != null) && weightUnit != null) {
             val formattedWeight = WeightUnitConverter.formatWithUnit(
                 WeightUnitConverter.convertDisplay(nextSetWeight, weightUnit),
                 weightUnit

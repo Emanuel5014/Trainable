@@ -174,6 +174,9 @@ import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
+import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.ui.components.exercise.RepsEditor
@@ -308,6 +311,8 @@ fun RoutineDetailScreen(
     var selectedExerciseType by remember { mutableStateOf("strength") }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var setsText by remember { mutableStateOf("3") }
+    // Reps goal of a Time & Reps exercise
+    var repsGoalText by remember { mutableStateOf(TimeAndReps.DEFAULT_REPS_GOAL.toString()) }
     var repsDraft by remember { mutableStateOf(RepsDraft()) }
     // Typed in the user's weight unit; blank means no starting weight
     var presetText by remember { mutableStateOf("") }
@@ -379,6 +384,7 @@ fun RoutineDetailScreen(
         selectedExerciseType = "strength"
         setsText = "3"
         repsDraft = RepsDraft()
+        repsGoalText = TimeAndReps.DEFAULT_REPS_GOAL.toString()
         presetText = ""
         presetTextAtOpen = ""
         timeTargetSecondsText = "45"
@@ -404,11 +410,16 @@ fun RoutineDetailScreen(
         editorWeek = viewWeek.coerceAtMost(draftWeeksCount)
         setsText = item.planExercise.serieTarget.toString()
         repsDraft = RepsDraft.from(item.planExercise.repsTarget, item.planExercise.repsMax)
+        // A plain exercise turned into Time & Reps keeps its reps as the goal
+        repsGoalText = TimeAndReps.goalOf(item.planExercise.repsRange?.min?.toString() ?: item.planExercise.repsTarget).toString()
         presetText = item.planExercise.weightPreset
             ?.let { WeightUnitConverter.format(WeightUnitConverter.convertDisplay(it, weightUnit)) }
             .orEmpty()
         presetTextAtOpen = presetText
-        timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString() ?: item.planExercise.repsTarget.filter { it.isDigit() }.ifBlank { "45" }
+        // Only a hold's reps ("45s") hold its time: a plain exercise's "20" are reps, not seconds
+        timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString()
+            ?: item.planExercise.repsTarget.takeIf { item.planExercise.exerciseType == "time_and_weight" }?.filter { it.isDigit() }?.ifBlank { null }
+            ?: "45"
         restText = item.planExercise.recuperoTarget.toString()
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
         showExerciseSheet = true
@@ -1136,7 +1147,8 @@ fun RoutineDetailScreen(
         }
         val presetInvalid = startingWeightEnabled && presetText.isNotBlank() && presetKg == null
         val strengthRepsInvalid = !isSelectedCardio && selectedExerciseType == "strength" && !repsDraft.isValid
-        val canSaveExercise = !presetInvalid && !strengthRepsInvalid
+        val repsGoalInvalid = !isSelectedCardio && selectedExerciseType == TIME_AND_REPS && TimeAndReps.parseGoal(repsGoalText) == null
+        val canSaveExercise = !presetInvalid && !strengthRepsInvalid && !repsGoalInvalid
 
         ModalBottomSheet(
             onDismissRequest = { showExerciseSheet = false },
@@ -1301,6 +1313,19 @@ fun RoutineDetailScreen(
                                 if (startingWeightEnabled) {
                                     StartingWeightField(text = presetText, onTextChange = { presetText = it }, weightUnit = weightUnit)
                                 }
+                            } else if (selectedExerciseType == TIME_AND_REPS) {
+                                // No weight, so no starting weight either
+                                TimeAndRepsEditor(
+                                    setsText = setsText,
+                                    onSetsChange = { setsText = it },
+                                    repsGoalText = repsGoalText,
+                                    onRepsGoalChange = { repsGoalText = it },
+                                    seconds = timeTargetSecondsText.toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS,
+                                    onSecondsChange = { timeTargetSecondsText = it.toString() },
+                                    hapticEnabled = hapticEnabled,
+                                    haptic = haptic,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             } else {
                                 RepsEditor(
                                     draft = repsDraft,
@@ -1510,6 +1535,37 @@ fun RoutineDetailScreen(
                                             excludedWeeks = draftExcludedWeeks.toSet(),
                                             clearAdvanced = current.isAdvanced && advancedOn,
                                             weightPreset = presetKg
+                                        )
+                                    }
+                                } else if (selectedExerciseType == TIME_AND_REPS) {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                    val goal = TimeAndReps.parseGoal(repsGoalText) ?: return@GymButton
+                                    val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS
+
+                                    if (current == null) {
+                                        viewModel.addExercise(
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = goal.toString(),
+                                            recuperoTarget = rest,
+                                            exerciseType = TIME_AND_REPS,
+                                            durataTargetSecondi = targetSec,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            weightPreset = null
+                                        )
+                                    } else {
+                                        viewModel.updateExercise(
+                                            original = current.planExercise,
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = goal.toString(),
+                                            recuperoTarget = rest,
+                                            exerciseType = TIME_AND_REPS,
+                                            durataTargetSecondi = targetSec,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            clearAdvanced = current.isAdvanced && advancedOn,
+                                            weightPreset = null
                                         )
                                     }
                                 } else {

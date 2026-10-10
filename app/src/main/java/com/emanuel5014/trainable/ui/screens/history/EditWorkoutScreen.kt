@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.kind
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +45,7 @@ import androidx.compose.material.icons.rounded.Percent
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Timelapse
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
@@ -445,7 +448,7 @@ fun EditWorkoutScreen(
         // A range the exercise was done against is offered again (its bottom and top), otherwise the first set's reps
         val currentRange = exerciseStateToSwap?.sets?.firstNotNullOfOrNull { it.repsRange }
         val currentReps = currentRange?.min?.toString() ?: exerciseStateToSwap?.sets?.firstOrNull()?.let {
-            if (it.durataSecondi != null) "${it.durataSecondi}" else "${it.repsEffettive}"
+            if (it.kind == SetLogKind.TIME_AND_WEIGHT) "${it.durataSecondi}" else "${it.repsEffettive}"
         } ?: "8"
 
         SwapExerciseBottomSheet(
@@ -775,7 +778,8 @@ fun EditExerciseCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            val isTimeAndWeight = exerciseState.sets.any { it.durataSecondi != null }
+            val setKind = exerciseState.sets.kind
+            val isTimeAndWeight = setKind.isTimed
             if (isSuperset || isTimeAndWeight) {
                 Spacer(modifier = Modifier.height(6.dp))
                 FlowRow(
@@ -820,14 +824,16 @@ fun EditExerciseCard(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Timer,
+                                    imageVector = if (setKind == SetLogKind.TIME_AND_REPS) Icons.Rounded.Timelapse else Icons.Rounded.Timer,
                                     contentDescription = null,
                                     tint = Primary,
                                     modifier = Modifier.size(12.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = stringResource(R.string.time_and_weight_badge).uppercase(),
+                                    text = stringResource(
+                                        if (setKind == SetLogKind.TIME_AND_REPS) R.string.time_and_reps_badge else R.string.time_and_weight_badge
+                                    ).uppercase(),
                                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.5.sp),
                                     color = Primary,
                                     fontWeight = FontWeight.ExtraBold,
@@ -968,12 +974,8 @@ fun EditSetRow(
         Spacer(modifier = Modifier.width(16.dp))
         
         Column(modifier = Modifier.weight(1f)) {
-            val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
             Text(
-                text = WeightUnitConverter.formatWithUnit(
-                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                    weightUnit
-                ) + " × $repsOrTime",
+                text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = OnSurface

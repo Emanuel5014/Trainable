@@ -916,6 +916,16 @@
     <string name="time_weight_reset_timer">Timer zurücksetzen</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Erweitert</string>
+    <string name="exercise_type_time_and_reps">Zeit &amp; Wdh.</string>
+    <string name="exercise_type_time_and_reps_hint">Wiederholungen in einem Zeitintervall, ohne Gewicht</string>
+    <string name="time_and_reps_badge">ZEIT &amp; WDH.</string>
+    <string name="time_reps_value">%1$ds · %2$d Wdh.</string>
+    <string name="reps_goal_label">Ziel-Wdh.</string>
+    <string name="reps_goal_error">Gib eine ganze Zahl von 1 bis 999 ein</string>
+    <string name="reps_done_label">Geschaffte Wdh.</string>
+    <string name="reps_decrease">Eine Wdh. weniger</string>
+    <string name="reps_increase">Eine Wdh. mehr</string>
+    <string name="notification_next_set_text">Nächste: %1$s - Satz %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">%1RM-Blöcke, RPE und Techniken</string>
     <string name="one_rep_max">1RM</string>
     <string name="one_rep_max_value">1RM %1$s</string>

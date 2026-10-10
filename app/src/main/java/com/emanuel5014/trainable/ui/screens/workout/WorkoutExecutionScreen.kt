@@ -69,6 +69,7 @@ import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -78,6 +79,7 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.OutlinedTextField
@@ -157,6 +159,10 @@ import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material3.OutlinedButton
 import com.emanuel5014.trainable.ui.components.WeightTimeInput
+import com.emanuel5014.trainable.ui.components.TimeRepsInput
+import com.emanuel5014.trainable.ui.components.setValueText
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.components.RestSlider
 import com.emanuel5014.trainable.ui.components.formatRestTime
 import com.emanuel5014.trainable.ui.theme.Error
@@ -685,7 +691,7 @@ fun WorkoutExecutionScreen(
                             } else {
                                 var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
                                 LaunchedEffect(targetActiveSetIndex) {
-                                    if (targetExState.isTimeAndWeight) {
+                                    if (targetExState.isTimed) {
                                         expandedSetIndex = targetActiveSetIndex
                                     }
                                 }
@@ -735,7 +741,10 @@ fun WorkoutExecutionScreen(
                                             PrescriptionExpander.legacyTargets(targetExState.blocks)
                                         } else null
                                         val setsCount = weekTargets?.first ?: targetExState.sets.size
-                                        val repsCount = if (targetExState.isTimeAndWeight) {
+                                        val repsCount = if (targetExState.isTimeAndReps) {
+                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
+                                            stringResource(R.string.time_reps_value, sec, targetExState.repsGoal ?: 0)
+                                        } else if (targetExState.isTimeAndWeight) {
                                             val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
                                             "${sec}s"
                                         } else {
@@ -948,7 +957,7 @@ fun WorkoutExecutionScreen(
                                         }
 
                                         val haptic = LocalHapticFeedback.current
-                                        val isExpanded = targetExState.isTimeAndWeight && (expandedSetIndex == index) && !set.isCompleted
+                                        val isExpanded = targetExState.isTimed && (expandedSetIndex == index) && !set.isCompleted
 
                                         if (targetExState.isAdvanced) {
                                             val previous = targetExState.sets.getOrNull(index - 1)
@@ -1027,7 +1036,7 @@ fun WorkoutExecutionScreen(
                                                 if (set.isAmrap && !set.isCompleted && index == targetActiveSetIndex) {
                                                     // AMRAP: reps must be entered before logging
                                                     isEditingValues = true
-                                                } else if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                                } else if (targetExState.isTimed && !set.isCompleted) {
                                                     viewModel.skipTimerAndLogSet(
                                                         targetIndex,
                                                         index,
@@ -1061,7 +1070,8 @@ fun WorkoutExecutionScreen(
                                             previousNote = set.previousNote,
                                             timeSeconds = set.timeSeconds,
                                             isExpanded = isExpanded,
-                                            onToggleExpanded = if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                            isTimeAndReps = set.isTimeAndReps,
+                                            onToggleExpanded = if (targetExState.isTimed && !set.isCompleted) {
                                                 { expandedSetIndex = if (expandedSetIndex == index) null else index }
                                             } else null,
                                             expandedContent = if (isExpanded) {
@@ -1158,6 +1168,15 @@ fun WorkoutExecutionScreen(
                                                                     color = OnSurfaceVariant,
                                                                     fontWeight = FontWeight.Bold,
                                                                     modifier = Modifier.padding(bottom = 2.dp)
+                                                                )
+                                                            }
+
+                                                            if (set.isTimeAndReps) {
+                                                                // What was done in the interval: counted while the clock runs, fixed up once it stops
+                                                                RepsDoneStepper(
+                                                                    reps = set.reps,
+                                                                    onRepsChange = { viewModel.updateSetReps(targetIndex, index, it) },
+                                                                    hapticEnabled = state.hapticEnabled
                                                                 )
                                                             }
 
@@ -1486,7 +1505,14 @@ fun WorkoutExecutionScreen(
                                                     }
                                                 }
                                             }
-                                            if (exercise.isTimeAndWeight) {
+                                            if (exercise.isTimeAndReps) {
+                                                TimeRepsInput(
+                                                    seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
+                                                    reps = editedSet.reps,
+                                                    onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
+                                                    onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) }
+                                                )
+                                            } else if (exercise.isTimeAndWeight) {
                                                 WeightTimeInput(
                                                     weight = editedSet.weight,
                                                     seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: 45,
@@ -1559,7 +1585,14 @@ fun WorkoutExecutionScreen(
                                                     Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
                                                 }
                                             }
-                                            if (currentExState?.isTimeAndWeight == true) {
+                                            if (currentExState?.isTimeAndReps == true) {
+                                                TimeRepsInput(
+                                                    seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
+                                                    reps = set.reps,
+                                                    onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
+                                                    onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) }
+                                                )
+                                            } else if (currentExState?.isTimeAndWeight == true) {
                                                 WeightTimeInput(
                                                     weight = set.weight,
                                                     seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45,
@@ -1617,7 +1650,7 @@ fun WorkoutExecutionScreen(
                                                 }
                                             }
                                             LogSetButton(onClick = {
-                                                if (currentExState?.isTimeAndWeight == true) {
+                                                if (currentExState?.isTimed == true) {
                                                     viewModel.skipTimerAndLogSet(
                                                         state.currentExerciseIndex,
                                                         activeSetIndex,
@@ -1656,18 +1689,15 @@ fun WorkoutExecutionScreen(
                                                 Spacer(modifier = Modifier.width(16.dp))
                                                 Column(modifier = Modifier.weight(1f)) {
                                                     Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-                                                    val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
-                                                        "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
-                                                    } else if (set.isAmrap) {
-                                                        stringResource(R.string.max_label)
-                                                    } else {
-                                                        "${set.reps}"
-                                                    }
                                                     Text(
-                                                        text = WeightUnitConverter.formatWithUnit(
-                                                            WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
-                                                            state.weightUnit
-                                                        ) + " × $repsOrTime", 
+                                                        text = setValueText(
+                                                            kind = currentExState?.setKind ?: SetLogKind.STRENGTH,
+                                                            weightKg = set.weight,
+                                                            reps = set.reps,
+                                                            seconds = if (currentExState?.isTimed == true) set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45 else null,
+                                                            weightUnit = state.weightUnit,
+                                                            repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
+                                                        ),
                                                         style = MaterialTheme.typography.titleLarge, 
                                                         fontWeight = FontWeight.ExtraBold
                                                     )
@@ -1694,7 +1724,7 @@ fun WorkoutExecutionScreen(
                                                     onClick = {
                                                         if (set.isAmrap) {
                                                             isEditingValues = true
-                                                        } else if (currentExState?.isTimeAndWeight == true) {
+                                                        } else if (currentExState?.isTimed == true) {
                                                             viewModel.skipTimerAndLogSet(
                                                                 state.currentExerciseIndex,
                                                                 activeSetIndex,
@@ -2822,7 +2852,7 @@ private fun ActiveSetPlateChip(
     onClick: () -> Unit
 ) {
     if (!state.plateCalculatorEnabled || exercise == null || set == null || set.isCompleted) return
-    if (exercise.isTimeAndWeight || exercise.isCardio || exercise.exercise.id !in plateExercises) return
+    if (exercise.isTimed || exercise.isCardio || exercise.exercise.id !in plateExercises) return
     PlateChip(
         weightKg = set.weight,
         barKg = plateExercises[exercise.exercise.id],
@@ -3065,3 +3095,47 @@ fun LogSetButton(
     }
 }
 
+
+/** The reps of a Time & Reps set in its timer card: big − / + so they can be counted up mid-interval with one thumb. */
+@Composable
+private fun RepsDoneStepper(reps: Int, onRepsChange: (Int) -> Unit, hapticEnabled: Boolean) {
+    val haptic = LocalHapticFeedback.current
+    fun change(to: Int) {
+        if (to < 0 || to > TimeAndReps.MAX_REPS) return
+        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onRepsChange(to)
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = stringResource(R.string.reps_done_label).uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+            color = OnSurfaceVariant,
+            fontWeight = FontWeight.ExtraBold
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            FilledIconButton(
+                onClick = { change(reps - 1) },
+                enabled = reps > 0,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = SurfaceContainerHigh, contentColor = OnSurface),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.reps_decrease))
+            }
+            Text(
+                text = "$reps",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Black,
+                color = Primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(min = 56.dp)
+            )
+            FilledIconButton(
+                onClick = { change(reps + 1) },
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Primary, contentColor = OnPrimary),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.reps_increase))
+            }
+        }
+    }
+}

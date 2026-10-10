@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -88,7 +89,9 @@ fun SetLogRow(
     /** Highlighted prescription badge, e.g. "75%". */
     intensityBadge: String? = null,
     /** Secondary badges: techniques, RPE, EXTRA. */
-    badges: List<String> = emptyList()
+    badges: List<String> = emptyList(),
+    /** A Time & Reps set: written "45s · 20 reps", without a weight. */
+    isTimeAndReps: Boolean = false
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -175,16 +178,19 @@ fun SetLogRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val repsOrTimeText = when {
-                    timeSeconds != null -> "${timeSeconds}s"
-                    repsLabel != null && !isCompleted -> repsLabel
-                    else -> "$reps"
-                }
                 Text(
-                    text = WeightUnitConverter.formatWithUnit(
-                        WeightUnitConverter.convertDisplay(weight, weightUnit),
-                        weightUnit
-                    ) + " × $repsOrTimeText",
+                    text = setValueText(
+                        kind = when {
+                            isTimeAndReps -> SetLogKind.TIME_AND_REPS
+                            timeSeconds != null -> SetLogKind.TIME_AND_WEIGHT
+                            else -> SetLogKind.STRENGTH
+                        },
+                        weightKg = weight,
+                        reps = reps,
+                        seconds = timeSeconds,
+                        weightUnit = weightUnit,
+                        repsText = repsLabel?.takeIf { !isCompleted }
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = textColor

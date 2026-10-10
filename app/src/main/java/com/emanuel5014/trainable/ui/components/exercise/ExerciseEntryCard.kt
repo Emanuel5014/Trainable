@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -142,6 +144,27 @@ fun ExerciseEntryCard(
                         val durSec = item.planExercise.durataTargetSecondi ?: item.planExercise.repsTarget.filter { it.isDigit() }.toIntOrNull() ?: 45
                         Text(
                             text = "${item.planExercise.serieTarget} × ${durSec}s • " + stringResource(R.string.rest_label, item.planExercise.recuperoTarget),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
+                    } else if (item.planExercise.exerciseType == TIME_AND_REPS) {
+                        Box(
+                            modifier = Modifier
+                                .background(Primary.copy(alpha = 0.15f), CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.time_and_reps_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        val durSec = item.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS
+                        val goal = TimeAndReps.goalOf(item.planExercise.repsTarget)
+                        Text(
+                            text = "${item.planExercise.serieTarget} × " + stringResource(R.string.time_reps_value, durSec, goal) +
+                                " • " + stringResource(R.string.rest_label, item.planExercise.recuperoTarget),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )

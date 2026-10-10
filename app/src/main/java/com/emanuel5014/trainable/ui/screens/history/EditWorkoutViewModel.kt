@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.asKind
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -332,7 +334,8 @@ class EditWorkoutViewModel @Inject constructor(
                 numeroSerie = nextSerie,
                 ordineEsercizio = exerciseOrder,
                 supersetId = supersetId,
-                durataSecondi = lastDuration
+                durataSecondi = lastDuration,
+                exerciseType = lastSet?.exerciseType
             )
             if (lastSet != null && lastSet.blockIndex == null) {
                 // A set added to a plain exercise done against a rep range keeps that range
@@ -412,8 +415,8 @@ class EditWorkoutViewModel @Inject constructor(
             val sets = oldExerciseState.sets.map { it.withoutPrescription().withRepsRange(repsRange) }
             val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = sets.firstOrNull()?.supersetId
-            val isTimeAndWeight = exerciseType == "time_and_weight"
-            val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
+            val kind = SetLogKind.ofExerciseType(exerciseType)
+            val targetSec = durataTargetSecondi ?: 45
 
             // Optimistic update
             val replacementExercise = _state.value.availableExercises.find { it.id == newExerciseId }
@@ -428,10 +431,8 @@ class EditWorkoutViewModel @Inject constructor(
                                 it.copy(
                                     exerciseId = newExerciseId,
                                     id = 0,
-                                    supersetId = supersetId,
-                                    durataSecondi = if (isTimeAndWeight) (it.durataSecondi ?: targetSec) else null,
-                                    repsEffettive = if (isTimeAndWeight && it.repsEffettive == 0) 0 else it.repsEffettive
-                                )
+                                    supersetId = supersetId
+                                ).asKind(kind, targetSec)
                             }
                         )
                     }
@@ -449,10 +450,8 @@ class EditWorkoutViewModel @Inject constructor(
                         id = 0,
                         exerciseId = newExerciseId,
                         ordineEsercizio = exerciseOrder,
-                        supersetId = supersetId,
-                        durataSecondi = if (isTimeAndWeight) (set.durataSecondi ?: targetSec) else null,
-                        repsEffettive = if (isTimeAndWeight && set.repsEffettive == 0) 0 else set.repsEffettive
-                    )
+                        supersetId = supersetId
+                    ).asKind(kind, targetSec)
                 )
             }
             
@@ -493,7 +492,7 @@ class EditWorkoutViewModel @Inject constructor(
             )
             val deleted = result.toDelete.map { it.id }.toSet()
             val updates = result.toUpdate.associateBy { it.id }
-            val moved = old.sets.filter { it.id !in deleted }.map { (updates[it.id] ?: it).copy(exerciseId = newExerciseId, durataSecondi = null) }
+            val moved = old.sets.filter { it.id !in deleted }.map { (updates[it.id] ?: it).copy(exerciseId = newExerciseId).asKind(SetLogKind.STRENGTH) }
             workoutRepository.applySetSync(SetSyncResult(result.toInsert, moved, result.toDelete))
         }
     }
@@ -590,8 +589,8 @@ class EditWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val nextOrder = (_state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: -1) + 1
             val exercise = _state.value.availableExercises.find { it.id == exerciseId }
-            val isTimeAndWeight = exerciseType == "time_and_weight"
-            val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
+            val kind = SetLogKind.ofExerciseType(exerciseType)
+            val targetSec = if (kind.isTimed) (durataTargetSecondi ?: 45) else null
             val setsCount = targetSets.coerceAtLeast(1)
             // A range goes on every row, so the history (and the next edit) know what the exercise was done against
             val repsRange = if (exerciseType == "strength") RepRange.of(repsTarget.trim().toIntOrNull(), repsMax) else null
@@ -603,11 +602,12 @@ class EditWorkoutViewModel @Inject constructor(
                     sessionId = sessionId,
                     exerciseId = exerciseId,
                     pesoSollevato = 0f,
-                    repsEffettive = if (isTimeAndWeight) 0 else plannedReps[setNum - 1],
+                    repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else plannedReps[setNum - 1],
                     numeroSerie = setNum,
                     ordineEsercizio = nextOrder,
                     supersetId = null,
-                    durataSecondi = targetSec
+                    durataSecondi = targetSec,
+                    exerciseType = kind.rowType
                 ).withRepsRange(repsRange)
             }
 
