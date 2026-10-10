@@ -63,6 +63,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Link
@@ -250,7 +251,8 @@ fun WorkoutExecutionScreen(
     var hubHeightPx by remember { mutableIntStateOf(0) }
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.mediaMessages)
-    var cardioDistanceInput by remember(state.currentExercise?.exercise?.id) {
+    // Each cardio set has its own distance
+    var cardioDistanceInput by remember(state.currentExercise?.exercise?.id, state.currentExercise?.activeCardioSetIndex) {
         mutableStateOf(
             if ((state.currentExercise?.cardioDistanceKm ?: 0f) > 0f) state.currentExercise?.cardioDistanceKm.toString() else ""
         )
@@ -639,6 +641,8 @@ fun WorkoutExecutionScreen(
                                 val showBottomHubForCardio = targetExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
                                 val cardioBottomPadding by animateDpAsState(
                                     targetValue = when {
+                                        // The rest card is taller than the hub: the next set's buttons stay above it
+                                        state.remainingRestSeconds > 0 -> 230.dp
                                         showBottomHubForCardio && (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) -> 190.dp
                                         showBottomHubForCardio || state.remainingRestSeconds > 0 -> 140.dp
                                         else -> 32.dp
@@ -650,6 +654,7 @@ fun WorkoutExecutionScreen(
                                     label = "cardioBottomPadding"
                                 )
                                 CardioExerciseContent(
+                                    exerciseIndex = targetIndex,
                                     exerciseState = targetExState,
                                     languageCode = languageCode,
                                     state = state,
@@ -2003,8 +2008,8 @@ fun WorkoutExecutionScreen(
                     onDismiss = { showSwapExerciseSheet = false },
                     editablePresetExercises = state.editablePresetExercises,
                     categories = categories,
-                    onCardioExerciseSelected = { newExercise, durationMinutes, rest ->
-                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest)
+                    onCardioExerciseSelected = { newExercise, durationMinutes, rest, sets ->
+                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest, sets)
                         showSwapExerciseSheet = false
                     },
                     onAdvancedExerciseSelected = { newExercise, blocks, rest ->
@@ -2045,11 +2050,11 @@ fun WorkoutExecutionScreen(
                 isAdding = true,
                 editablePresetExercises = state.editablePresetExercises,
                 categories = categories,
-                onCardioExerciseSelected = { exercise, durationMinutes, rest ->
+                onCardioExerciseSelected = { exercise, durationMinutes, rest, sets ->
                     if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes)
+                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
                     } else {
-                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes)
+                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false
@@ -2266,6 +2271,7 @@ fun CardioToggleButton(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CardioExerciseContent(
+    exerciseIndex: Int,
     exerciseState: WorkoutExerciseState,
     languageCode: String,
     state: WorkoutState,
@@ -2278,6 +2284,29 @@ fun CardioExerciseContent(
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
     var showCompleteDialog by remember { mutableStateOf(false) }
+    var openedSetIndex by remember(exerciseState.exercise.id) { mutableStateOf<Int?>(null) }
+    // The set the note button and the note line are about: the one on the timer, or the last one once all are done
+    val noteSetIndex = exerciseState.activeCardioSetIndex.takeIf { it >= 0 } ?: exerciseState.cardioSets.lastIndex
+    openedSetIndex?.let { index ->
+        exerciseState.cardioSets.getOrNull(index)?.let { set ->
+            val onTimer = index == exerciseState.activeCardioSetIndex && (state.cardioTimerRunning || state.cardioTimerPaused)
+            CardioSetDialog(
+                set = set,
+                onDismiss = { openedSetIndex = null },
+                onSave = { seconds, km, note ->
+                    if (set.isCompleted) viewModel.editCardioSet(exerciseIndex, index, seconds, km, note)
+                    else viewModel.updateCardioSetNote(exerciseIndex, index, note)
+                    openedSetIndex = null
+                },
+                onDelete = if (exerciseState.cardioSets.size > 1 && !onTimer) {
+                    {
+                        viewModel.removeCardioSet(exerciseIndex, index)
+                        openedSetIndex = null
+                    }
+                } else null
+            )
+        }
+    }
     var completeMinutes by remember { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
 
@@ -2393,7 +2422,10 @@ fun CardioExerciseContent(
         // Clamped to avoid glitches on extreme DPI / smallest-width settings.
         // The height counts too: the circle gives way when the content (about 260 dp besides the circle) would not fit
         val widthScale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
-        val heightScale = ((maxHeight - 260.dp) / 200.dp).coerceIn(0.4f, 1.15f)
+        // The set chips (and a set's note) take room too
+        val hasNoteLine = !exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()
+        val reservedHeight = if (hasNoteLine) 430.dp else 390.dp
+        val heightScale = ((maxHeight - reservedHeight) / 200.dp).coerceIn(0.4f, 1.15f)
         val scale = minOf(widthScale, heightScale)
         val cIndicatorSize = (200f * scale).dp
         val cButtonSize = (135f * scale).dp
@@ -2439,12 +2471,21 @@ fun CardioExerciseContent(
                 }
             }
 
-            IconButton(onClick = onSwap) {
-                Icon(
-                    imageVector = Icons.Rounded.SwapHoriz,
-                    contentDescription = stringResource(R.string.swap_exercise),
-                    tint = OnSurfaceVariant
-                )
+            Row {
+                IconButton(onClick = { openedSetIndex = noteSetIndex }) {
+                    Icon(
+                        imageVector = Icons.Rounded.EditNote,
+                        contentDescription = stringResource(R.string.cardio_set_note),
+                        tint = if (exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()) OnSurfaceVariant else Primary
+                    )
+                }
+                IconButton(onClick = onSwap) {
+                    Icon(
+                        imageVector = Icons.Rounded.SwapHoriz,
+                        contentDescription = stringResource(R.string.swap_exercise),
+                        tint = OnSurfaceVariant
+                    )
+                }
             }
         }
 
@@ -2499,6 +2540,19 @@ fun CardioExerciseContent(
                         }
                     }
                 }
+            }
+
+            CardioSetsStrip(
+                sets = exerciseState.cardioSets,
+                activeIndex = exerciseState.activeCardioSetIndex,
+                onSetClick = { openedSetIndex = it },
+                onAdd = {
+                    if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    viewModel.addCardioSet(exerciseIndex)
+                }
+            )
+            exerciseState.cardioSets.getOrNull(noteSetIndex)?.note?.takeIf { it.isNotBlank() }?.let { note ->
+                CardioSetNoteLine(note = note, onClick = { openedSetIndex = noteSetIndex })
             }
 
             if (!exerciseState.isCardioCompleted) {
@@ -2618,21 +2672,21 @@ fun CardioExerciseContent(
             } else {
                 Spacer(modifier = Modifier.height(-8.dp))
                 
-                val elapsed = exerciseState.cardioElapsedSeconds
-                val mins = elapsed / 60
-                val secs = elapsed % 60
-                val timeStr = String.format("%02d:%02d", mins, secs)
-                
-                val targetDurationMet = exerciseState.cardioDurataTargetSeconds?.let { 
-                    elapsed >= it 
+                // Several sets add up; the targets are per set, so every set has to reach them
+                val elapsed = exerciseState.cardioTotalSeconds
+                val timeStr = cardioTimeText(elapsed)
+                val totalKm = exerciseState.cardioTotalKm
+
+                val targetDurationMet = exerciseState.cardioDurataTargetSeconds?.let { target ->
+                    exerciseState.cardioSets.all { it.elapsedSeconds >= target }
                 } ?: false
-                val targetDistanceMet = exerciseState.cardioDistanzaTargetKm?.let { 
-                    exerciseState.cardioDistanceKm >= it 
+                val targetDistanceMet = exerciseState.cardioDistanzaTargetKm?.let { target ->
+                    exerciseState.cardioSets.all { it.distanceKm >= target }
                 } ?: false
                 val goalAchieved = targetDurationMet || targetDistanceMet
                 
                 val progress = exerciseState.cardioDurataTargetSeconds?.let { target ->
-                    (elapsed.toFloat() / target.toFloat()).coerceIn(0f, 1f)
+                    (elapsed.toFloat() / (target.toFloat() * exerciseState.cardioSets.size)).coerceIn(0f, 1f)
                 } ?: 1f
                 
                 val cookieRotation = remember { Animatable(0f) }
@@ -2728,7 +2782,7 @@ fun CardioExerciseContent(
                                     color = OnSurface,
                                     fontWeight = FontWeight.Black
                                 )
-                                if (exerciseState.cardioDistanceKm > 0f) {
+                                if (totalKm > 0f) {
                                     Text(
                                         text = "•",
                                         style = MaterialTheme.typography.displayMedium,
@@ -2736,7 +2790,7 @@ fun CardioExerciseContent(
                                         fontWeight = FontWeight.Black
                                     )
                                     Text(
-                                        text = stringResource(R.string.cardio_dist_value, exerciseState.cardioDistanceKm.toString()),
+                                        text = stringResource(R.string.cardio_dist_value, com.emanuel5014.trainable.ui.components.cardioKmText(totalKm)),
                                         style = MaterialTheme.typography.displayMedium,
                                         color = OnSurface,
                                         fontWeight = FontWeight.Black
@@ -2776,7 +2830,7 @@ fun CardioExerciseContent(
                                         }
                                     }
                                 }
-                                if (exerciseState.cardioDistanceKm > 0f && exerciseState.cardioDistanzaTargetKm != null) {
+                                if (totalKm > 0f && exerciseState.cardioDistanzaTargetKm != null) {
                                     Surface(
                                         color = if (targetDistanceMet) Primary.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
                                         shape = CircleShape

@@ -925,6 +925,11 @@
     <string name="reps_done_label">Reps done</string>
     <string name="reps_decrease">One rep less</string>
     <string name="reps_increase">One rep more</string>
+    <string name="cardio_add_set">Add set</string>
+    <string name="cardio_set_note">Set note</string>
+    <string name="cardio_remove_set">Remove set</string>
+    <string name="cardio_sets_total">%1$d sets</string>
+    <string name="seconds_label">Seconds</string>
     <string name="notification_next_set_text">Next: %1$s - Set %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">%1RM blocks, RPE and techniques</string>
     <string name="one_rep_max">1RM</string>

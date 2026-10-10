@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.domain.compare
 
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.isTimeAndReps
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
@@ -266,7 +268,8 @@ data class SessionComparison(
 
         /** Logs of the same activity are paired in order ("Treadmill" with "Treadmill"); the rest stand alone. */
         private fun cardio(a: SessionWithDetails, b: SessionWithDetails): List<CardioComparison> {
-            fun sorted(session: SessionWithDetails) = session.cardio.sortedBy { it.ordineEsercizio }
+            // The sets of a cardio exercise add up to one entry
+            fun sorted(session: SessionWithDetails) = session.cardio.groupedByExercise().map { it.combined() }
             val queueA = sorted(a).groupBy { normalize(it.categoria) }.mapValues { it.value.toMutableList() }
             val queueB = sorted(b).groupBy { normalize(it.categoria) }.mapValues { it.value.toMutableList() }
             val keys = (sorted(a).map { normalize(it.categoria) } + sorted(b).map { normalize(it.categoria) }).distinct()
@@ -287,6 +290,12 @@ data class SessionComparison(
         }
 
         private fun CardioLogEntity.toSide() = CardioSide(distanza, durataSecondi, durataTargetSecondi)
+
+        private fun CardioExerciseLogs.combined(): CardioLogEntity = first.copy(
+            distanza = totalKm,
+            durataSecondi = totalSeconds,
+            durataTargetSecondi = first.durataTargetSecondi?.let { it * sets.size }
+        )
 
         private fun normalize(label: String) = label.trim().lowercase(Locale.ROOT)
     }

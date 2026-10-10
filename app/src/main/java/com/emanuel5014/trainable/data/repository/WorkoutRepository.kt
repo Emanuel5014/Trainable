@@ -495,7 +495,13 @@ class WorkoutRepository @Inject constructor(
 
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>> = workoutDao.getCardioLogsForSession(sessionId)
 
-    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long) {
+    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?) = workoutDao.updateCardioSetValues(id, seconds, km, note)
+
+    suspend fun updateCardioNote(id: Int, note: String?) = workoutDao.updateCardioNote(id, note)
+
+    suspend fun updateCardioSetNumber(id: Int, number: Int) = workoutDao.updateCardioSetNumber(id, number)
+
+    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long, note: String? = null) {
         val user = userDao.getUser().first() ?: return
 
         // Find or create "Cardio" plan with system tag
@@ -534,7 +540,8 @@ class WorkoutRepository @Inject constructor(
                 categoria = categoria,
                 distanza = distanza,
                 durataSecondi = durataSecondi,
-                timestamp = timestamp
+                timestamp = timestamp,
+                note = note
             )
         )
     }
@@ -797,7 +804,8 @@ class WorkoutRepository @Inject constructor(
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
                 val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},$prescriptionColumns")
+                val note = escapeCsv(cardio.note ?: "")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns")
             }
         }
 

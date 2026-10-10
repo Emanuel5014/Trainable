@@ -752,12 +752,15 @@ fun Application.configureServer(
                         put("totalSets", session.sets.size)
                         put("sets", setsArray)
                         put("cardio", buildJsonArray {
-                            session.cardio.sortedBy { it.ordineEsercizio }.forEach { c ->
+                            // In the order they were done, the sets of an exercise one after the other
+                            session.cardio.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }, { it.id })).forEach { c ->
                                 add(buildJsonObject {
                                     put("category", c.categoria)
                                     put("distanceKm", c.distanza)
                                     put("durationSeconds", c.durataSecondi)
                                     c.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
+                                    put("setNumber", c.numeroSerie)
+                                    c.note?.let { put("note", it) }
                                 })
                             }
                         })

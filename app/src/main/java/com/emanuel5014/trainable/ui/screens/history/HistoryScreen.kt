@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
@@ -1085,8 +1087,8 @@ fun HistoryScreen(
     if (showCardioDialog) {
         AddCardioDialog(
             onDismiss = { showCardioDialog = false },
-            onConfirm = { categoria, distanza, durataSecondi ->
-                viewModel.saveCardioWorkout(categoria, distanza, durataSecondi)
+            onConfirm = { categoria, distanza, durataSecondi, note ->
+                viewModel.saveCardioWorkout(categoria, distanza, durataSecondi, note)
                 showCardioDialog = false
             }
         )
@@ -1416,8 +1418,8 @@ fun SessionHistoryCard(
                             val ord = block.exercises.firstOrNull()?.sets?.firstOrNull()?.setLog?.ordineEsercizio ?: 0
                             unifiedItems.add(UnifiedHistoryItem.Strength(block, ord))
                         }
-                        details.cardio.forEach { cardio ->
-                            unifiedItems.add(UnifiedHistoryItem.Cardio(cardio, cardio.ordineEsercizio))
+                        details.cardio.groupedByExercise().forEach { cardio ->
+                            unifiedItems.add(UnifiedHistoryItem.Cardio(cardio, cardio.order))
                         }
 
                         val sortedItems = unifiedItems.sortedBy { it.order }
@@ -1481,7 +1483,8 @@ fun SessionHistoryCard(
                                     }
                                 }
                                 is UnifiedHistoryItem.Cardio -> {
-                                    val cardio = item.cardio
+                                    val cardio = item.cardio.first
+                                    val cardioSets = item.cardio.sets
                                     val catLower = cardio.categoria.lowercase()
                                     val icon = when {
                                         catLower.contains("bici") || catLower.contains("bike") || catLower.contains("cycling") || catLower.contains("cyclette") -> Icons.AutoMirrored.Rounded.DirectionsBike
@@ -1506,7 +1509,30 @@ fun SessionHistoryCard(
                                             )
                                         }
                                         Spacer(modifier = Modifier.height(4.dp))
-                                        Row(
+                                        if (cardioSets.size > 1) {
+                                            // Several sets read like the sets of an exercise
+                                            cardioSets.forEachIndexed { index, set ->
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 4.dp, horizontal = 4.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(R.string.set_number, index + 1),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = OnSurfaceVariant
+                                                    )
+                                                    Text(
+                                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = OnSurface
+                                                    )
+                                                }
+                                                set.note?.takeIf { it.isNotBlank() }?.let { CardioHistoryNote(it) }
+                                            }
+                                        } else Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
@@ -1528,6 +1554,7 @@ fun SessionHistoryCard(
                                                 color = OnSurfaceVariant
                                             )
                                         }
+                                        if (cardioSets.size == 1) cardio.note?.takeIf { it.isNotBlank() }?.let { CardioHistoryNote(it) }
                                     }
                                 }
                             }
@@ -1538,6 +1565,19 @@ fun SessionHistoryCard(
                 }
             }
         }
+    }
+}
+
+/** The note of a cardio set, under it. */
+@Composable
+private fun CardioHistoryNote(note: String) {
+    Row(
+        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(12.dp))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = note, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontStyle = FontStyle.Italic)
     }
 }
 
@@ -1756,6 +1796,6 @@ private fun formatDuration(durationMs: Long): String {
 private sealed interface UnifiedHistoryItem {
     val order: Int
     data class Strength(val block: HistoryBlock, override val order: Int) : UnifiedHistoryItem
-    data class Cardio(val cardio: CardioLogEntity, override val order: Int) : UnifiedHistoryItem
+    data class Cardio(val cardio: CardioExerciseLogs, override val order: Int) : UnifiedHistoryItem
 }
 

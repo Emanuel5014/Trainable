@@ -224,6 +224,11 @@ function distanceText(km) {
   return `${parseFloat(Number(km).toFixed(2))} km`;
 }
 
+// Text typed by the user (notes) goes into the page as text, not markup
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
 function cardioSummary(distanceKm, durationSeconds) {
   const parts = [];
   if (distanceKm > 0) parts.push(distanceText(distanceKm));
@@ -242,7 +247,9 @@ function exerciseTypeIcon(type) {
 function planExerciseDetail(ex) {
   if (ex.excludedThisWeek) return '—';
   if (ex.type === 'cardio') {
-    return cardioSummary(ex.targetDistanceKm, ex.targetDurationSeconds);
+    // Several sets of the same targets: "3x 10 min"
+    const summary = cardioSummary(ex.targetDistanceKm, ex.targetDurationSeconds);
+    return ex.targetSets > 1 ? `${ex.targetSets}x ${summary}` : summary;
   }
   if (ex.type === 'time_and_weight') {
     const seconds = ex.targetDurationSeconds || parseInt(ex.targetReps, 10) || 0;
@@ -1497,10 +1504,11 @@ async function loadSessionDetail() {
           </div>
           ${cardio.map(c => `
             <div class="set-row">
-              <div class="set-number"><span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;">directions_run</span></div>
+              <div class="set-number">${c.setNumber > 1 ? c.setNumber : '<span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;">directions_run</span>'}</div>
               <div>${c.category}${c.distanceKm > 0 ? ' · ' + distanceText(c.distanceKm) : ''}</div>
               <div>${durationText(c.durationSeconds)}${c.targetDurationSeconds ? ' / ' + durationText(c.targetDurationSeconds) : ''}</div>
             </div>
+            ${c.note ? `<div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.75;font-size:0.8rem;"><div>${escapeHtml(c.note)}</div></div>` : ''}
           `).join('')}
         </div>
       </div>`;

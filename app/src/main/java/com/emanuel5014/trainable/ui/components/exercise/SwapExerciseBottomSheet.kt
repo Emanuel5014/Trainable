@@ -105,7 +105,8 @@ fun SwapExerciseBottomSheet(
     isAdding: Boolean = false,
     editablePresetExercises: Boolean = false,
     categories: List<String>? = null,
-    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?) -> Unit)? = null,
+    /** Receives the exercise, the minutes of each set, the rest in seconds and the number of sets. */
+    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?, Int) -> Unit)? = null,
     /** When set, an "Advanced" (%1RM / blocks) type is offered. Receives the blocks and the rest in seconds. */
     onAdvancedExerciseSelected: ((ExerciseEntity, List<PrescriptionBlock>, Int?) -> Unit)? = null,
     /** Prescription of the exercise being swapped, so the new one can keep it. */
@@ -301,8 +302,8 @@ fun SwapExerciseBottomSheet(
                     SwapCardioConfigDialog(
                         exercise = selectedExercise!!,
                         languageCode = languageCode,
-                        onConfirm = { durationMinutes, rest ->
-                            onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest)
+                        onConfirm = { durationMinutes, rest, sets ->
+                            onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest, sets)
                             onDismiss()
                         },
                         onBack = { step = 1 },
@@ -903,12 +904,13 @@ private fun SwapExerciseConfigSheet(
 private fun SwapCardioConfigDialog(
     exercise: ExerciseEntity,
     languageCode: String,
-    onConfirm: (Int, Int?) -> Unit,
+    onConfirm: (minutes: Int, rest: Int?, sets: Int) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     isAdding: Boolean = false
 ) {
     var durationText by remember { mutableStateOf("20") }
+    var setsText by remember { mutableStateOf("1") }
     var restText by remember { mutableStateOf("120") }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -982,6 +984,14 @@ private fun SwapCardioConfigDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                GymInputField(
+                    value = setsText,
+                    onValueChange = { setsText = it.filter { c -> c.isDigit() }.take(2) },
+                    label = stringResource(R.string.sets),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 RestSlider(
                     value = restText.toIntOrNull() ?: 120,
                     onValueChange = { restText = it.toString() },
@@ -996,7 +1006,7 @@ private fun SwapCardioConfigDialog(
                 onClick = {
                     val duration = durationText.trim().toIntOrNull() ?: return@TextButton
                     val rest = restText.toIntOrNull()
-                    onConfirm(duration, rest)
+                    onConfirm(duration, rest, (setsText.toIntOrNull() ?: 1).coerceIn(1, 20))
                 }
             ) {
                 Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)

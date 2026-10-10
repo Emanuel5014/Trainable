@@ -115,7 +115,9 @@ fun ExerciseEntryCard(
                         Spacer(modifier = Modifier.width(Spacing.small))
                         val durMin = item.planExercise.durataTargetSecondi?.let { it / 60 }
                         val distKm = item.planExercise.distanzaTargetKm
+                        val cardioSets = item.planExercise.serieTarget
                         val targetText = buildString {
+                            if (cardioSets > 1) append("$cardioSets × ")
                             if (durMin != null && durMin > 0) append(stringResource(R.string.cardio_min_format, durMin))
                             if (distKm != null && distKm > 0) {
                                 if (isNotEmpty()) append(" • ")

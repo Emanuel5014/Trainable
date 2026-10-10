@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import android.graphics.Bitmap
@@ -135,12 +136,13 @@ fun WorkoutShareCard(
         val ord = block.exercises.firstOrNull()?.sets?.firstOrNull()?.setLog?.ordineEsercizio ?: 0
         unifiedItems.add(UnifiedShareItem.Strength(block, ord))
     }
-    sessionDetails.cardio.forEach { cardio ->
-        unifiedItems.add(UnifiedShareItem.Cardio(cardio, cardio.ordineEsercizio))
+    val cardioExercises = sessionDetails.cardio.groupedByExercise()
+    cardioExercises.forEach { cardio ->
+        unifiedItems.add(UnifiedShareItem.Cardio(cardio, cardio.order))
     }
     val sortedUnifiedItems = unifiedItems.sortedBy { it.order }
 
-    val totalExercises = exercisesWithSets.size + sessionDetails.cardio.size
+    val totalExercises = exercisesWithSets.size + cardioExercises.size
     val totalSets = sessionDetails.sets.size
     val totalWeight = sessionDetails.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
     val durationMs = sessionDetails.session.durationMs
@@ -655,7 +657,8 @@ fun WorkoutShareCard(
                         }
                     }
                     is UnifiedShareItem.Cardio -> {
-                        val cardio = unifiedItem.cardio
+                        val cardio = unifiedItem.cardio.first
+                        val cardioSets = unifiedItem.cardio.sets
                         val cardioTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
                         Column(
                             modifier = Modifier
@@ -673,7 +676,32 @@ fun WorkoutShareCard(
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(10.dp))
-                            Row(
+                            if (cardioSets.size > 1) cardioSets.forEachIndexed { index, set ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = 38.dp, height = 18.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color.White.copy(alpha = 0.05f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "SET ${index + 1}", style = MaterialTheme.typography.labelSmall, color = textSecondary, fontWeight = FontWeight.Bold)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = textPrimary
+                                    )
+                                }
+                                if (!set.note.isNullOrBlank()) {
+                                    Text(text = set.note, style = MaterialTheme.typography.bodySmall, color = textSecondary, modifier = Modifier.padding(start = 46.dp))
+                                }
+                            } else Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -737,5 +765,5 @@ private data class ShareBlock(
 private sealed interface UnifiedShareItem {
     val order: Int
     data class Strength(val block: ShareBlock, override val order: Int) : UnifiedShareItem
-    data class Cardio(val cardio: com.emanuel5014.trainable.data.local.entity.CardioLogEntity, override val order: Int) : UnifiedShareItem
+    data class Cardio(val cardio: com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs, override val order: Int) : UnifiedShareItem
 }

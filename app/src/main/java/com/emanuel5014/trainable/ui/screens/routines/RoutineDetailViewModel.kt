@@ -649,7 +649,8 @@ class RoutineDetailViewModel @Inject constructor(
         cardioCategoria: String?,
         durataTargetSecondi: Int?,
         distanzaTargetKm: Float? = null,
-        recuperoTarget: Int = 0
+        recuperoTarget: Int = 0,
+        sets: Int = 1
     ) {
         viewModelScope.launch {
             val current = _uiState.value.planDetails ?: return@launch
@@ -659,7 +660,7 @@ class RoutineDetailViewModel @Inject constructor(
                 PlanExerciseEntity(
                     planId = current.plan.id,
                     exerciseId = exerciseId,
-                    serieTarget = 1,
+                    serieTarget = sets.coerceAtLeast(1),
                     repsTarget = "1",
                     recuperoTarget = recuperoTarget,
                     ordine = nextOrder,

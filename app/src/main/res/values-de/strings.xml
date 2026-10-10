@@ -925,6 +925,11 @@
     <string name="reps_done_label">Geschaffte Wdh.</string>
     <string name="reps_decrease">Eine Wdh. weniger</string>
     <string name="reps_increase">Eine Wdh. mehr</string>
+    <string name="cardio_add_set">Satz hinzufügen</string>
+    <string name="cardio_set_note">Satznotiz</string>
+    <string name="cardio_remove_set">Satz löschen</string>
+    <string name="cardio_sets_total">%1$d Sätze</string>
+    <string name="seconds_label">Sekunden</string>
     <string name="notification_next_set_text">Nächste: %1$s - Satz %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">%1RM-Blöcke, RPE und Techniken</string>
     <string name="one_rep_max">1RM</string>

@@ -925,6 +925,11 @@
     <string name="reps_done_label">Reps hechas</string>
     <string name="reps_decrease">Una repetición menos</string>
     <string name="reps_increase">Una repetición más</string>
+    <string name="cardio_add_set">Añadir serie</string>
+    <string name="cardio_set_note">Nota de la serie</string>
+    <string name="cardio_remove_set">Eliminar serie</string>
+    <string name="cardio_sets_total">%1$d series</string>
+    <string name="seconds_label">Segundos</string>
     <string name="notification_next_set_text">Siguiente: %1$s - Serie %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">Bloques %1RM, RPE y técnicas</string>
     <string name="one_rep_max">1RM</string>

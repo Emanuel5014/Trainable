@@ -258,6 +258,16 @@ interface WorkoutDao {
     @Update
     suspend fun updateCardioLog(cardio: CardioLogEntity)
 
+    /** Changes what a cardio set was (its time, distance and note) without touching its place in the session. */
+    @Query("UPDATE cardio_logs SET durata_secondi = :seconds, distanza = :km, note = :note WHERE id = :id")
+    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?)
+
+    @Query("UPDATE cardio_logs SET note = :note WHERE id = :id")
+    suspend fun updateCardioNote(id: Int, note: String?)
+
+    @Query("UPDATE cardio_logs SET numero_serie = :number WHERE id = :id")
+    suspend fun updateCardioSetNumber(id: Int, number: Int)
+
     @Query("SELECT * FROM cardio_logs WHERE session_id = :sessionId")
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>>
     

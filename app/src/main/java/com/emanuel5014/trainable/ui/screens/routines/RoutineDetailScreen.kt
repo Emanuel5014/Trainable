@@ -320,6 +320,7 @@ fun RoutineDetailScreen(
     var presetTextAtOpen by remember { mutableStateOf("") }
     var restText by remember { mutableStateOf("120") }
     var cardioDurationText by remember { mutableStateOf("20") }
+    var cardioSetsText by remember { mutableStateOf("1") }
 
     // Advanced (%1RM / blocks) prescription drafts
     val advancedOn = LocalAdvancedProgramming.current
@@ -389,6 +390,7 @@ fun RoutineDetailScreen(
         presetTextAtOpen = ""
         timeTargetSecondsText = "45"
         cardioDurationText = "20"
+        cardioSetsText = "1"
         advancedWeeks.clear()
         draftExcludedWeeks.clear()
         draftWeeksCount = planWeeksCount
@@ -422,6 +424,7 @@ fun RoutineDetailScreen(
             ?: "45"
         restText = item.planExercise.recuperoTarget.toString()
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
+        cardioSetsText = item.planExercise.serieTarget.coerceAtLeast(1).toString()
         showExerciseSheet = true
     }
 
@@ -1230,6 +1233,15 @@ fun RoutineDetailScreen(
                         }
 
                         if (isSelectedCardio) {
+                            // Several sets: intervals, or a warm-up and a cool-down; the rest is the one between them
+                            GymInputField(
+                                value = cardioSetsText,
+                                onValueChange = { cardioSetsText = it.filter { c -> c.isDigit() }.take(2) },
+                                label = stringResource(R.string.sets),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
                             CardioDurationSlider(
                                 valueMinutes = cardioDurationText.toIntOrNull() ?: 20,
                                 onValueChange = { cardioDurationText = it.toString() },
@@ -1468,6 +1480,7 @@ fun RoutineDetailScreen(
                                 val current = editingExercise
                                 if (isSelectedCardio) {
                                     val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
+                                    val cardioSets = (cardioSetsText.toIntOrNull() ?: 1).coerceIn(1, 20)
                                     val rest = restText.trim().toIntOrNull() ?: 0
                                     val category = selectedExercise?.categoria ?: "Cardio"
 
@@ -1476,7 +1489,8 @@ fun RoutineDetailScreen(
                                             exerciseId = exerciseId,
                                             cardioCategoria = category,
                                             durataTargetSecondi = durSec,
-                                            recuperoTarget = rest
+                                            recuperoTarget = rest,
+                                            sets = cardioSets
                                         )
                                     } else {
                                         viewModel.updateExercise(
@@ -1486,7 +1500,7 @@ fun RoutineDetailScreen(
                                                 durataTargetSecondi = durSec
                                             ),
                                             exerciseId = exerciseId,
-                                            serieTarget = 1,
+                                            serieTarget = cardioSets,
                                             repsTarget = "1",
                                             recuperoTarget = rest,
                                             excludedWeeks = draftExcludedWeeks.toSet(),
@@ -2822,15 +2836,12 @@ private fun CardioDurationSlider(
                 color = Primary,
                 fontWeight = FontWeight.ExtraBold
             )
-            val displayMinutes = valueMinutes / 60
-            val displaySecs = valueMinutes % 60
-            if (displayMinutes > 0 || displaySecs > 0) {
+            // The value is in minutes: from an hour up it is also written in hours ("1h 30m")
+            val displayHours = valueMinutes / 60
+            val displayMins = valueMinutes % 60
+            if (displayHours > 0) {
                 Text(
-                    text = when {
-                        displayMinutes == 0 -> "${displaySecs}s"
-                        displaySecs == 0 -> "${displayMinutes}m"
-                        else -> "${displayMinutes}m ${displaySecs}s"
-                    },
+                    text = if (displayMins == 0) "${displayHours}h" else "${displayHours}h ${displayMins}m",
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )

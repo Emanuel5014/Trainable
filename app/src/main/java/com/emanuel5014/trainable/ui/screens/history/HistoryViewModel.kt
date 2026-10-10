@@ -179,9 +179,9 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    fun saveCardioWorkout(categoria: String, distanza: Float, durataSecondi: Int) {
+    fun saveCardioWorkout(categoria: String, distanza: Float, durataSecondi: Int, note: String? = null) {
         viewModelScope.launch {
-            repository.saveCardioSession(categoria, distanza, durataSecondi, System.currentTimeMillis())
+            repository.saveCardioSession(categoria, distanza, durataSecondi, System.currentTimeMillis(), note)
         }
     }
 

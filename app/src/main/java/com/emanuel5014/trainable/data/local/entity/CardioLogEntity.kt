@@ -36,5 +36,10 @@ data class CardioLogEntity(
     @ColumnInfo(name = "durata_target_secondi")
     val durataTargetSecondi: Int? = null,
     @ColumnInfo(name = "is_completed")
-    val isCompleted: Boolean = true
+    val isCompleted: Boolean = true,
+    /** Set of the cardio exercise this row is (1, 2, ...): the rows with the same activity and order are one exercise. */
+    @ColumnInfo(name = "numero_serie")
+    val numeroSerie: Int = 1,
+    @ColumnInfo(name = "note")
+    val note: String? = null
 )

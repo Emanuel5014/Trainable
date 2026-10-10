@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.ui.components.cardioSetValueText
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
+import com.emanuel5014.trainable.data.local.entity.setsOf
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.kind
 import androidx.compose.foundation.background
@@ -131,7 +135,7 @@ import java.util.Date
 /** Stable lazy-list key of a row in the edit screen: exercises and cardio logs share one list. */
 internal fun getWorkoutItemKey(item: Any): String = when (item) {
     is EditExerciseState -> "exercise_${item.exercise.id}"
-    is CardioLogEntity -> "cardio_${item.id}"
+    is CardioExerciseLogs -> "cardio_${item.first.id}"
     else -> item.toString()
 }
 
@@ -155,8 +159,9 @@ fun EditWorkoutScreen(
         state.exercises.forEach { ex ->
             items.add(Pair(ex.sets.firstOrNull()?.ordineEsercizio ?: 0, ex as Any))
         }
-        state.cardioLogs.forEach { cardio ->
-            items.add(Pair(cardio.ordineEsercizio, cardio as Any))
+        // The sets of a cardio exercise are one card
+        state.cardioLogs.groupedByExercise().forEach { cardio ->
+            items.add(Pair(cardio.order, cardio as Any))
         }
         items.sortBy { it.first }
         items.map { it.second }
@@ -363,16 +368,17 @@ fun EditWorkoutScreen(
                                         onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) }
                                     )
                                 }
-                                is CardioLogEntity -> {
+                                is CardioExerciseLogs -> {
                                     CardioEditCard(
-                                        cardioLog = item,
+                                        cardio = item,
                                         isFirst = index == 0,
                                         isLast = index == displayedItems.lastIndex,
                                         isDragging = isDragging,
-                                        onEdit = { editingCardio = it },
-                                        onDelete = { viewModel.deleteCardioLog(it) },
-                                        onMoveUp = { viewModel.moveCardioUp(it) },
-                                        onMoveDown = { viewModel.moveCardioDown(it) }
+                                        onEditSet = { editingCardio = it },
+                                        onAddSet = { viewModel.addCardioSet(item) },
+                                        onDelete = { viewModel.deleteCardioExercise(item) },
+                                        onMoveUp = { viewModel.moveCardio(item, displayedItems, -1) },
+                                        onMoveDown = { viewModel.moveCardio(item, displayedItems, 1) }
                                     )
                                 }
                             }
@@ -403,14 +409,22 @@ fun EditWorkoutScreen(
         )
     }
 
-    if (editingCardio != null) {
+    editingCardio?.let { log ->
+        val siblings = state.cardioLogs.setsOf(log)
         EditCardioDialog(
-            cardioLog = editingCardio!!,
+            cardioLog = log,
             onDismiss = { editingCardio = null },
             onConfirm = {
                 viewModel.updateCardioLog(it)
                 editingCardio = null
-            }
+            },
+            onDelete = if (siblings.size > 1) {
+                {
+                    viewModel.deleteCardioLog(log)
+                    editingCardio = null
+                }
+            } else null,
+            setNumber = if (siblings.size > 1) siblings.indexOfFirst { it.id == log.id } + 1 else null
         )
     }
 
@@ -421,8 +435,8 @@ fun EditWorkoutScreen(
                 showAddCardio = false
                 pendingCardioCategory = null
             },
-            onConfirm = { categoria, distanza, durataSecondi ->
-                viewModel.addCardioLog(categoria, distanza, durataSecondi)
+            onConfirm = { categoria, distanza, durataSecondi, note ->
+                viewModel.addCardioLog(categoria, distanza, durataSecondi, note = note)
                 showAddCardio = false
                 pendingCardioCategory = null
             }
@@ -473,12 +487,12 @@ fun EditWorkoutScreen(
                 exerciseToSwap = null
                 showExercisePicker = false
             },
-            onCardioExerciseSelected = { exercise, durationMinutes, rest ->
+            onCardioExerciseSelected = { exercise, durationMinutes, _, sets ->
                 val currentSwapId = exerciseToSwap
                 if (currentSwapId != null) {
-                    viewModel.swapExerciseWithCardio(currentSwapId, exercise.nome, durationMinutes)
+                    viewModel.swapExerciseWithCardio(currentSwapId, exercise.nome, durationMinutes, sets)
                 } else {
-                    viewModel.addCardioLog(exercise.nome, 0f, durationMinutes * 60)
+                    viewModel.addCardioLog(exercise.nome, 0f, durationMinutes * 60, sets = sets)
                 }
                 exerciseToSwap = null
                 showExercisePicker = false
@@ -1029,24 +1043,23 @@ fun EditSetRow(
 
 @Composable
 fun CardioEditCard(
-    cardioLog: CardioLogEntity,
+    cardio: CardioExerciseLogs,
     isFirst: Boolean,
     isLast: Boolean,
     isDragging: Boolean = false,
-    onEdit: (CardioLogEntity) -> Unit,
-    onDelete: (CardioLogEntity) -> Unit,
-    onMoveUp: (CardioLogEntity) -> Unit,
-    onMoveDown: (CardioLogEntity) -> Unit
+    onEditSet: (CardioLogEntity) -> Unit,
+    onAddSet: () -> Unit,
+    onDelete: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit
 ) {
     val languageCode = java.util.Locale.getDefault().language
-    val translatedTitle = ExerciseTranslations.translate(cardioLog.categoria, languageCode)
+    val translatedTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
     val cardBgColor = if (isDragging) SurfaceContainerHigh else SurfaceContainerLow
     val cardBorder = if (isDragging) androidx.compose.foundation.BorderStroke(2.dp, Primary) else null
-    
+
     GymCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onEdit(cardioLog) },
+        modifier = Modifier.fillMaxWidth(),
         containerColor = cardBgColor,
         border = cardBorder
     ) {
@@ -1069,11 +1082,7 @@ fun CardioEditCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    IconButton(
-                        onClick = { onMoveUp(cardioLog) },
-                        enabled = !isFirst,
-                        modifier = Modifier.size(32.dp)
-                    ) {
+                    IconButton(onClick = onMoveUp, enabled = !isFirst, modifier = Modifier.size(32.dp)) {
                         Icon(
                             Icons.Rounded.KeyboardArrowUp,
                             contentDescription = null,
@@ -1081,11 +1090,7 @@ fun CardioEditCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    IconButton(
-                        onClick = { onMoveDown(cardioLog) },
-                        enabled = !isLast,
-                        modifier = Modifier.size(32.dp)
-                    ) {
+                    IconButton(onClick = onMoveDown, enabled = !isLast, modifier = Modifier.size(32.dp)) {
                         Icon(
                             Icons.Rounded.KeyboardArrowDown,
                             contentDescription = null,
@@ -1093,10 +1098,7 @@ fun CardioEditCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    IconButton(
-                        onClick = { onDelete(cardioLog) },
-                        modifier = Modifier.size(32.dp)
-                    ) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                         Icon(
                             Icons.Rounded.DeleteOutline,
                             contentDescription = null,
@@ -1106,9 +1108,9 @@ fun CardioEditCard(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(4.dp))
-            
+
             Text(
                 text = translatedTitle,
                 style = MaterialTheme.typography.titleMedium,
@@ -1116,33 +1118,70 @@ fun CardioEditCard(
                 color = OnSurface,
                 modifier = Modifier.fillMaxWidth()
             )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (cardioLog.distanza > 0f) {
-                    Text(
-                        text = "${cardioLog.distanza} km",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = OnSurface
-                    )
-                    Text(
-                        text = " • ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = OnSurfaceVariant.copy(alpha = 0.5f)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            cardio.sets.forEachIndexed { index, set ->
+                CardioSetEditRow(set = set, number = index + 1, onClick = { onEditSet(set) })
+                if (index < cardio.sets.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = SurfaceContainerHighest,
+                        thickness = 0.5.dp
                     )
                 }
-                val h = cardioLog.durataSecondi / 3600
-                val m = (cardioLog.durataSecondi % 3600) / 60
-                val s = cardioLog.durataSecondi % 60
-                val durationText = if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
-                Text(
-                    text = durationText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = OnSurface
-                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            GymButton(
+                onClick = onAddSet,
+                containerColor = Primary.copy(alpha = 0.1f),
+                contentColor = Primary,
+                modifier = Modifier.fillMaxWidth().height(40.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.add).uppercase(), style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
+/** One set of a cardio exercise in the edit screen: its time and distance, and its note under them. */
+@Composable
+private fun CardioSetEditRow(set: CardioLogEntity, number: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(SurfaceContainerHigh),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = number.toString(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = OnSurface)
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = cardioSetValueText(set),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = OnSurface
+            )
+            if (!set.note.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = set.note, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontStyle = FontStyle.Italic)
+                }
             }
         }
     }
@@ -1152,8 +1191,13 @@ fun CardioEditCard(
 fun EditCardioDialog(
     cardioLog: CardioLogEntity,
     onDismiss: () -> Unit,
-    onConfirm: (CardioLogEntity) -> Unit
+    onConfirm: (CardioLogEntity) -> Unit,
+    /** Removes the set; null when it is the only one of its exercise. */
+    onDelete: (() -> Unit)? = null,
+    /** Shown in the title when the exercise has more than one set. */
+    setNumber: Int? = null
 ) {
+    var note by remember { mutableStateOf(cardioLog.note.orEmpty()) }
     var categoria by remember { mutableStateOf(cardioLog.categoria) }
     var distanza by remember { mutableStateOf(cardioLog.distanza.toString()) }
     var durataOre by remember { mutableStateOf((cardioLog.durataSecondi / 3600).let { if (it > 0) it.toString() else "" }) }
@@ -1167,7 +1211,7 @@ fun EditCardioDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                stringResource(R.string.edit_exercise_title),
+                setNumber?.let { stringResource(R.string.set_number, it) } ?: stringResource(R.string.edit_exercise_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Black
             ) 
@@ -1185,7 +1229,9 @@ CardioInputForm(
                 onDurataMinutiChange = { durataMinuti = it },
                 durataSecondi = durataSecondi,
                 onDurataSecondiChange = { durataSecondi = it },
-                showCategory = false
+                showCategory = false,
+                note = note,
+                onNoteChange = { note = it }
             )
 }
         },
@@ -1197,7 +1243,7 @@ CardioInputForm(
                     val m = durataMinuti.toIntOrNull() ?: 0
                     val s = durataSecondi.toIntOrNull() ?: 0
                     val dur = h * 3600 + m * 60 + s
-                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur))
+                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur, note = note.trim().ifBlank { null }))
                 },
                 enabled = isValid
             ) {
@@ -1205,12 +1251,19 @@ CardioInputForm(
             }
         },
         dismissButton = {
-            GymButton(
-                onClick = onDismiss,
-                containerColor = Color.Transparent,
-                contentColor = OnSurfaceVariant
-            ) {
-                Text(stringResource(R.string.cancel).uppercase())
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onDelete != null) {
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.cardio_remove_set), tint = Error)
+                    }
+                }
+                GymButton(
+                    onClick = onDismiss,
+                    containerColor = Color.Transparent,
+                    contentColor = OnSurfaceVariant
+                ) {
+                    Text(stringResource(R.string.cancel).uppercase())
+                }
             }
         },
         containerColor = Surface,

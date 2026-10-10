@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
         PlanExerciseBlockEntity::class,
         OneRepMaxEntity::class
     ],
-    version = 30,
+    version = 31,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -374,6 +374,14 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_30_31 = object : Migration(30, 31) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Cardio in sets, each with its own note; what was logged so far is the first set
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN numero_serie INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN note TEXT")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -392,7 +400,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
                         MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30
+                        MIGRATION_29_30, MIGRATION_30_31
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {
