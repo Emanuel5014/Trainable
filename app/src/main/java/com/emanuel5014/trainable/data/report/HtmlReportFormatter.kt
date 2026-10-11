@@ -67,81 +67,11 @@ class HtmlReportFormatter @Inject constructor() {
                     append("</div>\n")
                     append("</div>\n")
 
-                    append("<div class=\"summary-grid\">\n")
-                    append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(exercise.summary.maxWeight)} ${report.weightUnit}", "fitness_center"))
-                    append(buildSummaryItem(strings["max_volume"] ?: "Max Volume", "${formatWeight(exercise.summary.maxVolume)} ${report.weightUnit}", "bar_chart"))
-                    append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", exercise.summary.totalSets.toString(), "format_list_numbered"))
-                    if (exercise.summary.bestEstimatedOneRM != null) {
-                        append(buildSummaryItem(strings["estimated_1rm"] ?: "Est. 1RM", "${formatWeight(exercise.summary.bestEstimatedOneRM)} ${report.weightUnit}", "whatshot"))
-                    }
-                    append("</div>\n")
+                    append(buildExerciseSummary(exercise, report.weightUnit, strings))
 
                     val allSets = exercise.sessions.flatMap { it.sets }.filter { !it.isWarmup }
                     if (allSets.isNotEmpty()) {
-                        val hasNotes = exercise.sessions.any { it.sets.any { s -> !s.note.isNullOrBlank() } }
-                        val hasRpeColumn = exercise.sessions.any { it.sets.any { s -> s.rpe != null } }
-                        val hasPrescription = exercise.sessions.any { it.sets.any { s -> !s.prescription.isNullOrBlank() } }
-                        
-                        append("<div class=\"data-table-wrapper\">\n")
-                        append("<table class=\"data-table\">\n")
-                        append("<thead>\n<tr>\n")
-                        append("<th>${strings["date"] ?: "Date"}</th>\n")
-                        append("<th>${strings["set"] ?: "Set"}</th>\n")
-                        append("<th>${strings["weight"] ?: "Weight"}</th>\n")
-                        append("<th>${strings["reps"] ?: "Reps"}</th>\n")
-                        if (hasPrescription) {
-                            append("<th>${strings["prescription"] ?: "Prescription"}</th>\n")
-                        }
-                        append("<th>${strings["volume"] ?: "Volume"}</th>\n")
-                        if (hasRpeColumn) {
-                            append("<th>RPE</th>\n")
-                        }
-                        if (hasNotes) {
-                            append("<th>${strings["notes"] ?: "Notes"}</th>\n")
-                        }
-                        append("</tr>\n</thead>\n<tbody>\n")
-
-                        exercise.sessions.forEach { session ->
-                            val sessionVolume = session.sets.filter { !it.isWarmup }.sumOf { (it.weight * it.reps).toDouble() }.toFloat()
-                            val hasRpe = hasRpeColumn
-                            val sessionHasNotes = session.sets.any { !it.note.isNullOrBlank() }
-
-                            session.sets.filter { !it.isWarmup }.forEachIndexed { setIndex, set ->
-                                append("<tr>\n")
-                                if (setIndex == 0) {
-                                    val rowSpan = session.sets.count { !it.isWarmup }
-                                    if (rowSpan > 1) {
-                                        append("<td rowspan=\"$rowSpan\">${dateFormat.format(Date(session.date))}</td>\n")
-                                    } else {
-                                        append("<td>${dateFormat.format(Date(session.date))}</td>\n")
-                                    }
-                                }
-                                append("<td><span class=\"set-number\">${set.setNumber}</span></td>\n")
-                                append("<td>${formatWeight(set.weight)} ${report.weightUnit}</td>\n")
-                                append("<td>${set.reps}</td>\n")
-                                if (hasPrescription) {
-                                    append("<td>${set.prescription?.let { escapeHtml(it) } ?: "-"}</td>\n")
-                                }
-                                if (setIndex == 0) {
-                                    val rowSpan = session.sets.count { !it.isWarmup }
-                                    if (rowSpan > 1) {
-                                        append("<td rowspan=\"$rowSpan\">${formatWeight(sessionVolume)} ${report.weightUnit}</td>\n")
-                                    } else {
-                                        append("<td>${formatWeight(sessionVolume)} ${report.weightUnit}</td>\n")
-                                    }
-                                }
-                                if (hasRpe) {
-                                    append("<td>${set.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: "-"}</td>\n")
-                                }
-                                if (hasNotes) {
-                                    append("<td>${set.note?.let { escapeHtml(it) } ?: ""}</td>\n")
-                                }
-                                append("</tr>\n")
-                            }
-                        }
-
-                        append("</tbody>\n</table>\n")
-                        append("</div>\n")
+                        append(buildExerciseTable(exercise, report.weightUnit, strings, dateFormat))
                     }
 
                     if (exercise.swapEvents.isNotEmpty()) {
@@ -166,6 +96,125 @@ class HtmlReportFormatter @Inject constructor() {
 
             append("</div>\n")
             append("</body>\n</html>")
+        }
+    }
+
+    /** The figures that sum an exercise up, by how it is measured. */
+    private fun buildExerciseSummary(exercise: ExerciseReport, unit: String, strings: Map<String, String>): String = buildString {
+        val summary = exercise.summary
+        append("<div class=\"summary-grid\">\n")
+        when (exercise.kind) {
+            ReportExerciseKind.STRENGTH -> {
+                append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(summary.maxWeight)} $unit", "fitness_center"))
+                append(buildSummaryItem(strings["max_volume"] ?: "Max Volume", "${formatWeight(summary.maxVolume)} $unit", "bar_chart"))
+                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
+                if (summary.bestEstimatedOneRM != null) {
+                    append(buildSummaryItem(strings["estimated_1rm"] ?: "Est. 1RM", "${formatWeight(summary.bestEstimatedOneRM)} $unit", "whatshot"))
+                }
+            }
+            ReportExerciseKind.TIME_AND_WEIGHT -> {
+                append(buildSummaryItem(strings["longest_set"] ?: "Longest Set", formatSeconds(summary.bestSeconds), "timer"))
+                if (summary.maxWeight > 0f) {
+                    append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(summary.maxWeight)} $unit", "fitness_center"))
+                }
+                append(buildSummaryItem(strings["total_time"] ?: "Total Time", formatSeconds(summary.totalSeconds), "bar_chart"))
+                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
+            }
+            ReportExerciseKind.TIME_AND_REPS -> {
+                append(buildSummaryItem(strings["best_reps"] ?: "Most Reps", summary.bestReps.toString(), "whatshot"))
+                append(buildSummaryItem(strings["total_reps"] ?: "Total Reps", summary.totalReps.toString(), "bar_chart"))
+                append(buildSummaryItem(strings["total_time"] ?: "Total Time", formatSeconds(summary.totalSeconds), "timer"))
+                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
+            }
+            ReportExerciseKind.CARDIO -> {
+                append(buildSummaryItem(strings["total_time"] ?: "Total Time", formatSeconds(summary.totalSeconds), "timer"))
+                if (summary.totalKm > 0f) {
+                    append(buildSummaryItem(strings["total_distance"] ?: "Total Distance", "${formatWeight(summary.totalKm)} km", "bar_chart"))
+                }
+                append(buildSummaryItem(strings["longest_set"] ?: "Longest Set", formatSeconds(summary.bestSeconds), "whatshot"))
+                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
+            }
+        }
+        append("</div>\n")
+    }
+
+    /** Every working set of the exercise, a session per block of rows; the columns follow how it is measured. */
+    private fun buildExerciseTable(exercise: ExerciseReport, unit: String, strings: Map<String, String>, dateFormat: SimpleDateFormat): String = buildString {
+        val kind = exercise.kind
+        val hasNotes = exercise.sessions.any { it.sets.any { s -> !s.note.isNullOrBlank() } }
+        val hasRpeColumn = kind == ReportExerciseKind.STRENGTH && exercise.sessions.any { it.sets.any { s -> s.rpe != null } }
+        val hasPrescription = kind == ReportExerciseKind.STRENGTH && exercise.sessions.any { it.sets.any { s -> !s.prescription.isNullOrBlank() } }
+        val hasWeight = kind == ReportExerciseKind.STRENGTH || (kind == ReportExerciseKind.TIME_AND_WEIGHT && exercise.summary.maxWeight > 0f)
+        val hasReps = kind == ReportExerciseKind.STRENGTH || kind == ReportExerciseKind.TIME_AND_REPS
+        val hasTime = kind != ReportExerciseKind.STRENGTH
+        val hasDistance = kind == ReportExerciseKind.CARDIO && exercise.summary.totalKm > 0f
+        // A session total that means something: tonnage for weights, reps for intervals, time for holds and cardio
+        val sessionTotalLabel = when (kind) {
+            ReportExerciseKind.STRENGTH -> strings["volume"] ?: "Volume"
+            ReportExerciseKind.TIME_AND_REPS -> strings["total_reps"] ?: "Total Reps"
+            else -> strings["total_time"] ?: "Total Time"
+        }
+
+        append("<div class=\"data-table-wrapper\">\n")
+        append("<table class=\"data-table\">\n")
+        append("<thead>\n<tr>\n")
+        append("<th>${strings["date"] ?: "Date"}</th>\n")
+        append("<th>${strings["set"] ?: "Set"}</th>\n")
+        if (hasWeight) append("<th>${strings["weight"] ?: "Weight"}</th>\n")
+        if (hasTime) append("<th>${strings["time"] ?: "Time"}</th>\n")
+        if (hasReps) append("<th>${strings["reps"] ?: "Reps"}</th>\n")
+        if (hasDistance) append("<th>${strings["distance"] ?: "Distance"}</th>\n")
+        if (hasPrescription) append("<th>${strings["prescription"] ?: "Prescription"}</th>\n")
+        append("<th>$sessionTotalLabel</th>\n")
+        if (hasRpeColumn) append("<th>RPE</th>\n")
+        if (hasNotes) append("<th>${strings["notes"] ?: "Notes"}</th>\n")
+        append("</tr>\n</thead>\n<tbody>\n")
+
+        exercise.sessions.forEach { session ->
+            val working = session.sets.filter { !it.isWarmup }
+            val sessionTotal = when (kind) {
+                ReportExerciseKind.STRENGTH -> "${formatWeight(working.sumOf { (it.weight * it.reps).toDouble() }.toFloat())} $unit"
+                ReportExerciseKind.TIME_AND_REPS -> working.sumOf { it.reps }.toString()
+                else -> formatSeconds(working.sumOf { it.seconds ?: 0 })
+            }
+            val rowSpan = working.size
+            working.forEachIndexed { setIndex, set ->
+                append("<tr>\n")
+                if (setIndex == 0) {
+                    append(if (rowSpan > 1) "<td rowspan=\"$rowSpan\">" else "<td>")
+                    append("${dateFormat.format(Date(session.date))}</td>\n")
+                }
+                append("<td><span class=\"set-number\">${set.setNumber}</span></td>\n")
+                if (hasWeight) append("<td>${formatWeight(set.weight)} $unit</td>\n")
+                if (hasTime) append("<td>${set.seconds?.let { formatSeconds(it) } ?: "-"}</td>\n")
+                if (hasReps) append("<td>${set.reps}</td>\n")
+                if (hasDistance) append("<td>${set.distanceKm?.takeIf { it > 0f }?.let { "${formatWeight(it)} km" } ?: "-"}</td>\n")
+                if (hasPrescription) append("<td>${set.prescription?.let { escapeHtml(it) } ?: "-"}</td>\n")
+                if (setIndex == 0) {
+                    append(if (rowSpan > 1) "<td rowspan=\"$rowSpan\">" else "<td>")
+                    append("$sessionTotal</td>\n")
+                }
+                if (hasRpeColumn) {
+                    append("<td>${set.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: "-"}</td>\n")
+                }
+                if (hasNotes) append("<td>${set.note?.let { escapeHtml(it) } ?: ""}</td>\n")
+                append("</tr>\n")
+            }
+        }
+
+        append("</tbody>\n</table>\n")
+        append("</div>\n")
+    }
+
+    /** "45s" for a short set, "12:30" or "1:05:00" for a longer one. */
+    private fun formatSeconds(seconds: Int): String {
+        val h = seconds / 3600
+        val m = (seconds % 3600) / 60
+        val sec = seconds % 60
+        return when {
+            seconds < 60 -> "${seconds}s"
+            h > 0 -> String.format(Locale.ROOT, "%d:%02d:%02d", h, m, sec)
+            else -> String.format(Locale.ROOT, "%d:%02d", m, sec)
         }
     }
 
@@ -206,6 +255,7 @@ class HtmlReportFormatter @Inject constructor() {
             "list" -> """<line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.5" cy="6" r="2"/><circle cx="4.5" cy="12" r="2"/><circle cx="4.5" cy="18" r="2"/>"""
             "bar_chart" -> """<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>"""
             "format_list_numbered" -> """<line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>"""
+            "timer" -> """<circle cx="12" cy="13" r="8"/><line x1="12" y1="13" x2="12" y2="9"/><line x1="10" y1="2" x2="14" y2="2"/>"""
             "whatshot" -> """<path d="M12 22c-3.5 0-6-2.5-6-6 0-3 2-5.5 4-7s2-3 2-5c3 2 6 5 6 10 0 3.5-2.5 6-6 6z"/>"""
             else -> """<circle cx="12" cy="12" r="10"/>"""
         }
@@ -242,7 +292,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "notes" to "Note",
                 "prescription" to "Prescrizione",
                 "swap_history" to "Cambi Esercizi",
-                "generated_by" to "Generato da Trainable il"
+                "generated_by" to "Generato da Trainable il",
+                "time" to "Tempo",
+                "distance" to "Distanza",
+                "total_time" to "Tempo Totale",
+                "longest_set" to "Serie più Lunga",
+                "best_reps" to "Reps Max",
+                "total_reps" to "Reps Totali",
+                "total_distance" to "Distanza Totale"
             )
             "es" -> mapOf(
                 "report" to "Informe de Rutina",
@@ -263,7 +320,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "notes" to "Notas",
                 "prescription" to "Prescripción",
                 "swap_history" to "Cambios de Ejercicios",
-                "generated_by" to "Generado por Trainable el"
+                "generated_by" to "Generado por Trainable el",
+                "time" to "Tiempo",
+                "distance" to "Distancia",
+                "total_time" to "Tiempo Total",
+                "longest_set" to "Serie más Larga",
+                "best_reps" to "Reps Máx",
+                "total_reps" to "Reps Totales",
+                "total_distance" to "Distancia Total"
             )
             "fr" -> mapOf(
                 "report" to "Rapport de Routine",
@@ -284,7 +348,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "notes" to "Notes",
                 "prescription" to "Prescription",
                 "swap_history" to "Changements d'Exercices",
-                "generated_by" to "Généré par Trainable le"
+                "generated_by" to "Généré par Trainable le",
+                "time" to "Temps",
+                "distance" to "Distance",
+                "total_time" to "Temps Total",
+                "longest_set" to "Série la plus Longue",
+                "best_reps" to "Reps Max",
+                "total_reps" to "Reps Totales",
+                "total_distance" to "Distance Totale"
             )
             "de" -> mapOf(
                 "report" to "Trainingsbericht",
@@ -305,7 +376,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "notes" to "Notizen",
                 "prescription" to "Vorgabe",
                 "swap_history" to "Übungswechsel",
-                "generated_by" to "Erstellt von Trainable am"
+                "generated_by" to "Erstellt von Trainable am",
+                "time" to "Zeit",
+                "distance" to "Distanz",
+                "total_time" to "Gesamtzeit",
+                "longest_set" to "Längster Satz",
+                "best_reps" to "Max Wdh",
+                "total_reps" to "Gesamt Wdh",
+                "total_distance" to "Gesamtdistanz"
             )
             "pt" -> mapOf(
                 "report" to "Relatório de Treino",
@@ -326,7 +404,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "notes" to "Notas",
                 "prescription" to "Prescrição",
                 "swap_history" to "Trocas de Exercícios",
-                "generated_by" to "Gerado pelo Trainable em"
+                "generated_by" to "Gerado pelo Trainable em",
+                "time" to "Tempo",
+                "distance" to "Distância",
+                "total_time" to "Tempo Total",
+                "longest_set" to "Série mais Longa",
+                "best_reps" to "Reps Máx",
+                "total_reps" to "Reps Totais",
+                "total_distance" to "Distância Total"
             )
             else -> mapOf(
                 "report" to "Routine Report",
@@ -345,8 +430,16 @@ class HtmlReportFormatter @Inject constructor() {
                 "reps" to "Reps",
                 "volume" to "Volume",
                 "notes" to "Notes",
+                "prescription" to "Prescription",
                 "swap_history" to "Exercise Swaps",
-                "generated_by" to "Generated by Trainable on"
+                "generated_by" to "Generated by Trainable on",
+                "time" to "Time",
+                "distance" to "Distance",
+                "total_time" to "Total Time",
+                "longest_set" to "Longest Set",
+                "best_reps" to "Most Reps",
+                "total_reps" to "Total Reps",
+                "total_distance" to "Total Distance"
             )
         }
     }

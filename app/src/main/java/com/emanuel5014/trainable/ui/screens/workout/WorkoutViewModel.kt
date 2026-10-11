@@ -320,8 +320,8 @@ internal fun pendingCardioSets(count: Int): List<CardioSetState> =
     (1..count.coerceAtLeast(1)).map { CardioSetState(setNumber = it) }
 
 /**
- * The sets of a cardio exercise from its logs, followed by the ones the plan still asks for ([plannedSets]): a set
- * gets its log only when it is started (or when the exercise was added during the workout).
+ * The sets of a cardio exercise from its logs. Once the exercise has a log every set of it has one, so the logs are all
+ * there is; an exercise with none yet has the [plannedSets] of the plan.
  */
 internal fun cardioSetsFrom(logs: List<CardioLogEntity>, plannedSets: Int): List<CardioSetState> {
     val logged = logs.sortedWith(compareBy({ it.numeroSerie }, { it.id })).mapIndexed { i, log ->
@@ -334,8 +334,8 @@ internal fun cardioSetsFrom(logs: List<CardioLogEntity>, plannedSets: Int): List
             note = log.note
         )
     }
-    val missing = (plannedSets - logged.size).coerceAtLeast(if (logged.isEmpty()) 1 else 0)
-    return logged + (1..missing).map { CardioSetState(setNumber = logged.size + it) }
+    if (logged.isNotEmpty()) return logged
+    return pendingCardioSets(plannedSets)
 }
 
 data class WorkoutSetState(
@@ -2189,7 +2189,8 @@ class WorkoutViewModel @Inject constructor(
                                     nextSetText = timedSetText(nextExState, firstSet)
                                 )
                             } else {
-                                startRestTimer(restTime)
+                                // A cardio exercise has no weight sets: its next set is announced by its targets
+                                startRestTimer(restTime, nextExState?.let { nextSetInfoOf(it) })
                             }
                         } else {
                             startRestTimer(restTime)
@@ -2428,25 +2429,54 @@ class WorkoutViewModel @Inject constructor(
         return repsList.getOrElse(setNumber - 1) { repsList.lastOrNull() }
     }
 
-    private fun buildNextSetLabel(): NextSetInfo? {
-        val currentEx = _state.value.currentExercise ?: return null
-        val currentState = _state.value
-        val nextSet = currentEx.sets.firstOrNull { !it.isCompleted }
-        if (nextSet != null) {
-            val plannedReps = getPlannedRepsForSet(currentEx, nextSet.setNumber) ?: nextSet.reps
-            return NextSetInfo(
-                exerciseName = ExerciseTranslations.translate(currentEx.exercise.nome, _languageCode.value),
-                setNumber = nextSet.setNumber,
-                weight = nextSet.weight,
-                reps = plannedReps,
-                weightUnit = currentState.weightUnit,
-                previousReps = nextSet.previousReps,
-                repsLabel = repsLabelFor(nextSet),
-                detail = prescriptionDetail(nextSet),
-                text = timedSetText(currentEx, nextSet)
-            )
+    /** What the rest notification announces for [exState]: its next set to do (a cardio one included), null when none is left. */
+    private fun nextSetInfoOf(exState: WorkoutExerciseState): NextSetInfo? {
+        val name = ExerciseTranslations.translate(exState.exercise.nome, _languageCode.value)
+        val unit = _state.value.weightUnit
+        if (exState.isCardio) {
+            val set = exState.activeCardioSet ?: return null
+            return NextSetInfo(exerciseName = name, setNumber = set.setNumber, weight = 0f, reps = 0, weightUnit = unit, text = cardioTargetText(exState))
         }
-        return null
+        val nextSet = exState.sets.firstOrNull { !it.isCompleted } ?: return null
+        val plannedReps = getPlannedRepsForSet(exState, nextSet.setNumber) ?: nextSet.reps
+        return NextSetInfo(
+            exerciseName = name,
+            setNumber = nextSet.setNumber,
+            weight = nextSet.weight,
+            reps = plannedReps,
+            weightUnit = unit,
+            previousReps = nextSet.previousReps,
+            repsLabel = repsLabelFor(nextSet),
+            detail = prescriptionDetail(nextSet),
+            text = timedSetText(exState, nextSet)
+        )
+    }
+
+    /** The next set of the exercise on screen or, once it is all done, the first one of the exercise after it. */
+    private fun buildNextSetLabel(): NextSetInfo? {
+        val state = _state.value
+        val currentEx = state.currentExercise ?: return null
+        return nextSetInfoOf(currentEx) ?: state.exercises.getOrNull(state.currentExerciseIndex + 1)?.let { nextSetInfoOf(it) }
+    }
+
+    /** A cardio set as the rest notification announces it: its targets ("5 min · 1.5 km"). */
+    private fun cardioTargetText(exState: WorkoutExerciseState): String {
+        val context = localeManager.localizedContext()
+        val parts = listOfNotNull(
+            exState.cardioDurataTargetSeconds?.takeIf { it >= 60 }?.let { context.getString(R.string.cardio_min_format, it / 60) },
+            exState.cardioDistanzaTargetKm?.takeIf { it > 0f }?.let { context.getString(R.string.cardio_dist_value, it.toString()) }
+        )
+        return parts.joinToString(" · ").ifEmpty { context.getString(R.string.cardio_free_form) }
+    }
+
+    private fun startRestTimer(seconds: Int, info: NextSetInfo?) {
+        if (info == null) return startRestTimer(seconds)
+        startRestTimer(
+            seconds, info.exerciseName, info.setNumber, info.weight, info.reps, info.previousReps, info.weightUnit,
+            nextSetRepsLabel = info.repsLabel,
+            nextSetDetail = info.detail,
+            nextSetText = info.text
+        )
     }
 
     /** A timed set as the rest notification writes it: "45s · 20 reps", "20 kg × 45s"; null for weight × reps sets. */
@@ -3417,6 +3447,7 @@ class WorkoutViewModel @Inject constructor(
                     )
                 }
                 saveCardioTimerToSession(initialSeconds, true, false, now)
+                persistCardioSets(currState.currentExerciseIndex)
             }
         } else {
             val baseSeconds = currState.cardioTimerBaseSeconds
@@ -3566,12 +3597,18 @@ class WorkoutViewModel @Inject constructor(
                 val newId = workoutRepository.saveCardioLog(cardioEntity).toInt()
                 setCardioSetId(currState.currentExerciseIndex, doneSet.setNumber, newId)
             }
+            persistCardioSets(currState.currentExerciseIndex)
         }
 
         val restSeconds = currentEx.customRestSeconds ?: currentEx.planDetails?.recuperoTarget ?: 0
         if (restSeconds > 0) {
-            val exerciseName = ExerciseTranslations.translate(currentEx.exercise.nome, _languageCode.value)
-            startRestTimer(restSeconds, exerciseName = exerciseName)
+            // The next set of this exercise, or the first of the next one
+            val info = buildNextSetLabel()
+            if (info != null) {
+                startRestTimer(restSeconds, info)
+            } else {
+                startRestTimer(restSeconds, exerciseName = ExerciseTranslations.translate(currentEx.exercise.nome, _languageCode.value))
+            }
         }
     }
 
@@ -3589,35 +3626,39 @@ class WorkoutViewModel @Inject constructor(
     private fun setCardioSetId(exerciseIndex: Int, setNumber: Int, id: Int) =
         updateCardioSets(exerciseIndex) { sets -> sets.map { if (it.setNumber == setNumber && it.id == null) it.copy(id = id) else it } }
 
+    /**
+     * Gives every set of the cardio exercise that has none its log. Once one set of an exercise has a log they all
+     * have one, so a workout that is reopened finds exactly the sets it had (sets added or removed included) instead
+     * of the plan's count.
+     */
+    private suspend fun persistCardioSets(exerciseIndex: Int) = setRowsLock.withLock {
+        val state = _state.value
+        val sessionId = state.sessionId ?: return@withLock
+        val ex = state.exercises.getOrNull(exerciseIndex)?.takeIf { it.isCardio } ?: return@withLock
+        ex.cardioSets.filter { it.id == null }.forEach { set ->
+            val id = workoutRepository.saveCardioLog(
+                CardioLogEntity(
+                    sessionId = sessionId,
+                    categoria = ex.exercise.nome,
+                    distanza = set.distanceKm,
+                    durataSecondi = set.elapsedSeconds,
+                    timestamp = System.currentTimeMillis(),
+                    ordineEsercizio = ex.executionOrder,
+                    durataTargetSecondi = ex.cardioDurataTargetSeconds,
+                    isCompleted = false,
+                    numeroSerie = set.setNumber,
+                    note = set.note
+                )
+            ).toInt()
+            setCardioSetId(exerciseIndex, set.setNumber, id)
+        }
+    }
+
     /** One more set of the cardio exercise, with the same targets; a done exercise goes back to its timer. */
     fun addCardioSet(exerciseIndex: Int) {
-        val sessionId = _state.value.sessionId ?: return
         val ex = _state.value.exercises.getOrNull(exerciseIndex)?.takeIf { it.isCardio } ?: return
-        val number = ex.cardioSets.size + 1
-        updateCardioSets(exerciseIndex) { it + CardioSetState(setNumber = number) }
-        // Once the exercise has logs its sets are rebuilt from them (beyond what the plan asks for), so every set up
-        // to this one needs its log right away, or the numbers would no longer follow each other
-        if (ex.cardioSets.none { it.id != null }) return
-        val withoutLog = ex.cardioSets.filter { it.id == null }.map { it.setNumber } + number
-        viewModelScope.launch {
-            withoutLog.forEach { setNumber ->
-                val id = workoutRepository.saveCardioLog(
-                    CardioLogEntity(
-                        sessionId = sessionId,
-                        categoria = ex.exercise.nome,
-                        distanza = 0f,
-                        durataSecondi = 0,
-                        timestamp = System.currentTimeMillis(),
-                        ordineEsercizio = _state.value.exercises.getOrNull(exerciseIndex)?.executionOrder ?: ex.executionOrder,
-                        durataTargetSecondi = ex.cardioDurataTargetSeconds,
-                        isCompleted = false,
-                        numeroSerie = setNumber,
-                        note = ex.cardioSets.firstOrNull { it.setNumber == setNumber }?.note
-                    )
-                ).toInt()
-                setCardioSetId(exerciseIndex, setNumber, id)
-            }
-        }
+        updateCardioSets(exerciseIndex) { it + CardioSetState(setNumber = ex.cardioSets.size + 1) }
+        viewModelScope.launch { persistCardioSets(exerciseIndex) }
     }
 
     /** Removes a cardio set (never the last one, nor the one whose timer is running) and numbers the rest again. */
@@ -3640,6 +3681,8 @@ class WorkoutViewModel @Inject constructor(
                 }
             }
             remaining.forEach { set -> set.id?.let { workoutRepository.updateCardioSetNumber(it, set.setNumber) } }
+            // A planned set removed before it had a log would otherwise come back with the plan's count
+            persistCardioSets(exerciseIndex)
         }
     }
 
