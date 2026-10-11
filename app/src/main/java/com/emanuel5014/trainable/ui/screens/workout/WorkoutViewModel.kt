@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.data.local.entity.straightReps
+import com.emanuel5014.trainable.data.local.entity.encodePerformed
+import com.emanuel5014.trainable.data.local.entity.parts
+import com.emanuel5014.trainable.data.local.entity.pauses
+import com.emanuel5014.trainable.data.local.entity.performed
+import com.emanuel5014.trainable.domain.prescription.SetPerformance
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.data.local.entity.kind
@@ -142,7 +148,11 @@ data class WorkoutState(
     /** 0 = advanced exercises only, 1 = always, 2 = never. */
     val rpeInputMode: Int = 0,
     /** Pending "new 1RM?" prompts shown before the session is closed. */
-    val oneRepMaxSuggestions: List<OneRepMaxSuggestion> = emptyList()
+    val oneRepMaxSuggestions: List<OneRepMaxSuggestion> = emptyList(),
+    /** The set just logged came out short of its reps: the rest card offers to finish it after a short pause. */
+    val miniSetOffer: MiniSetOffer? = null,
+    /** A mini-set on its way: its pause runs on the rest timer, then the hub asks how many reps it had. */
+    val miniSet: MiniSetRun? = null
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -161,6 +171,20 @@ data class WorkoutState(
 
     val showTimerSubtract: Boolean
         get() = timerShowTimeButtons && timerSubtractEnabled
+}
+
+data class MiniSetOffer(val exerciseIndex: Int, val setIndex: Int, val missing: Int)
+
+data class MiniSetRun(
+    val exerciseIndex: Int,
+    val setIndex: Int,
+    /** Reps still missing to the set's goal when the pause started (0 when it has none). */
+    val missing: Int,
+    val pauseStartedAt: Long,
+    /** How long the pause really lasted, known once it is over: the hub then asks for the reps. */
+    val pauseSeconds: Int? = null
+) {
+    val awaitingReps: Boolean get() = pauseSeconds != null
 }
 
 /**
@@ -359,8 +383,37 @@ data class WorkoutSetState(
     /** The rep range the exercise asks for ("10–15"); [reps] is the number the set is currently at. */
     val repsRange: RepRange? = null,
     /** A set of a Time & Reps exercise: [timeSeconds] is the interval, [reps] what was done in it, no weight. */
-    val isTimeAndReps: Boolean = false
+    val isTimeAndReps: Boolean = false,
+    /** Parts of a set finished after short pauses ("2+1+1"); empty for one done in one go. [reps] is their sum. */
+    val repParts: List<Int> = emptyList(),
+    /** Seconds of each pause between [repParts]. */
+    val pauses: List<Int> = emptyList(),
+    /** Reps a spotter helped with, on top of [reps]. */
+    val assistedReps: Int = 0,
+    /** Partial reps after the full ones, on top of [reps]. */
+    val partialReps: Int = 0,
+    /** Techniques the set was really done with when they differ from the prescription's; null as prescribed. */
+    val performedTechniques: List<Technique>? = null
 ) {
+    /** Reps done in one go: what an estimated 1RM or a progression can trust. */
+    val straightReps: Int get() = repParts.firstOrNull() ?: reps
+
+    /** New total reps; a set in parts takes the difference on its last part (see [SetPerformance.adjustParts]). */
+    fun withTotalReps(total: Int): WorkoutSetState {
+        if (repParts.isEmpty()) return copy(reps = total)
+        val parts = SetPerformance.adjustParts(repParts, total)
+        return copy(reps = total, repParts = parts, pauses = pauses.take((parts.size - 1).coerceAtLeast(0)))
+    }
+
+    /** The set as it came back from its row: how it really went. */
+    fun withPerformanceOf(row: SetLogEntity): WorkoutSetState = copy(
+        repParts = row.parts,
+        pauses = row.pauses,
+        assistedReps = row.assistedReps,
+        partialReps = row.partialReps,
+        performedTechniques = row.performed
+    )
+
     val isAmrap: Boolean get() = prescription?.repMode == RepMode.AMRAP
 
     val isEmom: Boolean get() = prescription?.techniques?.contains(Technique.Emom) == true
@@ -916,7 +969,7 @@ class WorkoutViewModel @Inject constructor(
                         isExtra = loggedSet.isExtra,
                         repsRange = repsRange,
                         isTimeAndReps = isTimeAndReps
-                    )
+                    ).withPerformanceOf(loggedSet)
                 } else {
                     WorkoutSetState(
                         setNumber = num,
@@ -1319,7 +1372,12 @@ class WorkoutViewModel @Inject constructor(
             techniques = p?.let { TechniqueCodec.encode(it.techniques) },
             targetTotalReps = p?.totalReps,
             exerciseType = if (set.isTimeAndReps) TIME_AND_REPS else null,
-            pesoSollevato = if (set.isTimeAndReps) 0f else pesoSollevato
+            pesoSollevato = if (set.isTimeAndReps) 0f else pesoSollevato,
+            repParts = SetPerformance.encodeParts(set.repParts),
+            intraRests = SetPerformance.encodePauses(set.pauses).takeIf { set.repParts.size > 1 },
+            assistedReps = set.assistedReps,
+            partialReps = set.partialReps,
+            performedTechniques = encodePerformed(set.performedTechniques)
         )
     }
 
@@ -1417,7 +1475,7 @@ class WorkoutViewModel @Inject constructor(
                     timeSeconds = row.durataSecondi,
                     prescription = row.snapshotPrescription(fallback) ?: fallback,
                     rpe = row.rpe
-                )
+                ).withPerformanceOf(row)
             }
             val template = blockPlan.first()
             if (template.repMode == RepMode.TOTAL) {
@@ -1448,7 +1506,7 @@ class WorkoutViewModel @Inject constructor(
                 timeSeconds = row.durataSecondi,
                 rpe = row.rpe,
                 isExtra = row.isExtra
-            )
+            ).withPerformanceOf(row)
         }
         return result.mapIndexed { i, set -> set.copy(setNumber = i + 1) }
     }
@@ -1494,8 +1552,9 @@ class WorkoutViewModel @Inject constructor(
         val p = set?.prescription ?: return if (set?.isExtra == true) localeManager.getString(R.string.extra_badge) else null
         val context = localeManager.localizedContext()
         val labels = prescriptionLabels(context, _state.value.weightUnit)
+        // The technique the set is being done with, when it was changed from the prescribed one
         val parts = listOfNotNull(PrescriptionFormatter.intensity(p.intensityType, p.intensityValue, labels)) +
-            p.techniques.map { techniqueLabel(context, it) }
+            (set.performedTechniques ?: p.techniques).map { techniqueLabel(context, it) }
         return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
     }
 
@@ -1518,7 +1577,8 @@ class WorkoutViewModel @Inject constructor(
     ): DoubleProgression.Suggestion? {
         if (range == null) return null
         val done = previousSets.filter { it.isCompleted && !it.isWarmup }.sortedBy { it.numeroSerie }
-            .mapIndexed { i, set -> DoubleProgression.DoneSet(i + 1, set.pesoSollevato, set.repsEffettive) }
+            // Reps after a pause (a set finished in parts) do not show the weight can go up
+            .mapIndexed { i, set -> DoubleProgression.DoneSet(i + 1, set.pesoSollevato, set.straightReps) }
         return DoubleProgression.suggest(done, range, plannedSets, unit, increment)
     }
 
@@ -1764,10 +1824,10 @@ class WorkoutViewModel @Inject constructor(
             val current = ex.oneRepMaxKg ?: return@mapNotNull null
             if (ex.isCardio || ex.isTimed) return@mapNotNull null
             val best = ex.sets
-                .filter { it.isCompleted && !it.isWarmup && it.weight > 0f && it.reps in 1..5 }
-                .maxByOrNull { LoadCalculator.epley(it.weight, it.reps) } ?: return@mapNotNull null
-            val estimate = LoadCalculator.epley(best.weight, best.reps)
-            val beats = if (best.reps == 1) best.weight > current else estimate > current * 1.025f
+                .filter { it.isCompleted && !it.isWarmup && it.weight > 0f && it.straightReps in 1..5 }
+                .maxByOrNull { LoadCalculator.epley(it.weight, it.straightReps) } ?: return@mapNotNull null
+            val estimate = LoadCalculator.epley(best.weight, best.straightReps)
+            val beats = if (best.straightReps == 1) best.weight > current else estimate > current * 1.025f
             if (!beats) return@mapNotNull null
             OneRepMaxSuggestion(
                 exerciseId = ex.exercise.id,
@@ -1909,7 +1969,7 @@ class WorkoutViewModel @Inject constructor(
                 // Weights typed while the rows were being inserted had no id to be saved with yet
                 _state.value.exercises.getOrNull(exerciseIndex)?.sets?.forEach { set ->
                     val saved = inserted[set.setNumber] ?: return@forEach
-                    if (set.id == saved.id && (set.weight != saved.weight || set.reps != saved.reps)) {
+                    if (set.id == saved.id && set != saved) {
                         workoutRepository.updateSet(set.toLogEntity(sessionId, exState, executionOrder))
                     }
                 }
@@ -1943,7 +2003,7 @@ class WorkoutViewModel @Inject constructor(
 
             if (set.isCompleted) return@update curr
 
-            val updatedSet = set.copy(reps = reps)
+            val updatedSet = set.withTotalReps(reps)
             mutableSets[setIndex] = updatedSet
             
             if (updatedSet.id != null && curr.sessionId != null) {
@@ -2012,7 +2072,7 @@ class WorkoutViewModel @Inject constructor(
         editCompletedSet(exerciseIndex, setIndex) { it.copy(weight = weightKg) }
 
     fun editCompletedSetReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
-        editCompletedSet(exerciseIndex, setIndex) { it.copy(reps = reps) }
+        editCompletedSet(exerciseIndex, setIndex) { it.withTotalReps(reps) }
         // The reps of a logged set count towards a total-reps block, whose pending sets follow what is left to do
         _state.value.exercises.getOrNull(exerciseIndex)?.sets?.getOrNull(setIndex)?.prescription
             ?.takeIf { it.repMode == RepMode.TOTAL }
@@ -2096,6 +2156,14 @@ class WorkoutViewModel @Inject constructor(
         val setState = exState.sets.getOrNull(setIndex) ?: return
         
         val newIsCompleted = !setState.isCompleted
+        // A set short of its reps can be finished after a short pause; unchecking it takes the offer back
+        val missing = if (newIsCompleted) SetPerformance.missingReps(miniSetTargetOf(exState, setState), setState.reps) else 0
+        _state.update {
+            it.copy(
+                miniSetOffer = if (missing > 0) MiniSetOffer(exerciseIndex, setIndex, missing) else null,
+                miniSet = null
+            )
+        }
 
         viewModelScope.launch {
             var newSetId = setState.id
@@ -2455,6 +2523,8 @@ class WorkoutViewModel @Inject constructor(
     /** The next set of the exercise on screen or, once it is all done, the first one of the exercise after it. */
     private fun buildNextSetLabel(): NextSetInfo? {
         val state = _state.value
+        // During the pause of a mini-set, what comes next is the mini-set
+        state.miniSet?.takeIf { !it.awaitingReps }?.let { run -> return miniSetInfo(run) }
         val currentEx = state.currentExercise ?: return null
         return nextSetInfoOf(currentEx) ?: state.exercises.getOrNull(state.currentExerciseIndex + 1)?.let { nextSetInfoOf(it) }
     }
@@ -2515,6 +2585,7 @@ class WorkoutViewModel @Inject constructor(
 
     private fun handleTimerFinished() {
         if (_state.value.restTimerEndTime != null) {
+            endMiniSetPause()
             _state.update { it.copy(remainingRestSeconds = 0, restTimerEndTime = null) }
             timerNotificationHelper.cancelFinishAlarm()
             if (_state.value.timerNotificationsEnabled && timerNotificationHelper.hasNotificationPermission()) {
@@ -2607,8 +2678,120 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun skipRestTimer() {
+        endMiniSetPause()
         stopRestTimer()
         clearTimerInSession()
+    }
+
+    // ---- Mini-sets, assisted and partial reps, technique as done ----
+
+    /**
+     * The reps a set is meant to reach, when it has a goal a mini-set can make up for: an advanced set with fixed
+     * reps, the bottom of a range, the reps of the plan. AMRAP and total-reps sets, EMOM rounds, timed sets and cardio
+     * have none.
+     */
+    private fun miniSetTargetOf(ex: WorkoutExerciseState, set: WorkoutSetState): Int? {
+        if (ex.isCardio || ex.isTimed || set.isEmom) return null
+        val p = set.prescription
+        if (p != null) return p.targetReps.takeIf { p.repMode == RepMode.FIXED }
+        set.repsRange?.let { return it.min }
+        return getPlannedRepsForSet(ex, set.setNumber)
+    }
+
+    /** Starts the short pause of a mini-set on the done set at [setIndex]; its reps are asked for when the pause ends. */
+    fun startMiniSet(exerciseIndex: Int, setIndex: Int) {
+        val ex = _state.value.exercises.getOrNull(exerciseIndex) ?: return
+        val set = ex.sets.getOrNull(setIndex)?.takeIf { it.isCompleted && !ex.isTimed && !ex.isCardio } ?: return
+        val missing = SetPerformance.missingReps(miniSetTargetOf(ex, set), set.reps)
+        val run = MiniSetRun(exerciseIndex, setIndex, missing, System.currentTimeMillis())
+        startRestTimer(SetPerformance.DEFAULT_PAUSE_SECONDS, miniSetInfo(run))
+        _state.update { it.copy(miniSetOffer = null, miniSet = run) }
+    }
+
+    /** The rest notification during the pause of a mini-set: "Next: Bench - set 3: mini-set". */
+    private fun miniSetInfo(run: MiniSetRun): NextSetInfo? {
+        val ex = _state.value.exercises.getOrNull(run.exerciseIndex) ?: return null
+        val set = ex.sets.getOrNull(run.setIndex) ?: return null
+        return NextSetInfo(
+            exerciseName = ExerciseTranslations.translate(ex.exercise.nome, _languageCode.value),
+            setNumber = set.setNumber,
+            weight = set.weight,
+            reps = run.missing,
+            weightUnit = _state.value.weightUnit,
+            text = localeManager.localizedContext().getString(R.string.mini_set_notification)
+        )
+    }
+
+    private fun endMiniSetPause() {
+        val run = _state.value.miniSet ?: return
+        if (run.awaitingReps) return
+        val seconds = ((System.currentTimeMillis() - run.pauseStartedAt) / 1000).toInt().coerceAtLeast(0)
+        _state.update { it.copy(miniSet = run.copy(pauseSeconds = seconds)) }
+    }
+
+    /** Adds the [reps] of the mini-set to its set, then the normal rest starts (and offers another one if still short). */
+    fun logMiniSet(reps: Int) {
+        val run = _state.value.miniSet ?: return
+        val ex = _state.value.exercises.getOrNull(run.exerciseIndex) ?: return
+        val set = ex.sets.getOrNull(run.setIndex) ?: return
+        if (reps > 0) {
+            val parts = SetPerformance.withPart(set.repParts, set.reps, reps)
+            updateSetState(run.exerciseIndex, run.setIndex) {
+                it.copy(repParts = parts, reps = parts.sum(), pauses = it.pauses + (run.pauseSeconds ?: SetPerformance.DEFAULT_PAUSE_SECONDS))
+            }
+        }
+        val updated = _state.value.exercises.getOrNull(run.exerciseIndex)?.sets?.getOrNull(run.setIndex) ?: set
+        finishMiniSets(run.exerciseIndex, run.setIndex, updated)
+    }
+
+    /** No more mini-sets on this set: the normal rest starts. */
+    fun endMiniSet() {
+        val run = _state.value.miniSet ?: return
+        val ex = _state.value.exercises.getOrNull(run.exerciseIndex) ?: return
+        val set = ex.sets.getOrNull(run.setIndex) ?: return
+        finishMiniSets(run.exerciseIndex, run.setIndex, set, offerAgain = false)
+    }
+
+    private fun finishMiniSets(exerciseIndex: Int, setIndex: Int, set: WorkoutSetState, offerAgain: Boolean = true) {
+        val ex = _state.value.exercises.getOrNull(exerciseIndex) ?: return
+        _state.update { it.copy(miniSet = null) }
+        val missing = if (offerAgain) SetPerformance.missingReps(miniSetTargetOf(ex, set), set.reps) else 0
+        val rest = restSecondsAfter(ex, set)
+        if (rest > 0) startRestTimer(rest, buildNextSetLabel())
+        _state.update { it.copy(miniSetOffer = if (missing > 0) MiniSetOffer(exerciseIndex, setIndex, missing) else null) }
+    }
+
+    fun dismissMiniSetOffer() = _state.update { it.copy(miniSetOffer = null) }
+
+    // A set still to do keeps these through leaving the workout: its rows are saved like for a typed weight
+    fun updateSetAssistedReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
+        updateSetState(exerciseIndex, setIndex) { it.copy(assistedReps = reps.coerceIn(0, 99)) }
+        persistPendingSets(exerciseIndex)
+    }
+
+    fun updateSetPartialReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
+        updateSetState(exerciseIndex, setIndex) { it.copy(partialReps = reps.coerceIn(0, 99)) }
+        persistPendingSets(exerciseIndex)
+    }
+
+    /**
+     * The techniques a set was really done with ([techniques] null: as prescribed). With [applyToFollowing] the sets of
+     * the same block still to do get them too: what could not be done once rarely can on the next set.
+     */
+    fun setPerformedTechniques(exerciseIndex: Int, setIndex: Int, techniques: List<Technique>?, applyToFollowing: Boolean) {
+        val ex = _state.value.exercises.getOrNull(exerciseIndex) ?: return
+        val set = ex.sets.getOrNull(setIndex) ?: return
+        val planned = set.prescription?.techniques.orEmpty()
+        // Back to the plan when nothing differs from it
+        val performed = techniques?.takeIf { it != planned }
+        val block = set.prescription?.blockIndex
+        ex.sets.forEachIndexed { index, other ->
+            val sameBlock = other.prescription?.blockIndex == block && other.isExtra == set.isExtra
+            if (index == setIndex || (applyToFollowing && index > setIndex && !other.isCompleted && sameBlock)) {
+                updateSetState(exerciseIndex, index) { it.copy(performedTechniques = performed) }
+            }
+        }
+        persistPendingSets(exerciseIndex)
     }
 
     // ---- Warmup / General Timer ----

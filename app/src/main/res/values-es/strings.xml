@@ -930,6 +930,38 @@
     <string name="cardio_remove_set">Eliminar serie</string>
     <string name="cardio_sets_total">%1$d series</string>
     <string name="seconds_label">Segundos</string>
+    <string name="mini_set_offer">Completa la serie · faltan %1$d rep.</string>
+    <string name="mini_set_offer_free">Añadir mini-serie</string>
+    <string name="mini_set_pause">Pausa mini-serie · serie %1$d</string>
+    <string name="mini_set_title">Mini-serie · serie %1$d</string>
+    <string name="mini_set_so_far">Hasta ahora %1$s</string>
+    <string name="mini_set_log">REGISTRAR MINI-SERIE</string>
+    <string name="mini_set_end">TERMINAR SERIE</string>
+    <string name="mini_set_add">Añadir mini-serie</string>
+    <string name="mini_set_notification">Mini-serie</string>
+    <string name="assisted_reps_label">Asistidas</string>
+    <string name="partial_reps_label">Parciales</string>
+    <string name="performed_technique_badge">Hecha: %1$s</string>
+    <string name="performed_technique_title">Técnica realizada</string>
+    <string name="performed_technique_hint">Cambia lo que no pudiste hacer como estaba previsto: la prescripción se mantiene.</string>
+    <string name="performed_apply_following">También las siguientes series del bloque</string>
+    <string name="performed_restore">Como prescrito</string>
+    <string name="technique_not_done">No realizada</string>
+    <string name="performed_technique_none">Sin técnica</string>
+    <string name="technique_edit">Técnica</string>
+    <string name="mini_set_parts_label">Mini-series (p. ej. 2+1+1)</string>
+    <string name="set_extras_more">Asistidas, parciales</string>
+    <string name="set_extras_more_technique">Asistidas, parciales, técnica</string>
+    <string name="parts_error">Usa números enteros separados por +, como 2+1+1</string>
+    <string name="parts_badge">%1$s · pausas %2$s</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%d asistida</item>
+        <item quantity="other">+%d asistidas</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%d parcial</item>
+        <item quantity="other">+%d parciales</item>
+    </plurals>
     <string name="notification_next_set_text">Siguiente: %1$s - Serie %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">Bloques %1RM, RPE y técnicas</string>
     <string name="one_rep_max">1RM</string>

@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.data.repository
 
+import com.emanuel5014.trainable.data.local.entity.parts
+import com.emanuel5014.trainable.data.local.entity.pauses
+import com.emanuel5014.trainable.data.local.entity.performed
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
@@ -750,7 +753,7 @@ class WorkoutRepository @Inject constructor(
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine(if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit))
+        sb.appendLine((if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit)) + "," + performanceCsvHeader(languageCode))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -796,7 +799,13 @@ class WorkoutRepository @Inject constructor(
                 val warmup = if (setLog.isWarmup) "1" else "0"
 
                 val prescriptionColumns = if (advanced) ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup" else ""
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns")
+                // How the set really went: its parts and pauses, help, partials, the technique as done
+                val performed = setLog.performed?.let { list ->
+                    if (list.isEmpty()) context.getString(com.emanuel5014.trainable.R.string.performed_technique_none)
+                    else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
+                }.orEmpty()
+                val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns")
             }
 
             session.cardio.forEach { cardio ->
@@ -805,7 +814,7 @@ class WorkoutRepository @Inject constructor(
                 val week = session.session.programWeek?.toString() ?: ""
                 val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,")
             }
         }
 
@@ -822,6 +831,15 @@ class WorkoutRepository @Inject constructor(
             else -> "Week,% 1RM,Target Reps,Techniques,RPE,Extra,Warm-up"
         }
         return basicCsvHeader(languageCode, weightUnit) + "," + prescriptionColumns
+    }
+
+    private fun performanceCsvHeader(languageCode: String): String = when (languageCode) {
+        "it" -> "Mini-serie,Pause (s),Aiutate,Parziali,Tecnica Eseguita"
+        "es" -> "Mini-series,Pausas (s),Asistidas,Parciales,Técnica Realizada"
+        "fr" -> "Mini-séries,Pauses (s),Aidées,Partielles,Technique Réalisée"
+        "de" -> "Minisätze,Pausen (s),Mit Hilfe,Teilwdh.,Ausgeführte Technik"
+        "pt" -> "Mini-séries,Pausas (s),Assistidas,Parciais,Técnica Realizada"
+        else -> "Mini-sets,Pauses (s),Assisted,Partials,Technique Done"
     }
 
     private fun basicCsvHeader(languageCode: String, weightUnit: String): String {

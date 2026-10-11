@@ -78,5 +78,23 @@ data class SetLogEntity(
      * duration alone and a plain one by having none (see [SetLogKind]).
      */
     @ColumnInfo(name = "exercise_type")
-    val exerciseType: String? = null
+    val exerciseType: String? = null,
+    /**
+     * The parts of a set finished after short pauses (rest-pause / cluster), "2+1+1"; null for a set done in one go.
+     * [repsEffettive] is their sum (see [SetPerformance]).
+     */
+    @ColumnInfo(name = "rep_parts")
+    val repParts: String? = null,
+    /** Seconds of each pause between the parts, "60,50". */
+    @ColumnInfo(name = "intra_rests")
+    val intraRests: String? = null,
+    /** Reps done with a spotter's help, on top of [repsEffettive]. */
+    @ColumnInfo(name = "assisted_reps")
+    val assistedReps: Int = 0,
+    /** Partial reps after the full ones, on top of [repsEffettive]. */
+    @ColumnInfo(name = "partial_reps")
+    val partialReps: Int = 0,
+    /** The techniques the set was really done with when they differ from the planned ones ([techniques]); null as planned. */
+    @ColumnInfo(name = "performed_techniques")
+    val performedTechniques: String? = null
 )

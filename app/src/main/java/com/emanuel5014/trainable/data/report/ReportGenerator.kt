@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.data.report
 
+import com.emanuel5014.trainable.data.local.entity.straightReps
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.kind
@@ -118,12 +119,12 @@ class ReportGenerator @Inject constructor(
                     rpe = setWithExercise.setLog.rpe.takeIf { advanced },
                     isWarmup = setWithExercise.setLog.isWarmup,
                     note = setWithExercise.setLog.note,
-                    prescription = if (advanced) {
-                        com.emanuel5014.trainable.ui.components.setLogPrescriptionText(
-                            localeManager.localizedContext(), setWithExercise.setLog
-                        )
-                    } else null,
-                    seconds = setWithExercise.setLog.durataSecondi
+                    // The prescription with advanced programming on; mini-sets, help and partials always
+                    prescription = com.emanuel5014.trainable.ui.components.setLogDetailsText(
+                        localeManager.localizedContext(), setWithExercise.setLog, withPrescription = advanced
+                    ),
+                    seconds = setWithExercise.setLog.durataSecondi,
+                    straightReps = setWithExercise.setLog.straightReps
                 )
                 kindRows.getOrPut(exerciseId) { mutableListOf() }.add(setWithExercise.setLog)
 
@@ -268,8 +269,8 @@ class ReportGenerator @Inject constructor(
         val maxVolumeDate = maxVolumeEntry?.first ?: 0L
 
         val bestOneRM = allSets
-            .filter { !it.isWarmup && it.weight > 0 && it.reps > 0 && it.seconds == null }
-            .maxOfOrNull { set -> com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.weight, set.reps) }
+            .filter { !it.isWarmup && it.weight > 0 && it.straightReps > 0 && it.seconds == null }
+            .maxOfOrNull { set -> com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.weight, set.straightReps) }
 
         val working = allSets.filter { !it.isWarmup }
         return ExerciseSummary(

@@ -137,6 +137,7 @@ interface AnalyticsDao {
             AND w.timestamp >= :startDate
             AND s.reps_effettive > 0
             AND s.is_warmup = 0
+            AND s.rep_parts IS NULL
         GROUP BY date(w.timestamp / 1000, 'unixepoch')
         ORDER BY MIN(w.timestamp) ASC
     """)
@@ -162,6 +163,7 @@ interface AnalyticsDao {
             COALESCE(MAX(s.peso_sollevato), 0) AS maxWeight,
             COALESCE(MAX(
                 CASE 
+                    WHEN s.rep_parts IS NOT NULL THEN 0
                     WHEN s.reps_effettive = 1 THEN s.peso_sollevato
                     ELSE s.peso_sollevato * (1.0 + CAST(s.reps_effettive AS REAL) / 30.0)
                 END

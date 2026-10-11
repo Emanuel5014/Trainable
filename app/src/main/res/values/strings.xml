@@ -930,6 +930,38 @@
     <string name="cardio_remove_set">Remove set</string>
     <string name="cardio_sets_total">%1$d sets</string>
     <string name="seconds_label">Seconds</string>
+    <string name="mini_set_offer">Finish the set · %1$d reps left</string>
+    <string name="mini_set_offer_free">Add a mini-set</string>
+    <string name="mini_set_pause">Mini-set pause · set %1$d</string>
+    <string name="mini_set_title">Mini-set · set %1$d</string>
+    <string name="mini_set_so_far">So far %1$s</string>
+    <string name="mini_set_log">LOG MINI-SET</string>
+    <string name="mini_set_end">END SET</string>
+    <string name="mini_set_add">Add a mini-set</string>
+    <string name="mini_set_notification">Mini-set</string>
+    <string name="assisted_reps_label">Assisted</string>
+    <string name="partial_reps_label">Partials</string>
+    <string name="performed_technique_badge">Done: %1$s</string>
+    <string name="performed_technique_title">Technique as done</string>
+    <string name="performed_technique_hint">Change what you could not do as planned: the prescription stays.</string>
+    <string name="performed_apply_following">Also the next sets of this block</string>
+    <string name="performed_restore">As planned</string>
+    <string name="technique_not_done">Not done</string>
+    <string name="performed_technique_none">No technique</string>
+    <string name="technique_edit">Technique</string>
+    <string name="mini_set_parts_label">Mini-sets (e.g. 2+1+1)</string>
+    <string name="set_extras_more">Assisted, partial reps</string>
+    <string name="set_extras_more_technique">Assisted, partials, technique</string>
+    <string name="parts_error">Use whole numbers separated by +, like 2+1+1</string>
+    <string name="parts_badge">%1$s · pauses %2$s</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%d assisted</item>
+        <item quantity="other">+%d assisted</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%d partial</item>
+        <item quantity="other">+%d partials</item>
+    </plurals>
     <string name="notification_next_set_text">Next: %1$s - Set %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">%1RM blocks, RPE and techniques</string>
     <string name="one_rep_max">1RM</string>

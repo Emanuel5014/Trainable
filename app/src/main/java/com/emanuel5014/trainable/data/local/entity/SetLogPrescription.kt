@@ -21,7 +21,8 @@ fun SetLogEntity.withPrescription(planned: PlannedSet?): SetLogEntity = copy(
     targetTotalReps = planned?.totalReps
 )
 
-fun SetLogEntity.withoutPrescription(): SetLogEntity = withPrescription(null).copy(isExtra = false)
+/** Drops the prescription snapshot, and with it the technique the set was done with instead of the planned one. */
+fun SetLogEntity.withoutPrescription(): SetLogEntity = withPrescription(null).copy(isExtra = false, performedTechniques = null)
 
 /**
  * The rep range a plain set was done against ("10–15"), kept in `target_reps` which plain sets never used. It lets a

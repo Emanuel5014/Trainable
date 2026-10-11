@@ -162,6 +162,7 @@ import androidx.compose.material3.OutlinedButton
 import com.emanuel5014.trainable.ui.components.WeightTimeInput
 import com.emanuel5014.trainable.ui.components.TimeRepsInput
 import com.emanuel5014.trainable.ui.components.setValueText
+import com.emanuel5014.trainable.ui.components.setPerformanceBadges
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.components.RestSlider
@@ -226,6 +227,21 @@ fun WorkoutExecutionScreen(
     var isEditingValues by remember { mutableStateOf(false) }
     // Index of a set being edited in place in the bottom hub, done or still to do (none by default); it resets with the exercise
     var editingSetIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
+    // The set whose technique-as-done dialog is open (exercise index, set index)
+    var techniqueDialogFor by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    techniqueDialogFor?.let { (exIndex, setIndex) ->
+        state.exercises.getOrNull(exIndex)?.sets?.getOrNull(setIndex)?.let { set ->
+            PerformedTechniqueDialog(
+                planned = set.prescription?.techniques.orEmpty(),
+                performed = set.performedTechniques,
+                onDismiss = { techniqueDialogFor = null },
+                onSave = { techniques, applyToFollowing ->
+                    viewModel.setPerformedTechniques(exIndex, setIndex, techniques, applyToFollowing)
+                    techniqueDialogFor = null
+                }
+            )
+        }
+    }
     var lastEditedIndex by remember { mutableIntStateOf(0) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
@@ -1030,6 +1046,8 @@ fun WorkoutExecutionScreen(
                                                 setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
                                                 set.rpe?.let { add(stringResource(R.string.rpe_short, PrescriptionFormatter.number(it))) }
                                                 if (set.isExtra) add(stringResource(R.string.extra_badge))
+                                                // How the set really went: parts after short pauses, help, partials, technique as done
+                                                addAll(setPerformanceBadges(context, set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
                                             },
                                             setNumber = set.setNumber,
                                             weight = set.weight,
@@ -1454,6 +1472,8 @@ fun WorkoutExecutionScreen(
 
                         AnimatedContent(
                             targetState = when {
+                                // The pause of a mini-set is over: how many reps did it have?
+                                state.miniSet?.awaitingReps == true -> HubMode.MiniSet
                                 // A set being edited wins over the rest card, which stays visible in a slim form
                                 setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
                                 isResting -> HubMode.Resting
@@ -1539,6 +1559,24 @@ fun WorkoutExecutionScreen(
                                                         onValueChange = { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                                     )
                                                 }
+                                                SetExtrasRow(
+                                                    assisted = editedSet.assistedReps,
+                                                    partial = editedSet.partialReps,
+                                                    onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, editedIndex, it) },
+                                                    onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, editedIndex, it) },
+                                                    hapticEnabled = state.hapticEnabled,
+                                                    techniqueChanged = editedSet.performedTechniques != null,
+                                                    onEditTechnique = if (editedSet.prescription?.techniques.isNullOrEmpty()) null else {
+                                                        { techniqueDialogFor = state.currentExerciseIndex to editedIndex }
+                                                    }
+                                                )
+                                                // A set already done can still be finished after a short pause
+                                                if (editedSet.isCompleted && !editedSet.isEmom) {
+                                                    MiniSetOfferButton(missing = 0, onClick = {
+                                                        editingSetIndex = null
+                                                        viewModel.startMiniSet(state.currentExerciseIndex, editedIndex)
+                                                    })
+                                                }
                                             }
                                             GymButton(
                                                 onClick = { editingSetIndex = null },
@@ -1568,6 +1606,14 @@ fun WorkoutExecutionScreen(
                                             showSubtract = state.showTimerSubtract,
                                             onSkip = { viewModel.skipRestTimer() }
                                         )
+                                        val miniSet = state.miniSet
+                                        val offer = state.miniSetOffer
+                                        if (miniSet != null) {
+                                            val miniSetNumber = state.exercises.getOrNull(miniSet.exerciseIndex)?.sets?.getOrNull(miniSet.setIndex)?.setNumber ?: 0
+                                            MiniSetPauseLabel(miniSetNumber, modifier = Modifier.align(Alignment.CenterHorizontally))
+                                        } else if (offer != null) {
+                                            MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                        }
                                         // The rest is the time to load the bar for the next set
                                         ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
                                     }
@@ -1653,6 +1699,17 @@ fun WorkoutExecutionScreen(
                                                         onValueChange = { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
                                                     )
                                                 }
+                                                SetExtrasRow(
+                                                    assisted = set.assistedReps,
+                                                    partial = set.partialReps,
+                                                    onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, activeSetIndex, it) },
+                                                    onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, activeSetIndex, it) },
+                                                    hapticEnabled = state.hapticEnabled,
+                                                    techniqueChanged = set.performedTechniques != null,
+                                                    onEditTechnique = if (set.prescription?.techniques.isNullOrEmpty()) null else {
+                                                        { techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
+                                                    }
+                                                )
                                             }
                                             LogSetButton(onClick = {
                                                 if (currentExState?.isTimed == true) {
@@ -1748,6 +1805,21 @@ fun WorkoutExecutionScreen(
                                         }
                                     }
                                 }
+                                HubMode.MiniSet -> {
+                                    state.miniSet?.let { run ->
+                                        val miniSetSet = state.exercises.getOrNull(run.exerciseIndex)?.sets?.getOrNull(run.setIndex)
+                                        if (miniSetSet != null) {
+                                            MiniSetEntry(
+                                                setNumber = miniSetSet.setNumber,
+                                                soFar = miniSetSet.repParts.ifEmpty { listOf(miniSetSet.reps) }.joinToString("+"),
+                                                initialReps = run.missing,
+                                                hapticEnabled = state.hapticEnabled,
+                                                onLog = { viewModel.logMiniSet(it) },
+                                                onEnd = { viewModel.endMiniSet() }
+                                            )
+                                        }
+                                    }
+                                }
                                 HubMode.Completed -> {
                                     val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
                                     val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
@@ -1756,6 +1828,10 @@ fun WorkoutExecutionScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
+                                        // The last set of the workout has no rest to offer it in
+                                        state.miniSetOffer?.let { offer ->
+                                            MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                        }
                                         if (allowModify) {
                                             GymButton(
                                                 onClick = {
@@ -2147,7 +2223,7 @@ fun WorkoutExecutionScreen(
     }
 }
 
-enum class HubMode { Logging, Editing, EditingSet, Resting, Completed, Cardio }
+enum class HubMode { Logging, Editing, EditingSet, Resting, MiniSet, Completed, Cardio }
 
 @Composable
 fun rememberAnimatedShape(

@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.encodePerformed
+import com.emanuel5014.trainable.data.local.entity.parts
+import com.emanuel5014.trainable.data.local.entity.pauses
+import com.emanuel5014.trainable.data.local.entity.performed
+import com.emanuel5014.trainable.domain.prescription.SetPerformance
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
@@ -1629,9 +1634,30 @@ fun EditSetDialog(
     var note by remember { mutableStateOf(set.note ?: "") }
     var kind by remember { mutableStateOf(set.kind) }
     var rpe by remember { mutableStateOf(set.rpe) }
+    // How the set really went
+    var partsText by remember { mutableStateOf(set.parts.joinToString("+")) }
+    var assisted by remember { mutableStateOf(set.assistedReps.takeIf { it > 0 }?.toString().orEmpty()) }
+    var partial by remember { mutableStateOf(set.partialReps.takeIf { it > 0 }?.toString().orEmpty()) }
+    var performed by remember { mutableStateOf(set.performed) }
+    var showTechniqueDialog by remember { mutableStateOf(false) }
+    val plannedTechniques = remember(set) { com.emanuel5014.trainable.domain.prescription.TechniqueCodec.decode(set.techniques) }
+    val parsedParts = partsText.takeIf { it.isNotBlank() }?.let { SetPerformance.parseParts(it) }
+    val partsInvalid = partsText.isNotBlank() && parsedParts == null
+    if (showTechniqueDialog) {
+        com.emanuel5014.trainable.ui.screens.workout.PerformedTechniqueDialog(
+            planned = plannedTechniques,
+            performed = performed,
+            onDismiss = { showTechniqueDialog = false },
+            onSave = { techniques, _ ->
+                performed = techniques
+                showTechniqueDialog = false
+            },
+            showApplyToFollowing = false
+        )
+    }
 
     // A Time & Reps set has no weight to fill in
-    val isValid = (kind == SetLogKind.TIME_AND_REPS || weight.isNotBlank()) && when (kind) {
+    val isValid = !partsInvalid && (kind == SetLogKind.TIME_AND_REPS || weight.isNotBlank()) && when (kind) {
         SetLogKind.STRENGTH -> reps.isNotBlank()
         SetLogKind.TIME_AND_WEIGHT -> seconds.isNotBlank()
         SetLogKind.TIME_AND_REPS -> seconds.isNotBlank() && reps.isNotBlank()
@@ -1699,8 +1725,51 @@ fun EditSetDialog(
                         value = reps,
                         onValueChange = { reps = it },
                         label = stringResource(R.string.reps),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        // A set in parts has their sum as its reps
+                        enabled = (parsedParts?.size ?: 0) < 2
                     )
+                    GymInputField(
+                        value = partsText,
+                        onValueChange = { text ->
+                            partsText = text.filter { it.isDigit() || it == '+' || it == ' ' }
+                            SetPerformance.parseParts(partsText)?.takeIf { it.size > 1 }?.let { reps = it.sum().toString() }
+                        },
+                        label = stringResource(R.string.mini_set_parts_label),
+                        supportingText = if (partsInvalid) stringResource(R.string.parts_error) else null,
+                        isError = partsInvalid
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                        GymInputField(
+                            value = assisted,
+                            onValueChange = { assisted = it.filter { c -> c.isDigit() }.take(2) },
+                            label = stringResource(R.string.assisted_reps_label),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                        GymInputField(
+                            value = partial,
+                            onValueChange = { partial = it.filter { c -> c.isDigit() }.take(2) },
+                            label = stringResource(R.string.partial_reps_label),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (plannedTechniques.isNotEmpty()) {
+                        val techniqueContext = LocalContext.current
+                        androidx.compose.material3.TextButton(onClick = { showTechniqueDialog = true }) {
+                            Text(
+                                text = performed?.let { list ->
+                                    if (list.isEmpty()) stringResource(R.string.performed_technique_none)
+                                    else stringResource(
+                                        R.string.performed_technique_badge,
+                                        list.joinToString(" · ") { com.emanuel5014.trainable.ui.components.techniqueLabel(techniqueContext, it) }
+                                    )
+                                } ?: stringResource(R.string.performed_technique_title),
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
                     if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
                         com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
                     }
@@ -1756,7 +1825,21 @@ fun EditSetDialog(
                             durataSecondi = if (kind.isTimed) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null },
                             rpe = if (kind.isTimed) null else rpe
-                        ).asKind(kind)
+                        ).asKind(kind).let { edited ->
+                            if (kind.isTimed) edited.copy(repParts = null, intraRests = null, assistedReps = 0, partialReps = 0)
+                            else {
+                                val parts = parsedParts?.takeIf { it.size > 1 }
+                                edited.copy(
+                                    repParts = parts?.let { SetPerformance.encodeParts(it) },
+                                    repsEffettive = parts?.sum() ?: edited.repsEffettive,
+                                    // The pauses there were stay with the parts they came between
+                                    intraRests = parts?.let { SetPerformance.encodePauses(edited.pauses.take(it.size - 1)) },
+                                    assistedReps = assisted.toIntOrNull() ?: 0,
+                                    partialReps = partial.toIntOrNull() ?: 0,
+                                    performedTechniques = encodePerformed(performed)
+                                )
+                            }
+                        }
                         onConfirm(updatedSet)
                     },
                     enabled = isValid,

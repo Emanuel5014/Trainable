@@ -58,7 +58,7 @@ interface OneRepMaxDao {
         FROM set_logs s INNER JOIN workout_sessions ws ON ws.id = s.session_id
         WHERE ws.is_finished = 1 AND s.is_completed = 1 AND s.is_warmup = 0
           AND s.peso_sollevato > 0 AND s.reps_effettive BETWEEN 1 AND 12
-          AND s.durata_secondi IS NULL AND ws.timestamp >= :sinceTimestamp
+          AND s.durata_secondi IS NULL AND s.rep_parts IS NULL AND ws.timestamp >= :sinceTimestamp
         GROUP BY s.exercise_id
         """
     )

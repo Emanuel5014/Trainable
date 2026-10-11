@@ -516,7 +516,7 @@ fun WorkoutShareCard(
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
                                             )
-                                            val shareBadges = if (showPrescription) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(shareContext, set) else null
+                                            val shareBadges = com.emanuel5014.trainable.ui.components.setLogDetailsText(shareContext, set, withPrescription = showPrescription)
                                             if (shareBadges != null) {
                                                 Text(
                                                     text = "  $shareBadges",
@@ -629,7 +629,7 @@ fun WorkoutShareCard(
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
                                             )
-                                            val shareBadges = if (showPrescription) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(shareContext, set) else null
+                                            val shareBadges = com.emanuel5014.trainable.ui.components.setLogDetailsText(shareContext, set, withPrescription = showPrescription)
                                             if (shareBadges != null) {
                                                 Text(
                                                     text = "  $shareBadges",

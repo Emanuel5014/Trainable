@@ -737,7 +737,7 @@ fun Application.configureServer(
                                 if (swd.setLog.isWarmup) put("isWarmup", true)
                                 if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
-                                if (advanced) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(context, swd.setLog)?.let { put("prescription", it) }
+                                com.emanuel5014.trainable.ui.components.setLogDetailsText(context, swd.setLog, withPrescription = advanced)?.let { put("prescription", it) }
                             })
                         }
                     }

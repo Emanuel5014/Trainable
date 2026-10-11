@@ -44,7 +44,9 @@ data class SetEntry(
     /** How long a timed or cardio set lasted. */
     val seconds: Int? = null,
     /** Distance of a cardio set, in km. */
-    val distanceKm: Float? = null
+    val distanceKm: Float? = null,
+    /** Reps done in one go: all of them, or the first part of a set finished after short pauses. */
+    val straightReps: Int = reps
 )
 
 data class ExerciseSummary(

@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.domain.compare
 
+import com.emanuel5014.trainable.data.local.entity.straightReps
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.isTimeAndReps
@@ -14,7 +15,8 @@ import kotlin.math.abs
 private const val MAX_REPS_FOR_E1RM = 12
 
 private fun SetLogEntity.e1rm(): Float? =
-    if (durataSecondi == null && repsEffettive in 1..MAX_REPS_FOR_E1RM) LoadCalculator.epley(pesoSollevato, repsEffettive) else null
+    // A set finished after short pauses only counts its reps done in one go
+    if (durataSecondi == null && straightReps in 1..MAX_REPS_FOR_E1RM) LoadCalculator.epley(pesoSollevato, straightReps) else null
 
 enum class Trend { UP, DOWN, SAME }
 
