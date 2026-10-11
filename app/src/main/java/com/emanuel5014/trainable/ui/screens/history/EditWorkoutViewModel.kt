@@ -74,6 +74,12 @@ class EditWorkoutViewModel @Inject constructor(
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
+    val setPerformanceEnabled = userPreferencesRepository.setPerformanceEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     val editablePresetExercises = userPreferencesRepository.editablePresetExercises.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

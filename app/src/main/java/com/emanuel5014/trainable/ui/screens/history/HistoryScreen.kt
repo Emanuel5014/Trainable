@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.data.local.entity.encodePerformed
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
 import com.emanuel5014.trainable.data.local.entity.performed
+import com.emanuel5014.trainable.data.local.entity.isInParts
 import com.emanuel5014.trainable.domain.prescription.SetPerformance
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
@@ -1619,6 +1620,7 @@ fun EditSetDialog(
     set: SetLogEntity,
     weightUnit: String = "kg",
     isNewSet: Boolean = false,
+    setPerformanceEnabled: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: (SetLogEntity) -> Unit,
     onDelete: (SetLogEntity) -> Unit
@@ -1643,6 +1645,10 @@ fun EditSetDialog(
     val plannedTechniques = remember(set) { com.emanuel5014.trainable.domain.prescription.TechniqueCodec.decode(set.techniques) }
     val parsedParts = partsText.takeIf { it.isNotBlank() }?.let { SetPerformance.parseParts(it) }
     val partsInvalid = partsText.isNotBlank() && parsedParts == null
+    // With the setting off a set carries only its note, but one saved with these details can still fix them
+    val showExtras = remember(set) {
+        setPerformanceEnabled || set.isInParts || set.assistedReps > 0 || set.partialReps > 0 || set.performedTechniques != null
+    }
     if (showTechniqueDialog) {
         com.emanuel5014.trainable.ui.screens.workout.PerformedTechniqueDialog(
             planned = plannedTechniques,
@@ -1729,45 +1735,47 @@ fun EditSetDialog(
                         // A set in parts has their sum as its reps
                         enabled = (parsedParts?.size ?: 0) < 2
                     )
-                    GymInputField(
-                        value = partsText,
-                        onValueChange = { text ->
-                            partsText = text.filter { it.isDigit() || it == '+' || it == ' ' }
-                            SetPerformance.parseParts(partsText)?.takeIf { it.size > 1 }?.let { reps = it.sum().toString() }
-                        },
-                        label = stringResource(R.string.mini_set_parts_label),
-                        supportingText = if (partsInvalid) stringResource(R.string.parts_error) else null,
-                        isError = partsInvalid
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                    if (showExtras) {
                         GymInputField(
-                            value = assisted,
-                            onValueChange = { assisted = it.filter { c -> c.isDigit() }.take(2) },
-                            label = stringResource(R.string.assisted_reps_label),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
+                            value = partsText,
+                            onValueChange = { text ->
+                                partsText = text.filter { it.isDigit() || it == '+' || it == ' ' }
+                                SetPerformance.parseParts(partsText)?.takeIf { it.size > 1 }?.let { reps = it.sum().toString() }
+                            },
+                            label = stringResource(R.string.mini_set_parts_label),
+                            supportingText = if (partsInvalid) stringResource(R.string.parts_error) else null,
+                            isError = partsInvalid
                         )
-                        GymInputField(
-                            value = partial,
-                            onValueChange = { partial = it.filter { c -> c.isDigit() }.take(2) },
-                            label = stringResource(R.string.partial_reps_label),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    if (plannedTechniques.isNotEmpty()) {
-                        val techniqueContext = LocalContext.current
-                        androidx.compose.material3.TextButton(onClick = { showTechniqueDialog = true }) {
-                            Text(
-                                text = performed?.let { list ->
-                                    if (list.isEmpty()) stringResource(R.string.performed_technique_none)
-                                    else stringResource(
-                                        R.string.performed_technique_badge,
-                                        list.joinToString(" · ") { com.emanuel5014.trainable.ui.components.techniqueLabel(techniqueContext, it) }
-                                    )
-                                } ?: stringResource(R.string.performed_technique_title),
-                                fontWeight = FontWeight.ExtraBold
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                            GymInputField(
+                                value = assisted,
+                                onValueChange = { assisted = it.filter { c -> c.isDigit() }.take(2) },
+                                label = stringResource(R.string.assisted_reps_label),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
                             )
+                            GymInputField(
+                                value = partial,
+                                onValueChange = { partial = it.filter { c -> c.isDigit() }.take(2) },
+                                label = stringResource(R.string.partial_reps_label),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (plannedTechniques.isNotEmpty()) {
+                            val techniqueContext = LocalContext.current
+                            androidx.compose.material3.TextButton(onClick = { showTechniqueDialog = true }) {
+                                Text(
+                                    text = performed?.let { list ->
+                                        if (list.isEmpty()) stringResource(R.string.performed_technique_none)
+                                        else stringResource(
+                                            R.string.performed_technique_badge,
+                                            list.joinToString(" · ") { com.emanuel5014.trainable.ui.components.techniqueLabel(techniqueContext, it) }
+                                        )
+                                    } ?: stringResource(R.string.performed_technique_title),
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
                         }
                     }
                     if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {

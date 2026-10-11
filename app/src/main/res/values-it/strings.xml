@@ -1211,6 +1211,8 @@
     <!-- Starting weight, rep ranges and double progression -->
     <string name="starting_weight">Peso di partenza</string>
     <string name="starting_weight_desc">Dai a ogni esercizio di una scheda un peso da cui partire. Finché la scheda non ha un allenamento da cui copiare, le serie partono da lì, o dall\'ultimo peso che hai usato per quell\'esercizio.</string>
+    <string name="set_performance_setting">Dettagli delle serie</string>
+    <string name="set_performance_setting_desc">Mini-serie dopo una breve pausa, reps aiutate e parziali e la tecnica con cui hai fatto davvero la serie. Se è spento, le serie hanno solo la nota.</string>
     <string name="starting_weight_field">Peso di partenza (%1$s)</string>
     <string name="starting_weight_hint">Facoltativo · usato fino al primo allenamento registrato</string>
     <string name="reps_mode_fixed">Fisso</string>

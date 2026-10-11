@@ -1211,6 +1211,8 @@
     <!-- Starting weight, rep ranges and double progression -->
     <string name="starting_weight">Startgewicht</string>
     <string name="starting_weight_desc">Gib jeder Übung einer Routine ein Gewicht zum Starten. Solange die Routine noch kein Training zum Übernehmen hat, beginnen die Sätze dort oder beim zuletzt genutzten Gewicht dieser Übung.</string>
+    <string name="set_performance_setting">Satzdetails</string>
+    <string name="set_performance_setting_desc">Mini-Sätze nach einer kurzen Pause, unterstützte und Teilwiederholungen und die Technik, mit der der Satz wirklich gemacht wurde. Aus haben Sätze nur ihre Notiz.</string>
     <string name="starting_weight_field">Startgewicht (%1$s)</string>
     <string name="starting_weight_hint">Optional · gilt bis zum ersten erfassten Training</string>
     <string name="reps_mode_fixed">Fest</string>

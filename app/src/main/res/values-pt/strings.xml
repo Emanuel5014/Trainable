@@ -1211,6 +1211,8 @@
     <!-- Starting weight, rep ranges and double progression -->
     <string name="starting_weight">Peso inicial</string>
     <string name="starting_weight_desc">Dê a cada exercício de uma rotina um peso para começar. Enquanto a rotina não tiver um treino para copiar, as séries começam aí, ou no último peso que você usou nesse exercício.</string>
+    <string name="set_performance_setting">Detalhes das séries</string>
+    <string name="set_performance_setting_desc">Mini-séries após uma pausa curta, reps assistidas e parciais e a técnica com que a série foi realmente feita. Desligado, as séries ficam só com a nota.</string>
     <string name="starting_weight_field">Peso inicial (%1$s)</string>
     <string name="starting_weight_hint">Opcional · usado até o primeiro treino registrado</string>
     <string name="reps_mode_fixed">Fixo</string>

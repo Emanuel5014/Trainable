@@ -1559,19 +1559,21 @@ fun WorkoutExecutionScreen(
                                                         onValueChange = { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                                     )
                                                 }
-                                                SetExtrasRow(
-                                                    assisted = editedSet.assistedReps,
-                                                    partial = editedSet.partialReps,
-                                                    onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, editedIndex, it) },
-                                                    onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, editedIndex, it) },
-                                                    hapticEnabled = state.hapticEnabled,
-                                                    techniqueChanged = editedSet.performedTechniques != null,
-                                                    onEditTechnique = if (editedSet.prescription?.techniques.isNullOrEmpty()) null else {
-                                                        { techniqueDialogFor = state.currentExerciseIndex to editedIndex }
-                                                    }
-                                                )
+                                                if (state.setPerformanceEnabled) {
+                                                    SetExtrasRow(
+                                                        assisted = editedSet.assistedReps,
+                                                        partial = editedSet.partialReps,
+                                                        onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, editedIndex, it) },
+                                                        onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, editedIndex, it) },
+                                                        hapticEnabled = state.hapticEnabled,
+                                                        techniqueChanged = editedSet.performedTechniques != null,
+                                                        onEditTechnique = if (editedSet.prescription?.techniques.isNullOrEmpty()) null else {
+                                                            { techniqueDialogFor = state.currentExerciseIndex to editedIndex }
+                                                        }
+                                                    )
+                                                }
                                                 // A set already done can still be finished after a short pause
-                                                if (editedSet.isCompleted && !editedSet.isEmom) {
+                                                if (state.setPerformanceEnabled && editedSet.isCompleted && !editedSet.isEmom) {
                                                     MiniSetOfferButton(missing = 0, onClick = {
                                                         editingSetIndex = null
                                                         viewModel.startMiniSet(state.currentExerciseIndex, editedIndex)
@@ -1699,17 +1701,19 @@ fun WorkoutExecutionScreen(
                                                         onValueChange = { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
                                                     )
                                                 }
-                                                SetExtrasRow(
-                                                    assisted = set.assistedReps,
-                                                    partial = set.partialReps,
-                                                    onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, activeSetIndex, it) },
-                                                    onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, activeSetIndex, it) },
-                                                    hapticEnabled = state.hapticEnabled,
-                                                    techniqueChanged = set.performedTechniques != null,
-                                                    onEditTechnique = if (set.prescription?.techniques.isNullOrEmpty()) null else {
-                                                        { techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
-                                                    }
-                                                )
+                                                if (state.setPerformanceEnabled) {
+                                                    SetExtrasRow(
+                                                        assisted = set.assistedReps,
+                                                        partial = set.partialReps,
+                                                        onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, activeSetIndex, it) },
+                                                        onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, activeSetIndex, it) },
+                                                        hapticEnabled = state.hapticEnabled,
+                                                        techniqueChanged = set.performedTechniques != null,
+                                                        onEditTechnique = if (set.prescription?.techniques.isNullOrEmpty()) null else {
+                                                            { techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
+                                                        }
+                                                    )
+                                                }
                                             }
                                             LogSetButton(onClick = {
                                                 if (currentExState?.isTimed == true) {

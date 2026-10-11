@@ -110,6 +110,8 @@ data class WorkoutState(
     val timerAddEnabled: Boolean = true,
     val timerSubtractEnabled: Boolean = true,
     val plateCalculatorEnabled: Boolean = false,
+    /** Mini-sets, assisted and partial reps and the technique as done; off, a set carries only its note. */
+    val setPerformanceEnabled: Boolean = false,
     /** Plates the gym has, in [weightUnit], heaviest first. */
     val availablePlates: List<Float> = PlateCalculator.DEFAULT_PLATES_KG,
     val warmupTimerEnabled: Boolean = false,
@@ -667,6 +669,12 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.plateCalculatorEnabled.collect { enabled ->
                 _state.update { it.copy(plateCalculatorEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.setPerformanceEnabled.collect { enabled ->
+                _state.update { it.copy(setPerformanceEnabled = enabled, miniSetOffer = if (enabled) it.miniSetOffer else null) }
             }
         }
 
@@ -2165,7 +2173,7 @@ class WorkoutViewModel @Inject constructor(
         
         val newIsCompleted = !setState.isCompleted
         // A set short of its reps can be finished after a short pause; unchecking it takes the offer back
-        val missing = if (newIsCompleted) SetPerformance.missingReps(miniSetTargetOf(exState, setState), setState.reps) else 0
+        val missing = if (newIsCompleted && currentState.setPerformanceEnabled) SetPerformance.missingReps(miniSetTargetOf(exState, setState), setState.reps) else 0
         _state.update {
             it.copy(
                 miniSetOffer = if (missing > 0) MiniSetOffer(exerciseIndex, setIndex, missing) else null,
@@ -2813,7 +2821,7 @@ class WorkoutViewModel @Inject constructor(
         val ex = _state.value.exercises.getOrNull(exerciseIndex) ?: return
         _state.update { it.copy(miniSet = null) }
         saveMiniSet(null)
-        val missing = if (offerAgain) SetPerformance.missingReps(miniSetTargetOf(ex, set), set.reps) else 0
+        val missing = if (offerAgain && _state.value.setPerformanceEnabled) SetPerformance.missingReps(miniSetTargetOf(ex, set), set.reps) else 0
         val rest = restSecondsAfter(ex, set)
         if (rest > 0) startRestTimer(rest, buildNextSetLabel())
         _state.update { it.copy(miniSetOffer = if (missing > 0) MiniSetOffer(exerciseIndex, setIndex, missing) else null) }

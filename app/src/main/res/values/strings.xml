@@ -1211,6 +1211,8 @@
     <!-- Starting weight, rep ranges and double progression -->
     <string name="starting_weight">Starting weight</string>
     <string name="starting_weight_desc">Give each exercise of a routine a weight to start from. Until the routine has a workout to copy from, its sets start there, or at the last weight you used for that exercise.</string>
+    <string name="set_performance_setting">Set details</string>
+    <string name="set_performance_setting_desc">Mini-sets after a short pause, assisted and partial reps and the technique a set was really done with. Off, sets keep only their note.</string>
     <string name="starting_weight_field">Starting weight (%1$s)</string>
     <string name="starting_weight_hint">Optional · used until the first workout is logged</string>
     <string name="reps_mode_fixed">Fixed</string>

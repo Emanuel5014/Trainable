@@ -148,6 +148,7 @@ fun EditWorkoutScreen(
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
+    val setPerformanceEnabled by viewModel.setPerformanceEnabled.collectAsState()
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
@@ -397,6 +398,7 @@ fun EditWorkoutScreen(
             set = editingSet!!,
             weightUnit = state.weightUnit,
             isNewSet = false,
+            setPerformanceEnabled = setPerformanceEnabled,
             onDismiss = { editingSet = null },
             onConfirm = {
                 viewModel.updateSet(it)
