@@ -1690,7 +1690,7 @@ fun EditSetDialog(
                     onValueChange = { newValue ->
                         weight = newValue.replace(",", ".")
                     },
-                    label = "Weight ($weightUnit)",
+                    label = stringResource(R.string.weight_label_unit, weightUnit),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     trailingIcon = if (!isNewSet && weight.isNotEmpty()) {
                         {

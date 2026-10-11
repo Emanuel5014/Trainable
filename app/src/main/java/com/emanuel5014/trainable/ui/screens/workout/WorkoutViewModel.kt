@@ -204,6 +204,13 @@ data class EmomRun(
  */
 internal const val PROVISIONAL_ORDER_BASE = 10_000
 
+private const val MINI_SESSION = "session_id"
+private const val MINI_SET = "set_id"
+private const val MINI_MISSING = "missing"
+private const val MINI_STARTED = "started_at"
+private const val MINI_ENDS = "ends_at"
+private const val MINI_PAUSE = "pause_seconds"
+
 data class WorkoutExerciseState(
     val exercise: ExerciseEntity,
     val planDetails: PlanExerciseEntity?,
@@ -1187,6 +1194,7 @@ class WorkoutViewModel @Inject constructor(
         if (savedRemainingSeconds > 0 && savedEndTime != null) {
             resumeRestTimer(savedEndTime)
         }
+        restoreMiniSet()
         if (savedWarmupRemainingSeconds > 0 && savedWarmupEndTime != null) {
             resumeWarmupTimer(savedWarmupEndTime)
         }
@@ -2164,6 +2172,7 @@ class WorkoutViewModel @Inject constructor(
                 miniSet = null
             )
         }
+        saveMiniSet(null)
 
         viewModelScope.launch {
             var newSetId = setState.id
@@ -2706,6 +2715,53 @@ class WorkoutViewModel @Inject constructor(
         val run = MiniSetRun(exerciseIndex, setIndex, missing, System.currentTimeMillis())
         startRestTimer(SetPerformance.DEFAULT_PAUSE_SECONDS, miniSetInfo(run))
         _state.update { it.copy(miniSetOffer = null, miniSet = run) }
+        saveMiniSet(run)
+    }
+
+    // A mini-set lives through the app being closed: its set, its pause and what is missing are kept on the device
+    private val miniSetPrefs by lazy {
+        localeManager.localizedContext().getSharedPreferences("workout_mini_set", android.content.Context.MODE_PRIVATE)
+    }
+
+    private fun saveMiniSet(run: MiniSetRun?) {
+        val sessionId = _state.value.sessionId
+        val setId = run?.let { _state.value.exercises.getOrNull(it.exerciseIndex)?.sets?.getOrNull(it.setIndex)?.id }
+        if (run == null || sessionId == null || setId == null) {
+            miniSetPrefs.edit().clear().apply()
+            return
+        }
+        miniSetPrefs.edit()
+            .putInt(MINI_SESSION, sessionId)
+            .putInt(MINI_SET, setId)
+            .putInt(MINI_MISSING, run.missing)
+            .putLong(MINI_STARTED, run.pauseStartedAt)
+            .putLong(MINI_ENDS, _state.value.restTimerEndTime ?: 0L)
+            .putInt(MINI_PAUSE, run.pauseSeconds ?: -1)
+            .apply()
+    }
+
+    /** Brings back the mini-set the workout was in when it was left: still pausing, or asking for its reps. */
+    private fun restoreMiniSet() {
+        val state = _state.value
+        val sessionId = state.sessionId ?: return
+        if (miniSetPrefs.getInt(MINI_SESSION, -1) != sessionId) return
+        val setId = miniSetPrefs.getInt(MINI_SET, -1)
+        val exerciseIndex = state.exercises.indexOfFirst { ex -> ex.sets.any { it.id == setId } }
+        val setIndex = state.exercises.getOrNull(exerciseIndex)?.sets?.indexOfFirst { it.id == setId } ?: -1
+        if (exerciseIndex < 0 || setIndex < 0) {
+            saveMiniSet(null)
+            return
+        }
+        val startedAt = miniSetPrefs.getLong(MINI_STARTED, System.currentTimeMillis())
+        val savedPause = miniSetPrefs.getInt(MINI_PAUSE, -1).takeIf { it >= 0 }
+        // The pause ran out while the app was closed: it lasted what it was set to
+        val pause = savedPause ?: if (state.remainingRestSeconds <= 0) {
+            val endsAt = miniSetPrefs.getLong(MINI_ENDS, 0L).takeIf { it > startedAt } ?: System.currentTimeMillis()
+            ((endsAt - startedAt) / 1000).toInt()
+        } else null
+        _state.update {
+            it.copy(miniSet = MiniSetRun(exerciseIndex, setIndex, miniSetPrefs.getInt(MINI_MISSING, 0), startedAt, pause), miniSetOffer = null)
+        }
     }
 
     /** The rest notification during the pause of a mini-set: "Next: Bench - set 3: mini-set". */
@@ -2727,6 +2783,7 @@ class WorkoutViewModel @Inject constructor(
         if (run.awaitingReps) return
         val seconds = ((System.currentTimeMillis() - run.pauseStartedAt) / 1000).toInt().coerceAtLeast(0)
         _state.update { it.copy(miniSet = run.copy(pauseSeconds = seconds)) }
+        saveMiniSet(_state.value.miniSet)
     }
 
     /** Adds the [reps] of the mini-set to its set, then the normal rest starts (and offers another one if still short). */
@@ -2755,6 +2812,7 @@ class WorkoutViewModel @Inject constructor(
     private fun finishMiniSets(exerciseIndex: Int, setIndex: Int, set: WorkoutSetState, offerAgain: Boolean = true) {
         val ex = _state.value.exercises.getOrNull(exerciseIndex) ?: return
         _state.update { it.copy(miniSet = null) }
+        saveMiniSet(null)
         val missing = if (offerAgain) SetPerformance.missingReps(miniSetTargetOf(ex, set), set.reps) else 0
         val rest = restSecondsAfter(ex, set)
         if (rest > 0) startRestTimer(rest, buildNextSetLabel())
