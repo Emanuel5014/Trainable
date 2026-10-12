@@ -224,6 +224,11 @@ function distanceText(km) {
   return `${parseFloat(Number(km).toFixed(2))} km`;
 }
 
+// Text typed by the user (notes) goes into the page as text, not markup
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
 function cardioSummary(distanceKm, durationSeconds) {
   const parts = [];
   if (distanceKm > 0) parts.push(distanceText(distanceKm));
@@ -234,6 +239,7 @@ function cardioSummary(distanceKm, durationSeconds) {
 function exerciseTypeIcon(type) {
   if (type === 'cardio') return '<span class="material-symbols-outlined exercise-type-icon">directions_run</span>';
   if (type === 'time_and_weight') return '<span class="material-symbols-outlined exercise-type-icon">timer</span>';
+  if (type === 'time_and_reps') return '<span class="material-symbols-outlined exercise-type-icon">timelapse</span>';
   return '';
 }
 
@@ -241,11 +247,17 @@ function exerciseTypeIcon(type) {
 function planExerciseDetail(ex) {
   if (ex.excludedThisWeek) return '—';
   if (ex.type === 'cardio') {
-    return cardioSummary(ex.targetDistanceKm, ex.targetDurationSeconds);
+    // Several sets of the same targets: "3x 10 min"
+    const summary = cardioSummary(ex.targetDistanceKm, ex.targetDurationSeconds);
+    return ex.targetSets > 1 ? `${ex.targetSets}x ${summary}` : summary;
   }
   if (ex.type === 'time_and_weight') {
     const seconds = ex.targetDurationSeconds || parseInt(ex.targetReps, 10) || 0;
     return `${ex.targetSets}x ${durationText(seconds)}`;
+  }
+  if (ex.type === 'time_and_reps') {
+    // Reps goal in an interval: "3x 45s · 20 reps"
+    return `${ex.targetSets}x ${durationText(ex.targetDurationSeconds || 45)} · ${ex.targetReps} ${t('reps').toLowerCase()}`;
   }
   return ex.prescription || (ex.targetSets + 'x' + ex.targetReps);
 }
@@ -1451,23 +1463,25 @@ async function loadSessionDetail() {
 
   const exerciseBlocks = Object.entries(grouped).map(([name, exerciseSets]) => {
     const hasTimedSets = exerciseSets.some(set => set.durataSecondi != null);
+    // Time & Reps: no weight, the duration takes its column and the reps keep theirs
+    const isTimeAndReps = exerciseSets.some(set => set.exerciseType === 'time_and_reps');
     return `
       <div class="exercise-block">
         <div class="exercise-block-header">
-          <div class="exercise-block-name">${hasTimedSets ? exerciseTypeIcon('time_and_weight') : ''}${name}</div>
+          <div class="exercise-block-name">${isTimeAndReps ? exerciseTypeIcon('time_and_reps') : hasTimedSets ? exerciseTypeIcon('time_and_weight') : ''}${name}</div>
           <span class="badge badge-neutral">${exerciseSets.length} ${t('setShort')}</span>
         </div>
         <div class="sets-list">
           <div class="set-row set-row-header">
             <div>${t('series')}</div>
-            <div>${t('weight')}</div>
-            <div>${hasTimedSets ? t('repsOrTime') : t('reps')}</div>
+            <div>${isTimeAndReps ? t('duration') : t('weight')}</div>
+            <div>${isTimeAndReps ? t('reps') : hasTimedSets ? t('repsOrTime') : t('reps')}</div>
           </div>
           ${exerciseSets.map(set => `
             <div class="set-row">
               <div class="set-number">${set.numeroSerie}</div>
-              <div>${weightText(set.pesoSollevato)}</div>
-              <div>${set.durataSecondi != null ? durationText(set.durataSecondi) : set.repsEffettive}${set.rpe != null ? ' @' + set.rpe : ''}</div>
+              <div>${set.exerciseType === 'time_and_reps' ? durationText(set.durataSecondi) : weightText(set.pesoSollevato)}</div>
+              <div>${set.exerciseType !== 'time_and_reps' && set.durataSecondi != null ? durationText(set.durataSecondi) : set.repsEffettive}${set.rpe != null ? ' @' + set.rpe : ''}</div>
             </div>
             ${set.prescription ? `<div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.75;font-size:0.8rem;"><div>${set.prescription}</div></div>` : ''}
           `).join('')}
@@ -1490,10 +1504,11 @@ async function loadSessionDetail() {
           </div>
           ${cardio.map(c => `
             <div class="set-row">
-              <div class="set-number"><span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;">directions_run</span></div>
+              <div class="set-number">${c.setNumber > 1 ? c.setNumber : '<span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;">directions_run</span>'}</div>
               <div>${c.category}${c.distanceKm > 0 ? ' · ' + distanceText(c.distanceKm) : ''}</div>
               <div>${durationText(c.durationSeconds)}${c.targetDurationSeconds ? ' / ' + durationText(c.targetDurationSeconds) : ''}</div>
             </div>
+            ${c.note ? `<div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.75;font-size:0.8rem;"><div>${escapeHtml(c.note)}</div></div>` : ''}
           `).join('')}
         </div>
       </div>`;

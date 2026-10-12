@@ -15,7 +15,7 @@ object PlateCalculator {
     val BAR_PRESETS_LB = listOf(45f, 35f, 25f)
 
     /** Plates the user can switch on or off in the settings, biggest first. */
-    val PLATE_CHOICES_KG = listOf(25f, 20f, 15f, 10f, 5f, 2.5f, 1.25f, 1f, 0.5f)
+    val PLATE_CHOICES_KG = listOf(25f, 20f, 15f, 10f, 5f, 2.5f, 2f, 1.25f, 1f, 0.5f)
     val PLATE_CHOICES_LB = listOf(45f, 35f, 25f, 10f, 5f, 2.5f, 1.25f)
 
     val DEFAULT_PLATES_KG = listOf(25f, 20f, 15f, 10f, 5f, 2.5f, 1.25f)

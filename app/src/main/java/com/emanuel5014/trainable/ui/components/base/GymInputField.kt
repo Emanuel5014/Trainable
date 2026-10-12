@@ -31,6 +31,7 @@ fun GymInputField(
     singleLine: Boolean = true,
     readOnly: Boolean = false,
     enabled: Boolean = true,
+    isError: Boolean = false,
     textAlign: androidx.compose.ui.text.style.TextAlign = androidx.compose.ui.text.style.TextAlign.Start
 ) {
     OutlinedTextField(
@@ -47,6 +48,7 @@ fun GymInputField(
         singleLine = singleLine,
         readOnly = readOnly,
         enabled = enabled,
+        isError = isError,
         shape = Shapes.large,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = OnSurface,

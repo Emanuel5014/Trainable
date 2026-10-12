@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -113,7 +115,9 @@ fun ExerciseEntryCard(
                         Spacer(modifier = Modifier.width(Spacing.small))
                         val durMin = item.planExercise.durataTargetSecondi?.let { it / 60 }
                         val distKm = item.planExercise.distanzaTargetKm
+                        val cardioSets = item.planExercise.serieTarget
                         val targetText = buildString {
+                            if (cardioSets > 1) append("$cardioSets × ")
                             if (durMin != null && durMin > 0) append(stringResource(R.string.cardio_min_format, durMin))
                             if (distKm != null && distKm > 0) {
                                 if (isNotEmpty()) append(" • ")
@@ -145,6 +149,27 @@ fun ExerciseEntryCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
+                    } else if (item.planExercise.exerciseType == TIME_AND_REPS) {
+                        Box(
+                            modifier = Modifier
+                                .background(Primary.copy(alpha = 0.15f), CircleShape)
+                                .padding(horizontal = Spacing.small, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.time_and_reps_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        val durSec = item.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS
+                        val goal = TimeAndReps.goalOf(item.planExercise.repsTarget)
+                        Text(
+                            text = "${item.planExercise.serieTarget} × " + stringResource(R.string.time_reps_value, durSec, goal) +
+                                " • " + stringResource(R.string.rest_label, item.planExercise.recuperoTarget),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant
+                        )
                     } else {
                         Box(
                             modifier = Modifier
@@ -152,7 +177,7 @@ fun ExerciseEntryCard(
                                 .padding(horizontal = Spacing.small, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "${item.planExercise.serieTarget} × ${item.planExercise.repsTarget}",
+                                text = "${item.planExercise.serieTarget} × ${item.planExercise.repsDisplay}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnSurfaceVariant
                             )

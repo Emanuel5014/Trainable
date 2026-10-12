@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
+import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -1377,6 +1380,7 @@ private fun ScanEntryCard(
                 selectedType = when {
                     entry.isAdvanced -> "advanced"
                     entry.isTimeAndWeight -> "time_and_weight"
+                    entry.isTimeAndReps -> TIME_AND_REPS
                     else -> "strength"
                 },
                 showAdvanced = LocalAdvancedProgramming.current,
@@ -1387,6 +1391,15 @@ private fun ScanEntryCard(
                             entry.copy(
                                 exerciseType = "strength",
                                 reps = if (entry.reps.endsWith("s")) "$currentTarget" else entry.reps,
+                                blocksByWeek = emptyMap()
+                            )
+                        )
+                        TIME_AND_REPS -> onUpdate(
+                            entry.copy(
+                                exerciseType = TIME_AND_REPS,
+                                // A hold's "45s" is its time; plain reps ("8-12") give their first number as the goal
+                                timeSeconds = entry.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS,
+                                reps = TimeAndReps.goalOf(entry.reps.takeUnless { it.endsWith("s") }?.substringBefore("-")).toString(),
                                 blocksByWeek = emptyMap()
                             )
                         )
@@ -1441,6 +1454,25 @@ private fun ScanEntryCard(
                     ),
                     // Each card scans on its own; the routine scan and its draft are untouched by this
                     aiScanKey = "program_scan_$index"
+                )
+            } else if (entry.isTimeAndReps) {
+                var goalText by remember(entry.rawName, index) { mutableStateOf(entry.reps) }
+                TimeAndRepsEditor(
+                    setsText = setsText,
+                    onSetsChange = { value ->
+                        setsText = value
+                        value.toIntOrNull()?.let { onUpdate(entry.copy(sets = it)) }
+                    },
+                    repsGoalText = goalText,
+                    onRepsGoalChange = { value ->
+                        goalText = value
+                        TimeAndReps.parseGoal(value)?.let { onUpdate(entry.copy(reps = it.toString())) }
+                    },
+                    seconds = entry.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS,
+                    onSecondsChange = { onUpdate(entry.copy(timeSeconds = it)) },
+                    hapticEnabled = true,
+                    haptic = haptic,
+                    modifier = Modifier.fillMaxWidth()
                 )
             } else if (entry.isTimeAndWeight) {
                 GymInputField(

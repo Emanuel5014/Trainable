@@ -573,7 +573,7 @@ fun Application.configureServer(
                                             put("exerciseName", ExerciseTranslations.translate(ex.exercise.nome, lang))
                                             put("category", ExerciseTranslations.translateCategory(ex.exercise.categoria, lang))
                                             put("targetSets", ex.planExercise.serieTarget)
-                                            put("targetReps", ex.planExercise.repsTarget)
+                                            put("targetReps", ex.planExercise.repsDisplay)
                                             put("targetRest", ex.planExercise.recuperoTarget)
                                             put("type", ex.planExercise.exerciseType)
                                             ex.planExercise.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
@@ -732,10 +732,12 @@ fun Application.configureServer(
                                 put("numeroSerie", swd.setLog.numeroSerie)
                                 // Time & Weight sets log how long the set lasted instead of reps
                                 swd.setLog.durataSecondi?.let { put("durataSecondi", it) }
+                                // Time & Reps sets have a duration too, and their reps are what counts
+                                if (swd.setLog.exerciseType == com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS) put("exerciseType", swd.setLog.exerciseType)
                                 if (swd.setLog.isWarmup) put("isWarmup", true)
                                 if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
-                                if (advanced) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(context, swd.setLog)?.let { put("prescription", it) }
+                                com.emanuel5014.trainable.ui.components.setLogDetailsText(context, swd.setLog, withPrescription = advanced)?.let { put("prescription", it) }
                             })
                         }
                     }
@@ -750,12 +752,15 @@ fun Application.configureServer(
                         put("totalSets", session.sets.size)
                         put("sets", setsArray)
                         put("cardio", buildJsonArray {
-                            session.cardio.sortedBy { it.ordineEsercizio }.forEach { c ->
+                            // In the order they were done, the sets of an exercise one after the other
+                            session.cardio.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }, { it.id })).forEach { c ->
                                 add(buildJsonObject {
                                     put("category", c.categoria)
                                     put("distanceKm", c.distanza)
                                     put("durationSeconds", c.durataSecondi)
                                     c.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
+                                    put("setNumber", c.numeroSerie)
+                                    c.note?.let { put("note", it) }
                                 })
                             }
                         })

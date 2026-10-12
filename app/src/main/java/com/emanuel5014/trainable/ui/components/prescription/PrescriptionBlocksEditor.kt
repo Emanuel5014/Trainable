@@ -64,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.IntensityType
@@ -618,8 +619,30 @@ fun ConnectedToggleRow(
     options: List<String>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** With very large text the options go one under the other instead of being cut short on one line. */
+    stackWhenTextIsLarge: Boolean = false
 ) {
+    if (stackWhenTextIsLarge && LocalDensity.current.fontScale >= LARGE_TEXT_SCALE) {
+        Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            options.forEachIndexed { index, label ->
+                ToggleButton(
+                    checked = index == selectedIndex,
+                    onCheckedChange = { if (index != selectedIndex) onSelect(index) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ToggleButtonDefaults.toggleButtonColors(
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurfaceVariant,
+                        checkedContainerColor = Primary,
+                        checkedContentColor = OnPrimary
+                    )
+                ) {
+                    Text(text = label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+        return
+    }
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
@@ -721,3 +744,5 @@ private fun IntTextField(
         modifier = modifier
     )
 }
+
+private const val LARGE_TEXT_SCALE = 1.4f

@@ -1,17 +1,25 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.setsOf
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.asKind
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.repsRange
+import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.data.local.entity.withoutPrescription
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.PrescriptionSetSync
 import com.emanuel5014.trainable.data.repository.SetSyncResult
+import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
@@ -65,6 +73,12 @@ class EditWorkoutViewModel @Inject constructor(
 
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
+
+    val setPerformanceEnabled = userPreferencesRepository.setPerformanceEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     val editablePresetExercises = userPreferencesRepository.editablePresetExercises.stateIn(
         scope = viewModelScope,
@@ -172,120 +186,70 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addCardioLog(categoria: String, distanza: Float, durataSecondi: Int) {
+    fun addCardioLog(categoria: String, distanza: Float, durataSecondi: Int, sets: Int = 1, note: String? = null) {
         viewModelScope.launch {
             val maxOrder = maxOf(
                 _state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: 0,
                 _state.value.cardioLogs.maxOfOrNull { it.ordineEsercizio } ?: 0
             )
-            val newCardio = CardioLogEntity(
-                sessionId = sessionId,
-                categoria = categoria,
-                distanza = distanza,
-                durataSecondi = durataSecondi,
-                timestamp = _state.value.sessionTimestamp,
-                ordineEsercizio = maxOrder + 1
-            )
-            workoutRepository.saveCardioLog(newCardio)
+            (1..sets.coerceAtLeast(1)).forEach { number ->
+                workoutRepository.saveCardioLog(
+                    CardioLogEntity(
+                        sessionId = sessionId,
+                        categoria = categoria,
+                        distanza = distanza,
+                        durataSecondi = durataSecondi,
+                        timestamp = _state.value.sessionTimestamp,
+                        ordineEsercizio = maxOrder + 1,
+                        numeroSerie = number,
+                        note = note.takeIf { number == 1 }
+                    )
+                )
+            }
         }
     }
 
+    /** One more set of a cardio exercise, starting from the values of its last one. */
+    fun addCardioSet(cardio: CardioExerciseLogs) {
+        val last = cardio.sets.last()
+        viewModelScope.launch {
+            workoutRepository.saveCardioLog(
+                last.copy(id = 0, numeroSerie = cardio.sets.size + 1, note = null, isCompleted = true)
+            )
+        }
+    }
+
+    /** Removes one cardio set; the others of its exercise are numbered again. */
     fun deleteCardioLog(cardio: CardioLogEntity) {
         viewModelScope.launch {
+            val remaining = _state.value.cardioLogs.setsOf(cardio).filter { it.id != cardio.id }
             // Optimistic update
             _state.update { curr ->
                 curr.copy(cardioLogs = curr.cardioLogs.filter { it.id != cardio.id })
             }
             workoutRepository.deleteCardioLog(cardio)
-        }
-    }
-
-    fun moveCardioUp(cardio: CardioLogEntity) {
-        val allItems = mutableListOf<Pair<Int, Any>>()
-        _state.value.exercises.forEach { ex ->
-            allItems.add(Pair(ex.sets.firstOrNull()?.ordineEsercizio ?: 0, ex as Any))
-        }
-        _state.value.cardioLogs.forEach { c ->
-            allItems.add(Pair(c.ordineEsercizio, c as Any))
-        }
-        allItems.sortBy { it.first }
-
-        val cardioIndex = allItems.indexOfFirst { it.second == cardio }
-        if (cardioIndex > 0) {
-            val prevItem = allItems[cardioIndex - 1]
-            val prevOrder = prevItem.first
-            val cardioOrder = cardio.ordineEsercizio
-
-            _state.update { curr ->
-                val updatedCardioLogs = curr.cardioLogs.map {
-                    if (it.id == cardio.id) it.copy(ordineEsercizio = prevOrder) else it
-                }
-                val updatedExercises = curr.exercises.map { exState ->
-                    if (exState.sets.firstOrNull()?.ordineEsercizio == prevOrder) {
-                        exState.copy(sets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) })
-                    } else {
-                        exState
-                    }
-                }
-                curr.copy(exercises = updatedExercises, cardioLogs = updatedCardioLogs)
-            }
-
-            viewModelScope.launch {
-                workoutRepository.updateCardioLog(cardio.copy(ordineEsercizio = prevOrder))
-                if (prevItem.second is EditExerciseState) {
-                    val exState = prevItem.second as EditExerciseState
-                    val updatedSets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) }
-                    workoutRepository.updateSetOrders(updatedSets)
-                } else if (prevItem.second is CardioLogEntity) {
-                    val prevCardio = prevItem.second as CardioLogEntity
-                    workoutRepository.updateCardioLog(prevCardio.copy(ordineEsercizio = cardioOrder))
-                }
+            remaining.forEachIndexed { index, set ->
+                if (set.numeroSerie != index + 1) workoutRepository.updateCardioSetNumber(set.id, index + 1)
             }
         }
     }
 
-    fun moveCardioDown(cardio: CardioLogEntity) {
-        val allItems = mutableListOf<Pair<Int, Any>>()
-        _state.value.exercises.forEach { ex ->
-            allItems.add(Pair(ex.sets.firstOrNull()?.ordineEsercizio ?: 0, ex as Any))
+    /** Removes a whole cardio exercise, every set of it. */
+    fun deleteCardioExercise(cardio: CardioExerciseLogs) {
+        viewModelScope.launch {
+            val ids = cardio.sets.map { it.id }.toSet()
+            _state.update { curr -> curr.copy(cardioLogs = curr.cardioLogs.filter { it.id !in ids }) }
+            cardio.sets.forEach { workoutRepository.deleteCardioLog(it) }
         }
-        _state.value.cardioLogs.forEach { c ->
-            allItems.add(Pair(c.ordineEsercizio, c as Any))
-        }
-        allItems.sortBy { it.first }
+    }
 
-        val cardioIndex = allItems.indexOfFirst { it.second == cardio }
-        if (cardioIndex < allItems.lastIndex) {
-            val nextItem = allItems[cardioIndex + 1]
-            val nextOrder = nextItem.first
-            val cardioOrder = cardio.ordineEsercizio
-
-            _state.update { curr ->
-                val updatedCardioLogs = curr.cardioLogs.map {
-                    if (it.id == cardio.id) it.copy(ordineEsercizio = nextOrder) else it
-                }
-                val updatedExercises = curr.exercises.map { exState ->
-                    if (exState.sets.firstOrNull()?.ordineEsercizio == nextOrder) {
-                        exState.copy(sets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) })
-                    } else {
-                        exState
-                    }
-                }
-                curr.copy(exercises = updatedExercises, cardioLogs = updatedCardioLogs)
-            }
-
-            viewModelScope.launch {
-                workoutRepository.updateCardioLog(cardio.copy(ordineEsercizio = nextOrder))
-                if (nextItem.second is EditExerciseState) {
-                    val exState = nextItem.second as EditExerciseState
-                    val updatedSets = exState.sets.map { it.copy(ordineEsercizio = cardioOrder) }
-                    workoutRepository.updateSetOrders(updatedSets)
-                } else if (nextItem.second is CardioLogEntity) {
-                    val nextCardio = nextItem.second as CardioLogEntity
-                    workoutRepository.updateCardioLog(nextCardio.copy(ordineEsercizio = cardioOrder))
-                }
-            }
-        }
+    /** Moves a cardio exercise one place up ([delta] -1) or down (+1) among the [items] on screen. */
+    fun moveCardio(cardio: CardioExerciseLogs, items: List<Any>, delta: Int) {
+        val index = items.indexOfFirst { it is CardioExerciseLogs && it.first.id == cardio.first.id }
+        val target = index + delta
+        if (index < 0 || target !in items.indices) return
+        val reordered = items.toMutableList().apply { add(target, removeAt(index)) }
+        updateItemsOrder(reordered)
     }
 
     fun deleteSet(set: SetLogEntity) {
@@ -328,8 +292,13 @@ class EditWorkoutViewModel @Inject constructor(
                 numeroSerie = nextSerie,
                 ordineEsercizio = exerciseOrder,
                 supersetId = supersetId,
-                durataSecondi = lastDuration
+                durataSecondi = lastDuration,
+                exerciseType = lastSet?.exerciseType
             )
+            if (lastSet != null && lastSet.blockIndex == null) {
+                // A set added to a plain exercise done against a rep range keeps that range
+                newSet = newSet.withRepsRange(lastSet.repsRange)
+            }
             if (lastSet != null && lastSet.blockIndex != null && lastSet.repMode != "total") {
                 // A set added to an advanced exercise repeats the prescription of the one before it
                 newSet = newSet.copy(
@@ -394,16 +363,18 @@ class EditWorkoutViewModel @Inject constructor(
         oldExerciseId: Int,
         newExerciseId: Int,
         exerciseType: String = "strength",
-        durataTargetSecondi: Int? = null
+        durataTargetSecondi: Int? = null,
+        /** The rep range the replacement was done against; the logged reps themselves are kept. */
+        repsRange: RepRange? = null
     ) {
         viewModelScope.launch {
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
             // The percentages referred to the old exercise's 1RM, so a plain swap drops the prescription
-            val sets = oldExerciseState.sets.map { it.withoutPrescription() }
+            val sets = oldExerciseState.sets.map { it.withoutPrescription().withRepsRange(repsRange) }
             val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
             val supersetId = sets.firstOrNull()?.supersetId
-            val isTimeAndWeight = exerciseType == "time_and_weight"
-            val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
+            val kind = SetLogKind.ofExerciseType(exerciseType)
+            val targetSec = durataTargetSecondi ?: 45
 
             // Optimistic update
             val replacementExercise = _state.value.availableExercises.find { it.id == newExerciseId }
@@ -418,10 +389,8 @@ class EditWorkoutViewModel @Inject constructor(
                                 it.copy(
                                     exerciseId = newExerciseId,
                                     id = 0,
-                                    supersetId = supersetId,
-                                    durataSecondi = if (isTimeAndWeight) (it.durataSecondi ?: targetSec) else null,
-                                    repsEffettive = if (isTimeAndWeight && it.repsEffettive == 0) 0 else it.repsEffettive
-                                )
+                                    supersetId = supersetId
+                                ).asKind(kind, targetSec)
                             }
                         )
                     }
@@ -439,10 +408,8 @@ class EditWorkoutViewModel @Inject constructor(
                         id = 0,
                         exerciseId = newExerciseId,
                         ordineEsercizio = exerciseOrder,
-                        supersetId = supersetId,
-                        durataSecondi = if (isTimeAndWeight) (set.durataSecondi ?: targetSec) else null,
-                        repsEffettive = if (isTimeAndWeight && set.repsEffettive == 0) 0 else set.repsEffettive
-                    )
+                        supersetId = supersetId
+                    ).asKind(kind, targetSec)
                 )
             }
             
@@ -483,7 +450,7 @@ class EditWorkoutViewModel @Inject constructor(
             )
             val deleted = result.toDelete.map { it.id }.toSet()
             val updates = result.toUpdate.associateBy { it.id }
-            val moved = old.sets.filter { it.id !in deleted }.map { (updates[it.id] ?: it).copy(exerciseId = newExerciseId, durataSecondi = null) }
+            val moved = old.sets.filter { it.id !in deleted }.map { (updates[it.id] ?: it).copy(exerciseId = newExerciseId).asKind(SetLogKind.STRENGTH) }
             workoutRepository.applySetSync(SetSyncResult(result.toInsert, moved, result.toDelete))
         }
     }
@@ -543,7 +510,7 @@ class EditWorkoutViewModel @Inject constructor(
     private suspend fun prescriptionEnvironment(): Pair<String, Float> =
         userPreferencesRepository.weightUnit.first() to userPreferencesRepository.loadRoundingIncrement.first()
 
-    fun swapExerciseWithCardio(oldExerciseId: Int, cardioCategory: String, durationMinutes: Int) {
+    fun swapExerciseWithCardio(oldExerciseId: Int, cardioCategory: String, durationMinutes: Int, sets: Int = 1) {
         viewModelScope.launch {
             val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId }
             val order = oldExerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
@@ -553,17 +520,20 @@ class EditWorkoutViewModel @Inject constructor(
                 curr.copy(exercises = curr.exercises.filter { it.exercise.id != oldExerciseId })
             }
 
-            val newCardio = CardioLogEntity(
-                sessionId = sessionId,
-                categoria = cardioCategory,
-                distanza = 0f,
-                durataSecondi = durationMinutes * 60,
-                timestamp = _state.value.sessionTimestamp,
-                ordineEsercizio = order
-            )
-            val cardioId = workoutRepository.saveCardioLog(newCardio)
+            val added = (1..sets.coerceAtLeast(1)).map { number ->
+                val newCardio = CardioLogEntity(
+                    sessionId = sessionId,
+                    categoria = cardioCategory,
+                    distanza = 0f,
+                    durataSecondi = durationMinutes * 60,
+                    timestamp = _state.value.sessionTimestamp,
+                    ordineEsercizio = order,
+                    numeroSerie = number
+                )
+                newCardio.copy(id = workoutRepository.saveCardioLog(newCardio).toInt())
+            }
             _state.update { curr ->
-                curr.copy(cardioLogs = curr.cardioLogs + newCardio.copy(id = cardioId.toInt()))
+                curr.copy(cardioLogs = curr.cardioLogs + added)
             }
         }
     }
@@ -573,27 +543,33 @@ class EditWorkoutViewModel @Inject constructor(
         targetSets: Int = 1,
         repsTarget: String = "8",
         exerciseType: String = "strength",
-        durataTargetSecondi: Int? = null
+        durataTargetSecondi: Int? = null,
+        /** Top of a rep range; [repsTarget] is then its bottom. */
+        repsMax: Int? = null
     ) {
         viewModelScope.launch {
             val nextOrder = (_state.value.exercises.maxOfOrNull { it.sets.firstOrNull()?.ordineEsercizio ?: 0 } ?: -1) + 1
             val exercise = _state.value.availableExercises.find { it.id == exerciseId }
-            val isTimeAndWeight = exerciseType == "time_and_weight"
-            val targetSec = if (isTimeAndWeight) (durataTargetSecondi ?: 45) else null
-            val repsNum = if (isTimeAndWeight) 0 else (repsTarget.toIntOrNull() ?: 8)
+            val kind = SetLogKind.ofExerciseType(exerciseType)
+            val targetSec = if (kind.isTimed) (durataTargetSecondi ?: 45) else null
             val setsCount = targetSets.coerceAtLeast(1)
+            // A range goes on every row, so the history (and the next edit) know what the exercise was done against
+            val repsRange = if (exerciseType == "strength") RepRange.of(repsTarget.trim().toIntOrNull(), repsMax) else null
+            // One number for every set, or a list ("8-6-4") that goes set by set like in a live workout
+            val plannedReps = LegacyReps.parse(repsTarget, setsCount)
 
             val newSets = (1..setsCount).map { setNum ->
                 SetLogEntity(
                     sessionId = sessionId,
                     exerciseId = exerciseId,
                     pesoSollevato = 0f,
-                    repsEffettive = repsNum,
+                    repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else plannedReps[setNum - 1],
                     numeroSerie = setNum,
                     ordineEsercizio = nextOrder,
                     supersetId = null,
-                    durataSecondi = targetSec
-                )
+                    durataSecondi = targetSec,
+                    exerciseType = kind.rowType
+                ).withRepsRange(repsRange)
             }
 
             // Optimistic update
@@ -896,10 +872,10 @@ class EditWorkoutViewModel @Inject constructor(
                         setsToUpdate.addAll(updatedSets)
                         updatedExercises.add(item.copy(sets = updatedSets))
                     }
-                    is CardioLogEntity -> {
-                        val updatedCardio = item.copy(ordineEsercizio = index)
-                        cardioToUpdate.add(updatedCardio)
-                        updatedCardioLogs.add(updatedCardio)
+                    is CardioExerciseLogs -> {
+                        val updatedCardio = item.sets.map { it.copy(ordineEsercizio = index) }
+                        cardioToUpdate.addAll(updatedCardio)
+                        updatedCardioLogs.addAll(updatedCardio)
                     }
                 }
             }

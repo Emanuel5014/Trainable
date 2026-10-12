@@ -24,7 +24,9 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.Scale
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -79,7 +81,9 @@ fun WorkoutSettingsScreen(
     val timerSubtractSeconds by viewModel.timerSubtractSeconds.collectAsState()
     val timerAddEnabled by viewModel.timerAddEnabled.collectAsState()
     val timerSubtractEnabled by viewModel.timerSubtractEnabled.collectAsState()
+    val startingWeightEnabled by viewModel.startingWeightEnabled.collectAsState()
     val plateCalculatorEnabled by viewModel.plateCalculatorEnabled.collectAsState()
+    val setPerformanceEnabled by viewModel.setPerformanceEnabled.collectAsState()
     val plateCalculatorPlates by viewModel.plateCalculatorPlates.collectAsState()
 
     Scaffold(
@@ -453,6 +457,80 @@ fun WorkoutSettingsScreen(
                             )
                         }
                     }
+                }
+            }
+
+            // Starting weight: a weight per exercise of a routine for its first workouts
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = Icons.Rounded.Scale,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                stringResource(R.string.starting_weight),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.starting_weight_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    SettingsSwitch(
+                        checked = startingWeightEnabled,
+                        onCheckedChange = { viewModel.setStartingWeightEnabled(it) }
+                    )
+                }
+            }
+
+            // Set details: mini-sets, assisted and partial reps, technique as done
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = Icons.Rounded.Tune,
+                            contentDescription = null,
+                            tint = Primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                stringResource(R.string.set_performance_setting),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = OnSurface,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                stringResource(R.string.set_performance_setting_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    SettingsSwitch(
+                        checked = setPerformanceEnabled,
+                        onCheckedChange = { viewModel.setSetPerformanceEnabled(it) }
+                    )
                 }
             }
 

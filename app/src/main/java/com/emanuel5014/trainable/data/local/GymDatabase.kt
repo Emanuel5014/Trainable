@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
         PlanExerciseBlockEntity::class,
         OneRepMaxEntity::class
     ],
-    version = 28,
+    version = 32,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -359,6 +359,40 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_28_29 = object : Migration(28, 29) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Rep ranges ("10-15") and a starting weight per exercise of a routine
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN reps_max INTEGER")
+                db.execSQL("ALTER TABLE plan_exercises ADD COLUMN weight_preset REAL")
+            }
+        }
+
+        val MIGRATION_29_30 = object : Migration(29, 30) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Time & Reps sets: timed like Time & Weight ones, so their kind has to be written down
+                db.execSQL("ALTER TABLE set_logs ADD COLUMN exercise_type TEXT")
+            }
+        }
+
+        val MIGRATION_30_31 = object : Migration(30, 31) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Cardio in sets, each with its own note; what was logged so far is the first set
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN numero_serie INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN note TEXT")
+            }
+        }
+
+        val MIGRATION_31_32 = object : Migration(31, 32) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // How a set really went: mini-sets after short pauses, help from a spotter, partials, a changed technique
+                db.execSQL("ALTER TABLE set_logs ADD COLUMN rep_parts TEXT")
+                db.execSQL("ALTER TABLE set_logs ADD COLUMN intra_rests TEXT")
+                db.execSQL("ALTER TABLE set_logs ADD COLUMN assisted_reps INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE set_logs ADD COLUMN partial_reps INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE set_logs ADD COLUMN performed_techniques TEXT")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -376,7 +410,8 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
-                        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28
+                        MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {

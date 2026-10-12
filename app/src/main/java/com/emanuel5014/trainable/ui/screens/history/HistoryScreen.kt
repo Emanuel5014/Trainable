@@ -1,5 +1,18 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.encodePerformed
+import com.emanuel5014.trainable.data.local.entity.parts
+import com.emanuel5014.trainable.data.local.entity.pauses
+import com.emanuel5014.trainable.data.local.entity.performed
+import com.emanuel5014.trainable.data.local.entity.isInParts
+import com.emanuel5014.trainable.domain.prescription.SetPerformance
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
+import com.emanuel5014.trainable.data.local.entity.asKind
+import com.emanuel5014.trainable.data.local.entity.kind
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -209,6 +222,12 @@ fun HistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
     val languageCode by viewModel.languageCode.collectAsState()
+    // When each routine was last done, to tell routines apart in the add-workout sheet
+    val lastDoneByPlan = remember(uiState.sessions) {
+        AddWorkoutPlans.lastDoneByPlan(
+            uiState.sessions.filter { it.session.isFinished }.map { it.session.planId to it.session.timestamp }
+        )
+    }
     val context = LocalContext.current
 
     // La pagina resta composta quando si cambia tab (beyondViewportPageCount),
@@ -1054,8 +1073,11 @@ fun HistoryScreen(
                 )
             }
         ) {
-            AddWorkoutFromPlanContent(
+            AddWorkoutSheetContent(
                 plans = uiState.availablePlans,
+                summaries = uiState.planSummaries,
+                lastDoneByPlan = lastDoneByPlan,
+                languageCode = languageCode,
                 onPlanSelected = { planId ->
                     viewModel.addManualWorkout(planId)
                     showAddWorkoutSheet = false
@@ -1071,8 +1093,8 @@ fun HistoryScreen(
     if (showCardioDialog) {
         AddCardioDialog(
             onDismiss = { showCardioDialog = false },
-            onConfirm = { categoria, distanza, durataSecondi ->
-                viewModel.saveCardioWorkout(categoria, distanza, durataSecondi)
+            onConfirm = { categoria, distanza, durataSecondi, note ->
+                viewModel.saveCardioWorkout(categoria, distanza, durataSecondi, note)
                 showCardioDialog = false
             }
         )
@@ -1081,158 +1103,6 @@ fun HistoryScreen(
 }
 
 // AddCardioDialog was moved to CardioInputForm.kt as a reusable component
-
-@Composable
-fun AddWorkoutFromPlanContent(
-    plans: List<WorkoutPlanEntity>,
-    onPlanSelected: (Int) -> Unit,
-    onEmptyWorkoutClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.add_workout),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Black,
-            color = OnSurface
-        )
-        
-        Text(
-            text = stringResource(R.string.select_plan_to_add),
-            style = MaterialTheme.typography.bodyMedium,
-            color = OnSurfaceVariant
-        )
-        
-        val filteredPlans = remember(plans) { 
-            plans.filter { it.note != "SYSTEM_PLAN" } 
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                GymCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onEmptyWorkoutClick() }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Primary.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Rounded.AddBox,
-                                contentDescription = null,
-                                tint = Primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.add_empty_workout),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnSurface
-                            )
-                            Text(
-                                text = stringResource(R.string.custom_workout),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
-            items(filteredPlans) { plan ->
-                GymCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onPlanSelected(plan.id) }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Primary.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (plan.imageUri != null) {
-                                val context = LocalContext.current
-                                val model = remember(plan.imageUri) {
-                                    UriMigrationHelper.fixPath(plan.imageUri, context) ?: plan.imageUri
-                                }
-                                AsyncImage(
-                                    model = model,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.Notes,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = plan.nome,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnSurface
-                            )
-                            if (!plan.note.isNullOrBlank()) {
-                                Text(
-                                    text = plan.note,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                        
-                        Icon(
-                            Icons.Rounded.ChevronRight,
-                            contentDescription = null,
-                            tint = OnSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun HistoryExerciseGroup(
@@ -1268,12 +1138,8 @@ private fun HistoryExerciseGroup(
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )
-                    val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                     Text(
-                        text = WeightUnitConverter.formatWithUnit(
-                            WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                            weightUnit
-                        ) + " × $repsOrTime",
+                        text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = OnSurface
@@ -1558,8 +1424,8 @@ fun SessionHistoryCard(
                             val ord = block.exercises.firstOrNull()?.sets?.firstOrNull()?.setLog?.ordineEsercizio ?: 0
                             unifiedItems.add(UnifiedHistoryItem.Strength(block, ord))
                         }
-                        details.cardio.forEach { cardio ->
-                            unifiedItems.add(UnifiedHistoryItem.Cardio(cardio, cardio.ordineEsercizio))
+                        details.cardio.groupedByExercise().forEach { cardio ->
+                            unifiedItems.add(UnifiedHistoryItem.Cardio(cardio, cardio.order))
                         }
 
                         val sortedItems = unifiedItems.sortedBy { it.order }
@@ -1623,7 +1489,8 @@ fun SessionHistoryCard(
                                     }
                                 }
                                 is UnifiedHistoryItem.Cardio -> {
-                                    val cardio = item.cardio
+                                    val cardio = item.cardio.first
+                                    val cardioSets = item.cardio.sets
                                     val catLower = cardio.categoria.lowercase()
                                     val icon = when {
                                         catLower.contains("bici") || catLower.contains("bike") || catLower.contains("cycling") || catLower.contains("cyclette") -> Icons.AutoMirrored.Rounded.DirectionsBike
@@ -1648,7 +1515,30 @@ fun SessionHistoryCard(
                                             )
                                         }
                                         Spacer(modifier = Modifier.height(4.dp))
-                                        Row(
+                                        if (cardioSets.size > 1) {
+                                            // Several sets read like the sets of an exercise
+                                            cardioSets.forEachIndexed { index, set ->
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 4.dp, horizontal = 4.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(R.string.set_number, index + 1),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = OnSurfaceVariant
+                                                    )
+                                                    Text(
+                                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = OnSurface
+                                                    )
+                                                }
+                                                set.note?.takeIf { it.isNotBlank() }?.let { CardioHistoryNote(it) }
+                                            }
+                                        } else Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
@@ -1670,6 +1560,7 @@ fun SessionHistoryCard(
                                                 color = OnSurfaceVariant
                                             )
                                         }
+                                        if (cardioSets.size == 1) cardio.note?.takeIf { it.isNotBlank() }?.let { CardioHistoryNote(it) }
                                     }
                                 }
                             }
@@ -1680,6 +1571,19 @@ fun SessionHistoryCard(
                 }
             }
         }
+    }
+}
+
+/** The note of a cardio set, under it. */
+@Composable
+private fun CardioHistoryNote(note: String) {
+    Row(
+        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(12.dp))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = note, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontStyle = FontStyle.Italic)
     }
 }
 
@@ -1716,6 +1620,7 @@ fun EditSetDialog(
     set: SetLogEntity,
     weightUnit: String = "kg",
     isNewSet: Boolean = false,
+    setPerformanceEnabled: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: (SetLogEntity) -> Unit,
     onDelete: (SetLogEntity) -> Unit
@@ -1729,10 +1634,40 @@ fun EditSetDialog(
     var reps by remember { mutableStateOf(set.repsEffettive.toString()) }
     var seconds by remember { mutableStateOf(set.durataSecondi?.toString() ?: "45") }
     var note by remember { mutableStateOf(set.note ?: "") }
-    var isTimeSet by remember { mutableStateOf(set.durataSecondi != null) }
+    var kind by remember { mutableStateOf(set.kind) }
     var rpe by remember { mutableStateOf(set.rpe) }
+    // How the set really went
+    var partsText by remember { mutableStateOf(set.parts.joinToString("+")) }
+    var assisted by remember { mutableStateOf(set.assistedReps.takeIf { it > 0 }?.toString().orEmpty()) }
+    var partial by remember { mutableStateOf(set.partialReps.takeIf { it > 0 }?.toString().orEmpty()) }
+    var performed by remember { mutableStateOf(set.performed) }
+    var showTechniqueDialog by remember { mutableStateOf(false) }
+    val plannedTechniques = remember(set) { com.emanuel5014.trainable.domain.prescription.TechniqueCodec.decode(set.techniques) }
+    val parsedParts = partsText.takeIf { it.isNotBlank() }?.let { SetPerformance.parseParts(it) }
+    val partsInvalid = partsText.isNotBlank() && parsedParts == null
+    // With the setting off a set carries only its note, but one saved with these details can still fix them
+    val showExtras = remember(set) {
+        setPerformanceEnabled || set.isInParts || set.assistedReps > 0 || set.partialReps > 0 || set.performedTechniques != null
+    }
+    if (showTechniqueDialog) {
+        com.emanuel5014.trainable.ui.screens.workout.PerformedTechniqueDialog(
+            planned = plannedTechniques,
+            performed = performed,
+            onDismiss = { showTechniqueDialog = false },
+            onSave = { techniques, _ ->
+                performed = techniques
+                showTechniqueDialog = false
+            },
+            showApplyToFollowing = false
+        )
+    }
 
-    val isValid = weight.isNotBlank() && (if (isTimeSet) seconds.isNotBlank() else reps.isNotBlank())
+    // A Time & Reps set has no weight to fill in
+    val isValid = !partsInvalid && (kind == SetLogKind.TIME_AND_REPS || weight.isNotBlank()) && when (kind) {
+        SetLogKind.STRENGTH -> reps.isNotBlank()
+        SetLogKind.TIME_AND_WEIGHT -> seconds.isNotBlank()
+        SetLogKind.TIME_AND_REPS -> seconds.isNotBlank() && reps.isNotBlank()
+    }
 
     AlertDialog(
         modifier = Modifier.imePadding(),
@@ -1744,20 +1679,24 @@ fun EditSetDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ExerciseTypeSelector(
-                    selectedType = if (isTimeSet) "time_and_weight" else "strength",
+                    selectedType = when (kind) {
+                        SetLogKind.STRENGTH -> "strength"
+                        SetLogKind.TIME_AND_WEIGHT -> TIME_AND_WEIGHT
+                        SetLogKind.TIME_AND_REPS -> TIME_AND_REPS
+                    },
                     onTypeSelected = { type ->
-                        isTimeSet = type == "time_and_weight"
-                        if (isTimeSet && seconds.isBlank()) seconds = "45"
+                        kind = SetLogKind.ofExerciseType(type)
+                        if (kind.isTimed && seconds.isBlank()) seconds = "45"
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                GymInputField(
+                if (kind != SetLogKind.TIME_AND_REPS) GymInputField(
                     value = weight,
                     onValueChange = { newValue ->
                         weight = newValue.replace(",", ".")
                     },
-                    label = "Weight ($weightUnit)",
+                    label = stringResource(R.string.weight_label_unit, weightUnit),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     trailingIcon = if (!isNewSet && weight.isNotEmpty()) {
                         {
@@ -1772,20 +1711,73 @@ fun EditSetDialog(
                         }
                     } else null
                 )
-                if (isTimeSet) {
+                if (kind.isTimed) {
                     GymInputField(
                         value = seconds,
                         onValueChange = { seconds = it.filter { char -> char.isDigit() } },
                         label = stringResource(R.string.set_duration_label),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
-                } else {
+                }
+                if (kind == SetLogKind.TIME_AND_REPS) {
+                    GymInputField(
+                        value = reps,
+                        onValueChange = { reps = it.filter { char -> char.isDigit() } },
+                        label = stringResource(R.string.reps),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                } else if (!kind.isTimed) {
                     GymInputField(
                         value = reps,
                         onValueChange = { reps = it },
                         label = stringResource(R.string.reps),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        // A set in parts has their sum as its reps
+                        enabled = (parsedParts?.size ?: 0) < 2
                     )
+                    if (showExtras) {
+                        GymInputField(
+                            value = partsText,
+                            onValueChange = { text ->
+                                partsText = text.filter { it.isDigit() || it == '+' || it == ' ' }
+                                SetPerformance.parseParts(partsText)?.takeIf { it.size > 1 }?.let { reps = it.sum().toString() }
+                            },
+                            label = stringResource(R.string.mini_set_parts_label),
+                            supportingText = if (partsInvalid) stringResource(R.string.parts_error) else null,
+                            isError = partsInvalid
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                            GymInputField(
+                                value = assisted,
+                                onValueChange = { assisted = it.filter { c -> c.isDigit() }.take(2) },
+                                label = stringResource(R.string.assisted_reps_label),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            GymInputField(
+                                value = partial,
+                                onValueChange = { partial = it.filter { c -> c.isDigit() }.take(2) },
+                                label = stringResource(R.string.partial_reps_label),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        if (plannedTechniques.isNotEmpty()) {
+                            val techniqueContext = LocalContext.current
+                            androidx.compose.material3.TextButton(onClick = { showTechniqueDialog = true }) {
+                                Text(
+                                    text = performed?.let { list ->
+                                        if (list.isEmpty()) stringResource(R.string.performed_technique_none)
+                                        else stringResource(
+                                            R.string.performed_technique_badge,
+                                            list.joinToString(" · ") { com.emanuel5014.trainable.ui.components.techniqueLabel(techniqueContext, it) }
+                                        )
+                                    } ?: stringResource(R.string.performed_technique_title),
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
                     if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
                         com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
                     }
@@ -1837,11 +1829,25 @@ fun EditSetDialog(
                         val storageWeight = WeightUnitConverter.convertStorage(displayWeight, weightUnit)
                         val updatedSet = set.copy(
                             pesoSollevato = storageWeight,
-                            repsEffettive = if (isTimeSet) 0 else (reps.toIntOrNull() ?: 0),
-                            durataSecondi = if (isTimeSet) (seconds.toIntOrNull() ?: 45) else null,
+                            repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else (reps.toIntOrNull() ?: 0),
+                            durataSecondi = if (kind.isTimed) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null },
-                            rpe = if (isTimeSet) null else rpe
-                        )
+                            rpe = if (kind.isTimed) null else rpe
+                        ).asKind(kind).let { edited ->
+                            if (kind.isTimed) edited.copy(repParts = null, intraRests = null, assistedReps = 0, partialReps = 0)
+                            else {
+                                val parts = parsedParts?.takeIf { it.size > 1 }
+                                edited.copy(
+                                    repParts = parts?.let { SetPerformance.encodeParts(it) },
+                                    repsEffettive = parts?.sum() ?: edited.repsEffettive,
+                                    // The pauses there were stay with the parts they came between
+                                    intraRests = parts?.let { SetPerformance.encodePauses(edited.pauses.take(it.size - 1)) },
+                                    assistedReps = assisted.toIntOrNull() ?: 0,
+                                    partialReps = partial.toIntOrNull() ?: 0,
+                                    performedTechniques = encodePerformed(performed)
+                                )
+                            }
+                        }
                         onConfirm(updatedSet)
                     },
                     enabled = isValid,
@@ -1881,6 +1887,6 @@ private fun formatDuration(durationMs: Long): String {
 private sealed interface UnifiedHistoryItem {
     val order: Int
     data class Strength(val block: HistoryBlock, override val order: Int) : UnifiedHistoryItem
-    data class Cardio(val cardio: CardioLogEntity, override val order: Int) : UnifiedHistoryItem
+    data class Cardio(val cardio: CardioExerciseLogs, override val order: Int) : UnifiedHistoryItem
 }
 

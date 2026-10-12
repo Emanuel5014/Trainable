@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.parts
+import com.emanuel5014.trainable.data.local.entity.pauses
+import com.emanuel5014.trainable.data.local.entity.performed
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -27,6 +30,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
@@ -85,7 +89,9 @@ fun PrescriptionPill(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (emphasized) FontWeight.Black else FontWeight.ExtraBold,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            maxLines = 1
+            // Long ones (a custom technique as done) wrap instead of losing their end
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
     }
 }
@@ -124,9 +130,45 @@ fun PrescriptionBlocksSummary(
 @Composable
 fun weekLabel(week: Int): String = stringResource(R.string.week_short, week)
 
-/** Prescription of a logged set as plain text for exports ("75% · MAX · Pause 2″"), without RPE. */
+/** Prescription of a logged set as plain text for exports ("75% · MAX · Pause 2″ · 2+1+1"), without RPE. */
 fun setLogPrescriptionText(context: android.content.Context, set: SetLogEntity): String? =
-    setLogPrescriptionBadges(context, set.copy(rpe = null)).takeIf { it.isNotEmpty() }?.joinToString(" · ")
+    (setLogPrescriptionBadges(context, set.copy(rpe = null)) + setLogPerformanceBadges(context, set))
+        .takeIf { it.isNotEmpty() }?.joinToString(" · ")
+
+/** What an export says about a set: its prescription (with advanced programming on) and how it really went. */
+fun setLogDetailsText(context: android.content.Context, set: SetLogEntity, withPrescription: Boolean): String? =
+    if (withPrescription) setLogPrescriptionText(context, set)
+    else setLogPerformanceBadges(context, set).takeIf { it.isNotEmpty() }?.joinToString(" · ")
+
+/**
+ * How a set really went, as badges: its parts after short pauses ("2+1+1 · pauses 60s, 50s"), the reps a spotter
+ * helped with, the partials, and the technique it was done with when it was not the planned one.
+ */
+fun setPerformanceBadges(
+    context: android.content.Context,
+    parts: List<Int>,
+    pauses: List<Int>,
+    assisted: Int,
+    partial: Int,
+    performed: List<Technique>?
+): List<String> = buildList {
+    if (parts.size > 1) {
+        val text = parts.joinToString("+")
+        add(if (pauses.isNotEmpty()) context.getString(R.string.parts_badge, text, pauses.joinToString(", ") { "${it}s" }) else text)
+    }
+    if (assisted > 0) add(context.resources.getQuantityString(R.plurals.assisted_reps_badge, assisted, assisted))
+    if (partial > 0) add(context.resources.getQuantityString(R.plurals.partial_reps_badge, partial, partial))
+    performed?.let { list ->
+        // "Done: Discesa 3, Fermo 1, Salita 3", or "No technique" for a set done without any of the planned ones
+        add(
+            if (list.isEmpty()) context.getString(R.string.performed_technique_none)
+            else context.getString(R.string.performed_technique_badge, list.joinToString(" · ") { techniqueLabel(context, it) })
+        )
+    }
+}
+
+fun setLogPerformanceBadges(context: android.content.Context, set: SetLogEntity): List<String> =
+    setPerformanceBadges(context, set.parts, set.pauses, set.assistedReps, set.partialReps, set.performed)
 
 /** Badges describing the prescription snapshot and RPE of a logged set ("75%", "MAX", "Pause 2″", "RPE 8", "EXTRA"). */
 fun setLogPrescriptionBadges(context: android.content.Context, set: SetLogEntity): List<String> = buildList {
@@ -141,19 +183,28 @@ fun setLogPrescriptionBadges(context: android.content.Context, set: SetLogEntity
     if (set.isExtra) add(context.getString(R.string.extra_badge))
 }
 
-/** Pills row for a logged set; the %1RM badge (if any) is highlighted. */
+/**
+ * Pills row for a logged set: the rep range it was done against ("10–15", for any set that has one) and, with
+ * advanced programming on, its prescription; the %1RM badge (if any) is highlighted.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
-    if (!LocalAdvancedProgramming.current) return
+    val advanced = LocalAdvancedProgramming.current
     val context = LocalContext.current
-    val badges = remember(set) { setLogPrescriptionBadges(context, set) }
-    if (badges.isEmpty()) return
+    val badges = remember(set, advanced) { if (advanced) setLogPrescriptionBadges(context, set) else emptyList() }
+    // How the set went shows whether advanced programming is on or not
+    val performance = remember(set) { setLogPerformanceBadges(context, set) }
+    val range = set.repsRange?.text
+    if (badges.isEmpty() && range == null && performance.isEmpty()) return
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        range?.let {
+            PrescriptionPill(text = it, containerColor = SurfaceContainerHigh, contentColor = OnSurfaceVariant)
+        }
         badges.forEachIndexed { i, text ->
             val highlight = i == 0 && set.targetPercent != null
             PrescriptionPill(
@@ -162,6 +213,9 @@ fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
                 contentColor = if (highlight) Primary else OnSurfaceVariant,
                 emphasized = highlight
             )
+        }
+        performance.forEach { text ->
+            PrescriptionPill(text = text, containerColor = Tertiary.copy(alpha = 0.15f), contentColor = Tertiary)
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -44,6 +46,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
+import com.emanuel5014.trainable.domain.prescription.RepsDraft
+import com.emanuel5014.trainable.domain.prescription.RepsTarget
+import com.emanuel5014.trainable.ui.components.exercise.RepsEditor
+import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -89,7 +95,8 @@ fun SwapExerciseBottomSheet(
     currentReps: String,
     availableExercises: List<ExerciseEntity>,
     languageCode: String,
-    onExerciseSelected: (ExerciseEntity, Int, String, Int?, String, Int?) -> Unit,
+    /** Receives the exercise, the sets, the reps (fixed, a range or one per set), the rest, the type and the target seconds. */
+    onExerciseSelected: (ExerciseEntity, Int, RepsTarget, Int?, String, Int?) -> Unit,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
@@ -98,13 +105,18 @@ fun SwapExerciseBottomSheet(
     isAdding: Boolean = false,
     editablePresetExercises: Boolean = false,
     categories: List<String>? = null,
-    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?) -> Unit)? = null,
+    /** Receives the exercise, the minutes of each set, the rest in seconds and the number of sets. */
+    onCardioExerciseSelected: ((ExerciseEntity, Int, Int?, Int) -> Unit)? = null,
     /** When set, an "Advanced" (%1RM / blocks) type is offered. Receives the blocks and the rest in seconds. */
     onAdvancedExerciseSelected: ((ExerciseEntity, List<PrescriptionBlock>, Int?) -> Unit)? = null,
     /** Prescription of the exercise being swapped, so the new one can keep it. */
     initialBlocks: List<PrescriptionBlock> = emptyList(),
     /** The exercise being replaced, marked in the list; none when an exercise is being added. */
-    currentExerciseId: Int? = null
+    currentExerciseId: Int? = null,
+    /** Top of the rep range of the exercise being replaced, so the new one starts from the same kind of reps. */
+    currentRepsMax: Int? = null,
+    /** Exercises that cannot be picked (the ones a screen that keys its list by exercise already has). */
+    excludedExerciseIds: Set<Int> = emptySet()
 ) {
     rememberResponsiveSize()
 
@@ -113,15 +125,12 @@ fun SwapExerciseBottomSheet(
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
-    var setsText by remember { mutableStateOf(currentSets.toString()) }
-    var repsText by remember { mutableStateOf(currentReps) }
-    
     var showAddCustomDialog by remember { mutableStateOf(false) }
     var exerciseToEdit by remember { mutableStateOf<ExerciseEntity?>(null) }
     var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
 
-    val filteredExercises = remember(availableExercises, searchQuery, selectedCategory, showOnlyCustom, languageCode) {
+    val filteredExercises = remember(availableExercises, searchQuery, selectedCategory, showOnlyCustom, languageCode, excludedExerciseIds) {
         availableExercises.filter { exercise ->
             val exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode)
             val matchesSearch = searchQuery.isBlank() || 
@@ -130,7 +139,7 @@ fun SwapExerciseBottomSheet(
             val matchesCategory = selectedCategory == null || 
                 exercise.categoria == selectedCategory
             val matchesCustom = !showOnlyCustom || exercise.id >= 1000
-            matchesSearch && matchesCategory && matchesCustom
+            exercise.id !in excludedExerciseIds && matchesSearch && matchesCategory && matchesCustom
         }
     }
 
@@ -293,8 +302,8 @@ fun SwapExerciseBottomSheet(
                     SwapCardioConfigDialog(
                         exercise = selectedExercise!!,
                         languageCode = languageCode,
-                        onConfirm = { durationMinutes, rest ->
-                            onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest)
+                        onConfirm = { durationMinutes, rest, sets ->
+                            onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest, sets)
                             onDismiss()
                         },
                         onBack = { step = 1 },
@@ -306,8 +315,9 @@ fun SwapExerciseBottomSheet(
                         SwapExerciseConfigSheet(
                             exercise = ex,
                             languageCode = languageCode,
-                            initialSets = setsText,
-                            initialReps = repsText,
+                            initialSets = currentSets.toString(),
+                            initialReps = currentReps,
+                            initialRepsMax = currentRepsMax,
                             initialBlocks = initialBlocks,
                             advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
@@ -704,9 +714,10 @@ private fun SwapExerciseConfigSheet(
     languageCode: String,
     initialSets: String,
     initialReps: String,
+    initialRepsMax: Int?,
     initialBlocks: List<PrescriptionBlock>,
     advancedEnabled: Boolean,
-    onConfirm: (Int, String, Int?, String, Int?) -> Unit,
+    onConfirm: (Int, RepsTarget, Int?, String, Int?) -> Unit,
     onConfirmAdvanced: (List<PrescriptionBlock>, Int?) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
@@ -716,8 +727,10 @@ private fun SwapExerciseConfigSheet(
         mutableStateOf(if (advancedEnabled && initialBlocks.isNotEmpty()) "advanced" else "strength")
     }
     var setsText by remember { mutableStateOf(initialSets) }
-    var repsText by remember { mutableStateOf(initialReps) }
+    // What the exercise had before ("45s" of a timed one is no reps: start from the usual 8)
+    var repsDraft by remember { mutableStateOf(RepsDraft.from(initialReps, initialRepsMax).takeIf { it.isValid } ?: RepsDraft()) }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
+    var repsGoalText by remember { mutableStateOf(TimeAndReps.goalOf(initialReps).toString()) }
     var restText by remember { mutableStateOf("120") }
     var advancedBlocks by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
 
@@ -769,7 +782,7 @@ private fun SwapExerciseConfigSheet(
                         if (type == "advanced" && advancedBlocks[1].isNullOrEmpty()) {
                             // Carry the plain sets × reps over as a first free block
                             val sets = setsText.trim().toIntOrNull() ?: 3
-                            val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                            val reps = repsDraft.target?.repsTarget ?: "5"
                             advancedBlocks = mapOf(1 to listOf(PrescriptionBlock(sets = sets, reps = reps)))
                         }
                         selectedExerciseType = type
@@ -800,30 +813,24 @@ private fun SwapExerciseConfigSheet(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
-                    else -> Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        GymInputField(
-                            value = setsText,
-                            onValueChange = { setsText = it },
-                            label = stringResource(R.string.sets),
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                        GymInputField(
-                            value = repsText,
-                            onValueChange = {
-                                repsText = it
-                                val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                    setsText = repCount.toString()
-                                }
-                            },
-                            label = stringResource(R.string.reps),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    TIME_AND_REPS -> TimeAndRepsEditor(
+                        setsText = setsText,
+                        onSetsChange = { setsText = it },
+                        repsGoalText = repsGoalText,
+                        onRepsGoalChange = { repsGoalText = it },
+                        seconds = timeTargetSecondsText.toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS,
+                        onSecondsChange = { timeTargetSecondsText = it.toString() },
+                        hapticEnabled = hapticEnabled,
+                        haptic = haptic,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    else -> RepsEditor(
+                        draft = repsDraft,
+                        onDraftChange = { repsDraft = it },
+                        setsText = setsText,
+                        onSetsChange = { setsText = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 RestSlider(
@@ -862,16 +869,28 @@ private fun SwapExerciseConfigSheet(
                                 "time_and_weight" -> {
                                     val sets = setsText.trim().toIntOrNull() ?: return@GymButton
                                     val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: 45
-                                    onConfirm(sets, "${targetSec}s", rest, "time_and_weight", targetSec)
+                                    onConfirm(sets, RepsTarget("${targetSec}s", null), rest, "time_and_weight", targetSec)
+                                }
+                                TIME_AND_REPS -> {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val goal = TimeAndReps.parseGoal(repsGoalText) ?: return@GymButton
+                                    val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS
+                                    onConfirm(sets, RepsTarget(goal.toString(), null), rest, TIME_AND_REPS, targetSec)
                                 }
                                 else -> {
                                     val sets = setsText.trim().toIntOrNull() ?: return@GymButton
-                                    val reps = repsText.trim().takeIf { it.isNotBlank() } ?: return@GymButton
+                                    val reps = repsDraft.target ?: return@GymButton
                                     onConfirm(sets, reps, rest, "strength", null)
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        // Plain exercises need valid reps (a range with its top above its bottom, a list of numbers...)
+                        enabled = when (selectedExerciseType) {
+                            "strength" -> repsDraft.isValid
+                            TIME_AND_REPS -> TimeAndReps.parseGoal(repsGoalText) != null
+                            else -> true
+                        }
                     ) {
                         Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Black)
                     }
@@ -885,12 +904,13 @@ private fun SwapExerciseConfigSheet(
 private fun SwapCardioConfigDialog(
     exercise: ExerciseEntity,
     languageCode: String,
-    onConfirm: (Int, Int?) -> Unit,
+    onConfirm: (minutes: Int, rest: Int?, sets: Int) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     isAdding: Boolean = false
 ) {
     var durationText by remember { mutableStateOf("20") }
+    var setsText by remember { mutableStateOf("1") }
     var restText by remember { mutableStateOf("120") }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -964,6 +984,14 @@ private fun SwapCardioConfigDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                GymInputField(
+                    value = setsText,
+                    onValueChange = { setsText = it.filter { c -> c.isDigit() }.take(2) },
+                    label = stringResource(R.string.sets),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 RestSlider(
                     value = restText.toIntOrNull() ?: 120,
                     onValueChange = { restText = it.toString() },
@@ -978,7 +1006,7 @@ private fun SwapCardioConfigDialog(
                 onClick = {
                     val duration = durationText.trim().toIntOrNull() ?: return@TextButton
                     val rest = restText.toIntOrNull()
-                    onConfirm(duration, rest)
+                    onConfirm(duration, rest, (setsText.toIntOrNull() ?: 1).coerceIn(1, 20))
                 }
             ) {
                 Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)

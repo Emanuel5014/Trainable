@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.data.report
 
+import com.emanuel5014.trainable.data.local.entity.straightReps
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
+import com.emanuel5014.trainable.data.local.entity.kind
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
@@ -68,6 +72,8 @@ class ReportGenerator @Inject constructor(
         val periodLast = sessionTimestamps.maxOrNull()
 
         val exerciseDataMap = mutableMapOf<Int, MutableList<Pair<Long, List<SetEntry>>>>()
+        // The rows of each exercise, to tell how it is measured (weight × reps, timed, time & reps)
+        val kindRows = mutableMapOf<Int, MutableList<com.emanuel5014.trainable.data.local.entity.SetLogEntity>>()
         val swapEventsByExercise = mutableMapOf<Int, MutableList<SwapEvent>>()
 
         val planExerciseMap = planWithDetails.exercises.associateBy { it.planExercise.id }
@@ -113,12 +119,14 @@ class ReportGenerator @Inject constructor(
                     rpe = setWithExercise.setLog.rpe.takeIf { advanced },
                     isWarmup = setWithExercise.setLog.isWarmup,
                     note = setWithExercise.setLog.note,
-                    prescription = if (advanced) {
-                        com.emanuel5014.trainable.ui.components.setLogPrescriptionText(
-                            localeManager.localizedContext(), setWithExercise.setLog
-                        )
-                    } else null
+                    // The prescription with advanced programming on; mini-sets, help and partials always
+                    prescription = com.emanuel5014.trainable.ui.components.setLogDetailsText(
+                        localeManager.localizedContext(), setWithExercise.setLog, withPrescription = advanced
+                    ),
+                    seconds = setWithExercise.setLog.durataSecondi,
+                    straightReps = setWithExercise.setLog.straightReps
                 )
+                kindRows.getOrPut(exerciseId) { mutableListOf() }.add(setWithExercise.setLog)
 
                 exerciseDataMap.getOrPut(exerciseId) { mutableListOf() }
                     .add(date to listOf(setEntry))
@@ -166,9 +174,16 @@ class ReportGenerator @Inject constructor(
                 isCurrentlyInPlan = exerciseId in currentExerciseIds,
                 sessions = sortedSessions,
                 summary = summary,
-                swapEvents = swapEventsByExercise[exerciseId] ?: emptyList()
+                swapEvents = swapEventsByExercise[exerciseId] ?: emptyList(),
+                kind = when (kindRows[exerciseId].orEmpty().kind) {
+                    SetLogKind.TIME_AND_REPS -> ReportExerciseKind.TIME_AND_REPS
+                    SetLogKind.TIME_AND_WEIGHT -> ReportExerciseKind.TIME_AND_WEIGHT
+                    SetLogKind.STRENGTH -> ReportExerciseKind.STRENGTH
+                }
             )
-        }.sortedByDescending { it.summary.totalSets }
+        } + cardioExercises(planWithDetails, sessions, languageCode)
+
+        val sortedExercises = exercises.sortedByDescending { it.summary.totalSets }
 
         return PlanReport(
             planId = plan.id,
@@ -179,9 +194,56 @@ class ReportGenerator @Inject constructor(
             totalSessions = sessions.size,
             periodFirstSession = periodFirst,
             periodLastSession = periodLast,
-            exercises = exercises,
+            exercises = sortedExercises,
             weightUnit = weightUnit
         )
+    }
+
+    /**
+     * Cardio exercises have no set rows: their sets are the cardio logs of each session, one exercise per activity
+     * (a session can have it twice, e.g. a warm-up and a cool-down, which both count).
+     */
+    private fun cardioExercises(planWithDetails: PlanWithDetails, sessions: List<SessionWithDetails>, languageCode: String): List<ExerciseReport> {
+        val byActivity = mutableMapOf<String, MutableList<ExerciseSessionEntry>>()
+        val names = mutableMapOf<String, String>()
+        sessions.forEach { session ->
+            session.cardio.filter { it.isCompleted }.groupedByExercise().forEach { cardio ->
+                val key = cardio.categoria.trim().lowercase(java.util.Locale.ROOT)
+                names.putIfAbsent(key, cardio.categoria.trim())
+                byActivity.getOrPut(key) { mutableListOf() }.add(
+                    ExerciseSessionEntry(
+                        date = session.session.timestamp,
+                        sets = cardio.sets.mapIndexed { index, log ->
+                            SetEntry(
+                                setNumber = index + 1,
+                                weight = 0f,
+                                reps = 0,
+                                rpe = null,
+                                isWarmup = false,
+                                note = log.note,
+                                seconds = log.durataSecondi,
+                                distanceKm = log.distanza
+                            )
+                        }
+                    )
+                )
+            }
+        }
+        return byActivity.map { (key, entries) ->
+            val planExercise = planWithDetails.exercises.firstOrNull { it.exercise.nome.trim().lowercase(java.util.Locale.ROOT) == key }
+            val sorted = entries.sortedBy { it.date }
+            ExerciseReport(
+                // Activities typed by hand have no exercise: a stable id that cannot clash with a real one
+                exerciseId = planExercise?.exercise?.id ?: -(key.hashCode() and Int.MAX_VALUE) - 1,
+                exerciseName = ExerciseTranslations.translate(names.getValue(key), languageCode),
+                muscleGroup = ExerciseTranslations.translateCategory("Cardio", languageCode),
+                isCurrentlyInPlan = planExercise != null,
+                sessions = sorted,
+                summary = calculateSummary(sorted),
+                swapEvents = emptyList(),
+                kind = ReportExerciseKind.CARDIO
+            )
+        }
     }
 
     private fun calculateSummary(sessions: List<ExerciseSessionEntry>): ExerciseSummary {
@@ -207,9 +269,10 @@ class ReportGenerator @Inject constructor(
         val maxVolumeDate = maxVolumeEntry?.first ?: 0L
 
         val bestOneRM = allSets
-            .filter { !it.isWarmup && it.weight > 0 && it.reps > 0 }
-            .maxOfOrNull { set -> com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.weight, set.reps) }
+            .filter { !it.isWarmup && it.weight > 0 && it.straightReps > 0 && it.seconds == null }
+            .maxOfOrNull { set -> com.emanuel5014.trainable.domain.prescription.LoadCalculator.epley(set.weight, set.straightReps) }
 
+        val working = allSets.filter { !it.isWarmup }
         return ExerciseSummary(
             firstSessionDate = sessions.first().date,
             lastSessionDate = sessions.last().date,
@@ -218,7 +281,12 @@ class ReportGenerator @Inject constructor(
             maxWeightDate = maxWeightDate,
             maxVolume = maxVolume,
             maxVolumeDate = maxVolumeDate,
-            bestEstimatedOneRM = bestOneRM
+            bestEstimatedOneRM = bestOneRM,
+            bestSeconds = working.maxOfOrNull { it.seconds ?: 0 } ?: 0,
+            totalSeconds = working.sumOf { it.seconds ?: 0 },
+            bestReps = working.maxOfOrNull { it.reps } ?: 0,
+            totalReps = working.sumOf { it.reps },
+            totalKm = working.sumOf { (it.distanceKm ?: 0f).toDouble() }.toFloat()
         )
     }
 }

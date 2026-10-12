@@ -63,12 +63,14 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -78,6 +80,7 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.OutlinedTextField
@@ -142,6 +145,7 @@ import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
+import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
 import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
@@ -156,6 +160,11 @@ import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material3.OutlinedButton
 import com.emanuel5014.trainable.ui.components.WeightTimeInput
+import com.emanuel5014.trainable.ui.components.TimeRepsInput
+import com.emanuel5014.trainable.ui.components.setValueText
+import com.emanuel5014.trainable.ui.components.setPerformanceBadges
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.components.RestSlider
 import com.emanuel5014.trainable.ui.components.formatRestTime
 import com.emanuel5014.trainable.ui.theme.Error
@@ -218,6 +227,21 @@ fun WorkoutExecutionScreen(
     var isEditingValues by remember { mutableStateOf(false) }
     // Index of a set being edited in place in the bottom hub, done or still to do (none by default); it resets with the exercise
     var editingSetIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
+    // The set whose technique-as-done dialog is open (exercise index, set index)
+    var techniqueDialogFor by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    techniqueDialogFor?.let { (exIndex, setIndex) ->
+        state.exercises.getOrNull(exIndex)?.sets?.getOrNull(setIndex)?.let { set ->
+            PerformedTechniqueDialog(
+                planned = set.prescription?.techniques.orEmpty(),
+                performed = set.performedTechniques,
+                onDismiss = { techniqueDialogFor = null },
+                onSave = { techniques, applyToFollowing ->
+                    viewModel.setPerformedTechniques(exIndex, setIndex, techniques, applyToFollowing)
+                    techniqueDialogFor = null
+                }
+            )
+        }
+    }
     var lastEditedIndex by remember { mutableIntStateOf(0) }
     var showSwapExerciseSheet by remember { mutableStateOf(false) }
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
@@ -243,7 +267,8 @@ fun WorkoutExecutionScreen(
     var hubHeightPx by remember { mutableIntStateOf(0) }
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.mediaMessages)
-    var cardioDistanceInput by remember(state.currentExercise?.exercise?.id) {
+    // Each cardio set has its own distance
+    var cardioDistanceInput by remember(state.currentExercise?.exercise?.id, state.currentExercise?.activeCardioSetIndex) {
         mutableStateOf(
             if ((state.currentExercise?.cardioDistanceKm ?: 0f) > 0f) state.currentExercise?.cardioDistanceKm.toString() else ""
         )
@@ -632,6 +657,8 @@ fun WorkoutExecutionScreen(
                                 val showBottomHubForCardio = targetExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
                                 val cardioBottomPadding by animateDpAsState(
                                     targetValue = when {
+                                        // The rest card is taller than the hub: the next set's buttons stay above it
+                                        state.remainingRestSeconds > 0 -> 230.dp
                                         showBottomHubForCardio && (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) -> 190.dp
                                         showBottomHubForCardio || state.remainingRestSeconds > 0 -> 140.dp
                                         else -> 32.dp
@@ -643,6 +670,7 @@ fun WorkoutExecutionScreen(
                                     label = "cardioBottomPadding"
                                 )
                                 CardioExerciseContent(
+                                    exerciseIndex = targetIndex,
                                     exerciseState = targetExState,
                                     languageCode = languageCode,
                                     state = state,
@@ -684,7 +712,7 @@ fun WorkoutExecutionScreen(
                             } else {
                                 var expandedSetIndex by remember(targetIndex) { mutableStateOf<Int?>(targetActiveSetIndex) }
                                 LaunchedEffect(targetActiveSetIndex) {
-                                    if (targetExState.isTimeAndWeight) {
+                                    if (targetExState.isTimed) {
                                         expandedSetIndex = targetActiveSetIndex
                                     }
                                 }
@@ -734,11 +762,14 @@ fun WorkoutExecutionScreen(
                                             PrescriptionExpander.legacyTargets(targetExState.blocks)
                                         } else null
                                         val setsCount = weekTargets?.first ?: targetExState.sets.size
-                                        val repsCount = if (targetExState.isTimeAndWeight) {
+                                        val repsCount = if (targetExState.isTimeAndReps) {
+                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
+                                            stringResource(R.string.time_reps_value, sec, targetExState.repsGoal ?: 0)
+                                        } else if (targetExState.isTimeAndWeight) {
                                             val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
                                             "${sec}s"
                                         } else {
-                                            weekTargets?.second ?: targetExState.planDetails?.repsTarget ?: targetExState.customRepsTarget ?: run {
+                                            weekTargets?.second ?: targetExState.repsDisplay.takeIf { it.isNotBlank() } ?: run {
                                                 if (targetExState.sets.isEmpty()) "0"
                                                 else {
                                                     val allReps = targetExState.sets.map { it.reps }
@@ -896,6 +927,18 @@ fun WorkoutExecutionScreen(
                                     }
                                 }
                                 
+                                targetExState.progressionToShow?.let { suggestion ->
+                                    ProgressionSuggestionCard(
+                                        suggestion = suggestion,
+                                        weightUnit = state.weightUnit,
+                                        onApply = { viewModel.applyProgression(targetIndex) },
+                                        onDismiss = { viewModel.dismissProgression(targetIndex) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
+                                    )
+                                }
+
                                 // Sets List
                                 LazyColumn(
                                     state = exerciseListState,
@@ -935,7 +978,7 @@ fun WorkoutExecutionScreen(
                                         }
 
                                         val haptic = LocalHapticFeedback.current
-                                        val isExpanded = targetExState.isTimeAndWeight && (expandedSetIndex == index) && !set.isCompleted
+                                        val isExpanded = targetExState.isTimed && (expandedSetIndex == index) && !set.isCompleted
 
                                         if (targetExState.isAdvanced) {
                                             val previous = targetExState.sets.getOrNull(index - 1)
@@ -997,10 +1040,14 @@ fun WorkoutExecutionScreen(
                                             intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
                                                 ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },
                                             badges = buildList {
+                                                // The goal of a rep range stays visible until the set is done
+                                                if (!set.isCompleted) set.repsRange?.let { add(it.text) }
                                                 if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
                                                 setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
                                                 set.rpe?.let { add(stringResource(R.string.rpe_short, PrescriptionFormatter.number(it))) }
                                                 if (set.isExtra) add(stringResource(R.string.extra_badge))
+                                                // How the set really went: parts after short pauses, help, partials, technique as done
+                                                addAll(setPerformanceBadges(context, set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
                                             },
                                             setNumber = set.setNumber,
                                             weight = set.weight,
@@ -1012,7 +1059,7 @@ fun WorkoutExecutionScreen(
                                                 if (set.isAmrap && !set.isCompleted && index == targetActiveSetIndex) {
                                                     // AMRAP: reps must be entered before logging
                                                     isEditingValues = true
-                                                } else if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                                } else if (targetExState.isTimed && !set.isCompleted) {
                                                     viewModel.skipTimerAndLogSet(
                                                         targetIndex,
                                                         index,
@@ -1046,7 +1093,8 @@ fun WorkoutExecutionScreen(
                                             previousNote = set.previousNote,
                                             timeSeconds = set.timeSeconds,
                                             isExpanded = isExpanded,
-                                            onToggleExpanded = if (targetExState.isTimeAndWeight && !set.isCompleted) {
+                                            isTimeAndReps = set.isTimeAndReps,
+                                            onToggleExpanded = if (targetExState.isTimed && !set.isCompleted) {
                                                 { expandedSetIndex = if (expandedSetIndex == index) null else index }
                                             } else null,
                                             expandedContent = if (isExpanded) {
@@ -1143,6 +1191,15 @@ fun WorkoutExecutionScreen(
                                                                     color = OnSurfaceVariant,
                                                                     fontWeight = FontWeight.Bold,
                                                                     modifier = Modifier.padding(bottom = 2.dp)
+                                                                )
+                                                            }
+
+                                                            if (set.isTimeAndReps) {
+                                                                // What was done in the interval: counted while the clock runs, fixed up once it stops
+                                                                RepsDoneStepper(
+                                                                    reps = set.reps,
+                                                                    onRepsChange = { viewModel.updateSetReps(targetIndex, index, it) },
+                                                                    hapticEnabled = state.hapticEnabled
                                                                 )
                                                             }
 
@@ -1415,6 +1472,8 @@ fun WorkoutExecutionScreen(
 
                         AnimatedContent(
                             targetState = when {
+                                // The pause of a mini-set is over: how many reps did it have?
+                                state.miniSet?.awaitingReps == true -> HubMode.MiniSet
                                 // A set being edited wins over the rest card, which stays visible in a slim form
                                 setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
                                 isResting -> HubMode.Resting
@@ -1471,7 +1530,14 @@ fun WorkoutExecutionScreen(
                                                     }
                                                 }
                                             }
-                                            if (exercise.isTimeAndWeight) {
+                                            if (exercise.isTimeAndReps) {
+                                                TimeRepsInput(
+                                                    seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
+                                                    reps = editedSet.reps,
+                                                    onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
+                                                    onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) }
+                                                )
+                                            } else if (exercise.isTimeAndWeight) {
                                                 WeightTimeInput(
                                                     weight = editedSet.weight,
                                                     seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: 45,
@@ -1492,6 +1558,26 @@ fun WorkoutExecutionScreen(
                                                         value = editedSet.rpe,
                                                         onValueChange = { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                                     )
+                                                }
+                                                if (state.setPerformanceEnabled) {
+                                                    SetExtrasRow(
+                                                        assisted = editedSet.assistedReps,
+                                                        partial = editedSet.partialReps,
+                                                        onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, editedIndex, it) },
+                                                        onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, editedIndex, it) },
+                                                        hapticEnabled = state.hapticEnabled,
+                                                        techniqueChanged = editedSet.performedTechniques != null,
+                                                        onEditTechnique = if (editedSet.prescription?.techniques.isNullOrEmpty()) null else {
+                                                            { techniqueDialogFor = state.currentExerciseIndex to editedIndex }
+                                                        }
+                                                    )
+                                                }
+                                                // A set already done can still be finished after a short pause
+                                                if (state.setPerformanceEnabled && editedSet.isCompleted && !editedSet.isEmom) {
+                                                    MiniSetOfferButton(missing = 0, onClick = {
+                                                        editingSetIndex = null
+                                                        viewModel.startMiniSet(state.currentExerciseIndex, editedIndex)
+                                                    })
                                                 }
                                             }
                                             GymButton(
@@ -1522,6 +1608,14 @@ fun WorkoutExecutionScreen(
                                             showSubtract = state.showTimerSubtract,
                                             onSkip = { viewModel.skipRestTimer() }
                                         )
+                                        val miniSet = state.miniSet
+                                        val offer = state.miniSetOffer
+                                        if (miniSet != null) {
+                                            val miniSetNumber = state.exercises.getOrNull(miniSet.exerciseIndex)?.sets?.getOrNull(miniSet.setIndex)?.setNumber ?: 0
+                                            MiniSetPauseLabel(miniSetNumber, modifier = Modifier.align(Alignment.CenterHorizontally))
+                                        } else if (offer != null) {
+                                            MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                        }
                                         // The rest is the time to load the bar for the next set
                                         ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
                                     }
@@ -1544,7 +1638,14 @@ fun WorkoutExecutionScreen(
                                                     Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
                                                 }
                                             }
-                                            if (currentExState?.isTimeAndWeight == true) {
+                                            if (currentExState?.isTimeAndReps == true) {
+                                                TimeRepsInput(
+                                                    seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
+                                                    reps = set.reps,
+                                                    onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
+                                                    onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) }
+                                                )
+                                            } else if (currentExState?.isTimeAndWeight == true) {
                                                 WeightTimeInput(
                                                     weight = set.weight,
                                                     seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45,
@@ -1556,6 +1657,14 @@ fun WorkoutExecutionScreen(
                                                 if (set.isAmrap) {
                                                     Text(
                                                         text = stringResource(R.string.amrap_enter_reps),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = Primary,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                                set.repsRange?.let { range ->
+                                                    Text(
+                                                        text = stringResource(R.string.reps_goal, range.text),
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         color = Primary,
                                                         fontWeight = FontWeight.Bold
@@ -1592,9 +1701,22 @@ fun WorkoutExecutionScreen(
                                                         onValueChange = { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
                                                     )
                                                 }
+                                                if (state.setPerformanceEnabled) {
+                                                    SetExtrasRow(
+                                                        assisted = set.assistedReps,
+                                                        partial = set.partialReps,
+                                                        onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, activeSetIndex, it) },
+                                                        onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, activeSetIndex, it) },
+                                                        hapticEnabled = state.hapticEnabled,
+                                                        techniqueChanged = set.performedTechniques != null,
+                                                        onEditTechnique = if (set.prescription?.techniques.isNullOrEmpty()) null else {
+                                                            { techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
+                                                        }
+                                                    )
+                                                }
                                             }
                                             LogSetButton(onClick = {
-                                                if (currentExState?.isTimeAndWeight == true) {
+                                                if (currentExState?.isTimed == true) {
                                                     viewModel.skipTimerAndLogSet(
                                                         state.currentExerciseIndex,
                                                         activeSetIndex,
@@ -1633,24 +1755,22 @@ fun WorkoutExecutionScreen(
                                                 Spacer(modifier = Modifier.width(16.dp))
                                                 Column(modifier = Modifier.weight(1f)) {
                                                     Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-                                                    val repsOrTime = if (currentExState?.isTimeAndWeight == true) {
-                                                        "${set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45}s"
-                                                    } else if (set.isAmrap) {
-                                                        stringResource(R.string.max_label)
-                                                    } else {
-                                                        "${set.reps}"
-                                                    }
                                                     Text(
-                                                        text = WeightUnitConverter.formatWithUnit(
-                                                            WeightUnitConverter.convertDisplay(set.weight, state.weightUnit),
-                                                            state.weightUnit
-                                                        ) + " × $repsOrTime", 
+                                                        text = setValueText(
+                                                            kind = currentExState?.setKind ?: SetLogKind.STRENGTH,
+                                                            weightKg = set.weight,
+                                                            reps = set.reps,
+                                                            seconds = if (currentExState?.isTimed == true) set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45 else null,
+                                                            weightUnit = state.weightUnit,
+                                                            repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
+                                                        ),
                                                         style = MaterialTheme.typography.titleLarge, 
                                                         fontWeight = FontWeight.ExtraBold
                                                     )
                                                     val p = set.prescription
                                                     val detail = listOfNotNull(
-                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
+                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) },
+                                                        set.repsRange?.let { stringResource(R.string.reps_goal, it.text) }
                                                     ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
                                                         listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
                                                     if (detail.isNotEmpty()) {
@@ -1670,7 +1790,7 @@ fun WorkoutExecutionScreen(
                                                     onClick = {
                                                         if (set.isAmrap) {
                                                             isEditingValues = true
-                                                        } else if (currentExState?.isTimeAndWeight == true) {
+                                                        } else if (currentExState?.isTimed == true) {
                                                             viewModel.skipTimerAndLogSet(
                                                                 state.currentExerciseIndex,
                                                                 activeSetIndex,
@@ -1689,6 +1809,21 @@ fun WorkoutExecutionScreen(
                                         }
                                     }
                                 }
+                                HubMode.MiniSet -> {
+                                    state.miniSet?.let { run ->
+                                        val miniSetSet = state.exercises.getOrNull(run.exerciseIndex)?.sets?.getOrNull(run.setIndex)
+                                        if (miniSetSet != null) {
+                                            MiniSetEntry(
+                                                setNumber = miniSetSet.setNumber,
+                                                soFar = miniSetSet.repParts.ifEmpty { listOf(miniSetSet.reps) }.joinToString("+"),
+                                                initialReps = run.missing,
+                                                hapticEnabled = state.hapticEnabled,
+                                                onLog = { viewModel.logMiniSet(it) },
+                                                onEnd = { viewModel.endMiniSet() }
+                                            )
+                                        }
+                                    }
+                                }
                                 HubMode.Completed -> {
                                     val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
                                     val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
@@ -1697,6 +1832,10 @@ fun WorkoutExecutionScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
+                                        // The last set of the workout has no rest to offer it in
+                                        state.miniSetOffer?.let { offer ->
+                                            MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                        }
                                         if (allowModify) {
                                             GymButton(
                                                 onClick = {
@@ -1926,11 +2065,15 @@ fun WorkoutExecutionScreen(
                 SwapExerciseBottomSheet(
                     // A cardio exercise has no sets or reps to carry over
                     currentSets = exState.sets.size.takeIf { it > 0 } ?: 3,
-                    currentReps = if (exState.isCardio) "8" else exState.planDetails?.repsTarget ?: exState.customRepsTarget ?: "8",
+                    currentReps = if (exState.isCardio) "8" else exState.currentReps.repsTarget,
+                    currentRepsMax = if (exState.isCardio) null else exState.currentReps.repsMax,
                     availableExercises = availableExercises,
                     languageCode = languageCode,
                     onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, exerciseType, durataTargetSec)
+                        viewModel.swapExercise(
+                            state.currentExerciseIndex, newExercise.id, sets, reps.repsTarget, rest, exerciseType, durataTargetSec,
+                            repsMax = reps.repsMax
+                        )
                         showSwapExerciseSheet = false
                     },
                     onAddCustomExercise = { nome, categoria, onCreated ->
@@ -1945,8 +2088,8 @@ fun WorkoutExecutionScreen(
                     onDismiss = { showSwapExerciseSheet = false },
                     editablePresetExercises = state.editablePresetExercises,
                     categories = categories,
-                    onCardioExerciseSelected = { newExercise, durationMinutes, rest ->
-                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest)
+                    onCardioExerciseSelected = { newExercise, durationMinutes, rest, sets ->
+                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest, sets)
                         showSwapExerciseSheet = false
                     },
                     onAdvancedExerciseSelected = { newExercise, blocks, rest ->
@@ -1968,9 +2111,9 @@ fun WorkoutExecutionScreen(
                 languageCode = languageCode,
                 onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
                     if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec)
+                        viewModel.addExerciseAfterCurrent(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
                     } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec)
+                        viewModel.addExerciseToActiveSession(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false
@@ -1987,11 +2130,11 @@ fun WorkoutExecutionScreen(
                 isAdding = true,
                 editablePresetExercises = state.editablePresetExercises,
                 categories = categories,
-                onCardioExerciseSelected = { exercise, durationMinutes, rest ->
+                onCardioExerciseSelected = { exercise, durationMinutes, rest, sets ->
                     if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes)
+                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
                     } else {
-                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes)
+                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
                     }
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false
@@ -2084,7 +2227,7 @@ fun WorkoutExecutionScreen(
     }
 }
 
-enum class HubMode { Logging, Editing, EditingSet, Resting, Completed, Cardio }
+enum class HubMode { Logging, Editing, EditingSet, Resting, MiniSet, Completed, Cardio }
 
 @Composable
 fun rememberAnimatedShape(
@@ -2208,6 +2351,7 @@ fun CardioToggleButton(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CardioExerciseContent(
+    exerciseIndex: Int,
     exerciseState: WorkoutExerciseState,
     languageCode: String,
     state: WorkoutState,
@@ -2220,6 +2364,29 @@ fun CardioExerciseContent(
 ) {
     var showStopDialog by remember { mutableStateOf(false) }
     var showCompleteDialog by remember { mutableStateOf(false) }
+    var openedSetIndex by remember(exerciseState.exercise.id) { mutableStateOf<Int?>(null) }
+    // The set the note button and the note line are about: the one on the timer, or the last one once all are done
+    val noteSetIndex = exerciseState.activeCardioSetIndex.takeIf { it >= 0 } ?: exerciseState.cardioSets.lastIndex
+    openedSetIndex?.let { index ->
+        exerciseState.cardioSets.getOrNull(index)?.let { set ->
+            val onTimer = index == exerciseState.activeCardioSetIndex && (state.cardioTimerRunning || state.cardioTimerPaused)
+            CardioSetDialog(
+                set = set,
+                onDismiss = { openedSetIndex = null },
+                onSave = { seconds, km, note ->
+                    if (set.isCompleted) viewModel.editCardioSet(exerciseIndex, index, seconds, km, note)
+                    else viewModel.updateCardioSetNote(exerciseIndex, index, note)
+                    openedSetIndex = null
+                },
+                onDelete = if (exerciseState.cardioSets.size > 1 && !onTimer) {
+                    {
+                        viewModel.removeCardioSet(exerciseIndex, index)
+                        openedSetIndex = null
+                    }
+                } else null
+            )
+        }
+    }
     var completeMinutes by remember { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
 
@@ -2335,7 +2502,10 @@ fun CardioExerciseContent(
         // Clamped to avoid glitches on extreme DPI / smallest-width settings.
         // The height counts too: the circle gives way when the content (about 260 dp besides the circle) would not fit
         val widthScale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
-        val heightScale = ((maxHeight - 260.dp) / 200.dp).coerceIn(0.4f, 1.15f)
+        // The set chips (and a set's note) take room too
+        val hasNoteLine = !exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()
+        val reservedHeight = if (hasNoteLine) 430.dp else 390.dp
+        val heightScale = ((maxHeight - reservedHeight) / 200.dp).coerceIn(0.4f, 1.15f)
         val scale = minOf(widthScale, heightScale)
         val cIndicatorSize = (200f * scale).dp
         val cButtonSize = (135f * scale).dp
@@ -2381,12 +2551,21 @@ fun CardioExerciseContent(
                 }
             }
 
-            IconButton(onClick = onSwap) {
-                Icon(
-                    imageVector = Icons.Rounded.SwapHoriz,
-                    contentDescription = stringResource(R.string.swap_exercise),
-                    tint = OnSurfaceVariant
-                )
+            Row {
+                IconButton(onClick = { openedSetIndex = noteSetIndex }) {
+                    Icon(
+                        imageVector = Icons.Rounded.EditNote,
+                        contentDescription = stringResource(R.string.cardio_set_note),
+                        tint = if (exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()) OnSurfaceVariant else Primary
+                    )
+                }
+                IconButton(onClick = onSwap) {
+                    Icon(
+                        imageVector = Icons.Rounded.SwapHoriz,
+                        contentDescription = stringResource(R.string.swap_exercise),
+                        tint = OnSurfaceVariant
+                    )
+                }
             }
         }
 
@@ -2441,6 +2620,19 @@ fun CardioExerciseContent(
                         }
                     }
                 }
+            }
+
+            CardioSetsStrip(
+                sets = exerciseState.cardioSets,
+                activeIndex = exerciseState.activeCardioSetIndex,
+                onSetClick = { openedSetIndex = it },
+                onAdd = {
+                    if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    viewModel.addCardioSet(exerciseIndex)
+                }
+            )
+            exerciseState.cardioSets.getOrNull(noteSetIndex)?.note?.takeIf { it.isNotBlank() }?.let { note ->
+                CardioSetNoteLine(note = note, onClick = { openedSetIndex = noteSetIndex })
             }
 
             if (!exerciseState.isCardioCompleted) {
@@ -2560,21 +2752,21 @@ fun CardioExerciseContent(
             } else {
                 Spacer(modifier = Modifier.height(-8.dp))
                 
-                val elapsed = exerciseState.cardioElapsedSeconds
-                val mins = elapsed / 60
-                val secs = elapsed % 60
-                val timeStr = String.format("%02d:%02d", mins, secs)
-                
-                val targetDurationMet = exerciseState.cardioDurataTargetSeconds?.let { 
-                    elapsed >= it 
+                // Several sets add up; the targets are per set, so every set has to reach them
+                val elapsed = exerciseState.cardioTotalSeconds
+                val timeStr = cardioTimeText(elapsed)
+                val totalKm = exerciseState.cardioTotalKm
+
+                val targetDurationMet = exerciseState.cardioDurataTargetSeconds?.let { target ->
+                    exerciseState.cardioSets.all { it.elapsedSeconds >= target }
                 } ?: false
-                val targetDistanceMet = exerciseState.cardioDistanzaTargetKm?.let { 
-                    exerciseState.cardioDistanceKm >= it 
+                val targetDistanceMet = exerciseState.cardioDistanzaTargetKm?.let { target ->
+                    exerciseState.cardioSets.all { it.distanceKm >= target }
                 } ?: false
                 val goalAchieved = targetDurationMet || targetDistanceMet
                 
                 val progress = exerciseState.cardioDurataTargetSeconds?.let { target ->
-                    (elapsed.toFloat() / target.toFloat()).coerceIn(0f, 1f)
+                    (elapsed.toFloat() / (target.toFloat() * exerciseState.cardioSets.size)).coerceIn(0f, 1f)
                 } ?: 1f
                 
                 val cookieRotation = remember { Animatable(0f) }
@@ -2670,7 +2862,7 @@ fun CardioExerciseContent(
                                     color = OnSurface,
                                     fontWeight = FontWeight.Black
                                 )
-                                if (exerciseState.cardioDistanceKm > 0f) {
+                                if (totalKm > 0f) {
                                     Text(
                                         text = "•",
                                         style = MaterialTheme.typography.displayMedium,
@@ -2678,7 +2870,7 @@ fun CardioExerciseContent(
                                         fontWeight = FontWeight.Black
                                     )
                                     Text(
-                                        text = stringResource(R.string.cardio_dist_value, exerciseState.cardioDistanceKm.toString()),
+                                        text = stringResource(R.string.cardio_dist_value, com.emanuel5014.trainable.ui.components.cardioKmText(totalKm)),
                                         style = MaterialTheme.typography.displayMedium,
                                         color = OnSurface,
                                         fontWeight = FontWeight.Black
@@ -2718,7 +2910,7 @@ fun CardioExerciseContent(
                                         }
                                     }
                                 }
-                                if (exerciseState.cardioDistanceKm > 0f && exerciseState.cardioDistanzaTargetKm != null) {
+                                if (totalKm > 0f && exerciseState.cardioDistanzaTargetKm != null) {
                                     Surface(
                                         color = if (targetDistanceMet) Primary.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
                                         shape = CircleShape
@@ -2794,7 +2986,7 @@ private fun ActiveSetPlateChip(
     onClick: () -> Unit
 ) {
     if (!state.plateCalculatorEnabled || exercise == null || set == null || set.isCompleted) return
-    if (exercise.isTimeAndWeight || exercise.isCardio || exercise.exercise.id !in plateExercises) return
+    if (exercise.isTimed || exercise.isCardio || exercise.exercise.id !in plateExercises) return
     PlateChip(
         weightKg = set.weight,
         barKg = plateExercises[exercise.exercise.id],
@@ -3037,3 +3229,47 @@ fun LogSetButton(
     }
 }
 
+
+/** The reps of a Time & Reps set in its timer card: big − / + so they can be counted up mid-interval with one thumb. */
+@Composable
+private fun RepsDoneStepper(reps: Int, onRepsChange: (Int) -> Unit, hapticEnabled: Boolean) {
+    val haptic = LocalHapticFeedback.current
+    fun change(to: Int) {
+        if (to < 0 || to > TimeAndReps.MAX_REPS) return
+        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onRepsChange(to)
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = stringResource(R.string.reps_done_label).uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+            color = OnSurfaceVariant,
+            fontWeight = FontWeight.ExtraBold
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            FilledIconButton(
+                onClick = { change(reps - 1) },
+                enabled = reps > 0,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = SurfaceContainerHigh, contentColor = OnSurface),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.reps_decrease))
+            }
+            Text(
+                text = "$reps",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Black,
+                color = Primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(min = 56.dp)
+            )
+            FilledIconButton(
+                onClick = { change(reps + 1) },
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Primary, contentColor = OnPrimary),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.reps_increase))
+            }
+        }
+    }
+}

@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.domain.compare
 
+import com.emanuel5014.trainable.data.local.entity.straightReps
+import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
+import com.emanuel5014.trainable.data.local.entity.isTimeAndReps
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
@@ -11,7 +15,8 @@ import kotlin.math.abs
 private const val MAX_REPS_FOR_E1RM = 12
 
 private fun SetLogEntity.e1rm(): Float? =
-    if (durataSecondi == null && repsEffettive in 1..MAX_REPS_FOR_E1RM) LoadCalculator.epley(pesoSollevato, repsEffettive) else null
+    // A set finished after short pauses only counts its reps done in one go
+    if (durataSecondi == null && straightReps in 1..MAX_REPS_FOR_E1RM) LoadCalculator.epley(pesoSollevato, straightReps) else null
 
 enum class Trend { UP, DOWN, SAME }
 
@@ -77,7 +82,10 @@ enum class ExerciseKind {
     BODYWEIGHT,
 
     /** Time & Weight: how long a set was held, with an optional load (planks, carries). */
-    TIMED
+    TIMED,
+
+    /** Time & Reps: the reps done in a timed interval, no load (burpees for 60 s). */
+    TIME_AND_REPS
 }
 
 /** A logged set reduced to what the comparison needs; [log] keeps the prescription snapshot and RPE for display. */
@@ -96,7 +104,7 @@ data class ExerciseSide(val sets: List<ComparedSet>) {
 
     val volumeKg: Float = workingSets.filter { it.durationSeconds == null }.sumOf { (it.weightKg * it.reps).toDouble() }.toFloat()
 
-    val totalReps: Int = workingSets.filter { it.durationSeconds == null }.sumOf { it.reps }
+    val totalReps: Int = workingSets.filter { it.durationSeconds == null || it.log.isTimeAndReps }.sumOf { it.reps }
 
     val totalSeconds: Int = workingSets.sumOf { it.durationSeconds ?: 0 }
 
@@ -125,6 +133,7 @@ data class ExerciseComparison(
                     else ComparedMetric(MetricKind.VOLUME, a.volumeKg, b.volumeKg)
                 ExerciseKind.BODYWEIGHT -> ComparedMetric(MetricKind.TOTAL_REPS, a.totalReps.toFloat(), b.totalReps.toFloat())
                 ExerciseKind.TIMED -> ComparedMetric(MetricKind.TIME_UNDER_TENSION, a.totalSeconds.toFloat(), b.totalSeconds.toFloat())
+                ExerciseKind.TIME_AND_REPS -> ComparedMetric(MetricKind.TOTAL_REPS, a.totalReps.toFloat(), b.totalReps.toFloat())
             }
         }
 
@@ -250,6 +259,7 @@ data class SessionComparison(
         private fun kindOf(sides: List<ExerciseSide>): ExerciseKind {
             val sets = sides.flatMap { it.workingSets.ifEmpty { it.sets } }
             return when {
+                sets.any { it.log.isTimeAndReps } -> ExerciseKind.TIME_AND_REPS
                 sets.any { it.durationSeconds != null } -> ExerciseKind.TIMED
                 sets.any { it.weightKg > 0f } -> ExerciseKind.STRENGTH
                 else -> ExerciseKind.BODYWEIGHT
@@ -260,7 +270,8 @@ data class SessionComparison(
 
         /** Logs of the same activity are paired in order ("Treadmill" with "Treadmill"); the rest stand alone. */
         private fun cardio(a: SessionWithDetails, b: SessionWithDetails): List<CardioComparison> {
-            fun sorted(session: SessionWithDetails) = session.cardio.sortedBy { it.ordineEsercizio }
+            // The sets of a cardio exercise add up to one entry
+            fun sorted(session: SessionWithDetails) = session.cardio.groupedByExercise().map { it.combined() }
             val queueA = sorted(a).groupBy { normalize(it.categoria) }.mapValues { it.value.toMutableList() }
             val queueB = sorted(b).groupBy { normalize(it.categoria) }.mapValues { it.value.toMutableList() }
             val keys = (sorted(a).map { normalize(it.categoria) } + sorted(b).map { normalize(it.categoria) }).distinct()
@@ -282,6 +293,12 @@ data class SessionComparison(
 
         private fun CardioLogEntity.toSide() = CardioSide(distanza, durataSecondi, durataTargetSecondi)
 
+        private fun CardioExerciseLogs.combined(): CardioLogEntity = first.copy(
+            distanza = totalKm,
+            durataSecondi = totalSeconds,
+            durataTargetSecondi = first.durataTargetSecondi?.let { it * sets.size }
+        )
+
         private fun normalize(label: String) = label.trim().lowercase(Locale.ROOT)
     }
 }
@@ -293,7 +310,7 @@ private class SessionFigures(session: SessionWithDetails) {
 
     val volumeKg: Float = loaded.sumOf { (it.pesoSollevato * it.repsEffettive).toDouble() }.toFloat()
     val workingSets: Int = working.size
-    val totalReps: Int = loaded.sumOf { it.repsEffettive }
+    val totalReps: Int = working.filter { it.durataSecondi == null || it.isTimeAndReps }.sumOf { it.repsEffettive }
     val exerciseCount: Int = session.sets.map { it.exercise.id }.distinct().size
     val maxWeightKg: Float = working.maxOfOrNull { it.pesoSollevato } ?: 0f
     val bestE1rmKg: Float = working.mapNotNull { it.e1rm() }.maxOrNull() ?: 0f

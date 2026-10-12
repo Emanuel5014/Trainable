@@ -916,6 +916,53 @@
     <string name="time_weight_reset_timer">Timer zurücksetzen</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Erweitert</string>
+    <string name="exercise_type_time_and_reps">Zeit &amp; Wdh.</string>
+    <string name="exercise_type_time_and_reps_hint">Wiederholungen in einem Zeitintervall, ohne Gewicht</string>
+    <string name="time_and_reps_badge">ZEIT &amp; WDH.</string>
+    <string name="time_reps_value">%1$ds · %2$d Wdh.</string>
+    <string name="reps_goal_label">Ziel-Wdh.</string>
+    <string name="reps_goal_error">Gib eine ganze Zahl von 1 bis 999 ein</string>
+    <string name="reps_done_label">Geschaffte Wdh.</string>
+    <string name="reps_decrease">Eine Wdh. weniger</string>
+    <string name="reps_increase">Eine Wdh. mehr</string>
+    <string name="cardio_add_set">Satz hinzufügen</string>
+    <string name="cardio_set_note">Satznotiz</string>
+    <string name="cardio_remove_set">Satz löschen</string>
+    <string name="cardio_sets_total">%1$d Sätze</string>
+    <string name="seconds_label">Sekunden</string>
+    <string name="mini_set_offer">Satz beenden · noch %1$d Wdh.</string>
+    <string name="mini_set_offer_free">Minisatz hinzufügen</string>
+    <string name="mini_set_pause">Minisatz-Pause · Satz %1$d</string>
+    <string name="mini_set_title">Minisatz · Satz %1$d</string>
+    <string name="mini_set_so_far">Bisher %1$s</string>
+    <string name="mini_set_log">MINISATZ SPEICHERN</string>
+    <string name="mini_set_end">SATZ BEENDEN</string>
+    <string name="mini_set_add">Minisatz hinzufügen</string>
+    <string name="mini_set_notification">Minisatz</string>
+    <string name="assisted_reps_label">Mit Hilfe</string>
+    <string name="partial_reps_label">Teilwdh.</string>
+    <string name="performed_technique_badge">Ausgeführt: %1$s</string>
+    <string name="performed_technique_title">Ausgeführte Technik</string>
+    <string name="performed_technique_hint">Ändere, was du nicht wie geplant geschafft hast: die Vorgabe bleibt.</string>
+    <string name="performed_apply_following">Auch die nächsten Sätze dieses Blocks</string>
+    <string name="performed_restore">Wie vorgegeben</string>
+    <string name="technique_not_done">Nicht ausgeführt</string>
+    <string name="performed_technique_none">Ohne Technik</string>
+    <string name="technique_edit">Technik</string>
+    <string name="mini_set_parts_label">Minisätze (z. B. 2+1+1)</string>
+    <string name="set_extras_more">Mit Hilfe, Teilwdh.</string>
+    <string name="set_extras_more_technique">Mit Hilfe, Teilwdh., Technik</string>
+    <string name="parts_error">Ganze Zahlen mit + getrennt, z. B. 2+1+1</string>
+    <string name="parts_badge">%1$s · Pausen %2$s</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%d mit Hilfe</item>
+        <item quantity="other">+%d mit Hilfe</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%d Teilwdh.</item>
+        <item quantity="other">+%d Teilwdh.</item>
+    </plurals>
+    <string name="notification_next_set_text">Nächste: %1$s - Satz %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">%1RM-Blöcke, RPE und Techniken</string>
     <string name="one_rep_max">1RM</string>
     <string name="one_rep_max_value">1RM %1$s</string>
@@ -1160,4 +1207,34 @@
     <string name="cardio_complete_logs_time">Erfasst die geplante Zeit: %1$s</string>
     <string name="cardio_complete_duration">Dauer (Min.)</string>
     <string name="optional_suffix">(optional)</string>
+
+    <!-- Starting weight, rep ranges and double progression -->
+    <string name="starting_weight">Startgewicht</string>
+    <string name="starting_weight_desc">Gib jeder Übung einer Routine ein Gewicht zum Starten. Solange die Routine noch kein Training zum Übernehmen hat, beginnen die Sätze dort oder beim zuletzt genutzten Gewicht dieser Übung.</string>
+    <string name="set_performance_setting">Satzdetails</string>
+    <string name="set_performance_setting_desc">Mini-Sätze nach einer kurzen Pause, unterstützte und Teilwiederholungen und die Technik, mit der der Satz wirklich gemacht wurde. Aus haben Sätze nur ihre Notiz.</string>
+    <string name="starting_weight_field">Startgewicht (%1$s)</string>
+    <string name="starting_weight_hint">Optional · gilt bis zum ersten erfassten Training</string>
+    <string name="reps_mode_fixed">Fest</string>
+    <string name="reps_mode_range">Bereich</string>
+    <string name="reps_mode_per_set">Pro Satz</string>
+    <string name="reps_min">Min</string>
+    <string name="reps_max">Max</string>
+    <string name="reps_range_hint">Behalte das Gewicht, bis du in jedem Satz das Maximum schaffst, dann steigere es</string>
+    <string name="reps_range_error">Das Maximum muss höher als das Minimum sein</string>
+    <string name="reps_number_error">Gib eine ganze Zahl von 1 bis 100 ein</string>
+    <string name="reps_list_error">Zahlen mit Bindestrichen trennen, z. B. 8-6-4-2</string>
+    <string name="reps_goal">Ziel: %1$s</string>
+    <string name="progression_hit_max">%1$d Wdh. in jedem Satz beim letzten Mal</string>
+    <string name="progression_try_weight">Probiere %1$s</string>
+    <string name="progression_dismiss">Aktuelles Gewicht behalten</string>
+
+    <!-- Add workout sheet: routines grouped by active / archived -->
+    <plurals name="add_workout_exercise_count">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
+    <string name="add_workout_last_done">Zuletzt: %1$s</string>
+    <string name="show_archived_routines">Archivierte Routinen anzeigen</string>
+    <string name="hide_archived_routines">Archivierte Routinen ausblenden</string>
 </resources>

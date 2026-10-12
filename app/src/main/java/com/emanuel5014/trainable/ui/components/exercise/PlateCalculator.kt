@@ -89,13 +89,16 @@ private val PlatePalette = listOf(
     Color(0xFF7B1FA2),
     Color(0xFF00897B)
 )
+// The 2 kg plate sits between 2.5 and 1.25 kg, so it gets its own colour there and the rest keep theirs
+private val PlatePaletteKg = PlatePalette.take(6) + Color(0xFFEF6C00) + PlatePalette.drop(6)
 private val SteelColor = Color(0xFF5F5F66)
 private val SteelTipColor = Color(0xFFB4B4BC)
 
 private fun plateColor(plate: Float, unit: String): Color {
     val choices = PlateCalculator.plateChoices(unit)
+    val palette = if (unit == "lb") PlatePalette else PlatePaletteKg
     val index = choices.indexOfFirst { abs(it - plate) < 0.001f }
-    return PlatePalette[(if (index >= 0) index else 6).coerceAtMost(PlatePalette.lastIndex)]
+    return palette[(if (index >= 0) index else 6).coerceAtMost(palette.lastIndex)]
 }
 
 /** Heavier plates are taller and thicker, but never so small that they cannot be tapped. */

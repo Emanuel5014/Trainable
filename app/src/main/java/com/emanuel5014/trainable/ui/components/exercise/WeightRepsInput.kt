@@ -578,3 +578,126 @@ fun WeightTimeInput(
         )
     }
 }
+
+/** Interval and reps of a Time & Reps set (no weight): the duration wheel goes in 5 s steps, the reps one up to 300. */
+@Composable
+fun TimeRepsInput(
+    seconds: Int,
+    reps: Int,
+    onSecondsChange: (Int) -> Unit,
+    onRepsChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var customSeconds by remember { mutableStateOf(false) }
+    var customReps by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            val baseSecondsRange = remember { (5..600 step 5).map { it.toFloat() } }
+            val secondsRange = remember(seconds, baseSecondsRange) {
+                val secF = seconds.toFloat()
+                if (!baseSecondsRange.contains(secF) && seconds > 0) (baseSecondsRange + secF).sorted() else baseSecondsRange
+            }
+            WheelPickerBox(
+                label = stringResource(R.string.set_duration_label),
+                value = seconds.toFloat(),
+                range = secondsRange,
+                onValueChange = { onSecondsChange(it.toInt()) },
+                modifier = Modifier.fillMaxWidth(),
+                format = { "${it.toInt()}s" }
+            )
+            CustomValueButton(onClick = { customSeconds = true }, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            val repsRange = remember(reps) {
+                val base = (0..TIME_REPS_WHEEL_MAX).map { it.toFloat() }
+                if (reps > TIME_REPS_WHEEL_MAX) base + reps.toFloat() else base
+            }
+            WheelPickerBox(
+                label = stringResource(R.string.reps),
+                value = reps.toFloat(),
+                range = repsRange,
+                onValueChange = { onRepsChange(it.toInt()) },
+                modifier = Modifier.fillMaxWidth(),
+                format = { it.toInt().toString() }
+            )
+            CustomValueButton(onClick = { customReps = true }, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+    }
+
+    if (customSeconds) {
+        CustomNumberDialog(
+            title = stringResource(R.string.set_duration_label),
+            label = stringResource(R.string.target_seconds),
+            current = seconds,
+            onDismiss = { customSeconds = false },
+            onConfirm = { if (it > 0) onSecondsChange(it) }
+        )
+    }
+    if (customReps) {
+        CustomNumberDialog(
+            title = stringResource(R.string.custom_reps),
+            label = stringResource(R.string.reps),
+            current = reps,
+            onDismiss = { customReps = false },
+            onConfirm = onRepsChange
+        )
+    }
+}
+
+private const val TIME_REPS_WHEEL_MAX = 300
+
+@Composable
+private fun CustomValueButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    TextButton(onClick = onClick, modifier = modifier.padding(top = 4.dp)) {
+        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = OnSurfaceVariant)
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(stringResource(R.string.custom), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+    }
+}
+
+@Composable
+private fun CustomNumberDialog(
+    title: String,
+    label: String,
+    current: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    var text by remember { mutableStateOf("") }
+    AlertDialog(
+        modifier = Modifier.imePadding(),
+        onDismissRequest = onDismiss,
+        title = { Text(title, color = OnSurface) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it.filter { char -> char.isDigit() }.take(4) },
+                label = { Text(label) },
+                placeholder = { Text(current.toString(), color = OnSurfaceVariant.copy(alpha = 0.5f)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = Shapes.large,
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Primary, cursorColor = Primary),
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                text.toIntOrNull()?.let(onConfirm)
+                onDismiss()
+            }) {
+                Text(stringResource(R.string.ok), color = Primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel), color = OnSurfaceVariant)
+            }
+        },
+        containerColor = SurfaceContainerHigh
+    )
+}

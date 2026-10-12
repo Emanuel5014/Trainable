@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.local.entity.groupedByExercise
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import android.graphics.Bitmap
 import android.view.View
 import androidx.compose.foundation.BorderStroke
@@ -133,12 +136,13 @@ fun WorkoutShareCard(
         val ord = block.exercises.firstOrNull()?.sets?.firstOrNull()?.setLog?.ordineEsercizio ?: 0
         unifiedItems.add(UnifiedShareItem.Strength(block, ord))
     }
-    sessionDetails.cardio.forEach { cardio ->
-        unifiedItems.add(UnifiedShareItem.Cardio(cardio, cardio.ordineEsercizio))
+    val cardioExercises = sessionDetails.cardio.groupedByExercise()
+    cardioExercises.forEach { cardio ->
+        unifiedItems.add(UnifiedShareItem.Cardio(cardio, cardio.order))
     }
     val sortedUnifiedItems = unifiedItems.sortedBy { it.order }
 
-    val totalExercises = exercisesWithSets.size + sessionDetails.cardio.size
+    val totalExercises = exercisesWithSets.size + cardioExercises.size
     val totalSets = sessionDetails.sets.size
     val totalWeight = sessionDetails.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
     val durationMs = sessionDetails.session.durationMs
@@ -455,9 +459,15 @@ fun WorkoutShareCard(
                                             val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
                                                 resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
                                             } else {
-                                                val targetDisplay = if (isTime) {
+                                                val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
+                                                    stringResource(
+                                                        com.emanuel5014.trainable.R.string.time_reps_value,
+                                                        planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
+                                                        TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
+                                                    )
+                                                } else if (isTime) {
                                                     planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
-                                                } else planExercise.planExercise.repsTarget
+                                                } else planExercise.planExercise.repsDisplay
                                                 "${planExercise.planExercise.serieTarget}×$targetDisplay"
                                             }
                                             Text(
@@ -476,7 +486,6 @@ fun WorkoutShareCard(
 
                                     item.sets.forEach { setWithEx ->
                                         val set = setWithEx.setLog
-                                        val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -502,15 +511,12 @@ fun WorkoutShareCard(
                                             Spacer(modifier = Modifier.width(8.dp))
 
                                             Text(
-                                                text = WeightUnitConverter.formatWithUnit(
-                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                                    weightUnit
-                                                ) + " × $repsOrTime",
+                                                text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
                                             )
-                                            val shareBadges = if (showPrescription) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(shareContext, set) else null
+                                            val shareBadges = com.emanuel5014.trainable.ui.components.setLogDetailsText(shareContext, set, withPrescription = showPrescription)
                                             if (shareBadges != null) {
                                                 Text(
                                                     text = "  $shareBadges",
@@ -566,9 +572,15 @@ fun WorkoutShareCard(
                                             val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
                                                 resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
                                             } else {
-                                                val targetDisplay = if (isTime) {
+                                                val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
+                                                    stringResource(
+                                                        com.emanuel5014.trainable.R.string.time_reps_value,
+                                                        planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
+                                                        TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
+                                                    )
+                                                } else if (isTime) {
                                                     planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
-                                                } else planExercise.planExercise.repsTarget
+                                                } else planExercise.planExercise.repsDisplay
                                                 "${planExercise.planExercise.serieTarget}×$targetDisplay"
                                             }
                                             Text(
@@ -587,7 +599,6 @@ fun WorkoutShareCard(
 
                                     item.sets.forEach { setWithEx ->
                                         val set = setWithEx.setLog
-                                        val repsOrTime = if (set.durataSecondi != null) "${set.durataSecondi}s" else "${set.repsEffettive}"
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -613,15 +624,12 @@ fun WorkoutShareCard(
                                             Spacer(modifier = Modifier.width(8.dp))
 
                                             Text(
-                                                text = WeightUnitConverter.formatWithUnit(
-                                                    WeightUnitConverter.convertDisplay(set.pesoSollevato, weightUnit),
-                                                    weightUnit
-                                                ) + " × $repsOrTime",
+                                                text = com.emanuel5014.trainable.ui.components.setValueText(set, weightUnit),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = textPrimary
                                             )
-                                            val shareBadges = if (showPrescription) com.emanuel5014.trainable.ui.components.setLogPrescriptionText(shareContext, set) else null
+                                            val shareBadges = com.emanuel5014.trainable.ui.components.setLogDetailsText(shareContext, set, withPrescription = showPrescription)
                                             if (shareBadges != null) {
                                                 Text(
                                                     text = "  $shareBadges",
@@ -649,7 +657,8 @@ fun WorkoutShareCard(
                         }
                     }
                     is UnifiedShareItem.Cardio -> {
-                        val cardio = unifiedItem.cardio
+                        val cardio = unifiedItem.cardio.first
+                        val cardioSets = unifiedItem.cardio.sets
                         val cardioTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
                         Column(
                             modifier = Modifier
@@ -667,7 +676,32 @@ fun WorkoutShareCard(
                                 letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(10.dp))
-                            Row(
+                            if (cardioSets.size > 1) cardioSets.forEachIndexed { index, set ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = 38.dp, height = 18.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color.White.copy(alpha = 0.05f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "SET ${index + 1}", style = MaterialTheme.typography.labelSmall, color = textSecondary, fontWeight = FontWeight.Bold)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = textPrimary
+                                    )
+                                }
+                                if (!set.note.isNullOrBlank()) {
+                                    Text(text = set.note, style = MaterialTheme.typography.bodySmall, color = textSecondary, modifier = Modifier.padding(start = 46.dp))
+                                }
+                            } else Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -731,5 +765,5 @@ private data class ShareBlock(
 private sealed interface UnifiedShareItem {
     val order: Int
     data class Strength(val block: ShareBlock, override val order: Int) : UnifiedShareItem
-    data class Cardio(val cardio: com.emanuel5014.trainable.data.local.entity.CardioLogEntity, override val order: Int) : UnifiedShareItem
+    data class Cardio(val cardio: com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs, override val order: Int) : UnifiedShareItem
 }

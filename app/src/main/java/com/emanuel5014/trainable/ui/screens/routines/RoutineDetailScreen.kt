@@ -86,7 +86,9 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
+import com.emanuel5014.trainable.domain.prescription.RepsDraft
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.StartingWeight
 import com.emanuel5014.trainable.ui.components.NumberStepper
 import com.emanuel5014.trainable.ui.components.AdvancedPrescriptionEditor
 import com.emanuel5014.trainable.ui.components.WeekEditing
@@ -172,7 +174,13 @@ import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
 import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
+import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.util.ImageStorageUtils
+import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.components.exercise.RepsEditor
+import com.emanuel5014.trainable.ui.components.exercise.StartingWeightField
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -303,13 +311,21 @@ fun RoutineDetailScreen(
     var selectedExerciseType by remember { mutableStateOf("strength") }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var setsText by remember { mutableStateOf("3") }
-    var repsText by remember { mutableStateOf("8-12") }
+    // Reps goal of a Time & Reps exercise
+    var repsGoalText by remember { mutableStateOf(TimeAndReps.DEFAULT_REPS_GOAL.toString()) }
+    var repsDraft by remember { mutableStateOf(RepsDraft()) }
+    // Typed in the user's weight unit; blank means no starting weight
+    var presetText by remember { mutableStateOf("") }
+    // What the field showed when the sheet opened: left alone, the stored weight is kept as it is
+    var presetTextAtOpen by remember { mutableStateOf("") }
     var restText by remember { mutableStateOf("120") }
     var cardioDurationText by remember { mutableStateOf("20") }
+    var cardioSetsText by remember { mutableStateOf("1") }
 
     // Advanced (%1RM / blocks) prescription drafts
     val advancedOn = LocalAdvancedProgramming.current
     val weightUnit by viewModel.weightUnit.collectAsState()
+    val startingWeightEnabled by viewModel.startingWeightEnabled.collectAsState()
     val oneRepMaxes by viewModel.oneRepMaxes.collectAsState()
     val prescriptionLabels = rememberPrescriptionLabels(weightUnit)
     val advancedWeeks = remember { mutableStateMapOf<Int, List<PrescriptionBlock>>() }
@@ -338,9 +354,9 @@ fun RoutineDetailScreen(
     }
 
     var editingExerciseId by remember { mutableStateOf<Int?>(null) }
-    val editingExercise = remember(editingExerciseId, localExercises.size, localExercises.map { it.planExercise.supersetId }) {
-        localExercises.find { it.planExercise.id == editingExerciseId }
-    }
+    // Looked up on every composition: a cached copy would still hold the blocks / starting weight the exercise had
+    // before it was last saved, and saving would write those old values back
+    val editingExercise = localExercises.find { it.planExercise.id == editingExerciseId }
 
     // Sync local list with UI state when not dragging
     LaunchedEffect(uiState.planDetails?.exercises) {
@@ -368,9 +384,13 @@ fun RoutineDetailScreen(
         selectedExerciseId = null
         selectedExerciseType = "strength"
         setsText = "3"
-        repsText = "8"
+        repsDraft = RepsDraft()
+        repsGoalText = TimeAndReps.DEFAULT_REPS_GOAL.toString()
+        presetText = ""
+        presetTextAtOpen = ""
         timeTargetSecondsText = "45"
         cardioDurationText = "20"
+        cardioSetsText = "1"
         advancedWeeks.clear()
         draftExcludedWeeks.clear()
         draftWeeksCount = planWeeksCount
@@ -391,10 +411,20 @@ fun RoutineDetailScreen(
         draftWeeksCount = maxOf(planWeeksCount, item.blocksByWeek.keys.maxOrNull() ?: 1)
         editorWeek = viewWeek.coerceAtMost(draftWeeksCount)
         setsText = item.planExercise.serieTarget.toString()
-        repsText = item.planExercise.repsTarget
-        timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString() ?: item.planExercise.repsTarget.filter { it.isDigit() }.ifBlank { "45" }
+        repsDraft = RepsDraft.from(item.planExercise.repsTarget, item.planExercise.repsMax)
+        // A plain exercise turned into Time & Reps keeps its reps as the goal
+        repsGoalText = TimeAndReps.goalOf(item.planExercise.repsRange?.min?.toString() ?: item.planExercise.repsTarget).toString()
+        presetText = item.planExercise.weightPreset
+            ?.let { WeightUnitConverter.format(WeightUnitConverter.convertDisplay(it, weightUnit)) }
+            .orEmpty()
+        presetTextAtOpen = presetText
+        // Only a hold's reps ("45s") hold its time: a plain exercise's "20" are reps, not seconds
+        timeTargetSecondsText = item.planExercise.durataTargetSecondi?.toString()
+            ?: item.planExercise.repsTarget.takeIf { item.planExercise.exerciseType == "time_and_weight" }?.filter { it.isDigit() }?.ifBlank { null }
+            ?: "45"
         restText = item.planExercise.recuperoTarget.toString()
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
+        cardioSetsText = item.planExercise.serieTarget.coerceAtLeast(1).toString()
         showExerciseSheet = true
     }
 
@@ -1111,6 +1141,17 @@ fun RoutineDetailScreen(
     if (showExerciseSheet) {
         val selectedExercise = uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
         val isSelectedCardio = selectedExercise?.categoria?.equals("Cardio", ignoreCase = true) == true || editingExercise?.planExercise?.exerciseType == "cardio"
+        // With starting weights off the field is hidden and an exercise keeps the weight it already had
+        val presetKg: Float? = when {
+            !startingWeightEnabled -> editingExercise?.planExercise?.weightPreset
+            // Untouched: a round trip through pounds would nudge the stored kilograms (62.5 -> 62.5002)
+            editingExercise != null && presetText == presetTextAtOpen -> editingExercise.planExercise.weightPreset
+            else -> StartingWeight.parse(presetText)?.let { WeightUnitConverter.convertStorage(it, weightUnit) }
+        }
+        val presetInvalid = startingWeightEnabled && presetText.isNotBlank() && presetKg == null
+        val strengthRepsInvalid = !isSelectedCardio && selectedExerciseType == "strength" && !repsDraft.isValid
+        val repsGoalInvalid = !isSelectedCardio && selectedExerciseType == TIME_AND_REPS && TimeAndReps.parseGoal(repsGoalText) == null
+        val canSaveExercise = !presetInvalid && !strengthRepsInvalid && !repsGoalInvalid
 
         ModalBottomSheet(
             onDismissRequest = { showExerciseSheet = false },
@@ -1192,6 +1233,15 @@ fun RoutineDetailScreen(
                         }
 
                         if (isSelectedCardio) {
+                            // Several sets: intervals, or a warm-up and a cool-down; the rest is the one between them
+                            GymInputField(
+                                value = cardioSetsText,
+                                onValueChange = { cardioSetsText = it.filter { c -> c.isDigit() }.take(2) },
+                                label = stringResource(R.string.sets),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
                             CardioDurationSlider(
                                 valueMinutes = cardioDurationText.toIntOrNull() ?: 20,
                                 onValueChange = { cardioDurationText = it.toString() },
@@ -1215,7 +1265,7 @@ fun RoutineDetailScreen(
                                     if (type == "advanced" && selectedExerciseType != "advanced" && advancedWeeks.values.none { it.isNotEmpty() }) {
                                         // Carry the simple sets × reps over as a first free block
                                         val sets = setsText.trim().toIntOrNull() ?: 3
-                                        val reps = repsText.trim().takeIf { r -> r.split("-").all { it.trim().toIntOrNull() != null } } ?: "5"
+                                        val reps = repsDraft.target?.repsTarget ?: "5"
                                         advancedWeeks[editorWeek] = listOf(PrescriptionBlock(sets = sets, reps = reps))
                                     }
                                     selectedExerciseType = type
@@ -1272,31 +1322,32 @@ fun RoutineDetailScreen(
                                     haptic = haptic,
                                     modifier = Modifier.fillMaxWidth()
                                 )
+                                if (startingWeightEnabled) {
+                                    StartingWeightField(text = presetText, onTextChange = { presetText = it }, weightUnit = weightUnit)
+                                }
+                            } else if (selectedExerciseType == TIME_AND_REPS) {
+                                // No weight, so no starting weight either
+                                TimeAndRepsEditor(
+                                    setsText = setsText,
+                                    onSetsChange = { setsText = it },
+                                    repsGoalText = repsGoalText,
+                                    onRepsGoalChange = { repsGoalText = it },
+                                    seconds = timeTargetSecondsText.toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS,
+                                    onSecondsChange = { timeTargetSecondsText = it.toString() },
+                                    hapticEnabled = hapticEnabled,
+                                    haptic = haptic,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             } else {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-                                ) {
-                                    GymInputField(
-                                        value = setsText,
-                                        onValueChange = { setsText = it },
-                                        label = stringResource(R.string.sets),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    GymInputField(
-                                        value = repsText,
-                                        onValueChange = {
-                                            repsText = it
-                                            val repCount = it.split("-").count { n -> n.trim().toIntOrNull() != null }
-                                            if (repCount > 1 && repCount != (setsText.toIntOrNull() ?: 0)) {
-                                                setsText = repCount.toString()
-                                            }
-                                        },
-                                        label = stringResource(R.string.reps),
-                                        supportingText = stringResource(R.string.reps_hint),
-                                        modifier = Modifier.weight(1f)
-                                    )
+                                RepsEditor(
+                                    draft = repsDraft,
+                                    onDraftChange = { repsDraft = it },
+                                    setsText = setsText,
+                                    onSetsChange = { setsText = it },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                if (startingWeightEnabled) {
+                                    StartingWeightField(text = presetText, onTextChange = { presetText = it }, weightUnit = weightUnit)
                                 }
                             }
 
@@ -1429,6 +1480,7 @@ fun RoutineDetailScreen(
                                 val current = editingExercise
                                 if (isSelectedCardio) {
                                     val durSec = cardioDurationText.trim().toIntOrNull()?.let { it * 60 }
+                                    val cardioSets = (cardioSetsText.toIntOrNull() ?: 1).coerceIn(1, 20)
                                     val rest = restText.trim().toIntOrNull() ?: 0
                                     val category = selectedExercise?.categoria ?: "Cardio"
 
@@ -1437,7 +1489,8 @@ fun RoutineDetailScreen(
                                             exerciseId = exerciseId,
                                             cardioCategoria = category,
                                             durataTargetSecondi = durSec,
-                                            recuperoTarget = rest
+                                            recuperoTarget = rest,
+                                            sets = cardioSets
                                         )
                                     } else {
                                         viewModel.updateExercise(
@@ -1447,7 +1500,7 @@ fun RoutineDetailScreen(
                                                 durataTargetSecondi = durSec
                                             ),
                                             exerciseId = exerciseId,
-                                            serieTarget = 1,
+                                            serieTarget = cardioSets,
                                             repsTarget = "1",
                                             recuperoTarget = rest,
                                             excludedWeeks = draftExcludedWeeks.toSet(),
@@ -1481,7 +1534,8 @@ fun RoutineDetailScreen(
                                             recuperoTarget = rest,
                                             exerciseType = "time_and_weight",
                                             durataTargetSecondi = targetSec,
-                                            excludedWeeks = draftExcludedWeeks.toSet()
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            weightPreset = presetKg
                                         )
                                     } else {
                                         viewModel.updateExercise(
@@ -1493,35 +1547,71 @@ fun RoutineDetailScreen(
                                             exerciseType = "time_and_weight",
                                             durataTargetSecondi = targetSec,
                                             excludedWeeks = draftExcludedWeeks.toSet(),
-                                            clearAdvanced = current.isAdvanced && advancedOn
+                                            clearAdvanced = current.isAdvanced && advancedOn,
+                                            weightPreset = presetKg
                                         )
                                     }
-                                } else {
+                                } else if (selectedExerciseType == TIME_AND_REPS) {
                                     val sets = setsText.trim().toIntOrNull() ?: return@GymButton
                                     val rest = restText.trim().toIntOrNull() ?: return@GymButton
-                                    val reps = repsText.trim().ifBlank { return@GymButton }
+                                    val goal = TimeAndReps.parseGoal(repsGoalText) ?: return@GymButton
+                                    val targetSec = timeTargetSecondsText.trim().toIntOrNull() ?: TimeAndReps.DEFAULT_SECONDS
 
                                     if (current == null) {
                                         viewModel.addExercise(
                                             exerciseId = exerciseId,
                                             serieTarget = sets,
-                                            repsTarget = reps,
+                                            repsTarget = goal.toString(),
                                             recuperoTarget = rest,
-                                            exerciseType = "strength",
-                                            durataTargetSecondi = null,
-                                            excludedWeeks = draftExcludedWeeks.toSet()
+                                            exerciseType = TIME_AND_REPS,
+                                            durataTargetSecondi = targetSec,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            weightPreset = null
                                         )
                                     } else {
                                         viewModel.updateExercise(
                                             original = current.planExercise,
                                             exerciseId = exerciseId,
                                             serieTarget = sets,
-                                            repsTarget = reps,
+                                            repsTarget = goal.toString(),
+                                            recuperoTarget = rest,
+                                            exerciseType = TIME_AND_REPS,
+                                            durataTargetSecondi = targetSec,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            clearAdvanced = current.isAdvanced && advancedOn,
+                                            weightPreset = null
+                                        )
+                                    }
+                                } else {
+                                    val sets = setsText.trim().toIntOrNull() ?: return@GymButton
+                                    val rest = restText.trim().toIntOrNull() ?: return@GymButton
+                                    val reps = repsDraft.target ?: return@GymButton
+
+                                    if (current == null) {
+                                        viewModel.addExercise(
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = reps.repsTarget,
                                             recuperoTarget = rest,
                                             exerciseType = "strength",
                                             durataTargetSecondi = null,
                                             excludedWeeks = draftExcludedWeeks.toSet(),
-                                            clearAdvanced = current.isAdvanced && advancedOn
+                                            repsMax = reps.repsMax,
+                                            weightPreset = presetKg
+                                        )
+                                    } else {
+                                        viewModel.updateExercise(
+                                            original = current.planExercise,
+                                            exerciseId = exerciseId,
+                                            serieTarget = sets,
+                                            repsTarget = reps.repsTarget,
+                                            recuperoTarget = rest,
+                                            exerciseType = "strength",
+                                            durataTargetSecondi = null,
+                                            excludedWeeks = draftExcludedWeeks.toSet(),
+                                            clearAdvanced = current.isAdvanced && advancedOn,
+                                            repsMax = reps.repsMax,
+                                            weightPreset = presetKg
                                         )
                                     }
                                 }
@@ -1531,7 +1621,8 @@ fun RoutineDetailScreen(
                                     }
                                 }
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            enabled = canSaveExercise
                         ) {
                             Text(
                                 text = if (editingExercise == null) stringResource(R.string.add).uppercase() else stringResource(R.string.save).uppercase(),
@@ -2745,15 +2836,12 @@ private fun CardioDurationSlider(
                 color = Primary,
                 fontWeight = FontWeight.ExtraBold
             )
-            val displayMinutes = valueMinutes / 60
-            val displaySecs = valueMinutes % 60
-            if (displayMinutes > 0 || displaySecs > 0) {
+            // The value is in minutes: from an hour up it is also written in hours ("1h 30m")
+            val displayHours = valueMinutes / 60
+            val displayMins = valueMinutes % 60
+            if (displayHours > 0) {
                 Text(
-                    text = when {
-                        displayMinutes == 0 -> "${displaySecs}s"
-                        displaySecs == 0 -> "${displayMinutes}m"
-                        else -> "${displayMinutes}m ${displaySecs}s"
-                    },
+                    text = if (displayMins == 0) "${displayHours}h" else "${displayHours}h ${displayMins}m",
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )

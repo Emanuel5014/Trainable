@@ -68,6 +68,9 @@ fun CardioInputForm(
     durataSecondi: String,
     onDurataSecondiChange: (String) -> Unit,
     showCategory: Boolean = true,
+    /** The note field is shown only when there is a note to edit (null leaves it out). */
+    note: String? = null,
+    onNoteChange: (String) -> Unit = {}
 ) {
     val categories = if (showCategory) listOf(
         CardioCategory(stringResource(R.string.cardio_run), Icons.AutoMirrored.Rounded.DirectionsRun),
@@ -232,6 +235,15 @@ fun CardioInputForm(
                 )
             }
         }
+
+        if (note != null) {
+            GymInputField(
+                value = note,
+                onValueChange = onNoteChange,
+                label = stringResource(R.string.routine_notes),
+                singleLine = false
+            )
+        }
     }
 }
 
@@ -329,10 +341,11 @@ private fun IncrementButton(
 @Composable
 fun AddCardioDialog(
     onDismiss: () -> Unit,
-    onConfirm: (categoria: String, distanza: Float, durataSecondi: Int) -> Unit,
+    onConfirm: (categoria: String, distanza: Float, durataSecondi: Int, note: String?) -> Unit,
     initialCategoria: String? = null
 ) {
     var categoria by remember { mutableStateOf(initialCategoria ?: "") }
+    var note by remember { mutableStateOf("") }
     var distanza by remember { mutableStateOf("") }
     var durataOre by remember { mutableStateOf("") }
     var durataMinuti by remember { mutableStateOf("") }
@@ -362,7 +375,9 @@ CardioInputForm(
                 durataMinuti = durataMinuti,
                 onDurataMinutiChange = { durataMinuti = it },
                 durataSecondi = durataSecondi,
-                onDurataSecondiChange = { durataSecondi = it }
+                onDurataSecondiChange = { durataSecondi = it },
+                note = note,
+                onNoteChange = { note = it }
             )
 }
         },
@@ -374,7 +389,7 @@ CardioInputForm(
                     val m = durataMinuti.toIntOrNull() ?: 0
                     val s = durataSecondi.toIntOrNull() ?: 0
                     val dur = h * 3600 + m * 60 + s
-                    onConfirm(categoria, dist, dur)
+                    onConfirm(categoria, dist, dur, note.trim().ifBlank { null })
                 },
                 enabled = isValid
             ) {

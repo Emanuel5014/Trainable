@@ -916,6 +916,53 @@
     <string name="time_weight_reset_timer">Reset timer</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Advanced</string>
+    <string name="exercise_type_time_and_reps">Time &amp; Reps</string>
+    <string name="exercise_type_time_and_reps_hint">Reps done in a timed interval, without weight</string>
+    <string name="time_and_reps_badge">TIME &amp; REPS</string>
+    <string name="time_reps_value">%1$ds · %2$d reps</string>
+    <string name="reps_goal_label">Reps goal</string>
+    <string name="reps_goal_error">Enter a whole number from 1 to 999</string>
+    <string name="reps_done_label">Reps done</string>
+    <string name="reps_decrease">One rep less</string>
+    <string name="reps_increase">One rep more</string>
+    <string name="cardio_add_set">Add set</string>
+    <string name="cardio_set_note">Set note</string>
+    <string name="cardio_remove_set">Remove set</string>
+    <string name="cardio_sets_total">%1$d sets</string>
+    <string name="seconds_label">Seconds</string>
+    <string name="mini_set_offer">Finish the set · %1$d reps left</string>
+    <string name="mini_set_offer_free">Add a mini-set</string>
+    <string name="mini_set_pause">Mini-set pause · set %1$d</string>
+    <string name="mini_set_title">Mini-set · set %1$d</string>
+    <string name="mini_set_so_far">So far %1$s</string>
+    <string name="mini_set_log">LOG MINI-SET</string>
+    <string name="mini_set_end">END SET</string>
+    <string name="mini_set_add">Add a mini-set</string>
+    <string name="mini_set_notification">Mini-set</string>
+    <string name="assisted_reps_label">Assisted</string>
+    <string name="partial_reps_label">Partials</string>
+    <string name="performed_technique_badge">Done: %1$s</string>
+    <string name="performed_technique_title">Technique as done</string>
+    <string name="performed_technique_hint">Change what you could not do as planned: the prescription stays.</string>
+    <string name="performed_apply_following">Also the next sets of this block</string>
+    <string name="performed_restore">As planned</string>
+    <string name="technique_not_done">Not done</string>
+    <string name="performed_technique_none">No technique</string>
+    <string name="technique_edit">Technique</string>
+    <string name="mini_set_parts_label">Mini-sets (e.g. 2+1+1)</string>
+    <string name="set_extras_more">Assisted, partial reps</string>
+    <string name="set_extras_more_technique">Assisted, partials, technique</string>
+    <string name="parts_error">Use whole numbers separated by +, like 2+1+1</string>
+    <string name="parts_badge">%1$s · pauses %2$s</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%d assisted</item>
+        <item quantity="other">+%d assisted</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%d partial</item>
+        <item quantity="other">+%d partials</item>
+    </plurals>
+    <string name="notification_next_set_text">Next: %1$s - Set %2$d: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">%1RM blocks, RPE and techniques</string>
     <string name="one_rep_max">1RM</string>
     <string name="one_rep_max_value">1RM %1$s</string>
@@ -1160,4 +1207,34 @@
     <string name="cardio_complete_logs_time">Logs the planned time: %1$s</string>
     <string name="cardio_complete_duration">Duration (min)</string>
     <string name="optional_suffix">(optional)</string>
+
+    <!-- Starting weight, rep ranges and double progression -->
+    <string name="starting_weight">Starting weight</string>
+    <string name="starting_weight_desc">Give each exercise of a routine a weight to start from. Until the routine has a workout to copy from, its sets start there, or at the last weight you used for that exercise.</string>
+    <string name="set_performance_setting">Set details</string>
+    <string name="set_performance_setting_desc">Mini-sets after a short pause, assisted and partial reps and the technique a set was really done with. Off, sets keep only their note.</string>
+    <string name="starting_weight_field">Starting weight (%1$s)</string>
+    <string name="starting_weight_hint">Optional · used until the first workout is logged</string>
+    <string name="reps_mode_fixed">Fixed</string>
+    <string name="reps_mode_range">Range</string>
+    <string name="reps_mode_per_set">Per set</string>
+    <string name="reps_min">Min</string>
+    <string name="reps_max">Max</string>
+    <string name="reps_range_hint">Keep the weight until you hit the max on every set, then go up</string>
+    <string name="reps_range_error">Max must be higher than min</string>
+    <string name="reps_number_error">Enter a whole number from 1 to 100</string>
+    <string name="reps_list_error">Use numbers separated by hyphens, like 8-6-4-2</string>
+    <string name="reps_goal">Goal: %1$s</string>
+    <string name="progression_hit_max">%1$d reps on every set last time</string>
+    <string name="progression_try_weight">Try %1$s</string>
+    <string name="progression_dismiss">Keep the current weight</string>
+
+    <!-- Add workout sheet: routines grouped by active / archived -->
+    <plurals name="add_workout_exercise_count">
+        <item quantity="one">%d exercise</item>
+        <item quantity="other">%d exercises</item>
+    </plurals>
+    <string name="add_workout_last_done">Last: %1$s</string>
+    <string name="show_archived_routines">Show archived routines</string>
+    <string name="hide_archived_routines">Hide archived routines</string>
 </resources>

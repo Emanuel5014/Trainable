@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Timelapse
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -464,8 +465,11 @@ private fun ExerciseCard(comparison: ExerciseComparison, weightUnit: String, lan
     ) {
         Column(modifier = Modifier.padding(Spacing.medium), verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (comparison.kind == ExerciseKind.TIMED) {
-                    Icon(Icons.Rounded.Timer, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                if (comparison.kind == ExerciseKind.TIMED || comparison.kind == ExerciseKind.TIME_AND_REPS) {
+                    Icon(
+                        if (comparison.kind == ExerciseKind.TIME_AND_REPS) Icons.Rounded.Timelapse else Icons.Rounded.Timer,
+                        contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp)
+                    )
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -603,6 +607,8 @@ private fun SetCell(
 private fun setValueText(set: ComparedSet, kind: ExerciseKind, weightUnit: String): String {
     val load = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(set.weightKg, weightUnit), weightUnit)
     return when {
+        kind == ExerciseKind.TIME_AND_REPS && set.durationSeconds != null ->
+            formatDuration(set.durationSeconds) + " · " + stringResource(R.string.compare_reps_value, set.reps)
         set.durationSeconds != null -> formatDuration(set.durationSeconds) + if (set.weightKg > 0f) " · $load" else ""
         kind == ExerciseKind.BODYWEIGHT || set.weightKg <= 0f -> stringResource(R.string.compare_reps_value, set.reps)
         else -> "$load × ${set.reps}"

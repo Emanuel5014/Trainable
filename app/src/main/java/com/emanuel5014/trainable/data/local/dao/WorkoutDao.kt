@@ -258,6 +258,16 @@ interface WorkoutDao {
     @Update
     suspend fun updateCardioLog(cardio: CardioLogEntity)
 
+    /** Changes what a cardio set was (its time, distance and note) without touching its place in the session. */
+    @Query("UPDATE cardio_logs SET durata_secondi = :seconds, distanza = :km, note = :note WHERE id = :id")
+    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?)
+
+    @Query("UPDATE cardio_logs SET note = :note WHERE id = :id")
+    suspend fun updateCardioNote(id: Int, note: String?)
+
+    @Query("UPDATE cardio_logs SET numero_serie = :number WHERE id = :id")
+    suspend fun updateCardioSetNumber(id: Int, number: Int)
+
     @Query("SELECT * FROM cardio_logs WHERE session_id = :sessionId")
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>>
     
@@ -298,6 +308,23 @@ interface WorkoutDao {
         ORDER BY sl.numero_serie ASC
     """)
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>>
+
+    /**
+     * Weight (kg) of the first working set of the exercise in its most recent finished workout, in any routine.
+     * Null when it was never lifted with a weight.
+     */
+    @Query("""
+        SELECT sl.peso_sollevato FROM set_logs sl
+        INNER JOIN workout_sessions ws ON sl.session_id = ws.id
+        WHERE sl.exercise_id = :exerciseId
+        AND ws.is_finished = 1
+        AND sl.is_completed = 1
+        AND sl.is_warmup = 0
+        AND sl.peso_sollevato > 0
+        ORDER BY ws.timestamp DESC, ws.id DESC, sl.numero_serie ASC
+        LIMIT 1
+    """)
+    suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float?
 
     @Query("""
         SELECT sl.* FROM set_logs sl

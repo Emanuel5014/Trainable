@@ -76,6 +76,16 @@ class UserPreferencesRepository @Inject constructor(
     val EXERCISE_MEDIA_LARGE = booleanPreferencesKey("exercise_media_large")
     /** Master switch for the plate calculator (which plates go on each side of the bar). Off by default. */
     val PLATE_CALCULATOR_ENABLED = booleanPreferencesKey("plate_calculator_enabled")
+    /**
+     * Starting weights: an exercise of a routine can carry a weight its sets start from, and an exercise with no
+     * workout to copy from in the routine starts at the last weight used for it elsewhere. Off by default.
+     */
+    val STARTING_WEIGHT_ENABLED = booleanPreferencesKey("starting_weight_enabled")
+    /**
+     * Set details: mini-sets after a short pause, assisted and partial reps and the technique a set was really done
+     * with. Off by default, sets then carry only their note.
+     */
+    val SET_PERFORMANCE_ENABLED = booleanPreferencesKey("set_performance_enabled")
     /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
     val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
     val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
@@ -436,6 +446,24 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setTimerShowSkipButton(show: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_SHOW_SKIP_BUTTON] = show
+        }
+    }
+
+    val startingWeightEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[STARTING_WEIGHT_ENABLED] ?: false }
+
+    suspend fun setStartingWeightEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[STARTING_WEIGHT_ENABLED] = enabled
+        }
+    }
+
+    val setPerformanceEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[SET_PERFORMANCE_ENABLED] ?: false }
+
+    suspend fun setSetPerformanceEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SET_PERFORMANCE_ENABLED] = enabled
         }
     }
 

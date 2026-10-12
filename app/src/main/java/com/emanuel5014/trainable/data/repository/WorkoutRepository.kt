@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.data.repository
 
+import com.emanuel5014.trainable.data.local.entity.parts
+import com.emanuel5014.trainable.data.local.entity.pauses
+import com.emanuel5014.trainable.data.local.entity.performed
+import com.emanuel5014.trainable.data.local.entity.SetLogKind
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
+import com.emanuel5014.trainable.data.local.entity.kind
 import android.content.Context
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
@@ -11,6 +18,7 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
@@ -23,9 +31,12 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.StartingWeight
 import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
 import com.emanuel5014.trainable.util.ImageStorageUtils
@@ -171,6 +182,7 @@ class WorkoutRepository @Inject constructor(
                         exerciseCategory = exerciseWithDetails.exercise.categoria,
                         serieTarget = exerciseWithDetails.planExercise.serieTarget,
                         repsTarget = exerciseWithDetails.planExercise.repsTarget,
+                        repsMax = exerciseWithDetails.planExercise.repsMax,
                         recuperoTarget = exerciseWithDetails.planExercise.recuperoTarget,
                         ordine = exerciseWithDetails.planExercise.ordine,
                         supersetId = exerciseWithDetails.planExercise.supersetId,
@@ -318,6 +330,8 @@ class WorkoutRepository @Inject constructor(
                                     exerciseId = finalExerciseId,
                                     serieTarget = exerciseDto.serieTarget,
                                     repsTarget = exerciseDto.repsTarget,
+                                    // A range only counts next to a plain bottom number, never next to a per-set list
+                                    repsMax = exerciseDto.repsMax?.takeIf { RepRange.of(exerciseDto.repsTarget.trim().toIntOrNull(), it) != null },
                                     recuperoTarget = exerciseDto.recuperoTarget,
                                     ordine = exerciseDto.ordine,
                                     supersetId = remapSuperset(exerciseDto.supersetId),
@@ -484,7 +498,13 @@ class WorkoutRepository @Inject constructor(
 
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>> = workoutDao.getCardioLogsForSession(sessionId)
 
-    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long) {
+    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?) = workoutDao.updateCardioSetValues(id, seconds, km, note)
+
+    suspend fun updateCardioNote(id: Int, note: String?) = workoutDao.updateCardioNote(id, note)
+
+    suspend fun updateCardioSetNumber(id: Int, number: Int) = workoutDao.updateCardioSetNumber(id, number)
+
+    suspend fun saveCardioSession(categoria: String, distanza: Float, durataSecondi: Int, timestamp: Long, note: String? = null) {
         val user = userDao.getUser().first() ?: return
 
         // Find or create "Cardio" plan with system tag
@@ -523,7 +543,8 @@ class WorkoutRepository @Inject constructor(
                 categoria = categoria,
                 distanza = distanza,
                 durataSecondi = durataSecondi,
-                timestamp = timestamp
+                timestamp = timestamp,
+                note = note
             )
         )
     }
@@ -622,18 +643,34 @@ class WorkoutRepository @Inject constructor(
                 3
             }
             
+            // A routine's first workout has nothing to copy: start from the exercise's starting weight (if on)
+            val startWeight = if (prevSets.isNullOrEmpty()) startingWeightFor(planEx, exerciseId) else 0f
+            // Planned reps per set: a single number for every set, a range starts at its bottom, "8-6-4-2" goes set by set
+            val plannedReps = if (planEx.repsTarget.split("-").any { it.trim().toIntOrNull() != null }) {
+                LegacyReps.parse(planEx.repsTarget, numSets)
+            } else emptyList()
+            // Timed exercises keep their kind: the hold or interval of the routine (a hold copies last time's)
+            val kind = SetLogKind.ofExerciseType(planEx.exerciseType)
+            val planSeconds = planEx.durataTargetSecondi ?: 45
             for (i in 1..numSets) {
                 val prevSet = prevSets?.getOrNull(i - 1)
+                val seconds = when (kind) {
+                    SetLogKind.TIME_AND_WEIGHT -> prevSet?.durataSecondi ?: planSeconds
+                    SetLogKind.TIME_AND_REPS -> planSeconds
+                    SetLogKind.STRENGTH -> null
+                }
                 workoutDao.insertSet(
                     SetLogEntity(
                         sessionId = sessionId.toInt(),
                         exerciseId = exerciseId,
-                        pesoSollevato = prevSet?.pesoSollevato ?: 0f,
-                        repsEffettive = prevSet?.repsEffettive ?: planEx.repsTarget.toIntOrNull() ?: 10,
+                        pesoSollevato = if (kind == SetLogKind.TIME_AND_REPS) 0f else prevSet?.pesoSollevato ?: startWeight,
+                        repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else prevSet?.repsEffettive ?: plannedReps.getOrNull(i - 1) ?: 10,
                         numeroSerie = i,
                         ordineEsercizio = planEx.ordine,
-                        supersetId = planEx.supersetId
-                    )
+                        supersetId = planEx.supersetId,
+                        durataSecondi = seconds,
+                        exerciseType = kind.rowType
+                    ).withRepsRange(planEx.repsRange.takeIf { planEx.exerciseType == "strength" })
                 )
             }
         }
@@ -650,6 +687,20 @@ class WorkoutRepository @Inject constructor(
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getLastFinishedSetsForExercise(exerciseId)
+
+    /** Weight in kg the exercise was last lifted with in any routine, null if never. */
+    suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float? = workoutDao.getLastWorkingWeightForExercise(exerciseId)
+
+    /**
+     * The weight (kg) the sets of an exercise start from when its routine has no workout to copy them from:
+     * the one set on the exercise, else the last one used for it in any routine. 0 with starting weights off.
+     */
+    suspend fun startingWeightFor(planExercise: PlanExerciseEntity?, exerciseId: Int): Float {
+        if (!userPreferencesRepository.startingWeightEnabled.first()) return 0f
+        val preset = planExercise?.weightPreset
+        val lastUsed = if (preset != null && preset > 0f) null else workoutDao.getLastWorkingWeightForExercise(exerciseId)
+        return StartingWeight.resolve(enabled = true, presetKg = preset, lastUsedKg = lastUsed)
+    }
 
     fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>> = 
         workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
@@ -702,7 +753,7 @@ class WorkoutRepository @Inject constructor(
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine(if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit))
+        sb.appendLine((if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit)) + "," + performanceCsvHeader(languageCode))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -724,9 +775,13 @@ class WorkoutRepository @Inject constructor(
                 val note = escapeCsv(setLog.note ?: "")
                 val weight = WeightUnitConverter.convertDisplay(setLog.pesoSollevato, weightUnit)
 
-                val isTimeAndWeight = setLog.durataSecondi != null
-                val type = if (isTimeAndWeight) "time_and_weight" else "strength"
-                val reps = if (isTimeAndWeight) "" else setLog.repsEffettive.toString()
+                val kind = setLog.kind
+                val type = when (kind) {
+                    SetLogKind.STRENGTH -> "strength"
+                    SetLogKind.TIME_AND_WEIGHT -> TIME_AND_WEIGHT
+                    SetLogKind.TIME_AND_REPS -> TIME_AND_REPS
+                }
+                val reps = if (kind == SetLogKind.TIME_AND_WEIGHT) "" else setLog.repsEffettive.toString()
                 val duration = setLog.durataSecondi?.toString() ?: ""
 
                 val week = session.session.programWeek?.toString() ?: ""
@@ -744,7 +799,13 @@ class WorkoutRepository @Inject constructor(
                 val warmup = if (setLog.isWarmup) "1" else "0"
 
                 val prescriptionColumns = if (advanced) ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup" else ""
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns")
+                // How the set really went: its parts and pauses, help, partials, the technique as done
+                val performed = setLog.performed?.let { list ->
+                    if (list.isEmpty()) context.getString(com.emanuel5014.trainable.R.string.performed_technique_none)
+                    else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
+                }.orEmpty()
+                val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns")
             }
 
             session.cardio.forEach { cardio ->
@@ -752,7 +813,8 @@ class WorkoutRepository @Inject constructor(
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
                 val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,,,,${cardio.durataSecondi},${cardio.distanza},$prescriptionColumns")
+                val note = escapeCsv(cardio.note ?: "")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,")
             }
         }
 
@@ -769,6 +831,15 @@ class WorkoutRepository @Inject constructor(
             else -> "Week,% 1RM,Target Reps,Techniques,RPE,Extra,Warm-up"
         }
         return basicCsvHeader(languageCode, weightUnit) + "," + prescriptionColumns
+    }
+
+    private fun performanceCsvHeader(languageCode: String): String = when (languageCode) {
+        "it" -> "Mini-serie,Pause (s),Aiutate,Parziali,Tecnica Eseguita"
+        "es" -> "Mini-series,Pausas (s),Asistidas,Parciales,Técnica Realizada"
+        "fr" -> "Mini-séries,Pauses (s),Aidées,Partielles,Technique Réalisée"
+        "de" -> "Minisätze,Pausen (s),Mit Hilfe,Teilwdh.,Ausgeführte Technik"
+        "pt" -> "Mini-séries,Pausas (s),Assistidas,Parciais,Técnica Realizada"
+        else -> "Mini-sets,Pauses (s),Assisted,Partials,Technique Done"
     }
 
     private fun basicCsvHeader(languageCode: String, weightUnit: String): String {

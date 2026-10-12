@@ -916,6 +916,53 @@
     <string name="time_weight_reset_timer">Azzera timer</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Avanzata</string>
+    <string name="exercise_type_time_and_reps">Tempo &amp; Ripetizioni</string>
+    <string name="exercise_type_time_and_reps_hint">Ripetizioni fatte in un intervallo a tempo, senza peso</string>
+    <string name="time_and_reps_badge">TEMPO &amp; RIP.</string>
+    <string name="time_reps_value">%1$ds · %2$d rip.</string>
+    <string name="reps_goal_label">Obiettivo ripetizioni</string>
+    <string name="reps_goal_error">Inserisci un numero intero da 1 a 999</string>
+    <string name="reps_done_label">Ripetizioni fatte</string>
+    <string name="reps_decrease">Una ripetizione in meno</string>
+    <string name="reps_increase">Una ripetizione in più</string>
+    <string name="cardio_add_set">Aggiungi serie</string>
+    <string name="cardio_set_note">Nota della serie</string>
+    <string name="cardio_remove_set">Elimina serie</string>
+    <string name="cardio_sets_total">%1$d serie</string>
+    <string name="seconds_label">Secondi</string>
+    <string name="mini_set_offer">Completa la serie · mancano %1$d rip.</string>
+    <string name="mini_set_offer_free">Aggiungi una mini-serie</string>
+    <string name="mini_set_pause">Pausa mini-serie · serie %1$d</string>
+    <string name="mini_set_title">Mini-serie · serie %1$d</string>
+    <string name="mini_set_so_far">Finora %1$s</string>
+    <string name="mini_set_log">REGISTRA MINI-SERIE</string>
+    <string name="mini_set_end">FINE SERIE</string>
+    <string name="mini_set_add">Aggiungi mini-serie</string>
+    <string name="mini_set_notification">Mini-serie</string>
+    <string name="assisted_reps_label">Aiutate</string>
+    <string name="partial_reps_label">Parziali</string>
+    <string name="performed_technique_badge">Eseguita: %1$s</string>
+    <string name="performed_technique_title">Tecnica eseguita</string>
+    <string name="performed_technique_hint">Cambia ciò che non sei riuscito a fare come previsto: la prescrizione resta.</string>
+    <string name="performed_apply_following">Anche le serie successive del blocco</string>
+    <string name="performed_restore">Come prescritto</string>
+    <string name="technique_not_done">Non eseguita</string>
+    <string name="performed_technique_none">Senza tecnica</string>
+    <string name="technique_edit">Tecnica</string>
+    <string name="mini_set_parts_label">Mini-serie (es. 2+1+1)</string>
+    <string name="set_extras_more">Reps aiutate, parziali</string>
+    <string name="set_extras_more_technique">Aiutate, parziali, tecnica</string>
+    <string name="parts_error">Usa numeri interi separati da +, come 2+1+1</string>
+    <string name="parts_badge">%1$s · pause %2$s</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%d aiutata</item>
+        <item quantity="other">+%d aiutate</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%d parziale</item>
+        <item quantity="other">+%d parziali</item>
+    </plurals>
+    <string name="notification_next_set_text">Prossima: %1$s - %2$dª serie: %3$s</string>
     <string name="advanced_prescription_hint" formatted="false">Blocchi a %1RM, RPE e tecniche</string>
     <string name="one_rep_max">Massimale</string>
     <string name="one_rep_max_value">Massimale %1$s</string>
@@ -1160,4 +1207,35 @@
     <string name="cardio_complete_logs_time">Registra il tempo previsto: %1$s</string>
     <string name="cardio_complete_duration">Durata (min)</string>
     <string name="optional_suffix">(facoltativo)</string>
+
+    <!-- Starting weight, rep ranges and double progression -->
+    <string name="starting_weight">Peso di partenza</string>
+    <string name="starting_weight_desc">Dai a ogni esercizio di una scheda un peso da cui partire. Finché la scheda non ha un allenamento da cui copiare, le serie partono da lì, o dall\'ultimo peso che hai usato per quell\'esercizio.</string>
+    <string name="set_performance_setting">Dettagli delle serie</string>
+    <string name="set_performance_setting_desc">Mini-serie dopo una breve pausa, reps aiutate e parziali e la tecnica con cui hai fatto davvero la serie. Se è spento, le serie hanno solo la nota.</string>
+    <string name="starting_weight_field">Peso di partenza (%1$s)</string>
+    <string name="starting_weight_hint">Facoltativo · usato fino al primo allenamento registrato</string>
+    <string name="reps_mode_fixed">Fisso</string>
+    <string name="reps_mode_range">Intervallo</string>
+    <string name="reps_mode_per_set">Per serie</string>
+    <string name="reps_min">Min</string>
+    <string name="reps_max">Max</string>
+    <string name="reps_range_hint">Mantieni il peso finché non raggiungi il massimo su ogni serie, poi sali</string>
+    <string name="reps_range_error">Il massimo deve essere maggiore del minimo</string>
+    <string name="reps_number_error">Inserisci un numero intero da 1 a 100</string>
+    <string name="reps_list_error">Usa numeri separati da trattini, come 8-6-4-2</string>
+    <string name="reps_goal">Obiettivo: %1$s</string>
+    <string name="progression_hit_max">%1$d rip. su ogni serie l\'ultima volta</string>
+    <string name="progression_try_weight">Prova %1$s</string>
+    <string name="progression_dismiss">Tieni il peso attuale</string>
+
+    <!-- Add workout sheet: routines grouped by active / archived -->
+    <plurals name="add_workout_exercise_count">
+        <item quantity="one">%d esercizio</item>
+        <item quantity="many">%d esercizi</item>
+        <item quantity="other">%d esercizi</item>
+    </plurals>
+    <string name="add_workout_last_done">Ultimo: %1$s</string>
+    <string name="show_archived_routines">Mostra le schede archiviate</string>
+    <string name="hide_archived_routines">Nascondi le schede archiviate</string>
 </resources>
