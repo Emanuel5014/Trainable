@@ -47,6 +47,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -92,6 +93,12 @@ import com.emanuel5014.trainable.util.ExerciseMediaStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+/**
+ * Whether "Show in Workouts" is switched on in the Exercise Media settings. Provided once at the app root, like
+ * [LocalAdvancedProgramming], so lists outside the workout screen (the exercise picker) follow the same switch.
+ */
+val LocalExerciseMediaEnabled = staticCompositionLocalOf { false }
 
 /**
  * Side of the square exercise thumbnail shown next to the exercise name. It grows with the screen width,
@@ -324,15 +331,15 @@ fun ExerciseMediaCard(
 /**
  * Full-screen look at an exercise's media: pinch to zoom, double-tap to reset, tap to play or pause an
  * animation. Replace and remove live in the top bar rather than in a bottom row so a phone in landscape
- * keeps all of its height for the image.
+ * keeps all of its height for the image. Leave [onReplace] and [onRemove] null for a look-only viewer.
  */
 @Composable
 fun ExerciseMediaViewer(
     fileName: String,
     exerciseName: String,
     onDismiss: () -> Unit,
-    onReplace: () -> Unit,
-    onRemove: () -> Unit
+    onReplace: (() -> Unit)? = null,
+    onRemove: (() -> Unit)? = null
 ) {
     var showRemoveConfirm by remember { mutableStateOf(false) }
     var playing by remember { mutableStateOf(true) }
@@ -340,7 +347,7 @@ fun ExerciseMediaViewer(
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    if (showRemoveConfirm) {
+    if (showRemoveConfirm && onRemove != null) {
         AlertDialog(
             onDismissRequest = { showRemoveConfirm = false },
             containerColor = SurfaceContainerHigh,
@@ -401,19 +408,23 @@ fun ExerciseMediaViewer(
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 )
-                IconButton(onClick = onReplace) {
-                    Icon(
-                        Icons.Rounded.SwapHoriz,
-                        contentDescription = stringResource(R.string.exercise_media_replace),
-                        tint = Color.White
-                    )
+                if (onReplace != null) {
+                    IconButton(onClick = onReplace) {
+                        Icon(
+                            Icons.Rounded.SwapHoriz,
+                            contentDescription = stringResource(R.string.exercise_media_replace),
+                            tint = Color.White
+                        )
+                    }
                 }
-                IconButton(onClick = { showRemoveConfirm = true }) {
-                    Icon(
-                        Icons.Rounded.Delete,
-                        contentDescription = stringResource(R.string.exercise_media_remove),
-                        tint = Error
-                    )
+                if (onRemove != null) {
+                    IconButton(onClick = { showRemoveConfirm = true }) {
+                        Icon(
+                            Icons.Rounded.Delete,
+                            contentDescription = stringResource(R.string.exercise_media_remove),
+                            tint = Error
+                        )
+                    }
                 }
             }
 

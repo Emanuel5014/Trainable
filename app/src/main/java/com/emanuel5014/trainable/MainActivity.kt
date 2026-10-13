@@ -55,6 +55,7 @@ import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
 import com.emanuel5014.trainable.ui.components.UpdateDialog
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
+import com.emanuel5014.trainable.ui.components.LocalExerciseMediaEnabled
 import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.navigation.MainNavGraph
 import com.emanuel5014.trainable.ui.navigation.MainTabs
@@ -185,6 +186,7 @@ class MainActivity : FragmentActivity() {
             val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
+            val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
 
             val context = androidx.compose.ui.platform.LocalContext.current
             val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -272,6 +274,7 @@ class MainActivity : FragmentActivity() {
             ) {
               CompositionLocalProvider(
                   LocalAdvancedProgramming provides advancedProgramming,
+                  LocalExerciseMediaEnabled provides exerciseMediaEnabled,
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating)
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
