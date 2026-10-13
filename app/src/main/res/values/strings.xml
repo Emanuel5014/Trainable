@@ -953,7 +953,12 @@
     <string name="set_extras_more">Assisted, partial reps</string>
     <string name="set_extras_more_technique">Assisted, partials, technique</string>
     <string name="parts_error">Use whole numbers separated by +, like 2+1+1</string>
-    <string name="parts_badge">%1$s · pauses %2$s</string>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pause %2$s</item>
+        <item quantity="other">%1$s · pauses %2$s</item>
+    </plurals>
+    <string name="pause_field_label">Pause %1$d (s)</string>
+    <string name="pause_field_hint">%1$d → %2$d reps</string>
     <plurals name="assisted_reps_badge">
         <item quantity="one">+%d assisted</item>
         <item quantity="other">+%d assisted</item>
@@ -1237,4 +1242,43 @@
     <string name="add_workout_last_done">Last: %1$s</string>
     <string name="show_archived_routines">Show archived routines</string>
     <string name="hide_archived_routines">Hide archived routines</string>
+    <!-- Changing the program during a workout -->
+    <string name="edit_program">Edit program</string>
+    <string name="program_edit_subtitle">Change what this workout asks for. Sets already done stay as they are.</string>
+    <string name="program_edit_scope_title">Where do you want to keep it?</string>
+    <string name="program_edit_scope_message">You changed the program of %1$s.</string>
+    <string name="program_edit_scope_plan">Update the routine</string>
+    <string name="program_edit_scope_plan_week">Replaces week %1$d of the routine: the next workouts will follow it.</string>
+    <string name="program_edit_scope_plan_all">Replaces the prescription of this exercise in the routine: the next workouts will follow it.</string>
+    <string name="program_edit_scope_workout">Only this workout</string>
+    <string name="program_edit_scope_workout_desc">The routine stays as it is. The change is marked as a variation and shows in the report.</string>
+    <string name="program_edit_pill_workout">Variation</string>
+    <string name="program_edit_pill_plan">Routine updated</string>
+    <string name="load_sheet_title">Load percentage</string>
+    <string name="load_sheet_subtitle">Raise or lower the load of the sets still to do.</string>
+    <string name="load_new_percent">New percentage</string>
+    <string name="load_weight_result">= %1$s · %2$s</string>
+    <string name="load_one_rep_max_missing">Set the 1RM to see the weight.</string>
+    <string name="load_apply_to">Apply to</string>
+    <string name="load_apply_block">This block</string>
+    <string name="load_apply_block_desc">Block %1$d · %2$d to do</string>
+    <string name="load_apply_all">All remaining sets</string>
+    <string name="load_apply_all_desc">Moves every block still to do by %1$s points</string>
+    <string name="load_preview_line">Block %1$d: %2$s → %3$s</string>
+    <string name="load_done_stay">Sets already done keep their load.</string>
+    <string name="load_save_where">Keep the change</string>
+    <string name="scope_short_workout">This workout</string>
+    <string name="scope_short_plan">Also the routine</string>
+    <string name="change_percent_button">Change percentage · %1$s</string>
+    <string name="program_edit_history_title">Program changed</string>
+    <string name="program_edit_before">Before</string>
+    <string name="program_edit_after">After</string>
+    <string name="program_edit_kind_load">Load</string>
+    <string name="program_edit_kind_program">Program</string>
+    <string name="program_edit_plan_week">Routine updated (week %1$d)</string>
+    <string name="program_edit_plan_updated">Routine updated</string>
+    <string name="program_edit_original">Original program</string>
+    <string name="program_edit_block_added">+ Block %1$d: %2$s</string>
+    <string name="program_edit_block_removed">− Block %1$d: %2$s</string>
+    <string name="program_edit_full_program">Program now</string>
 </resources>

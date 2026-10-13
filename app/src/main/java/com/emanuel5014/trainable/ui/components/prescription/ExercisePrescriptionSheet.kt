@@ -53,7 +53,9 @@ fun ExercisePrescriptionSheet(
     initialBlocks: List<PrescriptionBlock>,
     onDismiss: () -> Unit,
     onSave: (List<PrescriptionBlock>) -> Unit,
-    onRemove: (() -> Unit)?
+    onRemove: (() -> Unit)?,
+    /** Replaces the default line under the name, for a screen where the change means something else. */
+    subtitle: String? = null
 ) {
     val context = LocalContext.current
     var blocksByWeek by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
@@ -83,7 +85,7 @@ fun ExercisePrescriptionSheet(
                         fontWeight = FontWeight.Black
                     )
                     Text(
-                        text = stringResource(R.string.prescription_sheet_subtitle),
+                        text = subtitle ?: stringResource(R.string.prescription_sheet_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )

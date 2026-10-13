@@ -18,8 +18,11 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.byWeek
 import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
+import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
@@ -34,6 +37,7 @@ import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
+import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
 import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
 import com.emanuel5014.trainable.domain.prescription.StartingWeight
@@ -96,6 +100,33 @@ class WorkoutRepository @Inject constructor(
         }
         workoutDao.replaceAllBlocks(planExerciseId, entities)
     }
+
+    /**
+     * Gives one week of a plan exercise a new prescription, leaving the other weeks alone. The sets and reps the plan
+     * exercise carries for older consumers follow the week the routine is on, as when the routine itself is edited.
+     */
+    suspend fun replacePlanWeekBlocks(planExerciseId: Int, week: Int, blocks: List<PrescriptionBlock>) {
+        workoutDao.replaceWeekBlocks(
+            planExerciseId, week,
+            blocks.mapIndexed { index, block -> PlanExerciseBlockEntity.fromDomain(block, planExerciseId, week, index) }
+        )
+        val planExercise = workoutDao.getPlanExerciseOnce(planExerciseId) ?: return
+        val currentWeek = workoutDao.getPlanCurrentWeek(planExercise.planId) ?: return
+        val byWeek = workoutDao.getBlocksForPlanExercise(planExerciseId).byWeek()
+        val summary = (PrescriptionResolver.resolve(byWeek, emptySet(), currentWeek) as? ResolvedPrescription.Blocks)?.blocks ?: return
+        val (sets, reps) = PrescriptionExpander.legacyTargets(summary)
+        if (sets != planExercise.serieTarget || reps != planExercise.repsTarget) {
+            workoutDao.updatePlanExercise(planExercise.copy(serieTarget = sets, repsTarget = reps))
+        }
+    }
+
+    suspend fun recordPrescriptionEdit(edit: SessionPrescriptionEditEntity): Long = workoutDao.insertPrescriptionEdit(edit)
+
+    suspend fun getPrescriptionEditsForSession(sessionId: Int): List<SessionPrescriptionEditEntity> =
+        workoutDao.getPrescriptionEditsForSession(sessionId)
+
+    suspend fun getPrescriptionEditsForSessions(sessionIds: List<Int>): List<SessionPrescriptionEditEntity> =
+        if (sessionIds.isEmpty()) emptyList() else workoutDao.getPrescriptionEditsForSessions(sessionIds)
 
     suspend fun setExcludedWeeks(planExerciseId: Int, weeks: Set<Int>) =
         workoutDao.setExcludedWeeks(planExerciseId, WeekSetCodec.encode(weeks))
@@ -753,7 +784,7 @@ class WorkoutRepository @Inject constructor(
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine((if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit)) + "," + performanceCsvHeader(languageCode))
+        sb.appendLine((if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit)) + "," + performanceCsvHeader(languageCode) + "," + programEditCsvHeader(languageCode))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -770,6 +801,11 @@ class WorkoutRepository @Inject constructor(
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
                 val exercise = setWithExercise.exercise
+                // Whether the prescription of the exercise was changed in this workout (and whether the routine was updated
+                // by any of the changes), and what it was at the start
+                val edits = session.prescriptionEdits.forExercise(exercise.id)
+                val programEditColumns = if (edits.isEmpty()) ",," else
+                    ",${(if (edits.any { it.editScope == com.emanuel5014.trainable.domain.prescription.ProgramEditScope.PLAN }) com.emanuel5014.trainable.domain.prescription.ProgramEditScope.PLAN else com.emanuel5014.trainable.domain.prescription.ProgramEditScope.WORKOUT).code},${escapeCsv(com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.notation(edits.first().before))}"
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(exercise.nome, languageCode))
                 val category = escapeCsv(ExerciseTranslations.translateCategory(exercise.categoria, languageCode))
                 val note = escapeCsv(setLog.note ?: "")
@@ -805,7 +841,7 @@ class WorkoutRepository @Inject constructor(
                     else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns")
             }
 
             session.cardio.forEach { cardio ->
@@ -814,7 +850,7 @@ class WorkoutRepository @Inject constructor(
                 val week = session.session.programWeek?.toString() ?: ""
                 val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,")
             }
         }
 
@@ -840,6 +876,16 @@ class WorkoutRepository @Inject constructor(
         "de" -> "Minisätze,Pausen (s),Mit Hilfe,Teilwdh.,Ausgeführte Technik"
         "pt" -> "Mini-séries,Pausas (s),Assistidas,Parciais,Técnica Realizada"
         else -> "Mini-sets,Pauses (s),Assisted,Partials,Technique Done"
+    }
+
+    /** Whether the prescription of the exercise was changed in that workout (workout / plan), and what it was before. */
+    private fun programEditCsvHeader(languageCode: String): String = when (languageCode) {
+        "it" -> "Programma Modificato,Programma Originale"
+        "es" -> "Programación Modificada,Programación Original"
+        "fr" -> "Programmation Modifiée,Programmation d'Origine"
+        "de" -> "Programm Geändert,Ursprüngliches Programm"
+        "pt" -> "Programação Alterada,Programação Original"
+        else -> "Program Changed,Original Program"
     }
 
     private fun basicCsvHeader(languageCode: String, weightUnit: String): String {

@@ -953,7 +953,12 @@
     <string name="set_extras_more">Aidées, partielles</string>
     <string name="set_extras_more_technique">Aidées, partielles, technique</string>
     <string name="parts_error">Utilise des nombres entiers séparés par +, comme 2+1+1</string>
-    <string name="parts_badge">%1$s · pauses %2$s</string>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pause %2$s</item>
+        <item quantity="other">%1$s · pauses %2$s</item>
+    </plurals>
+    <string name="pause_field_label">Pause %1$d (s)</string>
+    <string name="pause_field_hint">%1$d → %2$d rép.</string>
     <plurals name="assisted_reps_badge">
         <item quantity="one">+%d aidée</item>
         <item quantity="other">+%d aidées</item>
@@ -1238,4 +1243,43 @@
     <string name="add_workout_last_done">Dernier : %1$s</string>
     <string name="show_archived_routines">Afficher les routines archivées</string>
     <string name="hide_archived_routines">Masquer les routines archivées</string>
+    <!-- Changing the program during a workout -->
+    <string name="edit_program">Modifier la programmation</string>
+    <string name="program_edit_subtitle">Change ce que demande cette séance. Les séries déjà faites restent telles quelles.</string>
+    <string name="program_edit_scope_title">Où veux-tu garder la modification ?</string>
+    <string name="program_edit_scope_message">Tu as modifié la programmation de %1$s.</string>
+    <string name="program_edit_scope_plan">Mettre à jour la routine</string>
+    <string name="program_edit_scope_plan_week">Remplace la semaine %1$d de la routine : les prochaines séances la suivront.</string>
+    <string name="program_edit_scope_plan_all">Remplace la programmation de cet exercice dans la routine : les prochaines séances la suivront.</string>
+    <string name="program_edit_scope_workout">Seulement cette séance</string>
+    <string name="program_edit_scope_workout_desc">La routine reste telle quelle. La modification est notée comme variation et apparaît dans le rapport.</string>
+    <string name="program_edit_pill_workout">Variation</string>
+    <string name="program_edit_pill_plan">Routine mise à jour</string>
+    <string name="load_sheet_title">Pourcentage de la charge</string>
+    <string name="load_sheet_subtitle">Monte ou baisse la charge des séries restant à faire.</string>
+    <string name="load_new_percent">Nouveau pourcentage</string>
+    <string name="load_weight_result">= %1$s · %2$s</string>
+    <string name="load_one_rep_max_missing">Définis le 1RM pour voir la charge.</string>
+    <string name="load_apply_to">Appliquer à</string>
+    <string name="load_apply_block">Ce bloc</string>
+    <string name="load_apply_block_desc">Bloc %1$d · %2$d à faire</string>
+    <string name="load_apply_all">Toutes les séries restantes</string>
+    <string name="load_apply_all_desc">Décale de %1$s points chaque bloc restant</string>
+    <string name="load_preview_line">Bloc %1$d : %2$s → %3$s</string>
+    <string name="load_done_stay">Les séries déjà faites gardent leur charge.</string>
+    <string name="load_save_where">Où garder la modification</string>
+    <string name="scope_short_workout">Cette séance</string>
+    <string name="scope_short_plan">Aussi la routine</string>
+    <string name="change_percent_button">Changer le pourcentage · %1$s</string>
+    <string name="program_edit_history_title">Programmation modifiée</string>
+    <string name="program_edit_before">Avant</string>
+    <string name="program_edit_after">Après</string>
+    <string name="program_edit_kind_load">Charge</string>
+    <string name="program_edit_kind_program">Programme</string>
+    <string name="program_edit_plan_week">Routine mise à jour (semaine %1$d)</string>
+    <string name="program_edit_plan_updated">Routine mise à jour</string>
+    <string name="program_edit_original">Programmation d\'origine</string>
+    <string name="program_edit_block_added">+ Bloc %1$d : %2$s</string>
+    <string name="program_edit_block_removed">− Bloc %1$d : %2$s</string>
+    <string name="program_edit_full_program">Programmation maintenant</string>
 </resources>

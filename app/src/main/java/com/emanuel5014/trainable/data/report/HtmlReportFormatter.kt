@@ -74,6 +74,10 @@ class HtmlReportFormatter @Inject constructor() {
                         append(buildExerciseTable(exercise, report.weightUnit, strings, dateFormat))
                     }
 
+                    if (exercise.programEdits.isNotEmpty()) {
+                        append(buildProgramEdits(exercise.programEdits, strings, dateTimeFormat))
+                    }
+
                     if (exercise.swapEvents.isNotEmpty()) {
                         append("<div class=\"swap-section\">\n")
                         append("<div class=\"swap-title\">${strings["swap_history"] ?: "Swap History"}</div>\n")
@@ -97,6 +101,40 @@ class HtmlReportFormatter @Inject constructor() {
             append("</div>\n")
             append("</body>\n</html>")
         }
+    }
+
+    /** What was changed in the prescription of an exercise along the way: when, how, and what it was before and after. */
+    private fun buildProgramEdits(
+        edits: List<ProgramEditEvent>,
+        strings: Map<String, String>,
+        dateTimeFormat: SimpleDateFormat
+    ): String = buildString {
+        append("<div class=\"swap-section\">\n")
+        append("<div class=\"swap-title\">${escapeHtml(strings["program_edits"] ?: "Program Changes")}</div>\n")
+        edits.forEach { edit ->
+            val kind = if (edit.kind == com.emanuel5014.trainable.domain.prescription.ProgramEditKind.LOAD) {
+                strings["program_edit_kind_load"] ?: "Load"
+            } else strings["program_edit_kind_program"] ?: "Program"
+            val scope = if (edit.scope == com.emanuel5014.trainable.domain.prescription.ProgramEditScope.PLAN) {
+                strings["program_edit_plan"] ?: "Routine updated"
+            } else strings["program_edit_workout"] ?: "This workout only"
+            val scopeClass = if (edit.scope == com.emanuel5014.trainable.domain.prescription.ProgramEditScope.PLAN) "edit-plan" else "edit-workout"
+            append("<div class=\"edit-event\">\n")
+            append("<div class=\"edit-head\">")
+            // The moment of the change: two workouts of the same day tell apart by it
+            append("<span class=\"swap-date\">${dateTimeFormat.format(Date(edit.createdAt))}</span>")
+            append("<span class=\"edit-badge\">${escapeHtml(kind)}</span>")
+            edit.week?.let { append("<span class=\"edit-badge\">${escapeHtml(strings["week_short"] ?: "Week")} $it</span>") }
+            append("<span class=\"edit-badge $scopeClass\">${escapeHtml(scope)}</span>")
+            append("</div>\n")
+            edit.changes.forEach { line ->
+                append("<div class=\"edit-line edit-change\">${escapeHtml(line)}</div>\n")
+            }
+            append("<div class=\"edit-line\"><span class=\"edit-label\">${escapeHtml(strings["program_edit_before"] ?: "Before")}</span>${escapeHtml(edit.before)}</div>\n")
+            append("<div class=\"edit-line\"><span class=\"edit-label\">${escapeHtml(strings["program_edit_after"] ?: "After")}</span>${escapeHtml(edit.after)}</div>\n")
+            append("</div>\n")
+        }
+        append("</div>\n")
     }
 
     /** The figures that sum an exercise up, by how it is measured. */
@@ -293,6 +331,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "prescription" to "Prescrizione",
                 "details" to "Dettagli",
                 "swap_history" to "Cambi Esercizi",
+                "program_edits" to "Modifiche alla Programmazione",
+                "program_edit_workout" to "Solo questo allenamento",
+                "program_edit_plan" to "Scheda aggiornata",
+                "program_edit_kind_load" to "Carico",
+                "program_edit_kind_program" to "Programma",
+                "program_edit_before" to "Prima",
+                "program_edit_after" to "Dopo",
+                "week_short" to "Sett.",
                 "generated_by" to "Generato da Trainable il",
                 "time" to "Tempo",
                 "distance" to "Distanza",
@@ -322,6 +368,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "prescription" to "Prescripción",
                 "details" to "Detalles",
                 "swap_history" to "Cambios de Ejercicios",
+                "program_edits" to "Cambios de Programación",
+                "program_edit_workout" to "Solo ese entrenamiento",
+                "program_edit_plan" to "Rutina actualizada",
+                "program_edit_kind_load" to "Carga",
+                "program_edit_kind_program" to "Programa",
+                "program_edit_before" to "Antes",
+                "program_edit_after" to "Después",
+                "week_short" to "Sem.",
                 "generated_by" to "Generado por Trainable el",
                 "time" to "Tiempo",
                 "distance" to "Distancia",
@@ -351,6 +405,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "prescription" to "Prescription",
                 "details" to "Détails",
                 "swap_history" to "Changements d'Exercices",
+                "program_edits" to "Modifications de Programmation",
+                "program_edit_workout" to "Seulement cette séance",
+                "program_edit_plan" to "Routine mise à jour",
+                "program_edit_kind_load" to "Charge",
+                "program_edit_kind_program" to "Programme",
+                "program_edit_before" to "Avant",
+                "program_edit_after" to "Après",
+                "week_short" to "Sem.",
                 "generated_by" to "Généré par Trainable le",
                 "time" to "Temps",
                 "distance" to "Distance",
@@ -380,6 +442,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "prescription" to "Vorgabe",
                 "details" to "Details",
                 "swap_history" to "Übungswechsel",
+                "program_edits" to "Programmänderungen",
+                "program_edit_workout" to "Nur dieses Training",
+                "program_edit_plan" to "Routine aktualisiert",
+                "program_edit_kind_load" to "Last",
+                "program_edit_kind_program" to "Programm",
+                "program_edit_before" to "Vorher",
+                "program_edit_after" to "Nachher",
+                "week_short" to "Woche",
                 "generated_by" to "Erstellt von Trainable am",
                 "time" to "Zeit",
                 "distance" to "Distanz",
@@ -409,6 +479,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "prescription" to "Prescrição",
                 "details" to "Detalhes",
                 "swap_history" to "Trocas de Exercícios",
+                "program_edits" to "Alterações da Programação",
+                "program_edit_workout" to "Só esse treino",
+                "program_edit_plan" to "Rotina atualizada",
+                "program_edit_kind_load" to "Carga",
+                "program_edit_kind_program" to "Programa",
+                "program_edit_before" to "Antes",
+                "program_edit_after" to "Depois",
+                "week_short" to "Sem.",
                 "generated_by" to "Gerado pelo Trainable em",
                 "time" to "Tempo",
                 "distance" to "Distância",
@@ -438,6 +516,14 @@ class HtmlReportFormatter @Inject constructor() {
                 "prescription" to "Prescription",
                 "details" to "Details",
                 "swap_history" to "Exercise Swaps",
+                "program_edits" to "Program Changes",
+                "program_edit_workout" to "This workout only",
+                "program_edit_plan" to "Routine updated",
+                "program_edit_kind_load" to "Load",
+                "program_edit_kind_program" to "Program",
+                "program_edit_before" to "Before",
+                "program_edit_after" to "After",
+                "week_short" to "Week",
                 "generated_by" to "Generated by Trainable on",
                 "time" to "Time",
                 "distance" to "Distance",
@@ -755,6 +841,62 @@ class HtmlReportFormatter @Inject constructor() {
 
         .swap-text {
             color: var(--md-on-surface);
+        }
+
+        .edit-event {
+            padding: 10px 12px;
+            background: color-mix(in srgb, var(--md-primary), transparent 92%);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+
+        .edit-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .edit-badge {
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            background: color-mix(in srgb, var(--md-primary), transparent 85%);
+            color: var(--md-primary);
+        }
+
+        .edit-badge.edit-plan {
+            background: color-mix(in srgb, var(--md-tertiary), transparent 80%);
+            color: var(--md-tertiary);
+        }
+
+        .edit-badge.edit-workout {
+            background: var(--md-surface-container-high, rgba(128,128,128,0.15));
+            color: var(--md-on-surface-variant);
+        }
+
+        .edit-line {
+            color: var(--md-on-surface);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .edit-change {
+            color: var(--md-primary);
+        }
+
+        .edit-label {
+            display: inline-block;
+            min-width: 56px;
+            margin-right: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--md-on-surface-variant);
         }
 
         .footer {

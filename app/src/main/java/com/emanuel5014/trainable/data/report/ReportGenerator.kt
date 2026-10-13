@@ -10,6 +10,7 @@ import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -107,6 +108,27 @@ class ReportGenerator @Inject constructor(
             }
         }
 
+        // What was changed in the prescription of an exercise along the way, with the units and language of the report
+        val editContext = localeManager.localizedContext()
+        val editLabels = com.emanuel5014.trainable.ui.components.prescriptionLabels(editContext, weightUnit)
+        val programEditsByExercise = mutableMapOf<Int, MutableList<ProgramEditEvent>>()
+        sessions.forEach { session ->
+            session.prescriptionEdits.forEach { edit ->
+                programEditsByExercise.getOrPut(edit.exerciseId) { mutableListOf() }.add(
+                    ProgramEditEvent(
+                        sessionDate = session.session.timestamp,
+                        createdAt = edit.createdAt,
+                        week = edit.programWeek,
+                        kind = edit.editKind,
+                        scope = edit.editScope,
+                        before = PrescriptionFormatter.summary(edit.before, editLabels).ifBlank { "-" },
+                        after = PrescriptionFormatter.summary(edit.after, editLabels).ifBlank { "-" },
+                        changes = com.emanuel5014.trainable.ui.components.programChangeLines(editContext, weightUnit, edit.before, edit.after)
+                    )
+                )
+            }
+        }
+
         sessions.forEach { session ->
             val date = session.session.timestamp
             session.sets.forEach { setWithExercise ->
@@ -175,6 +197,7 @@ class ReportGenerator @Inject constructor(
                 sessions = sortedSessions,
                 summary = summary,
                 swapEvents = swapEventsByExercise[exerciseId] ?: emptyList(),
+                programEdits = programEditsByExercise[exerciseId].orEmpty().sortedWith(compareBy({ it.sessionDate }, { it.createdAt })),
                 kind = when (kindRows[exerciseId].orEmpty().kind) {
                     SetLogKind.TIME_AND_REPS -> ReportExerciseKind.TIME_AND_REPS
                     SetLogKind.TIME_AND_WEIGHT -> ReportExerciseKind.TIME_AND_WEIGHT

@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
@@ -34,5 +35,11 @@ data class SessionWithDetails(
         parentColumn = "id",
         entityColumn = "session_id"
     )
-    val cardio: List<CardioLogEntity> = emptyList()
+    val cardio: List<CardioLogEntity> = emptyList(),
+    /** Changes made to the prescription of an exercise during the workout, oldest first. */
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "session_id"
+    )
+    val prescriptionEdits: List<SessionPrescriptionEditEntity> = emptyList()
 )

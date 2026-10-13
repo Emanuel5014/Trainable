@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.data.report
 
+import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
+import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
+
 data class PlanReport(
     val planId: Int,
     val planName: String,
@@ -24,7 +27,9 @@ data class ExerciseReport(
     val sessions: List<ExerciseSessionEntry>,
     val summary: ExerciseSummary,
     val swapEvents: List<SwapEvent>,
-    val kind: ReportExerciseKind = ReportExerciseKind.STRENGTH
+    val kind: ReportExerciseKind = ReportExerciseKind.STRENGTH,
+    /** Changes made to the prescription of the exercise during a workout, oldest first. */
+    val programEdits: List<ProgramEditEvent> = emptyList()
 )
 
 data class ExerciseSessionEntry(
@@ -72,4 +77,20 @@ data class SwapEvent(
     val originalPlanExerciseId: Int,
     val originalExerciseName: String,
     val replacementExerciseName: String
+)
+
+/**
+ * The prescription of an exercise was changed during a workout: [before] and [after] are the blocks as one line each
+ * ("70% 1×6 · 75% 4×5 Pause 2″"), [scope] says whether the routine was updated or the change stayed in that workout.
+ */
+data class ProgramEditEvent(
+    val sessionDate: Long,
+    val createdAt: Long,
+    val week: Int?,
+    val kind: ProgramEditKind,
+    val scope: ProgramEditScope,
+    val before: String,
+    val after: String,
+    /** The blocks that changed, one line each (see programChangeLines); empty when no block shows the change. */
+    val changes: List<String> = emptyList()
 )

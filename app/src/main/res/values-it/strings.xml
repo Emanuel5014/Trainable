@@ -953,7 +953,12 @@
     <string name="set_extras_more">Reps aiutate, parziali</string>
     <string name="set_extras_more_technique">Aiutate, parziali, tecnica</string>
     <string name="parts_error">Usa numeri interi separati da +, come 2+1+1</string>
-    <string name="parts_badge">%1$s · pause %2$s</string>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pausa %2$s</item>
+        <item quantity="other">%1$s · pause %2$s</item>
+    </plurals>
+    <string name="pause_field_label">Pausa %1$d (s)</string>
+    <string name="pause_field_hint">%1$d → %2$d rip.</string>
     <plurals name="assisted_reps_badge">
         <item quantity="one">+%d aiutata</item>
         <item quantity="other">+%d aiutate</item>
@@ -1238,4 +1243,43 @@
     <string name="add_workout_last_done">Ultimo: %1$s</string>
     <string name="show_archived_routines">Mostra le schede archiviate</string>
     <string name="hide_archived_routines">Nascondi le schede archiviate</string>
+    <!-- Changing the program during a workout -->
+    <string name="edit_program">Modifica programmazione</string>
+    <string name="program_edit_subtitle">Cambia cosa chiede questo allenamento. Le serie già fatte restano come sono.</string>
+    <string name="program_edit_scope_title">Dove vuoi salvare la modifica?</string>
+    <string name="program_edit_scope_message">Hai cambiato la programmazione di %1$s.</string>
+    <string name="program_edit_scope_plan">Aggiorna la scheda</string>
+    <string name="program_edit_scope_plan_week">Sostituisce la settimana %1$d della scheda: anche i prossimi allenamenti la seguiranno.</string>
+    <string name="program_edit_scope_plan_all">Sostituisce la programmazione di questo esercizio nella scheda: anche i prossimi allenamenti la seguiranno.</string>
+    <string name="program_edit_scope_workout">Solo questo allenamento</string>
+    <string name="program_edit_scope_workout_desc">La scheda resta com\'è. La modifica viene segnata come variazione e compare nel report.</string>
+    <string name="program_edit_pill_workout">Variazione</string>
+    <string name="program_edit_pill_plan">Scheda aggiornata</string>
+    <string name="load_sheet_title">Percentuale del carico</string>
+    <string name="load_sheet_subtitle">Alza o abbassa il carico delle serie ancora da fare.</string>
+    <string name="load_new_percent">Nuova percentuale</string>
+    <string name="load_weight_result">= %1$s · %2$s</string>
+    <string name="load_one_rep_max_missing">Imposta il massimale per vedere il peso.</string>
+    <string name="load_apply_to">Applica a</string>
+    <string name="load_apply_block">Questo blocco</string>
+    <string name="load_apply_block_desc">Blocco %1$d · %2$d da fare</string>
+    <string name="load_apply_all">Tutte le serie da fare</string>
+    <string name="load_apply_all_desc">Sposta di %1$s punti ogni blocco ancora da fare</string>
+    <string name="load_preview_line">Blocco %1$d: %2$s → %3$s</string>
+    <string name="load_done_stay">Le serie già fatte restano come sono.</string>
+    <string name="load_save_where">Dove tenere la modifica</string>
+    <string name="scope_short_workout">Questo allenamento</string>
+    <string name="scope_short_plan">Anche la scheda</string>
+    <string name="change_percent_button">Cambia percentuale · %1$s</string>
+    <string name="program_edit_history_title">Programmazione modificata</string>
+    <string name="program_edit_before">Prima</string>
+    <string name="program_edit_after">Dopo</string>
+    <string name="program_edit_kind_load">Carico</string>
+    <string name="program_edit_kind_program">Programma</string>
+    <string name="program_edit_plan_week">Scheda aggiornata (settimana %1$d)</string>
+    <string name="program_edit_plan_updated">Scheda aggiornata</string>
+    <string name="program_edit_original">Programma originale</string>
+    <string name="program_edit_block_added">+ Blocco %1$d: %2$s</string>
+    <string name="program_edit_block_removed">− Blocco %1$d: %2$s</string>
+    <string name="program_edit_full_program">Programma ora</string>
 </resources>

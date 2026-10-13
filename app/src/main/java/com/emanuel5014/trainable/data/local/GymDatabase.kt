@@ -21,6 +21,7 @@ import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.UserEntity
 import com.emanuel5014.trainable.data.local.entity.WeightLogEntity
@@ -32,7 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [ // 14 Entities
+    entities = [ // 15 Entities
         UserEntity::class,
         WeightLogEntity::class,
         ExerciseEntity::class,
@@ -46,9 +47,10 @@ import kotlinx.coroutines.launch
         PhysicalCheckEntity::class,
         CustomCategoryEntity::class,
         PlanExerciseBlockEntity::class,
-        OneRepMaxEntity::class
+        OneRepMaxEntity::class,
+        SessionPrescriptionEditEntity::class
     ],
-    version = 32,
+    version = 33,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -393,6 +395,32 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_32_33 = object : Migration(32, 33) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The changes made to the prescription of an exercise during its workout, kept next to the session
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `session_prescription_edits` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `session_id` INTEGER NOT NULL,
+                        `exercise_id` INTEGER NOT NULL,
+                        `plan_exercise_id` INTEGER,
+                        `program_week` INTEGER,
+                        `created_at` INTEGER NOT NULL,
+                        `kind` TEXT NOT NULL,
+                        `scope` TEXT NOT NULL,
+                        `before_blocks` TEXT NOT NULL,
+                        `after_blocks` TEXT NOT NULL,
+                        FOREIGN KEY(`session_id`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_prescription_edits_session_id` ON `session_prescription_edits` (`session_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_prescription_edits_exercise_id` ON `session_prescription_edits` (`exercise_id`)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -411,7 +439,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
                         MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {

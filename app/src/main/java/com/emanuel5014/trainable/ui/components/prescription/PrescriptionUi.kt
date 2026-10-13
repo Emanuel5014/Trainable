@@ -154,7 +154,10 @@ fun setPerformanceBadges(
 ): List<String> = buildList {
     if (parts.size > 1) {
         val text = parts.joinToString("+")
-        add(if (pauses.isNotEmpty()) context.getString(R.string.parts_badge, text, pauses.joinToString(", ") { "${it}s" }) else text)
+        add(
+            if (pauses.isEmpty()) text
+            else context.resources.getQuantityString(R.plurals.parts_pause_badge, pauses.size, text, pauses.joinToString(", ") { "$it″" })
+        )
     }
     if (assisted > 0) add(context.resources.getQuantityString(R.plurals.assisted_reps_badge, assisted, assisted))
     if (partial > 0) add(context.resources.getQuantityString(R.plurals.partial_reps_badge, partial, partial))

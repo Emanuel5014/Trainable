@@ -953,7 +953,12 @@
     <string name="set_extras_more">Assistidas, parciais</string>
     <string name="set_extras_more_technique">Assistidas, parciais, técnica</string>
     <string name="parts_error">Usa números inteiros separados por +, como 2+1+1</string>
-    <string name="parts_badge">%1$s · pausas %2$s</string>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pausa %2$s</item>
+        <item quantity="other">%1$s · pausas %2$s</item>
+    </plurals>
+    <string name="pause_field_label">Pausa %1$d (s)</string>
+    <string name="pause_field_hint">%1$d → %2$d reps</string>
     <plurals name="assisted_reps_badge">
         <item quantity="one">+%d assistida</item>
         <item quantity="other">+%d assistidas</item>
@@ -1238,4 +1243,43 @@
     <string name="add_workout_last_done">Último: %1$s</string>
     <string name="show_archived_routines">Mostrar rotinas arquivadas</string>
     <string name="hide_archived_routines">Ocultar rotinas arquivadas</string>
+    <!-- Changing the program during a workout -->
+    <string name="edit_program">Editar programação</string>
+    <string name="program_edit_subtitle">Muda o que este treino pede. As séries já feitas ficam como estão.</string>
+    <string name="program_edit_scope_title">Onde queres guardar a alteração?</string>
+    <string name="program_edit_scope_message">Mudaste a programação de %1$s.</string>
+    <string name="program_edit_scope_plan">Atualizar a rotina</string>
+    <string name="program_edit_scope_plan_week">Substitui a semana %1$d da rotina: os próximos treinos vão segui-la.</string>
+    <string name="program_edit_scope_plan_all">Substitui a programação deste exercício na rotina: os próximos treinos vão segui-la.</string>
+    <string name="program_edit_scope_workout">Só este treino</string>
+    <string name="program_edit_scope_workout_desc">A rotina fica como está. A alteração é marcada como variação e aparece no relatório.</string>
+    <string name="program_edit_pill_workout">Variação</string>
+    <string name="program_edit_pill_plan">Rotina atualizada</string>
+    <string name="load_sheet_title">Percentagem da carga</string>
+    <string name="load_sheet_subtitle">Sobe ou baixa a carga das séries que faltam fazer.</string>
+    <string name="load_new_percent">Nova percentagem</string>
+    <string name="load_weight_result">= %1$s · %2$s</string>
+    <string name="load_one_rep_max_missing">Define o 1RM para ver o peso.</string>
+    <string name="load_apply_to">Aplicar a</string>
+    <string name="load_apply_block">Este bloco</string>
+    <string name="load_apply_block_desc">Bloco %1$d · %2$d por fazer</string>
+    <string name="load_apply_all">Todas as séries restantes</string>
+    <string name="load_apply_all_desc">Move cada bloco pendente em %1$s pontos</string>
+    <string name="load_preview_line">Bloco %1$d: %2$s → %3$s</string>
+    <string name="load_done_stay">As séries já feitas mantêm a carga.</string>
+    <string name="load_save_where">Onde guardar a alteração</string>
+    <string name="scope_short_workout">Este treino</string>
+    <string name="scope_short_plan">Também a rotina</string>
+    <string name="change_percent_button">Mudar percentagem · %1$s</string>
+    <string name="program_edit_history_title">Programação alterada</string>
+    <string name="program_edit_before">Antes</string>
+    <string name="program_edit_after">Depois</string>
+    <string name="program_edit_kind_load">Carga</string>
+    <string name="program_edit_kind_program">Programa</string>
+    <string name="program_edit_plan_week">Rotina atualizada (semana %1$d)</string>
+    <string name="program_edit_plan_updated">Rotina atualizada</string>
+    <string name="program_edit_original">Programação original</string>
+    <string name="program_edit_block_added">+ Bloco %1$d: %2$s</string>
+    <string name="program_edit_block_removed">− Bloco %1$d: %2$s</string>
+    <string name="program_edit_full_program">Programa agora</string>
 </resources>

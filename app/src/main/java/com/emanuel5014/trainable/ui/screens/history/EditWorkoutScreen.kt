@@ -100,6 +100,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.data.local.entity.repsRange
+import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
@@ -366,7 +367,8 @@ fun EditWorkoutScreen(
                                         onMoveSetDown = { viewModel.moveSetDown(it) },
                                         onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
                                         onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) },
-                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) }
+                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) },
+                                        programEdits = state.prescriptionEdits.forExercise(exerciseState.exercise.id)
                                     )
                                 }
                                 is CardioExerciseLogs -> {
@@ -685,8 +687,19 @@ fun EditExerciseCard(
     onMoveSetDown: (SetLogEntity) -> Unit,
     onMoveExerciseUp: () -> Unit,
     onMoveExerciseDown: () -> Unit,
-    onToggleSuperset: () -> Unit
+    onToggleSuperset: () -> Unit,
+    /** Changes made to the prescription of this exercise while the workout was done, oldest first. */
+    programEdits: List<com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity> = emptyList()
 ) {
+    var showProgramEdits by remember { mutableStateOf(false) }
+    if (showProgramEdits) {
+        com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog(
+            exerciseName = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
+            edits = programEdits,
+            weightUnit = weightUnit,
+            onDismiss = { showProgramEdits = false }
+        )
+    }
     val cardBgColor = when {
         isDragging -> SurfaceContainerHigh
         else -> SurfaceContainerLow
@@ -793,6 +806,10 @@ fun EditExerciseCard(
                 color = OnSurface,
                 modifier = Modifier.fillMaxWidth()
             )
+            programEdits.lastOrNull()?.let { edit ->
+                Spacer(modifier = Modifier.height(4.dp))
+                com.emanuel5014.trainable.ui.components.ProgramEditPill(edit, Modifier.clickable { showProgramEdits = true })
+            }
 
             val setKind = exerciseState.sets.kind
             val isTimeAndWeight = setKind.isTimed

@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.components
 
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.data.local.entity.finalBlocks
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import android.graphics.Bitmap
 import android.view.View
@@ -455,8 +456,12 @@ fun WorkoutShareCard(
                                         val planExercise = planExerciseMap?.get(item.exercise.id)
                                         if (planExercise != null) {
                                             val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
+                                            // A prescription changed during the workout is what the exercise was done against
+                                            val editedBlocks = if (showPrescription) sessionDetails.prescriptionEdits.finalBlocks(item.exercise.id) else null
                                             val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
-                                            val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
+                                            val targetText = if (editedBlocks != null) {
+                                                editedBlocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) } + " ✎"
+                                            } else if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
                                                 resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
                                             } else {
                                                 val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
@@ -568,8 +573,12 @@ fun WorkoutShareCard(
                                         val planExercise = planExerciseMap?.get(item.exercise.id)
                                         if (planExercise != null) {
                                             val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
+                                            // A prescription changed during the workout is what the exercise was done against
+                                            val editedBlocks = if (showPrescription) sessionDetails.prescriptionEdits.finalBlocks(item.exercise.id) else null
                                             val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
-                                            val targetText = if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
+                                            val targetText = if (editedBlocks != null) {
+                                                editedBlocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) } + " ✎"
+                                            } else if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
                                                 resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
                                             } else {
                                                 val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {

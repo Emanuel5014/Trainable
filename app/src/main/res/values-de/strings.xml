@@ -953,7 +953,12 @@
     <string name="set_extras_more">Mit Hilfe, Teilwdh.</string>
     <string name="set_extras_more_technique">Mit Hilfe, Teilwdh., Technik</string>
     <string name="parts_error">Ganze Zahlen mit + getrennt, z. B. 2+1+1</string>
-    <string name="parts_badge">%1$s · Pausen %2$s</string>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · Pause %2$s</item>
+        <item quantity="other">%1$s · Pausen %2$s</item>
+    </plurals>
+    <string name="pause_field_label">Pause %1$d (s)</string>
+    <string name="pause_field_hint">%1$d → %2$d Wdh.</string>
     <plurals name="assisted_reps_badge">
         <item quantity="one">+%d mit Hilfe</item>
         <item quantity="other">+%d mit Hilfe</item>
@@ -1237,4 +1242,43 @@
     <string name="add_workout_last_done">Zuletzt: %1$s</string>
     <string name="show_archived_routines">Archivierte Routinen anzeigen</string>
     <string name="hide_archived_routines">Archivierte Routinen ausblenden</string>
+    <!-- Changing the program during a workout -->
+    <string name="edit_program">Programm bearbeiten</string>
+    <string name="program_edit_subtitle">Ändere, was dieses Training verlangt. Bereits gemachte Sätze bleiben, wie sie sind.</string>
+    <string name="program_edit_scope_title">Wo soll die Änderung gespeichert werden?</string>
+    <string name="program_edit_scope_message">Du hast die Programmierung von %1$s geändert.</string>
+    <string name="program_edit_scope_plan">Routine aktualisieren</string>
+    <string name="program_edit_scope_plan_week">Ersetzt Woche %1$d der Routine: die nächsten Trainings folgen ihr.</string>
+    <string name="program_edit_scope_plan_all">Ersetzt die Vorgabe dieser Übung in der Routine: die nächsten Trainings folgen ihr.</string>
+    <string name="program_edit_scope_workout">Nur dieses Training</string>
+    <string name="program_edit_scope_workout_desc">Die Routine bleibt, wie sie ist. Die Änderung wird als Abweichung markiert und erscheint im Bericht.</string>
+    <string name="program_edit_pill_workout">Abweichung</string>
+    <string name="program_edit_pill_plan">Routine aktualisiert</string>
+    <string name="load_sheet_title">Lastprozent</string>
+    <string name="load_sheet_subtitle">Erhöhe oder senke die Last der noch offenen Sätze.</string>
+    <string name="load_new_percent">Neuer Prozentsatz</string>
+    <string name="load_weight_result">= %1$s · %2$s</string>
+    <string name="load_one_rep_max_missing">Lege das 1RM fest, um das Gewicht zu sehen.</string>
+    <string name="load_apply_to">Anwenden auf</string>
+    <string name="load_apply_block">Dieser Block</string>
+    <string name="load_apply_block_desc">Block %1$d · %2$d offen</string>
+    <string name="load_apply_all">Alle offenen Sätze</string>
+    <string name="load_apply_all_desc">Verschiebt jeden offenen Block um %1$s Punkte</string>
+    <string name="load_preview_line">Block %1$d: %2$s → %3$s</string>
+    <string name="load_done_stay">Bereits gemachte Sätze behalten ihre Last.</string>
+    <string name="load_save_where">Änderung speichern in</string>
+    <string name="scope_short_workout">Dieses Training</string>
+    <string name="scope_short_plan">Auch die Routine</string>
+    <string name="change_percent_button">Prozentsatz ändern · %1$s</string>
+    <string name="program_edit_history_title">Programmierung geändert</string>
+    <string name="program_edit_before">Vorher</string>
+    <string name="program_edit_after">Nachher</string>
+    <string name="program_edit_kind_load">Last</string>
+    <string name="program_edit_kind_program">Programm</string>
+    <string name="program_edit_plan_week">Routine aktualisiert (Woche %1$d)</string>
+    <string name="program_edit_plan_updated">Routine aktualisiert</string>
+    <string name="program_edit_original">Ursprüngliche Programmierung</string>
+    <string name="program_edit_block_added">+ Block %1$d: %2$s</string>
+    <string name="program_edit_block_removed">− Block %1$d: %2$s</string>
+    <string name="program_edit_full_program">Programm jetzt</string>
 </resources>
