@@ -1282,4 +1282,148 @@
     <string name="program_edit_block_added">+ Blocco %1$d: %2$s</string>
     <string name="program_edit_block_removed">− Blocco %1$d: %2$s</string>
     <string name="program_edit_full_program">Programma ora</string>
+
+    <!-- Import workout history from a CSV file -->
+    <string name="import_csv">IMPORTA CSV</string>
+    <string name="import_history_title">Importa storico</string>
+    <string name="import_history_intro">Porta i tuoi allenamenti passati in Trainable da un file CSV. Usa lo stesso file che l\'app esporta con ESPORTA CSV: se la tua vecchia app esporta qualcosa di diverso, adattalo alle colonne qui sotto. Vedrai tutto ciò che sta per essere importato prima che venga salvato qualsiasi cosa.</string>
+    <string name="import_history_columns_title">Colonne lette</string>
+    <string name="import_history_columns_required">Obbligatorie: Data, Esercizio e almeno una tra Peso, Ripetizioni, Durata o Distanza.</string>
+    <string name="import_history_columns_optional">Utili: ID Sessione (distingue due allenamenti dello stesso giorno), Scheda, Categoria, Tipo (strength, time_and_weight, time_and_reps, cardio), Serie, Nota.</string>
+    <string name="import_history_rules_title">Come funziona l\'importazione</string>
+    <string name="import_history_rule_exercises">Gli esercizi che non sono nell\'app vengono creati con il nome e la categoria del file.</string>
+    <string name="import_history_rule_routines">Ogni allenamento va nella scheda con lo stesso nome; se non esiste viene creata. Gli allenamenti senza scheda diventano allenamenti veloci.</string>
+    <string name="import_history_rule_duplicates">Gli allenamenti già presenti nell\'app vengono riconosciuti e saltati.</string>
+    <string name="import_history_backup_tip">Consiglio: fai prima un backup. Subito dopo l\'importazione puoi comunque annullarla.</string>
+    <string name="import_history_choose_file">SCEGLI FILE CSV</string>
+    <string name="import_history_choose_another">SCEGLI UN ALTRO FILE</string>
+    <string name="import_history_reading">Lettura del file…</string>
+    <string name="import_history_error_empty">Il file è vuoto.</string>
+    <string name="import_history_error_no_rows">Il file ha l\'intestazione ma nessun allenamento.</string>
+    <string name="import_history_error_not_history">Non sembra uno storico di allenamenti. Colonne mancanti: %1$s.</string>
+    <string name="import_history_error_unreadable">Impossibile leggere il file.</string>
+    <string name="import_history_error_too_large">Il file è troppo grande (il limite è %1$d MB).</string>
+    <string name="import_history_error_import">Importazione non riuscita, non è stato salvato nulla: %1$s</string>
+    <string name="import_history_column_date">Data</string>
+    <string name="import_history_column_exercise">Esercizio</string>
+    <string name="import_history_column_measure">Peso, Ripetizioni, Durata o Distanza</string>
+    <string name="import_history_col_weight">Peso</string>
+    <string name="import_history_col_reps">Ripetizioni</string>
+    <string name="import_history_col_duration">Durata</string>
+    <string name="import_history_col_distance">Distanza</string>
+    <string name="import_history_col_set">Serie</string>
+    <string name="import_history_col_rpe">RPE</string>
+    <string name="import_history_col_parts">Mini-serie</string>
+    <string name="import_history_col_type">Tipo</string>
+    <string name="import_history_issue_line">Riga %1$d</string>
+    <string name="import_history_issue_missing_date">Data mancante</string>
+    <string name="import_history_issue_invalid_date">Data non riconosciuta: %1$s</string>
+    <string name="import_history_issue_missing_exercise">Nome esercizio mancante</string>
+    <string name="import_history_issue_invalid_number">%1$s non è un numero valido: %2$s</string>
+    <string name="import_history_issue_too_large">%1$s è troppo grande: %2$s</string>
+    <string name="import_history_issue_no_values">Nessun peso, ripetizione, durata o distanza</string>
+    <string name="import_history_issue_missing_reps">Mancano le ripetizioni</string>
+    <string name="import_history_issue_missing_duration">Manca la durata</string>
+    <string name="import_history_issue_missing_cardio">Il cardio richiede una durata o una distanza</string>
+    <string name="import_history_issue_not_cardio">\"%1$s\" è indicato come cardio ma non è un esercizio cardio</string>
+    <string name="import_history_issue_unknown_type">Tipo non riconosciuto (%1$s): dedotto dai valori</string>
+    <string name="import_history_issue_ignored">%1$s ignorato: %2$s</string>
+    <string name="import_history_issue_future">Data nel futuro: %1$s</string>
+    <string name="import_history_section_options">OPZIONI</string>
+    <string name="import_history_weights_in">I pesi nel file sono in</string>
+    <string name="import_history_weights_from_file">Letto dall\'intestazione del file</string>
+    <string name="import_history_weights_assumed">Il file non lo indica: viene usata l\'unità dell\'app</string>
+    <string name="import_history_skip_duplicates">Salta gli allenamenti già presenti</string>
+    <string name="import_history_skip_duplicates_found">Stesso giorno, scheda e serie. Trovati: %1$d</string>
+    <string name="import_history_fill_routines">Riempi le nuove schede con gli esercizi</string>
+    <string name="import_history_fill_routines_desc">Una scheda nuova riceve gli esercizi del suo allenamento più recente nel file.</string>
+    <string name="import_history_dates_day_first">Le date come 03/04/2026 sono lette come giorno/mese/anno.</string>
+    <string name="import_history_dates_month_first">Le date come 03/04/2026 sono lette come mese/giorno/anno.</string>
+    <string name="import_history_dates_guessed">Il file non specifica quale: controlla le date degli allenamenti qui sotto.</string>
+    <string name="import_history_not_imported_columns">Colonne non importate: %1$s</string>
+    <string name="import_history_unknown_columns">Colonne sconosciute, ignorate: %1$s</string>
+    <string name="import_history_volume">Volume totale: %1$s</string>
+    <string name="import_history_nothing">Niente di nuovo da importare</string>
+    <string name="import_history_section_issues">PROBLEMI</string>
+    <string name="import_history_issues_note">Le righe con errori vengono escluse. Correggi il file e sceglilo di nuovo se le vuoi.</string>
+    <string name="import_history_show_more">Mostra altri %1$d</string>
+    <string name="import_history_section_routines">SCHEDE</string>
+    <string name="import_history_routines_existing">Collegati alle tue schede</string>
+    <string name="import_history_routines_new">Nuove schede (verranno create)</string>
+    <string name="import_history_routines_declined">Non create: importate come allenamenti veloci</string>
+    <string name="import_history_routine_empty">Creata vuota</string>
+    <string name="import_history_quick_workouts">Allenamenti veloci</string>
+    <string name="import_history_routines_none">Senza scheda</string>
+    <string name="import_history_undo_confirm">RIMUOVI</string>
+    <string name="import_history_custom_workouts">Allenamenti personalizzati</string>
+    <string name="import_history_cardio_workouts">Cardio</string>
+    <string name="import_history_section_exercises">ESERCIZI</string>
+    <string name="import_history_exercises_new">Nuovi (creati come esercizi personalizzati)</string>
+    <string name="import_history_exercises_existing">Già presenti nell\'app</string>
+    <string name="import_history_exercise_matched">nel file: %1$s</string>
+    <string name="import_history_new_categories">Nuove categorie: %1$s</string>
+    <string name="import_history_section_workouts">ALLENAMENTI</string>
+    <string name="import_history_already_in_app">Già presente</string>
+    <string name="import_history_importing">Importazione in corso…</string>
+    <string name="import_history_done_title">Importazione completata</string>
+    <string name="import_history_undo">ANNULLA IMPORTAZIONE</string>
+    <string name="import_history_undo_title">Annullare l\'importazione?</string>
+    <string name="import_history_undo_message">Viene rimosso tutto ciò che questa importazione ha aggiunto: gli allenamenti, gli esercizi e le schede che ha creato. Il resto non viene toccato.</string>
+    <string name="import_history_undone">Importazione annullata. Tutto ciò che aveva aggiunto è stato rimosso.</string>
+    <string name="import_history_undo_failed">Impossibile annullare l\'importazione: %1$s</string>
+    <string name="import_history_stat_workouts">Allenamenti</string>
+    <string name="import_history_stat_sets">Serie</string>
+    <string name="import_history_stat_exercises">Esercizi</string>
+    <string name="import_history_new_badge">Nuovo</string>
+    <string name="import_history_template_title">File di esempio</string>
+    <string name="import_history_template_hint">Non sai com\'è fatto il file? Scarica un esempio con serie di forza, a tempo e cardio, due schede e un allenamento senza scheda. Modificalo con i tuoi allenamenti e importalo.</string>
+    <string name="import_history_template_button">SCARICA CSV DI ESEMPIO</string>
+    <string name="import_history_template_saved">File di esempio salvato</string>
+    <string name="import_history_template_error">Impossibile salvare il file: %1$s</string>
+    <string name="import_history_template_note_warmup">riscaldamento</string>
+    <string name="import_history_template_note_easy">ritmo facile</string>
+    <plurals name="import_history_workouts_count">
+        <item quantity="one">%d allenamento</item>
+        <item quantity="other">%d allenamenti</item>
+    </plurals>
+    <plurals name="import_history_sets_count">
+        <item quantity="one">%d serie</item>
+        <item quantity="other">%d serie</item>
+    </plurals>
+    <plurals name="import_history_exercises_count">
+        <item quantity="one">%d esercizio</item>
+        <item quantity="other">%d esercizi</item>
+    </plurals>
+    <plurals name="import_history_routine_with_exercises">
+        <item quantity="one">Creata con %d esercizio</item>
+        <item quantity="other">Creata con %d esercizi</item>
+    </plurals>
+    <plurals name="import_history_rows_skipped">
+        <item quantity="one">%d riga saltata</item>
+        <item quantity="other">%d righe saltate</item>
+    </plurals>
+    <plurals name="import_history_warnings">
+        <item quantity="one">%d avviso</item>
+        <item quantity="other">%d avvisi</item>
+    </plurals>
+    <plurals name="import_history_button">
+        <item quantity="one">IMPORTA %d ALLENAMENTO</item>
+        <item quantity="other">IMPORTA %d ALLENAMENTI</item>
+    </plurals>
+    <plurals name="import_history_done_new_exercises">
+        <item quantity="one">%d nuovo esercizio creato</item>
+        <item quantity="other">%d nuovi esercizi creati</item>
+    </plurals>
+    <plurals name="import_history_done_new_routines">
+        <item quantity="one">%d nuova scheda creata</item>
+        <item quantity="other">%d nuove schede create</item>
+    </plurals>
+    <plurals name="import_history_done_skipped_duplicates">
+        <item quantity="one">%d allenamento già presente, saltato</item>
+        <item quantity="other">%d allenamenti già presenti, saltati</item>
+    </plurals>
+    <plurals name="import_history_routines_count">
+        <item quantity="one">%d scheda</item>
+        <item quantity="other">%d schede</item>
+    </plurals>
 </resources>

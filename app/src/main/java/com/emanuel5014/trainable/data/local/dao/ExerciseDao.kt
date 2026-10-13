@@ -38,6 +38,12 @@ interface ExerciseDao {
     @Query("DELETE FROM exercises WHERE id = :id")
     suspend fun deleteExerciseById(id: Int)
 
+    @Query("DELETE FROM exercises WHERE id IN (:ids)")
+    suspend fun deleteExercisesByIds(ids: List<Int>)
+
+    @Query("DELETE FROM custom_categories WHERE id IN (:ids)")
+    suspend fun deleteCustomCategoriesByIds(ids: List<Int>)
+
     @Query("UPDATE exercises SET nome = :nome WHERE id = :id")
     suspend fun updateExerciseName(id: Int, nome: String)
 

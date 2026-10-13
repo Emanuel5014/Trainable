@@ -33,6 +33,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -784,7 +785,7 @@ class WorkoutRepository @Inject constructor(
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine((if (advanced) csvHeader(languageCode, weightUnit) else basicCsvHeader(languageCode, weightUnit)) + "," + performanceCsvHeader(languageCode) + "," + programEditCsvHeader(languageCode))
+        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -855,47 +856,5 @@ class WorkoutRepository @Inject constructor(
         }
 
         return sb.toString()
-    }
-
-    private fun csvHeader(languageCode: String, weightUnit: String): String {
-        val prescriptionColumns = when (languageCode) {
-            "it" -> "Settimana,% Massimale,Rep Target,Tecniche,RPE,Extra,Riscaldamento"
-            "es" -> "Semana,% 1RM,Reps Objetivo,Técnicas,RPE,Extra,Calentamiento"
-            "fr" -> "Semaine,% 1RM,Reps Cible,Techniques,RPE,Bonus,Échauffement"
-            "de" -> "Woche,% 1RM,Ziel-Wdh.,Techniken,RPE,Extra,Aufwärmen"
-            "pt" -> "Semana,% 1RM,Reps Alvo,Técnicas,RPE,Extra,Aquecimento"
-            else -> "Week,% 1RM,Target Reps,Techniques,RPE,Extra,Warm-up"
-        }
-        return basicCsvHeader(languageCode, weightUnit) + "," + prescriptionColumns
-    }
-
-    private fun performanceCsvHeader(languageCode: String): String = when (languageCode) {
-        "it" -> "Mini-serie,Pause (s),Aiutate,Parziali,Tecnica Eseguita"
-        "es" -> "Mini-series,Pausas (s),Asistidas,Parciales,Técnica Realizada"
-        "fr" -> "Mini-séries,Pauses (s),Aidées,Partielles,Technique Réalisée"
-        "de" -> "Minisätze,Pausen (s),Mit Hilfe,Teilwdh.,Ausgeführte Technik"
-        "pt" -> "Mini-séries,Pausas (s),Assistidas,Parciais,Técnica Realizada"
-        else -> "Mini-sets,Pauses (s),Assisted,Partials,Technique Done"
-    }
-
-    /** Whether the prescription of the exercise was changed in that workout (workout / plan), and what it was before. */
-    private fun programEditCsvHeader(languageCode: String): String = when (languageCode) {
-        "it" -> "Programma Modificato,Programma Originale"
-        "es" -> "Programación Modificada,Programación Original"
-        "fr" -> "Programmation Modifiée,Programmation d'Origine"
-        "de" -> "Programm Geändert,Ursprüngliches Programm"
-        "pt" -> "Programação Alterada,Programação Original"
-        else -> "Program Changed,Original Program"
-    }
-
-    private fun basicCsvHeader(languageCode: String, weightUnit: String): String {
-        return when (languageCode) {
-            "it" -> "Data,ID Sessione,Scheda,Esercizio,Categoria,Tipo,Serie,Peso ($weightUnit),Ripetizioni,Durata (s),Distanza (km),Nota"
-            "es" -> "Fecha,ID Sesión,Plan,Ejercicio,Categoría,Tipo,Serie,Peso ($weightUnit),Repeticiones,Duración (s),Distancia (km),Nota"
-            "fr" -> "Date,ID Séance,Programme,Exercice,Catégorie,Type,Série,Poids ($weightUnit),Répétitions,Durée (s),Distance (km),Note"
-            "de" -> "Datum,Sitzungs-ID,Plan,Übung,Kategorie,Typ,Satz,Gewicht ($weightUnit),Wiederholungen,Dauer (s),Distanz (km),Notiz"
-            "pt" -> "Data,ID Sessão,Plano,Exercício,Categoria,Tipo,Série,Peso ($weightUnit),Repetições,Duração (s),Distância (km),Nota"
-            else -> "Date,Session ID,Plan,Exercise,Category,Type,Set,Weight ($weightUnit),Reps,Duration (s),Distance (km),Note"
-        }
     }
 }
