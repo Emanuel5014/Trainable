@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.AppLocaleManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,6 +52,7 @@ data class HistoryUiState(
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val repository: WorkoutRepository,
+    private val exerciseRepository: ExerciseRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager
 ) : ViewModel() {
@@ -149,6 +151,11 @@ class HistoryViewModel @Inject constructor(
                 }
                 .collect()
         }
+    }
+
+    /** Adds an exercise the user deleted from the exercise list back, from a workout that still has it. */
+    fun restoreExercise(exerciseId: Int) {
+        viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
     }
 
     fun deleteSession(sessionId: Int) {

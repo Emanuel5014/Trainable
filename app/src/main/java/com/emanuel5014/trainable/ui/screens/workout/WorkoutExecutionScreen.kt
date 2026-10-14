@@ -160,6 +160,7 @@ import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
+import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.TimerAdjustButton
@@ -372,6 +373,16 @@ fun WorkoutExecutionScreen(
             containerColor = SurfaceContainerHigh,
             titleContentColor = OnSurface,
             textContentColor = OnSurfaceVariant
+        )
+    }
+
+    // The routine has exercises the user deleted from the exercise list: offer to add them back
+    if (state.deletedExercises.isNotEmpty()) {
+        RestoreExerciseDialog(
+            exerciseNames = state.deletedExercises.map { ExerciseTranslations.translate(it.nome, languageCode) },
+            onRestore = { viewModel.restoreDeletedExercises() },
+            onSkip = { viewModel.dismissDeletedExercises() },
+            onDismiss = { viewModel.dismissDeletedExercises() }
         )
     }
 

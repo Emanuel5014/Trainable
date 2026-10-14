@@ -188,7 +188,12 @@
     <string name="filter_custom">Benutzerdefiniert</string>
     <string name="new_exercise">Neue Übung</string>
     <string name="delete_exercise_title">Übung löschen?</string>
-    <string name="delete_exercise_message">\"%1$s\" löschen? Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_exercise_message">\"%1$s\" aus deiner Übungsliste löschen? Trainings und Pläne, die sie schon verwenden, behalten sie.</string>
+    <string name="exercise_deleted_badge">Gelöscht</string>
+    <string name="deleted_exercise_title">Übung gelöscht</string>
+    <string name="deleted_exercise_message">\"%1$s\" wurde aus deiner Übungsliste gelöscht, ist aber noch in deinen Plänen und Trainings. Wieder zur Liste hinzufügen?</string>
+    <string name="deleted_exercises_message">Diese Übungen wurden aus deiner Übungsliste gelöscht, sind aber noch in deinen Plänen und Trainings: %1$s. Wieder zur Liste hinzufügen?</string>
+    <string name="deleted_exercise_restore">Wieder hinzufügen</string>
     <string name="add_custom_exercise">Benutzerdefinierte Übung hinzufügen</string>
     <string name="exercise_name">Übungsname</string>
     <string name="category">Kategorie</string>

@@ -164,6 +164,7 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.ExerciseEntryCard
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
+import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
@@ -401,6 +402,9 @@ fun RoutineDetailScreen(
         showExercisePicker = true
     }
 
+    // The exercise deleted from the exercise list that the user tapped
+    var deletedExerciseTapped by remember { mutableStateOf<PlanExerciseWithDetails?>(null) }
+
     fun openEditSheet(item: PlanExerciseWithDetails) {
         editingExerciseId = item.planExercise.id
         selectedExerciseId = item.exercise.id
@@ -427,6 +431,23 @@ fun RoutineDetailScreen(
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
         cardioSetsText = item.planExercise.serieTarget.coerceAtLeast(1).toString()
         showExerciseSheet = true
+    }
+
+    // Tapping an exercise deleted from the exercise list offers to add it back before editing it
+    deletedExerciseTapped?.let { tapped ->
+        RestoreExerciseDialog(
+            exerciseNames = listOf(ExerciseTranslations.translate(tapped.exercise.nome, languageCode)),
+            onRestore = {
+                viewModel.restoreExercise(tapped.exercise.id)
+                deletedExerciseTapped = null
+                openEditSheet(tapped)
+            },
+            onSkip = {
+                deletedExerciseTapped = null
+                openEditSheet(tapped)
+            },
+            onDismiss = { deletedExerciseTapped = null }
+        )
     }
 
     fun openRoutineEditSheet() {
@@ -1116,7 +1137,7 @@ fun RoutineDetailScreen(
 
                                 ExerciseEntryCard(
                                     item = item,
-                                    onClick = { openEditSheet(item) },
+                                    onClick = { if (item.exercise.isDeleted) deletedExerciseTapped = item else openEditSheet(item) },
                                     modifier = Modifier.weight(1f),
                                     languageCode = languageCode,
                                     isSuperset = isSuperset,
@@ -1140,7 +1161,9 @@ fun RoutineDetailScreen(
     }
 
     if (showExerciseSheet) {
-        val selectedExercise = uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
+        // The exercise being edited is looked up on the plan: it may be one deleted from the exercise list, which the list no longer has
+        val selectedExercise = editingExercise?.exercise?.takeIf { it.id == selectedExerciseId }
+            ?: uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
         val isSelectedCardio = selectedExercise?.categoria?.equals("Cardio", ignoreCase = true) == true || editingExercise?.planExercise?.exerciseType == "cardio"
         // With starting weights off the field is hidden and an exercise keeps the weight it already had
         val presetKg: Float? = when {

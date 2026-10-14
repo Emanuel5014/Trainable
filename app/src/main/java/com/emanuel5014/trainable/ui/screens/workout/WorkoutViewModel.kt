@@ -159,7 +159,9 @@ data class WorkoutState(
     /** The set just logged came out short of its reps: the rest card offers to finish it after a short pause. */
     val miniSetOffer: MiniSetOffer? = null,
     /** A mini-set on its way: its pause runs on the rest timer, then the hub asks how many reps it had. */
-    val miniSet: MiniSetRun? = null
+    val miniSet: MiniSetRun? = null,
+    /** Exercises of the routine the user deleted from the exercise list, to ask once if they are added back. */
+    val deletedExercises: List<ExerciseEntity> = emptyList()
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -507,16 +509,20 @@ class WorkoutViewModel @Inject constructor(
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
+    /** The exercises the user can pick; the ones deleted from the library are only in [_allExercises]. */
     private val _availableExercises = MutableStateFlow<List<ExerciseEntity>>(emptyList())
     val availableExercises: StateFlow<List<ExerciseEntity>> = _availableExercises.asStateFlow()
 
+    /** Every exercise, also the deleted ones a routine or a workout of the user still has (they keep working as before). */
+    private val _allExercises = MutableStateFlow<List<ExerciseEntity>>(emptyList())
+
     /** Exercise id -> file name of the user's own image/GIF, for the exercises that have one. */
-    val exerciseMedia: StateFlow<Map<Int, String>> = _availableExercises
+    val exerciseMedia: StateFlow<Map<Int, String>> = _allExercises
         .map { exercises -> exercises.mapNotNull { exercise -> exercise.mediaPath?.let { exercise.id to it } }.toMap() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     /** Exercise id -> bar weight in kg (null = the default bar), for the exercises that use the plate calculator. */
-    val plateCalculatorExercises: StateFlow<Map<Int, Float?>> = _availableExercises
+    val plateCalculatorExercises: StateFlow<Map<Int, Float?>> = _allExercises
         .map { exercises -> exercises.filter { it.plateCalculator }.associate { it.id to it.plateBarKg } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
@@ -749,8 +755,9 @@ class WorkoutViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            exerciseRepository.getAllExercises().collect { exercises ->
-                _availableExercises.value = exercises
+            exerciseRepository.getAllExercisesIncludingDeleted().collect { exercises ->
+                _allExercises.value = exercises
+                _availableExercises.value = exercises.filter { !it.isDeleted }
             }
         }
 
@@ -842,8 +849,8 @@ class WorkoutViewModel @Inject constructor(
         val resumeIncrement = userPreferencesRepository.loadRoundingIncrement.first()
         val resumeOneRepMaxes = oneRepMaxRepository.currentByExercise().first()
         
-        val allAvailableExercises = _availableExercises.value.ifEmpty { 
-            exerciseRepository.getAllExercises().firstOrNull() ?: emptyList() 
+        val allAvailableExercises = _allExercises.value.ifEmpty {
+            exerciseRepository.getAllExercisesIncludingDeleted().firstOrNull() ?: emptyList()
         }
 
         val cardioLogs = workoutRepository.getCardioLogsForSession(sessionId).firstOrNull() ?: emptyList()
@@ -1362,9 +1369,22 @@ class WorkoutViewModel @Inject constructor(
                 exercises = exerciseStates,
                 currentExerciseIndex = 0,
                 nextExecutionOrder = 0,
-                sessionStartTime = startTime
+                sessionStartTime = startTime,
+                deletedExercises = exerciseStates.map { state -> state.exercise }.filter { exercise -> exercise.isDeleted }.distinctBy { exercise -> exercise.id }
             )
         }
+    }
+
+    /** The user chose to add the deleted exercises of this routine back to the exercise list. */
+    fun restoreDeletedExercises() {
+        val ids = _state.value.deletedExercises.map { it.id }
+        _state.update { it.copy(deletedExercises = emptyList()) }
+        viewModelScope.launch { exerciseRepository.restoreExercises(ids) }
+    }
+
+    /** The workout goes on with the deleted exercises as they are. */
+    fun dismissDeletedExercises() {
+        _state.update { it.copy(deletedExercises = emptyList()) }
     }
 
     private suspend fun initializeQuickWorkout(name: String?) {

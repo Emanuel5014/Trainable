@@ -168,7 +168,9 @@ import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
+import com.emanuel5014.trainable.ui.components.DeletedExercisePill
 import com.emanuel5014.trainable.ui.components.EmptyState
+import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
@@ -611,6 +613,7 @@ fun HistoryScreen(
                                             sessionToShare = Triple(details, planName, planExercises)
                                         }
                                     },
+                                    onRestoreExercise = viewModel::restoreExercise,
                                     swipeActionsEnabled = swipeActionsEnabled,
                                     isSelectionMode = uiState.isSelectionMode,
                                     isSelected = uiState.selectedSessionIds.contains(session.id),
@@ -1114,9 +1117,25 @@ private fun HistoryExerciseGroup(
     weightUnit: String,
     modifier: Modifier = Modifier,
     /** Changes made to the prescription of this exercise during the workout, oldest first. */
-    programEdits: List<SessionPrescriptionEditEntity> = emptyList()
+    programEdits: List<SessionPrescriptionEditEntity> = emptyList(),
+    /** Adds an exercise deleted from the exercise list back to it. */
+    onRestoreExercise: (Int) -> Unit = {}
 ) {
     val exerciseName = ExerciseTranslations.translate(exWithSets.exercise.nome, languageCode)
+    val isDeleted = exWithSets.exercise.isDeleted
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    if (showRestoreDialog) {
+        RestoreExerciseDialog(
+            exerciseNames = listOf(exerciseName),
+            onRestore = {
+                onRestoreExercise(exWithSets.exercise.id)
+                showRestoreDialog = false
+            },
+            onSkip = { showRestoreDialog = false },
+            onDismiss = { showRestoreDialog = false },
+            skipLabel = stringResource(R.string.cancel)
+        )
+    }
     var showProgramEdits by remember { mutableStateOf(false) }
     if (showProgramEdits) {
         com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog(
@@ -1131,11 +1150,15 @@ private fun HistoryExerciseGroup(
             Text(
                 text = exerciseName.uppercase(),
                 style = MaterialTheme.typography.labelLarge,
-                color = Primary,
+                // Deleted from the exercise list: still in the history, greyed out
+                color = if (isDeleted) OnSurfaceVariant.copy(alpha = 0.7f) else Primary,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.sp,
                 modifier = Modifier.weight(1f, fill = false)
             )
+            if (isDeleted) {
+                DeletedExercisePill(Modifier.clickable { showRestoreDialog = true })
+            }
             programEdits.lastOrNull()?.let { edit ->
                 com.emanuel5014.trainable.ui.components.ProgramEditPill(edit, Modifier.clickable { showProgramEdits = true })
             }
@@ -1205,7 +1228,8 @@ fun SessionHistoryCard(
     isSelectionMode: Boolean = false,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onLongClick: () -> Unit = {},
+    onRestoreExercise: (Int) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -1490,7 +1514,8 @@ fun SessionHistoryCard(
                                                     languageCode = languageCode,
                                                     weightUnit = weightUnit,
                                                     modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp),
-                                                    programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id)
+                                                    programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id),
+                                                    onRestoreExercise = onRestoreExercise
                                                 )
                                             }
                                         }
@@ -1504,7 +1529,8 @@ fun SessionHistoryCard(
                                                 modifier = Modifier
                                                     .padding(horizontal = ResponsiveSize.cardPadding)
                                                     .padding(bottom = 16.dp),
-                                                programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id)
+                                                programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id),
+                                                onRestoreExercise = onRestoreExercise
                                             )
                                         }
                                     }

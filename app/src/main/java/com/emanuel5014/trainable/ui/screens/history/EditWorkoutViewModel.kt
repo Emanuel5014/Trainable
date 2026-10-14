@@ -641,6 +641,11 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
+    /** Adds an exercise the user deleted from the exercise list back, from a workout that still has it. */
+    fun restoreExercise(exerciseId: Int) {
+        viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
+    }
+
     fun deleteCustomExercise(exercise: ExerciseEntity) {
         viewModelScope.launch {
             exerciseRepository.deleteExercise(exercise)

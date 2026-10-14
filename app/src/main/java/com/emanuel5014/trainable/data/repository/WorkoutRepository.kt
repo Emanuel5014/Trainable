@@ -258,7 +258,8 @@ class WorkoutRepository @Inject constructor(
         if (importDtos.isEmpty()) return 0
 
         val currentPlans = workoutDao.getAllPlans().first()
-        val knownExercises = exerciseDao.getAllExercises().first().toMutableList()
+        // Also the exercises deleted from the library: an imported routine that uses one brings it back instead of duplicating it
+        val knownExercises = exerciseDao.getAllExercisesIncludingDeleted().first().toMutableList()
         var nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
         var imported = 0
 
@@ -335,7 +336,14 @@ class WorkoutRepository @Inject constructor(
                     val finalExerciseId: Int? = when (
                         val match = ImportedExerciseMatcher.match(knownExercises, exerciseDto.exerciseId, exerciseDto.exerciseName)
                     ) {
-                        is ImportedExerciseMatcher.Match.Existing -> match.exercise.id
+                        is ImportedExerciseMatcher.Match.Existing -> {
+                            if (match.exercise.isDeleted) {
+                                exerciseDao.setExerciseDeleted(match.exercise.id, false)
+                                val index = knownExercises.indexOfFirst { it.id == match.exercise.id }
+                                if (index >= 0) knownExercises[index] = match.exercise.copy(isDeleted = false)
+                            }
+                            match.exercise.id
+                        }
                         ImportedExerciseMatcher.Match.Unresolvable -> null
                         ImportedExerciseMatcher.Match.CreateCustom -> try {
                             val maxId = knownExercises.maxOfOrNull { it.id } ?: exerciseDao.getMaxId()

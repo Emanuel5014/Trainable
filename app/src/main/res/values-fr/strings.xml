@@ -188,7 +188,12 @@
     <string name="filter_custom">Personnalisés</string>
     <string name="new_exercise">Nouvel Exercice</string>
     <string name="delete_exercise_title">Supprimer l\'exercice?</string>
-    <string name="delete_exercise_message">Supprimer \"%1$s\" ? Cette action est irréversible.</string>
+    <string name="delete_exercise_message">Supprimer \"%1$s\" de ta liste d\'exercices ? Les séances et programmes qui l\'utilisent déjà le conservent.</string>
+    <string name="exercise_deleted_badge">Supprimé</string>
+    <string name="deleted_exercise_title">Exercice supprimé</string>
+    <string name="deleted_exercise_message">\"%1$s\" a été supprimé de ta liste d\'exercices, mais il est toujours dans tes programmes et tes séances. Le remettre dans la liste ?</string>
+    <string name="deleted_exercises_message">Ces exercices ont été supprimés de ta liste d\'exercices, mais sont toujours dans tes programmes et tes séances : %1$s. Les remettre dans la liste ?</string>
+    <string name="deleted_exercise_restore">Remettre</string>
     <string name="add_custom_exercise">Ajouter un Exercice Personnalisé</string>
     <string name="exercise_name">Nom de l\'Exercice</string>
     <string name="category">Catégorie</string>

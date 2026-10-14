@@ -53,7 +53,9 @@ data class ImportResult(
     internal val sessionIds: List<Int>,
     internal val planIds: List<Int>,
     internal val exerciseIds: List<Int>,
-    internal val categoryIds: List<Int>
+    internal val categoryIds: List<Int>,
+    /** Exercises deleted from the exercise list that the file brought back, hidden again by [HistoryCsvImporter.undo]. */
+    internal val revivedExerciseIds: List<Int> = emptyList()
 )
 
 /**
@@ -70,7 +72,9 @@ class HistoryCsvImporter @Inject constructor(
 ) {
     /** What the app holds now, to match a file against. */
     suspend fun loadKnown(zone: ZoneId = ZoneId.systemDefault()): KnownData {
-        val exercises = exerciseDao.getAllExercises().first()
+        // Also the exercises deleted from the exercise list: their workouts are still there, so a file that repeats them
+        // is recognised as duplicates, and one with new workouts of such an exercise adds them to it
+        val exercises = exerciseDao.getAllExercisesIncludingDeleted().first()
         val categories = exerciseDao.getAllCustomCategories().first().map { it.name }
         val plans = workoutDao.getAllPlans().first()
         val sessions = workoutDao.getAllSessionsWithDetails().first()
@@ -130,8 +134,10 @@ class HistoryCsvImporter @Inject constructor(
             exerciseIds.add(entity.id)
         }
 
+        // Exercises the user deleted from the exercise list that the imported workouts use come back to it
+        val revived = linkedSetOf<Int>()
         fun exerciseOf(exercise: ResolvedExercise): ExerciseEntity = when (exercise) {
-            is ResolvedExercise.Existing -> exercise.exercise
+            is ResolvedExercise.Existing -> exercise.exercise.also { if (it.isDeleted) revived.add(it.id) }
             is ResolvedExercise.New -> created.getValue(exercise.key)
         }
 
@@ -205,6 +211,8 @@ class HistoryCsvImporter @Inject constructor(
             writeWorkout(workout, planId, ::exerciseOf)
         }
 
+        revived.forEach { exerciseDao.setExerciseDeleted(it, false) }
+
         return ImportResult(
             workouts = workouts.size,
             sets = sets,
@@ -216,7 +224,8 @@ class HistoryCsvImporter @Inject constructor(
             sessionIds = sessionIds,
             planIds = planIds,
             exerciseIds = exerciseIds,
-            categoryIds = categoryIds
+            categoryIds = categoryIds,
+            revivedExerciseIds = revived.toList()
         )
     }
 
@@ -285,7 +294,9 @@ class HistoryCsvImporter @Inject constructor(
             // A plan of the app's own that the import made goes with it unless a workout has landed in it since
             val removable = result.planIds.filter { workoutDao.countSessionsForPlan(it) == 0 }
             removable.chunked(CHUNK).forEach { workoutDao.deletePlansByIds(it) }
-            result.exerciseIds.chunked(CHUNK).forEach { exerciseDao.deleteExercisesByIds(it) }
+            // An exercise the user has put to use since (in a routine, in a workout) stays, hidden, instead of taking that along
+            result.exerciseIds.forEach { exerciseDao.removeFromLibrary(it) }
+            result.revivedExerciseIds.forEach { exerciseDao.setExerciseDeleted(it, true) }
             result.categoryIds.chunked(CHUNK).forEach { exerciseDao.deleteCustomCategoriesByIds(it) }
         }
         triggerWidgetUpdate()

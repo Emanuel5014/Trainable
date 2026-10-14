@@ -24,5 +24,11 @@ data class ExerciseEntity(
     val plateCalculator: Boolean = false,
     /** Weight of the bar (or sled) in kg, in storage units; null falls back to the default Olympic bar. */
     @ColumnInfo(name = "plate_bar_kg")
-    val plateBarKg: Float? = null
+    val plateBarKg: Float? = null,
+    /**
+     * Deleted by the user while workouts, routines or maxes still refer to it: it is hidden from the exercise lists but
+     * the row stays, so that history and routines keep their exercise (shown greyed out until it is restored).
+     */
+    @ColumnInfo(name = "is_deleted", defaultValue = "0")
+    val isDeleted: Boolean = false
 )
