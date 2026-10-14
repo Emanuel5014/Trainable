@@ -46,7 +46,8 @@ class ReportViewModel @Inject constructor(
             try {
                 val languageCode = localeManager.getResolvedLanguage()
                 val reports = reportGenerator.generateReports(planIds, languageCode)
-                val html = reports.joinToString("\n") { htmlReportFormatter.format(it, languageCode) }
+                // One page for all the routines: glued pages would be several documents in one file
+                val html = htmlReportFormatter.format(reports, languageCode)
                 _uiState.update { it.copy(html = html, isLoading = false, reports = reports) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
