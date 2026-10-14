@@ -29,6 +29,7 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.data.local.entity.wasPrescribedLike
 import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.domain.emom.EmomClock
 import com.emanuel5014.trainable.domain.emom.EmomPhase
@@ -1487,13 +1488,18 @@ class WorkoutViewModel @Inject constructor(
         val previousByBlock = previousPlain.filter { it.blockIndex != null }.groupBy { it.blockIndex!! }
         // A session logged before the exercise had blocks has no block on its rows: match those by position instead
         val previousWithoutBlock = previousPlain.filter { it.blockIndex == null }
+        // What was written on a set last time only follows it into a block that is prescribed exactly as it was then
+        val plannedByBlock = planned.groupBy { it.blockIndex }
+        val sameBlockAsLastTime = previousByBlock.mapValues { (blockIndex, rows) -> rows.wasPrescribedLike(plannedByBlock[blockIndex].orEmpty()) }
         val loggedSorted = logged.sortedBy { it.numeroSerie }
         val loggedByBlock = loggedSorted.filter { it.blockIndex != null && !it.isExtra }.groupBy { it.blockIndex!! }
         val result = mutableListOf<WorkoutSetState>()
 
         fun plannedState(p: PlannedSet, lastWeightInBlock: Float?): WorkoutSetState {
-            val prev = previousByBlock[p.blockIndex]?.getOrNull(p.indexInBlock)
+            val prevBlock = previousByBlock[p.blockIndex]
+            val prev = prevBlock?.getOrNull(p.indexInBlock)
                 ?: previousWithoutBlock.getOrNull(planned.count { it.blockIndex < p.blockIndex } + p.indexInBlock)
+            val prevNote = prev?.note.takeIf { prevBlock == null || sameBlockAsLastTime[p.blockIndex] == true }
             val target = LoadCalculator.targetWeightKg(p, oneRepMaxKg, unit, increment)
             val reps = when (p.repMode) {
                 RepMode.FIXED -> p.targetReps ?: prev?.repsEffettive ?: 5
@@ -1505,7 +1511,7 @@ class WorkoutViewModel @Inject constructor(
                 // The load of the same set last time wins over the one just before it, so ramps keep their steps
                 weight = target ?: prev?.pesoSollevato ?: lastWeightInBlock ?: 0f,
                 reps = reps,
-                previousNote = prev?.note,
+                previousNote = prevNote,
                 previousReps = prev?.repsEffettive,
                 previousWeight = prev?.pesoSollevato,
                 prescription = p
