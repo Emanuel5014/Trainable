@@ -1465,6 +1465,17 @@ async function loadSessionDetail() {
     const hasTimedSets = exerciseSets.some(set => set.durataSecondi != null);
     // Time & Reps: no weight, the duration takes its column and the reps keep theirs
     const isTimeAndReps = exerciseSets.some(set => set.exerciseType === 'time_and_reps');
+    // Changes made to the prescription of this exercise during the workout
+    const edits = (session.programEdits || []).filter(e => e.exerciseName === name);
+    const editsHtml = edits.length === 0 ? '' : edits.map(e => `
+            <div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.85;font-size:0.8rem;">
+              <div>
+                <strong>${t('programEdit')}</strong> · ${e.scope === 'plan' ? t('programEditPlan') : t('programEditWorkout')}${e.week != null ? ' · ' + t('programEditWeek') + ' ' + e.week : ''}<br>
+                ${(e.changes || []).map(c => escapeHtml(c) + '<br>').join('')}
+                ${t('programEditBefore')}: ${escapeHtml(e.before)}<br>
+                ${t('programEditAfter')}: ${escapeHtml(e.after)}
+              </div>
+            </div>`).join('');
     return `
       <div class="exercise-block">
         <div class="exercise-block-header">
@@ -1485,6 +1496,7 @@ async function loadSessionDetail() {
             </div>
             ${set.prescription ? `<div class="set-row" style="grid-template-columns:1fr;padding-top:0;opacity:0.75;font-size:0.8rem;"><div>${set.prescription}</div></div>` : ''}
           `).join('')}
+          ${editsHtml}
         </div>
       </div>
     `;

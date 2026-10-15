@@ -1,210 +1,592 @@
 package com.emanuel5014.trainable.data.report
 
+import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
+import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
+import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
+import com.emanuel5014.trainable.domain.prescription.RepRange
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
+/**
+ * The report as one self-contained HTML page: no script, no font or image to download, semantic markup and a layout
+ * that wraps instead of scrolling sideways, so it reads the same in the app's WebView, a phone browser, a desktop
+ * browser or on paper. Several routines make one page, each with its own header and contents.
+ */
 class HtmlReportFormatter @Inject constructor() {
 
-    fun format(report: PlanReport, languageCode: String = "en"): String {
-        val strings = getStrings(languageCode)
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val dateTimeFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    fun format(report: PlanReport, languageCode: String = "en"): String = format(listOf(report), languageCode)
+
+    fun format(reports: List<PlanReport>, languageCode: String = "en"): String {
+        val page = Page(ReportStrings.forLanguage(languageCode), languageCode)
+        val s = page.s
+        val title = if (reports.size == 1) reports.first().planName else "Trainable"
 
         return buildString {
-            append("<!DOCTYPE html>\n<html lang=\"$languageCode\">\n<head>\n")
+            append("<!DOCTYPE html>\n<html lang=\"${escapeHtml(s.languageTag)}\">\n<head>\n")
             append("<meta charset=\"UTF-8\">\n")
-            append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n")
-            append("<title>${escapeHtml(report.planName)} - ${strings["report"]}</title>\n")
-            append("<style>\n")
-            append(getEmbeddedCss())
-            append("</style>\n")
-            append("</head>\n<body>\n")
+            append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
+            append("<meta name=\"color-scheme\" content=\"light dark\">\n")
+            // Keeps a phone browser from turning "100 5" into a call link
+            append("<meta name=\"format-detection\" content=\"telephone=no\">\n")
+            append("<title>${escapeHtml(title)} - ${escapeHtml(s["report"])}</title>\n")
+            append("<style>\n").append(ReportCss.STYLE).append("</style>\n")
+            append("</head>\n<body id=\"top\">\n<main class=\"page\">\n")
 
-            append("<div class=\"container\">\n")
+            if (reports.size > 1) appendPlansIndex(page, reports)
+            reports.forEachIndexed { index, report -> appendPlan(page, report, index) }
+            if (reports.isEmpty()) append("<p class=\"empty\">${escapeHtml(s["no_data"])}</p>\n")
 
-            append("<div class=\"page-header\">\n")
-            append("<div class=\"page-label\">${strings["report"]}</div>\n")
-            append("<h1 class=\"page-title\">${escapeHtml(report.planName)}</h1>\n")
-            if (!report.planNote.isNullOrBlank()) {
-                append("<p class=\"page-note\">${escapeHtml(report.planNote)}</p>\n")
-            }
-            append("</div>\n")
-
-            append("<div class=\"stats-grid\">\n")
-            append(buildStatCard(strings["total_sessions"] ?: "Total Sessions", report.totalSessions.toString(), "fitness_center"))
-            append(buildStatCard(
-                strings["period"] ?: "Period",
-                if (report.periodFirstSession != null && report.periodLastSession != null) {
-                    "${dateFormat.format(Date(report.periodFirstSession))} - ${dateFormat.format(Date(report.periodLastSession))}"
-                } else "-",
-                "date_range"
-            ))
-            append(buildStatCard(strings["exercises"] ?: "Exercises", report.exercises.size.toString(), "list"))
-            append("</div>\n")
-
-            if (report.exercises.isNotEmpty()) {
-                append("<div class=\"section-header\">\n")
-                append("<h2 class=\"section-title\">${strings["exercises_history"] ?: "Exercises History"}</h2>\n")
-                append("</div>\n")
-
-                report.exercises.forEachIndexed { index, exercise ->
-                    append("<div class=\"exercise-card ${if (!exercise.isCurrentlyInPlan) "removed\" data-removed=\"true\"" else "\""}>\n")
-
-                    append("<div class=\"exercise-header\">\n")
-                    append("<div class=\"exercise-info\">\n")
-                    append("<div class=\"exercise-number\">${index + 1}</div>\n")
-                    append("<div>\n")
-                    append("<h3 class=\"exercise-name\">${escapeHtml(exercise.exerciseName)}</h3>\n")
-                    append("<div class=\"exercise-meta\">\n")
-                    append("<span class=\"badge badge-neutral\">${escapeHtml(exercise.muscleGroup)}</span>\n")
-                    if (!exercise.isCurrentlyInPlan) {
-                        append("<span class=\"badge badge-removed\">${strings["removed"] ?: "Removed"}</span>\n")
-                    }
-                    append("</div>\n")
-                    append("</div>\n")
-                    append("</div>\n")
-                    append("</div>\n")
-
-                    append(buildExerciseSummary(exercise, report.weightUnit, strings))
-
-                    val allSets = exercise.sessions.flatMap { it.sets }.filter { !it.isWarmup }
-                    if (allSets.isNotEmpty()) {
-                        append(buildExerciseTable(exercise, report.weightUnit, strings, dateFormat))
-                    }
-
-                    if (exercise.swapEvents.isNotEmpty()) {
-                        append("<div class=\"swap-section\">\n")
-                        append("<div class=\"swap-title\">${strings["swap_history"] ?: "Swap History"}</div>\n")
-                        exercise.swapEvents.sortedBy { it.sessionDate }.forEach { swap ->
-                            append("<div class=\"swap-event\">\n")
-                            append("<span class=\"swap-date\">${dateFormat.format(Date(swap.sessionDate))}</span>\n")
-                            append("<span class=\"swap-text\">${escapeHtml(swap.originalExerciseName)} → ${escapeHtml(swap.replacementExerciseName)}</span>\n")
-                            append("</div>\n")
-                        }
-                        append("</div>\n")
-                    }
-
-                    append("</div>\n")
-                }
-            }
-
-            append("<div class=\"footer\">\n")
-            append("<p class=\"footer-text\">${strings["generated_by"]} ${dateTimeFormat.format(Date())}</p>\n")
-            append("</div>\n")
-
-            append("</div>\n")
-            append("</body>\n</html>")
+            append("<footer class=\"footer\">${escapeHtml(s["generated_by"])} ${escapeHtml(page.dateTime.format(Date()))}</footer>\n")
+            append("</main>\n</body>\n</html>\n")
         }
+    }
+
+    /** Language, formats and words shared by every part of one page. Dates follow the language of the report, not the device. */
+    private class Page(val s: ReportStrings, languageCode: String) {
+        private val locale: Locale = Locale.forLanguageTag(languageCode)
+        val date: DateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, locale)
+        val dateTime: DateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale)
+        private val isoDate = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)
+        private val isoDateTime = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.ROOT)
+
+        fun day(millis: Long): String = date.format(Date(millis))
+        fun isoDay(millis: Long): String = isoDate.format(Date(millis))
+        fun isoMoment(millis: Long): String = isoDateTime.format(Date(millis))
+    }
+
+    // ── Page and routines ────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun StringBuilder.appendPlansIndex(page: Page, reports: List<PlanReport>) {
+        val s = page.s
+        append("<nav class=\"plans-nav\" aria-labelledby=\"plans-title\">\n")
+        append("<p class=\"eyebrow\">Trainable</p>\n")
+        append("<h2 class=\"section-title\" id=\"plans-title\">${escapeHtml(s["routines"])}</h2>\n")
+        append("<ol class=\"toc-list\">\n")
+        reports.forEachIndexed { index, report ->
+            append("<li><a class=\"toc-link\" href=\"#plan-${index + 1}\">")
+            append("<span class=\"toc-n\">${index + 1}</span>")
+            append("<span class=\"toc-name\" dir=\"auto\">${escapeHtml(report.planName)}</span>")
+            append("<span class=\"toc-meta\">${escapeHtml(count(s, report.totalSessions, "session_one", "sessions_unit"))}</span>")
+            append("</a></li>\n")
+        }
+        append("</ol>\n</nav>\n")
+    }
+
+    private fun StringBuilder.appendPlan(page: Page, report: PlanReport, index: Int) {
+        val s = page.s
+        val id = "plan-${index + 1}"
+        append("<section class=\"plan\" id=\"$id\" aria-labelledby=\"$id-title\">\n")
+
+        append("<header>\n")
+        append("<p class=\"eyebrow\">${escapeHtml(s["report"])}</p>\n")
+        append("<h1 class=\"title\" id=\"$id-title\" dir=\"auto\">${escapeHtml(report.planName)}</h1>\n")
+        if (!report.planNote.isNullOrBlank()) appendNote(s["routine_note"], report.planNote)
+
+        val first = report.periodFirstSession
+        val last = report.periodLastSession
+        val period = when {
+            first == null || last == null -> "-"
+            page.day(first) == page.day(last) -> page.day(first)
+            else -> "${page.day(first)} – ${page.day(last)}"
+        }
+        append("<div class=\"facts\">\n")
+        appendFact(report.totalSessions.toString(), s["total_sessions"])
+        appendFact(report.exercises.size.toString(), s["exercises"])
+        // Where the athlete is in a periodized program
+        if (report.weeksCount > 1) appendFact("${report.currentWeek} / ${report.weeksCount}", s["current_week"], wide = true)
+        appendFact(period, s["period"], wide = true)
+        append("</div>\n</header>\n")
+
+        if (report.weeks.isNotEmpty()) appendWeeksOverview(page, report, id)
+
+        if (report.exercises.isEmpty()) {
+            append("<p class=\"empty\">${escapeHtml(s["no_data"])}</p>\n")
+        } else {
+            appendContents(page, report, id)
+            append("<section aria-labelledby=\"$id-history\">\n")
+            append("<h2 class=\"section-title\" id=\"$id-history\">${escapeHtml(s["exercises_history"])}</h2>\n")
+            report.exercises.forEachIndexed { exerciseIndex, exercise ->
+                appendExercise(page, report, id, exerciseIndex, exercise)
+            }
+            append("</section>\n")
+        }
+        append("</section>\n")
+    }
+
+    private fun StringBuilder.appendFact(value: String, label: String, wide: Boolean = false) {
+        append("<div class=\"fact${if (wide) " fact-wide" else ""}\">")
+        append("<span class=\"fact-value\">${escapeHtml(value)}</span>")
+        append("<span class=\"fact-label\">${escapeHtml(label)}</span>")
+        append("</div>\n")
+    }
+
+    /** Where to jump to: one tappable row per exercise, so a long routine can be crossed with a thumb. */
+    private fun StringBuilder.appendContents(page: Page, report: PlanReport, planId: String) {
+        val s = page.s
+        append("<nav id=\"$planId-contents\" aria-labelledby=\"$planId-contents-title\">\n")
+        append("<h2 class=\"section-title\" id=\"$planId-contents-title\">${escapeHtml(s["contents"])}</h2>\n")
+        append("<ol class=\"toc-list\">\n")
+        report.exercises.forEachIndexed { index, exercise ->
+            append("<li><a class=\"toc-link\" href=\"#$planId-ex-${index + 1}\">")
+            append("<span class=\"toc-n\">${index + 1}</span>")
+            append("<span class=\"toc-name\" dir=\"auto\">${escapeHtml(exercise.exerciseName)}</span>")
+            append("<span class=\"toc-meta\">${escapeHtml(count(s, exercise.summary.totalSets, "set_one", "sets_unit"))}</span>")
+            append("</a></li>\n")
+        }
+        append("</ol>\n</nav>\n")
+    }
+
+    // ── Exercise ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun StringBuilder.appendExercise(page: Page, report: PlanReport, planId: String, index: Int, exercise: ExerciseReport) {
+        val s = page.s
+        val id = "$planId-ex-${index + 1}"
+        val hasWorkingSets = exercise.sessions.any { session -> session.sets.any { !it.isWarmup } }
+
+        append("<article class=\"exercise${if (exercise.isCurrentlyInPlan) "" else " is-removed"}\" id=\"$id\">\n")
+        append("<details open>\n")
+        // The row inside the summary does the flex layout: a summary that is a flex box itself is not the same in every browser
+        append("<summary class=\"ex-head\"><span class=\"ex-row\">")
+        append("<span class=\"ex-num\">${index + 1}</span>")
+        append("<span class=\"ex-id\">")
+        // A heading made of spans: a summary may hold phrasing content and nothing more
+        append("<span class=\"ex-name\" role=\"heading\" aria-level=\"3\" dir=\"auto\">${escapeHtml(exercise.exerciseName)}</span>")
+        append("<span class=\"ex-tags\">")
+        if (exercise.muscleGroup.isNotBlank()) append("<span class=\"tag\">${escapeHtml(exercise.muscleGroup)}</span>")
+        if (!exercise.isCurrentlyInPlan) append("<span class=\"tag tag-removed\">${escapeHtml(s["removed"])}</span>")
+        append("</span></span>")
+        append(CHEVRON_ICON)
+        append("</span></summary>\n")
+
+        append("<div class=\"ex-body\">\n")
+        if (hasWorkingSets) {
+            appendMetrics(page, exercise, report.weightUnit)
+        }
+        if (exercise.programEdits.isNotEmpty()) appendProgramEdits(page, exercise.programEdits)
+        if (exercise.swapEvents.isNotEmpty()) appendSwaps(page, exercise.swapEvents)
+
+        appendProgramAndWorkouts(page, report, exercise)
+
+        append("<a class=\"back-link\" href=\"#$planId-contents\">$ARROW_UP_ICON${escapeHtml(s["to_contents"])}</a>\n")
+        append("</div>\n</details>\n</article>\n")
+    }
+
+    private class Metric(val label: String, val value: String, val hint: String? = null)
+
+    private fun StringBuilder.appendMetrics(page: Page, exercise: ExerciseReport, unit: String) {
+        append("<ul class=\"metrics\">\n")
+        metricsOf(page, exercise, unit).forEach { metric ->
+            append("<li class=\"metric\">")
+            append("<span class=\"metric-label\">${escapeHtml(metric.label)}</span>")
+            append("<span class=\"metric-value\">${escapeHtml(metric.value)}</span>")
+            metric.hint?.let { append("<span class=\"metric-hint\">${escapeHtml(it)}</span>") }
+            append("</li>\n")
+        }
+        append("</ul>\n")
     }
 
     /** The figures that sum an exercise up, by how it is measured. */
-    private fun buildExerciseSummary(exercise: ExerciseReport, unit: String, strings: Map<String, String>): String = buildString {
+    private fun metricsOf(page: Page, exercise: ExerciseReport, unit: String): List<Metric> {
+        val s = page.s
         val summary = exercise.summary
-        append("<div class=\"summary-grid\">\n")
-        when (exercise.kind) {
+        fun dateHint(millis: Long): String? = millis.takeIf { it > 0L }?.let { page.day(it) }
+
+        return when (exercise.kind) {
+            ReportExerciseKind.STRENGTH ->
+                // Nothing was ever lifted (pull-ups, push-ups): a weight and a volume of 0 say nothing, the reps do
+                if (summary.maxWeight <= 0f) listOf(
+                    Metric(s["best_reps"], summary.bestReps.toString()),
+                    Metric(s["total_reps"], summary.totalReps.toString()),
+                    Metric(s["total_sets"], summary.totalSets.toString())
+                ) else listOfNotNull(
+                    Metric(s["max_weight"], "${formatNumber(summary.maxWeight)} $unit", dateHint(summary.maxWeightDate)),
+                    Metric(s["max_volume"], "${formatNumber(summary.maxVolume)} $unit", dateHint(summary.maxVolumeDate)),
+                    Metric(s["total_sets"], summary.totalSets.toString()),
+                    summary.bestEstimatedOneRM?.let { Metric(s["estimated_1rm"], "${formatNumber(it)} $unit") }
+                )
+            ReportExerciseKind.TIME_AND_WEIGHT -> listOfNotNull(
+                Metric(s["longest_set"], formatSeconds(summary.bestSeconds)),
+                summary.maxWeight.takeIf { it > 0f }?.let { Metric(s["max_weight"], "${formatNumber(it)} $unit", dateHint(summary.maxWeightDate)) },
+                Metric(s["total_time"], formatSeconds(summary.totalSeconds)),
+                Metric(s["total_sets"], summary.totalSets.toString())
+            )
+            ReportExerciseKind.TIME_AND_REPS -> listOf(
+                Metric(s["best_reps"], summary.bestReps.toString()),
+                Metric(s["total_reps"], summary.totalReps.toString()),
+                Metric(s["total_time"], formatSeconds(summary.totalSeconds)),
+                Metric(s["total_sets"], summary.totalSets.toString())
+            )
+            ReportExerciseKind.CARDIO -> listOfNotNull(
+                Metric(s["total_time"], formatSeconds(summary.totalSeconds)),
+                summary.totalKm.takeIf { it > 0f }?.let { Metric(s["total_distance"], "${formatNumber(it)} km") },
+                Metric(s["longest_set"], formatSeconds(summary.bestSeconds)),
+                Metric(s["total_sets"], summary.totalSets.toString())
+            )
+        }
+    }
+
+    // ── Workouts and sets ────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun StringBuilder.appendSessions(page: Page, kind: ReportExerciseKind, unit: String, sessions: List<ExerciseSessionEntry>, showWeek: Boolean) {
+        append("<ol class=\"sessions\">\n")
+        sessions.forEach { appendSession(page, kind, unit, it, showWeek) }
+        append("</ol>\n")
+    }
+
+    private fun StringBuilder.appendSession(page: Page, kind: ReportExerciseKind, unit: String, session: ExerciseSessionEntry, showWeek: Boolean) {
+        val s = page.s
+        val working = session.sets.filter { !it.isWarmup }
+        if (working.isEmpty()) return
+
+        val (totalLabel, total) = sessionTotal(page, kind, unit, working)
+        append("<li class=\"session\">\n")
+        append("<div class=\"session-head\">")
+        append("<time class=\"session-date\" datetime=\"${page.isoDay(session.date)}\">${escapeHtml(page.day(session.date))}</time>")
+        // Inside a week of the program the week is already said above
+        if (showWeek) session.week?.let { append("<span class=\"chip chip-week\">${escapeHtml(s["week_short"])} $it</span>") }
+        append("<span class=\"session-total\"><span class=\"lbl\">${escapeHtml(totalLabel)}</span> ${escapeHtml(total)}</span>")
+        append("</div>\n")
+
+        session.adherence?.let { adherence ->
+            val setsUnit = if (adherence.setsPlanned == 1) s["set_one"] else s["sets_unit"]
+            append("<div class=\"adherence\">")
+            append(adherenceChip("${adherence.setsDone}/${adherence.setsPlanned} $setsUnit", adherence.setsDone >= adherence.setsPlanned))
+            adherence.repsPlanned?.let { append(adherenceChip("${adherence.repsDone}/$it ${s["reps_unit"]}", adherence.repsDone >= it)) }
+            append("</div>\n")
+        }
+
+        append("<ol class=\"sets\">\n")
+        working.forEach { appendSet(page, kind, unit, it) }
+        append("</ol>\n</li>\n")
+    }
+
+    /** A total of the workout that means something: tonnage for weights, reps for intervals, time for holds and cardio. */
+    private fun sessionTotal(page: Page, kind: ReportExerciseKind, unit: String, working: List<SetEntry>): Pair<String, String> {
+        val s = page.s
+        return when (kind) {
             ReportExerciseKind.STRENGTH -> {
-                append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(summary.maxWeight)} $unit", "fitness_center"))
-                append(buildSummaryItem(strings["max_volume"] ?: "Max Volume", "${formatWeight(summary.maxVolume)} $unit", "bar_chart"))
-                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
-                if (summary.bestEstimatedOneRM != null) {
-                    append(buildSummaryItem(strings["estimated_1rm"] ?: "Est. 1RM", "${formatWeight(summary.bestEstimatedOneRM)} $unit", "whatshot"))
-                }
+                val volume = working.sumOf { (it.weight * it.reps).toDouble() }.toFloat()
+                // Bodyweight sets carry no load: their reps are the only total there is
+                if (volume > 0f) s["volume"] to "${formatNumber(volume)} $unit"
+                else s["total_reps"] to working.sumOf { it.reps }.toString()
             }
-            ReportExerciseKind.TIME_AND_WEIGHT -> {
-                append(buildSummaryItem(strings["longest_set"] ?: "Longest Set", formatSeconds(summary.bestSeconds), "timer"))
-                if (summary.maxWeight > 0f) {
-                    append(buildSummaryItem(strings["max_weight"] ?: "Max Weight", "${formatWeight(summary.maxWeight)} $unit", "fitness_center"))
-                }
-                append(buildSummaryItem(strings["total_time"] ?: "Total Time", formatSeconds(summary.totalSeconds), "bar_chart"))
-                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
-            }
-            ReportExerciseKind.TIME_AND_REPS -> {
-                append(buildSummaryItem(strings["best_reps"] ?: "Most Reps", summary.bestReps.toString(), "whatshot"))
-                append(buildSummaryItem(strings["total_reps"] ?: "Total Reps", summary.totalReps.toString(), "bar_chart"))
-                append(buildSummaryItem(strings["total_time"] ?: "Total Time", formatSeconds(summary.totalSeconds), "timer"))
-                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
-            }
+            ReportExerciseKind.TIME_AND_REPS -> s["total_reps"] to working.sumOf { it.reps }.toString()
+            ReportExerciseKind.TIME_AND_WEIGHT -> s["total_time"] to formatSeconds(working.sumOf { it.seconds ?: 0 })
             ReportExerciseKind.CARDIO -> {
-                append(buildSummaryItem(strings["total_time"] ?: "Total Time", formatSeconds(summary.totalSeconds), "timer"))
-                if (summary.totalKm > 0f) {
-                    append(buildSummaryItem(strings["total_distance"] ?: "Total Distance", "${formatWeight(summary.totalKm)} km", "bar_chart"))
-                }
-                append(buildSummaryItem(strings["longest_set"] ?: "Longest Set", formatSeconds(summary.bestSeconds), "whatshot"))
-                append(buildSummaryItem(strings["total_sets"] ?: "Total Sets", summary.totalSets.toString(), "format_list_numbered"))
+                val km = working.sumOf { (it.distanceKm ?: 0f).toDouble() }.toFloat()
+                val time = formatSeconds(working.sumOf { it.seconds ?: 0 })
+                s["total_time"] to if (km > 0f) "$time · ${formatNumber(km)} km" else time
             }
         }
-        append("</div>\n")
     }
 
-    /** Every working set of the exercise, a session per block of rows; the columns follow how it is measured. */
-    private fun buildExerciseTable(exercise: ExerciseReport, unit: String, strings: Map<String, String>, dateFormat: SimpleDateFormat): String = buildString {
-        val kind = exercise.kind
-        val hasNotes = exercise.sessions.any { it.sets.any { s -> !s.note.isNullOrBlank() } }
-        val hasRpeColumn = kind == ReportExerciseKind.STRENGTH && exercise.sessions.any { it.sets.any { s -> s.rpe != null } }
-        val hasPrescription = kind == ReportExerciseKind.STRENGTH && exercise.sessions.any { it.sets.any { s -> !s.prescription.isNullOrBlank() } }
-        val hasWeight = kind == ReportExerciseKind.STRENGTH || (kind == ReportExerciseKind.TIME_AND_WEIGHT && exercise.summary.maxWeight > 0f)
-        val hasReps = kind == ReportExerciseKind.STRENGTH || kind == ReportExerciseKind.TIME_AND_REPS
-        val hasTime = kind != ReportExerciseKind.STRENGTH
-        val hasDistance = kind == ReportExerciseKind.CARDIO && exercise.summary.totalKm > 0f
-        // A session total that means something: tonnage for weights, reps for intervals, time for holds and cardio
-        val sessionTotalLabel = when (kind) {
-            ReportExerciseKind.STRENGTH -> strings["volume"] ?: "Volume"
-            ReportExerciseKind.TIME_AND_REPS -> strings["total_reps"] ?: "Total Reps"
-            else -> strings["total_time"] ?: "Total Time"
-        }
+    private fun StringBuilder.appendSet(page: Page, kind: ReportExerciseKind, unit: String, set: SetEntry) {
+        val s = page.s
+        append("<li class=\"set\">\n")
+        append("<span class=\"set-n\"><span class=\"sr\">${escapeHtml(s["set"])} </span>${set.setNumber}</span>\n")
+        append("<div class=\"set-body\">\n")
 
-        append("<div class=\"data-table-wrapper\">\n")
-        append("<table class=\"data-table\">\n")
-        append("<thead>\n<tr>\n")
-        append("<th>${strings["date"] ?: "Date"}</th>\n")
-        append("<th>${strings["set"] ?: "Set"}</th>\n")
-        if (hasWeight) append("<th>${strings["weight"] ?: "Weight"}</th>\n")
-        if (hasTime) append("<th>${strings["time"] ?: "Time"}</th>\n")
-        if (hasReps) append("<th>${strings["reps"] ?: "Reps"}</th>\n")
-        if (hasDistance) append("<th>${strings["distance"] ?: "Distance"}</th>\n")
-        if (hasPrescription) append("<th>${strings["details"] ?: "Details"}</th>\n")
-        append("<th>$sessionTotalLabel</th>\n")
-        if (hasRpeColumn) append("<th>RPE</th>\n")
-        if (hasNotes) append("<th>${strings["notes"] ?: "Notes"}</th>\n")
-        append("</tr>\n</thead>\n<tbody>\n")
-
-        exercise.sessions.forEach { session ->
-            val working = session.sets.filter { !it.isWarmup }
-            val sessionTotal = when (kind) {
-                ReportExerciseKind.STRENGTH -> "${formatWeight(working.sumOf { (it.weight * it.reps).toDouble() }.toFloat())} $unit"
-                ReportExerciseKind.TIME_AND_REPS -> working.sumOf { it.reps }.toString()
-                else -> formatSeconds(working.sumOf { it.seconds ?: 0 })
-            }
-            val rowSpan = working.size
-            working.forEachIndexed { setIndex, set ->
-                append("<tr>\n")
-                if (setIndex == 0) {
-                    append(if (rowSpan > 1) "<td rowspan=\"$rowSpan\">" else "<td>")
-                    append("${dateFormat.format(Date(session.date))}</td>\n")
-                }
-                append("<td><span class=\"set-number\">${set.setNumber}</span></td>\n")
-                if (hasWeight) append("<td>${formatWeight(set.weight)} $unit</td>\n")
-                if (hasTime) append("<td>${set.seconds?.let { formatSeconds(it) } ?: "-"}</td>\n")
-                if (hasReps) append("<td>${set.reps}</td>\n")
-                if (hasDistance) append("<td>${set.distanceKm?.takeIf { it > 0f }?.let { "${formatWeight(it)} km" } ?: "-"}</td>\n")
-                if (hasPrescription) append("<td>${set.prescription?.let { escapeHtml(it) } ?: "-"}</td>\n")
-                if (setIndex == 0) {
-                    append(if (rowSpan > 1) "<td rowspan=\"$rowSpan\">" else "<td>")
-                    append("$sessionTotal</td>\n")
-                }
-                if (hasRpeColumn) {
-                    append("<td>${set.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: "-"}</td>\n")
-                }
-                if (hasNotes) append("<td>${set.note?.let { escapeHtml(it) } ?: ""}</td>\n")
-                append("</tr>\n")
-            }
-        }
-
-        append("</tbody>\n</table>\n")
+        append("<div class=\"set-line\"><span class=\"fig\">${figure(page, kind, unit, set)}</span>")
+        set.rpe?.let { append("<span class=\"chip chip-rpe\">RPE ${formatNumber(it)}</span>") }
         append("</div>\n")
+
+        val goal = goalChip(page, set)
+        if (goal != null || set.planned.isNotEmpty() || set.performed.isNotEmpty()) {
+            append("<div class=\"chips\">")
+            goal?.let { append(it) }
+            set.planned.forEach { append("<span class=\"chip chip-plan\" dir=\"auto\">${programText(it)}</span>") }
+            set.performed.forEach { append("<span class=\"chip chip-done\" dir=\"auto\">${programText(it)}</span>") }
+            append("</div>\n")
+        }
+
+        if (!set.note.isNullOrBlank()) {
+            append("<p class=\"set-note\" role=\"note\">$NOTE_ICON<span class=\"txt\" dir=\"auto\">${escapeHtml(cleanNote(set.note))}</span></p>\n")
+        }
+        append("</div>\n</li>\n")
     }
+
+    /** What the set was, by how the exercise is measured: "100 kg × 5", "22 reps · 0:40", "1:15", "10:00 · 1.5 km". */
+    private fun figure(page: Page, kind: ReportExerciseKind, unit: String, set: SetEntry): String {
+        fun value(text: String) = "<b>${escapeHtml(text)}</b>"
+        fun small(text: String) = "<span class=\"u\">${escapeHtml(text)}</span>"
+        val sep = " <span class=\"sep\">·</span> "
+        val time = set.seconds?.let { formatSeconds(it) } ?: "-"
+        val weight = if (set.weight > 0f) value(formatNumber(set.weight)) + " " + small(unit) else null
+        val reps = value(set.reps.toString()) + " " + small(page.s["reps_unit"])
+
+        return when (kind) {
+            ReportExerciseKind.STRENGTH ->
+                if (weight != null) weight + " <span class=\"x\">×</span> " + value(set.reps.toString()) else reps
+            ReportExerciseKind.TIME_AND_WEIGHT -> listOfNotNull(weight, value(time)).joinToString(sep)
+            ReportExerciseKind.TIME_AND_REPS -> reps + sep + value(time)
+            ReportExerciseKind.CARDIO -> {
+                val km = set.distanceKm?.takeIf { it > 0f }?.let { value(formatNumber(it)) + " " + small("km") }
+                listOfNotNull(value(time), km).joinToString(sep)
+            }
+        }
+    }
+
+    private fun adherenceChip(text: String, reached: Boolean): String =
+        "<span class=\"chip ${if (reached) "chip-ok" else "chip-miss"}\">${escapeHtml(text)}</span>"
+
+    /** The reps the set was meant to reach when it fell short or went past them, e.g. "Goal 5 · −1"; nothing when it was on target. */
+    private fun goalChip(page: Page, set: SetEntry): String? {
+        val target = set.targetReps ?: return null
+        val range = RepRange.parse(target)
+        val (low, high) = when {
+            range != null -> range.min to range.max
+            else -> target.trim().toIntOrNull()?.let { it to it } ?: return null
+        }
+        val difference = when {
+            set.reps < low -> set.reps - low
+            set.reps > high -> set.reps - high
+            else -> return null
+        }
+        val sign = if (difference < 0) "−" else "+"
+        val text = "${page.s["goal"]} $target · $sign${kotlin.math.abs(difference)}"
+        return "<span class=\"chip ${if (difference < 0) "chip-miss" else "chip-over"}\">${escapeHtml(text)}</span>"
+    }
+
+    // ── What the sheet asks for, next to what was done ──────────────────────────────────────────────────────────
+
+    /**
+     * The sheet and the workouts of an exercise: week by week for a program with blocks (what was prescribed, then what
+     * was done), the plain target and then the workouts otherwise.
+     */
+    private fun StringBuilder.appendProgramAndWorkouts(page: Page, report: PlanReport, exercise: ExerciseReport) {
+        val s = page.s
+        val program = exercise.program
+        val workouts = exercise.sessions.filter { session -> session.sets.any { !it.isWarmup } }
+        val unit = report.weightUnit
+
+        if (program == null) {
+            if (workouts.isEmpty()) {
+                append("<p class=\"empty\">${escapeHtml(s["no_sets"])}</p>\n")
+            } else {
+                append("<h4 class=\"sub-title\">${escapeHtml(s["workouts"])}</h4>\n")
+                appendSessions(page, exercise.kind, unit, workouts, showWeek = true)
+            }
+            return
+        }
+
+        append("<h4 class=\"sub-title\">${escapeHtml(s["program_vs_done"])}</h4>\n")
+        if (program.weeks.isEmpty()) {
+            program.plain?.let { plain ->
+                append("<div class=\"sheet\"><div class=\"sheet-label\">${escapeHtml(s["prescribed"])}</div>")
+                append("<p class=\"sheet-plain\">${escapeHtml(plainText(page, plain))}</p></div>\n")
+            }
+            if (workouts.isEmpty()) {
+                append("<p class=\"empty\">${escapeHtml(s["no_sets"])}</p>\n")
+            } else {
+                append("<div class=\"sheet-label done-label\">${escapeHtml(s["done"])}</div>\n")
+                appendSessions(page, exercise.kind, unit, workouts, showWeek = true)
+            }
+            return
+        }
+
+        val periodized = report.weeksCount > 1
+        val byWeek = workouts.groupBy { it.week }
+        append("<ol class=\"weeks\">\n")
+        program.weeks.forEach { week ->
+            val done = if (periodized) byWeek[week.week].orEmpty() else workouts
+            val css = if (periodized) weekClass(week.week, done.size, report.currentWeek, week.excluded) else ""
+            append("<li class=\"week $css\">\n")
+            if (periodized) {
+                append("<div class=\"week-head\"><span class=\"week-n\">${escapeHtml(s["week_short"])} ${week.week}</span>")
+                append(weekChips(page, week.week, done.size, report.currentWeek, week.excluded))
+                week.repeatsWeek?.let { append("<span class=\"week-repeat\">${escapeHtml(s["same_as"])} ${escapeHtml(s["week_short"])} $it</span>") }
+                append("</div>\n")
+            }
+            if (!week.excluded) appendSheet(page, week)
+            if (done.isNotEmpty()) {
+                append("<div class=\"sheet-label done-label\">${escapeHtml(s["done"])}</div>\n")
+                appendSessions(page, exercise.kind, unit, done, showWeek = false)
+            }
+            append("</li>\n")
+        }
+        append("</ol>\n")
+
+        // Workouts that belong to no week of the program (done before it was periodized, or on a week since removed)
+        val covered = program.weeks.map { it.week }.toSet()
+        val others = if (periodized) workouts.filter { it.week !in covered } else emptyList()
+        if (others.isNotEmpty()) {
+            append("<h4 class=\"sub-title\">${escapeHtml(s["other_workouts"])}</h4>\n")
+            appendSessions(page, exercise.kind, unit, others, showWeek = true)
+        }
+    }
+
+    /** What the sheet says for one week: its blocks, each with the rest and the note written on it. */
+    private fun StringBuilder.appendSheet(page: Page, week: ProgramWeek) {
+        val s = page.s
+        append("<div class=\"sheet\"><div class=\"sheet-label\">${escapeHtml(s["prescribed"])}</div>")
+        if (week.blocks.isEmpty()) {
+            append("<p class=\"sheet-plain\">-</p></div>\n")
+            return
+        }
+        append("<ol class=\"blocks\">")
+        week.blocks.forEachIndexed { index, block ->
+            append("<li><span class=\"blk-n\">${index + 1}</span><span class=\"blk-t\" dir=\"auto\">${programText(block.text)}")
+            block.restSeconds?.let { append("<span class=\"blk-meta\">${escapeHtml(s["rest"])} ${formatSeconds(it)}</span>") }
+            block.note?.let { append("<span class=\"blk-note txt\" dir=\"auto\">${escapeHtml(cleanNote(it))}</span>") }
+            append("</span></li>")
+        }
+        append("</ol></div>\n")
+    }
+
+    /** "3 × 8–10 · Rest 1:30", "3 × 0:45", "10:00 · 1.5 km": the target of an exercise without blocks. */
+    private fun plainText(page: Page, target: PlainTarget): String {
+        val s = page.s
+        val reps = target.reps
+        val amount = reps ?: target.seconds?.let { formatSeconds(it) }
+        val parts = mutableListOf<String>()
+        when {
+            amount == null -> Unit
+            // A list of reps per set ("8-6-4-2") already says how many sets there are
+            reps != null && reps.contains('-') -> parts += "$reps ${s["reps_unit"]}"
+            target.sets != null -> parts += "${target.sets} × $amount"
+            else -> parts += amount
+        }
+        target.distanceKm?.let { parts += "${formatNumber(it)} km" }
+        target.restSeconds?.let { parts += "${s["rest"]} ${formatSeconds(it)}" }
+        return parts.joinToString(" · ").ifEmpty { "-" }
+    }
+
+    // ── Weeks of a program ───────────────────────────────────────────────────────────────────────────────────────
+
+    /** The weeks of the program at a glance: which were trained, which were missed, which are still to come. */
+    private fun StringBuilder.appendWeeksOverview(page: Page, report: PlanReport, planId: String) {
+        val s = page.s
+        append("<section aria-labelledby=\"$planId-weeks-title\">\n")
+        append("<h2 class=\"section-title\" id=\"$planId-weeks-title\">${escapeHtml(s["program_weeks"])}</h2>\n")
+        append("<ol class=\"week-rows\">\n")
+        report.weeks.forEach { week ->
+            val first = week.firstDate
+            val last = week.lastDate
+            val dates = when {
+                first == null || last == null -> "-"
+                page.day(first) == page.day(last) -> page.day(first)
+                else -> "${page.day(first)} – ${page.day(last)}"
+            }
+            append("<li class=\"week-row ${weekClass(week.week, week.workouts, report.currentWeek, excluded = false)}\">")
+            append("<span class=\"wr-n\">${escapeHtml(s["week_short"])} ${week.week}</span>")
+            append("<span class=\"wr-dates\">${escapeHtml(dates)}</span>")
+            append(weekChips(page, week.week, week.workouts, report.currentWeek, excluded = false))
+            append("</li>\n")
+        }
+        append("</ol>\n</section>\n")
+    }
+
+    private fun weekClass(week: Int, workouts: Int, currentWeek: Int, excluded: Boolean): String = when {
+        excluded -> "is-excluded"
+        workouts == 0 && week < currentWeek -> "is-missed"
+        week == currentWeek -> "is-current"
+        workouts == 0 -> "is-upcoming"
+        else -> ""
+    }
+
+    /** What became of a week: how many workouts it had, or that it was missed, is under way, still to come or skipped on the sheet. */
+    private fun weekChips(page: Page, week: Int, workouts: Int, currentWeek: Int, excluded: Boolean): String = buildString {
+        val s = page.s
+        when {
+            excluded -> append("<span class=\"chip\">${escapeHtml(s["week_excluded"])}</span>")
+            workouts > 0 -> append("<span class=\"chip chip-ok\">${escapeHtml(count(s, workouts, "session_one", "sessions_unit"))}</span>")
+            week < currentWeek -> append("<span class=\"chip chip-miss\">${escapeHtml(s["week_not_done"])}</span>")
+            week > currentWeek -> append("<span class=\"chip\">${escapeHtml(s["week_upcoming"])}</span>")
+        }
+        if (week == currentWeek) append("<span class=\"chip chip-week\">${escapeHtml(s["week_current"])}</span>")
+    }
+
+    // ── Program changes and swaps ────────────────────────────────────────────────────────────────────────────────
+
+    /** What was changed in the prescription of an exercise along the way: when, how, and what it was before and after. */
+    private fun StringBuilder.appendProgramEdits(page: Page, edits: List<ProgramEditEvent>) {
+        val s = page.s
+        append("<h4 class=\"sub-title\">${escapeHtml(s["program_edits"])}</h4>\n<ol class=\"events\">\n")
+        edits.forEach { edit ->
+            val kind = if (edit.kind == ProgramEditKind.LOAD) s["program_edit_kind_load"] else s["program_edit_kind_program"]
+            val isPlan = edit.scope == ProgramEditScope.PLAN
+            val scope = if (isPlan) s["program_edit_plan"] else s["program_edit_workout"]
+
+            append("<li class=\"event\">\n<div class=\"event-head\">")
+            // The moment of the change: two workouts of the same day tell apart by it
+            append("<time class=\"event-date\" datetime=\"${page.isoMoment(edit.createdAt)}\">${escapeHtml(page.dateTime.format(Date(edit.createdAt)))}</time>")
+            append("<span class=\"chip chip-kind\">${escapeHtml(kind)}</span>")
+            edit.week?.let { append("<span class=\"chip chip-week\">${escapeHtml(s["week_short"])} $it</span>") }
+            append("<span class=\"chip ${if (isPlan) "chip-scope-plan" else "chip-scope-workout"}\">${escapeHtml(scope)}</span>")
+            append("</div>\n")
+
+            val comparison = buildString {
+                append("<div class=\"compare\">\n")
+                appendBlocks(s["program_edit_before"], edit.before)
+                appendBlocks(s["program_edit_after"], edit.after)
+                append("</div>\n")
+            }
+            if (edit.changes.isEmpty()) {
+                // Only something the blocks do not show changed: the two programs are all there is to see
+                append(comparison)
+            } else {
+                append("<ul class=\"changes\">")
+                edit.changes.forEach { append("<li dir=\"auto\">${programText(it)}</li>") }
+                append("</ul>\n")
+                // The whole program before and after is long on a phone: the lines above already say what moved
+                append("<details class=\"full-program\"><summary class=\"full-toggle\">$CHEVRON_SMALL_ICON")
+                append("${escapeHtml(s["program_edit_before"])} / ${escapeHtml(s["program_edit_after"])}</summary>\n")
+                append(comparison)
+                append("</details>\n")
+            }
+            append("</li>\n")
+        }
+        append("</ol>\n")
+    }
+
+    private fun StringBuilder.appendBlocks(label: String, blocks: List<String>) {
+        append("<div class=\"compare-col\"><div class=\"compare-label\">${escapeHtml(label)}</div><ol class=\"blocks\">")
+        if (blocks.isEmpty()) {
+            append("<li><span class=\"blk-t none\">-</span></li>")
+        } else {
+            blocks.forEachIndexed { index, block ->
+                append("<li><span class=\"blk-n\">${index + 1}</span><span class=\"blk-t\" dir=\"auto\">${programText(block)}</span></li>")
+            }
+        }
+        append("</ol></div>\n")
+    }
+
+    private fun StringBuilder.appendSwaps(page: Page, swaps: List<SwapEvent>) {
+        append("<h4 class=\"sub-title\">${escapeHtml(page.s["swap_history"])}</h4>\n<ol class=\"events\">\n")
+        swaps.sortedBy { it.sessionDate }.forEach { swap ->
+            append("<li class=\"event event-swap\">\n")
+            append("<div class=\"event-head\"><time class=\"event-date\" datetime=\"${page.isoDay(swap.sessionDate)}\">${escapeHtml(page.day(swap.sessionDate))}</time></div>\n")
+            append("<div class=\"swap-line\"><span dir=\"auto\">${escapeHtml(swap.originalExerciseName)}</span>")
+            append("<span class=\"swap-arrow\" aria-hidden=\"true\">→</span>")
+            append("<span dir=\"auto\">${escapeHtml(swap.replacementExerciseName)}</span></div>\n")
+            append("</li>\n")
+        }
+        append("</ol>\n")
+    }
+
+    // ── Pieces ───────────────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun StringBuilder.appendNote(label: String, text: String) {
+        append("<div class=\"note\" role=\"note\">$NOTE_ICON<div class=\"note-body\">")
+        append("<div class=\"note-label\">${escapeHtml(label)}</div>")
+        append("<p class=\"txt\" dir=\"auto\">${escapeHtml(cleanNote(text))}</p>")
+        append("</div></div>\n")
+    }
+
+    /** Text of a program (blocks, techniques): the numbers of a tempo ("3-1-1") stay together instead of breaking at the hyphens. */
+    private fun programText(text: String): String =
+        escapeHtml(text).replace(DIGITS_WITH_HYPHENS) { "<span class=\"nb\">${it.value}</span>" }
+
+    /** "1 set", "8 sets": the word follows the number. */
+    private fun count(s: ReportStrings, number: Int, one: String, many: String): String =
+        "$number ${if (number == 1) s[one] else s[many]}"
+
+    /** A note keeps its own line breaks (the style shows them) but not the blank runs around it. */
+    private fun cleanNote(text: String): String =
+        text.replace("\r\n", "\n").replace('\r', '\n').trim().replace(BLANK_LINES, "\n\n")
 
     /** "45s" for a short set, "12:30" or "1:05:00" for a longer one. */
     private fun formatSeconds(seconds: Int): String {
@@ -218,49 +600,8 @@ class HtmlReportFormatter @Inject constructor() {
         }
     }
 
-    private fun buildStatCard(label: String, value: String, icon: String): String {
-        return """
-            <div class="stat-card">
-                <div class="stat-card-icon">${iconSvg(icon)}</div>
-                <div class="stat-card-value">$value</div>
-                <div class="stat-card-label">$label</div>
-            </div>
-        """.trimIndent()
-    }
-
-    private fun buildSummaryItem(label: String, value: String, icon: String): String {
-        return """
-            <div class="summary-item">
-                ${iconSvg(icon)}
-                <div class="summary-content">
-                    <div class="summary-value">$value</div>
-                    <div class="summary-label">$label</div>
-                </div>
-            </div>
-        """.trimIndent()
-    }
-
-    private fun formatWeight(weight: Float): String {
-        return if (weight == weight.toLong().toFloat()) {
-            weight.toLong().toString()
-        } else {
-            String.format("%.2f", weight)
-        }
-    }
-
-    private fun iconSvg(icon: String): String {
-        val paths = when (icon) {
-            "fitness_center" -> """<rect x="4" y="8" width="4" height="8" rx="1.5"/><line x1="8" y1="12" x2="16" y2="12" stroke-width="3"/><rect x="16" y="8" width="4" height="8" rx="1.5"/>"""
-            "date_range" -> """<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>"""
-            "list" -> """<line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4.5" cy="6" r="2"/><circle cx="4.5" cy="12" r="2"/><circle cx="4.5" cy="18" r="2"/>"""
-            "bar_chart" -> """<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>"""
-            "format_list_numbered" -> """<line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>"""
-            "timer" -> """<circle cx="12" cy="13" r="8"/><line x1="12" y1="13" x2="12" y2="9"/><line x1="10" y1="2" x2="14" y2="2"/>"""
-            "whatshot" -> """<path d="M12 22c-3.5 0-6-2.5-6-6 0-3 2-5.5 4-7s2-3 2-5c3 2 6 5 6 10 0 3.5-2.5 6-6 6z"/>"""
-            else -> """<circle cx="12" cy="12" r="10"/>"""
-        }
-        return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">$paths</svg>"""
-    }
+    /** 100 → "100", 62.5 → "62.5", the same way the prescriptions of the sets write their numbers. */
+    private fun formatNumber(value: Float): String = PrescriptionFormatter.number(value)
 
     private fun escapeHtml(text: String): String {
         return text
@@ -271,674 +612,14 @@ class HtmlReportFormatter @Inject constructor() {
             .replace("'", "&#39;")
     }
 
-    private fun getStrings(languageCode: String): Map<String, String> {
-        return when (languageCode) {
-            "it" -> mapOf(
-                "report" to "Report Scheda",
-                "total_sessions" to "Sessioni Totali",
-                "period" to "Periodo",
-                "exercises" to "Esercizi",
-                "exercises_history" to "Storico Esercizi",
-                "removed" to "Rimosso",
-                "max_weight" to "Peso Max",
-                "max_volume" to "Volume Max",
-                "total_sets" to "Serie Totali",
-                "estimated_1rm" to "1RM Stimato",
-                "date" to "Data",
-                "set" to "Serie",
-                "weight" to "Peso",
-                "reps" to "Reps",
-                "volume" to "Volume",
-                "notes" to "Note",
-                "prescription" to "Prescrizione",
-                "details" to "Dettagli",
-                "swap_history" to "Cambi Esercizi",
-                "generated_by" to "Generato da Trainable il",
-                "time" to "Tempo",
-                "distance" to "Distanza",
-                "total_time" to "Tempo Totale",
-                "longest_set" to "Serie più Lunga",
-                "best_reps" to "Reps Max",
-                "total_reps" to "Reps Totali",
-                "total_distance" to "Distanza Totale"
-            )
-            "es" -> mapOf(
-                "report" to "Informe de Rutina",
-                "total_sessions" to "Sesiones Totales",
-                "period" to "Período",
-                "exercises" to "Ejercicios",
-                "exercises_history" to "Historial de Ejercicios",
-                "removed" to "Eliminado",
-                "max_weight" to "Peso Máx",
-                "max_volume" to "Volumen Máx",
-                "total_sets" to "Series Totales",
-                "estimated_1rm" to "1RM Estimado",
-                "date" to "Fecha",
-                "set" to "Serie",
-                "weight" to "Peso",
-                "reps" to "Reps",
-                "volume" to "Volumen",
-                "notes" to "Notas",
-                "prescription" to "Prescripción",
-                "details" to "Detalles",
-                "swap_history" to "Cambios de Ejercicios",
-                "generated_by" to "Generado por Trainable el",
-                "time" to "Tiempo",
-                "distance" to "Distancia",
-                "total_time" to "Tiempo Total",
-                "longest_set" to "Serie más Larga",
-                "best_reps" to "Reps Máx",
-                "total_reps" to "Reps Totales",
-                "total_distance" to "Distancia Total"
-            )
-            "fr" -> mapOf(
-                "report" to "Rapport de Routine",
-                "total_sessions" to "Sessions Totales",
-                "period" to "Période",
-                "exercises" to "Exercices",
-                "exercises_history" to "Historique des Exercices",
-                "removed" to "Supprimé",
-                "max_weight" to "Poids Max",
-                "max_volume" to "Volume Max",
-                "total_sets" to "Séries Totales",
-                "estimated_1rm" to "1RM Estimé",
-                "date" to "Date",
-                "set" to "Série",
-                "weight" to "Poids",
-                "reps" to "Reps",
-                "volume" to "Volume",
-                "notes" to "Notes",
-                "prescription" to "Prescription",
-                "details" to "Détails",
-                "swap_history" to "Changements d'Exercices",
-                "generated_by" to "Généré par Trainable le",
-                "time" to "Temps",
-                "distance" to "Distance",
-                "total_time" to "Temps Total",
-                "longest_set" to "Série la plus Longue",
-                "best_reps" to "Reps Max",
-                "total_reps" to "Reps Totales",
-                "total_distance" to "Distance Totale"
-            )
-            "de" -> mapOf(
-                "report" to "Trainingsbericht",
-                "total_sessions" to "Gesamteinheiten",
-                "period" to "Zeitraum",
-                "exercises" to "Übungen",
-                "exercises_history" to "Übungsverlauf",
-                "removed" to "Entfernt",
-                "max_weight" to "Max Gewicht",
-                "max_volume" to "Max Volumen",
-                "total_sets" to "Gesamt Sätze",
-                "estimated_1rm" to "Gesch. 1RM",
-                "date" to "Datum",
-                "set" to "Satz",
-                "weight" to "Gewicht",
-                "reps" to "Wdh",
-                "volume" to "Volumen",
-                "notes" to "Notizen",
-                "prescription" to "Vorgabe",
-                "details" to "Details",
-                "swap_history" to "Übungswechsel",
-                "generated_by" to "Erstellt von Trainable am",
-                "time" to "Zeit",
-                "distance" to "Distanz",
-                "total_time" to "Gesamtzeit",
-                "longest_set" to "Längster Satz",
-                "best_reps" to "Max Wdh",
-                "total_reps" to "Gesamt Wdh",
-                "total_distance" to "Gesamtdistanz"
-            )
-            "pt" -> mapOf(
-                "report" to "Relatório de Treino",
-                "total_sessions" to "Sessões Totais",
-                "period" to "Período",
-                "exercises" to "Exercícios",
-                "exercises_history" to "Histórico de Exercícios",
-                "removed" to "Removido",
-                "max_weight" to "Peso Máx",
-                "max_volume" to "Volume Máx",
-                "total_sets" to "Séries Totais",
-                "estimated_1rm" to "1RM Estimado",
-                "date" to "Data",
-                "set" to "Série",
-                "weight" to "Peso",
-                "reps" to "Reps",
-                "volume" to "Volume",
-                "notes" to "Notas",
-                "prescription" to "Prescrição",
-                "details" to "Detalhes",
-                "swap_history" to "Trocas de Exercícios",
-                "generated_by" to "Gerado pelo Trainable em",
-                "time" to "Tempo",
-                "distance" to "Distância",
-                "total_time" to "Tempo Total",
-                "longest_set" to "Série mais Longa",
-                "best_reps" to "Reps Máx",
-                "total_reps" to "Reps Totais",
-                "total_distance" to "Distância Total"
-            )
-            else -> mapOf(
-                "report" to "Routine Report",
-                "total_sessions" to "Total Sessions",
-                "period" to "Period",
-                "exercises" to "Exercises",
-                "exercises_history" to "Exercises History",
-                "removed" to "Removed",
-                "max_weight" to "Max Weight",
-                "max_volume" to "Max Volume",
-                "total_sets" to "Total Sets",
-                "estimated_1rm" to "Est. 1RM",
-                "date" to "Date",
-                "set" to "Set",
-                "weight" to "Weight",
-                "reps" to "Reps",
-                "volume" to "Volume",
-                "notes" to "Notes",
-                "prescription" to "Prescription",
-                "details" to "Details",
-                "swap_history" to "Exercise Swaps",
-                "generated_by" to "Generated by Trainable on",
-                "time" to "Time",
-                "distance" to "Distance",
-                "total_time" to "Total Time",
-                "longest_set" to "Longest Set",
-                "best_reps" to "Most Reps",
-                "total_reps" to "Total Reps",
-                "total_distance" to "Total Distance"
-            )
-        }
+    private companion object {
+        val BLANK_LINES = Regex("\n{3,}")
+        val DIGITS_WITH_HYPHENS = Regex("""\d+(?:-\d+)+""")
+
+        private const val ICON_ATTRS = "xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\""
+        const val NOTE_ICON = "<svg $ICON_ATTRS width=\"16\" height=\"16\"><path d=\"M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9l-6 6H6a2 2 0 0 1-2-2z\"/><path d=\"M14 20v-4a2 2 0 0 1 2-2h4\"/></svg>"
+        const val CHEVRON_ICON = "<svg class=\"ex-chevron\" $ICON_ATTRS width=\"20\" height=\"20\"><polyline points=\"6 9 12 15 18 9\"/></svg>"
+        const val CHEVRON_SMALL_ICON = "<svg class=\"tg-chev\" $ICON_ATTRS width=\"16\" height=\"16\"><polyline points=\"6 9 12 15 18 9\"/></svg>"
+        const val ARROW_UP_ICON = "<svg $ICON_ATTRS width=\"14\" height=\"14\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg>"
     }
-
-    private fun getEmbeddedCss(): String = """
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --md-primary: #3A59D1;
-            --md-on-primary: #FFFFFF;
-            --md-primary-container: #DDE1FF;
-            --md-on-primary-container: #00164F;
-            --md-surface: #FBF8FF;
-            --md-on-surface: #1B1B21;
-            --md-on-surface-variant: #45454F;
-            --md-surface-container: #EFECF4;
-            --md-surface-container-high: #E9E7EE;
-            --md-surface-container-highest: #E2E0E8;
-            --md-outline-variant: #C6C4D0;
-            --md-error: #BA1A1A;
-            --md-success: #4CAF50;
-            --md-tertiary: #75546F;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--md-surface);
-            color: var(--md-on-surface);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        svg {
-            display: block;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 16px 12px;
-        }
-
-        .page-header {
-            text-align: center;
-            padding: 24px 0 16px;
-        }
-
-        .page-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--md-primary);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .page-title {
-            font-size: clamp(1.4rem, 4vw, 2.5rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            color: var(--md-on-surface);
-        }
-
-        .page-note {
-            font-size: 0.9rem;
-            color: var(--md-on-surface-variant);
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin: 16px 0;
-        }
-
-        .stat-card {
-            background: var(--md-surface-container);
-            padding: 14px 16px;
-            border-radius: 16px;
-            border: 1px solid var(--md-outline-variant);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .stat-card-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: var(--md-primary-container);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .stat-card-icon svg {
-            width: 18px;
-            height: 18px;
-            color: var(--md-on-primary-container);
-        }
-
-        .stat-card-value {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .stat-card-label {
-            font-size: 0.75rem;
-            color: var(--md-on-surface-variant);
-        }
-
-        .section-header {
-            margin: 28px 0 12px;
-        }
-
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .exercise-card {
-            background: var(--md-surface-container);
-            border-radius: 16px;
-            border: 1px solid var(--md-outline-variant);
-            padding: 14px;
-            margin-bottom: 14px;
-        }
-
-        .exercise-card[data-removed="true"] {
-            opacity: 0.7;
-            border-style: dashed;
-        }
-
-        .exercise-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .exercise-info {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .exercise-number {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--md-primary);
-            color: var(--md-on-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-
-        .exercise-name {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .exercise-meta {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 10px;
-            border-radius: 100px;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .badge-neutral {
-            background: var(--md-surface-container-high);
-            color: var(--md-on-surface-variant);
-        }
-
-        .badge-removed {
-            background: color-mix(in srgb, var(--md-error), transparent 85%);
-            color: var(--md-error);
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        .summary-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--md-surface-container-high);
-            padding: 10px 12px;
-            border-radius: 12px;
-        }
-
-        .summary-item svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            color: var(--md-primary);
-        }
-
-        .summary-value {
-            font-size: 0.85rem;
-            font-weight: 700;
-        }
-
-        .summary-label {
-            font-size: 0.65rem;
-            color: var(--md-on-surface-variant);
-        }
-
-        .data-table-wrapper {
-            background: var(--md-surface-container-high);
-            border-radius: 12px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .data-table {
-            width: 100%;
-            min-width: 380px;
-            border-collapse: collapse;
-        }
-
-        .data-table th {
-            padding: 10px 12px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.75rem;
-            color: var(--md-on-surface-variant);
-            border-bottom: 1px solid var(--md-outline-variant);
-            background: var(--md-surface-container-highest);
-            white-space: nowrap;
-        }
-
-        .data-table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--md-outline-variant);
-            font-size: 0.85rem;
-            white-space: nowrap;
-        }
-
-        .data-table tr:last-child td { border-bottom: none; }
-
-        .set-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: var(--md-primary-container);
-            color: var(--md-on-primary-container);
-            font-weight: 600;
-            font-size: 0.75rem;
-        }
-
-        .swap-section {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid var(--md-outline-variant);
-        }
-
-        .swap-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--md-on-surface-variant);
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .swap-event {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            background: color-mix(in srgb, var(--md-tertiary), transparent 90%);
-            border-radius: 10px;
-            margin-bottom: 6px;
-            font-size: 0.8rem;
-        }
-
-        .swap-date {
-            font-weight: 600;
-            color: var(--md-on-surface-variant);
-            white-space: nowrap;
-        }
-
-        .swap-text {
-            color: var(--md-on-surface);
-        }
-
-        .footer {
-            text-align: center;
-            padding: 24px 0 12px;
-            border-top: 1px solid var(--md-outline-variant);
-            margin-top: 28px;
-        }
-
-        .footer-text {
-            color: var(--md-on-surface-variant);
-            font-size: 0.8rem;
-        }
-
-        @media print {
-            body { background: white; }
-            .container { max-width: 100%; padding: 16px; }
-            .exercise-card { break-inside: avoid; }
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 32px 24px;
-            }
-
-            .page-header {
-                padding: 48px 0 32px;
-            }
-
-            .page-label {
-                font-size: 0.8rem;
-                margin-bottom: 8px;
-            }
-
-            .page-title {
-                font-size: clamp(1.8rem, 4vw, 2.5rem);
-            }
-
-            .page-note {
-                font-size: 1rem;
-                margin-top: 12px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 16px;
-                margin: 32px 0;
-            }
-
-            .stat-card {
-                padding: 24px;
-                border-radius: 24px;
-                display: block;
-            }
-
-            .stat-card-icon {
-                width: 44px;
-                height: 44px;
-                border-radius: 14px;
-                margin-bottom: 12px;
-            }
-
-            .stat-card-icon svg {
-                width: 22px;
-                height: 22px;
-            }
-
-            .stat-card-value {
-                font-size: 1.4rem;
-                margin-bottom: 2px;
-            }
-
-            .stat-card-label {
-                font-size: 0.85rem;
-            }
-
-            .section-header {
-                margin: 48px 0 20px;
-            }
-
-            .section-title {
-                font-size: 1.5rem;
-            }
-
-            .exercise-card {
-                padding: 24px;
-                border-radius: 24px;
-                margin-bottom: 20px;
-            }
-
-            .exercise-info {
-                gap: 16px;
-            }
-
-            .exercise-number {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-            }
-
-            .exercise-name {
-                font-size: 1.15rem;
-            }
-
-            .badge {
-                padding: 4px 12px;
-                font-size: 0.75rem;
-            }
-
-            .summary-grid {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-                gap: 12px;
-                margin-bottom: 20px;
-            }
-
-            .summary-item {
-                padding: 12px 16px;
-                border-radius: 16px;
-                gap: 10px;
-            }
-
-            .summary-item svg {
-                width: 20px;
-                height: 20px;
-            }
-
-            .summary-value {
-                font-size: 0.95rem;
-            }
-
-            .summary-label {
-                font-size: 0.7rem;
-            }
-
-            .data-table-wrapper {
-                border-radius: 16px;
-                overflow: hidden;
-            }
-
-            .data-table {
-                min-width: unset;
-            }
-
-            .data-table th {
-                padding: 12px 16px;
-                font-size: 0.8rem;
-            }
-
-            .data-table td {
-                padding: 10px 16px;
-                font-size: 0.9rem;
-            }
-
-            .set-number {
-                width: 28px;
-                height: 28px;
-                font-size: 0.8rem;
-            }
-
-            .swap-section {
-                margin-top: 16px;
-                padding-top: 16px;
-            }
-
-            .swap-title {
-                font-size: 0.8rem;
-                margin-bottom: 8px;
-            }
-
-            .swap-event {
-                padding: 8px 12px;
-                border-radius: 12px;
-                font-size: 0.85rem;
-                gap: 12px;
-            }
-
-            .footer {
-                padding: 40px 0 20px;
-                margin-top: 48px;
-            }
-
-            .footer-text {
-                font-size: 0.85rem;
-            }
-        }
-    """.trimIndent()
 }

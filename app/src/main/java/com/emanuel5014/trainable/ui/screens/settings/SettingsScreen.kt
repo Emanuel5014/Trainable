@@ -140,6 +140,7 @@ fun SettingsScreen(
     onNavigateToPersonalizationSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDonors: () -> Unit,
+    onNavigateToImportHistory: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
@@ -2143,6 +2144,17 @@ fun SettingsScreen(
                         Icon(Icons.Rounded.TableChart, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(stringResource(R.string.export_csv), fontWeight = FontWeight.ExtraBold)
+                    }
+
+                    GymButton(
+                        onClick = onNavigateToImportHistory,
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurface
+                    ) {
+                        Icon(Icons.Rounded.TableChart, contentDescription = null, tint = Primary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(stringResource(R.string.import_csv), fontWeight = FontWeight.ExtraBold)
                     }
 
                     GymButton(

@@ -7,6 +7,8 @@ import com.emanuel5014.trainable.data.local.entity.performed
 import com.emanuel5014.trainable.data.local.entity.isInParts
 import com.emanuel5014.trainable.domain.prescription.SetPerformance
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
+import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
@@ -166,7 +168,9 @@ import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.AddCardioDialog
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
+import com.emanuel5014.trainable.ui.components.DeletedExercisePill
 import com.emanuel5014.trainable.ui.components.EmptyState
+import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
@@ -609,6 +613,7 @@ fun HistoryScreen(
                                             sessionToShare = Triple(details, planName, planExercises)
                                         }
                                     },
+                                    onRestoreExercise = viewModel::restoreExercise,
                                     swipeActionsEnabled = swipeActionsEnabled,
                                     isSelectionMode = uiState.isSelectionMode,
                                     isSelected = uiState.selectedSessionIds.contains(session.id),
@@ -1110,17 +1115,54 @@ private fun HistoryExerciseGroup(
     isSuperset: Boolean,
     languageCode: String,
     weightUnit: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Changes made to the prescription of this exercise during the workout, oldest first. */
+    programEdits: List<SessionPrescriptionEditEntity> = emptyList(),
+    /** Adds an exercise deleted from the exercise list back to it. */
+    onRestoreExercise: (Int) -> Unit = {}
 ) {
     val exerciseName = ExerciseTranslations.translate(exWithSets.exercise.nome, languageCode)
-    Column(modifier = modifier) {
-        Text(
-            text = exerciseName.uppercase(),
-            style = MaterialTheme.typography.labelLarge,
-            color = Primary,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.sp
+    val isDeleted = exWithSets.exercise.isDeleted
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    if (showRestoreDialog) {
+        RestoreExerciseDialog(
+            exerciseNames = listOf(exerciseName),
+            onRestore = {
+                onRestoreExercise(exWithSets.exercise.id)
+                showRestoreDialog = false
+            },
+            onSkip = { showRestoreDialog = false },
+            onDismiss = { showRestoreDialog = false },
+            skipLabel = stringResource(R.string.cancel)
         )
+    }
+    var showProgramEdits by remember { mutableStateOf(false) }
+    if (showProgramEdits) {
+        com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog(
+            exerciseName = exerciseName,
+            edits = programEdits,
+            weightUnit = weightUnit,
+            onDismiss = { showProgramEdits = false }
+        )
+    }
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = exerciseName.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                // Deleted from the exercise list: still in the history, greyed out
+                color = if (isDeleted) OnSurfaceVariant.copy(alpha = 0.7f) else Primary,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.sp,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+            if (isDeleted) {
+                DeletedExercisePill(Modifier.clickable { showRestoreDialog = true })
+            }
+            programEdits.lastOrNull()?.let { edit ->
+                com.emanuel5014.trainable.ui.components.ProgramEditPill(edit, Modifier.clickable { showProgramEdits = true })
+            }
+        }
         Spacer(modifier = Modifier.height(4.dp))
         exWithSets.sets.sortedBy { it.setLog.numeroSerie }.forEach { setWithEx ->
             val set = setWithEx.setLog
@@ -1186,7 +1228,8 @@ fun SessionHistoryCard(
     isSelectionMode: Boolean = false,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
-    onLongClick: () -> Unit = {}
+    onLongClick: () -> Unit = {},
+    onRestoreExercise: (Int) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -1470,7 +1513,9 @@ fun SessionHistoryCard(
                                                     isSuperset = true,
                                                     languageCode = languageCode,
                                                     weightUnit = weightUnit,
-                                                    modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp)
+                                                    modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp),
+                                                    programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id),
+                                                    onRestoreExercise = onRestoreExercise
                                                 )
                                             }
                                         }
@@ -1483,7 +1528,9 @@ fun SessionHistoryCard(
                                                 weightUnit = weightUnit,
                                                 modifier = Modifier
                                                     .padding(horizontal = ResponsiveSize.cardPadding)
-                                                    .padding(bottom = 16.dp)
+                                                    .padding(bottom = 16.dp),
+                                                programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id),
+                                                onRestoreExercise = onRestoreExercise
                                             )
                                         }
                                     }
@@ -1638,6 +1685,8 @@ fun EditSetDialog(
     var rpe by remember { mutableStateOf(set.rpe) }
     // How the set really went
     var partsText by remember { mutableStateOf(set.parts.joinToString("+")) }
+    // The pause (seconds) after each part but the last, kept as typed so a half-typed parts field loses nothing
+    var pauseTexts by remember { mutableStateOf(set.pauses.map { it.toString() }) }
     var assisted by remember { mutableStateOf(set.assistedReps.takeIf { it > 0 }?.toString().orEmpty()) }
     var partial by remember { mutableStateOf(set.partialReps.takeIf { it > 0 }?.toString().orEmpty()) }
     var performed by remember { mutableStateOf(set.performed) }
@@ -1746,6 +1795,16 @@ fun EditSetDialog(
                             supportingText = if (partsInvalid) stringResource(R.string.parts_error) else null,
                             isError = partsInvalid
                         )
+                        if (parsedParts != null && parsedParts.size > 1) {
+                            PartPausesFields(
+                                parts = parsedParts,
+                                texts = pauseTexts,
+                                onTextChange = { index, value ->
+                                    val gaps = parsedParts.size - 1
+                                    pauseTexts = List(gaps) { i -> if (i == index) value else pauseTexts.getOrElse(i) { "" } }
+                                }
+                            )
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                             GymInputField(
                                 value = assisted,
@@ -1840,8 +1899,7 @@ fun EditSetDialog(
                                 edited.copy(
                                     repParts = parts?.let { SetPerformance.encodeParts(it) },
                                     repsEffettive = parts?.sum() ?: edited.repsEffettive,
-                                    // The pauses there were stay with the parts they came between
-                                    intraRests = parts?.let { SetPerformance.encodePauses(edited.pauses.take(it.size - 1)) },
+                                    intraRests = parts?.let { SetPerformance.encodePauses(SetPerformance.pausesFromInput(pauseTexts, it.size - 1)) },
                                     assistedReps = assisted.toIntOrNull() ?: 0,
                                     partialReps = partial.toIntOrNull() ?: 0,
                                     performedTechniques = encodePerformed(performed)
@@ -1870,6 +1928,32 @@ fun EditSetDialog(
         titleContentColor = OnSurface,
         textContentColor = OnSurfaceVariant
     )
+}
+
+/** One field per pause between the parts of a set done in mini-sets, in seconds (empty = not recorded). */
+@Composable
+private fun PartPausesFields(parts: List<Int>, texts: List<String>, onTextChange: (Int, String) -> Unit) {
+    // One or two pauses get the width of the dialog; more of them go three to a row
+    val gaps = parts.size - 1
+    val columns = if (gaps <= 2) gaps else 3
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+        (0 until gaps).chunked(columns).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                row.forEach { index ->
+                    GymInputField(
+                        value = texts.getOrElse(index) { "" },
+                        onValueChange = { onTextChange(index, it.filter { c -> c.isDigit() }.take(4)) },
+                        label = stringResource(R.string.pause_field_label, index + 1),
+                        supportingText = stringResource(R.string.pause_field_hint, parts[index], parts[index + 1]),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                // A short last row keeps the fields as wide as the full ones
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
 }
 
 private fun formatDuration(durationMs: Long): String {

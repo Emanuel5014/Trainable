@@ -61,6 +61,7 @@ interface AnalyticsDao {
             ORDER BY peso_sollevato DESC, reps_effettive DESC 
             LIMIT 1
         )
+        WHERE e.is_deleted = 0 OR s.id IS NOT NULL
         ORDER BY maxWeight DESC, e.nome ASC
         """
     )

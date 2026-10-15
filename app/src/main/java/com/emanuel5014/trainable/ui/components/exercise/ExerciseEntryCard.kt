@@ -56,7 +56,7 @@ fun ExerciseEntryCard(
     com.emanuel5014.trainable.ui.components.GymCard(
         modifier = modifier
             .fillMaxWidth()
-            .alpha(if (resolved is ResolvedPrescription.Excluded) 0.5f else 1f)
+            .alpha(if (resolved is ResolvedPrescription.Excluded || item.exercise.isDeleted) 0.5f else 1f)
             .clip(Shapes.extraLarge)
             .clickable { onClick() },
         containerColor = if (isSuperset) com.emanuel5014.trainable.ui.theme.Primary.copy(alpha = 0.08f) else SurfaceContainer,
@@ -80,6 +80,11 @@ fun ExerciseEntryCard(
                     color = OnSurface
                 )
                 Spacer(modifier = Modifier.height(2.dp))
+                // Deleted from the exercise list: the routine keeps it, greyed out, until the user adds it back
+                if (item.exercise.isDeleted) {
+                    DeletedExercisePill()
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
                 if (resolved is ResolvedPrescription.Excluded) {
                     PrescriptionPill(text = stringResource(R.string.not_in_week, week))
                 } else if (resolved is ResolvedPrescription.Blocks && labels != null) {

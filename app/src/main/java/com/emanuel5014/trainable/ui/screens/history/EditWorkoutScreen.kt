@@ -100,6 +100,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.data.local.entity.repsRange
+import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
@@ -366,7 +367,9 @@ fun EditWorkoutScreen(
                                         onMoveSetDown = { viewModel.moveSetDown(it) },
                                         onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
                                         onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) },
-                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) }
+                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) },
+                                        programEdits = state.prescriptionEdits.forExercise(exerciseState.exercise.id),
+                                        onRestoreExercise = { viewModel.restoreExercise(exerciseState.exercise.id) }
                                     )
                                 }
                                 is CardioExerciseLogs -> {
@@ -685,8 +688,34 @@ fun EditExerciseCard(
     onMoveSetDown: (SetLogEntity) -> Unit,
     onMoveExerciseUp: () -> Unit,
     onMoveExerciseDown: () -> Unit,
-    onToggleSuperset: () -> Unit
+    onToggleSuperset: () -> Unit,
+    /** Changes made to the prescription of this exercise while the workout was done, oldest first. */
+    programEdits: List<com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity> = emptyList(),
+    /** Adds the exercise back to the exercise list when the user deleted it from there. */
+    onRestoreExercise: () -> Unit = {}
 ) {
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    if (showRestoreDialog) {
+        com.emanuel5014.trainable.ui.components.RestoreExerciseDialog(
+            exerciseNames = listOf(ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode)),
+            onRestore = {
+                onRestoreExercise()
+                showRestoreDialog = false
+            },
+            onSkip = { showRestoreDialog = false },
+            onDismiss = { showRestoreDialog = false },
+            skipLabel = stringResource(R.string.cancel)
+        )
+    }
+    var showProgramEdits by remember { mutableStateOf(false) }
+    if (showProgramEdits) {
+        com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog(
+            exerciseName = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
+            edits = programEdits,
+            weightUnit = weightUnit,
+            onDismiss = { showProgramEdits = false }
+        )
+    }
     val cardBgColor = when {
         isDragging -> SurfaceContainerHigh
         else -> SurfaceContainerLow
@@ -790,9 +819,18 @@ fun EditExerciseCard(
                 text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
-                color = OnSurface,
+                // Deleted from the exercise list: still in the workout, greyed out
+                color = if (exerciseState.exercise.isDeleted) OnSurfaceVariant else OnSurface,
                 modifier = Modifier.fillMaxWidth()
             )
+            if (exerciseState.exercise.isDeleted) {
+                Spacer(modifier = Modifier.height(4.dp))
+                com.emanuel5014.trainable.ui.components.DeletedExercisePill(Modifier.clickable { showRestoreDialog = true })
+            }
+            programEdits.lastOrNull()?.let { edit ->
+                Spacer(modifier = Modifier.height(4.dp))
+                com.emanuel5014.trainable.ui.components.ProgramEditPill(edit, Modifier.clickable { showProgramEdits = true })
+            }
 
             val setKind = exerciseState.sets.kind
             val isTimeAndWeight = setKind.isTimed

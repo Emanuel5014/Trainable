@@ -751,6 +751,25 @@ fun Application.configureServer(
                         put("totalVolume", volume)
                         put("totalSets", session.sets.size)
                         put("sets", setsArray)
+                        // Changes made to the prescription of an exercise during the workout, oldest first
+                        put("programEdits", buildJsonArray {
+                            val editLabels = com.emanuel5014.trainable.ui.components.prescriptionLabels(context, "kg")
+                            val exerciseNames = session.sets.associate { it.exercise.id to ExerciseTranslations.translate(it.exercise.nome, lang) }
+                            session.prescriptionEdits.sortedWith(compareBy({ it.createdAt }, { it.id })).forEach { edit ->
+                                add(buildJsonObject {
+                                    put("exerciseName", exerciseNames[edit.exerciseId] ?: "")
+                                    put("kind", edit.kind)
+                                    put("scope", edit.scope)
+                                    edit.programWeek?.let { put("week", it) }
+                                    put("timestamp", edit.createdAt)
+                                    put("before", com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.summary(edit.before, editLabels))
+                                    put("after", com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.summary(edit.after, editLabels))
+                                    put("changes", buildJsonArray {
+                                        com.emanuel5014.trainable.ui.components.programChangeLines(context, "kg", edit.before, edit.after).forEach { add(JsonPrimitive(it)) }
+                                    })
+                                })
+                            }
+                        })
                         put("cardio", buildJsonArray {
                             // In the order they were done, the sets of an exercise one after the other
                             session.cardio.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }, { it.id })).forEach { c ->

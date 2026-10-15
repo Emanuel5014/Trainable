@@ -19,6 +19,8 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
+import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
@@ -27,6 +29,7 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.data.local.entity.wasPrescribedLike
 import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.domain.emom.EmomClock
 import com.emanuel5014.trainable.domain.emom.EmomPhase
@@ -37,6 +40,9 @@ import com.emanuel5014.trainable.domain.prescription.PlannedSet
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
+import com.emanuel5014.trainable.domain.prescription.LoadShift
+import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
+import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.domain.prescription.RepsTarget
@@ -154,7 +160,9 @@ data class WorkoutState(
     /** The set just logged came out short of its reps: the rest card offers to finish it after a short pause. */
     val miniSetOffer: MiniSetOffer? = null,
     /** A mini-set on its way: its pause runs on the rest timer, then the hub asks how many reps it had. */
-    val miniSet: MiniSetRun? = null
+    val miniSet: MiniSetRun? = null,
+    /** Exercises of the routine the user deleted from the exercise list, to ask once if they are added back. */
+    val deletedExercises: List<ExerciseEntity> = emptyList()
 ) {
     val currentExercise: WorkoutExerciseState?
         get() = exercises.getOrNull(currentExerciseIndex)
@@ -244,9 +252,14 @@ data class WorkoutExerciseState(
     /** Every set of the last workout reached the top of the rep range: the load can go up (see [DoubleProgression]). */
     val progression: DoubleProgression.Suggestion? = null,
     /** The lifter turned the suggestion down for this workout. */
-    val progressionDismissed: Boolean = false
+    val progressionDismissed: Boolean = false,
+    /** Changes made to this exercise's prescription during the workout, oldest first. */
+    val programEdits: List<SessionPrescriptionEditEntity> = emptyList()
 ) {
     val isAdvanced: Boolean get() = blocks.isNotEmpty()
+
+    /** The last change made to the prescription, null while it is as the routine has it. */
+    val lastProgramEdit: SessionPrescriptionEditEntity? get() = programEdits.lastOrNull()
 
     val activeCardioSetIndex: Int get() = cardioSets.indexOfFirst { !it.isCompleted }
 
@@ -497,16 +510,20 @@ class WorkoutViewModel @Inject constructor(
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
+    /** The exercises the user can pick; the ones deleted from the library are only in [_allExercises]. */
     private val _availableExercises = MutableStateFlow<List<ExerciseEntity>>(emptyList())
     val availableExercises: StateFlow<List<ExerciseEntity>> = _availableExercises.asStateFlow()
 
+    /** Every exercise, also the deleted ones a routine or a workout of the user still has (they keep working as before). */
+    private val _allExercises = MutableStateFlow<List<ExerciseEntity>>(emptyList())
+
     /** Exercise id -> file name of the user's own image/GIF, for the exercises that have one. */
-    val exerciseMedia: StateFlow<Map<Int, String>> = _availableExercises
+    val exerciseMedia: StateFlow<Map<Int, String>> = _allExercises
         .map { exercises -> exercises.mapNotNull { exercise -> exercise.mediaPath?.let { exercise.id to it } }.toMap() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     /** Exercise id -> bar weight in kg (null = the default bar), for the exercises that use the plate calculator. */
-    val plateCalculatorExercises: StateFlow<Map<Int, Float?>> = _availableExercises
+    val plateCalculatorExercises: StateFlow<Map<Int, Float?>> = _allExercises
         .map { exercises -> exercises.filter { it.plateCalculator }.associate { it.id to it.plateBarKg } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
@@ -739,8 +756,9 @@ class WorkoutViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            exerciseRepository.getAllExercises().collect { exercises ->
-                _availableExercises.value = exercises
+            exerciseRepository.getAllExercisesIncludingDeleted().collect { exercises ->
+                _allExercises.value = exercises
+                _availableExercises.value = exercises.filter { !it.isDeleted }
             }
         }
 
@@ -782,6 +800,8 @@ class WorkoutViewModel @Inject constructor(
         val planName = sessionWithSets.session.noteSessione ?: planWithDetails.plan.nome
         
         val swaps = workoutRepository.getSwapsForSession(sessionId).firstOrNull()
+        // Changes made to the prescription of an exercise during this workout: the last one is what it follows now
+        val prescriptionEdits = workoutRepository.getPrescriptionEditsForSession(sessionId)
         val swapMap = swaps?.associate { it.originalExerciseId to it.replacementExerciseId } ?: emptyMap()
         val reverseSwapMap = swaps?.associate { it.replacementExerciseId to it.originalExerciseId } ?: emptyMap()
 
@@ -830,8 +850,8 @@ class WorkoutViewModel @Inject constructor(
         val resumeIncrement = userPreferencesRepository.loadRoundingIncrement.first()
         val resumeOneRepMaxes = oneRepMaxRepository.currentByExercise().first()
         
-        val allAvailableExercises = _availableExercises.value.ifEmpty { 
-            exerciseRepository.getAllExercises().firstOrNull() ?: emptyList() 
+        val allAvailableExercises = _allExercises.value.ifEmpty {
+            exerciseRepository.getAllExercisesIncludingDeleted().firstOrNull() ?: emptyList()
         }
 
         val cardioLogs = workoutRepository.getCardioLogsForSession(sessionId).firstOrNull() ?: emptyList()
@@ -892,7 +912,11 @@ class WorkoutViewModel @Inject constructor(
             val defaultTargetSeconds = resolvedTargetSeconds ?: 45
             val resumeOneRepMaxKg = resumeOneRepMaxes[exercise.id]?.weightKg
             val planDetailWithBlocks = planDetail?.let { pd -> planExercises.find { it.planExercise.id == pd.id } }
-            val resolvedBlocks = if (resumeAdvanced) (planDetailWithBlocks?.resolve(resumeWeek) as? ResolvedPrescription.Blocks)?.blocks else null
+            val exerciseEdits = prescriptionEdits.forExercise(exercise.id).filter { planDetail != null && it.planExerciseId == planDetail.id }
+            val resolvedBlocks = if (resumeAdvanced) {
+                exerciseEdits.lastOrNull()?.after?.takeIf { it.isNotEmpty() }
+                    ?: (planDetailWithBlocks?.resolve(resumeWeek) as? ResolvedPrescription.Blocks)?.blocks
+            } else null
             if (resolvedBlocks != null && !isCardio && !isTimed && !isSwapped) {
                 val previous = getPreviousSetsForExercise(planId, exercise.id, ALL_SETS)
                 return WorkoutExerciseState(
@@ -904,7 +928,8 @@ class WorkoutViewModel @Inject constructor(
                     supersetId = planDetail?.supersetId,
                     exerciseType = "strength",
                     blocks = resolvedBlocks,
-                    oneRepMaxKg = resumeOneRepMaxKg
+                    oneRepMaxKg = resumeOneRepMaxKg,
+                    programEdits = exerciseEdits
                 )
             }
             if (resumeAdvanced && !isCardio && !isTimed && loggedSets.any { it.blockIndex != null }) {
@@ -923,7 +948,8 @@ class WorkoutViewModel @Inject constructor(
                         customRestSeconds = loggedSets.firstOrNull()?.restTimerSeconds,
                         exerciseType = "strength",
                         blocks = rebuilt,
-                        oneRepMaxKg = resumeOneRepMaxKg
+                        oneRepMaxKg = resumeOneRepMaxKg,
+                        programEdits = prescriptionEdits.forExercise(exercise.id)
                     )
                 }
             }
@@ -1344,9 +1370,22 @@ class WorkoutViewModel @Inject constructor(
                 exercises = exerciseStates,
                 currentExerciseIndex = 0,
                 nextExecutionOrder = 0,
-                sessionStartTime = startTime
+                sessionStartTime = startTime,
+                deletedExercises = exerciseStates.map { state -> state.exercise }.filter { exercise -> exercise.isDeleted }.distinctBy { exercise -> exercise.id }
             )
         }
+    }
+
+    /** The user chose to add the deleted exercises of this routine back to the exercise list. */
+    fun restoreDeletedExercises() {
+        val ids = _state.value.deletedExercises.map { it.id }
+        _state.update { it.copy(deletedExercises = emptyList()) }
+        viewModelScope.launch { exerciseRepository.restoreExercises(ids) }
+    }
+
+    /** The workout goes on with the deleted exercises as they are. */
+    fun dismissDeletedExercises() {
+        _state.update { it.copy(deletedExercises = emptyList()) }
     }
 
     private suspend fun initializeQuickWorkout(name: String?) {
@@ -1449,13 +1488,18 @@ class WorkoutViewModel @Inject constructor(
         val previousByBlock = previousPlain.filter { it.blockIndex != null }.groupBy { it.blockIndex!! }
         // A session logged before the exercise had blocks has no block on its rows: match those by position instead
         val previousWithoutBlock = previousPlain.filter { it.blockIndex == null }
+        // What was written on a set last time only follows it into a block that is prescribed exactly as it was then
+        val plannedByBlock = planned.groupBy { it.blockIndex }
+        val sameBlockAsLastTime = previousByBlock.mapValues { (blockIndex, rows) -> rows.wasPrescribedLike(plannedByBlock[blockIndex].orEmpty()) }
         val loggedSorted = logged.sortedBy { it.numeroSerie }
         val loggedByBlock = loggedSorted.filter { it.blockIndex != null && !it.isExtra }.groupBy { it.blockIndex!! }
         val result = mutableListOf<WorkoutSetState>()
 
         fun plannedState(p: PlannedSet, lastWeightInBlock: Float?): WorkoutSetState {
-            val prev = previousByBlock[p.blockIndex]?.getOrNull(p.indexInBlock)
+            val prevBlock = previousByBlock[p.blockIndex]
+            val prev = prevBlock?.getOrNull(p.indexInBlock)
                 ?: previousWithoutBlock.getOrNull(planned.count { it.blockIndex < p.blockIndex } + p.indexInBlock)
+            val prevNote = prev?.note.takeIf { prevBlock == null || sameBlockAsLastTime[p.blockIndex] == true }
             val target = LoadCalculator.targetWeightKg(p, oneRepMaxKg, unit, increment)
             val reps = when (p.repMode) {
                 RepMode.FIXED -> p.targetReps ?: prev?.repsEffettive ?: 5
@@ -1467,7 +1511,7 @@ class WorkoutViewModel @Inject constructor(
                 // The load of the same set last time wins over the one just before it, so ramps keep their steps
                 weight = target ?: prev?.pesoSollevato ?: lastWeightInBlock ?: 0f,
                 reps = reps,
-                previousNote = prev?.note,
+                previousNote = prevNote,
                 previousReps = prev?.repsEffettive,
                 previousWeight = prev?.pesoSollevato,
                 prescription = p
@@ -1520,6 +1564,8 @@ class WorkoutViewModel @Inject constructor(
                 isCompleted = row.isCompleted,
                 isWarmup = row.isWarmup,
                 timeSeconds = row.durataSecondi,
+                // A set that lost its block when the prescription was changed still shows the load it was done at
+                prescription = row.snapshotPrescription(null),
                 rpe = row.rpe,
                 isExtra = row.isExtra
             ).withPerformanceOf(row)
@@ -1660,6 +1706,104 @@ class WorkoutViewModel @Inject constructor(
     /** The range a swapped-in or added exercise starts with: only plain strength exercises have one. */
     private fun rangeFor(exerciseType: String, repsTarget: String, repsMax: Int?): RepRange? =
         if (exerciseType == "strength") RepRange.of(repsTarget.trim().toIntOrNull(), repsMax) else null
+
+    /**
+     * Gives the exercise at [exerciseIndex] a new prescription for this workout. The sets already done stay as they were
+     * done, the ones still to do follow [newBlocks]. With [ProgramEditScope.PLAN] the week of the routine the workout
+     * follows takes the new prescription too; either way the change is written down with the one it replaces, so the
+     * history and the report can tell it apart from what the routine says.
+     */
+    fun applyProgramEdit(
+        exerciseIndex: Int,
+        newBlocks: List<PrescriptionBlock>,
+        scope: ProgramEditScope,
+        kind: ProgramEditKind = ProgramEditKind.PROGRAM
+    ) {
+        val first = _state.value
+        val sessionId = first.sessionId ?: return
+        val startedWith = first.exercises.getOrNull(exerciseIndex) ?: return
+        if (!startedWith.isAdvanced || startedWith.isCardio || startedWith.isTimed || newBlocks.isEmpty()) return
+
+        viewModelScope.launch {
+            // The percentages may have been edited against a 1RM that was changed in the editor meanwhile
+            val oneRepMaxKg = oneRepMaxRepository.currentOnce(startedWith.exercise.id)?.weightKg ?: startedWith.oneRepMaxKg
+            val previous = getPreviousSetsForExercise(first.planId, startedWith.exercise.id, ALL_SETS)
+            val fresh = buildAdvancedSets(newBlocks, emptyList(), previous, oneRepMaxKg, first.weightUnit, first.loadRoundingIncrement)
+
+            var applied: WorkoutExerciseState? = null
+            var setsBefore = emptyList<WorkoutSetState>()
+            var removedIds = emptyList<Int>()
+            var edit: SessionPrescriptionEditEntity? = null
+            val week = first.programWeek ?: 1
+            setRowsLock.withLock {
+                _state.update { curr ->
+                    val exercise = curr.exercises.getOrNull(exerciseIndex) ?: return@update curr
+                    if (exercise.exercise.id != startedWith.exercise.id || !exercise.isAdvanced) return@update curr
+                    val loadsChanged = oneRepMaxKg != exercise.oneRepMaxKg
+                    if (exercise.blocks == newBlocks && !loadsChanged) return@update curr
+                    val result = ProgramEditing.apply(exercise.sets, fresh, exercise.blocks, newBlocks, loadsChanged)
+                    setsBefore = exercise.sets
+                    removedIds = result.removedIds
+                    val plan = exercise.planDetails?.takeIf { exercise.swappedExerciseId == null }
+                    if (exercise.blocks != newBlocks) {
+                        edit = SessionPrescriptionEditEntity.of(
+                            sessionId = sessionId,
+                            exerciseId = exercise.exercise.id,
+                            planExerciseId = plan?.id,
+                            programWeek = curr.programWeek,
+                            kind = kind,
+                            // A change that cannot reach a routine (a swapped or added exercise) is a variation of the workout
+                            scope = if (plan == null) ProgramEditScope.WORKOUT else scope,
+                            before = exercise.blocks,
+                            after = newBlocks
+                        )
+                    }
+                    val updated = exercise.copy(sets = result.sets, blocks = newBlocks, oneRepMaxKg = oneRepMaxKg)
+                    applied = updated
+                    val exercises = curr.exercises.toMutableList()
+                    exercises[exerciseIndex] = updated
+                    curr.copy(exercises = exercises)
+                }
+                val updated = applied ?: return@withLock
+                val before = setsBefore.associateBy { it.id }
+                removedIds.forEach { id ->
+                    workoutRepository.deleteSet(
+                        SetLogEntity(id = id, sessionId = sessionId, exerciseId = updated.exercise.id, pesoSollevato = 0f, repsEffettive = 0, numeroSerie = 0)
+                    )
+                }
+                updated.sets.filter { it.id != null && before[it.id] != it }.forEach { set ->
+                    workoutRepository.updateSet(set.toLogEntity(sessionId, updated, updated.executionOrder))
+                }
+                edit?.let { saved ->
+                    val plan = updated.planDetails?.takeIf { updated.swappedExerciseId == null }
+                    if (saved.editScope == ProgramEditScope.PLAN && plan != null) {
+                        workoutRepository.replacePlanWeekBlocks(plan.id, week, newBlocks)
+                    }
+                    val id = workoutRepository.recordPrescriptionEdit(saved).toInt()
+                    _state.update { curr ->
+                        val exercises = curr.exercises.toMutableList()
+                        val inner = exercises.getOrNull(exerciseIndex) ?: return@update curr
+                        if (inner.exercise.id != updated.exercise.id) return@update curr
+                        exercises[exerciseIndex] = inner.copy(programEdits = inner.programEdits + saved.copy(id = id))
+                        curr.copy(exercises = exercises)
+                    }
+                }
+            }
+            // The sets the change added have no row yet; a workout that is left and re-entered rebuilds them from the rows
+            persistPendingSets(exerciseIndex)
+        }
+    }
+
+    /**
+     * Moves the %1RM of the blocks at [blockIndices] by [delta] points ("-2.5" = 2.5 points lighter), for the sets still
+     * to do of the exercise at [exerciseIndex]. It is a change of its prescription like any other, written down as such.
+     */
+    fun shiftLoad(exerciseIndex: Int, blockIndices: Set<Int>, delta: Float, scope: ProgramEditScope) {
+        val exercise = _state.value.exercises.getOrNull(exerciseIndex) ?: return
+        val shifted = LoadShift.shift(exercise.blocks, blockIndices, delta)
+        if (shifted == exercise.blocks) return
+        applyProgramEdit(exerciseIndex, shifted, scope, ProgramEditKind.LOAD)
+    }
 
     /** Takes the weight suggested by double progression: heavier weight on the sets still to do, reps back to the bottom of the range. */
     fun applyProgression(exerciseIndex: Int) {
@@ -3053,6 +3197,8 @@ class WorkoutViewModel @Inject constructor(
                         timeTargetSeconds = durataTargetSecondi,
                         blocks = advancedBlocks,
                         oneRepMaxKg = newOneRepMaxKg,
+                        // The changes made to the prescription of the exercise swapped out do not belong to this one
+                        programEdits = emptyList(),
                         isCardio = false,
                         cardioSets = emptyList()
                     )
@@ -3076,6 +3222,8 @@ class WorkoutViewModel @Inject constructor(
                         timeTargetSeconds = durataTargetSecondi,
                         blocks = advancedBlocks,
                         oneRepMaxKg = newOneRepMaxKg,
+                        // The changes made to the prescription of the exercise swapped out do not belong to this one
+                        programEdits = emptyList(),
                         isCardio = false,
                         cardioSets = emptyList()
                     )
@@ -3164,6 +3312,7 @@ class WorkoutViewModel @Inject constructor(
                         exerciseType = "cardio",
                         timeTargetSeconds = null,
                         blocks = emptyList(),
+                        programEdits = emptyList(),
                         oneRepMaxKg = null
                     )
                     curr.copy(exercises = mutableExercises, exerciseSwaps = mutableSwaps)
@@ -3185,6 +3334,7 @@ class WorkoutViewModel @Inject constructor(
                         exerciseType = "cardio",
                         timeTargetSeconds = null,
                         blocks = emptyList(),
+                        programEdits = emptyList(),
                         oneRepMaxKg = null
                     )
                     curr.copy(exercises = mutableExercises)

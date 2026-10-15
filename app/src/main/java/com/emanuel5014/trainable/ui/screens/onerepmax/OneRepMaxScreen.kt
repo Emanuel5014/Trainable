@@ -168,7 +168,9 @@ fun OneRepMaxScreen(
     dialogExerciseId?.let { exerciseId ->
         val current = state.rows.firstOrNull { it.exerciseId == exerciseId }?.current?.weightKg
         OneRepMaxDialog(
-            title = exercises.firstOrNull { it.id == exerciseId }?.let { ExerciseTranslations.translate(it.nome, languageCode) }
+            // A row of an exercise deleted from the exercise list is not in `exercises` any more, its name is on the row
+            title = (exercises.firstOrNull { it.id == exerciseId }?.nome ?: state.rows.firstOrNull { it.exerciseId == exerciseId }?.exerciseName)
+                ?.let { ExerciseTranslations.translate(it, languageCode) }
                 ?: stringResource(R.string.add_one_rep_max),
             initialKg = current,
             weightUnit = state.weightUnit,

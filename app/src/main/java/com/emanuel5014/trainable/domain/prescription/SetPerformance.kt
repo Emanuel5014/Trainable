@@ -8,6 +8,7 @@ package com.emanuel5014.trainable.domain.prescription
 object SetPerformance {
     const val DEFAULT_PAUSE_SECONDS = 40
     private const val MAX_PARTS = 10
+    private const val MAX_PAUSE_SECONDS = 3600
 
     /** "2+1+1" for a set in parts, null for one done in one go. */
     fun encodeParts(parts: List<Int>): String? = parts.takeIf { it.size > 1 }?.joinToString("+")
@@ -27,6 +28,16 @@ object SetPerformance {
 
     fun decodePauses(raw: String?): List<Int> =
         raw?.split(",")?.mapNotNull { it.trim().toIntOrNull()?.takeIf { s -> s >= 0 } }.orEmpty()
+
+    /**
+     * The pauses typed by hand for the [gaps] between the parts of a set, one per field: a pause left empty after the
+     * last one given is dropped (it was not recorded), one left empty before it counts as 0 so the rest stay in place.
+     */
+    fun pausesFromInput(inputs: List<String>, gaps: Int): List<Int> {
+        val values = (0 until gaps.coerceAtLeast(0)).map { i -> inputs.getOrNull(i)?.trim()?.toIntOrNull()?.takeIf { it in 0..MAX_PAUSE_SECONDS } }
+        val last = values.indexOfLast { it != null }
+        return if (last < 0) emptyList() else values.take(last + 1).map { it ?: 0 }
+    }
 
     /** The parts after one more of [reps], starting from a set of [currentReps] done in one go when there were none. */
     fun withPart(parts: List<Int>, currentReps: Int, reps: Int): List<Int> =

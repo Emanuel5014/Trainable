@@ -9,7 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
+import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.data.local.entity.withoutPrescription
@@ -48,7 +52,11 @@ data class EditWorkoutState(
     val sessionTimestamp: Long = 0L,
     val sessionDurationMs: Long? = null,
     val error: String? = null,
-    val weightUnit: String = "kg"
+    val weightUnit: String = "kg",
+    /** Week of the routine the workout followed. */
+    val programWeek: Int? = null,
+    /** Changes made to the prescription of an exercise while the workout was done, oldest first. */
+    val prescriptionEdits: List<SessionPrescriptionEditEntity> = emptyList()
 )
 
 data class EditExerciseState(
@@ -130,7 +138,9 @@ class EditWorkoutViewModel @Inject constructor(
                                 sessionTimestamp = sessionDetails.session.timestamp,
                                 sessionDurationMs = sessionDetails.session.durationMs,
                                 exercises = exercises,
-                                cardioLogs = sessionDetails.cardio
+                                cardioLogs = sessionDetails.cardio,
+                                programWeek = sessionDetails.session.programWeek,
+                                prescriptionEdits = sessionDetails.prescriptionEdits
                             )
                         }
                     } else {
@@ -498,6 +508,23 @@ class EditWorkoutViewModel @Inject constructor(
                 increment = increment
             )
             workoutRepository.applySetSync(result)
+            // Changing the prescription of an exercise that already had one is written down like a change made in the workout
+            val before = exercise.sets.toPrescriptionBlocks()
+            if (before.isNotEmpty() && blocks.isNotEmpty() && before != blocks) {
+                workoutRepository.recordPrescriptionEdit(
+                    SessionPrescriptionEditEntity.of(
+                        sessionId = sessionId,
+                        exerciseId = exerciseId,
+                        planExerciseId = null,
+                        programWeek = _state.value.programWeek,
+                        kind = ProgramEditKind.PROGRAM,
+                        scope = ProgramEditScope.WORKOUT,
+                        // What the exercise was done against as its sets show it now (sets never done are gone by now)
+                        before = before,
+                        after = blocks
+                    )
+                )
+            }
         }
     }
 
@@ -612,6 +639,11 @@ class EditWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             exerciseRepository.saveExercise(exercise)
         }
+    }
+
+    /** Adds an exercise the user deleted from the exercise list back, from a workout that still has it. */
+    fun restoreExercise(exerciseId: Int) {
+        viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
     }
 
     fun deleteCustomExercise(exercise: ExerciseEntity) {

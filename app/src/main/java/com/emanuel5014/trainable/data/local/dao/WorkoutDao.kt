@@ -12,6 +12,7 @@ import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
@@ -141,6 +142,19 @@ interface WorkoutDao {
     @Query("DELETE FROM plan_exercise_blocks WHERE plan_exercise_id IN (SELECT id FROM plan_exercises WHERE plan_id = :planId) AND week > :maxWeek")
     suspend fun deleteBlocksBeyondWeek(planId: Int, maxWeek: Int)
 
+    /** Replaces the blocks of one week of a plan exercise, leaving the other weeks alone. */
+    @Transaction
+    suspend fun replaceWeekBlocks(planExerciseId: Int, week: Int, blocks: List<PlanExerciseBlockEntity>) {
+        deleteBlocksForWeek(planExerciseId, week)
+        if (blocks.isNotEmpty()) insertBlocks(blocks.map { it.copy(id = 0, planExerciseId = planExerciseId, week = week) })
+    }
+
+    @Query("SELECT * FROM plan_exercises WHERE id = :planExerciseId")
+    suspend fun getPlanExerciseOnce(planExerciseId: Int): PlanExerciseEntity?
+
+    @Query("SELECT current_week FROM workout_plans WHERE id = :planId")
+    suspend fun getPlanCurrentWeek(planId: Int): Int?
+
     /** Replaces every week's blocks of a plan exercise in one transaction. */
     @Transaction
     suspend fun replaceAllBlocks(planExerciseId: Int, blocks: List<PlanExerciseBlockEntity>) {
@@ -254,6 +268,22 @@ interface WorkoutDao {
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCardioLog(cardio: CardioLogEntity): Long
+
+    // --- History import (see HistoryCsvImporter) ---
+    @Insert
+    suspend fun insertSets(sets: List<SetLogEntity>)
+
+    @Insert
+    suspend fun insertCardioLogs(logs: List<CardioLogEntity>)
+
+    @Query("DELETE FROM workout_sessions WHERE id IN (:ids)")
+    suspend fun deleteSessionsByIds(ids: List<Int>)
+
+    @Query("DELETE FROM workout_plans WHERE id IN (:ids)")
+    suspend fun deletePlansByIds(ids: List<Int>)
+
+    @Query("SELECT COUNT(*) FROM workout_sessions WHERE plan_id = :planId")
+    suspend fun countSessionsForPlan(planId: Int): Int
     
     @Update
     suspend fun updateCardioLog(cardio: CardioLogEntity)
@@ -381,6 +411,19 @@ interface WorkoutDao {
     suspend fun updateSetOrders(sets: List<SetLogEntity>) {
         sets.forEach { updateSet(it) }
     }
+
+    // --- Prescription edits made during a workout ---
+    @Insert
+    suspend fun insertPrescriptionEdit(edit: SessionPrescriptionEditEntity): Long
+
+    @Query("SELECT * FROM session_prescription_edits WHERE session_id = :sessionId ORDER BY created_at ASC, id ASC")
+    suspend fun getPrescriptionEditsForSession(sessionId: Int): List<SessionPrescriptionEditEntity>
+
+    @Query("SELECT * FROM session_prescription_edits WHERE session_id IN (:sessionIds) ORDER BY created_at ASC, id ASC")
+    suspend fun getPrescriptionEditsForSessions(sessionIds: List<Int>): List<SessionPrescriptionEditEntity>
+
+    @Query("SELECT * FROM session_prescription_edits ORDER BY created_at ASC, id ASC")
+    suspend fun getAllPrescriptionEdits(): List<SessionPrescriptionEditEntity>
 
     // --- Exercise Swaps ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -64,6 +64,8 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.DesignServices
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Link
@@ -144,6 +146,13 @@ import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
+import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
+import com.emanuel5014.trainable.ui.components.LoadPercentChip
+import com.emanuel5014.trainable.ui.components.LoadPercentSheet
+import com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog
+import com.emanuel5014.trainable.ui.components.ProgramEditPill
+import com.emanuel5014.trainable.ui.components.ProgramEditScopeDialog
+import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
 import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
 import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
@@ -151,6 +160,7 @@ import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
+import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.TimerAdjustButton
@@ -247,6 +257,13 @@ fun WorkoutExecutionScreen(
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
     val plateExercises by viewModel.plateCalculatorExercises.collectAsState()
     var showPlateSheet by remember { mutableStateOf(false) }
+    // Changing the program of an exercise: the exercise (index) whose blocks are open in the editor, the new blocks
+    // waiting for the answer to "update the routine or only this workout?", the exercise and block the load editor
+    // is open for, and the exercise whose list of changes is shown
+    var programEditFor by remember { mutableStateOf<Int?>(null) }
+    var pendingProgram by remember { mutableStateOf<Pair<Int, List<com.emanuel5014.trainable.domain.prescription.PrescriptionBlock>>?>(null) }
+    var loadSheetFor by remember { mutableStateOf<Pair<Int, Int?>?>(null) }
+    var programHistoryFor by remember { mutableStateOf<Int?>(null) }
     var showAddExerciseSheet by remember { mutableStateOf(false) }
     var isAddingAfterCurrent by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
@@ -356,6 +373,16 @@ fun WorkoutExecutionScreen(
             containerColor = SurfaceContainerHigh,
             titleContentColor = OnSurface,
             textContentColor = OnSurfaceVariant
+        )
+    }
+
+    // The routine has exercises the user deleted from the exercise list: offer to add them back
+    if (state.deletedExercises.isNotEmpty()) {
+        RestoreExerciseDialog(
+            exerciseNames = state.deletedExercises.map { ExerciseTranslations.translate(it.nome, languageCode) },
+            onRestore = { viewModel.restoreDeletedExercises() },
+            onSkip = { viewModel.dismissDeletedExercises() },
+            onDismiss = { viewModel.dismissDeletedExercises() }
         )
     }
 
@@ -779,10 +806,12 @@ fun WorkoutExecutionScreen(
                                             }
                                         }
                                         if (targetExState.isAdvanced) {
-                                            Row(
+                                            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                                            androidx.compose.foundation.layout.FlowRow(
                                                 modifier = Modifier.weight(1f),
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                verticalAlignment = Alignment.CenterVertically
+                                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                                itemVerticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 state.programWeek?.let { week ->
                                                     PrescriptionPill(
@@ -808,6 +837,10 @@ fun WorkoutExecutionScreen(
                                                         fontWeight = FontWeight.ExtraBold
                                                     )
                                                 }
+                                                // The program of this exercise was changed during the workout: tap for the story
+                                                targetExState.lastProgramEdit?.let { edit ->
+                                                    ProgramEditPill(edit, Modifier.clickable { programHistoryFor = targetIndex })
+                                                }
                                             }
                                         } else Text(
                                             text = "$setsCount × $repsCount",
@@ -826,6 +859,15 @@ fun WorkoutExecutionScreen(
                                                     imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
                                                     contentDescription = stringResource(R.string.toggle_superset_with_next),
                                                     tint = if (isLinked) Primary else OnSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        if (targetExState.isAdvanced && !targetExState.isCardio && !targetExState.isTimed) {
+                                            IconButton(onClick = { programEditFor = targetIndex }) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.DesignServices,
+                                                    contentDescription = stringResource(R.string.edit_program),
+                                                    tint = if (targetExState.lastProgramEdit != null) Primary else OnSurfaceVariant
                                                 )
                                             }
                                         }
@@ -988,24 +1030,47 @@ fun WorkoutExecutionScreen(
                                                 previous?.prescription?.blockIndex != p?.blockIndex
                                             if (startsGroup) {
                                                 val block = p?.let { targetExState.blocks.getOrNull(it.blockIndex) }
+                                                // The load of a block that still has sets to do can be moved from its title
+                                                val loadEditable = block != null && p.blockIndex in
+                                                    ProgramEditing.percentBlocksToDo(targetExState.sets, targetExState.blocks)
                                                 Column(
                                                     modifier = Modifier.padding(top = if (index == 0) 0.dp else 6.dp),
                                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                                 ) {
-                                                    Text(
-                                                        text = when {
-                                                            block != null -> stringResource(
-                                                                R.string.block_header, p.blockIndex + 1,
-                                                                (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
-                                                                    block.techniques.map { techniqueLabel(context, it) }).joinToString(" · ")
-                                                            ).uppercase()
-                                                            set.isExtra -> stringResource(R.string.extra_badge)
-                                                            else -> ""
-                                                        },
-                                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.Black
-                                                    )
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .then(
+                                                                if (loadEditable) Modifier.clickable { loadSheetFor = targetIndex to p!!.blockIndex }
+                                                                else Modifier
+                                                            ),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = when {
+                                                                block != null -> stringResource(
+                                                                    R.string.block_header, p.blockIndex + 1,
+                                                                    (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
+                                                                        block.techniques.map { techniqueLabel(context, it) }).joinToString(" · ")
+                                                                ).uppercase()
+                                                                set.isExtra -> stringResource(R.string.extra_badge)
+                                                                else -> ""
+                                                            },
+                                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                                            color = Primary,
+                                                            fontWeight = FontWeight.Black,
+                                                            modifier = Modifier.weight(1f, fill = false)
+                                                        )
+                                                        if (loadEditable) {
+                                                            Icon(
+                                                                Icons.Rounded.Tune,
+                                                                contentDescription = stringResource(R.string.load_sheet_title),
+                                                                tint = Primary,
+                                                                modifier = Modifier.size(14.dp)
+                                                            )
+                                                        }
+                                                    }
                                                     if (block?.repMode == RepMode.TOTAL) {
                                                         val total = block.totalReps ?: 0
                                                         val done = targetExState.sets
@@ -1553,6 +1618,9 @@ fun WorkoutExecutionScreen(
                                                     onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) },
                                                     weightUnit = state.weightUnit
                                                 )
+                                                SetPercentChip(exercise, editedSet) {
+                                                    loadSheetFor = state.currentExerciseIndex to editedSet.prescription?.blockIndex
+                                                }
                                                 if (rpeInputShown(state.rpeInputMode, exercise, editedSet)) {
                                                     RpeSelector(
                                                         value = editedSet.rpe,
@@ -1677,6 +1745,9 @@ fun WorkoutExecutionScreen(
                                                     onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
                                                     weightUnit = state.weightUnit
                                                 )
+                                                SetPercentChip(currentExState, set) {
+                                                    loadSheetFor = state.currentExerciseIndex to set.prescription?.blockIndex
+                                                }
                                                 if (state.plateCalculatorEnabled && currentExState != null) {
                                                     val exerciseId = currentExState.exercise.id
                                                     if (exerciseId in plateExercises) {
@@ -2056,6 +2127,96 @@ fun WorkoutExecutionScreen(
                     onBarChange = { barKg -> viewModel.setPlateCalculator(exerciseId, true, barKg) },
                     onDisable = { viewModel.setPlateCalculator(exerciseId, false, plateExercises[exerciseId]) },
                     onDismiss = { showPlateSheet = false }
+                )
+            }
+        }
+
+        // --- Changing the program of an exercise during the workout ---
+        programEditFor?.let { exerciseIndex ->
+            val exercise = state.exercises.getOrNull(exerciseIndex)
+            if (exercise == null || !exercise.isAdvanced) {
+                programEditFor = null
+            } else {
+                val editedName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode)
+                ExercisePrescriptionSheet(
+                    exerciseId = exercise.exercise.id,
+                    exerciseName = editedName,
+                    initialBlocks = exercise.blocks,
+                    subtitle = stringResource(R.string.program_edit_subtitle),
+                    onDismiss = { programEditFor = null },
+                    onSave = { blocks ->
+                        val canUpdateRoutine = exercise.planDetails != null && exercise.swappedExerciseId == null
+                        when {
+                            blocks == exercise.blocks -> programEditFor = null
+                            // An exercise that is not in the routine can only be a variation of this workout
+                            !canUpdateRoutine -> {
+                                viewModel.applyProgramEdit(exerciseIndex, blocks, ProgramEditScope.WORKOUT)
+                                programEditFor = null
+                            }
+                            else -> pendingProgram = exerciseIndex to blocks
+                        }
+                    },
+                    onRemove = null
+                )
+            }
+        }
+
+        pendingProgram?.let { (exerciseIndex, blocks) ->
+            val exercise = state.exercises.getOrNull(exerciseIndex)
+            if (exercise == null) {
+                pendingProgram = null
+            } else {
+                ProgramEditScopeDialog(
+                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
+                    week = state.programWeek,
+                    onChoose = { scope ->
+                        viewModel.applyProgramEdit(exerciseIndex, blocks, scope)
+                        pendingProgram = null
+                        programEditFor = null
+                    },
+                    onDismiss = { pendingProgram = null }
+                )
+            }
+        }
+
+        loadSheetFor?.let { (exerciseIndex, blockIndex) ->
+            val exercise = state.exercises.getOrNull(exerciseIndex)
+            val toDo = exercise?.let { ProgramEditing.percentBlocksToDo(it.sets, it.blocks) }.orEmpty()
+            if (exercise == null || toDo.isEmpty()) {
+                loadSheetFor = null
+            } else {
+                LoadPercentSheet(
+                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
+                    blocks = exercise.blocks,
+                    activeBlockIndex = blockIndex,
+                    blocksToDo = toDo,
+                    setsToDoByBlock = exercise.sets.filter { !it.isCompleted && !it.isExtra }
+                        .groupingBy { it.prescription?.blockIndex ?: -1 }.eachCount(),
+                    oneRepMaxKg = exercise.oneRepMaxKg,
+                    weightUnit = state.weightUnit,
+                    roundingIncrement = state.loadRoundingIncrement,
+                    programWeek = state.programWeek,
+                    canUpdatePlan = exercise.planDetails != null && exercise.swappedExerciseId == null,
+                    hapticEnabled = state.hapticEnabled,
+                    onApply = { blockIndices, delta, scope ->
+                        viewModel.shiftLoad(exerciseIndex, blockIndices, delta, scope)
+                        loadSheetFor = null
+                    },
+                    onDismiss = { loadSheetFor = null }
+                )
+            }
+        }
+
+        programHistoryFor?.let { exerciseIndex ->
+            val exercise = state.exercises.getOrNull(exerciseIndex)
+            if (exercise == null || exercise.programEdits.isEmpty()) {
+                programHistoryFor = null
+            } else {
+                ProgramEditHistoryDialog(
+                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
+                    edits = exercise.programEdits,
+                    weightUnit = state.weightUnit,
+                    onDismiss = { programHistoryFor = null }
                 )
             }
         }
@@ -2974,6 +3135,18 @@ private fun RestTimerPill(remainingSeconds: Int, modifier: Modifier = Modifier) 
             fontWeight = FontWeight.ExtraBold
         )
     }
+}
+
+/** The way into the load editor for a set that asks for a %1RM and is still to do. */
+@Composable
+private fun SetPercentChip(exercise: WorkoutExerciseState?, set: WorkoutSetState?, onClick: () -> Unit) {
+    val prescription = set?.prescription ?: return
+    if (exercise == null || set.isCompleted || set.isExtra || prescription.intensityType != IntensityType.PERCENT) return
+    if (prescription.blockIndex !in ProgramEditing.percentBlocksToDo(exercise.sets, exercise.blocks)) return
+    LoadPercentChip(
+        percentText = PrescriptionFormatter.intensity(prescription.intensityType, prescription.intensityValue).orEmpty(),
+        onClick = onClick
+    )
 }
 
 /** The plate calculator line for the set about to be done, when this exercise uses the calculator. */

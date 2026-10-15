@@ -22,6 +22,12 @@ class ExerciseRepository @Inject constructor(
 ) {
     fun getAllExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAllExercises()
     
+    /**
+     * Also the exercises deleted from the library: what shows or resumes a workout or a routine looks its exercises up here,
+     * since those keep an exercise the user has deleted (see [deleteExercise]). Pickers use [getAllExercises].
+     */
+    fun getAllExercisesIncludingDeleted(): Flow<List<ExerciseEntity>> = exerciseDao.getAllExercisesIncludingDeleted()
+
     fun getExercisesByCategory(category: String): Flow<List<ExerciseEntity>> = 
         exerciseDao.getExercisesByCategory(category)
         
@@ -38,6 +44,11 @@ class ExerciseRepository @Inject constructor(
         exerciseDao.getAllCustomCategories()
     
     suspend fun addCustomExercise(nome: String, categoria: String, description: String? = null): Int {
+        // Creating again an exercise that was deleted brings the old one back, so its history and routines go on with it
+        exerciseDao.findDeletedByName(nome.trim())?.let { deleted ->
+            exerciseDao.reviveExercise(deleted.id, categoria, description)
+            return deleted.id
+        }
         val maxId = exerciseDao.getMaxId()
         val newId = if (maxId < 1000) 1000 else maxId + 1
         exerciseDao.insertExercise(
@@ -50,10 +61,24 @@ class ExerciseRepository @Inject constructor(
         exerciseDao.updateExercise(exercise)
     }
 
+    /**
+     * Removes [exercise] from the library. The workouts, routines and maxes that use it keep it (it is only hidden and
+     * can be [restoreExercise]d, so its media stays too); one nothing uses is deleted for good with its media.
+     */
     suspend fun deleteExercise(exercise: ExerciseEntity) {
         val mediaFile = exerciseDao.getExerciseMedia(exercise.id)
-        exerciseDao.deleteExerciseById(exercise.id)
-        withContext(Dispatchers.IO) { ExerciseMediaStorage.delete(context, mediaFile) }
+        if (exerciseDao.removeFromLibrary(exercise.id)) {
+            withContext(Dispatchers.IO) { ExerciseMediaStorage.delete(context, mediaFile) }
+        }
+    }
+
+    /** Puts an exercise deleted from the library back, with everything that was attached to it. */
+    suspend fun restoreExercise(exerciseId: Int) {
+        exerciseDao.setExerciseDeleted(exerciseId, false)
+    }
+
+    suspend fun restoreExercises(exerciseIds: Collection<Int>) {
+        exerciseIds.forEach { exerciseDao.setExerciseDeleted(it, false) }
     }
 
     /** Stores the picked image/GIF as the media of [exerciseId], replacing (and deleting) any previous one. */

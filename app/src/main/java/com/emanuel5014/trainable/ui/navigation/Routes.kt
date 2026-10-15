@@ -68,6 +68,9 @@ object NotificationSettings
 object ExerciseMediaSettings
 
 @Serializable
+object ImportHistory
+
+@Serializable
 data class PhysicalCheckCompare(val id1: Int, val id2: Int)
 
 @Serializable

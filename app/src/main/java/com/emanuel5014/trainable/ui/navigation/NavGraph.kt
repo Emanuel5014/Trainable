@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseCustomizationScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseMediaScreen
+import com.emanuel5014.trainable.ui.screens.settings.HistoryImportScreen
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.AiSettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsScreen
@@ -63,7 +64,13 @@ fun MainNavGraph(
                 onNavigateToAiSettings = { navController.navigate(AiSettings) },
                 onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                 onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
-                onNavigateToDonors = { navController.navigate(Donors) }
+                onNavigateToDonors = { navController.navigate(Donors) },
+                onNavigateToImportHistory = { navController.navigate(ImportHistory) }
+            )
+        }
+        composable<ImportHistory> {
+            HistoryImportScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable<OneRepMaxes> {

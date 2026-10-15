@@ -164,12 +164,14 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.ExerciseEntryCard
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
+import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.SheetFormBody
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
 import com.emanuel5014.trainable.ui.components.SheetFormLayout
+import com.emanuel5014.trainable.ui.components.GlowProgressOverlay
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.RoutineImagePicker
 import com.emanuel5014.trainable.ui.components.ScreenHeader
@@ -400,6 +402,9 @@ fun RoutineDetailScreen(
         showExercisePicker = true
     }
 
+    // The exercise deleted from the exercise list that the user tapped
+    var deletedExerciseTapped by remember { mutableStateOf<PlanExerciseWithDetails?>(null) }
+
     fun openEditSheet(item: PlanExerciseWithDetails) {
         editingExerciseId = item.planExercise.id
         selectedExerciseId = item.exercise.id
@@ -426,6 +431,23 @@ fun RoutineDetailScreen(
         cardioDurationText = item.planExercise.durataTargetSecondi?.let { (it / 60).toString() } ?: "20"
         cardioSetsText = item.planExercise.serieTarget.coerceAtLeast(1).toString()
         showExerciseSheet = true
+    }
+
+    // Tapping an exercise deleted from the exercise list offers to add it back before editing it
+    deletedExerciseTapped?.let { tapped ->
+        RestoreExerciseDialog(
+            exerciseNames = listOf(ExerciseTranslations.translate(tapped.exercise.nome, languageCode)),
+            onRestore = {
+                viewModel.restoreExercise(tapped.exercise.id)
+                deletedExerciseTapped = null
+                openEditSheet(tapped)
+            },
+            onSkip = {
+                deletedExerciseTapped = null
+                openEditSheet(tapped)
+            },
+            onDismiss = { deletedExerciseTapped = null }
+        )
     }
 
     fun openRoutineEditSheet() {
@@ -1115,7 +1137,7 @@ fun RoutineDetailScreen(
 
                                 ExerciseEntryCard(
                                     item = item,
-                                    onClick = { openEditSheet(item) },
+                                    onClick = { if (item.exercise.isDeleted) deletedExerciseTapped = item else openEditSheet(item) },
                                     modifier = Modifier.weight(1f),
                                     languageCode = languageCode,
                                     isSuperset = isSuperset,
@@ -1139,7 +1161,9 @@ fun RoutineDetailScreen(
     }
 
     if (showExerciseSheet) {
-        val selectedExercise = uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
+        // The exercise being edited is looked up on the plan: it may be one deleted from the exercise list, which the list no longer has
+        val selectedExercise = editingExercise?.exercise?.takeIf { it.id == selectedExerciseId }
+            ?: uiState.availableExercises.firstOrNull { it.id == selectedExerciseId }
         val isSelectedCardio = selectedExercise?.categoria?.equals("Cardio", ignoreCase = true) == true || editingExercise?.planExercise?.exerciseType == "cardio"
         // With starting weights off the field is hidden and an exercise keeps the weight it already had
         val presetKg: Float? = when {
@@ -2131,276 +2155,117 @@ internal fun AiScanningOverlay(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "ai_scan_glow_transition")
+    GlowProgressOverlay(isDark = isDark, hazeState = hazeState) {
+        GymLoadingIndicator()
 
-    val angle1 by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 10000, easing = LinearEasing)
-        ),
-        label = "glow_angle_1"
-    )
-
-    val angle2 by infiniteTransition.animateFloat(
-        initialValue = 360f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13000, easing = LinearEasing)
-        ),
-        label = "glow_angle_2"
-    )
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.25f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow_pulse_scale"
-    )
-
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.65f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow_pulse_alpha"
-    )
-
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val tertiaryColor = MaterialTheme.colorScheme.tertiary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
-    val scrimColor = MaterialTheme.colorScheme.surface
-        .copy(alpha = if (isDark) 0.65f else 0.85f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures { /* Consume touches to prevent triggering underlying buttons */ }
-            }
-            .then(
-                if (hazeState != null) {
-                    Modifier.hazeEffect(state = hazeState) {
-                        blurRadius = 24.dp
-                        tints = listOf(HazeTint(scrimColor))
-                        noiseFactor = 0.05f
-                    }
-                } else {
-                    Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = if (isDark) 0.92f else 0.95f))
-                }
-            )
-            .drawBehind {
-                val width = size.width
-                val height = size.height
-                val centerX = width / 2f
-                val centerY = height / 2f
-
-                // Orb 1: Primary color orbital glow
-                val rad1 = Math.toRadians(angle1.toDouble())
-                val offset1 = Offset(
-                    x = centerX + (cos(rad1) * width * 0.30f).toFloat(),
-                    y = centerY + (sin(rad1) * height * 0.22f).toFloat()
-                )
-                val radius1 = (width * 0.72f * pulseScale).coerceAtLeast(160f)
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            primaryColor.copy(alpha = if (isDark) 0.40f * pulseAlpha else 0.28f * pulseAlpha),
-                            primaryColor.copy(alpha = if (isDark) 0.15f * pulseAlpha else 0.09f * pulseAlpha),
-                            Color.Transparent
-                        ),
-                        center = offset1,
-                        radius = radius1
-                    ),
-                    center = offset1,
-                    radius = radius1
-                )
-
-                // Orb 2: Tertiary / Accent color orbital glow (counter-rotation)
-                val rad2 = Math.toRadians(angle2.toDouble())
-                val offset2 = Offset(
-                    x = centerX + (cos(rad2) * width * 0.34f).toFloat(),
-                    y = centerY + (sin(rad2) * height * 0.25f).toFloat()
-                )
-                val radius2 = (width * 0.65f * (2.1f - pulseScale)).coerceAtLeast(160f)
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            tertiaryColor.copy(alpha = if (isDark) 0.35f * pulseAlpha else 0.22f * pulseAlpha),
-                            tertiaryColor.copy(alpha = if (isDark) 0.12f * pulseAlpha else 0.07f * pulseAlpha),
-                            Color.Transparent
-                        ),
-                        center = offset2,
-                        radius = radius2
-                    ),
-                    center = offset2,
-                    radius = radius2
-                )
-
-                // Orb 3: Central breathing ambient aura behind card
-                val radiusCenter = width * 0.52f * pulseScale
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            primaryColor.copy(alpha = if (isDark) 0.25f * pulseAlpha else 0.16f * pulseAlpha),
-                            secondaryColor.copy(alpha = if (isDark) 0.10f * pulseAlpha else 0.05f * pulseAlpha),
-                            Color.Transparent
-                        ),
-                        center = Offset(centerX, centerY),
-                        radius = radiusCenter
-                    ),
-                    center = Offset(centerX, centerY),
-                    radius = radiusCenter
-                )
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = SurfaceContainerHigh.copy(alpha = if (isDark) 0.92f else 0.96f),
-            tonalElevation = 4.dp,
-            shadowElevation = if (isDark) 16.dp else 4.dp,
-            border = BorderStroke(
-                width = 1.dp,
-                brush = Brush.sweepGradient(
-                    colors = listOf(
-                        primaryColor.copy(alpha = 0.5f),
-                        tertiaryColor.copy(alpha = 0.35f),
-                        primaryColor.copy(alpha = 0.15f),
-                        tertiaryColor.copy(alpha = 0.45f),
-                        primaryColor.copy(alpha = 0.5f)
-                    )
-                )
-            ),
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .animateContentSize()
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 380.dp)
-                    .padding(horizontal = 24.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                GymLoadingIndicator()
+            Text(
+                text = stringResource(R.string.ai_scanning),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)
+                ),
+                color = OnSurface,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                text = aiPhaseLabel(phase) + " · ${elapsedSeconds}s",
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+        LinearProgressIndicator(
+            modifier = Modifier.fillMaxWidth(),
+            color = Primary,
+            trackColor = SurfaceContainerHighest
+        )
+
+        if (showResourceAnalytics && stream.metrics != null) {
+            DeviceResourceAnalyticsCard(
+                metrics = stream.metrics,
+                isDark = isDark
+            )
+        }
+
+        TextButton(onClick = { showThinking = !showThinking }) {
+            Icon(
+                Icons.Rounded.Psychology,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = Primary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (showThinking) stringResource(R.string.ai_scan_hide_thinking)
+                else stringResource(R.string.ai_scan_show_thinking),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+
+        AnimatedVisibility(visible = showThinking) {
+            val streamText = buildString {
+                if (stream.thinking.isNotBlank()) append(stream.thinking)
+                if (stream.output.isNotBlank()) {
+                    if (isNotEmpty()) append("\n\n")
+                    append(stream.output)
+                }
+            }
+
+            Column {
+                HorizontalDivider(color = OnSurfaceVariant.copy(alpha = 0.2f))
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(com.emanuel5014.trainable.ui.theme.Surface),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.ai_scanning),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)
-                        ),
-                        color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = aiPhaseLabel(phase) + " · ${elapsedSeconds}s",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnSurfaceVariant
-                    )
-                }
-
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Primary,
-                    trackColor = SurfaceContainerHighest
-                )
-
-                if (showResourceAnalytics && stream.metrics != null) {
-                    DeviceResourceAnalyticsCard(
-                        metrics = stream.metrics,
-                        isDark = isDark
-                    )
-                }
-
-                TextButton(onClick = { showThinking = !showThinking }) {
-                    Icon(
-                        Icons.Rounded.Psychology,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = Primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (showThinking) stringResource(R.string.ai_scan_hide_thinking)
-                        else stringResource(R.string.ai_scan_show_thinking),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-
-                AnimatedVisibility(visible = showThinking) {
-                    val streamText = buildString {
-                        if (stream.thinking.isNotBlank()) append(stream.thinking)
-                        if (stream.output.isNotBlank()) {
-                            if (isNotEmpty()) append("\n\n")
-                            append(stream.output)
-                        }
-                    }
-
-                    Column {
-                        HorizontalDivider(color = OnSurfaceVariant.copy(alpha = 0.2f))
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
+                    if (streamText.isBlank()) {
+                        Text(
+                            text = stringResource(R.string.ai_scan_thinking_placeholder),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    } else {
+                        Text(
+                            text = streamText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(160.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(com.emanuel5014.trainable.ui.theme.Surface),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (streamText.isBlank()) {
-                                Text(
-                                    text = stringResource(R.string.ai_scan_thinking_placeholder),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant.copy(alpha = 0.5f)
-                                )
-                            } else {
-                                Text(
-                                    text = streamText,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .verticalScroll(rememberScrollState())
-                                        .padding(12.dp)
-                                )
-                            }
-                        }
+                                .verticalScroll(rememberScrollState())
+                                .padding(12.dp)
+                        )
                     }
                 }
-                
-                OutlinedButton(
-                    onClick = { showCancelConfirmation = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = Shapes.medium,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f))
-                ) {
-                    Icon(
-                        Icons.Rounded.Close,
-                        contentDescription = null,
-                        tint = Error,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.ai_scan_stop),
-                        color = Error,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
+        }
+        
+        OutlinedButton(
+            onClick = { showCancelConfirmation = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape = Shapes.medium,
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Error),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Error.copy(alpha = 0.5f))
+        ) {
+            Icon(
+                Icons.Rounded.Close,
+                contentDescription = null,
+                tint = Error,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.ai_scan_stop),
+                color = Error,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 
