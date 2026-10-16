@@ -64,7 +64,6 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21
-        freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
 
@@ -108,10 +107,6 @@ dependencies {
     // Datastore
     implementation(libs.datastore.preferences)
 
-    // Vico
-    implementation(libs.vico.compose)
-    implementation(libs.vico.compose.m3)
-
     // Coil
     implementation(libs.coil.compose)
 
@@ -123,9 +118,6 @@ dependencies {
 
     // LiteRT-LM (on-device LLM inference, Gemma 4)
     implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.1")
-
-// Google Fonts
-implementation(libs.google.fonts)
 
 // Haze - Frosted Glass Blur
     implementation(libs.haze)
@@ -151,7 +143,7 @@ implementation(libs.google.fonts)
 
     testImplementation(libs.junit)
     // Real org.json for JVM unit tests (the Android stub returns defaults)
-    testImplementation("org.json:json:20250517")
+    testImplementation("org.json:json:20260814")
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
