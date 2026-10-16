@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SwapHoriz
@@ -82,6 +83,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -270,6 +273,74 @@ fun ExerciseMediaSlot(
             )
         }
     }
+}
+
+/**
+ * Whether a list where an exercise is picked draws the thumbnails of the exercises' media: it follows the "Show in
+ * Workouts" switch and waits until at least one of the offered exercises has media, so the list is unchanged for
+ * everyone else. From then on every row gets a tile ([ExerciseListThumbnail]), which keeps the names aligned.
+ */
+@Composable
+fun rememberShowExerciseThumbnails(exercises: List<ExerciseEntity>, excludedIds: Set<Int> = emptySet()): Boolean {
+    val enabled = LocalExerciseMediaEnabled.current
+    return enabled && remember(exercises, excludedIds) { exercises.any { it.mediaPath != null && it.id !in excludedIds } }
+}
+
+/**
+ * The user's image for the exercise, which opens full screen when tapped, or a neutral tile when it has none. Still
+ * on purpose (like the list in the exercise media settings): a GIF is shown by its first frame, so a long list does
+ * not animate all at once; the full-screen look plays it. Tapping anywhere else on the row picks the exercise.
+ */
+@Composable
+fun ExerciseListThumbnail(fileName: String?, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    if (fileName != null) {
+        val description = stringResource(R.string.exercise_media_open)
+        Box(
+            modifier = Modifier
+                .size(ExerciseListThumbnailSize)
+                .clip(shape)
+                .background(SurfaceContainerHighest)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { contentDescription = description }
+        ) {
+            ExerciseMediaImage(
+                fileName = fileName,
+                modifier = Modifier.fillMaxSize(),
+                playing = false,
+                maxPx = 192
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .size(ExerciseListThumbnailSize)
+                .clip(shape)
+                .background(SurfaceContainerHighest)
+                .clearAndSetSemantics { },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Rounded.FitnessCenter,
+                contentDescription = null,
+                tint = OnSurfaceVariant.copy(alpha = 0.45f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+private val ExerciseListThumbnailSize = 44.dp
+
+/** The full-screen, look-only viewer of [exercise]'s media; nothing while [exercise] is null or has no media. */
+@Composable
+fun ExerciseMediaPeek(exercise: ExerciseEntity?, languageCode: String, onDismiss: () -> Unit) {
+    val fileName = exercise?.mediaPath ?: return
+    ExerciseMediaViewer(
+        fileName = fileName,
+        exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode),
+        onDismiss = onDismiss
+    )
 }
 
 /**

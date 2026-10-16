@@ -129,6 +129,7 @@ fun SwapExerciseBottomSheet(
     var exerciseToEdit by remember { mutableStateOf<ExerciseEntity?>(null) }
     var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
+    var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
 
     val filteredExercises = remember(availableExercises, searchQuery, selectedCategory, showOnlyCustom, languageCode, excludedExerciseIds) {
         availableExercises.filter { exercise ->
@@ -146,6 +147,8 @@ fun SwapExerciseBottomSheet(
     val allCategories = categories ?: remember(availableExercises) {
         availableExercises.map { it.categoria }.distinct().sorted()
     }
+
+    val showThumbnails = rememberShowExerciseThumbnails(availableExercises, excludedExerciseIds)
 
     val imeVisible = isKeyboardVisible
 
@@ -264,7 +267,9 @@ fun SwapExerciseBottomSheet(
                                     { exerciseToDelete = exercise }
                                 } else null,
                                 isSelected = isSelected,
-                                showCurrent = exercise.id == currentExerciseId
+                                showCurrent = exercise.id == currentExerciseId,
+                                showThumbnail = showThumbnails,
+                                onThumbnailClick = { exerciseMediaToView = exercise }
                             )
                         }
                     }
@@ -338,6 +343,8 @@ fun SwapExerciseBottomSheet(
         }
     }
 
+    ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
+
     if (showAddCustomDialog) {
         AddCustomExerciseDialog(
             categories = allCategories,
@@ -403,7 +410,9 @@ private fun ExerciseListItem(
     onEditClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null,
     isSelected: Boolean,
-    showCurrent: Boolean
+    showCurrent: Boolean,
+    showThumbnail: Boolean = false,
+    onThumbnailClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -422,6 +431,10 @@ private fun ExerciseListItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (showThumbnail) {
+                ExerciseListThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick)
+                Spacer(modifier = Modifier.width(16.dp))
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(

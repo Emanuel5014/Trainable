@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,13 +21,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
@@ -60,10 +57,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
@@ -120,11 +113,7 @@ fun ExercisePickerBottomSheet(
         }
     }
 
-    // Thumbnails follow the "Show in Workouts" switch and are only drawn once the user has attached media to at
-    // least one exercise, so the list is unchanged for everyone else; from then on every row gets a tile,
-    // which keeps the names aligned.
-    val mediaEnabled = LocalExerciseMediaEnabled.current
-    val showThumbnails = mediaEnabled && remember(exercises) { exercises.any { it.mediaPath != null } }
+    val showThumbnails = rememberShowExerciseThumbnails(exercises)
 
     val imeVisible = isKeyboardVisible
 
@@ -328,16 +317,7 @@ fun ExercisePickerBottomSheet(
         )
     }
 
-    exerciseMediaToView?.let { exercise ->
-        val fileName = exercise.mediaPath
-        if (fileName != null) {
-            ExerciseMediaViewer(
-                fileName = fileName,
-                exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode),
-                onDismiss = { exerciseMediaToView = null }
-            )
-        }
-    }
+    ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
 
     if (exerciseToDelete != null) {
         AlertDialog(
@@ -393,7 +373,7 @@ private fun ExercisePickerItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (showThumbnail) {
-                ExercisePickerThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick)
+                ExerciseListThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick)
                 Spacer(modifier = Modifier.width(Spacing.medium))
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -456,52 +436,6 @@ private fun ExercisePickerItem(
         }
     }
 }
-
-/**
- * The user's image for the exercise, which opens full screen when tapped, or a neutral tile when it has none. Still
- * on purpose (like the list in the exercise media settings): a GIF is shown by its first frame, so a long list does
- * not animate all at once; the full-screen look plays it. Tapping anywhere else on the row picks the exercise.
- */
-@Composable
-private fun ExercisePickerThumbnail(fileName: String?, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
-    if (fileName != null) {
-        val description = stringResource(R.string.exercise_media_open)
-        Box(
-            modifier = Modifier
-                .size(PickerThumbnailSize)
-                .clip(shape)
-                .background(SurfaceContainerHighest)
-                .clickable(role = Role.Button, onClick = onClick)
-                .semantics { contentDescription = description }
-        ) {
-            ExerciseMediaImage(
-                fileName = fileName,
-                modifier = Modifier.fillMaxSize(),
-                playing = false,
-                maxPx = 192
-            )
-        }
-    } else {
-        Box(
-            modifier = Modifier
-                .size(PickerThumbnailSize)
-                .clip(shape)
-                .background(SurfaceContainerHighest)
-                .clearAndSetSemantics { },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Rounded.FitnessCenter,
-                contentDescription = null,
-                tint = OnSurfaceVariant.copy(alpha = 0.45f),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
-
-private val PickerThumbnailSize = 44.dp
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
