@@ -236,6 +236,7 @@ class HistoryCsvImporter @Inject constructor(
                 timestamp = workout.timestamp,
                 noteSessione = workout.sessionNote,
                 isFinished = true,
+                durationMs = workout.durationMs,
                 programWeek = workout.programWeek
             )
         ).toInt()

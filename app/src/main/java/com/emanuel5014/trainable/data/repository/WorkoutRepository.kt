@@ -34,6 +34,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
+import com.emanuel5014.trainable.domain.csvimport.SessionDuration
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -806,6 +807,8 @@ class WorkoutRepository @Inject constructor(
         sessions.forEach { session ->
             val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(session.session.timestamp))
             val planName = escapeCsv(session.plan.nome)
+            // How long the whole workout took, repeated on each of its rows (empty when it was never recorded)
+            val sessionMinutes = SessionDuration.format(session.session.durationMs)
 
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
@@ -850,7 +853,7 @@ class WorkoutRepository @Inject constructor(
                     else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes")
             }
 
             session.cardio.forEach { cardio ->
@@ -859,7 +862,7 @@ class WorkoutRepository @Inject constructor(
                 val week = session.session.programWeek?.toString() ?: ""
                 val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes")
             }
         }
 

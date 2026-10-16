@@ -1294,7 +1294,7 @@
     <string name="import_history_intro">Importez vos anciens entraînements dans Trainable depuis un fichier CSV. Utilisez le même fichier que l\'app exporte avec EXPORTER CSV : si votre ancienne app exporte autre chose, adaptez-le aux colonnes ci-dessous. Vous verrez tout ce qui va être importé avant que quoi que ce soit ne soit enregistré.</string>
     <string name="import_history_columns_title">Colonnes lues</string>
     <string name="import_history_columns_required">Obligatoires : Date, Exercice et au moins une parmi Poids, Répétitions, Durée ou Distance.</string>
-    <string name="import_history_columns_optional">Utiles : ID Séance (distingue deux entraînements du même jour), Programme, Catégorie, Type (strength, time_and_weight, time_and_reps, cardio), Série, Note.</string>
+    <string name="import_history_columns_optional">Utiles : ID Séance (distingue deux entraînements du même jour), Programme, Catégorie, Type (strength, time_and_weight, time_and_reps, cardio), Série, Note, Durée Séance (minutes).</string>
     <string name="import_history_rules_title">Comment fonctionne l\'import</string>
     <string name="import_history_rule_exercises">Les exercices absents de l\'app sont créés avec le nom et la catégorie du fichier.</string>
     <string name="import_history_rule_routines">Chaque entraînement va dans la routine du même nom ; si elle n\'existe pas, elle est créée. Les entraînements sans routine deviennent des entraînements rapides.</string>
@@ -1320,6 +1320,7 @@
     <string name="import_history_col_rpe">RPE</string>
     <string name="import_history_col_parts">Mini-séries</string>
     <string name="import_history_col_type">Type</string>
+    <string name="import_history_col_session_duration">Durée de la séance</string>
     <string name="import_history_issue_line">Ligne %1$d</string>
     <string name="import_history_issue_missing_date">Date manquante</string>
     <string name="import_history_issue_invalid_date">Date non reconnue : %1$s</string>

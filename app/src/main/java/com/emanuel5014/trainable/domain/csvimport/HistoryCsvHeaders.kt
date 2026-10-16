@@ -43,8 +43,18 @@ object HistoryCsvHeaders {
         else -> "Program Changed,Original Program"
     }
 
+    /** How long the whole workout took, in minutes: written on every row of the workout, empty when it is not known. */
+    fun sessionDuration(languageCode: String): String = when (languageCode) {
+        "it" -> "Durata Allenamento (min)"
+        "es" -> "Duración Sesión (min)"
+        "fr" -> "Durée Séance (min)"
+        "de" -> "Sitzungsdauer (min)"
+        "pt" -> "Duração Sessão (min)"
+        else -> "Session Duration (min)"
+    }
+
     /** The header line the export writes. */
     fun full(languageCode: String, weightUnit: String, advanced: Boolean): String =
         (if (advanced) basic(languageCode, weightUnit) + "," + prescription(languageCode) else basic(languageCode, weightUnit)) +
-            "," + performance(languageCode) + "," + programEdit(languageCode)
+            "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode)
 }

@@ -803,7 +803,8 @@ private fun WorkoutRow(
                 )
                 Text(
                     "${pluralStringResource(R.plurals.import_history_exercises_count, workout.entries.size, workout.entries.size)} · " +
-                        pluralStringResource(R.plurals.import_history_sets_count, workout.setCount, workout.setCount),
+                        pluralStringResource(R.plurals.import_history_sets_count, workout.setCount, workout.setCount) +
+                        (workout.durationMs?.let { " · " + formatSeconds((it / 1000).toInt()) } ?: ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = OnSurfaceVariant.copy(alpha = alpha)
                 )
@@ -914,6 +915,7 @@ private fun columnName(column: CsvColumn?): String = when (column) {
     CsvColumn.RPE -> stringResource(R.string.import_history_col_rpe)
     CsvColumn.PARTS -> stringResource(R.string.import_history_col_parts)
     CsvColumn.TYPE -> stringResource(R.string.import_history_col_type)
+    CsvColumn.SESSION_DURATION -> stringResource(R.string.import_history_col_session_duration)
     CsvColumn.DATE -> stringResource(R.string.import_history_column_date)
     CsvColumn.EXERCISE -> stringResource(R.string.import_history_column_exercise)
     else -> column?.name.orEmpty()

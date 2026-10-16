@@ -88,6 +88,8 @@ data class PlannedWorkout(
     /** The name the workout is shown with when it has no routine of that name (a declined routine). */
     val sessionNote: String?,
     val programWeek: Int?,
+    /** How long the workout took, when the file says. */
+    val durationMs: Long?,
     val entries: List<PlannedEntry>,
     /** The workout already in the app that this one repeats. */
     val duplicateOf: Int?
@@ -220,6 +222,7 @@ object HistoryImportPlanner {
                 routine = target,
                 sessionNote = note,
                 programWeek = week,
+                durationMs = d.rows.firstNotNullOfOrNull { it.row.sessionDurationMs },
                 entries = entries,
                 duplicateOf = duplicateOf(d.date, target, entries, known.sessions, plansByName)
             )

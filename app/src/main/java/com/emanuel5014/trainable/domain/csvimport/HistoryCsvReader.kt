@@ -53,6 +53,8 @@ data class ParsedRow(
     val durationSeconds: Int?,
     val distanceKm: Float?,
     val note: String,
+    /** How long the whole workout took, on every row of it; null when the cell is empty or not understood. */
+    val sessionDurationMs: Long?,
     val week: Int?,
     val rpe: Float?,
     val warmup: Boolean,
@@ -231,6 +233,10 @@ object HistoryCsvReader {
         val partials = text(CsvColumn.PARTIALS).let { raw -> NumberReader.decimal(raw)?.roundToInt()?.takeIf { it in 0..MAX_REPS } }
         val week = text(CsvColumn.WEEK).let { raw -> NumberReader.decimal(raw)?.roundToInt()?.takeIf { it in 1..99 } }
 
+        val sessionText = text(CsvColumn.SESSION_DURATION)
+        val sessionDuration = if (sessionText.isEmpty()) null else SessionDuration.parse(sessionText, header.sessionDurationUnit)
+        if (sessionText.isNotEmpty() && sessionDuration == null) warn(IssueCode.IGNORED_VALUE, CsvColumn.SESSION_DURATION, sessionText)
+
         val typeText = text(CsvColumn.TYPE)
         val declared = if (typeText.isEmpty()) null else kindOf(typeText)
         if (typeText.isNotEmpty() && declared == null) warn(IssueCode.UNKNOWN_TYPE, CsvColumn.TYPE, typeText)
@@ -252,6 +258,7 @@ object HistoryCsvReader {
             durationSeconds = duration,
             distanceKm = distance,
             note = text(CsvColumn.NOTE),
+            sessionDurationMs = sessionDuration,
             week = week,
             rpe = rpe,
             warmup = flag(text(CsvColumn.WARMUP)),
