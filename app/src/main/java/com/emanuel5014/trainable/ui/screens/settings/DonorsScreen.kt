@@ -65,6 +65,10 @@ val defaultDonors = listOf(
     Donor(
         name = "THED4NIEL",
         tier = "Supporter"
+    ),
+    Donor(
+        name = "Ivan",
+        tier = "Supporter"
     )
 )
 
