@@ -1307,6 +1307,40 @@ nav {
   font-size: 18px;
 }
 
+/* The workout journal on the session page */
+.session-journal {
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.journal-stars {
+  color: var(--md-primary);
+  font-size: 1.2rem;
+  letter-spacing: 3px;
+}
+.journal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.journal-tag {
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.journal-note {
+  margin: 12px 0 0;
+  color: var(--md-on-surface);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 /* ================================================================
    SESSION FILTERS - FAB + MODAL
    ================================================================ */

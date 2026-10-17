@@ -683,6 +683,8 @@ fun Application.configureServer(
 
                     sessions = sessions.take(limit)
 
+                    // The workout journal (rating, tags, note) is part of the answer only while it is on
+                    val journalEnabled = userPrefsRepo.journalEnabled.first()
                     val items = buildJsonArray {
                         sessions.forEach { swd ->
                             val volume = swd.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
@@ -692,6 +694,7 @@ fun Application.configureServer(
                                 put("planName", swd.plan.nome)
                                 put("timestamp", swd.session.timestamp)
                                 swd.session.noteSessione?.let { put("noteSessione", it) }
+                                if (journalEnabled) journalJson(swd)?.let { put("journal", it) }
                                 put("totalVolume", volume)
                                 put("totalSets", swd.sets.size)
                                 put("cardioCount", swd.cardio.size)
@@ -721,6 +724,7 @@ fun Application.configureServer(
 
                     val lang = resolveLanguage(userPrefsRepo)
                     val advanced = userPrefsRepo.advancedProgrammingEnabled.first()
+                    val journalEnabled = userPrefsRepo.journalEnabled.first()
                     val volume = session.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
                     val setsArray = buildJsonArray {
                         session.sets.forEach { swd ->
@@ -748,6 +752,7 @@ fun Application.configureServer(
                         put("planName", session.plan.nome)
                         put("timestamp", session.session.timestamp)
                         session.session.noteSessione?.let { put("noteSessione", it) }
+                        if (journalEnabled) journalJson(session)?.let { put("journal", it) }
                         put("totalVolume", volume)
                         put("totalSets", session.sets.size)
                         put("sets", setsArray)

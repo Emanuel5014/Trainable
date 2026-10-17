@@ -14,6 +14,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
+import com.emanuel5014.trainable.ui.components.journal.FinishWorkoutSheet
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import androidx.compose.animation.core.animateFloatAsState
@@ -2347,7 +2348,23 @@ fun WorkoutExecutionScreen(
             )
         }
 
-        if (showFinishDialog) {
+        if (showFinishDialog && state.journalEnabled && state.journalPromptAtFinish) {
+            FinishWorkoutSheet(
+                title = stringResource(R.string.finish_workout_title),
+                message = stringResource(
+                    if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
+                    else R.string.finish_workout_message_incomplete
+                ),
+                journal = state.journalDraft,
+                onJournalChange = viewModel::updateJournalDraft,
+                hapticEnabled = state.hapticEnabled,
+                onFinish = {
+                    viewModel.finishWorkout()
+                    showFinishDialog = false
+                },
+                onCancel = { showFinishDialog = false }
+            )
+        } else if (showFinishDialog) {
             AlertDialog(
                 onDismissRequest = { showFinishDialog = false },
                 title = { Text(stringResource(R.string.finish_workout_title)) },

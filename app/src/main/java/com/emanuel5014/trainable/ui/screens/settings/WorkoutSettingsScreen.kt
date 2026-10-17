@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PhoneAndroid
@@ -59,12 +61,46 @@ import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.WeightUnitConverter
 
+/** A switch row nested under a main switch: indented to line up with the text above it. */
+@Composable
+private fun NestedSwitchRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 40.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = OnSurface,
+                fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        SettingsSwitch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WorkoutSettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToExerciseCustomization: () -> Unit,
     onNavigateToOneRepMaxes: () -> Unit = {},
+    onNavigateToJournalTags: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val weightUnit by viewModel.weightUnit.collectAsState()
@@ -85,6 +121,9 @@ fun WorkoutSettingsScreen(
     val plateCalculatorEnabled by viewModel.plateCalculatorEnabled.collectAsState()
     val setPerformanceEnabled by viewModel.setPerformanceEnabled.collectAsState()
     val plateCalculatorPlates by viewModel.plateCalculatorPlates.collectAsState()
+    val journalEnabled by viewModel.journalEnabled.collectAsState()
+    val journalPromptAtFinish by viewModel.journalPromptAtFinish.collectAsState()
+    val journalRatingEnabled by viewModel.journalRatingEnabled.collectAsState()
 
     Scaffold(
         containerColor = Surface,
@@ -606,6 +645,89 @@ fun WorkoutSettingsScreen(
                                         )
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Workout journal: a rating, tags and a note on each workout
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = Icons.Rounded.EditNote,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    stringResource(R.string.journal_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = OnSurface,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    stringResource(R.string.journal_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = OnSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        SettingsSwitch(
+                            checked = journalEnabled,
+                            onCheckedChange = { viewModel.setJournalEnabled(it) }
+                        )
+                    }
+
+                    AnimatedVisibility(visible = journalEnabled) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            NestedSwitchRow(
+                                title = stringResource(R.string.journal_prompt_finish),
+                                description = stringResource(R.string.journal_prompt_finish_desc),
+                                checked = journalPromptAtFinish,
+                                onCheckedChange = { viewModel.setJournalPromptAtFinish(it) }
+                            )
+                            NestedSwitchRow(
+                                title = stringResource(R.string.journal_rating_setting),
+                                description = stringResource(R.string.journal_rating_setting_desc),
+                                checked = journalRatingEnabled,
+                                onCheckedChange = { viewModel.setJournalRatingEnabled(it) }
+                            )
+
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onNavigateToJournalTags() },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(start = 40.dp)) {
+                                    Text(
+                                        stringResource(R.string.journal_manage_tags),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = OnSurface,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Text(
+                                        stringResource(R.string.journal_manage_tags_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OnSurfaceVariant
+                                    )
+                                }
+                                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
                             }
                         }
                     }

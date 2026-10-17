@@ -24,7 +24,9 @@ import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.entity.repsRange
@@ -118,6 +120,15 @@ data class WorkoutState(
     val plateCalculatorEnabled: Boolean = false,
     /** Mini-sets, assisted and partial reps and the technique as done; off, a set carries only its note. */
     val setPerformanceEnabled: Boolean = false,
+    /** The workout journal is on: finishing a workout can carry a rating, tags and a note. */
+    val journalEnabled: Boolean = false,
+    /** With the journal on: finishing a workout opens the journal sheet instead of the plain dialog. */
+    val journalPromptAtFinish: Boolean = true,
+    /**
+     * What the lifter has put in the finish sheet so far. It lives here, not in the sheet, so cancelling the sheet keeps
+     * it and the "new 1RM?" review that can come between Finish and the end of the session cannot lose it.
+     */
+    val journalDraft: SessionJournal = SessionJournal(),
     /** Plates the gym has, in [weightUnit], heaviest first. */
     val availablePlates: List<Float> = PlateCalculator.DEFAULT_PLATES_KG,
     val warmupTimerEnabled: Boolean = false,
@@ -477,6 +488,7 @@ class WorkoutViewModel @Inject constructor(
     private val timerNotificationHelper: TimerNotificationHelper,
     private val localeManager: AppLocaleManager,
     private val oneRepMaxRepository: OneRepMaxRepository,
+    private val journalRepository: JournalRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -692,6 +704,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setPerformanceEnabled.collect { enabled ->
                 _state.update { it.copy(setPerformanceEnabled = enabled, miniSetOffer = if (enabled) it.miniSetOffer else null) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.journalEnabled.collect { enabled ->
+                _state.update { it.copy(journalEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.journalPromptAtFinish.collect { prompt ->
+                _state.update { it.copy(journalPromptAtFinish = prompt) }
             }
         }
 
@@ -2549,20 +2573,29 @@ class WorkoutViewModel @Inject constructor(
         performFinish()
     }
 
+    /** Keeps what is typed in the finish sheet (see [WorkoutState.journalDraft]). */
+    fun updateJournalDraft(journal: SessionJournal) {
+        _state.update { it.copy(journalDraft = journal) }
+    }
+
     private fun performFinish() {
         if (_state.value.isFinishing) return
         _state.update { it.copy(isFinishing = true) }
-        
+
         viewModelScope.launch {
             try {
                 _state.value.sessionId?.let { id ->
                     val durationMs = if (_state.value.workoutTimerEnabled) {
                         _state.value.sessionStartTime?.let { System.currentTimeMillis() - it }
                     } else null
+                    // Nothing is written for an empty journal, and nothing at all when the journal is off
+                    val journal = _state.value.journalDraft.cleaned().takeIf { _state.value.journalEnabled && !it.isEmpty }
                     withContext(Dispatchers.IO) {
                         workoutRepository.deleteUncompletedSetsForSession(id)
                         workoutRepository.deleteUncompletedCardioLogsForSession(id)
                         workoutRepository.setSessionFinished(id, durationMs)
+                        // A journal that cannot be saved must never keep the workout from finishing
+                        if (journal != null) runCatching { journalRepository.saveJournal(id, journal) }
                     }
                     advanceProgramWeek()
                     stopRestTimer()

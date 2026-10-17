@@ -31,6 +31,7 @@ import com.emanuel5014.trainable.domain.csvimport.RoutineTarget
 import com.emanuel5014.trainable.domain.csvimport.RowKind
 import com.emanuel5014.trainable.domain.csvimport.SetSignature
 import com.emanuel5014.trainable.domain.csvimport.SystemPlanKind
+import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.prescription.SetPerformance
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +56,9 @@ data class ImportResult(
     internal val exerciseIds: List<Int>,
     internal val categoryIds: List<Int>,
     /** Exercises deleted from the exercise list that the file brought back, hidden again by [HistoryCsvImporter.undo]. */
-    internal val revivedExerciseIds: List<Int> = emptyList()
+    internal val revivedExerciseIds: List<Int> = emptyList(),
+    /** Workout-journal tags this import made (not the ones it only found); [HistoryCsvImporter.undo] drops them if nothing else uses them. */
+    internal val tagIds: List<Int> = emptyList()
 )
 
 /**
@@ -68,6 +71,7 @@ class HistoryCsvImporter @Inject constructor(
     private val workoutDao: WorkoutDao,
     private val exerciseDao: ExerciseDao,
     private val userDao: UserDao,
+    private val journalRepository: JournalRepository,
     @ApplicationContext private val context: Context
 ) {
     /** What the app holds now, to match a file against. */
@@ -201,6 +205,7 @@ class HistoryCsvImporter @Inject constructor(
         }
 
         var sets = 0
+        val createdTagIds = mutableListOf<Int>()
         val sessionIds = workouts.map { workout ->
             val planId = when (val target = workout.routine) {
                 is RoutineTarget.Existing -> target.plan.id
@@ -208,7 +213,7 @@ class HistoryCsvImporter @Inject constructor(
                 is RoutineTarget.System -> systemPlanIds.getValue(target.kind)
             }
             sets += workout.setCount
-            writeWorkout(workout, planId, ::exerciseOf)
+            writeWorkout(workout, planId, ::exerciseOf, createdTagIds)
         }
 
         revived.forEach { exerciseDao.setExerciseDeleted(it, false) }
@@ -225,11 +230,17 @@ class HistoryCsvImporter @Inject constructor(
             planIds = planIds,
             exerciseIds = exerciseIds,
             categoryIds = categoryIds,
-            revivedExerciseIds = revived.toList()
+            revivedExerciseIds = revived.toList(),
+            tagIds = createdTagIds.toList()
         )
     }
 
-    private suspend fun writeWorkout(workout: PlannedWorkout, planId: Int, exerciseOf: (ResolvedExercise) -> ExerciseEntity): Int {
+    private suspend fun writeWorkout(
+        workout: PlannedWorkout,
+        planId: Int,
+        exerciseOf: (ResolvedExercise) -> ExerciseEntity,
+        createdTagIds: MutableList<Int>
+    ): Int {
         val sessionId = workoutDao.insertSession(
             WorkoutSessionEntity(
                 planId = planId,
@@ -240,6 +251,14 @@ class HistoryCsvImporter @Inject constructor(
                 programWeek = workout.programWeek
             )
         ).toInt()
+
+        // The workout journal the file carries: a tag the app does not have yet is made, and remembered for undo
+        if (workout.rating != null || workout.tags.isNotEmpty() || workout.journalNote != null) {
+            val tagIds = workout.tags.mapNotNull { name ->
+                journalRepository.findOrCreateTag(name)?.also { if (it.created) createdTagIds.add(it.tag.id) }?.tag?.id
+            }
+            journalRepository.saveJournal(sessionId, SessionJournal(workout.rating, workout.journalNote, tagIds.toSet()))
+        }
 
         val setRows = mutableListOf<SetLogEntity>()
         val cardioRows = mutableListOf<CardioLogEntity>()
@@ -292,6 +311,8 @@ class HistoryCsvImporter @Inject constructor(
     suspend fun undo(result: ImportResult) {
         database.withTransaction {
             result.sessionIds.chunked(CHUNK).forEach { workoutDao.deleteSessionsByIds(it) }
+            // Tags the import made go with it, unless a workout that was not part of it uses them
+            journalRepository.deleteTagsIfUnused(result.tagIds)
             // A plan of the app's own that the import made goes with it unless a workout has landed in it since
             val removable = result.planIds.filter { workoutDao.countSessionsForPlan(it) == 0 }
             removable.chunked(CHUNK).forEach { workoutDao.deletePlansByIds(it) }

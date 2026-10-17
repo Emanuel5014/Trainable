@@ -266,6 +266,9 @@ class BackupManager @Inject constructor(
                 json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB]?.let { json.put("plate_calculator_plates_lb", it) }
+                json.put("journal_enabled", prefs[UserPreferencesRepository.JOURNAL_ENABLED] ?: false)
+                json.put("journal_prompt_at_finish", prefs[UserPreferencesRepository.JOURNAL_PROMPT_AT_FINISH] ?: true)
+                json.put("journal_rating_enabled", prefs[UserPreferencesRepository.JOURNAL_RATING_ENABLED] ?: true)
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -437,6 +440,12 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG] = jsonObject.getString("plate_calculator_plates_kg")
                                             if (jsonObject.has("plate_calculator_plates_lb"))
                                                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB] = jsonObject.getString("plate_calculator_plates_lb")
+                                            if (jsonObject.has("journal_enabled"))
+                                                prefs[UserPreferencesRepository.JOURNAL_ENABLED] = jsonObject.getBoolean("journal_enabled")
+                                            if (jsonObject.has("journal_prompt_at_finish"))
+                                                prefs[UserPreferencesRepository.JOURNAL_PROMPT_AT_FINISH] = jsonObject.getBoolean("journal_prompt_at_finish")
+                                            if (jsonObject.has("journal_rating_enabled"))
+                                                prefs[UserPreferencesRepository.JOURNAL_RATING_ENABLED] = jsonObject.getBoolean("journal_rating_enabled")
                                         }
                                     }
                                 } catch (e: Exception) {

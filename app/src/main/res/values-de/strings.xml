@@ -1431,4 +1431,53 @@
         <item quantity="one">%d Routine</item>
         <item quantity="other">%d Routinen</item>
     </plurals>
+
+    <!-- Workout journal -->
+    <string name="journal_title">Trainingstagebuch</string>
+    <string name="journal_desc">Bewerte jedes Training und füge Tags und eine Notiz hinzu. Sie erscheinen auch in Exporten, Berichten und im Web-Viewer.</string>
+    <string name="journal_prompt_finish">Beim Beenden fragen</string>
+    <string name="journal_prompt_finish_desc">Zeigt das Tagebuch, wenn du ein Training beendest</string>
+    <string name="journal_rating_setting">Sternebewertung</string>
+    <string name="journal_rating_setting_desc">Bewerte jedes Training mit 1 bis 5 Sternen</string>
+    <string name="journal_manage_tags">Tags verwalten</string>
+    <string name="journal_manage_tags_desc">Benenne um, färbe um, führe zusammen oder lösche deine Tags</string>
+    <string name="journal_how_did_it_go">Wie lief es?</string>
+    <string name="journal_rating_1">Hart</string>
+    <string name="journal_rating_2">Naja</string>
+    <string name="journal_rating_3">Okay</string>
+    <string name="journal_rating_4">Gut</string>
+    <string name="journal_rating_5">Super</string>
+    <string name="journal_rating_cd">%1$d von 5 Sternen</string>
+    <string name="journal_not_rated">Nicht bewertet</string>
+    <string name="journal_tags">Tags</string>
+    <string name="journal_new_tag">Neues Tag</string>
+    <string name="journal_tag_name">Name des Tags</string>
+    <string name="journal_add_note">Notiz hinzufügen…</string>
+    <string name="journal_note">Trainingsnotiz</string>
+    <string name="journal_row_title">Tagebuch</string>
+    <string name="journal_row_empty">Bewertung, Tags und Notiz hinzufügen</string>
+    <string name="journal_edit">Tagebuch bearbeiten</string>
+    <string name="journal_match_any">Mindestens eins</string>
+    <string name="journal_match_all">Alle</string>
+    <string name="journal_filter_rating">Bewertung</string>
+    <string name="journal_bucket_low">1–2 ★</string>
+    <string name="journal_bucket_mid">3 ★</string>
+    <string name="journal_bucket_high">4–5 ★</string>
+    <string name="journal_filter_with_note">Mit Notiz</string>
+    <string name="journal_filter_remove_cd">Filter %1$s entfernen</string>
+    <string name="journal_tags_empty">Noch keine Tags. Damit markierst du ein Training: eine Verletzung, einen Ort, einen Trainingspartner.</string>
+    <string name="journal_tag_rename">Umbenennen</string>
+    <string name="journal_tag_rename_title">Tag umbenennen</string>
+    <string name="journal_tag_color">Farbe</string>
+    <string name="journal_tag_merge">Zusammenführen mit…</string>
+    <string name="journal_merge_action">Zusammenführen</string>
+    <string name="journal_tag_delete_title">Tag löschen?</string>
+    <string name="journal_tag_delete_message">Das Tag wird von den Trainings entfernt, die es verwenden (%1$d). Die Trainings bleiben erhalten.</string>
+    <string name="journal_tag_merge_title">Tag zusammenführen?</string>
+    <string name="journal_tag_merge_message">„%1$s“ wird mit „%2$s“ zusammengeführt: Die zugehörigen Trainings erhalten „%2$s“.</string>
+    <string name="journal_tag_exists">Ein Tag mit diesem Namen existiert: mit „%1$s“ zusammenführen?</string>
+    <plurals name="journal_tag_uses">
+        <item quantity="one">In %1$d Training verwendet</item>
+        <item quantity="other">In %1$d Trainings verwendet</item>
+    </plurals>
 </resources>

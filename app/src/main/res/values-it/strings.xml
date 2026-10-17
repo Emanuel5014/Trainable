@@ -1432,4 +1432,53 @@
         <item quantity="one">%d scheda</item>
         <item quantity="other">%d schede</item>
     </plurals>
+
+    <!-- Workout journal -->
+    <string name="journal_title">Diario allenamento</string>
+    <string name="journal_desc">Dai un voto a ogni allenamento e aggiungi tag e nota. Compaiono anche in export, report e visualizzatore web.</string>
+    <string name="journal_prompt_finish">Chiedi al termine</string>
+    <string name="journal_prompt_finish_desc">Mostra il diario quando termini un allenamento</string>
+    <string name="journal_rating_setting">Voto a stelle</string>
+    <string name="journal_rating_setting_desc">Valuta ogni allenamento da 1 a 5 stelle</string>
+    <string name="journal_manage_tags">Gestisci tag</string>
+    <string name="journal_manage_tags_desc">Rinomina, cambia colore, unisci o elimina i tuoi tag</string>
+    <string name="journal_how_did_it_go">Com\'è andata?</string>
+    <string name="journal_rating_1">Faticosa</string>
+    <string name="journal_rating_2">Così così</string>
+    <string name="journal_rating_3">Ok</string>
+    <string name="journal_rating_4">Buona</string>
+    <string name="journal_rating_5">Ottima</string>
+    <string name="journal_rating_cd">%1$d stelle su 5</string>
+    <string name="journal_not_rated">Senza voto</string>
+    <string name="journal_tags">Tag</string>
+    <string name="journal_new_tag">Nuovo tag</string>
+    <string name="journal_tag_name">Nome del tag</string>
+    <string name="journal_add_note">Aggiungi una nota…</string>
+    <string name="journal_note">Nota dell\'allenamento</string>
+    <string name="journal_row_title">Diario</string>
+    <string name="journal_row_empty">Aggiungi voto, tag e nota</string>
+    <string name="journal_edit">Modifica il diario</string>
+    <string name="journal_match_any">Almeno uno</string>
+    <string name="journal_match_all">Tutti</string>
+    <string name="journal_filter_rating">Voto</string>
+    <string name="journal_bucket_low">1–2 ★</string>
+    <string name="journal_bucket_mid">3 ★</string>
+    <string name="journal_bucket_high">4–5 ★</string>
+    <string name="journal_filter_with_note">Con nota</string>
+    <string name="journal_filter_remove_cd">Rimuovi filtro %1$s</string>
+    <string name="journal_tags_empty">Ancora nessun tag. Servono a segnare un allenamento: un infortunio, un luogo, un compagno.</string>
+    <string name="journal_tag_rename">Rinomina</string>
+    <string name="journal_tag_rename_title">Rinomina il tag</string>
+    <string name="journal_tag_color">Colore</string>
+    <string name="journal_tag_merge">Unisci in…</string>
+    <string name="journal_merge_action">Unisci</string>
+    <string name="journal_tag_delete_title">Eliminare il tag?</string>
+    <string name="journal_tag_delete_message">Il tag viene tolto dagli allenamenti che lo usano (%1$d). Gli allenamenti restano.</string>
+    <string name="journal_tag_merge_title">Unire il tag?</string>
+    <string name="journal_tag_merge_message">“%1$s” viene unito a “%2$s”: i suoi allenamenti avranno “%2$s”.</string>
+    <string name="journal_tag_exists">Esiste già un tag con questo nome: unire in “%1$s”?</string>
+    <plurals name="journal_tag_uses">
+        <item quantity="one">Usato in %1$d allenamento</item>
+        <item quantity="other">Usato in %1$d allenamenti</item>
+    </plurals>
 </resources>

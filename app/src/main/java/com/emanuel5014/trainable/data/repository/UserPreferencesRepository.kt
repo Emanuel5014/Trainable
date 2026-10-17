@@ -86,6 +86,15 @@ class UserPreferencesRepository @Inject constructor(
      * with. Off by default, sets then carry only their note.
      */
     val SET_PERFORMANCE_ENABLED = booleanPreferencesKey("set_performance_enabled")
+    /**
+     * Workout journal: a rating, tags and a note on each whole workout. Off by default; off hides it everywhere
+     * (the data is kept).
+     */
+    val JOURNAL_ENABLED = booleanPreferencesKey("journal_enabled")
+    /** With the journal on: the journal is offered when a workout is finished. On by default. */
+    val JOURNAL_PROMPT_AT_FINISH = booleanPreferencesKey("journal_prompt_at_finish")
+    /** With the journal on: workouts can be rated with 1 to 5 stars. On by default. */
+    val JOURNAL_RATING_ENABLED = booleanPreferencesKey("journal_rating_enabled")
     /** Plates the gym has, comma separated and heaviest first, one list per weight unit. */
     val PLATE_CALCULATOR_PLATES_KG = stringPreferencesKey("plate_calculator_plates_kg")
     val PLATE_CALCULATOR_PLATES_LB = stringPreferencesKey("plate_calculator_plates_lb")
@@ -464,6 +473,33 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setSetPerformanceEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SET_PERFORMANCE_ENABLED] = enabled
+        }
+    }
+
+    val journalEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[JOURNAL_ENABLED] ?: false }
+
+    suspend fun setJournalEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[JOURNAL_ENABLED] = enabled
+        }
+    }
+
+    val journalPromptAtFinish: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[JOURNAL_PROMPT_AT_FINISH] ?: true }
+
+    suspend fun setJournalPromptAtFinish(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[JOURNAL_PROMPT_AT_FINISH] = enabled
+        }
+    }
+
+    val journalRatingEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[JOURNAL_RATING_ENABLED] ?: true }
+
+    suspend fun setJournalRatingEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[JOURNAL_RATING_ENABLED] = enabled
         }
     }
 

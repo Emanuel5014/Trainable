@@ -68,6 +68,9 @@ object NotificationSettings
 object ExerciseMediaSettings
 
 @Serializable
+object JournalTags
+
+@Serializable
 object ImportHistory
 
 @Serializable

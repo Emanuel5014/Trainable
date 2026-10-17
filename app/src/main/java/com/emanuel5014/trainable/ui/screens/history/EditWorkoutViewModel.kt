@@ -10,8 +10,12 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
+import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
+import com.emanuel5014.trainable.data.local.relation.toJournal
+import com.emanuel5014.trainable.data.repository.JournalRepository
+import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
 import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.data.local.entity.repsRange
@@ -56,7 +60,13 @@ data class EditWorkoutState(
     /** Week of the routine the workout followed. */
     val programWeek: Int? = null,
     /** Changes made to the prescription of an exercise while the workout was done, oldest first. */
-    val prescriptionEdits: List<SessionPrescriptionEditEntity> = emptyList()
+    val prescriptionEdits: List<SessionPrescriptionEditEntity> = emptyList(),
+    /** The workout journal is switched on in the settings. */
+    val journalEnabled: Boolean = false,
+    /** Rating, note and tag ids of the workout. */
+    val journal: SessionJournal = SessionJournal(),
+    /** The tags of the workout, for showing them. */
+    val journalTags: List<SessionTagEntity> = emptyList()
 )
 
 data class EditExerciseState(
@@ -71,6 +81,7 @@ class EditWorkoutViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
     private val oneRepMaxRepository: OneRepMaxRepository,
+    private val journalRepository: JournalRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -108,6 +119,16 @@ class EditWorkoutViewModel @Inject constructor(
                 _state.update { it.copy(weightUnit = unit) }
             }
         }
+        viewModelScope.launch {
+            userPreferencesRepository.journalEnabled.collect { enabled ->
+                _state.update { it.copy(journalEnabled = enabled) }
+            }
+        }
+    }
+
+    /** Replaces the rating, note and tags of the workout; the screen follows through the session flow. */
+    fun saveJournal(journal: SessionJournal) {
+        viewModelScope.launch { journalRepository.saveJournal(sessionId, journal) }
     }
 
     private fun loadSessionData() {
@@ -140,7 +161,9 @@ class EditWorkoutViewModel @Inject constructor(
                                 exercises = exercises,
                                 cardioLogs = sessionDetails.cardio,
                                 programWeek = sessionDetails.session.programWeek,
-                                prescriptionEdits = sessionDetails.prescriptionEdits
+                                prescriptionEdits = sessionDetails.prescriptionEdits,
+                                journal = sessionDetails.toJournal(),
+                                journalTags = sessionDetails.tags
                             )
                         }
                     } else {

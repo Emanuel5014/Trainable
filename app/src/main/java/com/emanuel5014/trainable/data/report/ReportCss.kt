@@ -164,6 +164,15 @@ details[open] > .ex-head .ex-chevron { transform: rotate(180deg); }
 .fig .u { font-size: .85em; font-weight: 600; color: var(--muted); }
 .fig .x, .fig .sep { margin: 0 .2em; font-weight: 500; color: var(--muted); }
 
+/* The workout diary */
+.journal { margin-top: 28px; }
+.journal-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.journal-entry { min-width: 0; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.journal-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.stars { color: var(--primary); letter-spacing: 2px; font-size: .95rem; }
+.journal-entry .chips { margin-top: 6px; }
+.journal-note { margin: 8px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+
 /* The sheet next to what was done */
 .weeks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .week { padding: 12px; background: var(--surface-2); border-radius: 16px; border: 1px solid transparent; }

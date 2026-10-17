@@ -53,8 +53,19 @@ object HistoryCsvHeaders {
         else -> "Session Duration (min)"
     }
 
-    /** The header line the export writes. */
-    fun full(languageCode: String, weightUnit: String, advanced: Boolean): String =
+    /** The workout journal: its rating, its tags and its note; written on every row of the workout, only with the journal on. */
+    fun journal(languageCode: String): String = when (languageCode) {
+        "it" -> "Voto,Tag,Nota Allenamento"
+        "es" -> "Valoración,Etiquetas,Nota Sesión"
+        "fr" -> "Évaluation,Tags,Note Séance"
+        "de" -> "Bewertung,Tags,Sitzungsnotiz"
+        "pt" -> "Avaliação,Tags,Nota Sessão"
+        else -> "Rating,Tags,Workout Note"
+    }
+
+    /** The header line the export writes; with [journal] the three journal columns close it. */
+    fun full(languageCode: String, weightUnit: String, advanced: Boolean, journal: Boolean = false): String =
         (if (advanced) basic(languageCode, weightUnit) + "," + prescription(languageCode) else basic(languageCode, weightUnit)) +
-            "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode)
+            "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode) +
+            (if (journal) "," + journal(languageCode) else "")
 }

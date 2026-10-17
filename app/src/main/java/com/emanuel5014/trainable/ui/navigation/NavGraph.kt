@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseCustomizationScreen
 import com.emanuel5014.trainable.ui.screens.settings.ExerciseMediaScreen
+import com.emanuel5014.trainable.ui.screens.settings.JournalTagsScreen
 import com.emanuel5014.trainable.ui.screens.settings.HistoryImportScreen
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsScreen
 import com.emanuel5014.trainable.ui.screens.settings.AiSettingsScreen
@@ -92,7 +93,13 @@ fun MainNavGraph(
             WorkoutSettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToExerciseCustomization = { navController.navigate(ExerciseCustomization) },
-                onNavigateToOneRepMaxes = { navController.navigate(OneRepMaxes) }
+                onNavigateToOneRepMaxes = { navController.navigate(OneRepMaxes) },
+                onNavigateToJournalTags = { navController.navigate(JournalTags) }
+            )
+        }
+        composable<JournalTags> {
+            JournalTagsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable<ExerciseMediaSettings> {

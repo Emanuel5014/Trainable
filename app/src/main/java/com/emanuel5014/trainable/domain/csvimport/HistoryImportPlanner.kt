@@ -92,7 +92,11 @@ data class PlannedWorkout(
     val durationMs: Long?,
     val entries: List<PlannedEntry>,
     /** The workout already in the app that this one repeats. */
-    val duplicateOf: Int?
+    val duplicateOf: Int?,
+    /** The workout journal, when the file carries one: how it went (1..5), its tag names, its note. */
+    val rating: Int? = null,
+    val tags: List<String> = emptyList(),
+    val journalNote: String? = null
 ) {
     val isDuplicate: Boolean get() = duplicateOf != null
     val setCount: Int get() = entries.sumOf { it.sets.size }
@@ -224,7 +228,10 @@ object HistoryImportPlanner {
                 programWeek = week,
                 durationMs = d.rows.firstNotNullOfOrNull { it.row.sessionDurationMs },
                 entries = entries,
-                duplicateOf = duplicateOf(d.date, target, entries, known.sessions, plansByName)
+                duplicateOf = duplicateOf(d.date, target, entries, known.sessions, plansByName),
+                rating = d.rows.firstNotNullOfOrNull { it.row.rating },
+                tags = d.rows.firstOrNull { it.row.tags.isNotEmpty() }?.row?.tags.orEmpty(),
+                journalNote = d.rows.firstNotNullOfOrNull { it.row.journalNote }
             )
         }
 

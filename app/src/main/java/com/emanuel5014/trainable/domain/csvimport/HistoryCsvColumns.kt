@@ -10,6 +10,8 @@ enum class CsvColumn(
 ) {
     DATE, SESSION_ID, PLAN, EXERCISE, CATEGORY, TYPE, SET, WEIGHT, REPS, DURATION, DISTANCE, NOTE,
     SESSION_DURATION, WEEK, RPE, WARMUP, PARTS, PAUSES, ASSISTED, PARTIALS,
+    /** The workout journal: how the workout went (1..5), its tags, its note (the name of a workout is the plan cell). */
+    RATING, TAGS, JOURNAL_NOTE,
     EXTRA(imported = false), PERCENT(imported = false), TARGET_REPS(imported = false), TECHNIQUES(imported = false),
     PERFORMED_TECHNIQUE(imported = false), PROGRAM_CHANGED(imported = false), PROGRAM_ORIGINAL(imported = false)
 }
@@ -63,6 +65,12 @@ object HistoryCsvColumns {
         CsvColumn.SESSION_DURATION to listOf(
             "session duration", "workout duration", "session length", "durata allenamento", "duracion sesion",
             "duree seance", "sitzungsdauer", "duracao sessao"
+        ),
+        CsvColumn.RATING to listOf("rating", "voto", "valoracion", "evaluation", "bewertung", "avaliacao"),
+        CsvColumn.TAGS to listOf("tags", "tag", "etiquetas", "etichette", "etiquettes", "labels"),
+        CsvColumn.JOURNAL_NOTE to listOf(
+            "workout note", "workout notes", "session note", "nota allenamento", "nota sesion", "note seance",
+            "sitzungsnotiz", "nota sessao"
         ),
         CsvColumn.WEEK to listOf("week", "settimana", "semana", "semaine", "woche"),
         CsvColumn.RPE to listOf("rpe"),

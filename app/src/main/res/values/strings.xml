@@ -1431,4 +1431,53 @@
         <item quantity="one">%d routine</item>
         <item quantity="other">%d routines</item>
     </plurals>
+
+    <!-- Workout journal -->
+    <string name="journal_title">Workout journal</string>
+    <string name="journal_desc">Rate each workout and add tags and a note. They also appear in exports, reports and the web viewer.</string>
+    <string name="journal_prompt_finish">Ask when finishing</string>
+    <string name="journal_prompt_finish_desc">Show the journal when you finish a workout</string>
+    <string name="journal_rating_setting">Star rating</string>
+    <string name="journal_rating_setting_desc">Rate each workout from 1 to 5 stars</string>
+    <string name="journal_manage_tags">Manage tags</string>
+    <string name="journal_manage_tags_desc">Rename, recolor, merge or delete your tags</string>
+    <string name="journal_how_did_it_go">How did it go?</string>
+    <string name="journal_rating_1">Rough</string>
+    <string name="journal_rating_2">So-so</string>
+    <string name="journal_rating_3">Okay</string>
+    <string name="journal_rating_4">Good</string>
+    <string name="journal_rating_5">Great</string>
+    <string name="journal_rating_cd">%1$d of 5 stars</string>
+    <string name="journal_not_rated">Not rated</string>
+    <string name="journal_tags">Tags</string>
+    <string name="journal_new_tag">New tag</string>
+    <string name="journal_tag_name">Tag name</string>
+    <string name="journal_add_note">Add a note…</string>
+    <string name="journal_note">Workout note</string>
+    <string name="journal_row_title">Journal</string>
+    <string name="journal_row_empty">Add rating, tags and a note</string>
+    <string name="journal_edit">Edit journal</string>
+    <string name="journal_match_any">Any</string>
+    <string name="journal_match_all">All</string>
+    <string name="journal_filter_rating">Rating</string>
+    <string name="journal_bucket_low">1–2 ★</string>
+    <string name="journal_bucket_mid">3 ★</string>
+    <string name="journal_bucket_high">4–5 ★</string>
+    <string name="journal_filter_with_note">With note</string>
+    <string name="journal_filter_remove_cd">Remove filter %1$s</string>
+    <string name="journal_tags_empty">No tags yet. Use them to mark a workout: an injury, a place, a training partner.</string>
+    <string name="journal_tag_rename">Rename</string>
+    <string name="journal_tag_rename_title">Rename tag</string>
+    <string name="journal_tag_color">Color</string>
+    <string name="journal_tag_merge">Merge into…</string>
+    <string name="journal_merge_action">Merge</string>
+    <string name="journal_tag_delete_title">Delete tag?</string>
+    <string name="journal_tag_delete_message">The tag is removed from the workouts that use it (%1$d). The workouts stay.</string>
+    <string name="journal_tag_merge_title">Merge tag?</string>
+    <string name="journal_tag_merge_message">“%1$s” is merged into “%2$s”: its workouts get “%2$s”.</string>
+    <string name="journal_tag_exists">A tag with this name exists: merge into “%1$s”?</string>
+    <plurals name="journal_tag_uses">
+        <item quantity="one">Used in %1$d workout</item>
+        <item quantity="other">Used in %1$d workouts</item>
+    </plurals>
 </resources>

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.domain.csvimport
 
+import com.emanuel5014.trainable.domain.journal.JournalRating
+import com.emanuel5014.trainable.domain.journal.SessionJournal
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
@@ -61,7 +63,11 @@ data class ParsedRow(
     val parts: List<Int>,
     val pauses: List<Int>,
     val assisted: Int,
-    val partials: Int
+    val partials: Int,
+    /** The workout journal, on every row of the workout: how it went (1..5), its tags, its note. */
+    val rating: Int? = null,
+    val tags: List<String> = emptyList(),
+    val journalNote: String? = null
 )
 
 enum class DateOrder { DAY_FIRST, MONTH_FIRST }
@@ -237,6 +243,13 @@ object HistoryCsvReader {
         val sessionDuration = if (sessionText.isEmpty()) null else SessionDuration.parse(sessionText, header.sessionDurationUnit)
         if (sessionText.isNotEmpty() && sessionDuration == null) warn(IssueCode.IGNORED_VALUE, CsvColumn.SESSION_DURATION, sessionText)
 
+        // The workout journal: a rating that is not 1..5 is dropped with a warning, never the row
+        val ratingText = text(CsvColumn.RATING)
+        val rating = if (ratingText.isEmpty()) null else JournalRating.parse(ratingText)
+        if (ratingText.isNotEmpty() && rating == null) warn(IssueCode.IGNORED_VALUE, CsvColumn.RATING, ratingText)
+        val tags = JournalCsv.splitTags(text(CsvColumn.TAGS))
+        val journalNote = SessionJournal(note = text(CsvColumn.JOURNAL_NOTE)).cleaned().note
+
         val typeText = text(CsvColumn.TYPE)
         val declared = if (typeText.isEmpty()) null else kindOf(typeText)
         if (typeText.isNotEmpty() && declared == null) warn(IssueCode.UNKNOWN_TYPE, CsvColumn.TYPE, typeText)
@@ -265,7 +278,10 @@ object HistoryCsvReader {
             parts = parts,
             pauses = pauses,
             assisted = assisted ?: 0,
-            partials = partials ?: 0
+            partials = partials ?: 0,
+            rating = rating,
+            tags = tags,
+            journalNote = journalNote
         )
     }
 

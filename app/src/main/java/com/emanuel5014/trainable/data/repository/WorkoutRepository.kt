@@ -34,6 +34,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
+import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
@@ -792,9 +793,11 @@ class WorkoutRepository @Inject constructor(
         val sessions = workoutDao.getAllSessionsWithDetails().first()
         // With advanced programming off the file keeps the classic columns
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        // The workout journal adds its three columns only while it is on
+        val journalEnabled = userPreferencesRepository.journalEnabled.first()
 
         val sb = StringBuilder()
-        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced))
+        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -809,6 +812,10 @@ class WorkoutRepository @Inject constructor(
             val planName = escapeCsv(session.plan.nome)
             // How long the whole workout took, repeated on each of its rows (empty when it was never recorded)
             val sessionMinutes = SessionDuration.format(session.session.durationMs)
+            // Its rating, tags and note, repeated on each row like the duration (nothing at all with the journal off)
+            val journalCells = if (journalEnabled) {
+                JournalCsv.cells(session.session.rating, session.tags.map { it.name }.sorted(), session.session.journalNote)
+            } else ""
 
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
@@ -853,7 +860,7 @@ class WorkoutRepository @Inject constructor(
                     else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells")
             }
 
             session.cardio.forEach { cardio ->
@@ -862,7 +869,7 @@ class WorkoutRepository @Inject constructor(
                 val week = session.session.programWeek?.toString() ?: ""
                 val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells")
             }
         }
 

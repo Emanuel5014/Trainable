@@ -441,6 +441,42 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    val journalEnabled = userPrefsRepository.journalEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setJournalEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setJournalEnabled(enabled)
+        }
+    }
+
+    val journalPromptAtFinish = userPrefsRepository.journalPromptAtFinish.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setJournalPromptAtFinish(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setJournalPromptAtFinish(enabled)
+        }
+    }
+
+    val journalRatingEnabled = userPrefsRepository.journalRatingEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setJournalRatingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setJournalRatingEnabled(enabled)
+        }
+    }
+
     val plateCalculatorEnabled = userPrefsRepository.plateCalculatorEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

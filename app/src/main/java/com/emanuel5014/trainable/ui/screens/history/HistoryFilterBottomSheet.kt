@@ -32,6 +32,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import com.emanuel5014.trainable.data.local.relation.TagWithUsage
+import com.emanuel5014.trainable.domain.journal.JournalFilters
+import com.emanuel5014.trainable.domain.journal.RatingBucket
+import com.emanuel5014.trainable.ui.components.journal.TagChip
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -95,7 +99,13 @@ fun HistoryFilterBottomSheet(
     onDateClick: () -> Unit,
     onClearDate: () -> Unit,
     onClearAll: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** The workout journal is on: the tag, rating and note filters show. */
+    journalEnabled: Boolean = false,
+    ratingEnabled: Boolean = true,
+    availableTags: List<TagWithUsage> = emptyList(),
+    journalFilters: JournalFilters = JournalFilters(),
+    onJournalFiltersChanged: (JournalFilters) -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -221,7 +231,7 @@ fun HistoryFilterBottomSheet(
                             letterSpacing = (-0.5).sp
                         )
 
-                        if (selectedPlanId != null || startDate != null) {
+                        if (selectedPlanId != null || startDate != null || (journalEnabled && journalFilters.isActive)) {
                             Text(
                                 text = stringResource(R.string.clear_all),
                                 style = MaterialTheme.typography.labelLarge,
@@ -507,6 +517,91 @@ fun HistoryFilterBottomSheet(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Workout journal: tags, rating and notes
+                if (journalEnabled) {
+                    if (availableTags.isNotEmpty()) {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                ChipGroup(label = stringResource(R.string.journal_tags)) {
+                                    availableTags.forEach { tag ->
+                                        key(tag.id) {
+                                            TagChip(
+                                                name = tag.name,
+                                                colorIndex = tag.colorIndex,
+                                                selected = tag.id in journalFilters.tagIds,
+                                                onClick = {
+                                                    val ids = journalFilters.tagIds
+                                                    onJournalFiltersChanged(
+                                                        journalFilters.copy(tagIds = if (tag.id in ids) ids - tag.id else ids + tag.id)
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                // Several tags: a workout needs at least one of them, or all
+                                if (journalFilters.tagIds.size > 1) {
+                                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                        listOf(false to R.string.journal_match_any, true to R.string.journal_match_all)
+                                            .forEachIndexed { index, (matchAll, label) ->
+                                                SegmentedButton(
+                                                    selected = journalFilters.matchAllTags == matchAll,
+                                                    onClick = { onJournalFiltersChanged(journalFilters.copy(matchAllTags = matchAll)) },
+                                                    shape = SegmentedButtonDefaults.itemShape(index, 2),
+                                                    icon = {},
+                                                    colors = SegmentedButtonDefaults.colors(
+                                                        activeContainerColor = primaryColor.copy(alpha = 0.15f),
+                                                        activeContentColor = primaryColor,
+                                                        activeBorderColor = primaryColor.copy(alpha = 0.3f),
+                                                        inactiveContainerColor = Color.Transparent,
+                                                        inactiveContentColor = onSurfaceVariantColor,
+                                                        inactiveBorderColor = surfaceContainerHighestColor
+                                                    ),
+                                                    label = { Text(stringResource(label)) }
+                                                )
+                                            }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (ratingEnabled) {
+                        item {
+                            ChipGroup(label = stringResource(R.string.journal_filter_rating)) {
+                                RatingBucket.entries.forEach { bucket ->
+                                    val selected = bucket in journalFilters.ratingBuckets
+                                    FilterOptionChip(
+                                        label = stringResource(
+                                            when (bucket) {
+                                                RatingBucket.LOW -> R.string.journal_bucket_low
+                                                RatingBucket.MID -> R.string.journal_bucket_mid
+                                                RatingBucket.HIGH -> R.string.journal_bucket_high
+                                                RatingBucket.UNRATED -> R.string.journal_not_rated
+                                            }
+                                        ),
+                                        selected = selected,
+                                        onClick = {
+                                            val buckets = journalFilters.ratingBuckets
+                                            onJournalFiltersChanged(
+                                                journalFilters.copy(ratingBuckets = if (selected) buckets - bucket else buckets + bucket)
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    item {
+                        ChipGroup(label = stringResource(R.string.journal_note)) {
+                            FilterOptionChip(
+                                label = stringResource(R.string.journal_filter_with_note),
+                                selected = journalFilters.onlyWithNote,
+                                onClick = { onJournalFiltersChanged(journalFilters.copy(onlyWithNote = !journalFilters.onlyWithNote)) }
+                            )
                         }
                     }
                 }

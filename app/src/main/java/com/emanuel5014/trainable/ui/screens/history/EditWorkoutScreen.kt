@@ -112,6 +112,8 @@ import com.emanuel5014.trainable.ui.components.SheetFormBody
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
 import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.journal.JournalRow
+import com.emanuel5014.trainable.ui.components.journal.JournalSheet
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.rememberLazyListReorderState
@@ -191,6 +193,7 @@ fun EditWorkoutScreen(
     var exerciseToSwap by remember { mutableStateOf<Int?>(null) }
     var showDeleteExerciseDialog by remember { mutableStateOf<Int?>(null) }
     var showEditDetailsSheet by remember { mutableStateOf(false) }
+    var showJournalSheet by remember { mutableStateOf(false) }
     var showAddCardio by remember { mutableStateOf(false) }
     var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
@@ -272,6 +275,16 @@ fun EditWorkoutScreen(
                     onEditClick = { showEditDetailsSheet = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
+
+                if (state.journalEnabled) {
+                    JournalRow(
+                        rating = state.journal.rating,
+                        tags = state.journalTags,
+                        note = state.journal.note,
+                        onClick = { showJournalSheet = true },
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    )
+                }
 
                 if (state.exercises.isEmpty() && state.cardioLogs.isEmpty()) {
                     Box(
@@ -445,6 +458,18 @@ fun EditWorkoutScreen(
                 showAddCardio = false
                 pendingCardioCategory = null
             }
+        )
+    }
+
+    if (showJournalSheet) {
+        JournalSheet(
+            initial = state.journal,
+            onSave = {
+                viewModel.saveJournal(it)
+                showJournalSheet = false
+            },
+            onDismiss = { showJournalSheet = false },
+            hapticEnabled = hapticEnabled
         )
     }
 

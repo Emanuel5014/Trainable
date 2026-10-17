@@ -7,6 +7,10 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.data.local.relation.TagWithUsage
+import com.emanuel5014.trainable.data.repository.JournalRepository
+import com.emanuel5014.trainable.domain.journal.JournalFilters
+import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -26,7 +30,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Value of [HistoryUiState.selectedPlanId] that keeps the workouts without a routine of their own: cardio,
+ * Value of [HistoryFilters.planId] that keeps the workouts without a routine of their own: cardio,
  * custom and quick workouts, and those of routines that were deleted. Plan ids start at 1, so it never
  * collides with a real one.
  */
@@ -44,9 +48,14 @@ data class HistoryUiState(
     val selectedSessionIds: Set<Int> = emptySet(),
     val error: String? = null,
     val weightUnit: String = "kg",
-    val selectedPlanId: Int? = null,
-    val startDate: Long? = null,
-    val endDate: Long? = null
+    /** What [filteredSessions] is narrowed to. */
+    val filters: HistoryFilters = HistoryFilters(),
+    /** The workout journal is on: its filters apply and its tags, rating and notes are shown. */
+    val journalEnabled: Boolean = false,
+    /** With the journal on: workouts can be rated, so the rating filter shows. */
+    val journalRatingEnabled: Boolean = true,
+    /** Every tag, to pick from in the filter sheet and to name in the active-filters bar. */
+    val availableTags: List<TagWithUsage> = emptyList()
 )
 
 @HiltViewModel
@@ -54,7 +63,8 @@ class HistoryViewModel @Inject constructor(
     private val repository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val localeManager: AppLocaleManager
+    private val localeManager: AppLocaleManager,
+    private val journalRepository: JournalRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HistoryUiState())
@@ -80,6 +90,23 @@ class HistoryViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.userLanguage.collect { userLang ->
                 _languageCode.value = localeManager.resolveLanguageForCompose(userLang)
+            }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.journalEnabled.collect { enabled ->
+                _uiState.update { it.copy(journalEnabled = enabled) }
+                // Switching the journal off or on changes which filters count
+                applyFilters()
+            }
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.journalRatingEnabled.collect { enabled ->
+                _uiState.update { it.copy(journalRatingEnabled = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            journalRepository.tags.collect { tags ->
+                _uiState.update { it.copy(availableTags = tags) }
             }
         }
     }
@@ -119,24 +146,19 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    fun setFilters(planId: Int?, startDate: Long?, endDate: Long?) {
-        _uiState.update { it.copy(selectedPlanId = planId, startDate = startDate, endDate = endDate) }
+    fun setFilters(filters: HistoryFilters) {
+        _uiState.update { it.copy(filters = filters) }
         applyFilters()
+    }
+
+    /** Narrows the history to the workouts with this one tag (what tapping a tag on a card does); routine and dates stay. */
+    fun filterByTag(tagId: Int) {
+        setFilters(_uiState.value.filters.copy(journal = JournalFilters(tagIds = setOf(tagId))))
     }
 
     private fun applyFilters() {
         val state = _uiState.value
-        val filtered = state.sessions.filter { sessionDetails ->
-            val matchesPlan = when (state.selectedPlanId) {
-                null -> true
-                NO_ROUTINE_PLAN_ID -> sessionDetails.plan.isSystemPlan
-                else -> sessionDetails.session.planId == state.selectedPlanId
-            }
-            val matchesDate = (state.startDate == null || sessionDetails.session.timestamp >= state.startDate) &&
-                    (state.endDate == null || sessionDetails.session.timestamp <= (state.endDate + 86399999)) // Include the whole end day
-            matchesPlan && matchesDate
-        }
-        _uiState.update { it.copy(filteredSessions = filtered) }
+        _uiState.update { it.copy(filteredSessions = state.filters.apply(state.sessions, state.journalEnabled)) }
     }
 
     fun loadSessionDetails(sessionId: Int) {
@@ -156,6 +178,11 @@ class HistoryViewModel @Inject constructor(
     /** Adds an exercise the user deleted from the exercise list back, from a workout that still has it. */
     fun restoreExercise(exerciseId: Int) {
         viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
+    }
+
+    /** Replaces the rating, note and tags of a workout (the card follows through the history flow). */
+    fun saveJournal(sessionId: Int, journal: SessionJournal) {
+        viewModelScope.launch { journalRepository.saveJournal(sessionId, journal) }
     }
 
     fun deleteSession(sessionId: Int) {

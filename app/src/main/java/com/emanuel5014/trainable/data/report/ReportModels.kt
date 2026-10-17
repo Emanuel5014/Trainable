@@ -18,8 +18,13 @@ data class PlanReport(
     val weeksCount: Int = 1,
     val currentWeek: Int = 1,
     /** What was trained week by week; empty for a plain routine. */
-    val weeks: List<WeekSummary> = emptyList()
+    val weeks: List<WeekSummary> = emptyList(),
+    /** The workouts with a journal (rating, tags or note), newest first; empty with the workout journal off. */
+    val journal: List<JournalEntry> = emptyList()
 )
+
+/** What the lifter said about one workout of the routine. */
+data class JournalEntry(val date: Long, val rating: Int?, val tags: List<String>, val note: String?)
 
 /** The workouts of one week of a periodized program. */
 data class WeekSummary(val week: Int, val workouts: Int, val firstDate: Long?, val lastDate: Long?)
