@@ -1202,9 +1202,11 @@
     <string name="plate_total_weight">Peso totale</string>
     <string name="plate_bar">Bilanciere</string>
     <string name="plate_bar_other">Altro</string>
+    <string name="plate_bar_none">Senza bilanciere</string>
     <string name="plate_bar_dialog_title">Peso del bilanciere</string>
     <string name="plate_per_side">Per lato: %1$s</string>
     <string name="plate_no_plates">Nessun disco, solo il bilanciere</string>
+    <string name="plate_none">Nessun disco</string>
     <string name="plate_lighter_than_bar">Meno del bilanciere. Aumenta il peso o scegli un bilanciere più leggero.</string>
     <string name="plate_cannot_load">%1$s non si possono caricare con i tuoi dischi.</string>
     <string name="plate_edited">Modificato a mano</string>

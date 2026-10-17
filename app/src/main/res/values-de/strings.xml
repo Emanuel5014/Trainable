@@ -1202,9 +1202,11 @@
     <string name="plate_total_weight">Gesamtgewicht</string>
     <string name="plate_bar">Stange</string>
     <string name="plate_bar_other">Andere</string>
+    <string name="plate_bar_none">Ohne Stange</string>
     <string name="plate_bar_dialog_title">Gewicht der Stange</string>
     <string name="plate_per_side">Pro Seite: %1$s</string>
     <string name="plate_no_plates">Keine Scheiben, nur die Stange</string>
+    <string name="plate_none">Keine Scheiben</string>
     <string name="plate_lighter_than_bar">Leichter als die Stange. Erhöhe das Gewicht oder wähle eine leichtere Stange.</string>
     <string name="plate_cannot_load">%1$s lassen sich mit deinen Scheiben nicht laden.</string>
     <string name="plate_edited">Von Hand geändert</string>

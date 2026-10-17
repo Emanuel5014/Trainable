@@ -1202,9 +1202,11 @@
     <string name="plate_total_weight">Peso total</string>
     <string name="plate_bar">Barra</string>
     <string name="plate_bar_other">Outra</string>
+    <string name="plate_bar_none">Sem barra</string>
     <string name="plate_bar_dialog_title">Peso da barra</string>
     <string name="plate_per_side">Por lado: %1$s</string>
     <string name="plate_no_plates">Sem anilhas, só a barra</string>
+    <string name="plate_none">Sem anilhas</string>
     <string name="plate_lighter_than_bar">Mais leve que a barra. Aumente o peso ou escolha uma barra mais leve.</string>
     <string name="plate_cannot_load">%1$s não podem ser carregados com suas anilhas.</string>
     <string name="plate_edited">Editado manualmente</string>

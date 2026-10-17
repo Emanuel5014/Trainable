@@ -141,11 +141,13 @@ fun PlateChip(
     val result = remember(total, bar, plates) { PlateCalculator.solve(total, bar, plates) }
     val barText = "${format(bar)} $weightUnit"
     val loaded = groupPlates(result.platesPerSide)
+    val barless = !PlateCalculator.hasBar(bar)
     val text = when {
         result.belowBar -> stringResource(R.string.plate_chip_below_bar, barText)
-        result.isExact && result.platesPerSide.isEmpty() -> stringResource(R.string.plate_chip_bar_only, barText)
-        // The usual bar is taken for granted; any other bar is worth a mention
-        result.isExact && abs(bar - PlateCalculator.defaultBar(weightUnit)) < 0.01f ->
+        result.isExact && result.platesPerSide.isEmpty() ->
+            if (barless) stringResource(R.string.plate_none) else stringResource(R.string.plate_chip_bar_only, barText)
+        // The usual bar is taken for granted, and no bar has nothing to mention; any other bar is worth a mention
+        result.isExact && (barless || abs(bar - PlateCalculator.defaultBar(weightUnit)) < 0.01f) ->
             stringResource(R.string.plate_chip_per_side_plain, loaded)
         result.isExact -> stringResource(R.string.plate_chip_per_side, loaded, barText)
         else -> stringResource(R.string.plate_chip_short, loaded.ifEmpty { "–" }, "${format(result.missing)} $weightUnit")
@@ -301,7 +303,8 @@ fun PlateCalculatorSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val custom = presets.none { abs(it - bar) < 0.001f }
+                        val barless = !PlateCalculator.hasBar(bar)
+                        val custom = !barless && presets.none { abs(it - bar) < 0.001f }
                         presets.forEach { preset ->
                             SheetChip(
                                 label = "${format(preset)} $weightUnit",
@@ -313,6 +316,15 @@ fun PlateCalculatorSheet(
                                 }
                             )
                         }
+                        SheetChip(
+                            label = stringResource(R.string.plate_bar_none),
+                            selected = barless,
+                            onClick = {
+                                bar = 0f
+                                manual = null
+                                onBarChange(0f)
+                            }
+                        )
                         SheetChip(
                             label = if (custom) "${format(bar)} $weightUnit" else stringResource(R.string.plate_bar_other),
                             selected = custom,
@@ -348,7 +360,11 @@ fun PlateCalculatorSheet(
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            text = if (shown.isEmpty()) stringResource(R.string.plate_no_plates) else groupPlates(shown),
+                            text = when {
+                                shown.isNotEmpty() -> groupPlates(shown)
+                                PlateCalculator.hasBar(bar) -> stringResource(R.string.plate_no_plates)
+                                else -> stringResource(R.string.plate_none)
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant
                         )
@@ -597,7 +613,7 @@ private fun BarWeightDialog(
     onDismiss: () -> Unit
 ) {
     var text by remember { mutableStateOf("") }
-    val value = text.replace(',', '.').toFloatOrNull()?.takeIf { it > 0f && it <= 500f }
+    val value = PlateCalculator.parseBar(text)
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -1202,9 +1202,11 @@
     <string name="plate_total_weight">Poids total</string>
     <string name="plate_bar">Barre</string>
     <string name="plate_bar_other">Autre</string>
+    <string name="plate_bar_none">Sans barre</string>
     <string name="plate_bar_dialog_title">Poids de la barre</string>
     <string name="plate_per_side">Par côté : %1$s</string>
     <string name="plate_no_plates">Aucun disque, juste la barre</string>
+    <string name="plate_none">Aucun disque</string>
     <string name="plate_lighter_than_bar">Plus léger que la barre. Augmente le poids ou choisis une barre plus légère.</string>
     <string name="plate_cannot_load">%1$s ne peuvent pas être chargés avec tes disques.</string>
     <string name="plate_edited">Modifié à la main</string>

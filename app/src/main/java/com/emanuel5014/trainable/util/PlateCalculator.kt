@@ -21,6 +21,15 @@ object PlateCalculator {
     val DEFAULT_PLATES_KG = listOf(25f, 20f, 15f, 10f, 5f, 2.5f, 1.25f)
     val DEFAULT_PLATES_LB = listOf(45f, 35f, 25f, 10f, 5f, 2.5f)
 
+    /** Heaviest bar the lifter can type in. */
+    const val MAX_BAR = 500f
+
+    /** A bar of 0 means no bar at all: a Smith machine or a plate-loaded machine, where only the plates count. */
+    fun hasBar(bar: Float): Boolean = hundredths(bar) > 0
+
+    /** The bar weight typed by the lifter, 0 included; null when the text is not a usable weight. */
+    fun parseBar(text: String): Float? = text.replace(',', '.').toFloatOrNull()?.takeIf { it in 0f..MAX_BAR }
+
     fun defaultBar(unit: String): Float = if (unit == "lb") DEFAULT_BAR_LB else DEFAULT_BAR_KG
     fun barPresets(unit: String): List<Float> = if (unit == "lb") BAR_PRESETS_LB else BAR_PRESETS_KG
     fun plateChoices(unit: String): List<Float> = if (unit == "lb") PLATE_CHOICES_LB else PLATE_CHOICES_KG

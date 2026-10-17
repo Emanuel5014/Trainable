@@ -1202,9 +1202,11 @@
     <string name="plate_total_weight">Total weight</string>
     <string name="plate_bar">Bar</string>
     <string name="plate_bar_other">Other</string>
+    <string name="plate_bar_none">No bar</string>
     <string name="plate_bar_dialog_title">Bar weight</string>
     <string name="plate_per_side">Per side: %1$s</string>
     <string name="plate_no_plates">No plates, just the bar</string>
+    <string name="plate_none">No plates</string>
     <string name="plate_lighter_than_bar">Lighter than the bar. Raise the weight or pick a lighter bar.</string>
     <string name="plate_cannot_load">%1$s can\'t be loaded with your plates.</string>
     <string name="plate_edited">Edited by hand</string>
