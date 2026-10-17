@@ -26,6 +26,8 @@ enum class AiModelVariant(
     val fileName: String,
     val downloadUrl: String,
     val sizeLabel: String,
+    /** Exact size of [downloadUrl] on Hugging Face, which tells an imported file which model it is. */
+    val fileSizeBytes: Long,
     val requiredRamGb: Int
 ) {
     E2B(
@@ -34,6 +36,7 @@ enum class AiModelVariant(
         fileName = "gemma-4-E2B-it.litertlm",
         downloadUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
         sizeLabel = "~2.4 GB",
+        fileSizeBytes = 2_588_147_712L,
         requiredRamGb = 6
     ),
     E4B(
@@ -42,6 +45,7 @@ enum class AiModelVariant(
         fileName = "gemma-4-E4B-it.litertlm",
         downloadUrl = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
         sizeLabel = "~3.4 GB",
+        fileSizeBytes = 3_659_530_240L,
         requiredRamGb = 8
     );
 
@@ -52,7 +56,8 @@ enum class AiModelVariant(
 
 sealed interface AiModelStatus {
     data object NotDownloaded : AiModelStatus
-    data class Downloading(val progress: Float) : AiModelStatus
+    /** [importing]: the file is being copied from the device rather than downloaded. */
+    data class Downloading(val progress: Float, val importing: Boolean = false) : AiModelStatus
     data object Ready : AiModelStatus
     data class Error(val message: String) : AiModelStatus
 }

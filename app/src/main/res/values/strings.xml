@@ -832,6 +832,14 @@
     <string name="ai_model_download_retry">Retry download</string>
     <string name="ai_model_downloading">Downloading model… %1$d%%</string>
     <string name="ai_model_ready">Model ready</string>
+    <string name="ai_model_import">Import a model you already have</string>
+    <string name="ai_model_import_note">Pick a Gemma 4 E2B or E4B .litertlm file. It is copied into the app, so it takes up its size again until you delete the original.</string>
+    <string name="ai_model_importing">Importing model… %1$d%%</string>
+    <string name="ai_import_error_format">This isn\'t a LiteRT-LM model file (.litertlm).</string>
+    <string name="ai_import_error_unsupported">This file isn\'t Gemma 4 E2B or E4B, the models Trainable supports. Builds for GPU, web or a specific chip don\'t work.</string>
+    <string name="ai_import_error_space">Not enough free space: about %1$s are needed.</string>
+    <string name="ai_import_error_read">Couldn\'t read or copy the file. Try again.</string>
+    <string name="ai_import_error_busy">This model is already being downloaded or imported.</string>
     <string name="ai_model_delete">Delete</string>
     <string name="ai_model_delete_confirm_title">Delete model?</string>
     <string name="ai_model_delete_confirm_desc">The AI model will be deleted from your device. You can download it again later.</string>

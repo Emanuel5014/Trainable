@@ -832,6 +832,14 @@
     <string name="ai_model_download_retry">Download wiederholen</string>
     <string name="ai_model_downloading">Modell wird geladen… %1$d%%</string>
     <string name="ai_model_ready">Modell bereit</string>
+    <string name="ai_model_import">Bereits vorhandenes Modell importieren</string>
+    <string name="ai_model_import_note">Wähle eine Gemma 4 E2B- oder E4B-.litertlm-Datei. Sie wird in die App kopiert und belegt daher ihren Speicherplatz erneut, bis du das Original löschst.</string>
+    <string name="ai_model_importing">Modell wird importiert… %1$d%%</string>
+    <string name="ai_import_error_format">Das ist keine LiteRT-LM-Modelldatei (.litertlm).</string>
+    <string name="ai_import_error_unsupported">Diese Datei ist weder Gemma 4 E2B noch E4B, die von Trainable unterstützten Modelle. Versionen für GPU, Web oder einen bestimmten Chip funktionieren nicht.</string>
+    <string name="ai_import_error_space">Nicht genug freier Speicher: etwa %1$s werden benötigt.</string>
+    <string name="ai_import_error_read">Die Datei konnte nicht gelesen oder kopiert werden. Versuche es erneut.</string>
+    <string name="ai_import_error_busy">Dieses Modell wird bereits heruntergeladen oder importiert.</string>
     <string name="ai_model_delete">Löschen</string>
     <string name="ai_model_delete_confirm_title">Modell löschen?</string>
     <string name="ai_model_delete_confirm_desc">Das KI-Modell wird von deinem Gerät gelöscht. Du kannst es später erneut herunterladen.</string>

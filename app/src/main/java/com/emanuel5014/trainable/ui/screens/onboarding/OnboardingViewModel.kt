@@ -11,6 +11,7 @@ import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
 import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
+import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.local.entity.UserEntity
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConfig
@@ -133,6 +134,17 @@ class OnboardingViewModel @Inject constructor(
     fun cancelAiModelDownload() {
         val variant = AiModelVariant.fromId(aiModelVariant.value)
         modelDownloadManager.cancelDownload(variant)
+    }
+
+    val aiModelImportError: StateFlow<ModelImportError?> = modelDownloadManager.importError
+
+    /** Copies in a Gemma 4 model the user already has; the variant follows the file picked. */
+    fun importAiModel(uri: Uri) {
+        modelDownloadManager.importModel(uri)
+    }
+
+    fun clearAiModelImportError() {
+        modelDownloadManager.clearImportError()
     }
 
     fun clearStatus() {

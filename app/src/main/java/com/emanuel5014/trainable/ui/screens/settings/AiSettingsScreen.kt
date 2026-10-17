@@ -36,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ import com.emanuel5014.trainable.data.ai.AiModelStatus
 import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.shared.ModelImportOption
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -75,7 +77,11 @@ fun AiSettingsScreen(
     val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiModelVariant by viewModel.aiModelVariant.collectAsState()
     val aiModelStatus by viewModel.aiModelStatus.collectAsState()
+    val aiModelImportError by viewModel.aiModelImportError.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
+
+    // An error left by an earlier visit is no news now
+    LaunchedEffect(Unit) { viewModel.clearAiModelImportError() }
 
     var showDeleteModelDialog by remember { mutableStateOf(false) }
 
@@ -223,7 +229,10 @@ fun AiSettingsScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            stringResource(R.string.ai_model_downloading, (status.progress * 100).toInt()),
+                                            stringResource(
+                                                if (status.importing) R.string.ai_model_importing else R.string.ai_model_downloading,
+                                                (status.progress * 100).toInt()
+                                            ),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = Primary,
                                             fontWeight = FontWeight.ExtraBold
@@ -279,18 +288,30 @@ fun AiSettingsScreen(
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Text(stringResource(R.string.ai_model_download_retry))
                                     }
+                                    ModelImportOption(
+                                        error = aiModelImportError,
+                                        onPicked = { viewModel.importAiModel(it) },
+                                        onClearError = { viewModel.clearAiModelImportError() }
+                                    )
                                 }
                             }
                             AiModelStatus.NotDownloaded -> {
-                                GymButton(
-                                    onClick = { viewModel.downloadAiModel() },
-                                    containerColor = Primary.copy(alpha = 0.1f),
-                                    contentColor = Primary,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    GymButton(
+                                        onClick = { viewModel.downloadAiModel() },
+                                        containerColor = Primary.copy(alpha = 0.1f),
+                                        contentColor = Primary,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
+                                    }
+                                    ModelImportOption(
+                                        error = aiModelImportError,
+                                        onPicked = { viewModel.importAiModel(it) },
+                                        onClearError = { viewModel.clearAiModelImportError() }
+                                    )
                                 }
                             }
                         }
