@@ -13,7 +13,9 @@ ksp = "2.3.12"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
 room = "2.8.5"
-navigationCompose = "2.10.2"
+# Held at 2.9.8: with 2.10.x the back gesture between screens loses the in-app animation (the window shrinks like a
+# system back-to-home instead of the screens sliding). Re-test the gesture before moving to a newer version.
+navigationCompose = "2.9.8"
 serialization = "1.11.0"
 datastore = "1.2.1"
 workmanager = "2.12.0"
