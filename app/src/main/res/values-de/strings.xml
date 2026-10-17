@@ -35,6 +35,8 @@
     <string name="retry">Wiederholen</string>
     <string name="dismiss">Verwerfen</string>
     <string name="collapse">Einklappen</string>
+    <string name="hub_panel_collapse">Bereich einklappen</string>
+    <string name="hub_panel_expand">Bereich ausklappen</string>
     <string name="yes">JA</string>
     <string name="no">NEIN</string>
     <string name="selected">Ausgewählt</string>

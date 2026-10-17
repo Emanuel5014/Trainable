@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.util.lerp
 import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Tertiary
 
@@ -50,7 +52,9 @@ fun RestTimerSection(
     showSubtract: Boolean = true,
     /** Seconds the two time buttons move the countdown by (Workout settings), only used for their labels. */
     addSeconds: Int = 30,
-    subtractSeconds: Int = 10
+    subtractSeconds: Int = 10,
+    /** How open the bottom hub is (1 open, 0 thin strip): the card shrinks and drops its label as it closes. */
+    expansion: () -> Float = { 1f }
 ) {
     val isVisible = remainingSeconds > 0
     val progress = if (totalRestSeconds > 0) 1f - (remainingSeconds.toFloat() / totalRestSeconds.toFloat()) else 0f
@@ -61,12 +65,13 @@ fun RestTimerSection(
         exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         modifier = modifier
     ) {
+        val e = expansion()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(lerp(18.dp, 24.dp, e)))
                 .background(Tertiary)
-                .padding(20.dp)
+                .padding(lerp(9.dp, 20.dp, e))
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -80,7 +85,7 @@ fun RestTimerSection(
                     Box(contentAlignment = Alignment.Center) {
                         CircularWavyProgressIndicator(
                             progress = { progress },
-                            modifier = Modifier.size(56.dp),
+                            modifier = Modifier.size(lerp(32.dp, 56.dp, e)),
                             color = OnTertiary,
                             trackColor = OnTertiary.copy(alpha = 0.2f),
                             stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
@@ -90,22 +95,24 @@ fun RestTimerSection(
                             imageVector = Icons.Rounded.Timer,
                             contentDescription = "Rest Timer",
                             tint = OnTertiary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(lerp(16.dp, 24.dp, e))
                         )
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(lerp(10.dp, 16.dp, e)))
                     Column {
-                        Text(
-                            text = "REST",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = OnTertiary.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                        HubSlot(expansion = expansion, from = 0.3f, to = 0.55f) {
+                            Text(
+                                text = "REST",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = OnTertiary.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
                         val minutes = remainingSeconds / 60
                         val seconds = remainingSeconds % 60
                         Text(
                             text = String.format("%d:%02d", minutes, seconds),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
                             color = OnTertiary,
                             fontWeight = FontWeight.ExtraBold
                         )

@@ -35,6 +35,8 @@
     <string name="retry">Reintentar</string>
     <string name="dismiss">Descartar</string>
     <string name="collapse">Contraer</string>
+    <string name="hub_panel_collapse">Contraer el panel</string>
+    <string name="hub_panel_expand">Expandir el panel</string>
     <string name="yes">SÍ</string>
     <string name="no">NO</string>
     <string name="selected">Seleccionado</string>

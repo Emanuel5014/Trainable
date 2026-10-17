@@ -38,6 +38,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import kotlin.math.roundToInt
+import com.emanuel5014.trainable.ui.theme.ResponsiveSize
+import com.emanuel5014.trainable.ui.components.rememberHubSheetState
+import com.emanuel5014.trainable.ui.components.hubScaled
+import com.emanuel5014.trainable.ui.components.HubSlot
+import com.emanuel5014.trainable.ui.components.HubPanel
+import com.emanuel5014.trainable.ui.components.HubMotion
+import androidx.compose.ui.util.lerp
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -283,6 +294,9 @@ fun WorkoutExecutionScreen(
     var mediaViewer by remember { mutableStateOf<Pair<Int, String>?>(null) }
     // Height of the bottom interaction hub, so the large media card only takes the room left above it
     var hubHeightPx by remember { mutableIntStateOf(0) }
+    // The lifter drags the hub between open and a thin strip; it stays where it was left while the screen is open
+    val hubSheet = rememberHubSheetState()
+    val screenDensity = LocalDensity.current
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.setExerciseMedia(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.mediaMessages)
     // Each cardio set has its own distance
@@ -683,20 +697,10 @@ fun WorkoutExecutionScreen(
                         ) {
                             if (targetExState.isCardio) {
                                 val showBottomHubForCardio = targetExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)
-                                val cardioBottomPadding by animateDpAsState(
-                                    targetValue = when {
-                                        // The rest card is taller than the hub: the next set's buttons stay above it
-                                        state.remainingRestSeconds > 0 -> 230.dp
-                                        showBottomHubForCardio && (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) -> 190.dp
-                                        showBottomHubForCardio || state.remainingRestSeconds > 0 -> 140.dp
-                                        else -> 32.dp
-                                    },
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMediumLow
-                                    ),
-                                    label = "cardioBottomPadding"
-                                )
+                                // The content stays above the hub, whatever step it is on
+                                val cardioBottomPadding = if (showBottomHubForCardio || state.remainingRestSeconds > 0) {
+                                    with(screenDensity) { hubHeightPx.toDp() } + 16.dp
+                                } else 32.dp
                                 CardioExerciseContent(
                                     exerciseIndex = targetIndex,
                                     exerciseState = targetExState,
@@ -714,19 +718,8 @@ fun WorkoutExecutionScreen(
                                 )
                             } else if (usesEmomClock(targetExState)) {
                                 val emomIdle = state.emomRun == null
-                                val emomBottomPadding by animateDpAsState(
-                                    targetValue = when {
-                                        !emomIdle -> 32.dp
-                                        state.remainingRestSeconds > 0 -> 230.dp
-                                        state.isQuickWorkout || state.inlineExerciseModificationsEnabled -> 190.dp
-                                        else -> 140.dp
-                                    },
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMediumLow
-                                    ),
-                                    label = "emomBottomPadding"
-                                )
+                                // The content stays above the hub, whatever step it is on
+                                val emomBottomPadding = if (emomIdle) with(screenDensity) { hubHeightPx.toDp() } + 16.dp else 32.dp
                                 EmomExerciseContent(
                                     exerciseIndex = targetIndex,
                                     exerciseState = targetExState,
@@ -753,15 +746,17 @@ fun WorkoutExecutionScreen(
                                 var freeMediaPx by remember(targetIndex) { mutableIntStateOf(0) }
                                 val largeMediaVisible = largeMediaFile != null &&
                                     freeMediaPx >= with(localDensity) { MEDIA_CARD_MIN_HEIGHT.roundToPx() }
-                                LaunchedEffect(largeMediaFile != null, hubHeightPx) {
-                                    if (largeMediaFile == null || hubHeightPx <= 0) {
+                                LaunchedEffect(largeMediaFile != null) {
+                                    if (largeMediaFile == null) {
                                         freeMediaPx = 0
                                         return@LaunchedEffect
                                     }
                                     val bottomGapPx = with(localDensity) { 16.dp.roundToPx() }
                                     snapshotFlow {
                                         // While the list is scrolled the sets' position says nothing about free room: keep the last value
-                                        if (exerciseListState.firstVisibleItemIndex != 0 || exerciseListState.firstVisibleItemScrollOffset != 0) {
+                                        if (hubHeightPx <= 0) {
+                                            0
+                                        } else if (exerciseListState.firstVisibleItemIndex != 0 || exerciseListState.firstVisibleItemScrollOffset != 0) {
                                             null
                                         } else {
                                             val info = exerciseListState.layoutInfo
@@ -1404,10 +1399,14 @@ fun WorkoutExecutionScreen(
                                         }
                                     }
                                     item(key = "hub_spacer") {
-                                        // With the large media card the list already ends exactly above the hub
-                                        val hubSpacer = if (largeMediaVisible) {
-                                            with(localDensity) { hubHeightPx.toDp() }
-                                        } else if (com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight) 220.dp else 280.dp
+                                        // The list ends above the hub, whatever step it is on: with the large media card
+                                        // exactly above it, otherwise with a little air
+                                        val hubSpacer = when {
+                                            largeMediaVisible -> with(localDensity) { hubHeightPx.toDp() }
+                                            hubHeightPx > 0 -> with(localDensity) { hubHeightPx.toDp() } + 16.dp
+                                            com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight -> 220.dp
+                                            else -> 280.dp
+                                        }
                                         Spacer(modifier = Modifier.height(hubSpacer)) // Space for the dynamic hub
                                     }
                                 }
@@ -1423,29 +1422,31 @@ fun WorkoutExecutionScreen(
                 // While the minute clock runs, its screen has everything the lifter needs.
                 val showBottomHub = (!isCardioActive || currentExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)) &&
                     !(isEmomActive && state.emomRun != null)
+                val isResting = state.remainingRestSeconds > 0
+                val hubMode = when {
+                    // The pause of a mini-set is over: how many reps did it have?
+                    state.miniSet?.awaitingReps == true -> HubMode.MiniSet
+                    // A set being edited wins over the rest card, which stays visible in a slim form
+                    setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
+                    isResting -> HubMode.Resting
+                    // Cardio and the EMOM clock have their own screens: the hub only navigates.
+                    isCardioActive || isEmomActive -> HubMode.Cardio
+                    activeSet == null || activeSet.isCompleted -> HubMode.Completed
+                    isEditingValues -> HubMode.Editing
+                    else -> HubMode.Logging
+                }
+                // These ask the lifter to type something: the hub opens by itself and goes back to the strip afterwards
+                val hubNeedsInput = hubMode == HubMode.MiniSet || hubMode == HubMode.EditingSet || hubMode == HubMode.Editing
 
-                AnimatedVisibility(
+                HubPanel(
+                    sheet = hubSheet,
                     visible = showBottomHub,
-                    enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
-                    exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
+                    locked = hubNeedsInput,
+                    hapticEnabled = state.hapticEnabled,
+                    horizontalPadding = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding,
+                    onHeightChanged = { hubHeightPx = it },
                     modifier = Modifier.align(Alignment.BottomCenter)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onSizeChanged { hubHeightPx = it.height },
-                        color = Surface,
-                        tonalElevation = 8.dp,
-                        shadowElevation = 16.dp
-                    ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(horizontal = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding, vertical = 16.dp)
-                    ) {
-                        val isResting = state.remainingRestSeconds > 0
-
+                ) { expansion ->
                         AnimatedVisibility(
                             visible = state.warmupTimerEnabled && state.warmupTimerRemaining > 0,
                             enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
@@ -1453,13 +1454,14 @@ fun WorkoutExecutionScreen(
                         ) {
                             val warmupProgress = if (state.warmupTimerTotalSeconds > 0)
                                 1f - (state.warmupTimerRemaining.toFloat() / state.warmupTimerTotalSeconds.toFloat()) else 0f
+                            val e = expansion()
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 8.dp)
-                                    .clip(RoundedCornerShape(18.dp))
+                                    .clip(RoundedCornerShape(lerp(14.dp, 18.dp, e)))
                                     .background(Tertiary)
-                                    .padding(16.dp)
+                                    .padding(lerp(9.dp, 16.dp, e))
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -1473,7 +1475,7 @@ fun WorkoutExecutionScreen(
                                         Box(contentAlignment = Alignment.Center) {
                                             CircularWavyProgressIndicator(
                                                 progress = { warmupProgress },
-                                                modifier = Modifier.size(48.dp),
+                                                modifier = Modifier.size(lerp(32.dp, 48.dp, e)),
                                                 color = OnTertiary,
                                                 trackColor = OnTertiary.copy(alpha = 0.2f),
                                                 stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
@@ -1483,24 +1485,26 @@ fun WorkoutExecutionScreen(
                                                 imageVector = Icons.Rounded.Timer,
                                                 contentDescription = null,
                                                 tint = OnTertiary,
-                                                modifier = Modifier.size(20.dp)
+                                                modifier = Modifier.size(lerp(14.dp, 20.dp, e))
                                             )
                                         }
-                                        Spacer(modifier = Modifier.width(14.dp))
+                                        Spacer(modifier = Modifier.width(lerp(10.dp, 14.dp, e)))
                                         Column {
-                                            Text(
-                                                text = stringResource(R.string.warmup_label).uppercase(),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = OnTertiary.copy(alpha = 0.7f),
-                                                fontWeight = FontWeight.ExtraBold,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
+                                            HubSlot(expansion = expansion, from = 0.3f, to = 0.55f) {
+                                                Text(
+                                                    text = stringResource(R.string.warmup_label).uppercase(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = OnTertiary.copy(alpha = 0.7f),
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
                                             val wMinutes = state.warmupTimerRemaining / 60
                                             val wSeconds = state.warmupTimerRemaining % 60
                                             Text(
                                                 text = String.format("%d:%02d", wMinutes, wSeconds),
-                                                style = MaterialTheme.typography.titleLarge,
+                                                style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
                                                 color = OnTertiary,
                                                 fontWeight = FontWeight.ExtraBold
                                             )
@@ -1537,18 +1541,7 @@ fun WorkoutExecutionScreen(
                         }
 
                         AnimatedContent(
-                            targetState = when {
-                                // The pause of a mini-set is over: how many reps did it have?
-                                state.miniSet?.awaitingReps == true -> HubMode.MiniSet
-                                // A set being edited wins over the rest card, which stays visible in a slim form
-                                setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
-                                isResting -> HubMode.Resting
-                                // Cardio and the EMOM clock have their own screens: the hub only navigates.
-                                isCardioActive || isEmomActive -> HubMode.Cardio
-                                activeSet == null || activeSet.isCompleted -> HubMode.Completed
-                                isEditingValues -> HubMode.Editing
-                                else -> HubMode.Logging
-                            },
+                            targetState = hubMode,
                             label = "HubTransition",
                             transitionSpec = {
                                 (fadeIn() + expandVertically(expandFrom = Alignment.Bottom))
@@ -1567,7 +1560,8 @@ fun WorkoutExecutionScreen(
                                             onAddExercise = {
                                                 isAddingAfterCurrent = false
                                                 showAddExerciseSheet = true
-                                            }
+                                            },
+                                            expansion = expansion
                                         )
                                     }
                                 }
@@ -1665,7 +1659,7 @@ fun WorkoutExecutionScreen(
                                     }
                                 }
                                 HubMode.Resting -> {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Column {
                                         RestTimerSection(
                                             remainingSeconds = state.remainingRestSeconds,
                                             totalRestSeconds = state.totalRestSeconds,
@@ -1675,18 +1669,25 @@ fun WorkoutExecutionScreen(
                                             subtractSeconds = state.timerSubtractSeconds,
                                             showAdd = state.showTimerAdd,
                                             showSubtract = state.showTimerSubtract,
-                                            onSkip = { viewModel.skipRestTimer() }
+                                            onSkip = { viewModel.skipRestTimer() },
+                                            expansion = expansion
                                         )
                                         val miniSet = state.miniSet
                                         val offer = state.miniSetOffer
                                         if (miniSet != null) {
                                             val miniSetNumber = state.exercises.getOrNull(miniSet.exerciseIndex)?.sets?.getOrNull(miniSet.setIndex)?.setNumber ?: 0
-                                            MiniSetPauseLabel(miniSetNumber, modifier = Modifier.align(Alignment.CenterHorizontally))
+                                            HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                                                MiniSetPauseLabel(miniSetNumber)
+                                            }
                                         } else if (offer != null) {
-                                            MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                            HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
+                                                MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                            }
                                         }
                                         // The rest is the time to load the bar for the next set
-                                        ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
+                                        HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
+                                            ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
+                                        }
                                     }
                                 }
                                 HubMode.Editing -> {
@@ -1805,28 +1806,32 @@ fun WorkoutExecutionScreen(
                                 }
                                 HubMode.Logging -> {
                                     activeSet?.let { set ->
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        // The card keeps its place all the way down to the strip: what goes around it leaves first
+                                        val e = expansion()
+                                        Column {
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(24.dp))
+                                                    .clip(RoundedCornerShape(lerp(18.dp, 24.dp, e)))
                                                     .background(SurfaceContainerHigh)
                                                     .clickable { isEditingValues = true }
-                                                    .padding(12.dp),
+                                                    .padding(lerp(8.dp, 12.dp, e)),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(48.dp)
+                                                        .size(lerp(36.dp, 48.dp, e))
                                                         .clip(CircleShape)
                                                         .background(Primary.copy(alpha = 0.1f)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
                                                 }
-                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Spacer(modifier = Modifier.width(lerp(10.dp, 16.dp, e)))
                                                 Column(modifier = Modifier.weight(1f)) {
-                                                    Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                                                    HubSlot(expansion = expansion, from = 0.3f, to = 0.6f) {
+                                                        Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                                                    }
                                                     Text(
                                                         text = setValueText(
                                                             kind = currentExState?.setKind ?: SetLogKind.STRENGTH,
@@ -1836,7 +1841,7 @@ fun WorkoutExecutionScreen(
                                                             weightUnit = state.weightUnit,
                                                             repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
                                                         ),
-                                                        style = MaterialTheme.typography.titleLarge, 
+                                                        style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.82f, 1f, e)),
                                                         fontWeight = FontWeight.ExtraBold
                                                     )
                                                     val p = set.prescription
@@ -1846,14 +1851,16 @@ fun WorkoutExecutionScreen(
                                                     ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
                                                         listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
                                                     if (detail.isNotEmpty()) {
-                                                        Text(
-                                                            text = detail.joinToString(" · "),
-                                                            style = MaterialTheme.typography.labelMedium,
-                                                            color = Primary,
-                                                            fontWeight = FontWeight.ExtraBold,
-                                                            maxLines = 1,
-                                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                                        )
+                                                        HubSlot(expansion = expansion, from = 0.25f, to = 0.5f) {
+                                                            Text(
+                                                                text = detail.joinToString(" · "),
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                color = Primary,
+                                                                fontWeight = FontWeight.ExtraBold,
+                                                                maxLines = 1,
+                                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                            )
+                                                        }
                                                     }
                                                 }
                                                 Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
@@ -1873,11 +1880,13 @@ fun WorkoutExecutionScreen(
                                                             viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                                         }
                                                     },
-                                                    modifier = Modifier.width(120.dp),
+                                                    modifier = Modifier.width(120.dp).height(lerp(44.dp, 48.dp, e)),
                                                     compact = true
                                                 )
                                             }
-                                            ActiveSetPlateChip(currentExState, set, state, plateExercises) { showPlateSheet = true }
+                                            HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
+                                                ActiveSetPlateChip(currentExState, set, state, plateExercises) { showPlateSheet = true }
+                                            }
                                         }
                                     }
                                 }
@@ -1899,31 +1908,34 @@ fun WorkoutExecutionScreen(
                                 HubMode.Completed -> {
                                     val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
                                     val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
+                                    // On the strip the exercise buttons are a little lower and Add and the mini-set offer are gone
+                                    val navHeight = hubNavHeight(expansion())
 
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
+                                    Column(modifier = Modifier.fillMaxWidth()) {
                                         // The last set of the workout has no rest to offer it in
                                         state.miniSetOffer?.let { offer ->
-                                            MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                            HubSlot(expansion = expansion, from = 0.55f, to = 0.8f, gapBelow = 8.dp) {
+                                                MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
+                                            }
                                         }
                                         if (allowModify) {
-                                            GymButton(
-                                                onClick = {
-                                                    isAddingAfterCurrent = false
-                                                    showAddExerciseSheet = true
-                                                },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                containerColor = SurfaceContainerHigh,
-                                                contentColor = Primary
-                                            ) {
-                                                Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.add_exercise).uppercase(),
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
+                                            HubSlot(expansion = expansion, from = 0.55f, to = 0.8f, gapBelow = 8.dp) {
+                                                GymButton(
+                                                    onClick = {
+                                                        isAddingAfterCurrent = false
+                                                        showAddExerciseSheet = true
+                                                    },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    containerColor = SurfaceContainerHigh,
+                                                    contentColor = Primary
+                                                ) {
+                                                    Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = stringResource(R.string.add_exercise).uppercase(),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
                                             }
                                         }
 
@@ -1934,38 +1946,14 @@ fun WorkoutExecutionScreen(
                                             // Previous Exercise Button
                                             if (state.currentExerciseIndex > 0) {
                                                 val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
-                                                val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
-                                                GymButton(
+                                                HubPreviousButton(
+                                                    previousName = ExerciseTranslations.translate(prevName, languageCode),
+                                                    expansion = expansion,
                                                     onClick = { viewModel.previousExercise() },
-                                                    modifier = Modifier.weight(1f),
-                                                    containerColor = SurfaceContainerHigh,
-                                                    contentColor = OnSurface,
-                                                    height = 64
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                                                        contentDescription = null
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Column(
-                                                        horizontalAlignment = Alignment.Start,
-                                                        modifier = Modifier.weight(1f)
-                                                    ) {
-                                                        Text(
-                                                            text = stringResource(R.string.previous_exercise_btn).uppercase(),
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = OnSurfaceVariant,
-                                                            fontWeight = FontWeight.ExtraBold
-                                                        )
-                                                        Text(
-                                                            text = translatedPrev,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            fontWeight = FontWeight.Black,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    }
-                                                }
+                                                    nameStyle = MaterialTheme.typography.bodyMedium,
+                                                    nameWeight = FontWeight.Black,
+                                                    height = navHeight
+                                                )
                                             }
 
                                             // Next / Finish Button
@@ -1975,7 +1963,7 @@ fun WorkoutExecutionScreen(
                                                 GymButton(
                                                     onClick = { viewModel.nextExercise() },
                                                     modifier = Modifier.weight(1f),
-                                                    height = 64
+                                                    height = navHeight
                                                 ) {
                                                     Column(
                                                         horizontalAlignment = Alignment.End,
@@ -2007,7 +1995,7 @@ fun WorkoutExecutionScreen(
                                                 GymButton(
                                                     onClick = { showFinishDialog = true },
                                                     modifier = Modifier.weight(1f),
-                                                    height = 64
+                                                    height = navHeight
                                                 ) {
                                                     Icon(Icons.Rounded.Check, contentDescription = null)
                                                     Spacer(modifier = Modifier.width(8.dp))
@@ -2021,7 +2009,7 @@ fun WorkoutExecutionScreen(
                                                 GymButton(
                                                     onClick = { showFinishDialog = true },
                                                     modifier = Modifier.weight(1f),
-                                                    height = 64
+                                                    height = navHeight
                                                 ) {
                                                     Icon(Icons.Rounded.Check, contentDescription = null)
                                                     Spacer(modifier = Modifier.width(8.dp))
@@ -2037,28 +2025,27 @@ fun WorkoutExecutionScreen(
                             }
                         }
 
+                        // The first thing to leave when the hub shrinks: the strip keeps only the main action
                         if ((!isExerciseCompleted && !isEmomActive) || isResting) {
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            ExerciseNavigation(
-                                onPrevious = { viewModel.previousExercise() },
-                                onNext = {
-                                    if (state.currentExerciseIndex == state.exercises.size - 1) {
-                                        showFinishDialog = true
-                                    } else {
-                                        viewModel.nextExercise()
-                                    }
-                                },
-                                hasPrevious = state.currentExerciseIndex > 0,
-                                hasNext = state.currentExerciseIndex < state.exercises.size - 1,
-                                previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
-                                nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
-                                languageCode = languageCode
-                            )
+                            HubSlot(expansion = expansion, from = 0.7f, to = 0.95f, gap = 16.dp) {
+                                ExerciseNavigation(
+                                    onPrevious = { viewModel.previousExercise() },
+                                    onNext = {
+                                        if (state.currentExerciseIndex == state.exercises.size - 1) {
+                                            showFinishDialog = true
+                                        } else {
+                                            viewModel.nextExercise()
+                                        }
+                                    },
+                                    hasPrevious = state.currentExerciseIndex > 0,
+                                    hasNext = state.currentExerciseIndex < state.exercises.size - 1,
+                                    previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
+                                    nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
+                                    languageCode = languageCode
+                                )
+                            }
                         }
-                    }
                 }
-            }
             }
 
             if (state.isFinishing) {
@@ -3193,29 +3180,31 @@ fun CardioHubSection(
     viewModel: WorkoutViewModel,
     languageCode: String,
     onFinishWorkout: () -> Unit,
-    onAddExercise: (() -> Unit)? = null
+    onAddExercise: (() -> Unit)? = null,
+    /** How open the bottom hub is (1 open, 0 thin strip). */
+    expansion: () -> Float = { 1f }
 ) {
     val isLastExercise = state.currentExerciseIndex == state.exercises.lastIndex
     val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
+    val navHeight = hubNavHeight(expansion())
 
     if (allowModify && onAddExercise != null) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Top Row (in alto): Add Exercise Button
-            GymButton(
-                onClick = onAddExercise,
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = SurfaceContainerHigh,
-                contentColor = Primary
-            ) {
-                Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.add_exercise).uppercase(),
-                    fontWeight = FontWeight.ExtraBold
-                )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Top Row (in alto): Add Exercise Button, gone on the strip
+            HubSlot(expansion = expansion, from = 0.55f, to = 0.8f, gapBelow = 8.dp) {
+                GymButton(
+                    onClick = onAddExercise,
+                    modifier = Modifier.fillMaxWidth(),
+                    containerColor = SurfaceContainerHigh,
+                    contentColor = Primary
+                ) {
+                    Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.add_exercise).uppercase(),
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
 
             // Bottom Row (in basso): Exercise Navigation Controls
@@ -3225,37 +3214,13 @@ fun CardioHubSection(
             ) {
                 if (state.currentExerciseIndex > 0) {
                     val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
-                    val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
-                    GymButton(
+                    HubPreviousButton(
+                        previousName = ExerciseTranslations.translate(prevName, languageCode),
+                        expansion = expansion,
                         onClick = { viewModel.previousExercise() },
-                        modifier = Modifier.weight(1f),
-                        containerColor = SurfaceContainerHigh,
-                        contentColor = OnSurface
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(
-                            horizontalAlignment = Alignment.Start,
-                            modifier = Modifier.weight(1f, fill = false)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.previous_exercise_btn).uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = OnSurfaceVariant,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Text(
-                                text = translatedPrev,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+                        nameStyle = MaterialTheme.typography.labelLarge,
+                        nameWeight = FontWeight.ExtraBold
+                    )
                 }
 
                 if (!isLastExercise) {
@@ -3314,38 +3279,14 @@ fun CardioHubSection(
         ) {
             if (state.currentExerciseIndex > 0) {
                 val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
-                val translatedPrev = ExerciseTranslations.translate(prevName, languageCode)
-                GymButton(
+                HubPreviousButton(
+                    previousName = ExerciseTranslations.translate(prevName, languageCode),
+                    expansion = expansion,
                     onClick = { viewModel.previousExercise() },
-                    modifier = Modifier.weight(1f),
-                    containerColor = SurfaceContainerHigh,
-                    contentColor = OnSurface,
-                    height = 64
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                        contentDescription = null
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.previous_exercise_btn).uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Text(
-                            text = translatedPrev,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Black,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
+                    nameStyle = MaterialTheme.typography.bodyMedium,
+                    nameWeight = FontWeight.Black,
+                    height = navHeight
+                )
             }
 
             if (!isLastExercise) {
@@ -3354,7 +3295,7 @@ fun CardioHubSection(
                 GymButton(
                     onClick = { viewModel.nextExercise() },
                     modifier = Modifier.weight(1f),
-                    height = 64
+                    height = navHeight
                 ) {
                     Column(
                         horizontalAlignment = Alignment.End,
@@ -3385,7 +3326,7 @@ fun CardioHubSection(
                 GymButton(
                     onClick = onFinishWorkout,
                     modifier = Modifier.weight(1f),
-                    height = 64
+                    height = navHeight
                 ) {
                     Icon(Icons.Rounded.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -3394,6 +3335,62 @@ fun CardioHubSection(
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
+            }
+        }
+    }
+}
+
+/** Height of the exercise buttons in the bottom hub: a little lower on the strip. */
+private fun hubNavHeight(expansion: Float): Int = lerp(52f, 64f, expansion).roundToInt()
+
+/**
+ * "Previous exercise" in the bottom hub. As the hub shrinks to its strip the button gives up its label and most
+ * of its width and keeps only the arrow, so "next" can take the room.
+ */
+@Composable
+private fun RowScope.HubPreviousButton(
+    previousName: String,
+    expansion: () -> Float,
+    onClick: () -> Unit,
+    nameStyle: TextStyle,
+    nameWeight: FontWeight,
+    height: Int? = null
+) {
+    val label = HubMotion.window(expansion(), 0.25f, 0.6f)
+    val fullPadding = if (ResponsiveSize.isCompact) 16.dp else 24.dp
+    GymButton(
+        onClick = onClick,
+        modifier = Modifier.weight(lerp(0.2f, 1f, label)),
+        containerColor = SurfaceContainerHigh,
+        contentColor = OnSurface,
+        height = height ?: if (ResponsiveSize.isCompact) 48 else 56,
+        contentPadding = PaddingValues(horizontal = lerp(0.dp, fullPadding, label))
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+            // With the label gone the arrow has to say what the button does
+            contentDescription = if (label <= 0f) stringResource(R.string.previous_exercise_btn) else null
+        )
+        if (label > 0f) {
+            Spacer(modifier = Modifier.width(8.dp * label))
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f).graphicsLayer { alpha = label }
+            ) {
+                Text(
+                    text = stringResource(R.string.previous_exercise_btn).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1
+                )
+                Text(
+                    text = previousName,
+                    style = nameStyle,
+                    fontWeight = nameWeight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }

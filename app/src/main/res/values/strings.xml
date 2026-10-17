@@ -35,6 +35,8 @@
     <string name="retry">Retry</string>
     <string name="dismiss">Dismiss</string>
     <string name="collapse">Collapse</string>
+    <string name="hub_panel_collapse">Collapse panel</string>
+    <string name="hub_panel_expand">Expand panel</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
     <string name="selected">Selected</string>

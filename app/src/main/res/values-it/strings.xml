@@ -35,6 +35,8 @@
     <string name="retry">Riprova</string>
     <string name="dismiss">Rifiuta</string>
     <string name="collapse">Riduci</string>
+    <string name="hub_panel_collapse">Riduci il pannello</string>
+    <string name="hub_panel_expand">Espandi il pannello</string>
     <string name="yes">SÌ</string>
     <string name="no">NO</string>
     <string name="selected">selezionate</string>

@@ -35,6 +35,8 @@
     <string name="retry">Réessayer</string>
     <string name="dismiss">Ignorer</string>
     <string name="collapse">Réduire</string>
+    <string name="hub_panel_collapse">Réduire le panneau</string>
+    <string name="hub_panel_expand">Développer le panneau</string>
     <string name="yes">OUI</string>
     <string name="no">NON</string>
     <string name="selected">Sélectionné</string>
