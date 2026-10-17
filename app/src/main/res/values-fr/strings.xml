@@ -271,6 +271,10 @@
     <string name="exercise_media_unsupported">Impossible d\'ouvrir ce fichier. Choisis une image ou un GIF.</string>
     <string name="exercise_media_play_pause">Lecture ou pause</string>
     <string name="workout_settings">Entraînement</string>
+    <string name="workout_section_session">PENDANT L\'ENTRAÎNEMENT</string>
+    <string name="workout_section_timers">MINUTEURS &amp; CARDIO</string>
+    <string name="workout_section_programming">ROUTINES &amp; EXERCICES</string>
+    <string name="workout_section_after">APRÈS L\'ENTRAÎNEMENT</string>
     <string name="workout_settings_desc">Minuteur, arrêts auto et options d\'exercices</string>
     <string name="ai_settings_desc">Scan hors ligne et modèle</string>
     <string name="personalization_desc">Thème, couleurs et apparence</string>

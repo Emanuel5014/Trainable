@@ -271,6 +271,10 @@
     <string name="exercise_media_unsupported">Couldn\'t open that file. Choose an image or GIF.</string>
     <string name="exercise_media_play_pause">Play or pause</string>
     <string name="workout_settings">Workout</string>
+    <string name="workout_section_session">DURING THE WORKOUT</string>
+    <string name="workout_section_timers">TIMERS &amp; CARDIO</string>
+    <string name="workout_section_programming">ROUTINES &amp; EXERCISES</string>
+    <string name="workout_section_after">AFTER THE WORKOUT</string>
     <string name="workout_settings_desc">Timer, auto-stop and exercise options</string>
     <string name="ai_settings_desc">Offline sheet scan and model</string>
     <string name="personalization_desc">Theme, colors and appearance</string>
