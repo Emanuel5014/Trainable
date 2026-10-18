@@ -86,6 +86,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.ThumbDown
@@ -2667,13 +2668,18 @@ fun CardioExerciseContent(
         val hasNoteLine = !exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()
         // Right after a set is done, until the next one starts, how hard it felt is asked under the chips
         val justDoneIndex = exerciseState.cardioSets.indexOfLast { it.isCompleted }
-        val showRpeRow = state.rpeEnabled && justDoneIndex >= 0 && !state.cardioTimerRunning && !state.cardioTimerPaused
-        val rpeHeight = when {
-            !showRpeRow -> 0.dp
-            state.rpeScale == RpeScale.BASIC -> 140.dp
-            else -> 95.dp
+        val rpeAsked = state.rpeEnabled && justDoneIndex >= 0 && !state.cardioTimerRunning && !state.cardioTimerPaused
+        val baseReserved = if (hasNoteLine) 430.dp else 390.dp
+        val rpeRowHeight = if (state.rpeScale == RpeScale.BASIC) 140.dp else 95.dp
+        // The selector needs the circle to keep a minimum size (80 dp); on a shorter screen a small prompt opens the set
+        // instead, and on a really short one nothing is added (the set's chip still opens it)
+        val showRpeRow = rpeAsked && maxHeight >= baseReserved + rpeRowHeight + 80.dp
+        val showRpePrompt = rpeAsked && !showRpeRow && maxHeight >= baseReserved + 48.dp + 80.dp
+        val reservedHeight = baseReserved + when {
+            showRpeRow -> rpeRowHeight
+            showRpePrompt -> 48.dp
+            else -> 0.dp
         }
-        val reservedHeight = (if (hasNoteLine) 430.dp else 390.dp) + rpeHeight
         val heightScale = ((maxHeight - reservedHeight) / 200.dp).coerceIn(0.4f, 1.15f)
         val scale = minOf(widthScale, heightScale)
         val cIndicatorSize = (200f * scale).dp
@@ -2802,6 +2808,24 @@ fun CardioExerciseContent(
             )
             exerciseState.cardioSets.getOrNull(noteSetIndex)?.note?.takeIf { it.isNotBlank() }?.let { note ->
                 CardioSetNoteLine(note = note, onClick = { openedSetIndex = noteSetIndex })
+            }
+            if (showRpePrompt) {
+                val justDone = exerciseState.cardioSets[justDoneIndex]
+                Surface(onClick = { openedSetIndex = justDoneIndex }, shape = CircleShape, color = SurfaceContainerHigh) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Rounded.Speed, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = stringResource(R.string.set_number, justDone.setNumber) + " · " + stringResource(R.string.rpe_prompt),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
             if (showRpeRow) {
                 val justDone = exerciseState.cardioSets[justDoneIndex]

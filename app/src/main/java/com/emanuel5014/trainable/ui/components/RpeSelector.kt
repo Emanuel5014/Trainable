@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -150,10 +152,12 @@ fun RpeSelector(
 private fun LevelTiles(value: Float?, onValueChange: (Float?) -> Unit) {
     val picked = RpeLevel.entries.firstOrNull { it.value == value }
     val shape = RoundedCornerShape(14.dp)
+    // On a light theme the icons are darkened so the amber one still reads on its pale tint
+    val lightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         RpeLevel.entries.forEach { level ->
             val selected = level == picked
-            val color = level.color()
+            val color = if (lightTheme) lerp(level.color(), Color.Black, 0.3f) else level.color()
             val description = stringResource(level.nameRes()) + " " + level.range
             Box(
                 modifier = Modifier
