@@ -1263,6 +1263,8 @@ fun EditCardioDialog(
     setNumber: Int? = null
 ) {
     var note by remember { mutableStateOf(cardioLog.note.orEmpty()) }
+    var rpe by remember { mutableStateOf(cardioLog.rpe) }
+    val rpeScale = com.emanuel5014.trainable.ui.components.editableRpeScale(hasValue = cardioLog.rpe != null)
     var categoria by remember { mutableStateOf(cardioLog.categoria) }
     var distanza by remember { mutableStateOf(cardioLog.distanza.toString()) }
     var durataOre by remember { mutableStateOf((cardioLog.durataSecondi / 3600).let { if (it > 0) it.toString() else "" }) }
@@ -1283,6 +1285,7 @@ fun EditCardioDialog(
         },
         text = {
             Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 CardioInputForm(
                 categoria = categoria,
                 onCategoriaChange = { categoria = it },
@@ -1298,6 +1301,10 @@ CardioInputForm(
                 note = note,
                 onNoteChange = { note = it }
             )
+                rpeScale?.let { scale ->
+                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it }, scale = scale)
+                }
+              }
 }
         },
         confirmButton = {
@@ -1308,7 +1315,7 @@ CardioInputForm(
                     val m = durataMinuti.toIntOrNull() ?: 0
                     val s = durataSecondi.toIntOrNull() ?: 0
                     val dur = h * 3600 + m * 60 + s
-                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur, note = note.trim().ifBlank { null }))
+                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur, note = note.trim().ifBlank { null }, rpe = rpe))
                 },
                 enabled = isValid
             ) {

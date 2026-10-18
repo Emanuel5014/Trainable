@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +42,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.domain.rpe.RpeScale
+import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -110,6 +114,9 @@ internal fun CardioSetsStrip(
                     if (!set.note.isNullOrBlank()) {
                         Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null, tint = color, modifier = Modifier.size(14.dp))
                     }
+                    if (set.rpe != null) {
+                        Icon(Icons.Rounded.Speed, contentDescription = null, tint = color, modifier = Modifier.size(14.dp))
+                    }
                 }
             }
         }
@@ -147,20 +154,22 @@ internal fun CardioSetNoteLine(note: String, onClick: () -> Unit, modifier: Modi
 }
 
 /**
- * A cardio set: its note, and for a done set its time and distance too. [onDelete] is null when the set cannot go
- * (the only one, or the one on the timer).
+ * A cardio set: its note, and for a done set its time, distance and RPE too. [rpeScale] is null when RPE is not asked
+ * for. [onDelete] is null when the set cannot go (the only one, or the one on the timer).
  */
 @Composable
 internal fun CardioSetDialog(
     set: CardioSetState,
+    rpeScale: RpeScale?,
     onDismiss: () -> Unit,
-    onSave: (seconds: Int, distanceKm: Float, note: String) -> Unit,
+    onSave: (seconds: Int, distanceKm: Float, note: String, rpe: Float?) -> Unit,
     onDelete: (() -> Unit)?
 ) {
     var minutes by remember { mutableStateOf((set.elapsedSeconds / 60).toString()) }
     var seconds by remember { mutableStateOf((set.elapsedSeconds % 60).toString()) }
     var distance by remember { mutableStateOf(if (set.distanceKm > 0f) set.distanceKm.toString() else "") }
     var note by remember { mutableStateOf(set.note.orEmpty()) }
+    var rpe by remember { mutableStateOf(set.rpe) }
     val totalSeconds = (minutes.toIntOrNull() ?: 0) * 60 + (seconds.toIntOrNull() ?: 0)
     val valid = !set.isCompleted || totalSeconds > 0
 
@@ -169,7 +178,7 @@ internal fun CardioSetDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.set_number, set.setNumber)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (set.isCompleted) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(
@@ -200,6 +209,9 @@ internal fun CardioSetDialog(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
+                    if (rpeScale != null) {
+                        RpeSelector(value = rpe, onValueChange = { rpe = it }, scale = rpeScale)
+                    }
                 }
                 OutlinedTextField(
                     value = note,
@@ -220,7 +232,7 @@ internal fun CardioSetDialog(
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel).uppercase()) }
                 TextButton(
                     enabled = valid,
-                    onClick = { onSave(totalSeconds, distance.replace(',', '.').toFloatOrNull() ?: 0f, note) }
+                    onClick = { onSave(totalSeconds, distance.replace(',', '.').toFloatOrNull() ?: 0f, note, rpe) }
                 ) {
                     Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = if (valid) Primary else OnSurface.copy(alpha = 0.4f))
                 }

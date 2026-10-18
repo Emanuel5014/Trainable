@@ -2531,9 +2531,10 @@ fun CardioExerciseContent(
             val onTimer = index == exerciseState.activeCardioSetIndex && (state.cardioTimerRunning || state.cardioTimerPaused)
             CardioSetDialog(
                 set = set,
+                rpeScale = if (state.rpeEnabled || set.rpe != null) state.rpeScale else null,
                 onDismiss = { openedSetIndex = null },
-                onSave = { seconds, km, note ->
-                    if (set.isCompleted) viewModel.editCardioSet(exerciseIndex, index, seconds, km, note, set.rpe)
+                onSave = { seconds, km, note, rpe ->
+                    if (set.isCompleted) viewModel.editCardioSet(exerciseIndex, index, seconds, km, note, rpe)
                     else viewModel.updateCardioSetNote(exerciseIndex, index, note)
                     openedSetIndex = null
                 },
@@ -2792,6 +2793,24 @@ fun CardioExerciseContent(
             )
             exerciseState.cardioSets.getOrNull(noteSetIndex)?.note?.takeIf { it.isNotBlank() }?.let { note ->
                 CardioSetNoteLine(note = note, onClick = { openedSetIndex = noteSetIndex })
+            }
+            // Right after a set is done, until the next one starts: how hard it felt
+            val justDoneIndex = exerciseState.cardioSets.indexOfLast { it.isCompleted }
+            if (state.rpeEnabled && justDoneIndex >= 0 && !state.cardioTimerRunning && !state.cardioTimerPaused) {
+                val justDone = exerciseState.cardioSets[justDoneIndex]
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.set_number, justDone.setNumber),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = OnSurfaceVariant,
+                        fontWeight = FontWeight.Bold
+                    )
+                    RpeSelector(
+                        value = justDone.rpe,
+                        onValueChange = { viewModel.updateCardioSetRpe(exerciseIndex, justDoneIndex, it) },
+                        scale = state.rpeScale
+                    )
+                }
             }
 
             if (!exerciseState.isCardioCompleted) {

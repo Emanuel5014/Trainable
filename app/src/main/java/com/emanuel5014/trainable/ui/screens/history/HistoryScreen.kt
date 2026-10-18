@@ -1621,6 +1621,9 @@ fun SessionHistoryCard(
                                         else -> Icons.AutoMirrored.Rounded.DirectionsRun
                                     }
                                     val translatedTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
+                                    val rpeScale = com.emanuel5014.trainable.ui.components.LocalRpeSettings.current.scale
+                                    val rpeContext = androidx.compose.ui.platform.LocalContext.current
+                                    fun rpeSuffix(rpe: Float?) = rpe?.let { " · " + com.emanuel5014.trainable.ui.components.rpeBadgeText(rpeContext, it, rpeScale) }.orEmpty()
                                     Column(
                                         modifier = Modifier
                                             .padding(horizontal = ResponsiveSize.cardPadding)
@@ -1653,7 +1656,7 @@ fun SessionHistoryCard(
                                                         color = OnSurfaceVariant
                                                     )
                                                     Text(
-                                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
+                                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set) + rpeSuffix(set.rpe),
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = FontWeight.Bold,
                                                         color = OnSurface
@@ -1677,7 +1680,7 @@ fun SessionHistoryCard(
                                                     val h = cardio.durataSecondi / 3600
                                                     val m = (cardio.durataSecondi % 3600) / 60
                                                     val s = cardio.durataSecondi % 60
-                                                    if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                                                    (if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s") + rpeSuffix(cardio.rpe)
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = OnSurfaceVariant
