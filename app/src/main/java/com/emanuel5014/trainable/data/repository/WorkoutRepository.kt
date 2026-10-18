@@ -540,7 +540,10 @@ class WorkoutRepository @Inject constructor(
 
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>> = workoutDao.getCardioLogsForSession(sessionId)
 
-    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?) = workoutDao.updateCardioSetValues(id, seconds, km, note)
+    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?, rpe: Float?) =
+        workoutDao.updateCardioSetValues(id, seconds, km, note, rpe)
+
+    suspend fun updateCardioRpe(id: Int, rpe: Float?) = workoutDao.updateCardioRpe(id, rpe)
 
     suspend fun updateCardioNote(id: Int, note: String?) = workoutDao.updateCardioNote(id, note)
 

@@ -371,7 +371,9 @@ data class CardioSetState(
     val elapsedSeconds: Int = 0,
     val distanceKm: Float = 0f,
     val isCompleted: Boolean = false,
-    val note: String? = null
+    val note: String? = null,
+    /** How hard the set felt (RPE), once it is done. */
+    val rpe: Float? = null
 )
 
 /** [count] cardio sets still to do, numbered from 1. */
@@ -390,7 +392,8 @@ internal fun cardioSetsFrom(logs: List<CardioLogEntity>, plannedSets: Int): List
             elapsedSeconds = log.durataSecondi,
             distanceKm = log.distanza,
             isCompleted = log.isCompleted,
-            note = log.note
+            note = log.note,
+            rpe = log.rpe
         )
     }
     if (logged.isNotEmpty()) return logged
@@ -4020,7 +4023,8 @@ class WorkoutViewModel @Inject constructor(
                 ordineEsercizio = order,
                 isCompleted = true,
                 numeroSerie = doneSet.setNumber,
-                note = doneSet.note
+                note = doneSet.note,
+                rpe = doneSet.rpe
             )
             if (logId != null && logId > 0) {
                 workoutRepository.updateCardioLog(cardioEntity)
@@ -4078,7 +4082,8 @@ class WorkoutViewModel @Inject constructor(
                     durataTargetSecondi = ex.cardioDurataTargetSeconds,
                     isCompleted = false,
                     numeroSerie = set.setNumber,
-                    note = set.note
+                    note = set.note,
+                    rpe = set.rpe
                 )
             ).toInt()
             setCardioSetId(exerciseIndex, set.setNumber, id)
@@ -4118,13 +4123,20 @@ class WorkoutViewModel @Inject constructor(
     }
 
     /** Corrects a cardio set that was already done. */
-    fun editCardioSet(exerciseIndex: Int, setIndex: Int, seconds: Int, distanceKm: Float, note: String?) {
+    fun editCardioSet(exerciseIndex: Int, setIndex: Int, seconds: Int, distanceKm: Float, note: String?, rpe: Float?) {
         val set = _state.value.exercises.getOrNull(exerciseIndex)?.cardioSets?.getOrNull(setIndex) ?: return
         val cleanNote = note?.trim()?.ifBlank { null }
         updateCardioSets(exerciseIndex) { sets ->
-            sets.toMutableList().also { it[setIndex] = set.copy(elapsedSeconds = seconds, distanceKm = distanceKm, note = cleanNote) }
+            sets.toMutableList().also { it[setIndex] = set.copy(elapsedSeconds = seconds, distanceKm = distanceKm, note = cleanNote, rpe = rpe) }
         }
-        set.id?.let { id -> viewModelScope.launch { workoutRepository.updateCardioSetValues(id, seconds, distanceKm, cleanNote) } }
+        set.id?.let { id -> viewModelScope.launch { workoutRepository.updateCardioSetValues(id, seconds, distanceKm, cleanNote, rpe) } }
+    }
+
+    /** How hard a cardio set felt; one that has no log yet takes it with it when it gets one. */
+    fun updateCardioSetRpe(exerciseIndex: Int, setIndex: Int, rpe: Float?) {
+        val set = _state.value.exercises.getOrNull(exerciseIndex)?.cardioSets?.getOrNull(setIndex) ?: return
+        updateCardioSets(exerciseIndex) { sets -> sets.toMutableList().also { it[setIndex] = set.copy(rpe = rpe) } }
+        set.id?.let { id -> viewModelScope.launch { workoutRepository.updateCardioRpe(id, rpe) } }
     }
 
     /** The note of a cardio set; one that has no log yet takes it with it when it gets one. */

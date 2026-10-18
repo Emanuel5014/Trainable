@@ -2533,7 +2533,7 @@ fun CardioExerciseContent(
                 set = set,
                 onDismiss = { openedSetIndex = null },
                 onSave = { seconds, km, note ->
-                    if (set.isCompleted) viewModel.editCardioSet(exerciseIndex, index, seconds, km, note)
+                    if (set.isCompleted) viewModel.editCardioSet(exerciseIndex, index, seconds, km, note, set.rpe)
                     else viewModel.updateCardioSetNote(exerciseIndex, index, note)
                     openedSetIndex = null
                 },
