@@ -1118,11 +1118,6 @@
     <string name="one_rep_max_delete_entry">Eintrag löschen</string>
     <string name="load_rounding">Lastrundung</string>
     <string name="load_rounding_desc" formatted="false">%1RM-Lasten werden auf die nächste Scheibenstufe gerundet</string>
-    <string name="rpe_input">RPE-Eingabe</string>
-    <string name="rpe_input_desc">Wann beim Loggen eines Satzes nach RPE gefragt wird</string>
-    <string name="rpe_input_advanced">Nur erweitert</string>
-    <string name="rpe_input_all">Immer</string>
-    <string name="rpe_input_never">Nie</string>
     <string name="one_rep_maxes_card_desc">%1$d Übungen erfasst</string>
     <string name="one_rep_max_current">Aktuelles 1RM</string>
     <string name="ai_program_scan_button">Scannen</string>
@@ -1148,7 +1143,7 @@
     <string name="delete_week_message_local">Die Woche wird aus dieser Übung entfernt, die folgenden Wochen rücken auf.</string>
     <string name="add_block_short">Block</string>
     <string name="advanced_programming">Erweiterte Programmierung</string>
-    <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und RPE</string>
+    <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und Ziel-RPE</string>
     <string name="ai_program_review_summary">%1$d Wochen · %2$d Blöcke</string>
     <string name="ai_program_found_max">1RM auf der Seite gefunden</string>
     <string name="ai_program_save_max_short">Speichern</string>

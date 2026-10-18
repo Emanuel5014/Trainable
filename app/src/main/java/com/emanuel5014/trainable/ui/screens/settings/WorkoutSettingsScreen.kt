@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Scale
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -140,6 +141,8 @@ private fun DuringWorkoutCard(viewModel: SettingsViewModel) {
     val setPerformanceEnabled by viewModel.setPerformanceEnabled.collectAsState()
     val plateCalculatorEnabled by viewModel.plateCalculatorEnabled.collectAsState()
     val plateCalculatorPlates by viewModel.plateCalculatorPlates.collectAsState()
+    val rpeEnabled by viewModel.rpeEnabled.collectAsState()
+    val rpeScale by viewModel.rpeScale.collectAsState()
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -171,6 +174,25 @@ private fun DuringWorkoutCard(viewModel: SettingsViewModel) {
                 checked = setPerformanceEnabled,
                 onCheckedChange = { viewModel.setSetPerformanceEnabled(it) }
             )
+
+            SettingDivider()
+
+            // How hard each set felt, on the scale the user picks
+            SettingSwitchRow(
+                icon = Icons.Rounded.Speed,
+                title = stringResource(R.string.rpe_setting),
+                description = stringResource(R.string.rpe_setting_desc),
+                checked = rpeEnabled,
+                onCheckedChange = { viewModel.setRpeEnabled(it) }
+            )
+
+            AnimatedVisibility(visible = rpeEnabled) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SettingDivider()
+
+                    RpeScaleOptions(selected = rpeScale, onSelect = { viewModel.setRpeScale(it) })
+                }
+            }
 
             SettingDivider()
 
@@ -310,7 +332,6 @@ private fun RoutinesAndExercisesCard(
     val startingWeightEnabled by viewModel.startingWeightEnabled.collectAsState()
     val advancedProgramming by viewModel.advancedProgrammingEnabled.collectAsState()
     val loadRoundingIncrement by viewModel.loadRoundingIncrement.collectAsState()
-    val rpeInputMode by viewModel.rpeInputMode.collectAsState()
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -367,22 +388,6 @@ private fun RoutinesAndExercisesCard(
                     )
                 }
 
-                SettingDivider()
-
-                SettingChoice(
-                    title = stringResource(R.string.rpe_input),
-                    description = stringResource(R.string.rpe_input_desc)
-                ) {
-                    ConnectedToggleRow(
-                        options = listOf(
-                            stringResource(R.string.rpe_input_advanced),
-                            stringResource(R.string.rpe_input_all),
-                            stringResource(R.string.rpe_input_never)
-                        ),
-                        selectedIndex = rpeInputMode,
-                        onSelect = { viewModel.setRpeInputMode(it) }
-                    )
-                }
             }
         }
     }

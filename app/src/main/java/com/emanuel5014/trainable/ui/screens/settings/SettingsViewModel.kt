@@ -510,21 +510,9 @@ class SettingsViewModel @Inject constructor(
         initialValue = com.emanuel5014.trainable.domain.prescription.LoadCalculator.DEFAULT_INCREMENT_KG
     )
 
-    val rpeInputMode = userPrefsRepository.rpeInputMode.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
-
     fun setLoadRoundingIncrement(increment: Float) {
         viewModelScope.launch {
             userPrefsRepository.setLoadRoundingIncrement(weightUnit.value, increment)
-        }
-    }
-
-    fun setRpeInputMode(mode: Int) {
-        viewModelScope.launch {
-            userPrefsRepository.setRpeInputMode(mode)
         }
     }
 

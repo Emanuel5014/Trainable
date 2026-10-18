@@ -1118,11 +1118,6 @@
     <string name="one_rep_max_delete_entry">Delete entry</string>
     <string name="load_rounding">Load rounding</string>
     <string name="load_rounding_desc" formatted="false">%1RM loads are rounded to the nearest plate increment</string>
-    <string name="rpe_input">RPE input</string>
-    <string name="rpe_input_desc">When to ask for RPE while logging a set</string>
-    <string name="rpe_input_advanced">Advanced only</string>
-    <string name="rpe_input_all">Always</string>
-    <string name="rpe_input_never">Never</string>
     <string name="one_rep_maxes_card_desc">%1$d lifts tracked</string>
     <string name="one_rep_max_current">Current 1RM</string>
     <string name="ai_program_scan_button">Scan</string>
@@ -1148,7 +1143,7 @@
     <string name="delete_week_message_local">The week is removed from this exercise and the following weeks move up by one.</string>
     <string name="add_block_short">Block</string>
     <string name="advanced_programming">Advanced programming</string>
-    <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE</string>
+    <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE targets</string>
     <string name="ai_program_review_summary">%1$d weeks · %2$d blocks</string>
     <string name="ai_program_found_max">1RM found on the page</string>
     <string name="ai_program_save_max_short">Save</string>

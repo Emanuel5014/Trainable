@@ -561,15 +561,6 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
-    val rpeInputMode: Flow<Int> = dataStore.data
-        .map { preferences -> preferences[RPE_INPUT_MODE] ?: 0 }
-
-    suspend fun setRpeInputMode(mode: Int) {
-        dataStore.edit { preferences ->
-            preferences[RPE_INPUT_MODE] = mode
-        }
-    }
-
     val rpeEnabled: Flow<Boolean> = dataStore.data
         .map { preferences -> preferences[RPE_ENABLED] ?: false }
 

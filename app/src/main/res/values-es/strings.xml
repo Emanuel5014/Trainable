@@ -1118,11 +1118,6 @@
     <string name="one_rep_max_delete_entry">Eliminar registro</string>
     <string name="load_rounding">Redondeo de cargas</string>
     <string name="load_rounding_desc" formatted="false">Las cargas %1RM se redondean al disco más cercano</string>
-    <string name="rpe_input">Registro de RPE</string>
-    <string name="rpe_input_desc">Cuándo pedir el RPE al registrar una serie</string>
-    <string name="rpe_input_advanced">Solo avanzados</string>
-    <string name="rpe_input_all">Siempre</string>
-    <string name="rpe_input_never">Nunca</string>
     <string name="one_rep_maxes_card_desc">%1$d ejercicios registrados</string>
     <string name="one_rep_max_current">1RM actual</string>
     <string name="ai_program_scan_button">Escanear</string>
@@ -1148,7 +1143,7 @@
     <string name="delete_week_message_local">La semana se elimina de este ejercicio y las siguientes suben una posición.</string>
     <string name="add_block_short">Bloque</string>
     <string name="advanced_programming">Programación avanzada</string>
-    <string name="advanced_programming_desc" formatted="false">Series en %1RM, técnicas como pausas y cadenas, programas semanales, 1RM y RPE</string>
+    <string name="advanced_programming_desc" formatted="false">Series en %1RM, técnicas como pausas y cadenas, programas semanales, 1RM y RPE objetivo</string>
     <string name="ai_program_review_summary">%1$d semanas · %2$d bloques</string>
     <string name="ai_program_found_max">1RM encontrado en la página</string>
     <string name="ai_program_save_max_short">Guardar</string>

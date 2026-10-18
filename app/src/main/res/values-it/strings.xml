@@ -1118,11 +1118,6 @@
     <string name="one_rep_max_delete_entry">Elimina valore</string>
     <string name="load_rounding">Arrotondamento carichi</string>
     <string name="load_rounding_desc" formatted="false">I carichi a %1RM vengono arrotondati al disco più vicino</string>
-    <string name="rpe_input">Inserimento RPE</string>
-    <string name="rpe_input_desc">Quando chiedere l\'RPE durante il log di una serie</string>
-    <string name="rpe_input_advanced">Solo avanzati</string>
-    <string name="rpe_input_all">Sempre</string>
-    <string name="rpe_input_never">Mai</string>
     <string name="one_rep_maxes_card_desc">%1$d alzate monitorate</string>
     <string name="one_rep_max_current">Massimale attuale</string>
     <string name="ai_program_scan_button">Scansiona</string>
@@ -1148,7 +1143,7 @@
     <string name="delete_week_message_local">La settimana viene rimossa da questo esercizio e quelle successive scalano di una posizione.</string>
     <string name="add_block_short">Blocco</string>
     <string name="advanced_programming">Programmazione avanzata</string>
-    <string name="advanced_programming_desc" formatted="false">Serie in %1RM, tecniche come fermi e catene, programmi a settimane, massimali e RPE</string>
+    <string name="advanced_programming_desc" formatted="false">Serie in %1RM, tecniche come fermi e catene, programmi a settimane, massimali e RPE target</string>
     <string name="ai_program_review_summary">%1$d settimane · %2$d blocchi</string>
     <string name="ai_program_found_max">Massimale letto nella pagina</string>
     <string name="ai_program_save_max_short">Salva</string>
