@@ -276,7 +276,8 @@ class HistoryCsvImporter @Inject constructor(
                             timestamp = workout.timestamp,
                             ordineEsercizio = entry.order,
                             numeroSerie = set.number,
-                            note = set.note
+                            note = set.note,
+                            rpe = set.rpe
                         )
                     )
                 } else {

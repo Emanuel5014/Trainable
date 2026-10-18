@@ -798,9 +798,11 @@ class WorkoutRepository @Inject constructor(
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
         // The workout journal adds its three columns only while it is on
         val journalEnabled = userPreferencesRepository.journalEnabled.first()
+        // Without advanced programming the file only gets an RPE column when there is an RPE to write
+        val rpeColumn = !advanced && sessions.any { s -> s.sets.any { it.setLog.rpe != null } || s.cardio.any { it.rpe != null } }
 
         val sb = StringBuilder()
-        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled))
+        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -856,7 +858,11 @@ class WorkoutRepository @Inject constructor(
                 val extra = if (setLog.isExtra) "1" else "0"
                 val warmup = if (setLog.isWarmup) "1" else "0"
 
-                val prescriptionColumns = if (advanced) ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup" else ""
+                val prescriptionColumns = when {
+                    advanced -> ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup"
+                    rpeColumn -> ",$rpe"
+                    else -> ""
+                }
                 // How the set really went: its parts and pauses, help, partials, the technique as done
                 val performed = setLog.performed?.let { list ->
                     if (list.isEmpty()) context.getString(com.emanuel5014.trainable.R.string.performed_technique_none)
@@ -870,7 +876,12 @@ class WorkoutRepository @Inject constructor(
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
-                val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
+                val cardioRpe = cardio.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
+                val prescriptionColumns = when {
+                    advanced -> ",$week,,,,$cardioRpe,0,0"
+                    rpeColumn -> ",$cardioRpe"
+                    else -> ""
+                }
                 val note = escapeCsv(cardio.note ?: "")
                 sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells")
             }

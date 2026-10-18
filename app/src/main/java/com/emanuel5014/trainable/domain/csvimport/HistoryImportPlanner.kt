@@ -334,7 +334,7 @@ object HistoryImportPlanner {
             },
             distanceKm = if (kind == RowKind.CARDIO) row.distanceKm ?: 0f else 0f,
             note = row.note.ifBlank { null },
-            rpe = if (kind == RowKind.STRENGTH || kind == RowKind.TIME_AND_WEIGHT) row.rpe else null,
+            rpe = row.rpe,
             warmup = row.warmup && kind != RowKind.CARDIO,
             parts = parts,
             pauses = pauses,

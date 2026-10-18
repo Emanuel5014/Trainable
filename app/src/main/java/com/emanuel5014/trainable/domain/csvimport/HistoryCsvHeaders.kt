@@ -14,6 +14,9 @@ object HistoryCsvHeaders {
         else -> "Date,Session ID,Plan,Exercise,Category,Type,Set,Weight ($weightUnit),Reps,Duration (s),Distance (km),Note"
     }
 
+    /** How hard each set felt: its own column when advanced programming is off (with it on, the prescription columns have it). */
+    fun rpe(@Suppress("UNUSED_PARAMETER") languageCode: String): String = "RPE"
+
     /** Only written with advanced programming on. */
     fun prescription(languageCode: String): String = when (languageCode) {
         "it" -> "Settimana,% Massimale,Rep Target,Tecniche,RPE,Extra,Riscaldamento"
@@ -63,9 +66,16 @@ object HistoryCsvHeaders {
         else -> "Rating,Tags,Workout Note"
     }
 
-    /** The header line the export writes; with [journal] the three journal columns close it. */
-    fun full(languageCode: String, weightUnit: String, advanced: Boolean, journal: Boolean = false): String =
-        (if (advanced) basic(languageCode, weightUnit) + "," + prescription(languageCode) else basic(languageCode, weightUnit)) +
+    /**
+     * The header line the export writes; with [journal] the three journal columns close it, and with [rpeColumn] (and
+     * advanced programming off) an RPE column follows the note.
+     */
+    fun full(languageCode: String, weightUnit: String, advanced: Boolean, journal: Boolean = false, rpeColumn: Boolean = false): String =
+        (when {
+            advanced -> basic(languageCode, weightUnit) + "," + prescription(languageCode)
+            rpeColumn -> basic(languageCode, weightUnit) + "," + rpe(languageCode)
+            else -> basic(languageCode, weightUnit)
+        }) +
             "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode) +
             (if (journal) "," + journal(languageCode) else "")
 }
