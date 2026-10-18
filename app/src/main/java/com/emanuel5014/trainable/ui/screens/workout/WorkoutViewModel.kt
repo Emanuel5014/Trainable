@@ -34,6 +34,7 @@ import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.data.local.entity.wasPrescribedLike
 import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.domain.emom.EmomClock
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.domain.emom.EmomPhase
 import com.emanuel5014.trainable.domain.prescription.DoubleProgression
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
@@ -164,8 +165,9 @@ data class WorkoutState(
     val weeksCount: Int = 1,
     val autoAdvanceWeek: Boolean = true,
     val loadRoundingIncrement: Float = LoadCalculator.DEFAULT_INCREMENT_KG,
-    /** 0 = advanced exercises only, 1 = always, 2 = never. */
-    val rpeInputMode: Int = 0,
+    /** Whether the workout asks how hard each set felt, and on which scale. */
+    val rpeEnabled: Boolean = false,
+    val rpeScale: RpeScale = RpeScale.BASIC,
     /** Pending "new 1RM?" prompts shown before the session is closed. */
     val oneRepMaxSuggestions: List<OneRepMaxSuggestion> = emptyList(),
     /** The set just logged came out short of its reps: the rest card offers to finish it after a short pause. */
@@ -513,8 +515,6 @@ class WorkoutViewModel @Inject constructor(
     private var advancedEnabled = false
 
     private companion object {
-        /** [WorkoutState.rpeInputMode] value meaning "never ask for RPE". */
-        const val RPE_INPUT_NEVER = 2
         /** Fetch every set of the previous session (advanced exercises match them per block). */
         const val ALL_SETS = 500
     }
@@ -629,11 +629,10 @@ class WorkoutViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // With advanced programming off there is no RPE logging at all
-            combine(userPreferencesRepository.rpeInputMode, userPreferencesRepository.advancedProgrammingEnabled) { mode, advanced ->
-                if (advanced) mode else RPE_INPUT_NEVER
-            }.collect { mode ->
-                _state.update { it.copy(rpeInputMode = mode) }
+            combine(userPreferencesRepository.rpeEnabled, userPreferencesRepository.rpeScale) { enabled, scale ->
+                enabled to scale
+            }.collect { (enabled, scale) ->
+                _state.update { it.copy(rpeEnabled = enabled, rpeScale = scale) }
             }
         }
 

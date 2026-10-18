@@ -208,6 +208,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.RpeSelector
+import com.emanuel5014.trainable.ui.components.rpeBadgeText
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
@@ -1105,7 +1106,7 @@ fun WorkoutExecutionScreen(
                                                 if (!set.isCompleted) set.repsRange?.let { add(it.text) }
                                                 if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
                                                 setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
-                                                set.rpe?.let { add(stringResource(R.string.rpe_short, PrescriptionFormatter.number(it))) }
+                                                set.rpe?.let { add(rpeBadgeText(context, it, state.rpeScale)) }
                                                 if (set.isExtra) add(stringResource(R.string.extra_badge))
                                                 // How the set really went: parts after short pauses, help, partials, technique as done
                                                 addAll(setPerformanceBadges(context, set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
@@ -1597,6 +1598,7 @@ fun WorkoutExecutionScreen(
                                                     onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
                                                     onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) }
                                                 )
+                                                RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                             } else if (exercise.isTimeAndWeight) {
                                                 WeightTimeInput(
                                                     weight = editedSet.weight,
@@ -1605,6 +1607,7 @@ fun WorkoutExecutionScreen(
                                                     onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
                                                     weightUnit = state.weightUnit
                                                 )
+                                                RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                             } else {
                                                 WeightRepsInput(
                                                     weight = editedSet.weight,
@@ -1616,12 +1619,7 @@ fun WorkoutExecutionScreen(
                                                 SetPercentChip(exercise, editedSet) {
                                                     loadSheetFor = state.currentExerciseIndex to editedSet.prescription?.blockIndex
                                                 }
-                                                if (rpeInputShown(state.rpeInputMode, exercise, editedSet)) {
-                                                    RpeSelector(
-                                                        value = editedSet.rpe,
-                                                        onValueChange = { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
-                                                    )
-                                                }
+                                                RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                                 if (state.setPerformanceEnabled) {
                                                     SetExtrasRow(
                                                         assisted = editedSet.assistedReps,
@@ -1715,6 +1713,7 @@ fun WorkoutExecutionScreen(
                                                     onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
                                                     onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) }
                                                 )
+                                                RpeInput(state, set.rpe) { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
                                             } else if (currentExState?.isTimeAndWeight == true) {
                                                 WeightTimeInput(
                                                     weight = set.weight,
@@ -1723,6 +1722,7 @@ fun WorkoutExecutionScreen(
                                                     onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
                                                     weightUnit = state.weightUnit
                                                 )
+                                                RpeInput(state, set.rpe) { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
                                             } else {
                                                 if (set.isAmrap) {
                                                     Text(
@@ -1767,13 +1767,7 @@ fun WorkoutExecutionScreen(
                                                         })
                                                     }
                                                 }
-                                                val showRpe = rpeInputShown(state.rpeInputMode, currentExState, set)
-                                                if (showRpe) {
-                                                    RpeSelector(
-                                                        value = set.rpe,
-                                                        onValueChange = { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
-                                                    )
-                                                }
+                                                RpeInput(state, set.rpe) { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
                                                 if (state.setPerformanceEnabled) {
                                                     SetExtrasRow(
                                                         assisted = set.assistedReps,
@@ -3109,13 +3103,11 @@ fun CardioExerciseContent(
     }
 }
 
-/** Whether the RPE selector goes with a set: on every exercise, on none, or only on advanced ones and extra sets. */
-private fun rpeInputShown(rpeInputMode: Int, exercise: WorkoutExerciseState?, set: WorkoutSetState): Boolean =
-    when (rpeInputMode) {
-        1 -> true
-        2 -> false
-        else -> exercise?.isAdvanced == true || set.isExtra
-    }
+/** The RPE selector of a set, with the scale the user chose; nothing while the RPE switch is off. */
+@Composable
+private fun RpeInput(state: WorkoutState, value: Float?, onValueChange: (Float?) -> Unit) {
+    if (state.rpeEnabled) RpeSelector(value = value, onValueChange = onValueChange, scale = state.rpeScale)
+}
 
 /** The rest countdown in a small pill, for when the bottom hub is busy with something else. */
 @Composable
