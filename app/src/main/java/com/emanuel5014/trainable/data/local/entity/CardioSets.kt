@@ -32,3 +32,7 @@ fun List<CardioLogEntity>.groupedByExercise(): List<CardioExerciseLogs> =
 fun List<CardioLogEntity>.setsOf(log: CardioLogEntity): List<CardioLogEntity> =
     filter { it.ordineEsercizio == log.ordineEsercizio && it.categoria.equals(log.categoria, ignoreCase = true) }
         .sortedWith(compareBy({ it.numeroSerie }, { it.id }))
+
+/** A new set of the same cardio exercise as this one: it starts from the same time and distance, not from its note or RPE. */
+fun CardioLogEntity.nextSet(number: Int): CardioLogEntity =
+    copy(id = 0, numeroSerie = number, note = null, rpe = null, isCompleted = true)

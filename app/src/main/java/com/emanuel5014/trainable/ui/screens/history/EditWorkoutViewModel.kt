@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.history
 
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
+import com.emanuel5014.trainable.data.local.entity.nextSet
 import com.emanuel5014.trainable.data.local.entity.setsOf
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.asKind
@@ -247,7 +248,7 @@ class EditWorkoutViewModel @Inject constructor(
         val last = cardio.sets.last()
         viewModelScope.launch {
             workoutRepository.saveCardioLog(
-                last.copy(id = 0, numeroSerie = cardio.sets.size + 1, note = null, isCompleted = true)
+                last.nextSet(cardio.sets.size + 1)
             )
         }
     }
