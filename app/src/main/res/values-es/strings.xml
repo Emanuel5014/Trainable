@@ -1497,4 +1497,28 @@
         <item quantity="one">Usada en %1$d entrenamiento</item>
         <item quantity="other">Usada en %1$d entrenamientos</item>
     </plurals>
+
+    <!-- RPE: a switch, three scales and the five levels of the simplified one -->
+    <string name="rpe_setting">Esfuerzo percibido (RPE)</string>
+    <string name="rpe_setting_desc">Valora lo duro que fue cada serie</string>
+    <string name="rpe_prompt">¿Qué tan duro fue?</string>
+    <string name="rpe_scale_basic">Simplificada</string>
+    <string name="rpe_scale_basic_desc">5 niveles con nombre e icono</string>
+    <string name="rpe_scale_basic_example">Calentamiento · Fácil · Moderado · Difícil · Máximo</string>
+    <string name="rpe_scale_standard">Estándar</string>
+    <string name="rpe_scale_standard_desc">RPE de 1 a 10, números enteros</string>
+    <string name="rpe_scale_standard_example">1 · 2 · 3 … 10</string>
+    <string name="rpe_scale_advanced">Avanzada</string>
+    <string name="rpe_scale_advanced_desc">RPE de 6 a 10, en pasos de 0,5</string>
+    <string name="rpe_scale_advanced_example">6 · 6,5 · 7 … 10</string>
+    <string name="rpe_level_warmup">Calentamiento</string>
+    <string name="rpe_level_warmup_desc">Esfuerzo muy ligero · Preparándote</string>
+    <string name="rpe_level_easy">Fácil</string>
+    <string name="rpe_level_easy_desc">Cómodo · Te queda mucho en el depósito</string>
+    <string name="rpe_level_moderate">Moderado</string>
+    <string name="rpe_level_moderate_desc">Esfuerzo decidido · Tienes el control</string>
+    <string name="rpe_level_hard">Difícil</string>
+    <string name="rpe_level_hard_desc">Exigente · Esfuerzo alto</string>
+    <string name="rpe_level_maximum">Máximo</string>
+    <string name="rpe_level_maximum_desc">Cerca de tu límite · Fallo o esfuerzo máximo</string>
 </resources>

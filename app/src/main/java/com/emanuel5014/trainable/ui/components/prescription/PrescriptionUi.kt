@@ -222,35 +222,3 @@ fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
         }
     }
 }
-
-
-/** RPE 6–10 in half steps; tapping the selected value clears it. */
-@Composable
-fun RpeSelector(value: Float?, onValueChange: (Float?) -> Unit) {
-    val options = listOf(6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f, 9.5f, 10f)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = stringResource(R.string.rpe_optional).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = OnSurfaceVariant,
-            fontWeight = FontWeight.Black
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            options.forEach { option ->
-                val selected = value == option
-                androidx.compose.material3.FilterChip(
-                    selected = selected,
-                    onClick = { onValueChange(if (selected) null else option) },
-                    label = { Text(PrescriptionFormatter.number(option), fontWeight = FontWeight.ExtraBold) },
-                    colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary,
-                        selectedLabelColor = OnPrimary
-                    )
-                )
-            }
-        }
-    }
-}

@@ -1496,4 +1496,28 @@
         <item quantity="one">In %1$d Training verwendet</item>
         <item quantity="other">In %1$d Trainings verwendet</item>
     </plurals>
+
+    <!-- RPE: a switch, three scales and the five levels of the simplified one -->
+    <string name="rpe_setting">Wahrgenommene Anstrengung (RPE)</string>
+    <string name="rpe_setting_desc">Bewerte, wie hart sich jeder Satz angefühlt hat</string>
+    <string name="rpe_prompt">Wie hart war es?</string>
+    <string name="rpe_scale_basic">Vereinfacht</string>
+    <string name="rpe_scale_basic_desc">5 Stufen mit Namen und Symbol</string>
+    <string name="rpe_scale_basic_example">Aufwärmen · Leicht · Mittel · Schwer · Maximal</string>
+    <string name="rpe_scale_standard">Standard</string>
+    <string name="rpe_scale_standard_desc">RPE von 1 bis 10, ganze Zahlen</string>
+    <string name="rpe_scale_standard_example">1 · 2 · 3 … 10</string>
+    <string name="rpe_scale_advanced">Fortgeschritten</string>
+    <string name="rpe_scale_advanced_desc">RPE von 6 bis 10, in 0,5er-Schritten</string>
+    <string name="rpe_scale_advanced_example">6 · 6,5 · 7 … 10</string>
+    <string name="rpe_level_warmup">Aufwärmen</string>
+    <string name="rpe_level_warmup_desc">Sehr leichte Anstrengung · Du machst dich bereit</string>
+    <string name="rpe_level_easy">Leicht</string>
+    <string name="rpe_level_easy_desc">Angenehm · Noch viel Reserve</string>
+    <string name="rpe_level_moderate">Mittel</string>
+    <string name="rpe_level_moderate_desc">Zielgerichtete Anstrengung · Du hast die Kontrolle</string>
+    <string name="rpe_level_hard">Schwer</string>
+    <string name="rpe_level_hard_desc">Fordernd · Hohe Anstrengung</string>
+    <string name="rpe_level_maximum">Maximal</string>
+    <string name="rpe_level_maximum_desc">Nah am Limit · Muskelversagen oder maximale Anstrengung</string>
 </resources>

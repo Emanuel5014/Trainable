@@ -1496,4 +1496,28 @@
         <item quantity="one">Used in %1$d workout</item>
         <item quantity="other">Used in %1$d workouts</item>
     </plurals>
+
+    <!-- RPE: a switch, three scales and the five levels of the simplified one -->
+    <string name="rpe_setting">Perceived effort (RPE)</string>
+    <string name="rpe_setting_desc">Rate how hard each set felt</string>
+    <string name="rpe_prompt">How hard did it feel?</string>
+    <string name="rpe_scale_basic">Simplified</string>
+    <string name="rpe_scale_basic_desc">5 levels with clear names and icons</string>
+    <string name="rpe_scale_basic_example">Warm-up · Easy · Moderate · Hard · Maximum</string>
+    <string name="rpe_scale_standard">Standard</string>
+    <string name="rpe_scale_standard_desc">RPE from 1 to 10, whole numbers</string>
+    <string name="rpe_scale_standard_example">1 · 2 · 3 … 10</string>
+    <string name="rpe_scale_advanced">Advanced</string>
+    <string name="rpe_scale_advanced_desc">RPE from 6 to 10, in steps of 0.5</string>
+    <string name="rpe_scale_advanced_example">6 · 6.5 · 7 … 10</string>
+    <string name="rpe_level_warmup">Warm-up</string>
+    <string name="rpe_level_warmup_desc">Very light effort · Getting ready</string>
+    <string name="rpe_level_easy">Easy</string>
+    <string name="rpe_level_easy_desc">Comfortable · Plenty left in the tank</string>
+    <string name="rpe_level_moderate">Moderate</string>
+    <string name="rpe_level_moderate_desc">Purposeful effort · Still in control</string>
+    <string name="rpe_level_hard">Hard</string>
+    <string name="rpe_level_hard_desc">Challenging · High effort</string>
+    <string name="rpe_level_maximum">Maximum</string>
+    <string name="rpe_level_maximum_desc">Near your limit · Failure or maximal effort</string>
 </resources>
