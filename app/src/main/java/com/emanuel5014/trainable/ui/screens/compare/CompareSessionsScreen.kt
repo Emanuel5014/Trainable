@@ -569,7 +569,6 @@ private fun SetCell(
     weightUnit: String,
     modifier: Modifier = Modifier
 ) {
-    val advanced = LocalAdvancedProgramming.current
     if (set == null && absent == false) {
         Spacer(modifier = modifier)
         return
@@ -582,9 +581,8 @@ private fun SetCell(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         if (set != null) {
-            val rpe = set.log.rpe
             Text(
-                text = setValueText(set, kind, weightUnit) + if (!advanced && rpe != null) " @${WeightUnitConverter.format(rpe)}" else "",
+                text = setValueText(set, kind, weightUnit),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = if (set.isWarmup) OnSurfaceVariant else OnSurface

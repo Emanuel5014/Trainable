@@ -165,12 +165,12 @@ class ReportGenerator @Inject constructor(
                     setNumber = setWithExercise.setLog.numeroSerie,
                     weight = convertedWeight,
                     reps = setWithExercise.setLog.repsEffettive,
-                    rpe = setWithExercise.setLog.rpe.takeIf { advanced },
+                    rpe = setWithExercise.setLog.rpe,
                     isWarmup = setWithExercise.setLog.isWarmup,
                     note = setWithExercise.setLog.note,
                     // The prescription with advanced programming on (its RPE has a column of its own); mini-sets, help and partials always
                     planned = if (advanced) {
-                        com.emanuel5014.trainable.ui.components.setLogPrescriptionBadges(editContext, setWithExercise.setLog.copy(rpe = null))
+                        com.emanuel5014.trainable.ui.components.setLogPrescriptionBadges(editContext, setWithExercise.setLog)
                     } else emptyList(),
                     performed = com.emanuel5014.trainable.ui.components.setLogPerformanceBadges(editContext, setWithExercise.setLog),
                     seconds = setWithExercise.setLog.durataSecondi,
@@ -315,7 +315,7 @@ class ReportGenerator @Inject constructor(
                                 setNumber = index + 1,
                                 weight = 0f,
                                 reps = 0,
-                                rpe = null,
+                                rpe = log.rpe,
                                 isWarmup = false,
                                 note = log.note,
                                 seconds = log.durataSecondi,

@@ -739,7 +739,7 @@ fun Application.configureServer(
                                 // Time & Reps sets have a duration too, and their reps are what counts
                                 if (swd.setLog.exerciseType == com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS) put("exerciseType", swd.setLog.exerciseType)
                                 if (swd.setLog.isWarmup) put("isWarmup", true)
-                                if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
+                                swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
                                 com.emanuel5014.trainable.ui.components.setLogDetailsText(context, swd.setLog, withPrescription = advanced)?.let { put("prescription", it) }
                             })
@@ -785,6 +785,7 @@ fun Application.configureServer(
                                     c.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
                                     put("setNumber", c.numeroSerie)
                                     c.note?.let { put("note", it) }
+                                    c.rpe?.let { put("rpe", it) }
                                 })
                             }
                         })

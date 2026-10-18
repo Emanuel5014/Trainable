@@ -1916,9 +1916,9 @@ fun EditSetDialog(
                             }
                         }
                     }
-                    if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
-                        com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
-                    }
+                }
+                com.emanuel5014.trainable.ui.components.editableRpeScale(hasValue = set.rpe != null)?.let { scale ->
+                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it }, scale = scale)
                 }
                 GymInputField(
                     value = note,
@@ -1970,7 +1970,7 @@ fun EditSetDialog(
                             repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else (reps.toIntOrNull() ?: 0),
                             durataSecondi = if (kind.isTimed) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null },
-                            rpe = if (kind.isTimed) null else rpe
+                            rpe = rpe
                         ).asKind(kind).let { edited ->
                             if (kind.isTimed) edited.copy(repParts = null, intraRests = null, assistedReps = 0, partialReps = 0)
                             else {
