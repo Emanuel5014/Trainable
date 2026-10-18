@@ -207,6 +207,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rpeBadgeText
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
@@ -2664,7 +2665,15 @@ fun CardioExerciseContent(
         val widthScale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
         // The set chips (and a set's note) take room too
         val hasNoteLine = !exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()
-        val reservedHeight = if (hasNoteLine) 430.dp else 390.dp
+        // Right after a set is done, until the next one starts, how hard it felt is asked under the chips
+        val justDoneIndex = exerciseState.cardioSets.indexOfLast { it.isCompleted }
+        val showRpeRow = state.rpeEnabled && justDoneIndex >= 0 && !state.cardioTimerRunning && !state.cardioTimerPaused
+        val rpeHeight = when {
+            !showRpeRow -> 0.dp
+            state.rpeScale == RpeScale.BASIC -> 140.dp
+            else -> 95.dp
+        }
+        val reservedHeight = (if (hasNoteLine) 430.dp else 390.dp) + rpeHeight
         val heightScale = ((maxHeight - reservedHeight) / 200.dp).coerceIn(0.4f, 1.15f)
         val scale = minOf(widthScale, heightScale)
         val cIndicatorSize = (200f * scale).dp
@@ -2794,9 +2803,7 @@ fun CardioExerciseContent(
             exerciseState.cardioSets.getOrNull(noteSetIndex)?.note?.takeIf { it.isNotBlank() }?.let { note ->
                 CardioSetNoteLine(note = note, onClick = { openedSetIndex = noteSetIndex })
             }
-            // Right after a set is done, until the next one starts: how hard it felt
-            val justDoneIndex = exerciseState.cardioSets.indexOfLast { it.isCompleted }
-            if (state.rpeEnabled && justDoneIndex >= 0 && !state.cardioTimerRunning && !state.cardioTimerPaused) {
+            if (showRpeRow) {
                 val justDone = exerciseState.cardioSets[justDoneIndex]
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
