@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
@@ -524,6 +525,30 @@ class SettingsViewModel @Inject constructor(
     fun setRpeInputMode(mode: Int) {
         viewModelScope.launch {
             userPrefsRepository.setRpeInputMode(mode)
+        }
+    }
+
+    val rpeEnabled = userPrefsRepository.rpeEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val rpeScale = userPrefsRepository.rpeScale.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = RpeScale.BASIC
+    )
+
+    fun setRpeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setRpeEnabled(enabled)
+        }
+    }
+
+    fun setRpeScale(scale: RpeScale) {
+        viewModelScope.launch {
+            userPrefsRepository.setRpeScale(scale)
         }
     }
 

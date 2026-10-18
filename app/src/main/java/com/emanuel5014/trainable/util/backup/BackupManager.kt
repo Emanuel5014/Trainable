@@ -8,6 +8,8 @@ import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.domain.rpe.RpePreference
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
 import com.emanuel5014.trainable.util.TimerAdjustment
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -251,7 +253,8 @@ class BackupManager @Inject constructor(
                 json.put("keep_screen_on_set_timer", prefs[UserPreferencesRepository.KEEP_SCREEN_ON_SET_TIMER] ?: true)
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_KG]?.let { json.put("load_rounding_kg", it.toDouble()) }
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB]?.let { json.put("load_rounding_lb", it.toDouble()) }
-                json.put("rpe_input_mode", prefs[UserPreferencesRepository.RPE_INPUT_MODE] ?: 0)
+                json.put("rpe_enabled", prefs[UserPreferencesRepository.RPE_ENABLED] ?: false)
+                json.put("rpe_scale", prefs[UserPreferencesRepository.RPE_SCALE] ?: RpeScale.BASIC.id)
                 json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
                 json.put("exercise_media_enabled", prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] ?: false)
                 json.put("exercise_media_large", prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] ?: true)
@@ -410,8 +413,19 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.LOAD_ROUNDING_KG] = jsonObject.getDouble("load_rounding_kg").toFloat()
                                             if (jsonObject.has("load_rounding_lb"))
                                                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB] = jsonObject.getDouble("load_rounding_lb").toFloat()
-                                            if (jsonObject.has("rpe_input_mode"))
-                                                prefs[UserPreferencesRepository.RPE_INPUT_MODE] = jsonObject.getInt("rpe_input_mode")
+                                            if (jsonObject.has("rpe_enabled")) {
+                                                prefs[UserPreferencesRepository.RPE_ENABLED] = jsonObject.getBoolean("rpe_enabled")
+                                                if (jsonObject.has("rpe_scale"))
+                                                    prefs[UserPreferencesRepository.RPE_SCALE] = jsonObject.getInt("rpe_scale")
+                                            } else {
+                                                // A backup from before RPE had a switch of its own
+                                                val rpe = RpePreference.fromLegacy(
+                                                    advancedProgramming = jsonObject.optBoolean("advanced_programming_enabled", false),
+                                                    legacyInputMode = if (jsonObject.has("rpe_input_mode")) jsonObject.getInt("rpe_input_mode") else null
+                                                )
+                                                prefs[UserPreferencesRepository.RPE_ENABLED] = rpe.enabled
+                                                prefs[UserPreferencesRepository.RPE_SCALE] = rpe.scale.id
+                                            }
                                             if (jsonObject.has("advanced_programming_enabled"))
                                                 prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] = jsonObject.getBoolean("advanced_programming_enabled")
                                             if (jsonObject.has("exercise_media_enabled"))

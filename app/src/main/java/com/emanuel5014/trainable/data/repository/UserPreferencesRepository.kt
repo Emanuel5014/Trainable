@@ -12,6 +12,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,10 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "settings",
+    produceMigrations = { listOf(RpePreferenceMigration()) }
+)
 
 @Singleton
 class UserPreferencesRepository @Inject constructor(
@@ -109,8 +113,12 @@ class UserPreferencesRepository @Inject constructor(
     val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
-    /** 0 = RPE input only on advanced (%1RM) exercises, 1 = on every exercise, 2 = never. */
+    /** Old RPE setting (0 = advanced exercises only, 1 = every exercise, 2 = never): only [RpePreferenceMigration] and old backups read it. */
     val RPE_INPUT_MODE = intPreferencesKey("rpe_input_mode")
+    /** Asks how hard each set felt (RPE), for every kind of exercise. Off by default. */
+    val RPE_ENABLED = booleanPreferencesKey("rpe_enabled")
+    /** The [com.emanuel5014.trainable.domain.rpe.RpeScale] RPE is asked in, by its id. */
+    val RPE_SCALE = intPreferencesKey("rpe_scale")
     val KEEP_SCREEN_ON_CARDIO_TIMER = booleanPreferencesKey("keep_screen_on_cardio_timer")
     val KEEP_SCREEN_ON_SET_TIMER = booleanPreferencesKey("keep_screen_on_set_timer")
     val NEXTCLOUD_BACKUP_ENABLED = booleanPreferencesKey("nextcloud_backup_enabled")
@@ -559,6 +567,24 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setRpeInputMode(mode: Int) {
         dataStore.edit { preferences ->
             preferences[RPE_INPUT_MODE] = mode
+        }
+    }
+
+    val rpeEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[RPE_ENABLED] ?: false }
+
+    suspend fun setRpeEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[RPE_ENABLED] = enabled
+        }
+    }
+
+    val rpeScale: Flow<RpeScale> = dataStore.data
+        .map { preferences -> RpeScale.fromId(preferences[RPE_SCALE]) }
+
+    suspend fun setRpeScale(scale: RpeScale) {
+        dataStore.edit { preferences ->
+            preferences[RPE_SCALE] = scale.id
         }
     }
 
