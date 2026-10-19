@@ -20,5 +20,8 @@ data class SessionTagEntity(
     val nameKey: String,
     /** Position in `TagPalette`; the actual colour comes from the theme. */
     @ColumnInfo(name = "color_index")
-    val colorIndex: Int = 0
+    val colorIndex: Int = 0,
+    /** A colour the lifter picked freely (opaque ARGB); when set it wins over [colorIndex], which stays as the fallback. */
+    @ColumnInfo(name = "custom_color")
+    val customColor: Int? = null
 )

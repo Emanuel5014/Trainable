@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Sell
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -49,6 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -65,6 +68,7 @@ import com.emanuel5014.trainable.domain.journal.TagName
 import com.emanuel5014.trainable.domain.journal.TagPalette
 import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.GymButton
+import com.emanuel5014.trainable.ui.components.journal.TagColorPickerDialog
 import com.emanuel5014.trainable.ui.components.journal.tagColor
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -80,6 +84,7 @@ private sealed interface TagDialog {
     data class Rename(val tag: TagWithUsage, val invalid: Boolean = false) : TagDialog
     data class RenameConflict(val tag: TagWithUsage, val existingId: Int, val existingName: String) : TagDialog
     data class Color(val tag: TagWithUsage) : TagDialog
+    data class CustomColor(val tag: TagWithUsage) : TagDialog
     data class PickMergeTarget(val tag: TagWithUsage) : TagDialog
     data class ConfirmMerge(val from: TagWithUsage, val into: TagWithUsage) : TagDialog
     data class Delete(val tag: TagWithUsage) : TagDialog
@@ -219,9 +224,9 @@ fun JournalTagsScreen(
                 Text(stringResource(R.string.journal_tag_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
             },
             text = {
-                // Two rows of three: six swatches in one row do not fit in a dialog on a narrow screen
+                // Rows of four: seven swatches in one row do not fit in a dialog on a narrow screen
                 FlowRow(
-                    maxItemsInEachRow = 3,
+                    maxItemsInEachRow = 4,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -238,11 +243,15 @@ fun JournalTagsScreen(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            if (slot == open.tag.colorIndex) {
+                            if (open.tag.customColor == null && slot == open.tag.colorIndex) {
                                 Icon(Icons.Rounded.Check, contentDescription = null, tint = Surface, modifier = Modifier.size(22.dp))
                             }
                         }
                     }
+                    CustomColorSwatch(
+                        customColor = open.tag.customColor,
+                        onClick = { dialog = TagDialog.CustomColor(open.tag) }
+                    )
                 }
             },
             confirmButton = {},
@@ -250,6 +259,15 @@ fun JournalTagsScreen(
                 TextButton(onClick = { dialog = null }) {
                     Text(stringResource(R.string.cancel).uppercase(), color = Primary)
                 }
+            }
+        )
+
+        is TagDialog.CustomColor -> TagColorPickerDialog(
+            initialColor = tagColor(open.tag.colorIndex, open.tag.customColor),
+            onDismiss = { dialog = null },
+            onApply = { argb ->
+                viewModel.setCustomColor(open.tag.id, argb)
+                dialog = null
             }
         )
 
@@ -272,7 +290,7 @@ fun JournalTagsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            ColorDot(target.colorIndex)
+                            ColorDot(target.colorIndex, target.customColor)
                             Text(target.name, color = OnSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
@@ -312,8 +330,38 @@ fun JournalTagsScreen(
 }
 
 @Composable
-private fun ColorDot(colorIndex: Int, size: Int = 14) {
-    Box(modifier = Modifier.size(size.dp).clip(CircleShape).background(tagColor(colorIndex)))
+private fun ColorDot(colorIndex: Int, customColor: Int?, size: Int = 14) {
+    Box(modifier = Modifier.size(size.dp).clip(CircleShape).background(tagColor(colorIndex, customColor)))
+}
+
+/** The last swatch of the colour dialog: the tag's own colour when it has one (checked), else a rainbow that opens the picker. */
+@Composable
+private fun CustomColorSwatch(customColor: Int?, onClick: () -> Unit) {
+    val label = stringResource(R.string.custom_color)
+    val fill = if (customColor != null) {
+        Modifier.background(Color(customColor))
+    } else {
+        Modifier.background(
+            Brush.sweepGradient(
+                listOf(Color(0xFFFF4D4D), Color(0xFFFFC233), Color(0xFF5BD66B), Color(0xFF33B5FF), Color(0xFFB35CFF), Color(0xFFFF4D4D))
+            )
+        )
+    }
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .then(fill)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center
+    ) {
+        if (customColor != null) {
+            Icon(Icons.Rounded.Check, contentDescription = null, tint = Surface, modifier = Modifier.size(22.dp))
+        } else {
+            Icon(Icons.Rounded.Palette, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+        }
+    }
 }
 
 @Composable
@@ -334,7 +382,7 @@ private fun TagRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        ColorDot(tag.colorIndex, size = 18)
+        ColorDot(tag.colorIndex, tag.customColor, size = 18)
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = tag.name,

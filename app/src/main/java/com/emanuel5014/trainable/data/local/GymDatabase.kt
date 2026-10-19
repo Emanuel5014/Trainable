@@ -55,7 +55,7 @@ import kotlinx.coroutines.launch
         SessionTagEntity::class,
         SessionTagRefEntity::class
     ],
-    version = 36,
+    version = 37,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -461,6 +461,13 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_36_37 = object : Migration(36, 37) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // A tag can have a colour picked freely instead of one of the palette slots
+                db.execSQL("ALTER TABLE session_tags ADD COLUMN custom_color INTEGER")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -479,7 +486,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
                         MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {

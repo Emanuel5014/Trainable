@@ -89,6 +89,15 @@ class JournalRepository @Inject constructor(
         dao.setTagColor(id, colorIndex.coerceIn(0, TagPalette.SIZE - 1))
     }
 
+    /** A colour picked freely instead of a palette slot; any transparency in [argb] is dropped. */
+    suspend fun setTagCustomColor(id: Int, argb: Int) {
+        dao.setTagCustomColor(id, argb or OPAQUE)
+    }
+
+    private companion object {
+        const val OPAQUE = 0xFF shl 24
+    }
+
     /** Puts [intoId] on every workout that has [fromId] (once, even when it has both) and deletes [fromId]. */
     suspend fun mergeTags(fromId: Int, intoId: Int) {
         if (fromId == intoId) return

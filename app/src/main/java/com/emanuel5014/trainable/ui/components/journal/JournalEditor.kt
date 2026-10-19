@@ -119,6 +119,7 @@ fun JournalEditor(
                     TagChip(
                         name = tag.name,
                         colorIndex = tag.colorIndex,
+                        customColor = tag.customColor,
                         selected = tag.id in journal.tagIds,
                         onClick = {
                             val ids = journal.tagIds

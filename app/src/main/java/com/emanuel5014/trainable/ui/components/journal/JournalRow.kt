@@ -76,7 +76,7 @@ fun JournalRow(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             if (rating != null) RatingPill(rating)
-                            tags.forEach { TagBadge(it.name, it.colorIndex) }
+                            tags.forEach { TagBadge(it.name, it.colorIndex, it.customColor) }
                         }
                     }
                     if (!note.isNullOrBlank()) {

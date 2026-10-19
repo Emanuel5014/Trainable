@@ -41,6 +41,10 @@ class JournalTagsViewModel @Inject constructor(
         viewModelScope.launch { journalRepository.setTagColor(id, colorIndex) }
     }
 
+    fun setCustomColor(id: Int, argb: Int) {
+        viewModelScope.launch { journalRepository.setTagCustomColor(id, argb) }
+    }
+
     fun merge(fromId: Int, intoId: Int) {
         viewModelScope.launch { journalRepository.mergeTags(fromId, intoId) }
     }

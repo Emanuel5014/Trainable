@@ -453,6 +453,8 @@
     <string name="style">Estilo</string>
     <string name="apply">Aplicar</string>
     <string name="hue">Tono</string>
+    <string name="saturation">Saturación</string>
+    <string name="brightness">Brillo</string>
     <string name="system_default">Predeterminado del sistema</string>
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>

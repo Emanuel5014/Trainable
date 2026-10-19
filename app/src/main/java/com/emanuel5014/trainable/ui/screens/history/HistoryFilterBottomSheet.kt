@@ -532,6 +532,7 @@ fun HistoryFilterBottomSheet(
                                             TagChip(
                                                 name = tag.name,
                                                 colorIndex = tag.colorIndex,
+                                                customColor = tag.customColor,
                                                 selected = tag.id in journalFilters.tagIds,
                                                 onClick = {
                                                     val ids = journalFilters.tagIds

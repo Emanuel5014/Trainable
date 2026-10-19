@@ -8,8 +8,9 @@ data class TagWithUsage(
     val name: String,
     val nameKey: String,
     val colorIndex: Int,
+    val customColor: Int?,
     val uses: Int,
     val lastUsed: Long?
 ) {
-    fun toEntity() = SessionTagEntity(id = id, name = name, nameKey = nameKey, colorIndex = colorIndex)
+    fun toEntity() = SessionTagEntity(id = id, name = name, nameKey = nameKey, colorIndex = colorIndex, customColor = customColor)
 }

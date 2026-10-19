@@ -22,7 +22,8 @@ interface JournalDao {
     @Query("SELECT * FROM session_tags WHERE id = :id")
     suspend fun getTag(id: Int): SessionTagEntity?
 
-    @Query("SELECT color_index FROM session_tags")
+    /** The palette slots in use; a tag with a free colour does not take one. */
+    @Query("SELECT color_index FROM session_tags WHERE custom_color IS NULL")
     suspend fun allColorIndexes(): List<Int>
 
     @Insert
@@ -31,8 +32,12 @@ interface JournalDao {
     @Query("UPDATE session_tags SET name = :name, name_key = :key WHERE id = :id")
     suspend fun renameTag(id: Int, name: String, key: String)
 
-    @Query("UPDATE session_tags SET color_index = :colorIndex WHERE id = :id")
+    /** A palette colour; it replaces any free colour the tag had. */
+    @Query("UPDATE session_tags SET color_index = :colorIndex, custom_color = NULL WHERE id = :id")
     suspend fun setTagColor(id: Int, colorIndex: Int)
+
+    @Query("UPDATE session_tags SET custom_color = :color WHERE id = :id")
+    suspend fun setTagCustomColor(id: Int, color: Int)
 
     @Query("DELETE FROM session_tags WHERE id = :id")
     suspend fun deleteTag(id: Int)
@@ -53,7 +58,7 @@ interface JournalDao {
     @Query(
         """
         SELECT t.id AS id, t.name AS name, t.name_key AS nameKey, t.color_index AS colorIndex,
-               COUNT(r.session_id) AS uses, MAX(s.timestamp) AS lastUsed
+               t.custom_color AS customColor, COUNT(r.session_id) AS uses, MAX(s.timestamp) AS lastUsed
         FROM session_tags t
         LEFT JOIN session_tag_refs r ON r.tag_id = t.id
         LEFT JOIN workout_sessions s ON s.id = r.session_id

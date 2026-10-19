@@ -67,10 +67,11 @@ fun JournalSummaryLine(
                     TagBadge(
                         name = tag.name,
                         colorIndex = tag.colorIndex,
+                        customColor = tag.customColor,
                         modifier = Modifier.clip(CircleShape).clickable { onTagClick(tag.id) }
                     )
                 }
-                if (tags.size > VISIBLE_TAGS) TagBadge(name = "+${tags.size - VISIBLE_TAGS}", colorIndex = 4)
+                if (tags.size > VISIBLE_TAGS) TagBadge(name = "+${tags.size - VISIBLE_TAGS}", colorIndex = 4, customColor = null)
             }
         }
         val firstLine = note?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
@@ -128,6 +129,7 @@ fun JournalDetail(
                         TagBadge(
                             name = tag.name,
                             colorIndex = tag.colorIndex,
+                            customColor = tag.customColor,
                             modifier = Modifier.clip(CircleShape).clickable { onTagClick(tag.id) }
                         )
                     }

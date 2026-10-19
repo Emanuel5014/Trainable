@@ -453,6 +453,8 @@
     <string name="style">Style</string>
     <string name="apply">Apply</string>
     <string name="hue">Hue</string>
+    <string name="saturation">Saturation</string>
+    <string name="brightness">Brightness</string>
     <string name="system_default">System Default</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>

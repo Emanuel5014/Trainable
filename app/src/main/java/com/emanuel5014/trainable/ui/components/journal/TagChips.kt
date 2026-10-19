@@ -17,26 +17,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.emanuel5014.trainable.domain.journal.TagContrast
 import com.emanuel5014.trainable.domain.journal.TagPalette
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.OnTertiaryContainer
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 
-/** The colour of a palette slot, taken from the theme so dynamic colour and the dark theme keep working. */
+/**
+ * The colour of a tag: the one the lifter picked freely ([customColor], lightened or darkened only as far as it needs
+ * to read on a card) or else the palette slot, taken from the theme so dynamic colour and the dark theme keep working.
+ */
 @Composable
-fun tagColor(colorIndex: Int): Color = when (colorIndex.coerceIn(0, TagPalette.SIZE - 1)) {
-    0 -> Primary
-    1 -> Tertiary
-    2 -> Error
-    3 -> OnSecondaryContainer
-    4 -> OnSurfaceVariant
-    else -> OnTertiaryContainer
+fun tagColor(colorIndex: Int, customColor: Int? = null): Color {
+    if (customColor != null) return Color(TagContrast.readableOn(customColor, SurfaceContainerHigh.toArgb()))
+    return when (colorIndex.coerceIn(0, TagPalette.SIZE - 1)) {
+        0 -> Primary
+        1 -> Tertiary
+        2 -> Error
+        3 -> OnSecondaryContainer
+        4 -> OnSurfaceVariant
+        else -> OnTertiaryContainer
+    }
 }
 
 /** A tag that can be switched on and off: a dot of its colour while off, a check mark and a tinted container while on. */
@@ -44,11 +53,12 @@ fun tagColor(colorIndex: Int): Color = when (colorIndex.coerceIn(0, TagPalette.S
 fun TagChip(
     name: String,
     colorIndex: Int,
+    customColor: Int?,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val color = tagColor(colorIndex)
+    val color = tagColor(colorIndex, customColor)
     FilterChip(
         selected = selected,
         onClick = onClick,
@@ -71,8 +81,8 @@ fun TagChip(
 
 /** A tag as a small read-only pill, for lists and cards. */
 @Composable
-fun TagBadge(name: String, colorIndex: Int, modifier: Modifier = Modifier) {
-    val color = tagColor(colorIndex)
+fun TagBadge(name: String, colorIndex: Int, customColor: Int?, modifier: Modifier = Modifier) {
+    val color = tagColor(colorIndex, customColor)
     Text(
         text = name,
         style = MaterialTheme.typography.labelMedium,
