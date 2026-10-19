@@ -2839,7 +2839,8 @@ fun CardioExerciseContent(
                     RpeSelector(
                         value = justDone.rpe,
                         onValueChange = { viewModel.updateCardioSetRpe(exerciseIndex, justDoneIndex, it) },
-                        scale = state.rpeScale
+                        scale = state.rpeScale,
+                        hapticEnabled = state.hapticEnabled
                     )
                 }
             }
@@ -3156,7 +3157,7 @@ fun CardioExerciseContent(
 /** The RPE selector of a set, with the scale the user chose; nothing while the RPE switch is off. */
 @Composable
 private fun RpeInput(state: WorkoutState, value: Float?, onValueChange: (Float?) -> Unit) {
-    if (state.rpeEnabled) RpeSelector(value = value, onValueChange = onValueChange, scale = state.rpeScale)
+    if (state.rpeEnabled) RpeSelector(value = value, onValueChange = onValueChange, scale = state.rpeScale, hapticEnabled = state.hapticEnabled)
 }
 
 /** The rest countdown in a small pill, for when the bottom hub is busy with something else. */
