@@ -1516,4 +1516,15 @@
     <string name="rpe_level_hard_desc">Exigeant · Effort élevé</string>
     <string name="rpe_level_maximum">Maximum</string>
     <string name="rpe_level_maximum_desc">Proche de ta limite · Échec ou effort maximal</string>
+    <string name="routine_exercises_section">Exercices</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%d exercice</item>
+        <item quantity="many">%d exercices</item>
+        <item quantity="other">%d exercices</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%d série</item>
+        <item quantity="many">%d séries</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
 </resources>

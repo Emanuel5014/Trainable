@@ -1515,4 +1515,13 @@
     <string name="rpe_level_hard_desc">Fordernd · Hohe Anstrengung</string>
     <string name="rpe_level_maximum">Maximal</string>
     <string name="rpe_level_maximum_desc">Nah am Limit · Muskelversagen oder maximale Anstrengung</string>
+    <string name="routine_exercises_section">Übungen</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%d Übung</item>
+        <item quantity="other">%d Übungen</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%d Satz</item>
+        <item quantity="other">%d Sätze</item>
+    </plurals>
 </resources>

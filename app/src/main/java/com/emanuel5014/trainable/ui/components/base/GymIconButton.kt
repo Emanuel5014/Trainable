@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -36,7 +37,8 @@ fun GymIconButton(
     modifier: Modifier = Modifier,
     containerColor: Color = SurfaceContainerHigh,
     contentColor: Color = OnSurface,
-    description: String? = null
+    description: String? = null,
+    shape: Shape = CircleShape
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -53,7 +55,7 @@ fun GymIconButton(
         modifier = modifier
             .size(48.dp)
             .scale(scale)
-            .clip(CircleShape)
+            .clip(shape)
             .background(containerColor)
             .clickable(
                 interactionSource = interactionSource,

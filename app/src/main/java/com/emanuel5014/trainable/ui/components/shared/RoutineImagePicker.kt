@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
@@ -230,6 +231,35 @@ private fun ImagePickerContent(
         }
     }
 
+    // Nothing to show yet: a slim button instead of a big empty tile
+    if (images.isEmpty()) {
+        Box(modifier = modifier) {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(SurfaceContainerHigh)
+                    .clickable { showOptions = true }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.AddPhotoAlternate,
+                    contentDescription = null,
+                    tint = Primary,
+                    modifier = Modifier.size(22.dp)
+                )
+                Text(
+                    text = stringResource(R.string.add_photo),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = OnSurface,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+        }
+        return
+    }
+
     LazyRow(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 0.dp),
@@ -238,8 +268,8 @@ private fun ImagePickerContent(
         items(images, key = { it.id }) { image ->
             Box(
                 modifier = Modifier
-                    .size(150.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(112.dp)
+                    .clip(RoundedCornerShape(24.dp))
                     .clickable { onImageClick(image) }
             ) {
                 AsyncImage(
@@ -248,19 +278,21 @@ private fun ImagePickerContent(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                IconButton(
-                    onClick = { 
-                        onImageRemove(image)
-                        val fixedPath = UriMigrationHelper.fixPath(image.imageUri, context)
-                        if (fixedPath?.startsWith("/") == true) {
-                            File(fixedPath).delete()
-                        }
-                    },
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .size(24.dp)
-                        .background(Surface.copy(alpha = 0.8f), CircleShape)
+                        .padding(8.dp)
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Surface.copy(alpha = 0.8f))
+                        .clickable {
+                            onImageRemove(image)
+                            val fixedPath = UriMigrationHelper.fixPath(image.imageUri, context)
+                            if (fixedPath?.startsWith("/") == true) {
+                                File(fixedPath).delete()
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Close,
@@ -275,8 +307,8 @@ private fun ImagePickerContent(
         item {
             Box(
                 modifier = Modifier
-                    .size(150.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(112.dp)
+                    .clip(RoundedCornerShape(24.dp))
                     .background(SurfaceContainerHigh)
                     .clickable { showOptions = true },
                 contentAlignment = Alignment.Center
@@ -285,10 +317,10 @@ private fun ImagePickerContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Add,
+                        imageVector = Icons.Rounded.AddPhotoAlternate,
                         contentDescription = stringResource(R.string.add_photo),
-                        tint = OnSurfaceVariant,
-                        modifier = Modifier.size(32.dp)
+                        tint = Primary,
+                        modifier = Modifier.size(28.dp)
                     )
                     Text(
                         text = stringResource(R.string.add_photo),
