@@ -14,15 +14,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
@@ -32,8 +33,6 @@ import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,16 +59,15 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.rpe.RpeLevel
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.domain.rpe.RpeSettings
-import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
-import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 
 /** Whether RPE is asked for and on which scale, provided once at the app root like [LocalAdvancedProgramming]. */
@@ -126,9 +124,10 @@ private fun RpeLevel.color(): Color = when (this) {
 }
 
 /**
- * Asks how hard a set felt. The simplified [scale] is five icon tiles that name the level under them; the others are a
- * row of numbers. Tapping the chosen value clears it, and a value the scale does not offer (6.5 on the whole-number
- * scale) shows as nothing chosen until it is replaced.
+ * Asks how hard a set felt, as a connected group of tiles in every scale: the simplified one is five icon tiles that
+ * name the level under them, the others are the numbers of the scale (one row, or rows of five where the row is too
+ * narrow for a thumb). Tapping the chosen value clears it, and a value the scale does not offer (6.5 on the
+ * whole-number scale) shows as nothing chosen until it is replaced.
  */
 @Composable
 fun RpeSelector(
@@ -136,7 +135,7 @@ fun RpeSelector(
     onValueChange: (Float?) -> Unit,
     scale: RpeScale,
     modifier: Modifier = Modifier,
-    /** A tick when a level is picked on the simplified scale; the workout passes the app's vibration setting. */
+    /** A tick when a value is picked; the workout passes the app's vibration setting. */
     hapticEnabled: Boolean = false
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -149,37 +148,102 @@ fun RpeSelector(
         if (scale == RpeScale.BASIC) {
             LevelTiles(value = value, onValueChange = onValueChange, hapticEnabled = hapticEnabled)
         } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                scale.values.forEach { option ->
-                    val selected = value == option
-                    FilterChip(
-                        selected = selected,
-                        onClick = { onValueChange(if (selected) null else option) },
-                        label = { Text(PrescriptionFormatter.number(option), fontWeight = FontWeight.ExtraBold) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Primary,
-                            selectedLabelColor = OnPrimary
-                        )
-                    )
-                }
-            }
+            NumberTiles(value = value, onValueChange = onValueChange, scale = scale, hapticEnabled = hapticEnabled)
         }
     }
 }
 
 /**
- * The five levels as a connected expressive group: neutral tiles with the level's coloured icon; the chosen one fills
- * with that colour, takes more of the row with a little spring and pops its icon, and the caption under the row
- * slides in with its name and what it means.
+ * One tile of a connected choice row: neutral until it is chosen, then filled with [color], wider (by [growth], with a
+ * little overshoot) and with its content popping. [index] of [count] picks the connected shape of its place in the row.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
+private fun RowScope.ChoiceTile(
+    selected: Boolean,
+    color: Color,
+    idleContent: Color,
+    growth: Float,
+    index: Int,
+    count: Int,
+    height: Dp,
+    description: String?,
+    hapticEnabled: Boolean,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val haptic = LocalHapticFeedback.current
+    val container by animateColorAsState(
+        targetValue = if (selected) color else SurfaceContainerHighest,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "rpeTileContainer"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) color.onLevelColor() else idleContent,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "rpeTileContent"
+    )
+    val share by animateFloatAsState(
+        targetValue = if (selected) growth else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
+        label = "rpeTileShare"
+    )
+    // The content pops when its tile is chosen (not when the panel opens with a value already there)
+    val pop = remember { Animatable(1f) }
+    var firstComposition by remember { mutableStateOf(true) }
+    LaunchedEffect(selected) {
+        if (selected && !firstComposition) {
+            pop.snapTo(0.6f)
+            pop.animateTo(1f, spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium))
+        }
+        firstComposition = false
+    }
+    ToggleButton(
+        checked = selected,
+        onCheckedChange = {
+            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
+            onClick()
+        },
+        modifier = Modifier
+            .weight(share)
+            .height(height)
+            .semantics {
+                role = Role.RadioButton
+                if (description != null) contentDescription = description
+            },
+        shapes = when {
+            count == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+            index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+            index == count - 1 -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+        },
+        colors = ToggleButtonDefaults.toggleButtonColors(
+            containerColor = container,
+            contentColor = contentColor,
+            checkedContainerColor = container,
+            checkedContentColor = contentColor
+        ),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Box(
+            modifier = Modifier.graphicsLayer {
+                scaleX = pop.value
+                scaleY = pop.value
+                rotationZ = (1f - pop.value) * -25f
+            }
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * The five levels: neutral tiles with the level's coloured icon; the chosen one fills with that colour, and the
+ * caption under the row slides in with its name and what it means.
+ */
+@Composable
 private fun LevelTiles(value: Float?, onValueChange: (Float?) -> Unit, hapticEnabled: Boolean) {
     val picked = RpeLevel.entries.firstOrNull { it.value == value }
-    val haptic = LocalHapticFeedback.current
     // On a light theme the icons are darkened so the amber one still reads on a neutral tile
     val lightTheme = MaterialTheme.colorScheme.background.luminance() > 0.5f
     Row(
@@ -187,73 +251,20 @@ private fun LevelTiles(value: Float?, onValueChange: (Float?) -> Unit, hapticEna
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
     ) {
         RpeLevel.entries.forEachIndexed { index, level ->
-            val selected = level == picked
             val base = level.color()
-            val idleIcon = if (lightTheme) lerp(base, Color.Black, 0.3f) else base
-            val container by animateColorAsState(
-                targetValue = if (selected) base else SurfaceContainerHighest,
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                label = "rpeTileContainer"
-            )
-            val content by animateColorAsState(
-                targetValue = if (selected) base.onLevelColor() else idleIcon,
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                label = "rpeTileIcon"
-            )
-            // The chosen tile takes more of the row, with a little overshoot
-            val share by animateFloatAsState(
-                targetValue = if (selected) 1.9f else 1f,
-                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
-                label = "rpeTileShare"
-            )
-            // The icon pops when its tile is chosen (not when the panel opens with a level already there)
-            val pop = remember { Animatable(1f) }
-            var firstComposition by remember { mutableStateOf(true) }
-            LaunchedEffect(selected) {
-                if (selected && !firstComposition) {
-                    pop.snapTo(0.6f)
-                    pop.animateTo(1f, spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium))
-                }
-                firstComposition = false
-            }
-            val description = stringResource(level.nameRes()) + " " + level.range
-            ToggleButton(
-                checked = selected,
-                onCheckedChange = {
-                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                    onValueChange(if (selected) null else level.value)
-                },
-                modifier = Modifier
-                    .weight(share)
-                    .height(52.dp)
-                    .semantics {
-                        role = Role.RadioButton
-                        contentDescription = description
-                    },
-                shapes = when (index) {
-                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    RpeLevel.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                },
-                colors = ToggleButtonDefaults.toggleButtonColors(
-                    containerColor = container,
-                    contentColor = content,
-                    checkedContainerColor = container,
-                    checkedContentColor = content
-                ),
-                contentPadding = PaddingValues(0.dp)
+            ChoiceTile(
+                selected = level == picked,
+                color = base,
+                idleContent = if (lightTheme) lerp(base, Color.Black, 0.3f) else base,
+                growth = 1.9f,
+                index = index,
+                count = RpeLevel.entries.size,
+                height = 52.dp,
+                description = stringResource(level.nameRes()) + " " + level.range,
+                hapticEnabled = hapticEnabled,
+                onClick = { onValueChange(if (level == picked) null else level.value) }
             ) {
-                Icon(
-                    imageVector = level.icon(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .graphicsLayer {
-                            scaleX = pop.value
-                            scaleY = pop.value
-                            rotationZ = (1f - pop.value) * -25f
-                        }
-                )
+                Icon(imageVector = level.icon(), contentDescription = null, modifier = Modifier.size(24.dp))
             }
         }
     }
@@ -289,5 +300,50 @@ private fun LevelTiles(value: Float?, onValueChange: (Float?) -> Unit, hapticEna
     }
 }
 
-/** Icon colour on a tile filled with the level colour: dark on the light amber, white on the others. */
+/**
+ * The numbers of the standard and advanced scales: one connected row, or rows of five where a tile would get less than
+ * 34 dp. The chosen number fills with the colour of the effort level it falls in (7 and 8 are orange like "Hard").
+ */
+@Composable
+private fun NumberTiles(value: Float?, onValueChange: (Float?) -> Unit, scale: RpeScale, hapticEnabled: Boolean) {
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val perRow = if (maxWidth / scale.values.size >= 34.dp) scale.values.size else 5
+        Column(
+            modifier = Modifier.fillMaxWidth().selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+        ) {
+            scale.values.chunked(perRow).forEach { rowValues ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                ) {
+                    rowValues.forEachIndexed { index, option ->
+                        val label = PrescriptionFormatter.number(option)
+                        ChoiceTile(
+                            selected = value == option,
+                            color = RpeLevel.of(option).color(),
+                            idleContent = OnSurface,
+                            growth = 1.6f,
+                            index = index,
+                            count = rowValues.size,
+                            height = 48.dp,
+                            description = null,
+                            hapticEnabled = hapticEnabled,
+                            onClick = { onValueChange(if (value == option) null else option) }
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Icon or number colour on a tile filled with a level colour: dark on the light amber, white on the others. */
 private fun Color.onLevelColor(): Color = if (luminance() > 0.35f) Color(0xFF1B1B1B) else Color.White
