@@ -63,6 +63,8 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ripple
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.emanuel5014.trainable.util.BiometricHelper
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
@@ -149,6 +151,8 @@ fun DashboardScreen(
         }
     }
     val uiState by viewModel.uiState.collectAsState()
+    // The app can stay in memory for days: "today" and the week must follow the calendar, not the launch
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshToday() }
     val advancedProgramming = com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current
     var showMembershipDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }

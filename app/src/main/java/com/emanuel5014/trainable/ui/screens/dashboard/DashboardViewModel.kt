@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
+import com.emanuel5014.trainable.domain.suggestion.WorkoutSuggester
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
@@ -12,13 +14,19 @@ import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.util.notification.GymMembershipWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
+import java.time.temporal.WeekFields
+import java.util.Locale
 import javax.inject.Inject
 
 data class DashboardUiState(
@@ -65,22 +73,30 @@ class DashboardViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val weekStartMillis = Calendar.getInstance().apply {
-        set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-    }.timeInMillis
+    /** The day the dashboard is computed for; the ViewModel outlives midnight, so the screen refreshes it on resume. */
+    private val today = MutableStateFlow(LocalDate.now())
 
-    private val todayStartMillis = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-    }.timeInMillis
+    private fun weekStartMillis(day: LocalDate): Long {
+        val firstDayOfWeek = WeekFields.of(Locale.getDefault()).firstDayOfWeek
+        return day.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
+            .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    }
+
+    fun refreshToday() {
+        today.value = LocalDate.now()
+    }
+
+    private data class SessionData(
+        val all: List<WorkoutSessionEntity>,
+        val unfinished: List<SessionWithPlanName>,
+        val cardioCount: Int,
+        val day: LocalDate
+    )
 
     private val _uiState = MutableStateFlow(DashboardUiState(isLoading = true))
     private val _selectedSessionIds = MutableStateFlow<Set<Int>>(emptySet())
-    
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<DashboardUiState> = combine(
         combine(
             workoutRepository.getActivePlans(),
@@ -111,62 +127,23 @@ class DashboardViewModel @Inject constructor(
         combine(
             workoutRepository.getAllSessions(),
             workoutRepository.getUnfinishedSessionsWithPlanName(),
-            workoutRepository.getCardioSessionCountSince(weekStartMillis)
-        ) { all, unf, cardioCount -> Triple(all, unf, cardioCount) },
+            today.flatMapLatest { workoutRepository.getCardioSessionCountSince(weekStartMillis(it)) },
+            today
+        ) { all, unf, cardioCount, day -> SessionData(all, unf, cardioCount, day) },
         _selectedSessionIds
     ) { planVolumePair, user, prefs, sessionData, selectedIds ->
         val (plans, volume) = planVolumePair
         val (goal, membershipExpiry, dynamic, palette, swipe, floating) = prefs
-        val (allSessions, unfinished, cardioCount) = sessionData
-        val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
-        val numWorkoutsThisWeek = workoutsThisWeek.size
-        
-        // Suggested Plan Logic:
-        // 1. If we haven't trained today and there's a plan assigned for today, prioritize it.
-        // 2. Otherwise, find the first plan in the list that hasn't been performed yet this week.
-        // 3. If all plans have been performed at least once this week, suggest the next one in sequence after the last session.
-        
-        val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
-        val currentDayValue = when (today) {
-            Calendar.MONDAY -> 1
-            Calendar.TUESDAY -> 2
-            Calendar.WEDNESDAY -> 3
-            Calendar.THURSDAY -> 4
-            Calendar.FRIDAY -> 5
-            Calendar.SATURDAY -> 6
-            Calendar.SUNDAY -> 7
-            else -> 1
-        }.toString()
+        val (allSessions, unfinished, cardioCount, day) = sessionData
+        val weekStart = weekStartMillis(day)
+        val numWorkoutsThisWeek = allSessions.count { it.timestamp >= weekStart }
 
-        val planForToday = plans.find { it.giorniSettimana?.split(",")?.contains(currentDayValue) == true }
-        val lastSession = allSessions.firstOrNull()
-        val trainedToday = lastSession != null && lastSession.timestamp >= todayStartMillis
-        
-        val idsPerformedThisWeek = workoutsThisWeek.map { it.planId }.toSet()
-        val firstNotPerformedThisWeek = plans.find { it.id !in idsPerformedThisWeek }
-
-        val todayPlan = if (!trainedToday) planForToday else null
-        
-        var suggestedPlan: WorkoutPlanEntity? = null
-        if (plans.isNotEmpty()) {
-            suggestedPlan = if (firstNotPerformedThisWeek != null) {
-                firstNotPerformedThisWeek
-            } else {
-                val lastPlanIndex = plans.indexOfFirst { it.id == lastSession?.planId }
-                if (lastPlanIndex != -1) {
-                    plans[(lastPlanIndex + 1) % plans.size]
-                } else {
-                    plans.first()
-                }
-            }
-        }
-
-        // Avoid showing the same plan twice
-        val finalSuggestedPlan = if (suggestedPlan?.id == todayPlan?.id) null else suggestedPlan
+        // Which routine to offer: see WorkoutSuggester (the sequence of routines, the days only shape the card)
+        val (todayPlan, suggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, day)
 
         DashboardUiState(
             username = user?.username ?: "Athlete",
-            suggestedPlan = finalSuggestedPlan,
+            suggestedPlan = suggestedPlan,
             todayPlan = todayPlan,
             weeklyVolumeTons = (volume ?: 0f) / 1000f,
             weeklyGoal = goal,
