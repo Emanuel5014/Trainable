@@ -1529,4 +1529,6 @@
         <item quantity="many">%d serie</item>
         <item quantity="other">%d serie</item>
     </plurals>
+    <string name="routine_header_expand">Mostra dettagli</string>
+    <string name="routine_header_collapse">Nascondi dettagli</string>
 </resources>

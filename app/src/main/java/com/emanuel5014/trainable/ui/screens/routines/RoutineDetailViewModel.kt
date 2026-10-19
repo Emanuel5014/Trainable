@@ -131,6 +131,17 @@ class RoutineDetailViewModel @Inject constructor(
         initialValue = "kg"
     )
 
+    /** Whether the top of the screen is open or compact; one choice for every routine. */
+    val headerExpanded = userPreferencesRepository.routineHeaderExpanded.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setHeaderExpanded(expanded: Boolean) {
+        viewModelScope.launch { userPreferencesRepository.setRoutineHeaderExpanded(expanded) }
+    }
+
     /** With starting weights on, the exercise editor offers a weight field. */
     val startingWeightEnabled = userPreferencesRepository.startingWeightEnabled.stateIn(
         scope = viewModelScope,

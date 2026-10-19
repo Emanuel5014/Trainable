@@ -8,11 +8,20 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -33,6 +42,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -61,6 +71,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
@@ -157,6 +168,8 @@ import androidx.compose.ui.text.style.TextAlign
 import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
@@ -213,6 +226,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -358,6 +372,35 @@ fun RoutineDetailScreen(
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
     var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
+    // After the finger lifts the card is still on its way into the slot: it is no longer lifted, but keeps moving
+    var dragReleasing by remember { mutableStateOf(false) }
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+
+    fun releaseDrag() {
+        dragReleasing = true
+        settleJob?.cancel()
+        settleJob = scope.launch {
+            animate(
+                initialValue = dragOffsetY,
+                targetValue = 0f,
+                animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow)
+            ) { value, _ -> dragOffsetY = value }
+            draggedItemIndex = null
+            dragOffsetY = 0f
+            dragReleasing = false
+        }
+    }
+
+    // Real height of a run of rows plus the gaps between them: how far a block moves when another one passes it
+    fun rowsPitchPx(range: IntRange, fallbackPx: Float, gapPx: Float): Float {
+        val visible = listState.layoutInfo.visibleItemsInfo
+        var total = 0f
+        for (i in range) {
+            val id = localExercises.getOrNull(i)?.planExercise?.id
+            total += (visible.firstOrNull { it.key == id }?.size?.toFloat() ?: fallbackPx) + gapPx
+        }
+        return total
+    }
 
     val trainedMuscleGroups = remember(localExercises.size, localExercises.map { it.exercise.categoria }) {
         localExercises.map { it.exercise.categoria }
@@ -371,7 +414,7 @@ fun RoutineDetailScreen(
     val editingExercise = localExercises.find { it.planExercise.id == editingExerciseId }
 
     // Sync local list with UI state when not dragging
-    LaunchedEffect(uiState.planDetails?.exercises) {
+    LaunchedEffect(uiState.planDetails?.exercises, draggedItemIndex == null) {
         if (draggedItemIndex == null) {
             localExercises.clear()
             uiState.planDetails?.exercises?.let { localExercises.addAll(it) }
@@ -711,131 +754,21 @@ fun RoutineDetailScreen(
                     }
                 }
 
-                item {
-                    RoutineImagePicker(
+                item(key = "overview") {
+                    val headerExpanded by viewModel.headerExpanded.collectAsState()
+                    RoutineOverviewSection(
+                        startDate = details.plan.dataInizio,
+                        endDate = details.plan.dataFine,
+                        scheduledDaysCsv = details.plan.giorniSettimana,
+                        note = details.plan.note,
+                        muscleGroups = trainedMuscleGroups.map { ExerciseTranslations.translateCategory(it, languageCode) },
                         images = details.images,
+                        expanded = headerExpanded,
+                        onToggle = { viewModel.setHeaderExpanded(!headerExpanded) },
                         onImageAdd = { uri -> viewModel.addPlanImage(uri) },
                         onImageRemove = { image -> viewModel.removePlanImage(image) },
                         modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding)
                     )
-                }
-
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = ResponsiveSize.horizontalPadding)
-                            .clip(Shapes.large)
-                            .background(SurfaceContainerHigh)
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(Primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.CalendarMonth,
-                                    contentDescription = null,
-                                    tint = OnPrimary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(details.plan.dataInizio),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = OnSurface,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                                details.plan.dataFine?.let { expiry ->
-                                    Text(
-                                        text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (expiry < System.currentTimeMillis()) Error else OnSurfaceVariant,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                }
-                            }
-                        }
-
-                        if (!details.plan.giorniSettimana.isNullOrBlank()) {
-                            val scheduledDays = remember(details.plan.giorniSettimana) {
-                                details.plan.giorniSettimana.split(",").mapNotNull {
-                                    it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                            ) {
-                                DayOfWeek.entries.forEachIndexed { index, day ->
-                                    val isScheduled = scheduledDays.contains(day)
-                                    val dayShape = if (isScheduled) RoundedCornerShape(50)
-                                    else when (index) {
-                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes().shape
-                                        DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes().shape
-                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes().shape
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(36.dp)
-                                            .clip(dayShape)
-                                            .background(if (isScheduled) Primary else SurfaceContainerHighest),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = if (isScheduled) OnPrimary else OnSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        details.plan.note?.takeIf { it.isNotBlank() }?.let { note ->
-                            Text(
-                                text = note,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = OnSurfaceVariant
-                            )
-                        }
-
-                        if (trainedMuscleGroups.isNotEmpty()) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                trainedMuscleGroups.forEach { category ->
-                                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                                    Text(
-                                        text = translatedCategory,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Tertiary,
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .background(Tertiary.copy(alpha = 0.16f))
-                                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
                 }
 
                 if (advancedOn && details.plan.weeksCount > 1) {
@@ -1095,7 +1028,6 @@ fun RoutineDetailScreen(
                     itemsIndexed(localExercises, key = { _, item -> item.planExercise.id }) { index, item ->
                         val draggedRange = draggedItemIndex?.let { getSupersetRange(it, localExercises) }
                         val isDragging = draggedRange != null && index in draggedRange
-                        val elevation by animateDpAsState(if (isDragging) 12.dp else 0.dp, label = "elevation")
                         
                         // Superset logic
                         val currentSid = item.planExercise.supersetId
@@ -1112,6 +1044,14 @@ fun RoutineDetailScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                // The rows around a dragged card slide into place; the dragged card follows the finger
+                                .animateItem(
+                                    placementSpec = if (isDragging) null else spring(
+                                        dampingRatio = 0.7f,
+                                        stiffness = Spring.StiffnessMediumLow,
+                                        visibilityThreshold = IntOffset.VisibilityThreshold
+                                    )
+                                )
                                 .zIndex(if (isDragging) 1f else 0f)
                         ) {
                             if (isStart) {
@@ -1143,16 +1083,13 @@ fun RoutineDetailScreen(
                                     .padding(horizontal = sidePadding)
                                     .graphicsLayer {
                                         translationY = if (isDragging) dragOffsetY else 0f
-                                        scaleX = if (isDragging) 1.02f else 1f
-                                        scaleY = if (isDragging) 1.02f else 1f
-                                        shadowElevation = if (isDark) elevation.toPx() else 0f
-                                        shape = RoundedCornerShape(28.dp)
-                                        clip = isDragging
                                     }
                                     .pointerInput(item.planExercise.id) {
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {
                                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                settleJob?.cancel()
+                                                dragReleasing = false
                                                 draggedItemIndex = localExercises.indexOfFirst { it.planExercise.id == item.planExercise.id }
                                                 dragOffsetY = 0f
                                             },
@@ -1160,7 +1097,8 @@ fun RoutineDetailScreen(
                                                 change.consume()
                                                 dragOffsetY += dragAmount.y
                                                 
-                                                val itemHeight = 80.dp.toPx()
+                                                val gapPx = 12.dp.toPx()
+                                                val fallbackRowPx = 80.dp.toPx()
                                                 val currentDraggedIndex = draggedItemIndex
                                                 if (currentDraggedIndex != null) {
                                                     val range = getSupersetRange(currentDraggedIndex, localExercises)
@@ -1170,7 +1108,8 @@ fun RoutineDetailScreen(
                                                         val nextIndex = range.endInclusive + 1
                                                         val nextRange = getSupersetRange(nextIndex, localExercises)
                                                         val nextSize = nextRange.endInclusive - nextRange.start + 1
-                                                        val threshold = (nextSize * itemHeight) / 2f
+                                                        val nextPitch = rowsPitchPx(nextRange, fallbackRowPx, gapPx)
+                                                        val threshold = nextPitch / 2f
                                                         
                                                         if (dragOffsetY > threshold) {
                                                             val draggedItems = localExercises.subList(range.start, range.endInclusive + 1).toList()
@@ -1181,14 +1120,15 @@ fun RoutineDetailScreen(
                                                             localExercises.addAll(insertIndex, draggedItems)
                                                             
                                                             draggedItemIndex = insertIndex + (currentDraggedIndex - range.start)
-                                                            dragOffsetY -= nextSize * itemHeight
+                                                            dragOffsetY -= nextPitch
                                                             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         }
                                                     } else if (dragOffsetY < 0 && range.start > 0) {
                                                         val prevIndex = range.start - 1
                                                         val prevRange = getSupersetRange(prevIndex, localExercises)
                                                         val prevSize = prevRange.endInclusive - prevRange.start + 1
-                                                        val threshold = -(prevSize * itemHeight) / 2f
+                                                        val prevPitch = rowsPitchPx(prevRange, fallbackRowPx, gapPx)
+                                                        val threshold = -prevPitch / 2f
                                                         
                                                         if (dragOffsetY < threshold) {
                                                             val draggedItems = localExercises.subList(range.start, range.endInclusive + 1).toList()
@@ -1199,7 +1139,7 @@ fun RoutineDetailScreen(
                                                             localExercises.addAll(insertIndex, draggedItems)
                                                             
                                                             draggedItemIndex = insertIndex + (currentDraggedIndex - range.start)
-                                                            dragOffsetY += prevSize * itemHeight
+                                                            dragOffsetY += prevPitch
                                                             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         }
                                                     }
@@ -1207,13 +1147,9 @@ fun RoutineDetailScreen(
                                             },
                                             onDragEnd = {
                                                 viewModel.updateExercisesOrder(localExercises.map { it.planExercise })
-                                                draggedItemIndex = null
-                                                dragOffsetY = 0f
+                                                releaseDrag()
                                             },
-                                            onDragCancel = {
-                                                draggedItemIndex = null
-                                                dragOffsetY = 0f
-                                            }
+                                            onDragCancel = { releaseDrag() }
                                         )
                                     }
                                     .then(
@@ -1235,7 +1171,7 @@ fun RoutineDetailScreen(
                                 ExerciseEntryCard(
                                     item = item,
                                     number = index + 1,
-                                    isDragging = isDragging,
+                                    isDragging = isDragging && !dragReleasing,
                                     onClick = { if (item.exercise.isDeleted) deletedExerciseTapped = item else openEditSheet(item) },
                                     modifier = Modifier.weight(1f),
                                     languageCode = languageCode,
@@ -2888,6 +2824,185 @@ private fun ScanDraftBanner(
         }
         IconButton(onClick = onDiscard) {
             Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.scan_draft_discard), tint = OnSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * Top of the routine screen. Compact: the dates and a slim strip of scheduled days. Expanded: photos above, bigger
+ * day pills, the note and the muscle groups below. Tapping the card toggles it.
+ */
+@Composable
+private fun RoutineOverviewSection(
+    startDate: Long,
+    endDate: Long?,
+    scheduledDaysCsv: String?,
+    note: String?,
+    muscleGroups: List<String>,
+    images: List<com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity>,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onImageAdd: (String) -> Unit,
+    onImageRemove: (com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val expandSpec = spring<IntSize>(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)
+    val enter = expandVertically(animationSpec = expandSpec) + fadeIn(tween(180))
+    val exit = shrinkVertically(animationSpec = expandSpec) + fadeOut(tween(120))
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+        label = "overview_chevron"
+    )
+    val dayHeight by animateDpAsState(
+        targetValue = if (expanded) 36.dp else 24.dp,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow),
+        label = "overview_day_height"
+    )
+    val scheduledDays = remember(scheduledDaysCsv) {
+        scheduledDaysCsv.orEmpty().split(",").mapNotNull {
+            it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
+        }
+    }
+    val cleanNote = note?.takeIf { it.isNotBlank() }
+    val toggleLabel = stringResource(if (expanded) R.string.routine_header_collapse else R.string.routine_header_expand)
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        AnimatedVisibility(visible = expanded, enter = enter, exit = exit) {
+            RoutineImagePicker(
+                images = images,
+                onImageAdd = onImageAdd,
+                onImageRemove = onImageRemove,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(Shapes.large)
+                .background(SurfaceContainerHigh)
+                .clickable(onClickLabel = toggleLabel, onClick = onToggle)
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CalendarMonth,
+                        contentDescription = null,
+                        tint = OnPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = OnSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    endDate?.let { expiry ->
+                        Text(
+                            text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (expiry < System.currentTimeMillis()) Error else OnSurfaceVariant,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Rounded.ExpandMore,
+                    contentDescription = null,
+                    tint = OnSurfaceVariant,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer { rotationZ = chevronRotation }
+                )
+            }
+
+            if (!scheduledDaysCsv.isNullOrBlank()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                ) {
+                    DayOfWeek.entries.forEachIndexed { index, day ->
+                        val isScheduled = scheduledDays.contains(day)
+                        val dayShape = if (isScheduled) RoundedCornerShape(50)
+                        else when (index) {
+                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes().shape
+                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes().shape
+                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes().shape
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = dayHeight)
+                                .clip(dayShape)
+                                .background(if (isScheduled) Primary else SurfaceContainerHighest),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                style = if (expanded) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isScheduled) OnPrimary else OnSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = expanded && (cleanNote != null || muscleGroups.isNotEmpty()),
+                enter = enter,
+                exit = exit
+            ) {
+                Column(
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    cleanNote?.let { text ->
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                    if (muscleGroups.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            muscleGroups.forEach { category ->
+                                Text(
+                                    text = category,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Tertiary,
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(Tertiary.copy(alpha = 0.16f))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

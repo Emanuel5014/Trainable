@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -28,7 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
+import androidx.graphics.shapes.Morph
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,12 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.util.lerp
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -55,11 +60,15 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Tertiary
+import com.emanuel5014.trainable.ui.screens.workout.rememberAnimatedShape
 import com.emanuel5014.trainable.R
 import androidx.compose.ui.res.stringResource
 
 /** Size of the number badge; the superset rail in the routine screen is centred on it. */
 val ExerciseBadgeSize = 40.dp
+
+private val RestingCardRadius = 40.dp
+private val LiftedCardRadius = 16.dp
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -87,25 +96,40 @@ fun ExerciseEntryCard(
         animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow),
         label = "exercise_card_press"
     )
-    val badgeShape = MaterialShapes.Cookie9Sided.toShape()
-    val highlighted = isSuperset || isDragging
+    // Lifted while the card is dragged: the card squares off, the badge turns from a cookie into a rounded square
+    val lift by animateFloatAsState(
+        targetValue = if (isDragging) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow),
+        label = "exercise_card_lift"
+    )
+    val liftClamped = lift.coerceIn(0f, 1f)
+    val cardShape = RoundedCornerShape(lerp(RestingCardRadius, LiftedCardRadius, lift).coerceAtLeast(0.dp))
+    val badgeMorph = remember { Morph(MaterialShapes.Cookie9Sided, MaterialShapes.Square) }
+    val badgeShape = rememberAnimatedShape(badgeMorph, lift)
+    val restingColor = if (isSuperset) Primary.copy(alpha = 0.10f) else SurfaceContainer
+    val borderAlpha = lerp(if (isSuperset) 0.45f else 0f, 0.8f, liftClamped)
+    val badgeColor = lerp(if (isSuperset) Primary else SecondaryContainer, Primary, liftClamped)
+    val badgeTextColor = lerp(if (isSuperset) OnPrimary else OnSecondaryContainer, OnPrimary, liftClamped)
 
     com.emanuel5014.trainable.ui.components.GymCard(
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
+                val scale = pressScale * (1f + 0.02f * lift)
+                scaleX = scale
+                scaleY = scale
             }
+            .shadow(elevation = (10.dp * lift).coerceAtLeast(0.dp), shape = cardShape, clip = false)
             .alpha(if (resolved is ResolvedPrescription.Excluded || item.exercise.isDeleted) 0.5f else 1f)
-            .clip(Shapes.extraLarge)
+            .clip(cardShape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
                 onClick = onClick
             ),
-        containerColor = if (isSuperset) Primary.copy(alpha = 0.10f) else SurfaceContainer,
-        border = if (isSuperset) BorderStroke(1.5.dp, Primary.copy(alpha = 0.45f)) else null
+        containerColor = lerp(restingColor, lerp(SurfaceContainer, Primary, 0.2f), liftClamped),
+        border = if (borderAlpha > 0.01f) BorderStroke(1.5.dp, Primary.copy(alpha = borderAlpha)) else null,
+        shape = cardShape
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -115,13 +139,13 @@ fun ExerciseEntryCard(
                 modifier = Modifier
                     .size(ExerciseBadgeSize)
                     .clip(badgeShape)
-                    .background(if (highlighted) Primary else SecondaryContainer),
+                    .background(badgeColor),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "$number",
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (highlighted) OnPrimary else OnSecondaryContainer,
+                    color = badgeTextColor,
                     fontWeight = FontWeight.ExtraBold
                 )
             }

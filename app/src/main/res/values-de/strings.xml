@@ -1526,4 +1526,6 @@
         <item quantity="one">%d Satz</item>
         <item quantity="other">%d Sätze</item>
     </plurals>
+    <string name="routine_header_expand">Details anzeigen</string>
+    <string name="routine_header_collapse">Details ausblenden</string>
 </resources>

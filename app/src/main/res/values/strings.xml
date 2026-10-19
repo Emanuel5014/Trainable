@@ -1526,4 +1526,6 @@
         <item quantity="one">%d set</item>
         <item quantity="other">%d sets</item>
     </plurals>
+    <string name="routine_header_expand">Show details</string>
+    <string name="routine_header_collapse">Hide details</string>
 </resources>

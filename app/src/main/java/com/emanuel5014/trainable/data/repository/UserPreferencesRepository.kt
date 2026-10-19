@@ -85,6 +85,8 @@ class UserPreferencesRepository @Inject constructor(
      * workout to copy from in the routine starts at the last weight used for it elsewhere. Off by default.
      */
     val STARTING_WEIGHT_ENABLED = booleanPreferencesKey("starting_weight_enabled")
+    /** The top of the routine screen (photos, note, muscle groups, big day pills) is open. Compact by default. */
+    val ROUTINE_HEADER_EXPANDED = booleanPreferencesKey("routine_header_expanded")
     /**
      * Set details: mini-sets after a short pause, assisted and partial reps and the technique a set was really done
      * with. Off by default, sets then carry only their note.
@@ -463,6 +465,15 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setTimerShowSkipButton(show: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_SHOW_SKIP_BUTTON] = show
+        }
+    }
+
+    val routineHeaderExpanded: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[ROUTINE_HEADER_EXPANDED] ?: false }
+
+    suspend fun setRoutineHeaderExpanded(expanded: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ROUTINE_HEADER_EXPANDED] = expanded
         }
     }
 
