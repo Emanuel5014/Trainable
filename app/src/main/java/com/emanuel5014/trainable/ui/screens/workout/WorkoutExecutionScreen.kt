@@ -8,7 +8,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.layout.onSizeChanged
@@ -66,7 +65,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
@@ -75,7 +73,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.DesignServices
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -86,10 +83,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material.icons.rounded.Speed
-import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.ThumbDown
 import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.text.KeyboardOptions
@@ -208,7 +202,6 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
-import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.rpeBadgeText
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
@@ -2660,496 +2653,75 @@ fun CardioExerciseContent(
             .padding(horizontal = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding)
             .padding(top = 16.dp, bottom = bottomPadding)
     ) {
-        // Responsive scale: width-based so short/landscape heights don't collapse the UI.
-        // Clamped to avoid glitches on extreme DPI / smallest-width settings.
-        // The height counts too: the circle gives way when the content (about 260 dp besides the circle) would not fit
-        val widthScale = (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
-        // The set chips (and a set's note) take room too
-        val hasNoteLine = !exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()
+        // The circle takes the room the rest leaves (every part is measured, nothing is guessed in dp), up to this size
+        val maxCircle = 200.dp * (maxWidth / 400.dp).coerceIn(0.8f, 1.15f)
         // Right after a set is done, until the next one starts, how hard it felt is asked under the chips
         val justDoneIndex = exerciseState.cardioSets.indexOfLast { it.isCompleted }
         val rpeAsked = state.rpeEnabled && justDoneIndex >= 0 && !state.cardioTimerRunning && !state.cardioTimerPaused
-        val baseReserved = if (hasNoteLine) 430.dp else 390.dp
-        val rpeRowHeight = if (state.rpeScale == RpeScale.BASIC) 140.dp else 95.dp
-        // The selector needs the circle to keep a minimum size (80 dp); on a shorter screen a small prompt opens the set
-        // instead, and on a really short one nothing is added (the set's chip still opens it)
-        val showRpeRow = rpeAsked && maxHeight >= baseReserved + rpeRowHeight + 80.dp
-        val showRpePrompt = rpeAsked && !showRpeRow && maxHeight >= baseReserved + 48.dp + 80.dp
-        val reservedHeight = baseReserved + when {
-            showRpeRow -> rpeRowHeight
-            showRpePrompt -> 48.dp
-            else -> 0.dp
-        }
-        val heightScale = ((maxHeight - reservedHeight) / 200.dp).coerceIn(0.4f, 1.15f)
-        val scale = minOf(widthScale, heightScale)
-        val cIndicatorSize = (200f * scale).dp
-        val cButtonSize = (135f * scale).dp
-        // The time stays readable when the rest has to shrink a lot
-        val cTimerFontSize = (46f * scale.coerceAtLeast(0.7f)).sp
-        // Gaps and the action buttons give way a little too on a short screen
-        val cRowGap = (12f * scale.coerceIn(0.6f, 1f)).dp
-        val cActionHeight = if (scale < 0.7f) 40 else 48
-        val cCookieSize = (130f * scale).dp
-        val cCookieIconSize = (50f * scale).dp
-        val cGapSize = (10f * scale).dp
-        val cWavelength = (36f * scale).dp
+        val fits = remember(rpeAsked) { cardioFits(rpeAsked) }
+        val exerciseName = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode)
+        val viewportHeight = maxHeight
 
-        // Top bar: Cardio badge + swap button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                color = Tertiary.copy(alpha = 0.15f),
-                shape = CircleShape
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.DirectionsRun,
-                        contentDescription = null,
-                        tint = Tertiary,
-                        modifier = Modifier.size(16.dp)
+        // Only when nothing fits, even in the densest look (a huge font on a short screen), the screen scrolls
+        Box(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            CardioFitLayout(
+                fits = fits,
+                viewportHeight = viewportHeight,
+                maxCircle = maxCircle,
+                modifier = Modifier.fillMaxWidth(),
+                header = { fit ->
+                    CardioHeader(
+                        fit = fit,
+                        name = exerciseName,
+                        noteFilled = !exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank(),
+                        onNote = { openedSetIndex = noteSetIndex },
+                        onSwap = onSwap
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.cardio_badge),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Tertiary,
-                        fontWeight = FontWeight.ExtraBold
+                },
+                top = { fit ->
+                    CardioTopBlock(
+                        fit = fit,
+                        exerciseState = exerciseState,
+                        name = exerciseName,
+                        noteSetIndex = noteSetIndex,
+                        justDoneIndex = justDoneIndex,
+                        rpeScale = state.rpeScale,
+                        hapticEnabled = state.hapticEnabled,
+                        onSetClick = { openedSetIndex = it },
+                        onAddSet = {
+                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.addCardioSet(exerciseIndex)
+                        },
+                        onRpeChange = { viewModel.updateCardioSetRpe(exerciseIndex, justDoneIndex, it) }
                     )
-                }
-            }
-
-            Row {
-                IconButton(onClick = { openedSetIndex = noteSetIndex }) {
-                    Icon(
-                        imageVector = Icons.Rounded.EditNote,
-                        contentDescription = stringResource(R.string.cardio_set_note),
-                        tint = if (exerciseState.cardioSets.getOrNull(noteSetIndex)?.note.isNullOrBlank()) OnSurfaceVariant else Primary
-                    )
-                }
-                IconButton(onClick = onSwap) {
-                    Icon(
-                        imageVector = Icons.Rounded.SwapHoriz,
-                        contentDescription = stringResource(R.string.swap_exercise),
-                        tint = OnSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        // Centered content column — bottomPadding already shifts this up naturally
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(cRowGap)
-        ) {
-            Text(
-                text = ExerciseTranslations.translate(exerciseState.exercise.nome, languageCode),
-                style = MaterialTheme.typography.headlineMedium,
-                color = OnSurface,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            val targetMin = exerciseState.cardioDurataTargetSeconds?.let { it / 60 }
-            val targetKm = exerciseState.cardioDistanzaTargetKm
-            if (!exerciseState.isCardioCompleted && (targetMin != null || targetKm != null)) {
-                Surface(
-                    color = SurfaceContainerHigh,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (targetMin != null && targetMin > 0) {
-                            Text(
-                                text = stringResource(R.string.cardio_target_min_format, targetMin),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        if (targetMin != null && targetKm != null && targetMin > 0 && targetKm > 0) {
-                            Text(text = "•", color = OnSurfaceVariant.copy(alpha = 0.5f))
-                        }
-                        if (targetKm != null && targetKm > 0) {
-                            Text(
-                                text = stringResource(R.string.cardio_target_km_format, targetKm.toString()),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = OnSurfaceVariant,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-
-            CardioSetsStrip(
-                sets = exerciseState.cardioSets,
-                activeIndex = exerciseState.activeCardioSetIndex,
-                onSetClick = { openedSetIndex = it },
-                onAdd = {
-                    if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    viewModel.addCardioSet(exerciseIndex)
-                }
-            )
-            exerciseState.cardioSets.getOrNull(noteSetIndex)?.note?.takeIf { it.isNotBlank() }?.let { note ->
-                CardioSetNoteLine(note = note, onClick = { openedSetIndex = noteSetIndex })
-            }
-            if (showRpePrompt) {
-                val justDone = exerciseState.cardioSets[justDoneIndex]
-                Surface(onClick = { openedSetIndex = justDoneIndex }, shape = CircleShape, color = SurfaceContainerHigh) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.Speed, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
-                        Text(
-                            text = stringResource(R.string.set_number, justDone.setNumber) + " · " + stringResource(R.string.rpe_prompt),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-            if (showRpeRow) {
-                val justDone = exerciseState.cardioSets[justDoneIndex]
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(R.string.set_number, justDone.setNumber),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = OnSurfaceVariant,
-                        fontWeight = FontWeight.Bold
-                    )
-                    RpeSelector(
-                        value = justDone.rpe,
-                        onValueChange = { viewModel.updateCardioSetRpe(exerciseIndex, justDoneIndex, it) },
-                        scale = state.rpeScale,
-                        hapticEnabled = state.hapticEnabled
-                    )
-                }
-            }
-
-            if (!exerciseState.isCardioCompleted) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(cIndicatorSize)
-                ) {
-                    val cardioProgress = remember(state.cardioTimerSeconds, exerciseState.cardioDurataTargetSeconds) {
-                        val target = exerciseState.cardioDurataTargetSeconds
-                        if (target != null && target > 0) {
-                            (state.cardioTimerSeconds.toFloat() / target.toFloat()).coerceIn(0f, 1f)
-                        } else 0f
-                    }
-                    CircularWavyProgressIndicator(
-                        progress = { cardioProgress },
-                        modifier = Modifier.size(cIndicatorSize),
-                        color = Primary,
-                        trackColor = Primary.copy(alpha = 0.2f),
-                        stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                        trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
-                        gapSize = cGapSize,
-                        wavelength = cWavelength,
-                        amplitude = { progress ->
-                            if (!state.cardioTimerRunning) 0f
-                            else if (progress <= 0.1f) 0f
-                            else 1f
+                },
+                circle = { _, size ->
+                    CardioCircle(
+                        size = size,
+                        state = state,
+                        exerciseState = exerciseState,
+                        onToggle = {
+                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            when {
+                                state.cardioTimerRunning -> viewModel.pauseCardioTimer()
+                                else -> viewModel.startCardioTimer()
+                            }
                         }
                     )
-                        CardioToggleButton(
-                            isRunning = state.cardioTimerRunning,
-                            isPaused = state.cardioTimerPaused,
-                            onToggle = {
-                                if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                when {
-                                    state.cardioTimerRunning -> viewModel.pauseCardioTimer()
-                                    else -> viewModel.startCardioTimer()
-                                }
-                            },
-                            modifier = Modifier.size(cButtonSize)
-                        )
-                }
-
-                val timerSeconds = state.cardioTimerSeconds
-                val hours = timerSeconds / 3600
-                val minutes = (timerSeconds % 3600) / 60
-                val seconds = timerSeconds % 60
-                val timeFormatted = if (hours > 0) {
-                    String.format("%d:%02d:%02d", hours, minutes, seconds)
-                } else {
-                    String.format("%02d:%02d", minutes, seconds)
-                }
-
-                Text(
-                    text = timeFormatted,
-                    // The line height follows the size, or the text keeps taking the room of the big one
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = cTimerFontSize, lineHeight = cTimerFontSize * 1.15f),
-                    fontWeight = FontWeight.Black,
-                    color = if (state.cardioTimerRunning) Primary else OnSurface
-                )
-
-                Text(
-                    text = when {
-                        state.cardioTimerRunning -> stringResource(R.string.cardio_timer_running)
-                        state.cardioTimerPaused -> stringResource(R.string.cardio_timer_paused)
-                        else -> stringResource(R.string.cardio_timer_ready)
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (state.cardioTimerRunning) Primary else OnSurfaceVariant,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.5.sp
-                )
-
-                // Done without the timer: only while it is idle (a running or paused timer has its own stop and save)
-                AnimatedVisibility(
-                    visible = !state.cardioTimerRunning && !state.cardioTimerPaused,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    GymButton(
-                        onClick = {
+                },
+                bottom = { fit ->
+                    CardioBottomBlock(
+                        fit = fit,
+                        state = state,
+                        exerciseState = exerciseState,
+                        onMarkCompleted = {
                             completeMinutes = ""
                             showCompleteDialog = true
                         },
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .padding(top = 4.dp),
-                        height = cActionHeight,
-                        containerColor = Tertiary.copy(alpha = 0.15f),
-                        contentColor = Tertiary
-                    ) {
-                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.cardio_mark_completed), fontWeight = FontWeight.ExtraBold)
-                    }
+                        onStop = { showStopDialog = true }
+                    )
                 }
-
-                // Stop button shown inline when paused — no layout jump, just appears below status label
-                AnimatedVisibility(
-                    visible = state.cardioTimerPaused,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    GymButton(
-                        onClick = { showStopDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .padding(top = 4.dp),
-                        height = cActionHeight,
-                        containerColor = Error.copy(alpha = 0.15f),
-                        contentColor = Error
-                    ) {
-                        Icon(Icons.Rounded.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.cardio_stop_save), fontWeight = FontWeight.ExtraBold)
-                    }
-                }
-            } else {
-                Spacer(modifier = Modifier.height(-8.dp))
-                
-                // Several sets add up; the targets are per set, so every set has to reach them
-                val elapsed = exerciseState.cardioTotalSeconds
-                val timeStr = cardioTimeText(elapsed)
-                val totalKm = exerciseState.cardioTotalKm
-
-                val targetDurationMet = exerciseState.cardioDurataTargetSeconds?.let { target ->
-                    exerciseState.cardioSets.all { it.elapsedSeconds >= target }
-                } ?: false
-                val targetDistanceMet = exerciseState.cardioDistanzaTargetKm?.let { target ->
-                    exerciseState.cardioSets.all { it.distanceKm >= target }
-                } ?: false
-                val goalAchieved = targetDurationMet || targetDistanceMet
-                
-                val progress = exerciseState.cardioDurataTargetSeconds?.let { target ->
-                    (elapsed.toFloat() / (target.toFloat() * exerciseState.cardioSets.size)).coerceIn(0f, 1f)
-                } ?: 1f
-                
-                val cookieRotation = remember { Animatable(0f) }
-                LaunchedEffect(Unit) {
-                    while (true) {
-                        cookieRotation.animateTo(
-                            targetValue = 360f,
-                            animationSpec = tween(
-                                durationMillis = 20000,
-                                easing = LinearEasing
-                            )
-                        )
-                        cookieRotation.snapTo(0f)
-                    }
-                }
-                
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(cIndicatorSize)
-                    ) {
-                        CircularWavyProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier.size(cIndicatorSize),
-                            color = if (goalAchieved) Primary else Error,
-                            trackColor = if (goalAchieved) Primary.copy(alpha = 0.2f) else Error.copy(alpha = 0.2f),
-                            stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                            trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
-                            gapSize = cGapSize,
-                            wavelength = cWavelength
-                        )
-                        
-                        val cookieShape = remember {
-                            object : Shape {
-                                override fun createOutline(
-                                    size: Size,
-                                    layoutDirection: LayoutDirection,
-                                    density: Density
-                                ): Outline {
-                                    val path = MaterialShapes.Cookie6Sided.toPath().asComposePath()
-                                    val matrix = Matrix()
-                                    matrix.scale(size.width, size.height)
-                                    path.transform(matrix)
-                                    path.translate(size.center - path.getBounds().center)
-                                    return Outline.Generic(path)
-                                }
-                            }
-                        }
-                        
-                        Box(
-                            modifier = Modifier
-                                .size(cCookieSize)
-                                .graphicsLayer { rotationZ = cookieRotation.value }
-                                .background(
-                                    color = if (goalAchieved) Primary else Error,
-                                    shape = cookieShape
-                                )
-                                .clip(cookieShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (goalAchieved) Icons.Rounded.ThumbUp else Icons.Rounded.ThumbDown,
-                                contentDescription = null,
-                                tint = Surface,
-                                modifier = Modifier
-                                    .size(cCookieIconSize)
-                                    .graphicsLayer { rotationZ = -cookieRotation.value }
-                            )
-                        }
-                    }
-                    
-                    Surface(
-                        color = Surface,
-                        shape = RoundedCornerShape(28.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = timeStr,
-                                    style = MaterialTheme.typography.displayMedium,
-                                    color = OnSurface,
-                                    fontWeight = FontWeight.Black
-                                )
-                                if (totalKm > 0f) {
-                                    Text(
-                                        text = "•",
-                                        style = MaterialTheme.typography.displayMedium,
-                                        color = OnSurfaceVariant,
-                                        fontWeight = FontWeight.Black
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.cardio_dist_value, com.emanuel5014.trainable.ui.components.cardioKmText(totalKm)),
-                                        style = MaterialTheme.typography.displayMedium,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.Black
-                                    )
-                                }
-                            }
-                            
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (exerciseState.cardioDurataTargetSeconds != null) {
-                                    val targetMins = exerciseState.cardioDurataTargetSeconds / 60
-                                    val targetSecs = exerciseState.cardioDurataTargetSeconds % 60
-                                    Surface(
-                                        color = if (targetDurationMet) Primary.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
-                                        shape = CircleShape
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.cardio_target_label),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = if (targetDurationMet) Primary else Error,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                letterSpacing = 1.sp
-                                            )
-                                            Text(
-                                                text = "${String.format("%d:%02d", targetMins, targetSecs)}",
-                                                style = MaterialTheme.typography.titleLarge,
-                                                color = if (targetDurationMet) Primary else Error,
-                                                fontWeight = FontWeight.Black
-                                            )
-                                        }
-                                    }
-                                }
-                                if (totalKm > 0f && exerciseState.cardioDistanzaTargetKm != null) {
-                                    Surface(
-                                        color = if (targetDistanceMet) Primary.copy(alpha = 0.15f) else Error.copy(alpha = 0.15f),
-                                        shape = CircleShape
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = if (targetDistanceMet) Icons.Rounded.Check else Icons.Rounded.Close,
-                                                contentDescription = null,
-                                                tint = if (targetDistanceMet) Primary else Error,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Text(
-                                                text = stringResource(R.string.cardio_dist_value, exerciseState.cardioDistanzaTargetKm.toString()),
-                                                style = MaterialTheme.typography.titleLarge,
-                                                color = if (targetDistanceMet) Primary else Error,
-                                                fontWeight = FontWeight.Black
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            )
         }
     }
 }
