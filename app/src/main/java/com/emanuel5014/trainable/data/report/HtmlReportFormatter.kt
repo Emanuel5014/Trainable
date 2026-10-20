@@ -102,6 +102,8 @@ class HtmlReportFormatter @Inject constructor() {
 
         if (report.weeks.isNotEmpty()) appendWeeksOverview(page, report, id)
 
+        if (report.journal.isNotEmpty()) appendJournal(page, report, id)
+
         if (report.exercises.isEmpty()) {
             append("<p class=\"empty\">${escapeHtml(s["no_data"])}</p>\n")
         } else {
@@ -114,6 +116,34 @@ class HtmlReportFormatter @Inject constructor() {
             append("</section>\n")
         }
         append("</section>\n")
+    }
+
+    /** The workout diary: one entry per workout that has a rating, tags or a note, newest first. */
+    private fun StringBuilder.appendJournal(page: Page, report: PlanReport, planId: String) {
+        val s = page.s
+        append("<section class=\"journal\" aria-labelledby=\"$planId-journal\">\n")
+        append("<h2 class=\"section-title\" id=\"$planId-journal\">${escapeHtml(s["journal"])}</h2>\n")
+        append("<ol class=\"journal-list\">\n")
+        report.journal.forEach { entry ->
+            append("<li class=\"journal-entry\">\n")
+            append("<div class=\"journal-head\">")
+            append("<time class=\"session-date\" datetime=\"${page.isoDay(entry.date)}\">${escapeHtml(page.day(entry.date))}</time>")
+            entry.rating?.let {
+                val label = escapeHtml("${s["rating"]}: $it / 5")
+                append("<span class=\"stars\" role=\"img\" aria-label=\"$label\">${"★".repeat(it)}${"☆".repeat(5 - it)}</span>")
+            }
+            append("</div>\n")
+            if (entry.tags.isNotEmpty()) {
+                append("<div class=\"chips\">")
+                entry.tags.forEach { append("<span class=\"tag\" dir=\"auto\">${escapeHtml(it)}</span>") }
+                append("</div>\n")
+            }
+            if (!entry.note.isNullOrBlank()) {
+                append("<p class=\"journal-note\" dir=\"auto\">${escapeHtml(entry.note)}</p>\n")
+            }
+            append("</li>\n")
+        }
+        append("</ol>\n</section>\n")
     }
 
     private fun StringBuilder.appendFact(value: String, label: String, wide: Boolean = false) {

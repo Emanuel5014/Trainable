@@ -13,7 +13,10 @@ import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.PhysicalCheckDao
 import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
+import com.emanuel5014.trainable.data.local.dao.JournalDao
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
+import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
+import com.emanuel5014.trainable.data.local.entity.SessionTagRefEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseBlockEntity
 import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
@@ -33,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [ // 15 Entities
+    entities = [ // 17 Entities
         UserEntity::class,
         WeightLogEntity::class,
         ExerciseEntity::class,
@@ -48,9 +51,11 @@ import kotlinx.coroutines.launch
         CustomCategoryEntity::class,
         PlanExerciseBlockEntity::class,
         OneRepMaxEntity::class,
-        SessionPrescriptionEditEntity::class
+        SessionPrescriptionEditEntity::class,
+        SessionTagEntity::class,
+        SessionTagRefEntity::class
     ],
-    version = 34,
+    version = 37,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -62,6 +67,7 @@ abstract class GymDatabase : RoomDatabase() {
     abstract fun weightLogDao(): WeightLogDao
     abstract fun physicalCheckDao(): PhysicalCheckDao
     abstract fun oneRepMaxDao(): OneRepMaxDao
+    abstract fun journalDao(): JournalDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -428,6 +434,40 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_34_35 = object : Migration(34, 35) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The workout journal: a rating and a note on the workout, and tags that can be put on any workout
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN journal_note TEXT")
+                db.execSQL("ALTER TABLE workout_sessions ADD COLUMN rating INTEGER")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `session_tags` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`name` TEXT NOT NULL, `name_key` TEXT NOT NULL, `color_index` INTEGER NOT NULL)"
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_session_tags_name_key` ON `session_tags` (`name_key`)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `session_tag_refs` (`session_id` INTEGER NOT NULL, `tag_id` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`session_id`, `tag_id`), " +
+                        "FOREIGN KEY(`session_id`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                        "FOREIGN KEY(`tag_id`) REFERENCES `session_tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_tag_refs_tag_id` ON `session_tag_refs` (`tag_id`)")
+            }
+        }
+
+        val MIGRATION_35_36 = object : Migration(35, 36) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // How hard a cardio set felt (RPE); strength and timed sets already had it in set_logs
+                db.execSQL("ALTER TABLE cardio_logs ADD COLUMN rpe REAL")
+            }
+        }
+
+        val MIGRATION_36_37 = object : Migration(36, 37) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // A tag can have a colour picked freely instead of one of the palette slots
+                db.execSQL("ALTER TABLE session_tags ADD COLUMN custom_color INTEGER")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -446,7 +486,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
                         MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {

@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
 import com.emanuel5014.trainable.data.ai.LocalLlmEngine
 import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
+import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.model.NavBarStyle
@@ -22,6 +23,7 @@ import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.PlateCalculator
 import com.emanuel5014.trainable.util.TimerAdjustment
@@ -441,6 +443,42 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    val journalEnabled = userPrefsRepository.journalEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    fun setJournalEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setJournalEnabled(enabled)
+        }
+    }
+
+    val journalPromptAtFinish = userPrefsRepository.journalPromptAtFinish.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setJournalPromptAtFinish(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setJournalPromptAtFinish(enabled)
+        }
+    }
+
+    val journalRatingEnabled = userPrefsRepository.journalRatingEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setJournalRatingEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setJournalRatingEnabled(enabled)
+        }
+    }
+
     val plateCalculatorEnabled = userPrefsRepository.plateCalculatorEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -472,21 +510,33 @@ class SettingsViewModel @Inject constructor(
         initialValue = com.emanuel5014.trainable.domain.prescription.LoadCalculator.DEFAULT_INCREMENT_KG
     )
 
-    val rpeInputMode = userPrefsRepository.rpeInputMode.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0
-    )
-
     fun setLoadRoundingIncrement(increment: Float) {
         viewModelScope.launch {
             userPrefsRepository.setLoadRoundingIncrement(weightUnit.value, increment)
         }
     }
 
-    fun setRpeInputMode(mode: Int) {
+    val rpeEnabled = userPrefsRepository.rpeEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val rpeScale = userPrefsRepository.rpeScale.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = RpeScale.BASIC
+    )
+
+    fun setRpeEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            userPrefsRepository.setRpeInputMode(mode)
+            userPrefsRepository.setRpeEnabled(enabled)
+        }
+    }
+
+    fun setRpeScale(scale: RpeScale) {
+        viewModelScope.launch {
+            userPrefsRepository.setRpeScale(scale)
         }
     }
 
@@ -1108,6 +1158,17 @@ class SettingsViewModel @Inject constructor(
     fun cancelAiModelDownload() {
         val variant = AiModelVariant.fromId(aiModelVariant.value)
         modelDownloadManager.cancelDownload(variant)
+    }
+
+    val aiModelImportError: StateFlow<ModelImportError?> = modelDownloadManager.importError
+
+    /** Copies in a Gemma 4 model the user already has; the variant follows the file picked. */
+    fun importAiModel(uri: Uri) {
+        modelDownloadManager.importModel(uri)
+    }
+
+    fun clearAiModelImportError() {
+        modelDownloadManager.clearImportError()
     }
 
     fun deleteAiModel() {

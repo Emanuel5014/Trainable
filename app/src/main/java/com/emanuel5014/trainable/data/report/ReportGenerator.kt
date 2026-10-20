@@ -52,8 +52,24 @@ class ReportGenerator @Inject constructor(
         val weightUnit = userPreferencesRepository.weightUnit.first()
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
-        return buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced)
+        val report = buildReport(planWithDetails, sessions, swaps, languageCode, weightUnit, advanced)
+        // The workout journal is part of the report only while it is on
+        return if (userPreferencesRepository.journalEnabled.first()) report.copy(journal = journalEntries(sessions)) else report
     }
+
+    /** The workouts that have a rating, tags or a note, newest first. */
+    private fun journalEntries(sessions: List<SessionWithDetails>): List<JournalEntry> =
+        sessions
+            .filter { it.session.rating != null || it.tags.isNotEmpty() || !it.session.journalNote.isNullOrBlank() }
+            .sortedByDescending { it.session.timestamp }
+            .map { details ->
+                JournalEntry(
+                    date = details.session.timestamp,
+                    rating = details.session.rating,
+                    tags = details.tags.map { it.name }.sortedBy { it.lowercase() },
+                    note = details.session.journalNote?.takeIf { it.isNotBlank() }
+                )
+            }
 
     suspend fun generateReports(planIds: List<Int>, languageCode: String = "en"): List<PlanReport> {
         val reports = mutableListOf<PlanReport>()
@@ -149,12 +165,12 @@ class ReportGenerator @Inject constructor(
                     setNumber = setWithExercise.setLog.numeroSerie,
                     weight = convertedWeight,
                     reps = setWithExercise.setLog.repsEffettive,
-                    rpe = setWithExercise.setLog.rpe.takeIf { advanced },
+                    rpe = setWithExercise.setLog.rpe,
                     isWarmup = setWithExercise.setLog.isWarmup,
                     note = setWithExercise.setLog.note,
                     // The prescription with advanced programming on (its RPE has a column of its own); mini-sets, help and partials always
                     planned = if (advanced) {
-                        com.emanuel5014.trainable.ui.components.setLogPrescriptionBadges(editContext, setWithExercise.setLog.copy(rpe = null))
+                        com.emanuel5014.trainable.ui.components.setLogPrescriptionBadges(editContext, setWithExercise.setLog)
                     } else emptyList(),
                     performed = com.emanuel5014.trainable.ui.components.setLogPerformanceBadges(editContext, setWithExercise.setLog),
                     seconds = setWithExercise.setLog.durataSecondi,
@@ -299,7 +315,7 @@ class ReportGenerator @Inject constructor(
                                 setNumber = index + 1,
                                 weight = 0f,
                                 reps = 0,
-                                rpe = null,
+                                rpe = log.rpe,
                                 isWarmup = false,
                                 note = log.note,
                                 seconds = log.durataSecondi,

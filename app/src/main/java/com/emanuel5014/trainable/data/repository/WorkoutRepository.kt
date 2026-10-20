@@ -34,6 +34,8 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
+import com.emanuel5014.trainable.domain.csvimport.JournalCsv
+import com.emanuel5014.trainable.domain.csvimport.SessionDuration
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -538,7 +540,10 @@ class WorkoutRepository @Inject constructor(
 
     fun getCardioLogsForSession(sessionId: Int): Flow<List<CardioLogEntity>> = workoutDao.getCardioLogsForSession(sessionId)
 
-    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?) = workoutDao.updateCardioSetValues(id, seconds, km, note)
+    suspend fun updateCardioSetValues(id: Int, seconds: Int, km: Float, note: String?, rpe: Float?) =
+        workoutDao.updateCardioSetValues(id, seconds, km, note, rpe)
+
+    suspend fun updateCardioRpe(id: Int, rpe: Float?) = workoutDao.updateCardioRpe(id, rpe)
 
     suspend fun updateCardioNote(id: Int, note: String?) = workoutDao.updateCardioNote(id, note)
 
@@ -791,9 +796,13 @@ class WorkoutRepository @Inject constructor(
         val sessions = workoutDao.getAllSessionsWithDetails().first()
         // With advanced programming off the file keeps the classic columns
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
+        // The workout journal adds its three columns only while it is on
+        val journalEnabled = userPreferencesRepository.journalEnabled.first()
+        // Without advanced programming the file only gets an RPE column when there is an RPE to write
+        val rpeColumn = !advanced && sessions.any { s -> s.sets.any { it.setLog.rpe != null } || s.cardio.any { it.rpe != null } }
 
         val sb = StringBuilder()
-        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced))
+        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -806,6 +815,12 @@ class WorkoutRepository @Inject constructor(
         sessions.forEach { session ->
             val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(session.session.timestamp))
             val planName = escapeCsv(session.plan.nome)
+            // How long the whole workout took, repeated on each of its rows (empty when it was never recorded)
+            val sessionMinutes = SessionDuration.format(session.session.durationMs)
+            // Its rating, tags and note, repeated on each row like the duration (nothing at all with the journal off)
+            val journalCells = if (journalEnabled) {
+                JournalCsv.cells(session.session.rating, session.tags.map { it.name }.sorted(), session.session.journalNote)
+            } else ""
 
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
@@ -843,23 +858,32 @@ class WorkoutRepository @Inject constructor(
                 val extra = if (setLog.isExtra) "1" else "0"
                 val warmup = if (setLog.isWarmup) "1" else "0"
 
-                val prescriptionColumns = if (advanced) ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup" else ""
+                val prescriptionColumns = when {
+                    advanced -> ",$week,$targetPercent,$targetReps,$techniques,$rpe,$extra,$warmup"
+                    rpeColumn -> ",$rpe"
+                    else -> ""
+                }
                 // How the set really went: its parts and pauses, help, partials, the technique as done
                 val performed = setLog.performed?.let { list ->
                     if (list.isEmpty()) context.getString(com.emanuel5014.trainable.R.string.performed_technique_none)
                     else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells")
             }
 
             session.cardio.forEach { cardio ->
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
-                val prescriptionColumns = if (advanced) ",$week,,,,,0,0" else ""
+                val cardioRpe = cardio.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
+                val prescriptionColumns = when {
+                    advanced -> ",$week,,,,$cardioRpe,0,0"
+                    rpeColumn -> ",$cardioRpe"
+                    else -> ""
+                }
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells")
             }
         }
 

@@ -35,6 +35,8 @@
     <string name="retry">Réessayer</string>
     <string name="dismiss">Ignorer</string>
     <string name="collapse">Réduire</string>
+    <string name="hub_panel_collapse">Réduire le panneau</string>
+    <string name="hub_panel_expand">Développer le panneau</string>
     <string name="yes">OUI</string>
     <string name="no">NON</string>
     <string name="selected">Sélectionné</string>
@@ -271,6 +273,10 @@
     <string name="exercise_media_unsupported">Impossible d\'ouvrir ce fichier. Choisis une image ou un GIF.</string>
     <string name="exercise_media_play_pause">Lecture ou pause</string>
     <string name="workout_settings">Entraînement</string>
+    <string name="workout_section_session">PENDANT L\'ENTRAÎNEMENT</string>
+    <string name="workout_section_timers">MINUTEURS &amp; CARDIO</string>
+    <string name="workout_section_programming">ROUTINES &amp; EXERCICES</string>
+    <string name="workout_section_after">APRÈS L\'ENTRAÎNEMENT</string>
     <string name="workout_settings_desc">Minuteur, arrêts auto et options d\'exercices</string>
     <string name="ai_settings_desc">Scan hors ligne et modèle</string>
     <string name="personalization_desc">Thème, couleurs et apparence</string>
@@ -447,6 +453,8 @@
     <string name="style">Style</string>
     <string name="apply">Appliquer</string>
     <string name="hue">Teinte</string>
+    <string name="saturation">Saturation</string>
+    <string name="brightness">Luminosité</string>
     <string name="system_default">Par défaut</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Notifications du Minuteur</string>
@@ -826,6 +834,14 @@
     <string name="ai_model_download_retry">Réessayer le téléchargement</string>
     <string name="ai_model_downloading">Téléchargement du modèle… %1$d%%</string>
     <string name="ai_model_ready">Modèle prêt</string>
+    <string name="ai_model_import">Importer un modèle que vous avez déjà</string>
+    <string name="ai_model_import_note">Choisissez un fichier Gemma 4 E2B ou E4B .litertlm. Il est copié dans l\'app et occupe donc de nouveau sa taille jusqu\'à ce que vous supprimiez l\'original.</string>
+    <string name="ai_model_importing">Importation du modèle… %1$d%%</string>
+    <string name="ai_import_error_format">Ce n\'est pas un fichier de modèle LiteRT-LM (.litertlm).</string>
+    <string name="ai_import_error_unsupported">Ce fichier n\'est ni Gemma 4 E2B ni E4B, les modèles pris en charge par Trainable. Les versions pour GPU, web ou une puce précise ne fonctionnent pas.</string>
+    <string name="ai_import_error_space">Espace libre insuffisant : il faut environ %1$s.</string>
+    <string name="ai_import_error_read">Impossible de lire ou de copier le fichier. Réessayez.</string>
+    <string name="ai_import_error_busy">Ce modèle est déjà en cours de téléchargement ou d\'importation.</string>
     <string name="ai_model_delete">Supprimer</string>
     <string name="ai_model_delete_confirm_title">Supprimer le modèle ?</string>
     <string name="ai_model_delete_confirm_desc">Le modèle IA sera supprimé de votre appareil. Vous pourrez le télécharger à nouveau plus tard.</string>
@@ -1104,11 +1120,6 @@
     <string name="one_rep_max_delete_entry">Supprimer l\'entrée</string>
     <string name="load_rounding">Arrondi des charges</string>
     <string name="load_rounding_desc" formatted="false">Les charges %1RM sont arrondies au disque le plus proche</string>
-    <string name="rpe_input">Saisie du RPE</string>
-    <string name="rpe_input_desc">Quand demander le RPE lors de l\'enregistrement</string>
-    <string name="rpe_input_advanced">Avancés seulement</string>
-    <string name="rpe_input_all">Toujours</string>
-    <string name="rpe_input_never">Jamais</string>
     <string name="one_rep_maxes_card_desc">%1$d mouvements suivis</string>
     <string name="one_rep_max_current">1RM actuel</string>
     <string name="ai_program_scan_button">Scanner</string>
@@ -1134,7 +1145,7 @@
     <string name="delete_week_message_local">La semaine est retirée de cet exercice et les suivantes remontent d\'un rang.</string>
     <string name="add_block_short">Bloc</string>
     <string name="advanced_programming">Programmation avancée</string>
-    <string name="advanced_programming_desc" formatted="false">Séries en %1RM, techniques comme arrêts et chaînes, programmes hebdomadaires, 1RM et RPE</string>
+    <string name="advanced_programming_desc" formatted="false">Séries en %1RM, techniques comme arrêts et chaînes, programmes hebdomadaires, 1RM et RPE cibles</string>
     <string name="ai_program_review_summary">%1$d semaines · %2$d blocs</string>
     <string name="ai_program_found_max">1RM trouvé sur la page</string>
     <string name="ai_program_save_max_short">Enregistrer</string>
@@ -1196,9 +1207,11 @@
     <string name="plate_total_weight">Poids total</string>
     <string name="plate_bar">Barre</string>
     <string name="plate_bar_other">Autre</string>
+    <string name="plate_bar_none">Sans barre</string>
     <string name="plate_bar_dialog_title">Poids de la barre</string>
     <string name="plate_per_side">Par côté : %1$s</string>
     <string name="plate_no_plates">Aucun disque, juste la barre</string>
+    <string name="plate_none">Aucun disque</string>
     <string name="plate_lighter_than_bar">Plus léger que la barre. Augmente le poids ou choisis une barre plus légère.</string>
     <string name="plate_cannot_load">%1$s ne peuvent pas être chargés avec tes disques.</string>
     <string name="plate_edited">Modifié à la main</string>
@@ -1294,7 +1307,7 @@
     <string name="import_history_intro">Importez vos anciens entraînements dans Trainable depuis un fichier CSV. Utilisez le même fichier que l\'app exporte avec EXPORTER CSV : si votre ancienne app exporte autre chose, adaptez-le aux colonnes ci-dessous. Vous verrez tout ce qui va être importé avant que quoi que ce soit ne soit enregistré.</string>
     <string name="import_history_columns_title">Colonnes lues</string>
     <string name="import_history_columns_required">Obligatoires : Date, Exercice et au moins une parmi Poids, Répétitions, Durée ou Distance.</string>
-    <string name="import_history_columns_optional">Utiles : ID Séance (distingue deux entraînements du même jour), Programme, Catégorie, Type (strength, time_and_weight, time_and_reps, cardio), Série, Note.</string>
+    <string name="import_history_columns_optional">Utiles : ID Séance (distingue deux entraînements du même jour), Programme, Catégorie, Type (strength, time_and_weight, time_and_reps, cardio), Série, Note, Durée Séance (minutes).</string>
     <string name="import_history_rules_title">Comment fonctionne l\'import</string>
     <string name="import_history_rule_exercises">Les exercices absents de l\'app sont créés avec le nom et la catégorie du fichier.</string>
     <string name="import_history_rule_routines">Chaque entraînement va dans la routine du même nom ; si elle n\'existe pas, elle est créée. Les entraînements sans routine deviennent des entraînements rapides.</string>
@@ -1320,6 +1333,7 @@
     <string name="import_history_col_rpe">RPE</string>
     <string name="import_history_col_parts">Mini-séries</string>
     <string name="import_history_col_type">Type</string>
+    <string name="import_history_col_session_duration">Durée de la séance</string>
     <string name="import_history_issue_line">Ligne %1$d</string>
     <string name="import_history_issue_missing_date">Date manquante</string>
     <string name="import_history_issue_invalid_date">Date non reconnue : %1$s</string>
@@ -1431,4 +1445,90 @@
         <item quantity="one">%d routine</item>
         <item quantity="other">%d routines</item>
     </plurals>
+
+    <!-- Workout journal -->
+    <string name="journal_title">Journal d\'entraînement</string>
+    <string name="journal_desc">Évalue chaque entraînement et ajoute des tags et une note. Ils apparaissent aussi dans les exports, les rapports et le visualiseur web.</string>
+    <string name="journal_prompt_finish">Demander à la fin</string>
+    <string name="journal_prompt_finish_desc">Affiche le journal quand tu termines un entraînement</string>
+    <string name="journal_rating_setting">Évaluation en étoiles</string>
+    <string name="journal_rating_setting_desc">Évalue chaque entraînement de 1 à 5 étoiles</string>
+    <string name="journal_manage_tags">Gérer les tags</string>
+    <string name="journal_manage_tags_desc">Renomme, change la couleur, fusionne ou supprime tes tags</string>
+    <string name="journal_how_did_it_go">Comment ça s\'est passé ?</string>
+    <string name="journal_rating_1">Pénible</string>
+    <string name="journal_rating_2">Moyen</string>
+    <string name="journal_rating_3">Correct</string>
+    <string name="journal_rating_4">Bien</string>
+    <string name="journal_rating_5">Excellent</string>
+    <string name="journal_rating_cd">%1$d étoiles sur 5</string>
+    <string name="journal_not_rated">Non évalué</string>
+    <string name="journal_tags">Tags</string>
+    <string name="journal_new_tag">Nouveau tag</string>
+    <string name="journal_tag_name">Nom du tag</string>
+    <string name="journal_add_note">Ajouter une note…</string>
+    <string name="journal_note">Note de l\'entraînement</string>
+    <string name="journal_row_title">Journal</string>
+    <string name="journal_row_empty">Ajoute une évaluation, des tags et une note</string>
+    <string name="journal_edit">Modifier le journal</string>
+    <string name="journal_match_any">Au moins un</string>
+    <string name="journal_match_all">Tous</string>
+    <string name="journal_filter_rating">Évaluation</string>
+    <string name="journal_bucket_low">1–2 ★</string>
+    <string name="journal_bucket_mid">3 ★</string>
+    <string name="journal_bucket_high">4–5 ★</string>
+    <string name="journal_filter_with_note">Avec note</string>
+    <string name="journal_filter_remove_cd">Retirer le filtre %1$s</string>
+    <string name="journal_tags_empty">Aucun tag pour le moment. Ils servent à marquer un entraînement : une blessure, un lieu, un partenaire.</string>
+    <string name="journal_tag_rename">Renommer</string>
+    <string name="journal_tag_rename_title">Renommer le tag</string>
+    <string name="journal_tag_color">Couleur</string>
+    <string name="journal_tag_merge">Fusionner avec…</string>
+    <string name="journal_merge_action">Fusionner</string>
+    <string name="journal_tag_delete_title">Supprimer le tag ?</string>
+    <string name="journal_tag_delete_message">Le tag est retiré des entraînements qui l\'utilisent (%1$d). Les entraînements sont conservés.</string>
+    <string name="journal_tag_merge_title">Fusionner le tag ?</string>
+    <string name="journal_tag_merge_message">« %1$s » est fusionné avec « %2$s » : ses entraînements auront « %2$s ».</string>
+    <string name="journal_tag_exists">Un tag portant ce nom existe déjà : fusionner avec « %1$s » ?</string>
+    <plurals name="journal_tag_uses">
+        <item quantity="one">Utilisé dans %1$d entraînement</item>
+        <item quantity="other">Utilisé dans %1$d entraînements</item>
+    </plurals>
+
+    <!-- RPE: a switch, three scales and the five levels of the simplified one -->
+    <string name="rpe_setting">Effort perçu (RPE)</string>
+    <string name="rpe_setting_desc">Note la difficulté ressentie pour chaque série</string>
+    <string name="rpe_prompt">Quelle difficulté ?</string>
+    <string name="rpe_scale_basic">Simplifiée</string>
+    <string name="rpe_scale_basic_desc">5 niveaux avec nom et icône</string>
+    <string name="rpe_scale_basic_example">Échauffement · Facile · Modéré · Difficile · Maximum</string>
+    <string name="rpe_scale_standard">Standard</string>
+    <string name="rpe_scale_standard_desc">RPE de 1 à 10, nombres entiers</string>
+    <string name="rpe_scale_standard_example">1 · 2 · 3 … 10</string>
+    <string name="rpe_scale_advanced">Avancée</string>
+    <string name="rpe_scale_advanced_desc">RPE de 6 à 10, par pas de 0,5</string>
+    <string name="rpe_scale_advanced_example">6 · 6,5 · 7 … 10</string>
+    <string name="rpe_level_warmup">Échauffement</string>
+    <string name="rpe_level_warmup_desc">Effort très léger · Tu te prépares</string>
+    <string name="rpe_level_easy">Facile</string>
+    <string name="rpe_level_easy_desc">Confortable · Il t\'en reste beaucoup</string>
+    <string name="rpe_level_moderate">Modéré</string>
+    <string name="rpe_level_moderate_desc">Effort soutenu · Tu gardes le contrôle</string>
+    <string name="rpe_level_hard">Difficile</string>
+    <string name="rpe_level_hard_desc">Exigeant · Effort élevé</string>
+    <string name="rpe_level_maximum">Maximum</string>
+    <string name="rpe_level_maximum_desc">Proche de ta limite · Échec ou effort maximal</string>
+    <string name="routine_exercises_section">Exercices</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%d exercice</item>
+        <item quantity="many">%d exercices</item>
+        <item quantity="other">%d exercices</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%d série</item>
+        <item quantity="many">%d séries</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <string name="routine_header_expand">Afficher les détails</string>
+    <string name="routine_header_collapse">Masquer les détails</string>
 </resources>

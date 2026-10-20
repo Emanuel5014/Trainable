@@ -8,11 +8,20 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -24,6 +33,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,6 +42,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,6 +71,8 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Memory
@@ -78,6 +91,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.key
@@ -120,10 +135,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -144,12 +161,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
@@ -163,6 +183,7 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.components.ExerciseEntryCard
+import com.emanuel5014.trainable.ui.components.ExerciseBadgeSize
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -185,10 +206,12 @@ import com.emanuel5014.trainable.ui.components.exercise.RepsEditor
 import com.emanuel5014.trainable.ui.components.exercise.StartingWeightField
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
+import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.SecondaryContainer
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
@@ -203,6 +226,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -348,6 +372,35 @@ fun RoutineDetailScreen(
     val localExercises = remember { mutableStateListOf<PlanExerciseWithDetails>() }
     var draggedItemIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
+    // After the finger lifts the card is still on its way into the slot: it is no longer lifted, but keeps moving
+    var dragReleasing by remember { mutableStateOf(false) }
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+
+    fun releaseDrag() {
+        dragReleasing = true
+        settleJob?.cancel()
+        settleJob = scope.launch {
+            animate(
+                initialValue = dragOffsetY,
+                targetValue = 0f,
+                animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow)
+            ) { value, _ -> dragOffsetY = value }
+            draggedItemIndex = null
+            dragOffsetY = 0f
+            dragReleasing = false
+        }
+    }
+
+    // Real height of a run of rows plus the gaps between them: how far a block moves when another one passes it
+    fun rowsPitchPx(range: IntRange, fallbackPx: Float, gapPx: Float): Float {
+        val visible = listState.layoutInfo.visibleItemsInfo
+        var total = 0f
+        for (i in range) {
+            val id = localExercises.getOrNull(i)?.planExercise?.id
+            total += (visible.firstOrNull { it.key == id }?.size?.toFloat() ?: fallbackPx) + gapPx
+        }
+        return total
+    }
 
     val trainedMuscleGroups = remember(localExercises.size, localExercises.map { it.exercise.categoria }) {
         localExercises.map { it.exercise.categoria }
@@ -361,7 +414,7 @@ fun RoutineDetailScreen(
     val editingExercise = localExercises.find { it.planExercise.id == editingExerciseId }
 
     // Sync local list with UI state when not dragging
-    LaunchedEffect(uiState.planDetails?.exercises) {
+    LaunchedEffect(uiState.planDetails?.exercises, draggedItemIndex == null) {
         if (draggedItemIndex == null) {
             localExercises.clear()
             uiState.planDetails?.exercises?.let { localExercises.addAll(it) }
@@ -587,6 +640,9 @@ fun RoutineDetailScreen(
         }
     }
 
+    // The Start button shrinks to its icon once the list is scrolled away from the top
+    val startFabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -595,41 +651,39 @@ fun RoutineDetailScreen(
             ),
         containerColor = Surface,
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 FloatingActionButton(
                     onClick = { openAddSheet() },
-                    containerColor = Surface,
-                    contentColor = Primary,
-                    shape = CircleShape,
-                    modifier = Modifier.padding(bottom = Spacing.small)
+                    containerColor = SecondaryContainer,
+                    contentColor = OnSecondaryContainer,
+                    shape = RoundedCornerShape(18.dp)
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = "Add Exercise")
+                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_exercise))
                 }
-                
+
                 if (localExercises.isNotEmpty()) {
-                    FloatingActionButton(
+                    ExtendedFloatingActionButton(
                         onClick = {
-                            val planId = uiState.planDetails?.plan?.id ?: return@FloatingActionButton
-                            val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
-                            if (existing != null) {
-                                existingSessionForPlan = existing
-                            } else {
-                                onStartWorkout(planId, null)
+                            val planId = uiState.planDetails?.plan?.id
+                            if (planId != null) {
+                                val existing = uiState.unfinishedSessions.find { it.session.planId == planId }
+                                if (existing != null) {
+                                    existingSessionForPlan = existing
+                                } else {
+                                    onStartWorkout(planId, null)
+                                }
                             }
                         },
+                        expanded = startFabExpanded,
+                        icon = { Icon(Icons.Rounded.PlayArrow, contentDescription = null) },
+                        text = { Text(stringResource(R.string.start), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold) },
                         containerColor = Primary,
                         contentColor = OnPrimary,
-                        shape = CircleShape
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = Spacing.medium),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.start))
-                            Spacer(modifier = Modifier.width(Spacing.small))
-                            Text(stringResource(R.string.start), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
-                        }
-                    }
+                        shape = RoundedCornerShape(20.dp)
+                    )
                 }
             }
         }
@@ -657,26 +711,32 @@ fun RoutineDetailScreen(
                             GymIconButton(
                                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                                 onClick = onNavigateBack,
-                                containerColor = Color.Transparent,
-                                contentColor = OnSurface,
-                                description = "Back"
+                                containerColor = SecondaryContainer,
+                                contentColor = OnSecondaryContainer,
+                                description = "Back",
+                                shape = RoundedCornerShape(16.dp)
                             )
                         },
                         actions = {
-                            GymIconButton(
-                                icon = Icons.Rounded.RestartAlt,
-                                onClick = { showResetConfirmDialog = true },
-                                containerColor = SurfaceContainerHigh,
-                                contentColor = Error,
-                                description = "Reset Routine Content"
-                            )
-                            GymIconButton(
-                                icon = Icons.Rounded.Edit,
-                                onClick = { openRoutineEditSheet() },
-                                containerColor = SurfaceContainerHigh,
-                                contentColor = OnSurface,
-                                description = "Edit Routine"
-                            )
+                            // Connected pair, like the day and week pickers
+                            Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                                GymIconButton(
+                                    icon = Icons.Rounded.RestartAlt,
+                                    onClick = { showResetConfirmDialog = true },
+                                    containerColor = SecondaryContainer,
+                                    contentColor = Error,
+                                    description = "Reset Routine Content",
+                                    shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp, topEnd = 8.dp, bottomEnd = 8.dp)
+                                )
+                                GymIconButton(
+                                    icon = Icons.Rounded.Edit,
+                                    onClick = { openRoutineEditSheet() },
+                                    containerColor = SecondaryContainer,
+                                    contentColor = OnSecondaryContainer,
+                                    description = "Edit Routine",
+                                    shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 24.dp, bottomEnd = 24.dp)
+                                )
+                            }
                         },
                         titleInRow = true,
                         titleStyle = MaterialTheme.typography.headlineLarge
@@ -694,299 +754,310 @@ fun RoutineDetailScreen(
                     }
                 }
 
-                item {
-                    RoutineImagePicker(
+                item(key = "overview") {
+                    val headerExpanded by viewModel.headerExpanded.collectAsState()
+                    RoutineOverviewSection(
+                        startDate = details.plan.dataInizio,
+                        endDate = details.plan.dataFine,
+                        scheduledDaysCsv = details.plan.giorniSettimana,
+                        note = details.plan.note,
+                        muscleGroups = trainedMuscleGroups.map { ExerciseTranslations.translateCategory(it, languageCode) },
                         images = details.images,
+                        expanded = headerExpanded,
+                        onToggle = { viewModel.setHeaderExpanded(!headerExpanded) },
                         onImageAdd = { uri -> viewModel.addPlanImage(uri) },
                         onImageRemove = { image -> viewModel.removePlanImage(image) },
-                        modifier = Modifier.padding(horizontal = ResponsiveSize.cardPadding)
+                        modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding)
                     )
                 }
 
-                item {
-                    Column(modifier = Modifier.padding(horizontal = ResponsiveSize.horizontalPadding).padding(top = 8.dp, bottom = 8.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                if (advancedOn && details.plan.weeksCount > 1) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = ResponsiveSize.horizontalPadding)
+                                .clip(Shapes.large)
+                                .background(SurfaceContainerHigh)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(details.plan.dataInizio),
-                                    style = MaterialTheme.typography.labelMedium,
+                                    text = stringResource(R.string.week_of, viewWeek, details.plan.weeksCount).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                                     color = Primary,
-                                    fontWeight = FontWeight.ExtraBold
+                                    fontWeight = FontWeight.Black
                                 )
-                                details.plan.dataFine?.let { expiry ->
-                                    Text(
-                                        text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (expiry < System.currentTimeMillis()) Error else OnSurfaceVariant,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                }
-                            }
-                            
-                            if (!details.plan.giorniSettimana.isNullOrBlank()) {
-                                val scheduledDays = remember(details.plan.giorniSettimana) {
-                                    details.plan.giorniSettimana.split(",").mapNotNull { 
-                                        it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
-                                    }
-                                }
-                                
-                                Row(
-                                    modifier = Modifier.weight(1f).padding(start = 12.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                                ) {
-                                    DayOfWeek.entries.forEachIndexed { index, day ->
-                                        val isScheduled = scheduledDays.contains(day)
-                                        val dayShape = if (isScheduled) RoundedCornerShape(50)
-                                        else when (index) {
-                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes().shape
-                                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes().shape
-                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes().shape
-                                        }
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(dayShape)
-                                                .background(if (isScheduled) Primary else SurfaceContainerHigh)
-                                                .then(
-                                                    if (!isScheduled) Modifier.border(
-                                                        BorderStroke(1.dp, OnSurfaceVariant.copy(alpha = 0.2f)),
-                                                        dayShape
-                                                    ) else Modifier
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (viewWeek == details.plan.currentWeek) {
+                                        PrescriptionPill(
+                                            text = stringResource(R.string.current_badge),
+                                            containerColor = Primary.copy(alpha = 0.12f),
+                                            contentColor = Primary
+                                        )
+                                    } else {
+                                        TextButton(onClick = { viewModel.setCurrentWeek(viewWeek) }) {
                                             Text(
-                                                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                                style = MaterialTheme.typography.labelMedium,
+                                                text = stringResource(R.string.set_as_current_week).uppercase(),
+                                                style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.ExtraBold,
-                                                color = if (isScheduled) OnPrimary else OnSurfaceVariant,
-                                                modifier = Modifier.padding(vertical = 4.dp)
+                                                color = Primary
                                             )
                                         }
                                     }
-                                }
-                            }
-                        }
-                        
-                        details.plan.note?.let { note ->
-                            Text(
-                                text = note,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = OnSurfaceVariant,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-
-                        if (trainedMuscleGroups.isNotEmpty()) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState())
-                                    .padding(top = 10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                trainedMuscleGroups.forEach { category ->
-                                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                                    androidx.compose.material3.Surface(
-                                        color = SurfaceContainerHigh,
-                                        contentColor = OnSurfaceVariant,
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(
-                                            text = translatedCategory,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                            fontWeight = FontWeight.ExtraBold,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(36.dp)) {
+                                        Icon(
+                                            Icons.Rounded.Delete,
+                                            contentDescription = stringResource(R.string.delete_week),
+                                            tint = OnSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
                                 }
                             }
-                        }
-
-                        if (advancedOn && details.plan.weeksCount > 1) {
-                            Column(
-                                modifier = Modifier.padding(top = 14.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.week_of, viewWeek, details.plan.weeksCount).uppercase(),
-                                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                        color = Primary,
-                                        fontWeight = FontWeight.Black
-                                    )
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        if (viewWeek == details.plan.currentWeek) {
-                                            PrescriptionPill(
-                                                text = stringResource(R.string.current_badge),
-                                                containerColor = Primary.copy(alpha = 0.12f),
-                                                contentColor = Primary
-                                            )
-                                        } else {
-                                            TextButton(onClick = { viewModel.setCurrentWeek(viewWeek) }) {
-                                                Text(
-                                                    text = stringResource(R.string.set_as_current_week).uppercase(),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    fontWeight = FontWeight.ExtraBold,
-                                                    color = Primary
-                                                )
-                                            }
-                                        }
-                                        IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(36.dp)) {
-                                            Icon(
-                                                Icons.Rounded.Delete,
-                                                contentDescription = stringResource(R.string.delete_week),
-                                                tint = Error,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                                WeekSelector(
-                                    weeksCount = details.plan.weeksCount,
-                                    selectedWeek = viewWeek,
-                                    onWeekSelected = { viewWeek = it },
-                                    currentWeek = details.plan.currentWeek,
-                                    hapticEnabled = hapticEnabled
-                                )
-                            }
+                            WeekSelector(
+                                weeksCount = details.plan.weeksCount,
+                                selectedWeek = viewWeek,
+                                onWeekSelected = { viewWeek = it },
+                                currentWeek = details.plan.currentWeek,
+                                hapticEnabled = hapticEnabled,
+                                containerColor = SurfaceContainerHighest
+                            )
                         }
                     }
                 }
 
                 if (localExercises.isEmpty()) {
                     item {
+                        val cookieShape = MaterialShapes.Cookie9Sided.toShape()
                         if (aiScanAvailable) {
-                            Surface(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = ResponsiveSize.horizontalPadding)
-                                    .padding(top = 24.dp, bottom = 40.dp),
-                                shape = Shapes.medium,
-                                color = SurfaceContainerHigh,
-                                tonalElevation = 1.dp
+                                    .padding(top = 12.dp, bottom = 40.dp)
+                                    .clip(Shapes.large)
+                                    .background(SurfaceContainerHigh)
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Column(
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(24.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                        .size(72.dp)
+                                        .clip(cookieShape)
+                                        .background(Primary.copy(alpha = 0.16f)),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = Primary.copy(alpha = 0.12f),
-                                        modifier = Modifier.size(56.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.DocumentScanner,
-                                                contentDescription = null,
-                                                tint = Primary,
-                                                modifier = Modifier.size(28.dp)
-                                            )
-                                        }
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Rounded.DocumentScanner,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
 
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.ai_scan_empty_state_title),
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)
-                                            ),
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = OnSurface,
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.ai_scan_empty_state_desc),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = OnSurfaceVariant,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.ai_scan_empty_state_title),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)
+                                        ),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = OnSurface,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.ai_scan_empty_state_desc),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = OnSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
 
-                                    GymButton(
-                                        onClick = { showScanSourceSheet = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        containerColor = Primary,
-                                        contentColor = OnPrimary
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.DocumentScanner,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.ai_scan_empty_state_scan_button),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
+                                GymButton(
+                                    onClick = { showScanSourceSheet = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    containerColor = Primary,
+                                    contentColor = OnPrimary
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.DocumentScanner,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.ai_scan_empty_state_scan_button),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                GymButton(
+                                    onClick = { openAddSheet() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    containerColor = SecondaryContainer,
+                                    contentColor = OnSecondaryContainer
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Add,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.ai_scan_empty_state_add_manual),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         } else {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 80.dp, bottom = 40.dp),
+                                    .padding(horizontal = ResponsiveSize.horizontalPadding)
+                                    .padding(top = 48.dp, bottom = 40.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(cookieShape)
+                                        .background(Primary.copy(alpha = 0.16f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FitnessCenter,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                                 Text(
                                     text = stringResource(R.string.no_exercises_in_routine),
                                     style = MaterialTheme.typography.titleMedium.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.titleMedium.fontSize)),
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = OnSurface
+                                    color = OnSurface,
+                                    textAlign = TextAlign.Center
                                 )
-                                Spacer(modifier = Modifier.height(Spacing.xtraSmall))
                                 Text(
                                     text = stringResource(R.string.tap_plus_to_add),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = OnSurfaceVariant,
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(horizontal = 48.dp)
+                                    modifier = Modifier.padding(horizontal = 24.dp)
                                 )
+                                GymButton(
+                                    onClick = { openAddSheet() },
+                                    containerColor = Primary,
+                                    contentColor = OnPrimary
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Add,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.add_exercise),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
                 } else {
+                    item(key = "exercises_header") {
+                        // Excluded exercises (advanced programming, skipped this week) do not count
+                        var activeExercises = 0
+                        var totalSets = 0
+                        localExercises.forEach { entry ->
+                            when (val resolved = if (advancedOn) entry.resolve(viewWeek) else ResolvedPrescription.Legacy) {
+                                is ResolvedPrescription.Excluded -> Unit
+                                is ResolvedPrescription.Blocks -> {
+                                    activeExercises++
+                                    totalSets += resolved.blocks.sumOf { it.effectiveSets }
+                                }
+                                is ResolvedPrescription.Legacy -> {
+                                    activeExercises++
+                                    totalSets += entry.planExercise.serieTarget
+                                }
+                            }
+                        }
+                        // The summary drops under the title when a large font leaves no room beside it
+                        FlowRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = ResponsiveSize.horizontalPadding)
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            itemVerticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.routine_exercises_section),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = OnSurface
+                            )
+                            Text(
+                                text = pluralStringResource(R.plurals.routine_exercises_count, activeExercises, activeExercises) +
+                                    " \u00B7 " + pluralStringResource(R.plurals.routine_sets_count, totalSets, totalSets),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = OnSecondaryContainer,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(SecondaryContainer)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
                     itemsIndexed(localExercises, key = { _, item -> item.planExercise.id }) { index, item ->
                         val draggedRange = draggedItemIndex?.let { getSupersetRange(it, localExercises) }
                         val isDragging = draggedRange != null && index in draggedRange
-                        val elevation by animateDpAsState(if (isDragging) 12.dp else 0.dp, label = "elevation")
                         
                         // Superset logic
                         val currentSid = item.planExercise.supersetId
                         val isSuperset = currentSid != null
                         val isStart = isSuperset && (index == 0 || localExercises[index - 1].planExercise.supersetId != currentSid)
                         val isEnd = isSuperset && (index == localExercises.lastIndex || localExercises[index + 1].planExercise.supersetId != currentSid)
+                        val sidePadding = ResponsiveSize.horizontalPadding
+                        // Rail linking the number badges of a superset: centred on the badge, drawn behind the cards
+                        val railCenterX = ResponsiveSize.cardPadding + ExerciseBadgeSize / 2
+                        val railWidth = 4.dp
+                        val railGap = 12.dp
+                        val railColor = Primary
 
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                // The rows around a dragged card slide into place; the dragged card follows the finger
+                                .animateItem(
+                                    placementSpec = if (isDragging) null else spring(
+                                        dampingRatio = 0.7f,
+                                        stiffness = Spring.StiffnessMediumLow,
+                                        visibilityThreshold = IntOffset.VisibilityThreshold
+                                    )
+                                )
                                 .zIndex(if (isDragging) 1f else 0f)
                         ) {
                             if (isStart) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(start = 64.dp, bottom = 4.dp)
+                                    modifier = Modifier.padding(start = sidePadding + 16.dp, bottom = 4.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Link,
@@ -1009,19 +1080,16 @@ fun RoutineDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp)
+                                    .padding(horizontal = sidePadding)
                                     .graphicsLayer {
                                         translationY = if (isDragging) dragOffsetY else 0f
-                                        scaleX = if (isDragging) 1.02f else 1f
-                                        scaleY = if (isDragging) 1.02f else 1f
-                                        shadowElevation = if (isDark) elevation.toPx() else 0f
-                                        shape = RoundedCornerShape(28.dp)
-                                        clip = isDragging
                                     }
                                     .pointerInput(item.planExercise.id) {
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {
                                                 if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                settleJob?.cancel()
+                                                dragReleasing = false
                                                 draggedItemIndex = localExercises.indexOfFirst { it.planExercise.id == item.planExercise.id }
                                                 dragOffsetY = 0f
                                             },
@@ -1029,7 +1097,8 @@ fun RoutineDetailScreen(
                                                 change.consume()
                                                 dragOffsetY += dragAmount.y
                                                 
-                                                val itemHeight = 80.dp.toPx()
+                                                val gapPx = 12.dp.toPx()
+                                                val fallbackRowPx = 80.dp.toPx()
                                                 val currentDraggedIndex = draggedItemIndex
                                                 if (currentDraggedIndex != null) {
                                                     val range = getSupersetRange(currentDraggedIndex, localExercises)
@@ -1039,7 +1108,8 @@ fun RoutineDetailScreen(
                                                         val nextIndex = range.endInclusive + 1
                                                         val nextRange = getSupersetRange(nextIndex, localExercises)
                                                         val nextSize = nextRange.endInclusive - nextRange.start + 1
-                                                        val threshold = (nextSize * itemHeight) / 2f
+                                                        val nextPitch = rowsPitchPx(nextRange, fallbackRowPx, gapPx)
+                                                        val threshold = nextPitch / 2f
                                                         
                                                         if (dragOffsetY > threshold) {
                                                             val draggedItems = localExercises.subList(range.start, range.endInclusive + 1).toList()
@@ -1050,14 +1120,15 @@ fun RoutineDetailScreen(
                                                             localExercises.addAll(insertIndex, draggedItems)
                                                             
                                                             draggedItemIndex = insertIndex + (currentDraggedIndex - range.start)
-                                                            dragOffsetY -= nextSize * itemHeight
+                                                            dragOffsetY -= nextPitch
                                                             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         }
                                                     } else if (dragOffsetY < 0 && range.start > 0) {
                                                         val prevIndex = range.start - 1
                                                         val prevRange = getSupersetRange(prevIndex, localExercises)
                                                         val prevSize = prevRange.endInclusive - prevRange.start + 1
-                                                        val threshold = -(prevSize * itemHeight) / 2f
+                                                        val prevPitch = rowsPitchPx(prevRange, fallbackRowPx, gapPx)
+                                                        val threshold = -prevPitch / 2f
                                                         
                                                         if (dragOffsetY < threshold) {
                                                             val draggedItems = localExercises.subList(range.start, range.endInclusive + 1).toList()
@@ -1068,7 +1139,7 @@ fun RoutineDetailScreen(
                                                             localExercises.addAll(insertIndex, draggedItems)
                                                             
                                                             draggedItemIndex = insertIndex + (currentDraggedIndex - range.start)
-                                                            dragOffsetY += prevSize * itemHeight
+                                                            dragOffsetY += prevPitch
                                                             if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         }
                                                     }
@@ -1076,67 +1147,31 @@ fun RoutineDetailScreen(
                                             },
                                             onDragEnd = {
                                                 viewModel.updateExercisesOrder(localExercises.map { it.planExercise })
-                                                draggedItemIndex = null
-                                                dragOffsetY = 0f
+                                                releaseDrag()
                                             },
-                                            onDragCancel = {
-                                                draggedItemIndex = null
-                                                dragOffsetY = 0f
-                                            }
+                                            onDragCancel = { releaseDrag() }
                                         )
                                     }
+                                    .then(
+                                        if (isSuperset && !isDragging) {
+                                            Modifier.drawBehind {
+                                                val x = railCenterX.toPx()
+                                                val half = railGap.toPx() / 2f
+                                                val centerY = size.height / 2f
+                                                if (!isStart) {
+                                                    drawLine(railColor, Offset(x, centerY), Offset(x, -half), strokeWidth = railWidth.toPx())
+                                                }
+                                                if (!isEnd) {
+                                                    drawLine(railColor, Offset(x, centerY), Offset(x, size.height + half), strokeWidth = railWidth.toPx())
+                                                }
+                                            }
+                                        } else Modifier
+                                    )
                             ) {
-                                Box(
-                                    modifier = Modifier.size(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (isSuperset && !isDragging) {
-                                        val density = androidx.compose.ui.platform.LocalDensity.current
-                                        val strokeWidthPx = with(density) { 3.dp.toPx() }
-                                        val lineLengthPx = with(density) { 100.dp.toPx() }
-                                        val lineColor = Primary
-
-                                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                                            val centerY = size.height / 2
-                                            val centerX = size.width / 2
-                                            
-                                            if (!isStart) {
-                                                drawLine(
-                                                    color = lineColor,
-                                                    start = androidx.compose.ui.geometry.Offset(centerX, centerY),
-                                                    end = androidx.compose.ui.geometry.Offset(centerX, centerY - lineLengthPx),
-                                                    strokeWidth = strokeWidthPx
-                                                )
-                                            }
-                                            if (!isEnd) {
-                                                drawLine(
-                                                    color = lineColor,
-                                                    start = androidx.compose.ui.geometry.Offset(centerX, centerY),
-                                                    end = androidx.compose.ui.geometry.Offset(centerX, centerY + lineLengthPx),
-                                                    strokeWidth = strokeWidthPx
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(if (isDragging || isSuperset) Primary else SurfaceContainerHigh),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "${index + 1}",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = if (isDragging || isSuperset) OnPrimary else Primary,
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    }
-                                }
-
                                 ExerciseEntryCard(
                                     item = item,
+                                    number = index + 1,
+                                    isDragging = isDragging && !dragReleasing,
                                     onClick = { if (item.exercise.isDeleted) deletedExerciseTapped = item else openEditSheet(item) },
                                     modifier = Modifier.weight(1f),
                                     languageCode = languageCode,
@@ -2789,6 +2824,185 @@ private fun ScanDraftBanner(
         }
         IconButton(onClick = onDiscard) {
             Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.scan_draft_discard), tint = OnSurfaceVariant)
+        }
+    }
+}
+
+/**
+ * Top of the routine screen. Compact: the dates and a slim strip of scheduled days. Expanded: photos above, bigger
+ * day pills, the note and the muscle groups below. Tapping the card toggles it.
+ */
+@Composable
+private fun RoutineOverviewSection(
+    startDate: Long,
+    endDate: Long?,
+    scheduledDaysCsv: String?,
+    note: String?,
+    muscleGroups: List<String>,
+    images: List<com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity>,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onImageAdd: (String) -> Unit,
+    onImageRemove: (com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val expandSpec = spring<IntSize>(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)
+    val enter = expandVertically(animationSpec = expandSpec) + fadeIn(tween(180))
+    val exit = shrinkVertically(animationSpec = expandSpec) + fadeOut(tween(120))
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+        label = "overview_chevron"
+    )
+    val dayHeight by animateDpAsState(
+        targetValue = if (expanded) 36.dp else 24.dp,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow),
+        label = "overview_day_height"
+    )
+    val scheduledDays = remember(scheduledDaysCsv) {
+        scheduledDaysCsv.orEmpty().split(",").mapNotNull {
+            it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
+        }
+    }
+    val cleanNote = note?.takeIf { it.isNotBlank() }
+    val toggleLabel = stringResource(if (expanded) R.string.routine_header_collapse else R.string.routine_header_expand)
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        AnimatedVisibility(visible = expanded, enter = enter, exit = exit) {
+            RoutineImagePicker(
+                images = images,
+                onImageAdd = onImageAdd,
+                onImageRemove = onImageRemove,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(Shapes.large)
+                .background(SurfaceContainerHigh)
+                .clickable(onClickLabel = toggleLabel, onClick = onToggle)
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CalendarMonth,
+                        contentDescription = null,
+                        tint = OnPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.start_date) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(startDate),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = OnSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    endDate?.let { expiry ->
+                        Text(
+                            text = stringResource(R.string.expires) + " " + com.emanuel5014.trainable.ui.util.DateFormatter.format(expiry),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (expiry < System.currentTimeMillis()) Error else OnSurfaceVariant,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Rounded.ExpandMore,
+                    contentDescription = null,
+                    tint = OnSurfaceVariant,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer { rotationZ = chevronRotation }
+                )
+            }
+
+            if (!scheduledDaysCsv.isNullOrBlank()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+                ) {
+                    DayOfWeek.entries.forEachIndexed { index, day ->
+                        val isScheduled = scheduledDays.contains(day)
+                        val dayShape = if (isScheduled) RoundedCornerShape(50)
+                        else when (index) {
+                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes().shape
+                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes().shape
+                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes().shape
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .heightIn(min = dayHeight)
+                                .clip(dayShape)
+                                .background(if (isScheduled) Primary else SurfaceContainerHighest),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                                style = if (expanded) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (isScheduled) OnPrimary else OnSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = expanded && (cleanNote != null || muscleGroups.isNotEmpty()),
+                enter = enter,
+                exit = exit
+            ) {
+                Column(
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    cleanNote?.let { text ->
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurfaceVariant
+                        )
+                    }
+                    if (muscleGroups.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            muscleGroups.forEach { category ->
+                                Text(
+                                    text = category,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Tertiary,
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(Tertiary.copy(alpha = 0.16f))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

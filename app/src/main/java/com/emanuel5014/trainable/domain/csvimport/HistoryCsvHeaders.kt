@@ -14,6 +14,9 @@ object HistoryCsvHeaders {
         else -> "Date,Session ID,Plan,Exercise,Category,Type,Set,Weight ($weightUnit),Reps,Duration (s),Distance (km),Note"
     }
 
+    /** How hard each set felt: its own column when advanced programming is off (with it on, the prescription columns have it). */
+    fun rpe(@Suppress("UNUSED_PARAMETER") languageCode: String): String = "RPE"
+
     /** Only written with advanced programming on. */
     fun prescription(languageCode: String): String = when (languageCode) {
         "it" -> "Settimana,% Massimale,Rep Target,Tecniche,RPE,Extra,Riscaldamento"
@@ -43,8 +46,36 @@ object HistoryCsvHeaders {
         else -> "Program Changed,Original Program"
     }
 
-    /** The header line the export writes. */
-    fun full(languageCode: String, weightUnit: String, advanced: Boolean): String =
-        (if (advanced) basic(languageCode, weightUnit) + "," + prescription(languageCode) else basic(languageCode, weightUnit)) +
-            "," + performance(languageCode) + "," + programEdit(languageCode)
+    /** How long the whole workout took, in minutes: written on every row of the workout, empty when it is not known. */
+    fun sessionDuration(languageCode: String): String = when (languageCode) {
+        "it" -> "Durata Allenamento (min)"
+        "es" -> "Duración Sesión (min)"
+        "fr" -> "Durée Séance (min)"
+        "de" -> "Sitzungsdauer (min)"
+        "pt" -> "Duração Sessão (min)"
+        else -> "Session Duration (min)"
+    }
+
+    /** The workout journal: its rating, its tags and its note; written on every row of the workout, only with the journal on. */
+    fun journal(languageCode: String): String = when (languageCode) {
+        "it" -> "Voto,Tag,Nota Allenamento"
+        "es" -> "Valoración,Etiquetas,Nota Sesión"
+        "fr" -> "Évaluation,Tags,Note Séance"
+        "de" -> "Bewertung,Tags,Sitzungsnotiz"
+        "pt" -> "Avaliação,Tags,Nota Sessão"
+        else -> "Rating,Tags,Workout Note"
+    }
+
+    /**
+     * The header line the export writes; with [journal] the three journal columns close it, and with [rpeColumn] (and
+     * advanced programming off) an RPE column follows the note.
+     */
+    fun full(languageCode: String, weightUnit: String, advanced: Boolean, journal: Boolean = false, rpeColumn: Boolean = false): String =
+        (when {
+            advanced -> basic(languageCode, weightUnit) + "," + prescription(languageCode)
+            rpeColumn -> basic(languageCode, weightUnit) + "," + rpe(languageCode)
+            else -> basic(languageCode, weightUnit)
+        }) +
+            "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode) +
+            (if (journal) "," + journal(languageCode) else "")
 }

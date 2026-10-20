@@ -51,6 +51,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.suggestion.WorkoutSuggester
 import com.emanuel5014.trainable.ui.theme.getAppColorScheme
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -61,7 +62,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import java.time.LocalDate
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -95,58 +96,11 @@ class TrainableWidget : GlanceAppWidget() {
                 )
             }
 
-            // Re-use Suggested Plan Logic
-            val calendar = Calendar.getInstance()
-            val weekStartMillis = Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-            }.timeInMillis
-
-            val todayStartMillis = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-            }.timeInMillis
-
-            val workoutsThisWeek = allSessions.filter { it.timestamp >= weekStartMillis }
-            val lastSession = allSessions.firstOrNull()
-            val trainedToday = lastSession != null && lastSession.timestamp >= todayStartMillis
-
-            val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
-            val currentDayValue = when (today) {
-                Calendar.MONDAY -> "1"
-                Calendar.TUESDAY -> "2"
-                Calendar.WEDNESDAY -> "3"
-                Calendar.THURSDAY -> "4"
-                Calendar.FRIDAY -> "5"
-                Calendar.SATURDAY -> "6"
-                Calendar.SUNDAY -> "7"
-                else -> "1"
-            }
-
-            val planForToday = plans.find { it.giorniSettimana?.split(",")?.contains(currentDayValue) == true }
-            val idsPerformedThisWeek = workoutsThisWeek.map { it.planId }.toSet()
-            val firstNotPerformedThisWeek = plans.find { it.id !in idsPerformedThisWeek }
-
-            val todayPlan = if (!trainedToday) planForToday else null
-
-            var suggestedPlan: WorkoutPlanEntity? = null
-            if (plans.isNotEmpty()) {
-                suggestedPlan = if (firstNotPerformedThisWeek != null) {
-                    firstNotPerformedThisWeek
-                } else {
-                    val lastPlanIndex = plans.indexOfFirst { it.id == lastSession?.planId }
-                    if (lastPlanIndex != -1) {
-                        plans[(lastPlanIndex + 1) % plans.size]
-                    } else {
-                        plans.first()
-                    }
-                }
-            }
-
-            val finalSuggestedPlan = if (suggestedPlan?.id == todayPlan?.id) null else suggestedPlan
+            // Same choice as the dashboard: the sequence of routines, the days only shape the card
+            val suggestion = WorkoutSuggester.suggest(plans, allSessions, LocalDate.now())
+            // The widget starts a workout: once the routine of the day is done it offers the next one instead
+            val todayPlan = suggestion.todayPlan.takeUnless { suggestion.todayPlanDone }
+            val finalSuggestedPlan = suggestion.suggestedPlan ?: suggestion.todayPlan.takeIf { suggestion.todayPlanDone }
 
             GlanceTheme(colors = colors) {
                 WidgetContent(

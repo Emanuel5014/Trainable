@@ -156,7 +156,13 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.relation.toJournal
+import com.emanuel5014.trainable.ui.components.journal.JournalDetail
+import com.emanuel5014.trainable.ui.components.journal.JournalSheet
+import com.emanuel5014.trainable.ui.components.journal.JournalSummaryLine
+import com.emanuel5014.trainable.ui.components.journal.journalHasContent
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.entity.isArchived
@@ -290,6 +296,7 @@ fun HistoryScreen(
     var showCardioDialog by remember { mutableStateOf(false) }
     var showAddWorkoutSheet by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    var sessionToJournal by remember { mutableStateOf<SessionWithDetails?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -489,7 +496,7 @@ fun HistoryScreen(
                         }
                     } else {
                         {
-                            val hasActiveFilters = uiState.selectedPlanId != null || uiState.startDate != null || uiState.endDate != null
+                            val hasActiveFilters = uiState.filters.isActive(uiState.journalEnabled)
                             GymIconButton(
                                 icon = if (hasActiveFilters) Icons.Rounded.FilterListOff else Icons.Rounded.FilterList,
                                 onClick = { showFilterSheet = true },
@@ -499,6 +506,18 @@ fun HistoryScreen(
                         }
                     },
                     titleInRow = uiState.isSelectionMode
+                )
+
+                val noRoutineLabel = stringResource(R.string.no_routine)
+                ActiveFiltersBar(
+                    filters = uiState.filters,
+                    planName = uiState.filters.planId?.let { id ->
+                        if (id == NO_ROUTINE_PLAN_ID) noRoutineLabel
+                        else uiState.availablePlans.firstOrNull { it.id == id }?.nome ?: noRoutineLabel
+                    },
+                    tags = uiState.availableTags,
+                    journalEnabled = uiState.journalEnabled,
+                    onFiltersChange = viewModel::setFilters
                 )
 
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -518,7 +537,7 @@ fun HistoryScreen(
                             title = stringResource(R.string.no_results_filters),
                             description = stringResource(R.string.try_adjust_filters),
                             action = {
-                                GymButton(onClick = { viewModel.setFilters(null, null, null) }) {
+                                GymButton(onClick = { viewModel.setFilters(HistoryFilters()) }) {
                                     Text(stringResource(R.string.clear_filters).uppercase(), fontWeight = FontWeight.ExtraBold)
                                 }
                             }
@@ -614,6 +633,10 @@ fun HistoryScreen(
                                         }
                                     },
                                     onRestoreExercise = viewModel::restoreExercise,
+                                    journalTags = sessionDetails.tags,
+                                    showJournal = uiState.journalEnabled,
+                                    onTagClick = viewModel::filterByTag,
+                                    onEditJournal = { sessionToJournal = sessionDetails },
                                     swipeActionsEnabled = swipeActionsEnabled,
                                     isSelectionMode = uiState.isSelectionMode,
                                     isSelected = uiState.selectedSessionIds.contains(session.id),
@@ -964,27 +987,44 @@ fun HistoryScreen(
             )
         }
 
+        sessionToJournal?.let { target ->
+            JournalSheet(
+                initial = target.toJournal(),
+                onSave = {
+                    viewModel.saveJournal(target.session.id, it)
+                    sessionToJournal = null
+                },
+                onDismiss = { sessionToJournal = null },
+                hapticEnabled = hapticEnabled
+            )
+        }
+
         if (showFilterSheet) {
             HistoryFilterBottomSheet(
-                selectedPlanId = uiState.selectedPlanId,
+                selectedPlanId = uiState.filters.planId,
                 availablePlans = uiState.availablePlans,
                 hasUnassignedSessions = uiState.sessions.any { it.plan.isSystemPlan },
-                startDate = uiState.startDate,
-                endDate = uiState.endDate,
+                startDate = uiState.filters.startDate,
+                endDate = uiState.filters.endDate,
                 onPlanSelected = { planId ->
-                    viewModel.setFilters(planId, uiState.startDate, uiState.endDate)
+                    viewModel.setFilters(uiState.filters.copy(planId = planId))
                 },
                 onDateRangeSelected = { start, end ->
-                    viewModel.setFilters(uiState.selectedPlanId, start, end)
+                    viewModel.setFilters(uiState.filters.copy(startDate = start, endDate = end))
                 },
                 onDateClick = { showDatePicker = true },
                 onClearDate = {
-                    viewModel.setFilters(uiState.selectedPlanId, null, null)
+                    viewModel.setFilters(uiState.filters.copy(startDate = null, endDate = null))
                 },
                 onClearAll = {
-                    viewModel.setFilters(null, null, null)
+                    viewModel.setFilters(HistoryFilters())
                 },
-                onDismiss = { showFilterSheet = false }
+                onDismiss = { showFilterSheet = false },
+                journalEnabled = uiState.journalEnabled,
+                ratingEnabled = uiState.journalRatingEnabled,
+                availableTags = uiState.availableTags,
+                journalFilters = uiState.filters.journal,
+                onJournalFiltersChanged = { viewModel.setFilters(uiState.filters.copy(journal = it)) }
             )
         }
         if (showDatePicker) {
@@ -998,7 +1038,7 @@ fun HistoryScreen(
                         val start = dateRangePickerState.selectedStartDateMillis
                         val end = dateRangePickerState.selectedEndDateMillis
                         if (start != null && end != null) {
-                            viewModel.setFilters(uiState.selectedPlanId, start, end)
+                            viewModel.setFilters(uiState.filters.copy(startDate = start, endDate = end))
                         }
                         showDatePicker = false
                     },
@@ -1229,8 +1269,16 @@ fun SessionHistoryCard(
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
-    onRestoreExercise: (Int) -> Unit = {}
+    onRestoreExercise: (Int) -> Unit = {},
+    /** The tags of the workout journal on this workout. */
+    journalTags: List<SessionTagEntity> = emptyList(),
+    /** The workout journal is on: its rating, tags and note are shown. */
+    showJournal: Boolean = false,
+    onTagClick: (Int) -> Unit = {},
+    onEditJournal: () -> Unit = {}
 ) {
+    // The collapsed card gets one more line when the workout has a journal; without one it looks as it always did
+    val journalLine = showJournal && !isExpanded && journalHasContent(session.rating, journalTags, session.journalNote)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1253,7 +1301,7 @@ fun SessionHistoryCard(
                         start = ResponsiveSize.cardPadding,
                         end = ResponsiveSize.cardPadding,
                         top = ResponsiveSize.cardPadding,
-                        bottom = if (isExpanded) 0.dp else ResponsiveSize.cardPadding
+                        bottom = if (isExpanded || journalLine) 0.dp else ResponsiveSize.cardPadding
                     ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -1365,6 +1413,21 @@ fun SessionHistoryCard(
                 }
             }
 
+            if (journalLine) {
+                JournalSummaryLine(
+                    rating = session.rating,
+                    tags = journalTags,
+                    note = session.journalNote,
+                    onTagClick = onTagClick,
+                    modifier = Modifier.padding(
+                        start = ResponsiveSize.cardPadding,
+                        end = ResponsiveSize.cardPadding,
+                        top = 10.dp,
+                        bottom = ResponsiveSize.cardPadding
+                    )
+                )
+            }
+
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = expandVertically() + fadeIn(),
@@ -1398,7 +1461,20 @@ fun SessionHistoryCard(
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
+                    if (showJournal) {
+                        JournalDetail(
+                            rating = session.rating,
+                            tags = journalTags,
+                            note = session.journalNote,
+                            onTagClick = onTagClick,
+                            onEdit = onEditJournal,
+                            modifier = Modifier
+                                .padding(horizontal = ResponsiveSize.cardPadding)
+                                .padding(bottom = 16.dp)
+                        )
+                    }
+
                     if (details == null) {
                         Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                             GymLoadingIndicator(size = 24.dp)
@@ -1545,6 +1621,9 @@ fun SessionHistoryCard(
                                         else -> Icons.AutoMirrored.Rounded.DirectionsRun
                                     }
                                     val translatedTitle = ExerciseTranslations.translate(cardio.categoria, languageCode)
+                                    val rpeScale = com.emanuel5014.trainable.ui.components.LocalRpeSettings.current.scale
+                                    val rpeContext = androidx.compose.ui.platform.LocalContext.current
+                                    fun rpeSuffix(rpe: Float?) = rpe?.let { " · " + com.emanuel5014.trainable.ui.components.rpeBadgeText(rpeContext, it, rpeScale) }.orEmpty()
                                     Column(
                                         modifier = Modifier
                                             .padding(horizontal = ResponsiveSize.cardPadding)
@@ -1577,7 +1656,7 @@ fun SessionHistoryCard(
                                                         color = OnSurfaceVariant
                                                     )
                                                     Text(
-                                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
+                                                        text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set) + rpeSuffix(set.rpe),
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = FontWeight.Bold,
                                                         color = OnSurface
@@ -1601,7 +1680,7 @@ fun SessionHistoryCard(
                                                     val h = cardio.durataSecondi / 3600
                                                     val m = (cardio.durataSecondi % 3600) / 60
                                                     val s = cardio.durataSecondi % 60
-                                                    if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s"
+                                                    (if (h > 0) "${h}h ${m}m ${s}s" else "${m}m ${s}s") + rpeSuffix(cardio.rpe)
                                                 },
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = OnSurfaceVariant
@@ -1837,9 +1916,9 @@ fun EditSetDialog(
                             }
                         }
                     }
-                    if (com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming.current) {
-                        com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it })
-                    }
+                }
+                com.emanuel5014.trainable.ui.components.editableRpeScale(hasValue = set.rpe != null)?.let { scale ->
+                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it }, scale = scale)
                 }
                 GymInputField(
                     value = note,
@@ -1891,7 +1970,7 @@ fun EditSetDialog(
                             repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else (reps.toIntOrNull() ?: 0),
                             durataSecondi = if (kind.isTimed) (seconds.toIntOrNull() ?: 45) else null,
                             note = note.ifBlank { null },
-                            rpe = if (kind.isTimed) null else rpe
+                            rpe = rpe
                         ).asKind(kind).let { edited ->
                             if (kind.isTimed) edited.copy(repParts = null, intraRests = null, assistedReps = 0, partialReps = 0)
                             else {

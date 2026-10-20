@@ -683,6 +683,8 @@ fun Application.configureServer(
 
                     sessions = sessions.take(limit)
 
+                    // The workout journal (rating, tags, note) is part of the answer only while it is on
+                    val journalEnabled = userPrefsRepo.journalEnabled.first()
                     val items = buildJsonArray {
                         sessions.forEach { swd ->
                             val volume = swd.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
@@ -692,6 +694,7 @@ fun Application.configureServer(
                                 put("planName", swd.plan.nome)
                                 put("timestamp", swd.session.timestamp)
                                 swd.session.noteSessione?.let { put("noteSessione", it) }
+                                if (journalEnabled) journalJson(swd)?.let { put("journal", it) }
                                 put("totalVolume", volume)
                                 put("totalSets", swd.sets.size)
                                 put("cardioCount", swd.cardio.size)
@@ -721,6 +724,7 @@ fun Application.configureServer(
 
                     val lang = resolveLanguage(userPrefsRepo)
                     val advanced = userPrefsRepo.advancedProgrammingEnabled.first()
+                    val journalEnabled = userPrefsRepo.journalEnabled.first()
                     val volume = session.sets.sumOf { (it.setLog.pesoSollevato * it.setLog.repsEffettive).toDouble() }.toFloat()
                     val setsArray = buildJsonArray {
                         session.sets.forEach { swd ->
@@ -735,7 +739,7 @@ fun Application.configureServer(
                                 // Time & Reps sets have a duration too, and their reps are what counts
                                 if (swd.setLog.exerciseType == com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS) put("exerciseType", swd.setLog.exerciseType)
                                 if (swd.setLog.isWarmup) put("isWarmup", true)
-                                if (advanced) swd.setLog.rpe?.let { put("rpe", it) }
+                                swd.setLog.rpe?.let { put("rpe", it) }
                                 swd.setLog.note?.let { put("note", it) }
                                 com.emanuel5014.trainable.ui.components.setLogDetailsText(context, swd.setLog, withPrescription = advanced)?.let { put("prescription", it) }
                             })
@@ -748,6 +752,7 @@ fun Application.configureServer(
                         put("planName", session.plan.nome)
                         put("timestamp", session.session.timestamp)
                         session.session.noteSessione?.let { put("noteSessione", it) }
+                        if (journalEnabled) journalJson(session)?.let { put("journal", it) }
                         put("totalVolume", volume)
                         put("totalSets", session.sets.size)
                         put("sets", setsArray)
@@ -780,6 +785,7 @@ fun Application.configureServer(
                                     c.durataTargetSecondi?.let { put("targetDurationSeconds", it) }
                                     put("setNumber", c.numeroSerie)
                                     c.note?.let { put("note", it) }
+                                    c.rpe?.let { put("rpe", it) }
                                 })
                             }
                         })

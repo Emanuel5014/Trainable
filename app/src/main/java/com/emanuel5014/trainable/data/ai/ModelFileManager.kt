@@ -34,6 +34,15 @@ class ModelFileManager @Inject constructor(
 
     fun getModelFile(variant: AiModelVariant): File = File(modelsDir, variant.fileName)
 
+    /** Where [variant] is written while it is incomplete; renamed to [getModelFile] once whole. */
+    fun getPartFile(variant: AiModelVariant): File = File(modelsDir, variant.fileName + ".part")
+
+    /** Whether [bytes] more fit on the device while keeping the same reserve the download keeps. */
+    fun hasRoomFor(bytes: Long): Boolean = modelsDir.usableSpace >= bytes + MIN_FREE_SPACE
+
+    /** The room [hasRoomFor] asks for on top of [bytes]. */
+    fun spaceNeededFor(bytes: Long): Long = bytes + MIN_FREE_SPACE
+
     fun isDownloaded(variant: AiModelVariant): Boolean {
         val file = getModelFile(variant)
         return file.exists() && file.length() > 0

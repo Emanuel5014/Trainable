@@ -24,7 +24,9 @@ import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.PlanExerciseWithDetails
 import com.emanuel5014.trainable.data.local.entity.repsRange
@@ -32,6 +34,7 @@ import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.data.local.entity.wasPrescribedLike
 import com.emanuel5014.trainable.data.local.entity.withRepsRange
 import com.emanuel5014.trainable.domain.emom.EmomClock
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.domain.emom.EmomPhase
 import com.emanuel5014.trainable.domain.prescription.DoubleProgression
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
@@ -118,6 +121,15 @@ data class WorkoutState(
     val plateCalculatorEnabled: Boolean = false,
     /** Mini-sets, assisted and partial reps and the technique as done; off, a set carries only its note. */
     val setPerformanceEnabled: Boolean = false,
+    /** The workout journal is on: finishing a workout can carry a rating, tags and a note. */
+    val journalEnabled: Boolean = false,
+    /** With the journal on: finishing a workout opens the journal sheet instead of the plain dialog. */
+    val journalPromptAtFinish: Boolean = true,
+    /**
+     * What the lifter has put in the finish sheet so far. It lives here, not in the sheet, so cancelling the sheet keeps
+     * it and the "new 1RM?" review that can come between Finish and the end of the session cannot lose it.
+     */
+    val journalDraft: SessionJournal = SessionJournal(),
     /** Plates the gym has, in [weightUnit], heaviest first. */
     val availablePlates: List<Float> = PlateCalculator.DEFAULT_PLATES_KG,
     val warmupTimerEnabled: Boolean = false,
@@ -153,8 +165,9 @@ data class WorkoutState(
     val weeksCount: Int = 1,
     val autoAdvanceWeek: Boolean = true,
     val loadRoundingIncrement: Float = LoadCalculator.DEFAULT_INCREMENT_KG,
-    /** 0 = advanced exercises only, 1 = always, 2 = never. */
-    val rpeInputMode: Int = 0,
+    /** Whether the workout asks how hard each set felt, and on which scale. */
+    val rpeEnabled: Boolean = false,
+    val rpeScale: RpeScale = RpeScale.BASIC,
     /** Pending "new 1RM?" prompts shown before the session is closed. */
     val oneRepMaxSuggestions: List<OneRepMaxSuggestion> = emptyList(),
     /** The set just logged came out short of its reps: the rest card offers to finish it after a short pause. */
@@ -358,7 +371,9 @@ data class CardioSetState(
     val elapsedSeconds: Int = 0,
     val distanceKm: Float = 0f,
     val isCompleted: Boolean = false,
-    val note: String? = null
+    val note: String? = null,
+    /** How hard the set felt (RPE), once it is done. */
+    val rpe: Float? = null
 )
 
 /** [count] cardio sets still to do, numbered from 1. */
@@ -377,7 +392,8 @@ internal fun cardioSetsFrom(logs: List<CardioLogEntity>, plannedSets: Int): List
             elapsedSeconds = log.durataSecondi,
             distanceKm = log.distanza,
             isCompleted = log.isCompleted,
-            note = log.note
+            note = log.note,
+            rpe = log.rpe
         )
     }
     if (logged.isNotEmpty()) return logged
@@ -477,6 +493,7 @@ class WorkoutViewModel @Inject constructor(
     private val timerNotificationHelper: TimerNotificationHelper,
     private val localeManager: AppLocaleManager,
     private val oneRepMaxRepository: OneRepMaxRepository,
+    private val journalRepository: JournalRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -501,8 +518,6 @@ class WorkoutViewModel @Inject constructor(
     private var advancedEnabled = false
 
     private companion object {
-        /** [WorkoutState.rpeInputMode] value meaning "never ask for RPE". */
-        const val RPE_INPUT_NEVER = 2
         /** Fetch every set of the previous session (advanced exercises match them per block). */
         const val ALL_SETS = 500
     }
@@ -617,11 +632,10 @@ class WorkoutViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // With advanced programming off there is no RPE logging at all
-            combine(userPreferencesRepository.rpeInputMode, userPreferencesRepository.advancedProgrammingEnabled) { mode, advanced ->
-                if (advanced) mode else RPE_INPUT_NEVER
-            }.collect { mode ->
-                _state.update { it.copy(rpeInputMode = mode) }
+            combine(userPreferencesRepository.rpeEnabled, userPreferencesRepository.rpeScale) { enabled, scale ->
+                enabled to scale
+            }.collect { (enabled, scale) ->
+                _state.update { it.copy(rpeEnabled = enabled, rpeScale = scale) }
             }
         }
 
@@ -692,6 +706,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setPerformanceEnabled.collect { enabled ->
                 _state.update { it.copy(setPerformanceEnabled = enabled, miniSetOffer = if (enabled) it.miniSetOffer else null) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.journalEnabled.collect { enabled ->
+                _state.update { it.copy(journalEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.journalPromptAtFinish.collect { prompt ->
+                _state.update { it.copy(journalPromptAtFinish = prompt) }
             }
         }
 
@@ -2549,20 +2575,29 @@ class WorkoutViewModel @Inject constructor(
         performFinish()
     }
 
+    /** Keeps what is typed in the finish sheet (see [WorkoutState.journalDraft]). */
+    fun updateJournalDraft(journal: SessionJournal) {
+        _state.update { it.copy(journalDraft = journal) }
+    }
+
     private fun performFinish() {
         if (_state.value.isFinishing) return
         _state.update { it.copy(isFinishing = true) }
-        
+
         viewModelScope.launch {
             try {
                 _state.value.sessionId?.let { id ->
                     val durationMs = if (_state.value.workoutTimerEnabled) {
                         _state.value.sessionStartTime?.let { System.currentTimeMillis() - it }
                     } else null
+                    // Nothing is written for an empty journal, and nothing at all when the journal is off
+                    val journal = _state.value.journalDraft.cleaned().takeIf { _state.value.journalEnabled && !it.isEmpty }
                     withContext(Dispatchers.IO) {
                         workoutRepository.deleteUncompletedSetsForSession(id)
                         workoutRepository.deleteUncompletedCardioLogsForSession(id)
                         workoutRepository.setSessionFinished(id, durationMs)
+                        // A journal that cannot be saved must never keep the workout from finishing
+                        if (journal != null) runCatching { journalRepository.saveJournal(id, journal) }
                     }
                     advanceProgramWeek()
                     stopRestTimer()
@@ -3988,7 +4023,8 @@ class WorkoutViewModel @Inject constructor(
                 ordineEsercizio = order,
                 isCompleted = true,
                 numeroSerie = doneSet.setNumber,
-                note = doneSet.note
+                note = doneSet.note,
+                rpe = doneSet.rpe
             )
             if (logId != null && logId > 0) {
                 workoutRepository.updateCardioLog(cardioEntity)
@@ -4046,7 +4082,8 @@ class WorkoutViewModel @Inject constructor(
                     durataTargetSecondi = ex.cardioDurataTargetSeconds,
                     isCompleted = false,
                     numeroSerie = set.setNumber,
-                    note = set.note
+                    note = set.note,
+                    rpe = set.rpe
                 )
             ).toInt()
             setCardioSetId(exerciseIndex, set.setNumber, id)
@@ -4086,13 +4123,20 @@ class WorkoutViewModel @Inject constructor(
     }
 
     /** Corrects a cardio set that was already done. */
-    fun editCardioSet(exerciseIndex: Int, setIndex: Int, seconds: Int, distanceKm: Float, note: String?) {
+    fun editCardioSet(exerciseIndex: Int, setIndex: Int, seconds: Int, distanceKm: Float, note: String?, rpe: Float?) {
         val set = _state.value.exercises.getOrNull(exerciseIndex)?.cardioSets?.getOrNull(setIndex) ?: return
         val cleanNote = note?.trim()?.ifBlank { null }
         updateCardioSets(exerciseIndex) { sets ->
-            sets.toMutableList().also { it[setIndex] = set.copy(elapsedSeconds = seconds, distanceKm = distanceKm, note = cleanNote) }
+            sets.toMutableList().also { it[setIndex] = set.copy(elapsedSeconds = seconds, distanceKm = distanceKm, note = cleanNote, rpe = rpe) }
         }
-        set.id?.let { id -> viewModelScope.launch { workoutRepository.updateCardioSetValues(id, seconds, distanceKm, cleanNote) } }
+        set.id?.let { id -> viewModelScope.launch { workoutRepository.updateCardioSetValues(id, seconds, distanceKm, cleanNote, rpe) } }
+    }
+
+    /** How hard a cardio set felt; one that has no log yet takes it with it when it gets one. */
+    fun updateCardioSetRpe(exerciseIndex: Int, setIndex: Int, rpe: Float?) {
+        val set = _state.value.exercises.getOrNull(exerciseIndex)?.cardioSets?.getOrNull(setIndex) ?: return
+        updateCardioSets(exerciseIndex) { sets -> sets.toMutableList().also { it[setIndex] = set.copy(rpe = rpe) } }
+        set.id?.let { id -> viewModelScope.launch { workoutRepository.updateCardioRpe(id, rpe) } }
     }
 
     /** The note of a cardio set; one that has no log yet takes it with it when it gets one. */

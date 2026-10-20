@@ -8,6 +8,8 @@ import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.domain.rpe.RpePreference
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
 import com.emanuel5014.trainable.util.TimerAdjustment
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -251,7 +253,8 @@ class BackupManager @Inject constructor(
                 json.put("keep_screen_on_set_timer", prefs[UserPreferencesRepository.KEEP_SCREEN_ON_SET_TIMER] ?: true)
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_KG]?.let { json.put("load_rounding_kg", it.toDouble()) }
                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB]?.let { json.put("load_rounding_lb", it.toDouble()) }
-                json.put("rpe_input_mode", prefs[UserPreferencesRepository.RPE_INPUT_MODE] ?: 0)
+                json.put("rpe_enabled", prefs[UserPreferencesRepository.RPE_ENABLED] ?: false)
+                json.put("rpe_scale", prefs[UserPreferencesRepository.RPE_SCALE] ?: RpeScale.BASIC.id)
                 json.put("advanced_programming_enabled", prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] ?: false)
                 json.put("exercise_media_enabled", prefs[UserPreferencesRepository.EXERCISE_MEDIA_ENABLED] ?: false)
                 json.put("exercise_media_large", prefs[UserPreferencesRepository.EXERCISE_MEDIA_LARGE] ?: true)
@@ -266,6 +269,9 @@ class BackupManager @Inject constructor(
                 json.put("plate_calculator_enabled", prefs[UserPreferencesRepository.PLATE_CALCULATOR_ENABLED] ?: false)
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG]?.let { json.put("plate_calculator_plates_kg", it) }
                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB]?.let { json.put("plate_calculator_plates_lb", it) }
+                json.put("journal_enabled", prefs[UserPreferencesRepository.JOURNAL_ENABLED] ?: false)
+                json.put("journal_prompt_at_finish", prefs[UserPreferencesRepository.JOURNAL_PROMPT_AT_FINISH] ?: true)
+                json.put("journal_rating_enabled", prefs[UserPreferencesRepository.JOURNAL_RATING_ENABLED] ?: true)
 
                 json.put("ai_scan_enabled", prefs[UserPreferencesRepository.AI_SCAN_ENABLED] ?: false)
                 json.put("ai_model_variant", prefs[UserPreferencesRepository.AI_MODEL_VARIANT] ?: "e2b")
@@ -407,8 +413,19 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.LOAD_ROUNDING_KG] = jsonObject.getDouble("load_rounding_kg").toFloat()
                                             if (jsonObject.has("load_rounding_lb"))
                                                 prefs[UserPreferencesRepository.LOAD_ROUNDING_LB] = jsonObject.getDouble("load_rounding_lb").toFloat()
-                                            if (jsonObject.has("rpe_input_mode"))
-                                                prefs[UserPreferencesRepository.RPE_INPUT_MODE] = jsonObject.getInt("rpe_input_mode")
+                                            if (jsonObject.has("rpe_enabled")) {
+                                                prefs[UserPreferencesRepository.RPE_ENABLED] = jsonObject.getBoolean("rpe_enabled")
+                                                if (jsonObject.has("rpe_scale"))
+                                                    prefs[UserPreferencesRepository.RPE_SCALE] = jsonObject.getInt("rpe_scale")
+                                            } else {
+                                                // A backup from before RPE had a switch of its own
+                                                val rpe = RpePreference.fromLegacy(
+                                                    advancedProgramming = jsonObject.optBoolean("advanced_programming_enabled", false),
+                                                    legacyInputMode = if (jsonObject.has("rpe_input_mode")) jsonObject.getInt("rpe_input_mode") else null
+                                                )
+                                                prefs[UserPreferencesRepository.RPE_ENABLED] = rpe.enabled
+                                                prefs[UserPreferencesRepository.RPE_SCALE] = rpe.scale.id
+                                            }
                                             if (jsonObject.has("advanced_programming_enabled"))
                                                 prefs[UserPreferencesRepository.ADVANCED_PROGRAMMING_ENABLED] = jsonObject.getBoolean("advanced_programming_enabled")
                                             if (jsonObject.has("exercise_media_enabled"))
@@ -437,6 +454,12 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_KG] = jsonObject.getString("plate_calculator_plates_kg")
                                             if (jsonObject.has("plate_calculator_plates_lb"))
                                                 prefs[UserPreferencesRepository.PLATE_CALCULATOR_PLATES_LB] = jsonObject.getString("plate_calculator_plates_lb")
+                                            if (jsonObject.has("journal_enabled"))
+                                                prefs[UserPreferencesRepository.JOURNAL_ENABLED] = jsonObject.getBoolean("journal_enabled")
+                                            if (jsonObject.has("journal_prompt_at_finish"))
+                                                prefs[UserPreferencesRepository.JOURNAL_PROMPT_AT_FINISH] = jsonObject.getBoolean("journal_prompt_at_finish")
+                                            if (jsonObject.has("journal_rating_enabled"))
+                                                prefs[UserPreferencesRepository.JOURNAL_RATING_ENABLED] = jsonObject.getBoolean("journal_rating_enabled")
                                         }
                                     }
                                 } catch (e: Exception) {

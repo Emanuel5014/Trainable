@@ -1393,9 +1393,36 @@ function createSessionCard(session) {
             ${session.noteSessione}
           </span>
         ` : ''}
+        ${session.journal && session.journal.rating ? `
+          <span class="session-card-stat">
+            <span class="material-symbols-outlined">star</span>
+            ${session.journal.rating}/5
+          </span>
+        ` : ''}
+        ${session.journal && session.journal.tags && session.journal.tags.length ? `
+          <span class="session-card-stat">
+            <span class="material-symbols-outlined">sell</span>
+            ${session.journal.tags.map(escapeHtml).join(', ')}
+          </span>
+        ` : ''}
       </div>
     </div>
   `;
+}
+
+// The workout journal (rating, tags, note) as a block above the exercises; the API only sends it while the journal is on
+function createJournalBlock(journal) {
+  if (!journal) return null;
+  const stars = journal.rating ? '★'.repeat(journal.rating) + '☆'.repeat(5 - journal.rating) : '';
+  const tags = (journal.tags || []).map(tag => `<span class="journal-tag">${escapeHtml(tag)}</span>`).join('');
+  const block = document.createElement('div');
+  block.className = 'session-journal';
+  block.innerHTML = `
+    ${stars ? `<div class="journal-stars" aria-label="${journal.rating}/5">${stars}</div>` : ''}
+    ${tags ? `<div class="journal-tags">${tags}</div>` : ''}
+    ${journal.note ? `<p class="journal-note">${escapeHtml(journal.note)}</p>` : ''}
+  `;
+  return block;
 }
 
 // ============================================================
@@ -1449,6 +1476,9 @@ async function loadSessionDetail() {
 
   const el = document.getElementById('exercises-container');
   if (!el) return;
+
+  const journalBlock = createJournalBlock(session.journal);
+  if (journalBlock) el.parentElement.insertBefore(journalBlock, el);
 
   if (setCount === 0 && cardio.length === 0) {
     el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">fitness_center</div><div class="empty-state-text">' + t('noSetsRecorded') + '</div></div>';

@@ -57,5 +57,14 @@ data class WorkoutSessionEntity(
     val setTimerStartedAt: Long? = null,
     /** Week of the plan this session was performed in (null for plain routines). */
     @ColumnInfo(name = "program_week")
-    val programWeek: Int? = null
+    val programWeek: Int? = null,
+    /**
+     * Free-form note about the whole workout (the workout journal). Not the workout's name: that is [noteSessione],
+     * which replaces the routine's name in the history.
+     */
+    @ColumnInfo(name = "journal_note")
+    val journalNote: String? = null,
+    /** How the workout went, 1..5 stars; null = not rated. */
+    @ColumnInfo(name = "rating")
+    val rating: Int? = null
 )

@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material3.Icon
@@ -37,12 +40,15 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.core.view.drawToBitmap
 import com.emanuel5014.trainable.data.ExerciseTranslations
@@ -239,26 +245,15 @@ fun WorkoutShareCard(
                 .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val statLabelColor = textSecondary.copy(alpha = 0.7f)
+
             // Exercises Count Segment
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "$totalExercises",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    color = textPrimary
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = stringResource(id = com.emanuel5014.trainable.R.string.share_exercises).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = textSecondary.copy(alpha = 0.7f),
-                    letterSpacing = 1.sp
-                )
-            }
+            ShareStat(
+                value = "$totalExercises",
+                label = stringResource(id = com.emanuel5014.trainable.R.string.share_exercises),
+                valueColor = textPrimary,
+                labelColor = statLabelColor
+            )
 
             // Divider 1
             Box(
@@ -269,25 +264,12 @@ fun WorkoutShareCard(
             )
 
             // Total Sets Segment
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "$totalSets",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    color = textPrimary
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = stringResource(id = com.emanuel5014.trainable.R.string.share_sets).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = textSecondary.copy(alpha = 0.7f),
-                    letterSpacing = 1.sp
-                )
-            }
+            ShareStat(
+                value = "$totalSets",
+                label = stringResource(id = com.emanuel5014.trainable.R.string.share_sets),
+                valueColor = textPrimary,
+                labelColor = statLabelColor
+            )
 
             // Divider 2
             Box(
@@ -299,27 +281,14 @@ fun WorkoutShareCard(
 
             // Duration Segment
             if (durationMs != null) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val durHours = durationMs / 3600000
-                    val durMinutes = (durationMs % 3600000) / 60000
-                    Text(
-                        text = if (durHours > 0) "${durHours}h ${durMinutes}m" else "${durMinutes}m",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        color = textPrimary
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = stringResource(id = com.emanuel5014.trainable.R.string.share_duration).uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = textSecondary.copy(alpha = 0.7f),
-                        letterSpacing = 1.sp
-                    )
-                }
+                val durHours = durationMs / 3600000
+                val durMinutes = (durationMs % 3600000) / 60000
+                ShareStat(
+                    value = if (durHours > 0) "${durHours}h ${durMinutes}m" else "${durMinutes}m",
+                    label = stringResource(id = com.emanuel5014.trainable.R.string.share_duration),
+                    valueColor = textPrimary,
+                    labelColor = statLabelColor
+                )
 
                 // Divider 3
                 Box(
@@ -331,28 +300,15 @@ fun WorkoutShareCard(
             }
 
             // Total Tonnage Segment
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = WeightUnitConverter.formatWithUnit(
-                        WeightUnitConverter.convertDisplay(totalWeight, weightUnit),
-                        weightUnit
-                    ),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    color = textPrimary
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = stringResource(id = com.emanuel5014.trainable.R.string.share_volume).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = textSecondary.copy(alpha = 0.7f),
-                    letterSpacing = 1.sp
-                )
-            }
+            ShareStat(
+                value = WeightUnitConverter.formatWithUnit(
+                    WeightUnitConverter.convertDisplay(totalWeight, weightUnit),
+                    weightUnit
+                ),
+                label = stringResource(id = com.emanuel5014.trainable.R.string.share_volume),
+                valueColor = textPrimary,
+                labelColor = statLabelColor
+            )
         }
 
         // Muscle Groups Section
@@ -440,52 +396,14 @@ fun WorkoutShareCard(
                                         Spacer(modifier = Modifier.height(12.dp))
                                     }
 
-                                    val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = exerciseName.uppercase(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Black,
-                                            color = primaryColor,
-                                            letterSpacing = 0.5.sp,
-                                            modifier = Modifier.weight(1f)
-                                        )
-
-                                        val planExercise = planExerciseMap?.get(item.exercise.id)
-                                        if (planExercise != null) {
-                                            val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
-                                            // A prescription changed during the workout is what the exercise was done against
-                                            val editedBlocks = if (showPrescription) sessionDetails.prescriptionEdits.finalBlocks(item.exercise.id) else null
-                                            val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
-                                            val targetText = if (editedBlocks != null) {
-                                                editedBlocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) } + " ✎"
-                                            } else if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
-                                                resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
-                                            } else {
-                                                val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
-                                                    stringResource(
-                                                        com.emanuel5014.trainable.R.string.time_reps_value,
-                                                        planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
-                                                        TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
-                                                    )
-                                                } else if (isTime) {
-                                                    planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
-                                                } else planExercise.planExercise.repsDisplay
-                                                "${planExercise.planExercise.serieTarget}×$targetDisplay"
-                                            }
-                                            Text(
-                                                text = targetText,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = textSecondary,
-                                                maxLines = 1,
-                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                                modifier = Modifier.padding(start = 8.dp)
-                                            )
-                                        }
-                                    }
+                                    ShareExerciseHeader(
+                                        name = ExerciseTranslations.translate(item.exercise.nome, languageCode),
+                                        target = planExerciseMap?.get(item.exercise.id)?.let {
+                                            shareTargetText(it, item.exercise.id, sessionDetails, showPrescription, shareLabels)
+                                        },
+                                        nameColor = primaryColor,
+                                        targetColor = textSecondary
+                                    )
 
                                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -498,20 +416,7 @@ fun WorkoutShareCard(
                                             horizontalArrangement = Arrangement.Start,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(width = 38.dp, height = 18.dp)
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color.White.copy(alpha = 0.05f)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = "SET ${set.numeroSerie}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = textSecondary,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
+                                            ShareSetPill(text = "SET ${set.numeroSerie}", color = textSecondary)
 
                                             Spacer(modifier = Modifier.width(8.dp))
 
@@ -548,8 +453,6 @@ fun WorkoutShareCard(
                             }
                         } else {
                             block.exercises.forEach { item ->
-                                val exerciseName = ExerciseTranslations.translate(item.exercise.nome, languageCode)
-
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -558,51 +461,14 @@ fun WorkoutShareCard(
                                         .border(BorderStroke(1.dp, cardBorder), RoundedCornerShape(16.dp))
                                         .padding(14.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = exerciseName.uppercase(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Black,
-                                            color = primaryColor,
-                                            letterSpacing = 0.5.sp,
-                                            modifier = Modifier.weight(1f)
-                                        )
-
-                                        val planExercise = planExerciseMap?.get(item.exercise.id)
-                                        if (planExercise != null) {
-                                            val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
-                                            // A prescription changed during the workout is what the exercise was done against
-                                            val editedBlocks = if (showPrescription) sessionDetails.prescriptionEdits.finalBlocks(item.exercise.id) else null
-                                            val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
-                                            val targetText = if (editedBlocks != null) {
-                                                editedBlocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) } + " ✎"
-                                            } else if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
-                                                resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, shareLabels) }
-                                            } else {
-                                                val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
-                                                    stringResource(
-                                                        com.emanuel5014.trainable.R.string.time_reps_value,
-                                                        planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
-                                                        TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
-                                                    )
-                                                } else if (isTime) {
-                                                    planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
-                                                } else planExercise.planExercise.repsDisplay
-                                                "${planExercise.planExercise.serieTarget}×$targetDisplay"
-                                            }
-                                            Text(
-                                                text = targetText,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = textSecondary,
-                                                maxLines = 1,
-                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                                modifier = Modifier.padding(start = 8.dp)
-                                            )
-                                        }
-                                    }
+                                    ShareExerciseHeader(
+                                        name = ExerciseTranslations.translate(item.exercise.nome, languageCode),
+                                        target = planExerciseMap?.get(item.exercise.id)?.let {
+                                            shareTargetText(it, item.exercise.id, sessionDetails, showPrescription, shareLabels)
+                                        },
+                                        nameColor = primaryColor,
+                                        targetColor = textSecondary
+                                    )
 
                                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -615,20 +481,7 @@ fun WorkoutShareCard(
                                             horizontalArrangement = Arrangement.Start,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(width = 38.dp, height = 18.dp)
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color.White.copy(alpha = 0.05f)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = "SET ${set.numeroSerie}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = textSecondary,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
+                                            ShareSetPill(text = "SET ${set.numeroSerie}", color = textSecondary)
 
                                             Spacer(modifier = Modifier.width(8.dp))
 
@@ -690,15 +543,7 @@ fun WorkoutShareCard(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = 38.dp, height = 18.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(Color.White.copy(alpha = 0.05f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(text = "SET ${index + 1}", style = MaterialTheme.typography.labelSmall, color = textSecondary, fontWeight = FontWeight.Bold)
-                                    }
+                                    ShareSetPill(text = "SET ${index + 1}", color = textSecondary)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = com.emanuel5014.trainable.ui.components.cardioSetValueText(set),
@@ -759,6 +604,166 @@ fun WorkoutShareCard(
 
 fun captureViewToBitmap(view: View): Bitmap {
     return view.drawToBitmap()
+}
+
+/** The most of the row a target may take beside the exercise name; a longer one goes on its own line. */
+private const val TARGET_BESIDE_NAME_MAX_SHARE = 0.45f
+
+/**
+ * An exercise's name with its target on the right ("PANCA PIANA      3×8"). A target too wide to sit beside the name,
+ * like a week of %1RM or bodyweight blocks, goes on its own line under it: beside the name it used to take the whole
+ * row and leave the name a letter per line.
+ */
+@Composable
+internal fun ShareExerciseHeader(
+    name: String,
+    target: String?,
+    nameColor: Color,
+    targetColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Layout(
+        modifier = modifier,
+        content = {
+            Text(
+                text = name.uppercase(),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Black,
+                color = nameColor,
+                letterSpacing = 0.5.sp
+            )
+            if (target != null) {
+                Text(
+                    text = target,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = targetColor
+                )
+            }
+        }
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val nameMeasurable = measurables[0]
+        val targetMeasurable = measurables.getOrNull(1)
+        if (targetMeasurable == null) {
+            val name = nameMeasurable.measure(loose)
+            return@Layout layout(width, name.height) { name.placeRelative(0, 0) }
+        }
+
+        val gap = 8.dp.roundToPx()
+        val targetWidth = targetMeasurable.maxIntrinsicWidth(Constraints.Infinity)
+        if (targetWidth + gap <= width * TARGET_BESIDE_NAME_MAX_SHARE) {
+            val target = targetMeasurable.measure(loose.copy(maxWidth = targetWidth))
+            val name = nameMeasurable.measure(loose.copy(maxWidth = width - target.width - gap))
+            val height = maxOf(name.height, target.height)
+            layout(width, height) {
+                name.placeRelative(0, (height - name.height) / 2)
+                target.placeRelative(width - target.width, (height - target.height) / 2)
+            }
+        } else {
+            val name = nameMeasurable.measure(loose)
+            val target = targetMeasurable.measure(loose)
+            val spacing = 2.dp.roundToPx()
+            layout(width, name.height + spacing + target.height) {
+                name.placeRelative(0, 0)
+                target.placeRelative(0, name.height + spacing)
+            }
+        }
+    }
+}
+
+/** What the routine asked of an exercise: that week's blocks (as changed during the workout, if they were) or "3×8". */
+@Composable
+private fun shareTargetText(
+    planExercise: PlanExerciseWithDetails,
+    exerciseId: Int,
+    sessionDetails: SessionWithDetails,
+    showPrescription: Boolean,
+    labels: com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
+): String {
+    val isTime = planExercise.planExercise.exerciseType == "time_and_weight"
+    // A prescription changed during the workout is what the exercise was done against
+    val editedBlocks = if (showPrescription) sessionDetails.prescriptionEdits.finalBlocks(exerciseId) else null
+    val resolved = if (showPrescription) planExercise.resolve(sessionDetails.session.programWeek ?: 1) else com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Legacy
+    return if (editedBlocks != null) {
+        editedBlocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, labels) } + " ✎"
+    } else if (resolved is com.emanuel5014.trainable.domain.prescription.ResolvedPrescription.Blocks) {
+        resolved.blocks.joinToString(" · ") { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.headline(it, labels) }
+    } else {
+        val targetDisplay = if (planExercise.planExercise.exerciseType == TIME_AND_REPS) {
+            stringResource(
+                com.emanuel5014.trainable.R.string.time_reps_value,
+                planExercise.planExercise.durataTargetSecondi ?: TimeAndReps.DEFAULT_SECONDS,
+                TimeAndReps.goalOf(planExercise.planExercise.repsTarget)
+            )
+        } else if (isTime) {
+            planExercise.planExercise.durataTargetSecondi?.let { "${it}s" } ?: planExercise.planExercise.repsTarget
+        } else planExercise.planExercise.repsDisplay
+        "${planExercise.planExercise.serieTarget}×$targetDisplay"
+    }
+}
+
+/**
+ * One figure of the stats bar. With the duration there are four columns, and a value like "22070 kg" or the label
+ * "TONNELLAGGIO" shrinks to fit its column instead of wrapping.
+ */
+@Composable
+internal fun RowScope.ShareStat(value: String, label: String, valueColor: Color, labelColor: Color) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val valueStyle = MaterialTheme.typography.titleLarge
+        Text(
+            text = value,
+            style = valueStyle,
+            fontWeight = FontWeight.Black,
+            color = valueColor,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = valueStyle.fontSize)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        val labelStyle = MaterialTheme.typography.labelSmall
+        Text(
+            text = label.uppercase(),
+            style = labelStyle,
+            fontWeight = FontWeight.Bold,
+            color = labelColor,
+            // About 1sp at full size, and it shrinks with the text (a fixed 1sp alone overflowed the column)
+            letterSpacing = 0.09.em,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 6.sp, maxFontSize = labelStyle.fontSize)
+        )
+    }
+}
+
+/** The "SET 3" tag in front of a set. Its fixed width keeps the values in a column, so "SET 10" shrinks to fit it. */
+@Composable
+internal fun ShareSetPill(text: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .width(38.dp)
+            .heightIn(min = 18.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color.White.copy(alpha = 0.05f))
+            .padding(horizontal = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val style = MaterialTheme.typography.labelSmall
+        Text(
+            text = text,
+            style = style,
+            color = color,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 6.sp, maxFontSize = style.fontSize)
+        )
+    }
 }
 
 private data class ShareExerciseItem(

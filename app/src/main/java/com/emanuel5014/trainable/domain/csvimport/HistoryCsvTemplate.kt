@@ -5,7 +5,8 @@ import java.time.LocalDate
 
 /**
  * The example file offered next to the import: the real header of the app in its language and a few workouts that show
- * every kind of row (strength, timed hold, timed reps, cardio), two routines and a workout without one. Importing it
+ * every kind of row (strength, timed hold, timed reps, cardio), two routines, a workout without one and how long each
+ * workout took. Importing it
  * unchanged works, so what it shows is also what the import accepts.
  */
 object HistoryCsvTemplate {
@@ -31,14 +32,14 @@ object HistoryCsvTemplate {
     fun build(languageCode: String, weightUnit: String, today: LocalDate, notes: Notes): String {
         val rows = rows(notes)
         return buildString {
-            appendLine(HistoryCsvHeaders.basic(languageCode, weightUnit))
+            appendLine(HistoryCsvHeaders.basic(languageCode, weightUnit) + "," + HistoryCsvHeaders.sessionDuration(languageCode))
             rows.forEach { row ->
                 val builtIn = row.exercise in BUILT_IN
                 val name = if (builtIn) ExerciseTranslations.translate(row.exercise, languageCode) else row.exercise
                 val category = ExerciseTranslations.translateCategory(row.category, languageCode)
                 val cells = listOf(
                     today.minusDays(row.daysAgo).toString(), row.session.toString(), row.plan, name, category, row.type,
-                    row.set.toString(), row.weight, row.reps, row.seconds, row.km, row.note
+                    row.set.toString(), row.weight, row.reps, row.seconds, row.km, row.note, SESSION_MINUTES.getValue(row.session)
                 )
                 appendLine(cells.joinToString(",") { escape(it) })
             }
@@ -67,6 +68,9 @@ object HistoryCsvTemplate {
         add(Row(3, 4, "Push A", "Flat Bench Press", "Chest", "strength", 1, "62.5", "8"))
         add(Row(3, 4, "Push A", "Flat Bench Press", "Chest", "strength", 2, "62.5", "7"))
     }
+
+    /** How long each example workout took, in minutes. */
+    private val SESSION_MINUTES = mapOf(1 to "65", 2 to "50", 3 to "40", 4 to "55")
 
     private val BUILT_IN = setOf("Flat Bench Press", "Plank", "Treadmill", "Pull-ups", "Barbell Squat")
 

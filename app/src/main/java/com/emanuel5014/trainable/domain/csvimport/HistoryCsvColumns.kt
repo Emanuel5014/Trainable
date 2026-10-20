@@ -9,16 +9,23 @@ enum class CsvColumn(
     val imported: Boolean = true
 ) {
     DATE, SESSION_ID, PLAN, EXERCISE, CATEGORY, TYPE, SET, WEIGHT, REPS, DURATION, DISTANCE, NOTE,
-    WEEK, RPE, WARMUP, PARTS, PAUSES, ASSISTED, PARTIALS,
+    SESSION_DURATION, WEEK, RPE, WARMUP, PARTS, PAUSES, ASSISTED, PARTIALS,
+    /** The workout journal: how the workout went (1..5), its tags, its note (the name of a workout is the plan cell). */
+    RATING, TAGS, JOURNAL_NOTE,
     EXTRA(imported = false), PERCENT(imported = false), TARGET_REPS(imported = false), TECHNIQUES(imported = false),
     PERFORMED_TECHNIQUE(imported = false), PROGRAM_CHANGED(imported = false), PROGRAM_ORIGINAL(imported = false)
 }
+
+/** What the number in a duration column counts. */
+enum class DurationUnit(val millis: Long) { HOURS(3_600_000L), MINUTES(60_000L), SECONDS(1_000L) }
 
 /** Which header cell of the file is which column. */
 data class CsvHeader(
     val columns: Map<CsvColumn, Int>,
     /** Unit written next to the weight header ("kg", "lb"), null when the file does not say. */
     val weightUnit: String?,
+    /** Unit written next to the session duration header ("min", "s", "h"), null when the file does not say. */
+    val sessionDurationUnit: DurationUnit?,
     /** Header cells that match no known column, as written. */
     val unknown: List<String>
 ) {
@@ -55,6 +62,16 @@ object HistoryCsvColumns {
         CsvColumn.DURATION to listOf("duration", "durata", "duracion", "duree", "dauer", "duracao"),
         CsvColumn.DISTANCE to listOf("distance", "distanza", "distancia", "distanz"),
         CsvColumn.NOTE to listOf("note", "notes", "nota", "notas", "notiz"),
+        CsvColumn.SESSION_DURATION to listOf(
+            "session duration", "workout duration", "session length", "durata allenamento", "duracion sesion",
+            "duree seance", "sitzungsdauer", "duracao sessao"
+        ),
+        CsvColumn.RATING to listOf("rating", "voto", "valoracion", "evaluation", "bewertung", "avaliacao"),
+        CsvColumn.TAGS to listOf("tags", "tag", "etiquetas", "etichette", "etiquettes", "labels"),
+        CsvColumn.JOURNAL_NOTE to listOf(
+            "workout note", "workout notes", "session note", "nota allenamento", "nota sesion", "note seance",
+            "sitzungsnotiz", "nota sessao"
+        ),
         CsvColumn.WEEK to listOf("week", "settimana", "semana", "semaine", "woche"),
         CsvColumn.RPE to listOf("rpe"),
         CsvColumn.EXTRA to listOf("extra", "bonus"),
@@ -128,6 +145,7 @@ object HistoryCsvColumns {
         val columns = mutableMapOf<CsvColumn, Int>()
         val unknown = mutableListOf<String>()
         var weightUnit: String? = null
+        var sessionDurationUnit: DurationUnit? = null
         cells.forEachIndexed { index, raw ->
             val title = raw.replace("﻿", "").trim()
             if (title.isEmpty()) return@forEachIndexed
@@ -139,10 +157,18 @@ object HistoryCsvColumns {
                 else -> {
                     columns[column] = index
                     if (column == CsvColumn.WEIGHT) weightUnit = unitOf(bracket)
+                    if (column == CsvColumn.SESSION_DURATION) sessionDurationUnit = durationUnitOf(bracket)
                 }
             }
         }
-        return CsvHeader(columns, weightUnit, unknown)
+        return CsvHeader(columns, weightUnit, sessionDurationUnit, unknown)
+    }
+
+    private fun durationUnitOf(text: String?): DurationUnit? = when (text?.trim()?.lowercase(Locale.ROOT)) {
+        "min", "mins", "minute", "minutes", "m" -> DurationUnit.MINUTES
+        "s", "sec", "secs", "second", "seconds" -> DurationUnit.SECONDS
+        "h", "hr", "hrs", "hour", "hours" -> DurationUnit.HOURS
+        else -> null
     }
 
     private fun unitOf(text: String?): String? = when (text?.trim()?.lowercase(Locale.ROOT)) {

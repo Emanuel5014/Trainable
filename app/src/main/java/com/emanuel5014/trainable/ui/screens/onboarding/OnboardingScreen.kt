@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.onboarding
 
+import android.net.Uri
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -119,11 +120,13 @@ import com.emanuel5014.trainable.MainActivity
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.AiModelStatus
 import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudBackupFile
 import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.isKeyboardVisible
+import com.emanuel5014.trainable.ui.components.shared.ModelImportOption
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -183,6 +186,7 @@ fun OnboardingScreen(
     val selectedAiModelVariant by viewModel.aiModelVariant.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
     val aiModelStatus by viewModel.aiModelStatus.collectAsState()
+    val aiModelImportError by viewModel.aiModelImportError.collectAsState()
     val dynamicColorEnabled by viewModel.dynamicColor.collectAsState(initial = true)
     val dynamicColorSeed by viewModel.dynamicColorSeed.collectAsState(initial = null)
     val themePalette by viewModel.themePalette.collectAsState(initial = 0)
@@ -316,7 +320,10 @@ fun OnboardingScreen(
                                 onVariantSelected = { viewModel.setAiModelVariant(it.id) },
                                 aiModelStatus = aiModelStatus,
                                 onDownloadModel = { viewModel.downloadAiModel() },
-                                onCancelDownload = { viewModel.cancelAiModelDownload() }
+                                onCancelDownload = { viewModel.cancelAiModelDownload() },
+                                importError = aiModelImportError,
+                                onImportModel = { viewModel.importAiModel(it) },
+                                onClearImportError = { viewModel.clearAiModelImportError() }
                             )
                             8 -> BackupSlide(
                                 autoBackupEnabled = autoBackupEnabled,
@@ -1731,8 +1738,13 @@ private fun LocalAiSlide(
     onVariantSelected: (AiModelVariant) -> Unit,
     aiModelStatus: AiModelStatus,
     onDownloadModel: () -> Unit,
-    onCancelDownload: () -> Unit
+    onCancelDownload: () -> Unit,
+    importError: ModelImportError?,
+    onImportModel: (Uri) -> Unit,
+    onClearImportError: () -> Unit
 ) {
+    // An error left by an earlier visit is no news now
+    LaunchedEffect(Unit) { onClearImportError() }
 
     OnboardingPage {
         OnboardingTitle(stringResource(R.string.onboarding_ai_title))
@@ -1869,7 +1881,10 @@ private fun LocalAiSlide(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        stringResource(R.string.ai_model_downloading, (aiModelStatus.progress * 100).toInt()),
+                                        stringResource(
+                                            if (aiModelStatus.importing) R.string.ai_model_importing else R.string.ai_model_downloading,
+                                            (aiModelStatus.progress * 100).toInt()
+                                        ),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = Primary,
                                         fontWeight = FontWeight.ExtraBold
@@ -1939,6 +1954,12 @@ private fun LocalAiSlide(
                                     color = OnSurfaceVariant,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
+                                )
+                                ModelImportOption(
+                                    error = importError,
+                                    onPicked = onImportModel,
+                                    onClearError = onClearImportError,
+                                    centered = true
                                 )
                             }
                         }

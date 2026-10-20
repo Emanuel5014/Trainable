@@ -88,9 +88,15 @@ data class PlannedWorkout(
     /** The name the workout is shown with when it has no routine of that name (a declined routine). */
     val sessionNote: String?,
     val programWeek: Int?,
+    /** How long the workout took, when the file says. */
+    val durationMs: Long?,
     val entries: List<PlannedEntry>,
     /** The workout already in the app that this one repeats. */
-    val duplicateOf: Int?
+    val duplicateOf: Int?,
+    /** The workout journal, when the file carries one: how it went (1..5), its tag names, its note. */
+    val rating: Int? = null,
+    val tags: List<String> = emptyList(),
+    val journalNote: String? = null
 ) {
     val isDuplicate: Boolean get() = duplicateOf != null
     val setCount: Int get() = entries.sumOf { it.sets.size }
@@ -220,8 +226,12 @@ object HistoryImportPlanner {
                 routine = target,
                 sessionNote = note,
                 programWeek = week,
+                durationMs = d.rows.firstNotNullOfOrNull { it.row.sessionDurationMs },
                 entries = entries,
-                duplicateOf = duplicateOf(d.date, target, entries, known.sessions, plansByName)
+                duplicateOf = duplicateOf(d.date, target, entries, known.sessions, plansByName),
+                rating = d.rows.firstNotNullOfOrNull { it.row.rating },
+                tags = d.rows.firstOrNull { it.row.tags.isNotEmpty() }?.row?.tags.orEmpty(),
+                journalNote = d.rows.firstNotNullOfOrNull { it.row.journalNote }
             )
         }
 
@@ -324,7 +334,7 @@ object HistoryImportPlanner {
             },
             distanceKm = if (kind == RowKind.CARDIO) row.distanceKm ?: 0f else 0f,
             note = row.note.ifBlank { null },
-            rpe = if (kind == RowKind.STRENGTH || kind == RowKind.TIME_AND_WEIGHT) row.rpe else null,
+            rpe = row.rpe,
             warmup = row.warmup && kind != RowKind.CARDIO,
             parts = parts,
             pauses = pauses,

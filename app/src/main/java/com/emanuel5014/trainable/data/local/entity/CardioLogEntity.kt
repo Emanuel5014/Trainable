@@ -41,5 +41,8 @@ data class CardioLogEntity(
     @ColumnInfo(name = "numero_serie")
     val numeroSerie: Int = 1,
     @ColumnInfo(name = "note")
-    val note: String? = null
+    val note: String? = null,
+    /** How hard the set felt (RPE), on whichever scale it was asked in; null when it was not asked. */
+    @ColumnInfo(name = "rpe")
+    val rpe: Float? = null
 )

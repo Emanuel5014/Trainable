@@ -54,7 +54,10 @@ import com.emanuel5014.trainable.ui.components.BottomNavBarExpressive
 import com.emanuel5014.trainable.ui.components.BottomNavBarFlo
 import com.emanuel5014.trainable.ui.components.ImportConfirmationDialog
 import com.emanuel5014.trainable.ui.components.UpdateDialog
+import com.emanuel5014.trainable.domain.rpe.RpeScale
+import com.emanuel5014.trainable.domain.rpe.RpeSettings
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
+import com.emanuel5014.trainable.ui.components.LocalRpeSettings
 import com.emanuel5014.trainable.ui.components.LocalExerciseMediaEnabled
 import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.navigation.MainNavGraph
@@ -187,6 +190,9 @@ class MainActivity : FragmentActivity() {
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
             val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
+            val rpeEnabled by userPreferencesRepository.rpeEnabled.collectAsState(initial = false)
+            val rpeScale by userPreferencesRepository.rpeScale.collectAsState(initial = RpeScale.BASIC)
+            val rpeSettings = remember(rpeEnabled, rpeScale) { RpeSettings(rpeEnabled, rpeScale) }
 
             val context = androidx.compose.ui.platform.LocalContext.current
             val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -274,6 +280,7 @@ class MainActivity : FragmentActivity() {
             ) {
               CompositionLocalProvider(
                   LocalAdvancedProgramming provides advancedProgramming,
+                  LocalRpeSettings provides rpeSettings,
                   LocalExerciseMediaEnabled provides exerciseMediaEnabled,
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating)
               ) {

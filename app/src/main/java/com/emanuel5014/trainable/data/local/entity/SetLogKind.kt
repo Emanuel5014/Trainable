@@ -59,10 +59,10 @@ val List<SetLogEntity>.kind: SetLogKind
 
 /**
  * Turns the row into a set of [kind]: a timed one keeps its duration (or takes [defaultSeconds]), a Time & Reps one
- * loses its weight, a plain one its duration.
+ * loses its weight, a plain one its duration. Its RPE stays in every kind.
  */
 fun SetLogEntity.asKind(kind: SetLogKind, defaultSeconds: Int = 45): SetLogEntity = when (kind) {
     SetLogKind.STRENGTH -> copy(durataSecondi = null, exerciseType = null)
     SetLogKind.TIME_AND_WEIGHT -> copy(durataSecondi = durataSecondi ?: defaultSeconds, exerciseType = null)
-    SetLogKind.TIME_AND_REPS -> copy(durataSecondi = durataSecondi ?: defaultSeconds, exerciseType = TIME_AND_REPS, pesoSollevato = 0f, rpe = null)
+    SetLogKind.TIME_AND_REPS -> copy(durataSecondi = durataSecondi ?: defaultSeconds, exerciseType = TIME_AND_REPS, pesoSollevato = 0f)
 }

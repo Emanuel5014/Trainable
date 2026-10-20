@@ -112,6 +112,8 @@ import com.emanuel5014.trainable.ui.components.SheetFormBody
 import com.emanuel5014.trainable.ui.components.SheetFormFooter
 import com.emanuel5014.trainable.ui.components.SheetFormLayout
 import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.journal.JournalRow
+import com.emanuel5014.trainable.ui.components.journal.JournalSheet
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.rememberLazyListReorderState
@@ -191,6 +193,7 @@ fun EditWorkoutScreen(
     var exerciseToSwap by remember { mutableStateOf<Int?>(null) }
     var showDeleteExerciseDialog by remember { mutableStateOf<Int?>(null) }
     var showEditDetailsSheet by remember { mutableStateOf(false) }
+    var showJournalSheet by remember { mutableStateOf(false) }
     var showAddCardio by remember { mutableStateOf(false) }
     var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
@@ -272,6 +275,16 @@ fun EditWorkoutScreen(
                     onEditClick = { showEditDetailsSheet = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
+
+                if (state.journalEnabled) {
+                    JournalRow(
+                        rating = state.journal.rating,
+                        tags = state.journalTags,
+                        note = state.journal.note,
+                        onClick = { showJournalSheet = true },
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    )
+                }
 
                 if (state.exercises.isEmpty() && state.cardioLogs.isEmpty()) {
                     Box(
@@ -445,6 +458,18 @@ fun EditWorkoutScreen(
                 showAddCardio = false
                 pendingCardioCategory = null
             }
+        )
+    }
+
+    if (showJournalSheet) {
+        JournalSheet(
+            initial = state.journal,
+            onSave = {
+                viewModel.saveJournal(it)
+                showJournalSheet = false
+            },
+            onDismiss = { showJournalSheet = false },
+            hapticEnabled = hapticEnabled
         )
     }
 
@@ -1238,6 +1263,8 @@ fun EditCardioDialog(
     setNumber: Int? = null
 ) {
     var note by remember { mutableStateOf(cardioLog.note.orEmpty()) }
+    var rpe by remember { mutableStateOf(cardioLog.rpe) }
+    val rpeScale = com.emanuel5014.trainable.ui.components.editableRpeScale(hasValue = cardioLog.rpe != null)
     var categoria by remember { mutableStateOf(cardioLog.categoria) }
     var distanza by remember { mutableStateOf(cardioLog.distanza.toString()) }
     var durataOre by remember { mutableStateOf((cardioLog.durataSecondi / 3600).let { if (it > 0) it.toString() else "" }) }
@@ -1258,6 +1285,7 @@ fun EditCardioDialog(
         },
         text = {
             Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 CardioInputForm(
                 categoria = categoria,
                 onCategoriaChange = { categoria = it },
@@ -1273,6 +1301,10 @@ CardioInputForm(
                 note = note,
                 onNoteChange = { note = it }
             )
+                rpeScale?.let { scale ->
+                    com.emanuel5014.trainable.ui.components.RpeSelector(value = rpe, onValueChange = { rpe = it }, scale = scale)
+                }
+              }
 }
         },
         confirmButton = {
@@ -1283,7 +1315,7 @@ CardioInputForm(
                     val m = durataMinuti.toIntOrNull() ?: 0
                     val s = durataSecondi.toIntOrNull() ?: 0
                     val dur = h * 3600 + m * 60 + s
-                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur, note = note.trim().ifBlank { null }))
+                    onConfirm(cardioLog.copy(categoria = categoria, distanza = dist, durataSecondi = dur, note = note.trim().ifBlank { null }, rpe = rpe))
                 },
                 enabled = isValid
             ) {

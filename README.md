@@ -157,7 +157,7 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 *   **Horizontal Pager Navigation**: Fluid swipe-based transitions between main tabs.
 *   **Backup & Restore**: Secure ZIP-based local backup system with photo compression and expanded preference sync (Theme, Units, Language).
 *   **Auto-Backup**: Reliable WorkManager-based automated background backups with configurable frequency, max count, and image inclusion.
-*   **CSV History Import**: Bring a workout history in from a CSV with the same columns the app exports (any app language, `,` `;` or tab, UTF-8/UTF-16/Windows-1252). A full preview shows every routine, exercise and workout, what is skipped and why; missing exercises and routines are created, workouts already in the app are recognised, and the whole import can be undone.
+*   **CSV History Import**: Bring a workout history in from a CSV with the same columns the app exports (any app language, `,` `;` or tab, UTF-8/UTF-16/Windows-1252). A full preview shows every routine, exercise and workout, what is skipped and why; missing exercises and routines are created, workouts already in the app are recognised, and the whole import can be undone. The export and import also carry an optional Session Duration column (minutes).
 *   **Tactile Feedback**: Enhanced haptic responses for all critical UI interactions.
 *   **Interaction Choice**: Configure Swipe or Long-press interaction style in Settings.
 *   **Auto-Updates**: Built-in automatic update support for future releases.
