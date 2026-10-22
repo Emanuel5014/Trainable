@@ -80,8 +80,9 @@ class ExerciseRepository @Inject constructor(
     /** The exercise with this id as it changes (hidden, restored, renamed); emits null once it is gone for good. */
     fun observeExercise(id: Int): Flow<ExerciseEntity?> = exerciseDao.observeExercise(id)
 
-    suspend fun saveExercise(exercise: ExerciseEntity) {
-        exerciseDao.updateExercise(exercise)
+    /** Saves what the exercise form edits (name, category, description) and nothing else of the row. */
+    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?) {
+        exerciseDao.updateExerciseDetails(id, nome, categoria, descrizione)
     }
 
     /**

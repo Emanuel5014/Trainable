@@ -113,6 +113,10 @@ interface ExerciseDao {
     @Query("DELETE FROM custom_categories WHERE id IN (:ids)")
     suspend fun deleteCustomCategoriesByIds(ids: List<Int>)
 
+    /** An edit of the exercise form: only these three fields, so a media or a hidden flag changed meanwhile is not reverted. */
+    @Query("UPDATE exercises SET nome = :nome, categoria = :categoria, descrizione = :descrizione WHERE id = :id")
+    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?)
+
     @Query("UPDATE exercises SET nome = :nome WHERE id = :id")
     suspend fun updateExerciseName(id: Int, nome: String)
 

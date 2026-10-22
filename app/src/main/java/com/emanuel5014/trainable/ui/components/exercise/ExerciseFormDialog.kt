@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.ExerciseForm
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -37,9 +38,6 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-
-/** What the exercise form collects. [category] is the stored (English) category name; [description] is blank when none. */
-data class ExerciseForm(val name: String = "", val category: String = "", val description: String = "")
 
 /**
  * The form to create or edit an exercise, one for every screen that does either. The name is refused while it is that of

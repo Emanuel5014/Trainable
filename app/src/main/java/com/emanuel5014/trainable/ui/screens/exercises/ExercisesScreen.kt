@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.exercises
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
@@ -47,17 +49,18 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseFilter
 import com.emanuel5014.trainable.domain.exercise.ExerciseListFilter
 import com.emanuel5014.trainable.ui.components.ExerciseFormDialog
@@ -87,7 +91,6 @@ import com.emanuel5014.trainable.ui.theme.SecondaryContainer
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import kotlinx.coroutines.launch
 
 /**
  * Where the exercises are managed: the list with its filters, a way to create one, the media of each, and (further down)
@@ -101,6 +104,7 @@ fun ExercisesScreen(
 ) {
     val exercises by viewModel.exercises.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val namesInUse by viewModel.namesInUse.collectAsState()
     val mediaEnabled by viewModel.mediaEnabled.collectAsState()
     val largePreview by viewModel.largePreview.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
@@ -115,9 +119,11 @@ fun ExercisesScreen(
     var showNewExercise by remember { mutableStateOf(false) }
     var showCategories by remember { mutableStateOf(false) }
     var showResetNames by remember { mutableStateOf(false) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val resetDoneText = stringResource(R.string.reset_exercise_names)
-    val scope = rememberCoroutineScope()
+
+    // A new exercise opens its detail, where the media is added
+    LaunchedEffect(viewModel) { viewModel.createdExerciseId.collect { detailExerciseId = it } }
 
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.attach(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.messages)
@@ -137,7 +143,7 @@ fun ExercisesScreen(
         val exercise = all.orEmpty().firstOrNull { it.id == exerciseId }
         val mediaFile = exercise?.mediaPath
         // The file goes away when it is removed from the viewer: close it then
-        androidx.compose.runtime.LaunchedEffect(mediaFile) { if (mediaFile == null) viewerExerciseId = null }
+        LaunchedEffect(mediaFile) { if (mediaFile == null) viewerExerciseId = null }
         if (exercise != null && mediaFile != null) {
             ExerciseMediaViewer(
                 fileName = mediaFile,
@@ -157,14 +163,11 @@ fun ExercisesScreen(
         ExerciseFormDialog(
             title = stringResource(R.string.new_exercise),
             categories = categories,
-            existingExercises = library,
+            existingExercises = namesInUse,
             languageCode = languageCode,
             onConfirm = { form ->
                 showNewExercise = false
-                scope.launch {
-                    // A new exercise opens its detail, where the media is added
-                    detailExerciseId = viewModel.createExercise(form.name, form.category, form.description)
-                }
+                viewModel.createExercise(form.name, form.category, form.description)
             },
             onDismiss = { showNewExercise = false }
         )
@@ -185,7 +188,7 @@ fun ExercisesScreen(
             onConfirm = {
                 showResetNames = false
                 viewModel.resetPresetExerciseNames {
-                    android.widget.Toast.makeText(context, resetDoneText, android.widget.Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, resetDoneText, Toast.LENGTH_SHORT).show()
                 }
             },
             onDismiss = { showResetNames = false }
@@ -239,7 +242,7 @@ fun ExercisesScreen(
                         containerColor = SecondaryContainer,
                         contentColor = OnSecondaryContainer,
                         description = stringResource(R.string.back),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp)
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -250,10 +253,17 @@ fun ExercisesScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            // Not before the list is there: the name check of the form needs it
+            if (all != null) ExtendedFloatingActionButton(
                 onClick = { showNewExercise = true },
                 expanded = fabExpanded,
-                icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+                // Shrunk to its icon, the button still says what it does
+                icon = {
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = if (fabExpanded) null else stringResource(R.string.new_exercise)
+                    )
+                },
                 text = {
                     Text(
                         stringResource(R.string.new_exercise),
@@ -263,7 +273,7 @@ fun ExercisesScreen(
                 },
                 containerColor = Primary,
                 contentColor = OnPrimary,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp)
             )
         }
     ) { paddingValues ->
@@ -380,17 +390,14 @@ fun ExercisesScreen(
                         name = entry.name,
                         category = group.category,
                         mediaFile = exercise.mediaPath,
-                        isCustom = exercise.id >= com.emanuel5014.trainable.data.local.entity.ExerciseEntity.FIRST_CUSTOM_ID,
+                        isCustom = exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID,
                         isHidden = exercise.isDeleted,
                         onThumbnailClick = {
-                            when {
-                                // A hidden exercise is not for picking media: its detail is where it is restored
-                                filter == ExerciseFilter.HIDDEN -> detailExerciseId = exercise.id
-                                exercise.mediaPath != null -> viewerExerciseId = exercise.id
-                                else -> pickMedia(exercise.id)
-                            }
+                            if (exercise.mediaPath != null) viewerExerciseId = exercise.id else pickMedia(exercise.id)
                         },
                         onClick = { detailExerciseId = exercise.id },
+                        // A hidden exercise is not for picking media: its detail is where it is restored
+                        mediaAction = filter != ExerciseFilter.HIDDEN,
                         modifier = Modifier.animateItem()
                     )
                 }

@@ -187,8 +187,6 @@
     <string name="choose_from_library">Choose from library</string>
     <string name="filter_custom">Custom</string>
     <string name="new_exercise">New Exercise</string>
-    <string name="delete_exercise_title">Delete Exercise?</string>
-    <string name="delete_exercise_message">Delete \"%1$s\" from your exercise list? The workouts and routines that already use it keep it.</string>
     <string name="exercise_deleted_badge">Deleted</string>
     <string name="deleted_exercise_title">Exercise deleted</string>
     <string name="deleted_exercise_message">\"%1$s\" was deleted from your exercise list, but it is still in your routines and workouts. Add it back to the list?</string>

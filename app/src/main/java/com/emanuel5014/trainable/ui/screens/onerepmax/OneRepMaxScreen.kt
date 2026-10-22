@@ -161,7 +161,8 @@ fun OneRepMaxScreen(
             },
             onAddCustomExercise = { nome, categoria, onCreated -> viewModel.addCustomExercise(nome, categoria, onCreated) },
             onDismiss = { showPicker = false },
-            languageCode = languageCode
+            languageCode = languageCode,
+            namesInUse = exercises
         )
     }
 

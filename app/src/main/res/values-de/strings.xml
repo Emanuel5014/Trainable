@@ -187,8 +187,6 @@
     <string name="choose_from_library">Aus der Bibliothek wählen</string>
     <string name="filter_custom">Benutzerdefiniert</string>
     <string name="new_exercise">Neue Übung</string>
-    <string name="delete_exercise_title">Übung löschen?</string>
-    <string name="delete_exercise_message">\"%1$s\" aus deiner Übungsliste löschen? Trainings und Pläne, die sie schon verwenden, behalten sie.</string>
     <string name="exercise_deleted_badge">Gelöscht</string>
     <string name="deleted_exercise_title">Übung gelöscht</string>
     <string name="deleted_exercise_message">\"%1$s\" wurde aus deiner Übungsliste gelöscht, ist aber noch in deinen Plänen und Trainings. Wieder zur Liste hinzufügen?</string>

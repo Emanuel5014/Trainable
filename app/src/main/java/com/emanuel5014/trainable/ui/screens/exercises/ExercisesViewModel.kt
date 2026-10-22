@@ -5,12 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,7 +22,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,6 +36,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ExercisesViewModel @Inject constructor(
     private val exerciseRepository: ExerciseRepository,
+    private val mergeRepository: ExerciseMergeRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager
 ) : ViewModel() {
@@ -38,6 +45,12 @@ class ExercisesViewModel @Inject constructor(
     val exercises: StateFlow<List<ExerciseEntity>?> = exerciseRepository.getAllExercisesIncludingDeleted()
         .map<List<ExerciseEntity>, List<ExerciseEntity>?> { it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** The exercises as the form checks a name against them: the library plus the names of merged-away exercises. */
+    val namesInUse: StateFlow<List<ExerciseEntity>> =
+        combine(exerciseRepository.getAllExercisesIncludingDeleted(), mergeRepository.observeMerges()) { all, merges ->
+            ExerciseMerges.aliasView(all, merges)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Every category the exercise form can offer, built-in and custom. */
     val categories: StateFlow<List<String>> = exerciseRepository.getCategories()
@@ -60,6 +73,11 @@ class ExercisesViewModel @Inject constructor(
 
     private val _messages = MutableSharedFlow<ExerciseMediaMessage>(extraBufferCapacity = 1)
     val messages: SharedFlow<ExerciseMediaMessage> = _messages.asSharedFlow()
+
+    private val _created = Channel<Int>(Channel.BUFFERED)
+
+    /** The id of each exercise [createExercise] has made or brought back; held until the page is there to take it. */
+    val createdExerciseId: Flow<Int> = _created.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -115,9 +133,13 @@ class ExercisesViewModel @Inject constructor(
     }
 
     /**
-     * Creates an exercise (or brings back a hidden one with the same name, with its history) and returns its id.
+     * Creates an exercise (or brings back a hidden one with the same name, with its history) and announces its id on
+     * [createdExerciseId]. It runs in the view model, so a rotation between the tap and the end does not lose it.
      * [description] is stored as it is; blank means none.
      */
-    suspend fun createExercise(name: String, category: String, description: String?): Int =
-        exerciseRepository.addCustomExercise(name.trim(), category, description?.trim()?.ifEmpty { null })
+    fun createExercise(name: String, category: String, description: String?) {
+        viewModelScope.launch {
+            _created.send(exerciseRepository.addCustomExercise(name.trim(), category, description?.trim()?.ifEmpty { null }))
+        }
+    }
 }

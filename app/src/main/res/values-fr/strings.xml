@@ -187,8 +187,6 @@
     <string name="choose_from_library">Choisir dans la bibliothèque</string>
     <string name="filter_custom">Personnalisés</string>
     <string name="new_exercise">Nouvel Exercice</string>
-    <string name="delete_exercise_title">Supprimer l\'exercice?</string>
-    <string name="delete_exercise_message">Supprimer \"%1$s\" de ta liste d\'exercices ? Les séances et programmes qui l\'utilisent déjà le conservent.</string>
     <string name="exercise_deleted_badge">Supprimé</string>
     <string name="deleted_exercise_title">Exercice supprimé</string>
     <string name="deleted_exercise_message">\"%1$s\" a été supprimé de ta liste d\'exercices, mais il est toujours dans tes programmes et tes séances. Le remettre dans la liste ?</string>

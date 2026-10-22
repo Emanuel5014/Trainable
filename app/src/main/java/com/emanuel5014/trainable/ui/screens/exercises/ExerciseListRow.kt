@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.DeletedExercisePill
+import com.emanuel5014.trainable.ui.components.ExerciseListThumbnail
 import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -33,7 +34,8 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 /**
  * A row of the exercises page: the thumbnail (its own click: open the media or add one), the name and category, and a
  * pill for a custom or a hidden exercise. The rest of the row opens the detail. No button sits beside the text, so a long
- * name keeps its room on a small screen.
+ * name keeps its room on a small screen. With [mediaAction] false the thumbnail is only a picture, for a list where the
+ * whole row opens the detail (the hidden exercises).
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -45,7 +47,8 @@ internal fun ExerciseListRow(
     isHidden: Boolean,
     onThumbnailClick: () -> Unit,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    mediaAction: Boolean = true
 ) {
     Row(
         modifier = modifier
@@ -58,13 +61,17 @@ internal fun ExerciseListRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Still images only: a long list of GIFs would animate all at once
-        ExerciseMediaSlot(
-            fileName = mediaFile,
-            onOpen = onThumbnailClick,
-            onAdd = onThumbnailClick,
-            size = 56.dp,
-            playing = false
-        )
+        if (mediaAction) {
+            ExerciseMediaSlot(
+                fileName = mediaFile,
+                onOpen = onThumbnailClick,
+                onAdd = onThumbnailClick,
+                size = 56.dp,
+                playing = false
+            )
+        } else {
+            ExerciseListThumbnail(fileName = mediaFile, onClick = null, size = 56.dp)
+        }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = name,
@@ -86,7 +93,7 @@ internal fun ExerciseListRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (isCustom) PrescriptionPill(text = stringResource(R.string.filter_custom))
+                if (isCustom) PrescriptionPill(text = stringResource(R.string.custom))
                 if (isHidden) DeletedExercisePill()
             }
         }

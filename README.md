@@ -213,11 +213,13 @@ com/emanuel5014/trainable/
 │   │   ├── analytics/          # Analytics dashboard, drag-drop state, models (AnalyticsScreen, AnalyticsViewModel, AnalyticsModels, DragDropState)
 │   │   ├── compare/            # Session comparison (CompareSessionsScreen, CompareSessionsViewModel)
 │   │   ├── dashboard/          # Main dashboard (DashboardScreen, DashboardViewModel)
+│   │   ├── exercise/           # One exercise: history, edit, media, merge, hide (ExerciseDetailScreen, ExerciseDetailViewModel)
+│   │   ├── exercises/          # Exercises page in the settings: list with filters, media switches, categories, new exercise (ExercisesScreen, ExercisesViewModel, ExerciseListRow, CategoriesSheet, PersonalizationCard)
 │   │   ├── history/            # Session history, edit, filter bottom sheet (HistoryScreen, HistoryViewModel, EditWorkoutScreen, EditWorkoutViewModel, EditWorkoutDragDropState, HistoryFilterBottomSheet)
 │   │   ├── onboarding/         # Onboarding flow (OnboardingScreen, OnboardingViewModel)
 │   │   ├── physicalcheck/      # Physical checks (body progression, before/after slider, settings) (PhysicalCheckScreen, PhysicalCheckViewModel, PhysicalCheckCompareScreen, PhysicalCheckSettingsScreen, BeforeAfterSlider)
 │   │   ├── routines/           # Routine list, detail, builder, report, AI scan preview sheet (RoutineListScreen, RoutineDetailScreen, RoutineDetailViewModel, RoutinesViewModel, ReportScreen, ReportViewModel, AiScanPreviewSheet)
-│   │   ├── settings/           # App settings, workout settings, exercise customization, AI model manager (SettingsScreen, SettingsViewModel, WorkoutSettingsScreen, ExerciseCustomizationScreen, DonorsScreen)
+│   │   ├── settings/           # App settings, workout settings, AI model manager (SettingsScreen, SettingsViewModel, WorkoutSettingsScreen, DonorsScreen)
 │   │   └── workout/            # Workout execution (WorkoutExecutionScreen, WorkoutViewModel)
 │   │   └── MainPagerScreen.kt
 │   ├── theme/                  # Color, Shape, Type, Spacing, Theme, ResponsiveSize, ThemeColorStore

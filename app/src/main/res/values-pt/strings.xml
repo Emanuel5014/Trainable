@@ -187,8 +187,6 @@
     <string name="choose_from_library">Escolher da biblioteca</string>
     <string name="filter_custom">Personalizados</string>
     <string name="new_exercise">Novo Exercício</string>
-    <string name="delete_exercise_title">Excluir exercício?</string>
-    <string name="delete_exercise_message">Excluir \"%1$s\" da sua lista de exercícios? Os treinos e rotinas que já o usam continuam com ele.</string>
     <string name="exercise_deleted_badge">Excluído</string>
     <string name="deleted_exercise_title">Exercício excluído</string>
     <string name="deleted_exercise_message">\"%1$s\" foi excluído da sua lista de exercícios, mas ainda está nas suas rotinas e treinos. Adicioná-lo de volta à lista?</string>

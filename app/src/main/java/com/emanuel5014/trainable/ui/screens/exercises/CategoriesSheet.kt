@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.ui.screens.exercises
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
@@ -106,29 +108,11 @@ fun CategoriesSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(categories, key = { it.id }) { category ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(Shapes.medium)
-                            .background(SurfaceContainerHigh)
-                            .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = category.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = OnSurface,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = { toEdit = category }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit_category_title), tint = Primary, modifier = Modifier.size(20.dp))
-                        }
-                        IconButton(onClick = { toDelete = category }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = Error.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
-                        }
-                    }
+                    CategoryRow(
+                        name = category.name,
+                        onEdit = { toEdit = category },
+                        onDelete = { toDelete = category }
+                    )
                 }
             }
 
@@ -190,6 +174,59 @@ fun CategoriesSheet(
         )
     }
 }
+
+/**
+ * One category: the name and the edit and delete buttons. Beside the name when it keeps enough room, below it (buttons
+ * on the right) on a small screen or with a large font, where the two 48dp buttons would squeeze it to a few letters a line.
+ */
+@Composable
+internal fun CategoryRow(name: String, onEdit: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(Shapes.medium)
+            .background(SurfaceContainerHigh)
+    ) {
+        val stacked = maxWidth - CategoryButtonsWidth - CategoryRowInsets < CategoryNameMinWidth
+        val nameText = @Composable { modifier: Modifier ->
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = OnSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+                modifier = modifier
+            )
+        }
+        val buttons = @Composable {
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit_category_title), tint = Primary, modifier = Modifier.size(20.dp))
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = Error.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+            }
+        }
+        if (stacked) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
+                nameText(Modifier.padding(end = 12.dp))
+                Row(modifier = Modifier.align(Alignment.End)) { buttons() }
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                nameText(Modifier.weight(1f))
+                buttons()
+            }
+        }
+    }
+}
+
+private val CategoryButtonsWidth = 96.dp
+private val CategoryRowInsets = 28.dp
+private val CategoryNameMinWidth = 140.dp
 
 /** Asks for a category name; a blank or already used one is refused with the message of the old screen. */
 @Composable

@@ -12,9 +12,9 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
+import com.emanuel5014.trainable.domain.exercise.ExerciseForm
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.domain.exercise.MergeCheck
-import com.emanuel5014.trainable.ui.components.ExerciseForm
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.toMessage
@@ -104,11 +104,16 @@ class ExerciseDetailViewModel @Inject constructor(
     private val _messages = MutableSharedFlow<ExerciseDetailMessage>(extraBufferCapacity = 4)
     val messages: SharedFlow<ExerciseDetailMessage> = _messages.asSharedFlow()
 
-    /** Every category the form can offer, and the exercises of the library (to refuse a name already taken). */
+    /**
+     * Every category the form can offer, and the exercises as the form checks a name against them: the library plus the
+     * names of the exercises merged into another, which belong to the one they went into.
+     */
     val categories: StateFlow<List<String>> = exerciseRepository.getCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val library: StateFlow<List<ExerciseEntity>> = exerciseRepository.getAllExercises()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val namesInUse: StateFlow<List<ExerciseEntity>> =
+        combine(exerciseRepository.getAllExercisesIncludingDeleted(), mergeRepository.observeMerges()) { all, merges ->
+            ExerciseMerges.aliasView(all, merges)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _mediaMessages = MutableSharedFlow<ExerciseMediaMessage>(extraBufferCapacity = 4)
     val mediaMessages: SharedFlow<ExerciseMediaMessage> = _mediaMessages.asSharedFlow()
@@ -188,22 +193,17 @@ class ExerciseDetailViewModel @Inject constructor(
         val exercise = current.exercise ?: return
         if (!current.actions.canEdit || form.name.isBlank()) return
         viewModelScope.launch {
-            exerciseRepository.saveExercise(
-                exercise.copy(
-                    nome = form.name.trim(),
-                    categoria = form.category,
-                    descrizione = form.description.trim().ifEmpty { null }
-                )
+            exerciseRepository.updateExerciseDetails(
+                exercise.id, form.name.trim(), form.category, form.description.trim().ifEmpty { null }
             )
             _messages.tryEmit(ExerciseDetailMessage.SAVED)
         }
     }
 
-    /** Stores the image or GIF the user picked as the media of the open exercise, replacing the one it had. */
-    fun attachMedia(uri: Uri) {
-        val id = requestedId.value ?: return
+    /** Stores the image or GIF the user picked as the media of [exerciseId], replacing the one it had. */
+    fun attachMedia(exerciseId: Int, uri: Uri) {
         viewModelScope.launch {
-            exerciseRepository.attachExerciseMedia(id, uri).toMessage()?.let { _mediaMessages.emit(it) }
+            exerciseRepository.attachExerciseMedia(exerciseId, uri).toMessage()?.let { _mediaMessages.emit(it) }
         }
     }
 

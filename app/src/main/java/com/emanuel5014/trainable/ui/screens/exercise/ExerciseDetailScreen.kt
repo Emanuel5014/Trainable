@@ -5,7 +5,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.ExerciseFormDialog
-import com.emanuel5014.trainable.ui.components.ExerciseForm
+import com.emanuel5014.trainable.domain.exercise.ExerciseForm
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.toShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -125,9 +125,9 @@ fun ExerciseDetailDialog(
     var lastMergeTarget by remember { mutableStateOf("") }
     var editOpen by remember { mutableStateOf(false) }
     val categories by viewModel.categories.collectAsState()
-    val library by viewModel.library.collectAsState()
+    val namesInUse by viewModel.namesInUse.collectAsState()
     // Add or replace the image or GIF of the open exercise
-    val pickMedia = rememberExerciseMediaPicker { _, uri -> viewModel.attachMedia(uri) }
+    val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.attachMedia(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.mediaMessages)
 
     val snackbarHost = remember { SnackbarHostState() }
@@ -204,7 +204,7 @@ fun ExerciseDetailDialog(
         ExerciseFormDialog(
             title = stringResource(R.string.edit_exercise_title),
             categories = categories,
-            existingExercises = library,
+            existingExercises = namesInUse,
             languageCode = languageCode,
             initial = ExerciseForm(exercise.nome, exercise.categoria, exercise.descrizione.orEmpty()),
             editingId = exercise.id,
