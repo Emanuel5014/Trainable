@@ -35,7 +35,9 @@ fun AnalyticsLineChart(
     points: List<AnalyticsChartPoint>,
     modifier: Modifier = Modifier,
     lineColor: Color = Primary,
-    fillColor: Color = Primary.copy(alpha = 0.14f)
+    fillColor: Color = Primary.copy(alpha = 0.14f),
+    /** A value badge on every point; a long series reads better without them. */
+    showValueLabels: Boolean = true
 ) {
     if (points.isEmpty()) {
         Text(
@@ -132,6 +134,7 @@ fun AnalyticsLineChart(
                 val x = xFor(index)
                 val y = yFor(point.value)
                 drawCircle(color = lineColor, radius = 6f, center = Offset(x, y))
+                if (!showValueLabels) return@forEachIndexed
 
                 val text = String.format("%.1f", point.value)
                 val textPaint = android.graphics.Paint().apply {

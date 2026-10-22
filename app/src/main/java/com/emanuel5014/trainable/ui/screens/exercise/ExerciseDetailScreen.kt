@@ -221,7 +221,11 @@ private fun ProgressCard(points: List<AnalyticsChartPoint>, weightUnit: String) 
             fontWeight = FontWeight.ExtraBold,
             color = OnSurface
         )
-        AnalyticsLineChart(points = shown, modifier = Modifier.padding(top = 8.dp))
+        AnalyticsLineChart(
+            points = shown,
+            modifier = Modifier.padding(top = 8.dp),
+            showValueLabels = shown.size <= MAX_LABELLED_POINTS
+        )
     }
 }
 
@@ -369,6 +373,9 @@ private fun RecordRow(label: String, value: String, timestamp: Long) {
         }
     }
 }
+
+/** Past this many sessions the value badges of the chart overlap, so it is drawn without them. */
+private const val MAX_LABELLED_POINTS = 8
 
 private fun weightText(kg: Float, weightUnit: String): String =
     WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(kg, weightUnit), weightUnit)
