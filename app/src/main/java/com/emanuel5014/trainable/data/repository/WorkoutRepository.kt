@@ -51,6 +51,7 @@ import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -263,6 +264,8 @@ class WorkoutRepository @Inject constructor(
         val currentPlans = workoutDao.getAllPlans().first()
         // Also the exercises deleted from the library: an imported routine that uses one brings it back instead of duplicating it
         val knownExercises = exerciseDao.getAllExercisesIncludingDeleted().first().toMutableList()
+        // Exercises merged into another are looked up under their old name and id, and land on the one they were merged into
+        val merges = exerciseDao.getExerciseMerges()
         var nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
         var imported = 0
 
@@ -337,7 +340,11 @@ class WorkoutRepository @Inject constructor(
 
                 dto.exercises.forEach { exerciseDto ->
                     val finalExerciseId: Int? = when (
-                        val match = ImportedExerciseMatcher.match(knownExercises, exerciseDto.exerciseId, exerciseDto.exerciseName)
+                        val match = ImportedExerciseMatcher.match(
+                            ExerciseMerges.aliasView(knownExercises, merges),
+                            ExerciseMerges.winnerOf(exerciseDto.exerciseId, merges),
+                            exerciseDto.exerciseName
+                        )
                     ) {
                         is ImportedExerciseMatcher.Match.Existing -> {
                             if (match.exercise.isDeleted) {

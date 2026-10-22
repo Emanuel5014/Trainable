@@ -29,6 +29,7 @@ import com.emanuel5014.trainable.domain.csvimport.ResolvedExercise
 import com.emanuel5014.trainable.domain.csvimport.RoutineStatus
 import com.emanuel5014.trainable.domain.csvimport.RoutineTarget
 import com.emanuel5014.trainable.domain.csvimport.RowKind
+import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.domain.csvimport.SetSignature
 import com.emanuel5014.trainable.domain.csvimport.SystemPlanKind
 import com.emanuel5014.trainable.domain.journal.SessionJournal
@@ -78,7 +79,8 @@ class HistoryCsvImporter @Inject constructor(
     suspend fun loadKnown(zone: ZoneId = ZoneId.systemDefault()): KnownData {
         // Also the exercises deleted from the exercise list: their workouts are still there, so a file that repeats them
         // is recognised as duplicates, and one with new workouts of such an exercise adds them to it
-        val exercises = exerciseDao.getAllExercisesIncludingDeleted().first()
+        // An exercise merged into another is matched under its old name but resolves to the one it was merged into
+        val exercises = ExerciseMerges.aliasView(exerciseDao.getAllExercisesIncludingDeleted().first(), exerciseDao.getExerciseMerges())
         val categories = exerciseDao.getAllCustomCategories().first().map { it.name }
         val plans = workoutDao.getAllPlans().first()
         val sessions = workoutDao.getAllSessionsWithDetails().first()
