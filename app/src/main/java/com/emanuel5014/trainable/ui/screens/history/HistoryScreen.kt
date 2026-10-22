@@ -1358,11 +1358,7 @@ fun SessionHistoryCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = when (planName) {
-                                    "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-                                    "Custom Workout" -> stringResource(R.string.custom_workout)
-                                    else -> planName
-                                },
+                                text = SessionTitle.of(planName).displayText(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Primary,
                                 fontWeight = FontWeight.ExtraBold,
