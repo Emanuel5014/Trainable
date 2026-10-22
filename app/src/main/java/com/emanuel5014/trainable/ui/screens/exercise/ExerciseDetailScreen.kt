@@ -1,6 +1,18 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
 import androidx.compose.foundation.layout.Arrangement
+import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
+import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
+import com.emanuel5014.trainable.ui.components.ExerciseFormDialog
+import com.emanuel5014.trainable.ui.components.ExerciseForm
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -111,6 +123,12 @@ fun ExerciseDetailDialog(
     var removeOpen by remember { mutableStateOf(false) }
     var willBeDeleted by remember { mutableStateOf<Boolean?>(null) }
     var lastMergeTarget by remember { mutableStateOf("") }
+    var editOpen by remember { mutableStateOf(false) }
+    val categories by viewModel.categories.collectAsState()
+    val library by viewModel.library.collectAsState()
+    // Add or replace the image or GIF of the open exercise
+    val pickMedia = rememberExerciseMediaPicker { _, uri -> viewModel.attachMedia(uri) }
+    ExerciseMediaMessageToasts(viewModel.mediaMessages)
 
     val snackbarHost = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -146,6 +164,7 @@ fun ExerciseDetailDialog(
                         ExerciseActionsMenu(
                             actions = state.actions,
                             isPreset = exercise.id < ExerciseEntity.FIRST_CUSTOM_ID,
+                            onEdit = { editOpen = true },
                             onMerge = { pickerOpen = true },
                             onRemove = { removeOpen = true },
                             onRestore = viewModel::restore
@@ -154,7 +173,12 @@ fun ExerciseDetailDialog(
                 }
             ) {
                 if (exercise != null) {
-                    ExerciseDetailContent(state = state, onOpenMedia = { mediaOpen = true }, onUndoMerge = viewModel::undoMerge)
+                    ExerciseDetailContent(
+                        state = state,
+                        onOpenMedia = { mediaOpen = true },
+                        onAddMedia = { pickMedia(exercise.id) },
+                        onUndoMerge = viewModel::undoMerge
+                    )
                 } else if (!state.notFound) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 }
@@ -167,7 +191,28 @@ fun ExerciseDetailDialog(
         ExerciseMediaViewer(
             fileName = mediaFile,
             exerciseName = name,
-            onDismiss = { mediaOpen = false }
+            onDismiss = { mediaOpen = false },
+            onReplace = { pickMedia(exercise.id) },
+            onRemove = {
+                viewModel.removeMedia()
+                mediaOpen = false
+            }
+        )
+    }
+
+    if (editOpen && exercise != null) {
+        ExerciseFormDialog(
+            title = stringResource(R.string.edit_exercise_title),
+            categories = categories,
+            existingExercises = library,
+            languageCode = languageCode,
+            initial = ExerciseForm(exercise.nome, exercise.categoria, exercise.descrizione.orEmpty()),
+            editingId = exercise.id,
+            onConfirm = { form ->
+                editOpen = false
+                viewModel.save(form)
+            },
+            onDismiss = { editOpen = false }
         )
     }
 
@@ -224,6 +269,7 @@ fun ExerciseDetailDialog(
 private fun ExerciseActionsMenu(
     actions: ExerciseDetailActions,
     isPreset: Boolean,
+    onEdit: () -> Unit,
     onMerge: () -> Unit,
     onRemove: () -> Unit,
     onRestore: () -> Unit
@@ -239,6 +285,15 @@ private fun ExerciseActionsMenu(
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (actions.canEdit) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.exercise_action_edit)) },
+                    onClick = {
+                        open = false
+                        onEdit()
+                    }
+                )
+            }
             if (actions.canMerge) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.exercise_action_merge)) },
@@ -318,7 +373,12 @@ private fun ExerciseDetailScaffold(
 
 /** The body of the detail screen; the dialog around it is [ExerciseDetailDialog]. */
 @Composable
-internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: () -> Unit, onUndoMerge: (Int) -> Unit) {
+internal fun ExerciseDetailContent(
+    state: ExerciseDetailUiState,
+    onOpenMedia: () -> Unit,
+    onAddMedia: () -> Unit,
+    onUndoMerge: (Int) -> Unit
+) {
     val exercise = state.exercise ?: return
     val history = state.history ?: return
     LazyColumn(
@@ -326,13 +386,16 @@ internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: ()
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        exercise.mediaPath?.let { mediaFile ->
-            item(key = "media") {
+        item(key = "media") {
+            val mediaFile = exercise.mediaPath
+            if (mediaFile != null) {
                 ExerciseMediaCard(
                     fileName = mediaFile,
                     onOpen = onOpenMedia,
                     modifier = Modifier.fillMaxWidth().height(240.dp)
                 )
+            } else {
+                AddMediaCard(onClick = onAddMedia, modifier = Modifier.fillMaxWidth())
             }
         }
         item(key = "header") {
@@ -373,6 +436,44 @@ internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: ()
                 PerformanceCard(performance = performance, kind = history.kind, weightUnit = state.weightUnit)
             }
         }
+    }
+}
+
+/** Stands where the media goes while the exercise has none: one tap to pick an image or a GIF. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun AddMediaCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val cookie = MaterialShapes.Cookie9Sided.toShape()
+    val label = stringResource(R.string.exercise_media_add)
+    Column(
+        modifier = modifier
+            .clip(Shapes.large)
+            .background(SurfaceContainerHigh)
+            .clickable(onClickLabel = label, onClick = onClick)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(cookie)
+                .background(Primary.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AddPhotoAlternate,
+                contentDescription = null,
+                tint = Primary,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = OnSurface
+        )
     }
 }
 
