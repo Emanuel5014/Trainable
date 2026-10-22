@@ -3,6 +3,8 @@ package com.emanuel5014.trainable.ui.screens.settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,7 +77,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
-private enum class MediaFilter { ALL, WITH_MEDIA, WITHOUT_MEDIA }
+private enum class MediaFilter { ALL, WITH_MEDIA, WITHOUT_MEDIA, HIDDEN }
 
 /** Side of the thumbnail at the start of each exercise row. */
 private val RowThumbSize = 56.dp
@@ -104,15 +106,18 @@ fun ExerciseMediaScreen(
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.attach(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.messages)
 
-    val withMediaCount = exercises.count { it.mediaPath != null }
+    // The library: the hidden exercises only show under their own filter
+    val library = remember(exercises) { exercises.filter { !it.isDeleted } }
+    val hiddenCount = exercises.size - library.size
+    val withMediaCount = library.count { it.mediaPath != null }
 
     // Category -> (exercise, translated name), both ends sorted so the list reads like a glossary
     val groups = remember(exercises, query, filter, languageCode) {
         val needle = query.trim()
-        exercises.asSequence()
+        (if (filter == MediaFilter.HIDDEN) exercises.filter { it.isDeleted } else exercises.filter { !it.isDeleted }).asSequence()
             .filter {
                 when (filter) {
-                    MediaFilter.ALL -> true
+                    MediaFilter.ALL, MediaFilter.HIDDEN -> true
                     MediaFilter.WITH_MEDIA -> it.mediaPath != null
                     MediaFilter.WITHOUT_MEDIA -> it.mediaPath == null
                 }
@@ -230,7 +235,7 @@ fun ExerciseMediaScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.exercise_media_count, withMediaCount, exercises.size),
+                        text = stringResource(R.string.exercise_media_count, withMediaCount, library.size),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant,
                         modifier = Modifier.weight(1f)
@@ -268,12 +273,17 @@ fun ExerciseMediaScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterOption(MediaFilter.ALL, filter, R.string.all) { filter = it }
                     FilterOption(MediaFilter.WITH_MEDIA, filter, R.string.exercise_media_filter_with) { filter = it }
                     FilterOption(MediaFilter.WITHOUT_MEDIA, filter, R.string.exercise_media_filter_without) { filter = it }
+                    // Kept while selected, so restoring the last hidden exercise does not leave the list without its chip
+                    if (hiddenCount > 0 || filter == MediaFilter.HIDDEN) {
+                        FilterOption(MediaFilter.HIDDEN, filter, R.string.exercise_media_filter_hidden) { filter = it }
+                    }
                 }
             }
 
@@ -314,7 +324,10 @@ fun ExerciseMediaScreen(
                         category = category,
                         fileName = mediaFile,
                         onClick = {
-                            if (mediaFile != null) viewerExerciseId = exercise.id else pickMedia(exercise.id)
+                            // A hidden exercise is not for picking media: its detail is where it is restored
+                            if (filter == MediaFilter.HIDDEN) detailExerciseId = exercise.id
+                            else if (mediaFile != null) viewerExerciseId = exercise.id
+                            else pickMedia(exercise.id)
                         },
                         onInfo = { detailExerciseId = exercise.id }
                     )

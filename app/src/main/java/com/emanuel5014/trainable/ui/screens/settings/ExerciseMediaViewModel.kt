@@ -29,7 +29,8 @@ class ExerciseMediaViewModel @Inject constructor(
     private val localeManager: AppLocaleManager
 ) : ViewModel() {
 
-    val exercises: StateFlow<List<ExerciseEntity>> = exerciseRepository.getAllExercises()
+    /** Every exercise, also the hidden ones: the screen has a filter for those. */
+    val exercises: StateFlow<List<ExerciseEntity>> = exerciseRepository.getAllExercisesIncludingDeleted()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val mediaEnabled: StateFlow<Boolean> = userPreferencesRepository.exerciseMediaEnabled
