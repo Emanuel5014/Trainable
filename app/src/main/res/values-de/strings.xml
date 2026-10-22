@@ -1528,4 +1528,28 @@
     </plurals>
     <string name="routine_header_expand">Details anzeigen</string>
     <string name="routine_header_collapse">Details ausblenden</string>
+    <!-- Exercise detail -->
+    <string name="exercise_detail_open">Übungsdetails</string>
+    <string name="exercise_detail_records">Rekorde</string>
+    <string name="exercise_detail_progress">Fortschritt (geschätztes 1RM)</string>
+    <string name="exercise_detail_history">Verlauf</string>
+    <string name="exercise_detail_empty">Du hast diese Übung noch nicht gemacht</string>
+    <string name="exercise_detail_last">Zuletzt: %s</string>
+    <string name="exercise_detail_top">Max. %s</string>
+    <string name="exercise_detail_warmup">Aufwärmen</string>
+    <string name="exercise_record_heaviest">Schwerster Satz</string>
+    <string name="exercise_record_best_e1rm">Bestes geschätztes 1RM</string>
+    <string name="exercise_record_best_volume">Bestes Volumen einer Einheit</string>
+    <string name="exercise_record_most_reps_set">Meiste Wiederholungen in einem Satz</string>
+    <string name="exercise_record_most_reps_session">Meiste Wiederholungen in einer Einheit</string>
+    <string name="exercise_record_longest_hold">Längstes Halten</string>
+    <string name="exercise_record_most_reps_interval">Meiste Wiederholungen in einem Intervall</string>
+    <plurals name="exercise_detail_sessions">
+        <item quantity="one">%d Einheit</item>
+        <item quantity="other">%d Einheiten</item>
+    </plurals>
+    <plurals name="exercise_detail_sets">
+        <item quantity="one">%d Satz</item>
+        <item quantity="other">%d Sätze</item>
+    </plurals>
 </resources>

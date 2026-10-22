@@ -59,12 +59,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.ui.components.ExerciseInfoButton
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -96,6 +98,7 @@ fun ExerciseMediaScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(MediaFilter.ALL) }
     var viewerExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     var showRemoveAll by remember { mutableStateOf(false) }
 
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.attach(exerciseId, uri) }
@@ -137,6 +140,10 @@ fun ExerciseMediaScreen(
                 onRemove = { viewModel.remove(exerciseId) }
             )
         }
+    }
+
+    detailExerciseId?.let { exerciseId ->
+        ExerciseDetailDialog(exerciseId = exerciseId, onDismiss = { detailExerciseId = null })
     }
 
     if (showRemoveAll) {
@@ -308,7 +315,8 @@ fun ExerciseMediaScreen(
                         fileName = mediaFile,
                         onClick = {
                             if (mediaFile != null) viewerExerciseId = exercise.id else pickMedia(exercise.id)
-                        }
+                        },
+                        onInfo = { detailExerciseId = exercise.id }
                     )
                 }
             }
@@ -414,7 +422,8 @@ private fun ExerciseMediaRow(
     name: String,
     category: String,
     fileName: String?,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onInfo: () -> Unit
 ) {
     val clickLabel = stringResource(if (fileName != null) R.string.exercise_media_open else R.string.exercise_media_add)
     Row(
@@ -455,5 +464,6 @@ private fun ExerciseMediaRow(
                 overflow = TextOverflow.Ellipsis
             )
         }
+        ExerciseInfoButton(onClick = onInfo)
     }
 }

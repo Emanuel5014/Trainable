@@ -1528,4 +1528,28 @@
     </plurals>
     <string name="routine_header_expand">Show details</string>
     <string name="routine_header_collapse">Hide details</string>
+    <!-- Exercise detail -->
+    <string name="exercise_detail_open">Exercise details</string>
+    <string name="exercise_detail_records">Records</string>
+    <string name="exercise_detail_progress">Progress (estimated 1RM)</string>
+    <string name="exercise_detail_history">History</string>
+    <string name="exercise_detail_empty">You haven\'t done this exercise yet</string>
+    <string name="exercise_detail_last">Last: %s</string>
+    <string name="exercise_detail_top">Top %s</string>
+    <string name="exercise_detail_warmup">Warm-up</string>
+    <string name="exercise_record_heaviest">Heaviest set</string>
+    <string name="exercise_record_best_e1rm">Best estimated 1RM</string>
+    <string name="exercise_record_best_volume">Best session volume</string>
+    <string name="exercise_record_most_reps_set">Most reps in a set</string>
+    <string name="exercise_record_most_reps_session">Most reps in a session</string>
+    <string name="exercise_record_longest_hold">Longest hold</string>
+    <string name="exercise_record_most_reps_interval">Most reps in an interval</string>
+    <plurals name="exercise_detail_sessions">
+        <item quantity="one">%d session</item>
+        <item quantity="other">%d sessions</item>
+    </plurals>
+    <plurals name="exercise_detail_sets">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
 </resources>
