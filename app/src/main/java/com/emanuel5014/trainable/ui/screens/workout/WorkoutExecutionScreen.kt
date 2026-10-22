@@ -9,9 +9,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.platform.LocalDensity
-import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import androidx.compose.animation.core.animateFloatAsState
@@ -55,8 +53,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -66,21 +62,13 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.DesignServices
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
-import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -101,8 +89,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -135,30 +121,22 @@ import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
-import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
-import com.emanuel5014.trainable.ui.components.ExerciseInfoButton
 import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.LoadPercentChip
-import com.emanuel5014.trainable.ui.components.ProgramEditPill
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
-import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
-import com.emanuel5014.trainable.ui.components.SetLogRow
 import com.emanuel5014.trainable.ui.components.TimerAdjustButton
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
 import com.emanuel5014.trainable.ui.components.WeightTimeInput
 import com.emanuel5014.trainable.ui.components.TimeRepsInput
 import com.emanuel5014.trainable.ui.components.setValueText
-import com.emanuel5014.trainable.ui.components.setPerformanceBadges
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
-import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -166,21 +144,16 @@ import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.domain.prescription.IntensityType
-import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
-import com.emanuel5014.trainable.domain.prescription.RepMode
-import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.RpeSelector
-import com.emanuel5014.trainable.ui.components.rpeBadgeText
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
 import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
 
 /** Key of the large exercise media item in the sets list, used to read where the sets end. */
-private const val MEDIA_CARD_KEY = "exercise_media_card"
+internal const val MEDIA_CARD_KEY = "exercise_media_card"
 
 /** The large media card only appears when at least this much room is left under the sets. */
 private val MEDIA_CARD_MIN_HEIGHT = 140.dp
@@ -342,97 +315,11 @@ fun WorkoutExecutionScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { 
-                                if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
-                                        ui.showRenameDialog = true
-                                    } else {
-                                        state.planId?.let { onNavigateToRoutine(it) }
-                                    }
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = state.planName, 
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.session_in_progress_title), 
-                            style = MaterialTheme.typography.labelSmall, 
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                },
-                navigationIcon = {
-                    GymIconButton(
-                        icon = Icons.Rounded.Close,
-                        onClick = safeNavigateBack,
-                        containerColor = Color.Transparent,
-                        description = stringResource(R.string.close_workout)
-                    )
-                },
-                actions = {
-                    if (state.totalExercises > 0) {
-                        Surface(
-                            color = Primary.copy(alpha = 0.1f),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                text = "${state.completedExercises}/${state.totalExercises}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Primary,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        if (state.warmupTimerEnabled) {
-                            IconButton(
-                                onClick = {
-                                    ui.warmupTimerDuration = 120
-                                    ui.showWarmupTimerDialog = true
-                                },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Timer,
-                                    contentDescription = stringResource(R.string.warmup_timer),
-                                    tint = if (state.warmupTimerRemaining > 0) Primary else OnSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-                    }
-
-                    Surface(
-                        onClick = { ui.showCancelDialog = true },
-                        shape = CircleShape,
-                        color = Error.copy(alpha = 0.1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Delete,
-                            contentDescription = stringResource(R.string.cancel_workout),
-                            tint = Error,
-                            modifier = Modifier.padding(10.dp).size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                    navigationIconContentColor = OnSurface
-                )
+            WorkoutTopBar(
+                state = state,
+                ui = ui,
+                onClose = safeNavigateBack,
+                onNavigateToRoutine = onNavigateToRoutine
             )
         },
         containerColor = Surface
@@ -621,651 +508,38 @@ fun WorkoutExecutionScreen(
                                     }.collect { free -> if (free != null) freeMediaPx = free }
                                 }
 
-                                // Exercise Header
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp, vertical = 16.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // An advanced exercise reads what the current week prescribes: the plan's own
-                                        // sets and reps targets are only kept in step with the first week
-                                        val weekTargets = if (targetExState.isAdvanced) {
-                                            PrescriptionExpander.legacyTargets(targetExState.blocks)
-                                        } else null
-                                        val setsCount = weekTargets?.first ?: targetExState.sets.size
-                                        val repsCount = if (targetExState.isTimeAndReps) {
-                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
-                                            stringResource(R.string.time_reps_value, sec, targetExState.repsGoal ?: 0)
-                                        } else if (targetExState.isTimeAndWeight) {
-                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
-                                            "${sec}s"
-                                        } else {
-                                            weekTargets?.second ?: targetExState.repsDisplay.takeIf { it.isNotBlank() } ?: run {
-                                                if (targetExState.sets.isEmpty()) "0"
-                                                else {
-                                                    val allReps = targetExState.sets.map { it.reps }
-                                                    if (allReps.distinct().size == 1) allReps.first().toString()
-                                                    else allReps.joinToString("-")
-                                                }
-                                            }
-                                        }
-                                        if (targetExState.isAdvanced) {
-                                            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-                                            androidx.compose.foundation.layout.FlowRow(
-                                                modifier = Modifier.weight(1f),
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                                                itemVerticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                state.programWeek?.let { week ->
-                                                    PrescriptionPill(
-                                                        text = stringResource(R.string.week_short, week),
-                                                        containerColor = Primary,
-                                                        contentColor = OnPrimary,
-                                                        emphasized = true
-                                                    )
-                                                }
-                                                val usesPercent = targetExState.blocks.any { it.intensityType == IntensityType.PERCENT }
-                                                if (usesPercent) {
-                                                    PrescriptionPill(
-                                                        text = targetExState.oneRepMaxKg?.let { stringResource(R.string.one_rep_max_value, prescriptionLabels.weight(it)) }
-                                                            ?: stringResource(R.string.one_rep_max_missing),
-                                                        containerColor = if (targetExState.oneRepMaxKg != null) Primary.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f),
-                                                        contentColor = if (targetExState.oneRepMaxKg != null) Primary else Error
-                                                    )
-                                                } else {
-                                                    Text(
-                                                        text = "$setsCount × $repsCount",
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                }
-                                                // The program of this exercise was changed during the workout: tap for the story
-                                                targetExState.lastProgramEdit?.let { edit ->
-                                                    ProgramEditPill(edit, Modifier.clickable { ui.programHistoryFor = targetIndex })
-                                                }
-                                            }
-                                        } else Text(
-                                            text = "$setsCount × $repsCount",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = Primary,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        if (targetIndex < state.exercises.lastIndex) {
-                                            val nextEx = state.exercises[targetIndex + 1]
-                                            val isLinked = targetExState.supersetId != null && targetExState.supersetId == nextEx.supersetId
-                                            IconButton(
-                                                onClick = { viewModel.toggleSupersetWithNext(targetIndex) }
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
-                                                    contentDescription = stringResource(R.string.toggle_superset_with_next),
-                                                    tint = if (isLinked) Primary else OnSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        if (targetExState.isAdvanced && !targetExState.isCardio && !targetExState.isTimed) {
-                                            IconButton(onClick = { ui.programEditFor = targetIndex }) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.DesignServices,
-                                                    contentDescription = stringResource(R.string.edit_program),
-                                                    tint = if (targetExState.lastProgramEdit != null) Primary else OnSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        if (!targetExState.isCardio) {
-                                            ExerciseInfoButton(onClick = { detailExerciseId = targetExState.exercise.id })
-                                        }
-                                        IconButton(
-                                            onClick = { ui.showSwapExerciseSheet = true }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.SwapHoriz,
-                                                contentDescription = stringResource(R.string.swap_exercise),
-                                                tint = OnSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                    val exerciseDisplayName = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
-                                    if (state.exerciseMediaEnabled) {
-                                        // The thumbnail takes width from the name, so the name steps down one size
-                                        // to wrap onto the same number of lines it did at full width.
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.Top,
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Text(
-                                                text = exerciseDisplayName,
-                                                style = MaterialTheme.typography.headlineMedium,
-                                                color = OnSurface,
-                                                fontWeight = FontWeight.Black,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            ExerciseMediaSlot(
-                                                fileName = exerciseMedia[targetExState.exercise.id],
-                                                onOpen = { ui.mediaViewer = targetExState.exercise.id to exerciseDisplayName },
-                                                onAdd = { pickMedia(targetExState.exercise.id) },
-                                                playing = !largeMediaVisible
-                                            )
-                                        }
-                                    } else {
-                                        Text(
-                                            text = exerciseDisplayName,
-                                            style = MaterialTheme.typography.displaySmall,
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
+                                ExerciseHeader(
+                                    targetExState = targetExState,
+                                    targetIndex = targetIndex,
+                                    state = state,
+                                    ui = ui,
+                                    viewModel = viewModel,
+                                    languageCode = languageCode,
+                                    exerciseMedia = exerciseMedia,
+                                    largeMediaVisible = largeMediaVisible,
+                                    pickMedia = pickMedia,
+                                    prescriptionLabels = prescriptionLabels,
+                                    onOpenDetail = { detailExerciseId = it }
+                                )
 
-                                    if (targetExState.emomStartIndex != null && targetExState.exercise.id in ui.emomManualExercises) {
-                                        Surface(
-                                            onClick = { ui.emomManualExercises = ui.emomManualExercises - targetExState.exercise.id },
-                                            color = Tertiary.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            modifier = Modifier.padding(top = 8.dp)
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Timer,
-                                                    contentDescription = null,
-                                                    tint = Tertiary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.emom_use_timer),
-                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                    color = Tertiary,
-                                                    fontWeight = FontWeight.Black
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    if (targetExState.supersetId != null) {
-                                        Surface(
-                                            color = Primary.copy(alpha = 0.1f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            modifier = Modifier.padding(top = 8.dp)
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Timer,
-                                                    contentDescription = null,
-                                                    tint = Primary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.superset),
-                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                    color = Primary,
-                                                    fontWeight = FontWeight.Black
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                targetExState.progressionToShow?.let { suggestion ->
-                                    ProgressionSuggestionCard(
-                                        suggestion = suggestion,
-                                        weightUnit = state.weightUnit,
-                                        onApply = { viewModel.applyProgression(targetIndex) },
-                                        onDismiss = { viewModel.dismissProgression(targetIndex) },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
-                                    )
-                                }
-
-                                // Sets List
-                                LazyColumn(
-                                    state = exerciseListState,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxWidth(),
-                                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    itemsIndexed(targetExState.sets) { index, set ->
-                                        val isActive = index == targetActiveSetIndex && !set.isCompleted
-                                        var showDeleteConfirm by remember { mutableStateOf(false) }
-
-                                        if (showDeleteConfirm) {
-                                            AlertDialog(
-                                                onDismissRequest = { showDeleteConfirm = false },
-                                                title = { Text(stringResource(R.string.remove_set)) },
-                                                text = { Text(stringResource(R.string.remove_set_confirm)) },
-                                                confirmButton = {
-                                                    TextButton(onClick = {
-                                                        ui.editingSetIndex = null
-                                                        viewModel.removeSetFromExercise(targetIndex, index)
-                                                        showDeleteConfirm = false
-                                                    }) {
-                                                        Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
-                                                    }
-                                                },
-                                                dismissButton = {
-                                                    TextButton(onClick = { showDeleteConfirm = false }) {
-                                                        Text(stringResource(R.string.cancel).uppercase())
-                                                    }
-                                                },
-                                                containerColor = SurfaceContainerHigh,
-                                                titleContentColor = OnSurface,
-                                                textContentColor = OnSurfaceVariant
-                                            )
-                                        }
-
-                                        val haptic = LocalHapticFeedback.current
-                                        val isExpanded = targetExState.isTimed && (expandedSetIndex == index) && !set.isCompleted
-
-                                        if (targetExState.isAdvanced) {
-                                            val previous = targetExState.sets.getOrNull(index - 1)
-                                            val p = set.prescription
-                                            val startsGroup = index == 0 ||
-                                                previous?.isExtra != set.isExtra ||
-                                                previous?.prescription?.blockIndex != p?.blockIndex
-                                            if (startsGroup) {
-                                                val block = p?.let { targetExState.blocks.getOrNull(it.blockIndex) }
-                                                // The load of a block that still has sets to do can be moved from its title
-                                                val loadEditable = block != null && p.blockIndex in
-                                                    ProgramEditing.percentBlocksToDo(targetExState.sets, targetExState.blocks)
-                                                Column(
-                                                    modifier = Modifier.padding(top = if (index == 0) 0.dp else 6.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .then(
-                                                                if (loadEditable) Modifier.clickable { ui.loadSheetFor = targetIndex to p!!.blockIndex }
-                                                                else Modifier
-                                                            ),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                    ) {
-                                                        Text(
-                                                            text = when {
-                                                                block != null -> stringResource(
-                                                                    R.string.block_header, p.blockIndex + 1,
-                                                                    (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
-                                                                        block.techniques.map { techniqueLabel(context, it) }).joinToString(" · ")
-                                                                ).uppercase()
-                                                                set.isExtra -> stringResource(R.string.extra_badge)
-                                                                else -> ""
-                                                            },
-                                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                            color = Primary,
-                                                            fontWeight = FontWeight.Black,
-                                                            modifier = Modifier.weight(1f, fill = false)
-                                                        )
-                                                        if (loadEditable) {
-                                                            Icon(
-                                                                Icons.Rounded.Tune,
-                                                                contentDescription = stringResource(R.string.load_sheet_title),
-                                                                tint = Primary,
-                                                                modifier = Modifier.size(14.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    if (block?.repMode == RepMode.TOTAL) {
-                                                        val total = block.totalReps ?: 0
-                                                        val done = targetExState.sets
-                                                            .filter { it.prescription?.blockIndex == p.blockIndex && it.isCompleted }
-                                                            .sumOf { it.reps }
-                                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                                            androidx.compose.material3.LinearWavyProgressIndicator(
-                                                                progress = { if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 0f },
-                                                                modifier = Modifier.weight(1f),
-                                                                color = Primary,
-                                                                trackColor = SurfaceContainerHighest
-                                                            )
-                                                            Spacer(modifier = Modifier.width(12.dp))
-                                                            Text(
-                                                                text = stringResource(R.string.total_reps_progress, done, total),
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = Primary,
-                                                                fontWeight = FontWeight.ExtraBold
-                                                            )
-                                                        }
-                                                    }
-                                                    block?.note?.let { note ->
-                                                        Text(note, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        val setPrescription = set.prescription
-                                        SetLogRow(
-                                            repsLabel = if (set.isAmrap) stringResource(R.string.max_label) else null,
-                                            intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
-                                                ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },
-                                            badges = buildList {
-                                                // The goal of a rep range stays visible until the set is done
-                                                if (!set.isCompleted) set.repsRange?.let { add(it.text) }
-                                                if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
-                                                setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
-                                                set.rpe?.let { add(rpeBadgeText(context, it, state.rpeScale)) }
-                                                if (set.isExtra) add(stringResource(R.string.extra_badge))
-                                                // How the set really went: parts after short pauses, help, partials, technique as done
-                                                addAll(setPerformanceBadges(context, set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
-                                            },
-                                            setNumber = set.setNumber,
-                                            weight = set.weight,
-                                            reps = set.reps,
-                                            note = set.note,
-                                            isWarmup = set.isWarmup,
-                                            isCompleted = set.isCompleted,
-                                            onToggleComplete = { 
-                                                if (set.isAmrap && !set.isCompleted && index == targetActiveSetIndex) {
-                                                    // AMRAP: reps must be entered before logging
-                                                    ui.isEditingValues = true
-                                                } else if (targetExState.isTimed && !set.isCompleted) {
-                                                    viewModel.skipTimerAndLogSet(
-                                                        targetIndex,
-                                                        index,
-                                                        set.weight,
-                                                        set.timeSeconds ?: targetExState.timeTargetSeconds ?: 45
-                                                    )
-                                                } else {
-                                                    viewModel.toggleSetComplete(targetIndex, index) 
-                                                }
-                                            },
-                                            onNoteChange = { newNote ->
-                                                viewModel.updateSetNote(targetIndex, index, newNote)
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                showDeleteConfirm = true
-                                            },
-                                            onEditValues = {
-                                                ui.editingSetIndex = null
-                                                ui.isEditingValues = !ui.isEditingValues
-                                            },
-                                            // A tap on the card edits that set in place, done or still to do; the square
-                                            // on the right is what checks and unchecks it
-                                            onEdit = {
-                                                ui.editingSetIndex = if (ui.editingSetIndex == index) null else index
-                                                ui.isEditingValues = false
-                                            },
-                                            isEditing = ui.editingSetIndex == index && targetIndex == state.currentExerciseIndex,
-                                            isActive = isActive,
-                                            weightUnit = state.weightUnit,
-                                            previousNote = set.previousNote,
-                                            timeSeconds = set.timeSeconds,
-                                            isExpanded = isExpanded,
-                                            isTimeAndReps = set.isTimeAndReps,
-                                            onToggleExpanded = if (targetExState.isTimed && !set.isCompleted) {
-                                                { expandedSetIndex = if (expandedSetIndex == index) null else index }
-                                            } else null,
-                                            expandedContent = if (isExpanded) {
-                                                {
-                                                    val targetSeconds = set.timeSeconds ?: targetExState.timeTargetSeconds ?: 45
-                                                    val isCurrentActive = index == targetActiveSetIndex
-                                                    val timerSeconds = if (isCurrentActive) state.setTimerSeconds else 0
-                                                    val isRunning = isCurrentActive && state.setTimerRunning
-                                                    val isPaused = isCurrentActive && state.setTimerPaused
-                                                    val isTargetReached = targetSeconds > 0 && timerSeconds >= targetSeconds
-                                                    val timerColor = if (isTargetReached) Color(0xFF4CAF50) else Primary
-                                                    val timerTrackColor = if (isTargetReached) Color(0xFF4CAF50).copy(alpha = 0.25f) else Primary.copy(alpha = 0.2f)
-                                                    val progress = if (targetSeconds > 0) (timerSeconds.toFloat() / targetSeconds.toFloat()).coerceIn(0f, 1f) else 0f
-
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .clip(RoundedCornerShape(16.dp))
-                                                            .background(SurfaceContainerHighest.copy(alpha = 0.5f))
-                                                            .padding(vertical = 16.dp, horizontal = 12.dp),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Column(
-                                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                                                        ) {
-                                                            Box(
-                                                                contentAlignment = Alignment.Center,
-                                                                modifier = Modifier.size(130.dp)
-                                                            ) {
-                                                                CircularWavyProgressIndicator(
-                                                                    progress = { progress },
-                                                                    modifier = Modifier.size(130.dp),
-                                                                    color = timerColor,
-                                                                    trackColor = timerTrackColor,
-                                                                    stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                                                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
-                                                                    gapSize = 8.dp,
-                                                                    wavelength = 28.dp,
-                                                                    amplitude = { p ->
-                                                                        if (!isRunning) 0f
-                                                                        else if (p <= 0.1f) 0f
-                                                                        else 1f
-                                                                    }
-                                                                )
-                                                                if (state.autoStopTimeWeightAtTarget && isTargetReached) {
-                                                                    Box(
-                                                                        modifier = Modifier
-                                                                            .size(80.dp)
-                                                                            .background(timerColor, CircleShape),
-                                                                        contentAlignment = Alignment.Center
-                                                                    ) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Rounded.ThumbUp,
-                                                                            contentDescription = null,
-                                                                            tint = Color.White,
-                                                                            modifier = Modifier.size(36.dp)
-                                                                        )
-                                                                    }
-                                                                } else {
-                                                                    CardioToggleButton(
-                                                                        isRunning = isRunning,
-                                                                        isPaused = isPaused,
-                                                                        onToggle = {
-                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                            when {
-                                                                                isRunning -> viewModel.pauseSetTimer()
-                                                                                else -> viewModel.startSetTimer()
-                                                                            }
-                                                                        },
-                                                                        modifier = Modifier.size(80.dp),
-                                                                        activeColor = timerColor,
-                                                                        onActiveColor = if (isTargetReached) Color.White else OnPrimary
-                                                                    )
-                                                                }
-                                                            }
-
-                                                            val curFormatted = String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)
-                                                            val tarFormatted = String.format("%02d:%02d", targetSeconds / 60, targetSeconds % 60)
-                                                            Row(
-                                                                verticalAlignment = Alignment.Bottom,
-                                                                horizontalArrangement = Arrangement.Center
-                                                            ) {
-                                                                Text(
-                                                                    text = curFormatted,
-                                                                    style = MaterialTheme.typography.headlineMedium,
-                                                                    fontWeight = FontWeight.Black,
-                                                                    color = if (isTargetReached) timerColor else if (isRunning) Primary else OnSurface
-                                                                )
-                                                                Spacer(modifier = Modifier.width(6.dp))
-                                                                Text(
-                                                                    text = "/ $tarFormatted",
-                                                                    style = MaterialTheme.typography.titleMedium,
-                                                                    color = OnSurfaceVariant,
-                                                                    fontWeight = FontWeight.Bold,
-                                                                    modifier = Modifier.padding(bottom = 2.dp)
-                                                                )
-                                                            }
-
-                                                            if (set.isTimeAndReps) {
-                                                                // What was done in the interval: counted while the clock runs, fixed up once it stops
-                                                                RepsDoneStepper(
-                                                                    reps = set.reps,
-                                                                    onRepsChange = { viewModel.updateSetReps(targetIndex, index, it) },
-                                                                    hapticEnabled = state.hapticEnabled
-                                                                )
-                                                            }
-
-                                                            if (isRunning || isPaused || timerSeconds > 0) {
-                                                                Row(
-                                                                    modifier = Modifier.fillMaxWidth(),
-                                                                    horizontalArrangement = Arrangement.Center,
-                                                                    verticalAlignment = Alignment.CenterVertically
-                                                                ) {
-                                                                    FilledIconButton(
-                                                                        onClick = {
-                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                            viewModel.resetSetTimer()
-                                                                        },
-                                                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                                                            containerColor = SurfaceContainerHigh,
-                                                                            contentColor = OnSurfaceVariant
-                                                                        ),
-                                                                        modifier = Modifier.size(42.dp)
-                                                                    ) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Rounded.Replay,
-                                                                            contentDescription = stringResource(R.string.time_weight_reset_timer),
-                                                                            modifier = Modifier.size(20.dp)
-                                                                        )
-                                                                    }
-
-                                                                    Spacer(modifier = Modifier.width(12.dp))
-
-                                                                    GymButton(
-                                                                        onClick = {
-                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                            viewModel.finishSetTimer(targetIndex, index, set.weight)
-                                                                        },
-                                                                        containerColor = timerColor,
-                                                                        contentColor = if (isTargetReached) Color.White else OnPrimary,
-                                                                        modifier = Modifier.fillMaxWidth(0.72f),
-                                                                        height = 42
-                                                                    ) {
-                                                                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                                                                        Spacer(modifier = Modifier.width(6.dp))
-                                                                        Text(
-                                                                            stringResource(R.string.time_weight_finish_set),
-                                                                            style = MaterialTheme.typography.labelLarge,
-                                                                            fontWeight = FontWeight.ExtraBold
-                                                                        )
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            } else null
-                                        )
-                                    }
-                                    if (targetExState.isAdvanced) {
-                                        item {
-                                            GymButton(
-                                                onClick = { viewModel.addExtraSet(targetIndex) },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                containerColor = Primary.copy(alpha = 0.1f),
-                                                contentColor = Primary,
-                                                height = 48
-                                            ) {
-                                                Icon(Icons.Rounded.Add, contentDescription = null)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(stringResource(R.string.add_extra_set).uppercase(), fontWeight = FontWeight.ExtraBold)
-                                            }
-                                        }
-                                    }
-                                     if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
-                                        item {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-                                                GymButton(
-                                                    onClick = { viewModel.addSetToExercise(targetIndex) },
-                                                    modifier = Modifier.weight(1f),
-                                                    containerColor = SurfaceContainerHigh,
-                                                    contentColor = Primary
-                                                ) {
-                                                    Icon(Icons.Rounded.Add, contentDescription = null)
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
-                                                }
-                                                if (!isExerciseCompleted) {
-                                                    val isLastExercise = targetIndex == state.exercises.size - 1
-                                                    GymButton(
-                                                        onClick = {
-                                                            ui.isAddingAfterCurrent = !state.isQuickWorkout
-                                                            ui.showAddExerciseSheet = true
-                                                        },
-                                                        modifier = Modifier.weight(1f),
-                                                        containerColor = SurfaceContainerHigh,
-                                                        contentColor = Primary
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Rounded.KeyboardDoubleArrowRight,
-                                                            contentDescription = null
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = stringResource(
-                                                                if (state.isQuickWorkout) {
-                                                                    if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk
-                                                                } else {
-                                                                    R.string.add_exercise
-                                                                }
-                                                            ).uppercase(),
-                                                            fontWeight = FontWeight.ExtraBold
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (largeMediaFile != null) {
-                                        item(key = MEDIA_CARD_KEY) {
-                                            val targetHeight = if (largeMediaVisible) with(localDensity) { freeMediaPx.toDp() } else 0.dp
-                                            val cardHeight by animateDpAsState(targetHeight, label = "exerciseMediaCardHeight")
-                                            if (cardHeight > 0.dp) {
-                                                ExerciseMediaCard(
-                                                    fileName = largeMediaFile,
-                                                    onOpen = {
-                                                        ui.mediaViewer = targetExState.exercise.id to
-                                                            ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
-                                                    },
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(cardHeight)
-                                                )
-                                            }
-                                        }
-                                    }
-                                    item(key = "hub_spacer") {
-                                        // The list ends above the hub, whatever step it is on: with the large media card
-                                        // exactly above it, otherwise with a little air
-                                        val hubSpacer = when {
-                                            largeMediaVisible -> with(localDensity) { hubHeightPx.toDp() }
-                                            hubHeightPx > 0 -> with(localDensity) { hubHeightPx.toDp() } + 16.dp
-                                            com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight -> 220.dp
-                                            else -> 280.dp
-                                        }
-                                        Spacer(modifier = Modifier.height(hubSpacer)) // Space for the dynamic hub
-                                    }
-                                }
+                                SetList(
+                                    targetExState = targetExState,
+                                    targetIndex = targetIndex,
+                                    targetActiveSetIndex = targetActiveSetIndex,
+                                    exerciseListState = exerciseListState,
+                                    expandedSetIndex = expandedSetIndex,
+                                    onExpandedSetIndexChange = { expandedSetIndex = it },
+                                    largeMediaFile = largeMediaFile,
+                                    largeMediaVisible = largeMediaVisible,
+                                    freeMediaPx = freeMediaPx,
+                                    hubHeightPx = hubHeightPx,
+                                    isExerciseCompleted = isExerciseCompleted,
+                                    state = state,
+                                    ui = ui,
+                                    viewModel = viewModel,
+                                    languageCode = languageCode,
+                                    prescriptionLabels = prescriptionLabels
+                                )
                             }
                         }
                     }
@@ -2553,7 +1827,7 @@ fun LogSetButton(
 
 /** The reps of a Time & Reps set in its timer card: big − / + so they can be counted up mid-interval with one thumb. */
 @Composable
-private fun RepsDoneStepper(reps: Int, onRepsChange: (Int) -> Unit, hapticEnabled: Boolean) {
+internal fun RepsDoneStepper(reps: Int, onRepsChange: (Int) -> Unit, hapticEnabled: Boolean) {
     val haptic = LocalHapticFeedback.current
     fun change(to: Int) {
         if (to < 0 || to > TimeAndReps.MAX_REPS) return
