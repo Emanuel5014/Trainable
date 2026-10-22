@@ -1605,4 +1605,11 @@
         <item quantity="one">Em %d treino estão os dois exercícios: ao editá-lo aparecem como um só.</item>
         <item quantity="other">Em %d treinos estão os dois exercícios: ao editá-los aparecem como um só.</item>
     </plurals>
+    <!-- Exercises page -->
+    <string name="exercises_title">Exercícios</string>
+    <string name="exercises_manage_desc">Crie exercícios, adicione mídia e gerencie categorias</string>
+    <string name="exercise_action_edit">Editar</string>
+    <string name="exercise_description">Descrição</string>
+    <string name="exercise_name_taken">Já existe um exercício com este nome</string>
+    <string name="exercise_msg_saved">Salvo</string>
 </resources>

@@ -1602,4 +1602,11 @@
         <item quantity="one">In %d Training sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
         <item quantity="other">In %d Trainings sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
     </plurals>
+    <!-- Exercises page -->
+    <string name="exercises_title">Übungen</string>
+    <string name="exercises_manage_desc">Übungen erstellen, Medien hinzufügen und Kategorien verwalten</string>
+    <string name="exercise_action_edit">Bearbeiten</string>
+    <string name="exercise_description">Beschreibung</string>
+    <string name="exercise_name_taken">Eine Übung mit diesem Namen gibt es schon</string>
+    <string name="exercise_msg_saved">Gespeichert</string>
 </resources>

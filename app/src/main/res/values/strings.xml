@@ -1602,4 +1602,11 @@
         <item quantity="one">%d workout has both exercises: when you edit it they appear as a single exercise.</item>
         <item quantity="other">%d workouts have both exercises: when you edit them they appear as a single exercise.</item>
     </plurals>
+    <!-- Exercises page -->
+    <string name="exercises_title">Exercises</string>
+    <string name="exercises_manage_desc">Create exercises, add media and manage categories</string>
+    <string name="exercise_action_edit">Edit</string>
+    <string name="exercise_description">Description</string>
+    <string name="exercise_name_taken">An exercise with this name already exists</string>
+    <string name="exercise_msg_saved">Saved</string>
 </resources>
