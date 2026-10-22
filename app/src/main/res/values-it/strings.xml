@@ -1533,7 +1533,6 @@
     <string name="exercise_detail_empty">Non hai ancora fatto questo esercizio</string>
     <string name="exercise_detail_last">Ultima: %s</string>
     <string name="exercise_detail_top">Max %s</string>
-    <string name="exercise_detail_warmup">Riscaldamento</string>
     <string name="exercise_record_heaviest">Serie più pesante</string>
     <string name="exercise_record_best_e1rm">Miglior 1RM stimato</string>
     <string name="exercise_record_best_volume">Miglior volume in una sessione</string>
@@ -1561,6 +1560,7 @@
     <string name="exercise_merge_footer">%s verrà nascosto. Puoi annullare l\'unione da uno dei due esercizi.</string>
     <string name="exercise_merge_confirm">Unisci</string>
     <string name="exercise_merge_undo">Annulla unione</string>
+    <string name="exercise_merge_undo_blocked">Per annullare questa unione, annulla prima quella successiva</string>
     <string name="exercise_merged_in_row">Unito: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Unito in %s</string>
     <string name="exercise_manage_hide_title">Nascondere %s?</string>
@@ -1595,6 +1595,7 @@
         <item quantity="other">%d altri record</item>
     </plurals>
     <string name="exercise_msg_cannot_merge_workout">Termina prima l\'allenamento in corso</string>
+    <string name="exercise_msg_cannot_restore_name">Un altro esercizio ha già questo nome. Rinominalo prima.</string>
     <plurals name="exercise_merge_shared_warning">
         <item quantity="one">In %d allenamento ci sono entrambi gli esercizi: quando lo modifichi compaiono come un solo esercizio.</item>
         <item quantity="other">In %d allenamenti ci sono entrambi gli esercizi: quando li modifichi compaiono come un solo esercizio.</item>

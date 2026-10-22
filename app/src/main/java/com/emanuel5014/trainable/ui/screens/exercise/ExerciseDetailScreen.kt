@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
@@ -144,9 +145,12 @@ fun ExerciseDetailDialog(
                 ExerciseDetailMessage.CANNOT_MERGE -> context.getString(R.string.exercise_msg_cannot_merge)
                 ExerciseDetailMessage.CANNOT_MERGE_CARDIO -> context.getString(R.string.exercise_msg_cannot_merge_cardio)
                 ExerciseDetailMessage.CANNOT_MERGE_WORKOUT -> context.getString(R.string.exercise_msg_cannot_merge_workout)
+                ExerciseDetailMessage.CANNOT_RESTORE_NAME -> context.getString(R.string.exercise_msg_cannot_restore_name)
                 ExerciseDetailMessage.SAVED -> context.getString(R.string.exercise_msg_saved)
             }
-            snackbarHost.showSnackbar(text)
+            // The screen closes with a deleted exercise, and a snackbar goes with it: a toast stays
+            if (message == ExerciseDetailMessage.DELETED) Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+            else snackbarHost.showSnackbar(text)
         }
     }
 
@@ -157,6 +161,7 @@ fun ExerciseDetailDialog(
         Surface(modifier = Modifier.fillMaxSize(), color = Surface) {
             ExerciseDetailScaffold(
                 title = name,
+                dimmed = exercise?.isDeleted == true,
                 onBack = onDismiss,
                 snackbarHost = snackbarHost,
                 actions = {
@@ -329,6 +334,7 @@ private fun ExerciseActionsMenu(
 @Composable
 private fun ExerciseDetailScaffold(
     title: String,
+    dimmed: Boolean,
     onBack: () -> Unit,
     snackbarHost: SnackbarHostState,
     actions: @Composable RowScope.() -> Unit,
@@ -360,7 +366,7 @@ private fun ExerciseDetailScaffold(
                 actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Surface,
-                    titleContentColor = OnSurface,
+                    titleContentColor = if (dimmed) OnSurfaceVariant.copy(alpha = 0.7f) else OnSurface,
                     navigationIconContentColor = OnSurface,
                     actionIconContentColor = OnSurface
                 )
@@ -543,7 +549,7 @@ private fun PerformanceSetRow(set: SetLogEntity, weightUnit: String) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
-                if (set.isWarmup) PrescriptionPill(text = stringResource(R.string.exercise_detail_warmup))
+                if (set.isWarmup) PrescriptionPill(text = stringResource(R.string.compare_warmup_set))
             }
             Text(
                 text = setValueText(set, weightUnit),

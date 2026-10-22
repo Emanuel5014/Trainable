@@ -56,6 +56,7 @@ import com.emanuel5014.trainable.ui.components.prescriptionLabels
 import com.emanuel5014.trainable.ui.components.techniqueLabel
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.ui.screens.history.sessionName
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.util.notification.EmomNotificationAction
@@ -816,7 +817,7 @@ class WorkoutViewModel @Inject constructor(
         val sessionWithSets = workoutRepository.getSessionWithSets(sessionId).firstOrNull() ?: return
         val planId = sessionWithSets.session.planId
         val planWithDetails = workoutRepository.getPlanWithDetails(planId).firstOrNull() ?: return
-        val planName = sessionWithSets.session.noteSessione ?: planWithDetails.plan.nome
+        val planName = sessionName(sessionWithSets.session.noteSessione, planWithDetails.plan.nome)
         
         val swaps = workoutRepository.getSwapsForSession(sessionId).firstOrNull()
         // Changes made to the prescription of an exercise during this workout: the last one is what it follows now

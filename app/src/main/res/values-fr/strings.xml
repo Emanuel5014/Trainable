@@ -1533,7 +1533,6 @@
     <string name="exercise_detail_empty">Vous n\'avez pas encore fait cet exercice</string>
     <string name="exercise_detail_last">Dernière : %s</string>
     <string name="exercise_detail_top">Max %s</string>
-    <string name="exercise_detail_warmup">Échauffement</string>
     <string name="exercise_record_heaviest">Série la plus lourde</string>
     <string name="exercise_record_best_e1rm">Meilleur 1RM estimé</string>
     <string name="exercise_record_best_volume">Meilleur volume sur une séance</string>
@@ -1561,6 +1560,7 @@
     <string name="exercise_merge_footer">%s sera masqué. Vous pouvez annuler la fusion depuis l\'un ou l\'autre des exercices.</string>
     <string name="exercise_merge_confirm">Fusionner</string>
     <string name="exercise_merge_undo">Annuler la fusion</string>
+    <string name="exercise_merge_undo_blocked">Pour annuler cette fusion, annule d\'abord la plus récente</string>
     <string name="exercise_merged_in_row">Fusionné : %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Fusionné dans %s</string>
     <string name="exercise_manage_hide_title">Masquer %s ?</string>
@@ -1595,6 +1595,7 @@
         <item quantity="other">%d autres enregistrements</item>
     </plurals>
     <string name="exercise_msg_cannot_merge_workout">Terminez d\'abord la séance en cours</string>
+    <string name="exercise_msg_cannot_restore_name">Un autre exercice porte déjà ce nom. Renomme-le d\'abord.</string>
     <plurals name="exercise_merge_shared_warning">
         <item quantity="one">Dans %d séance, les deux exercices sont présents : en la modifiant, ils apparaissent comme un seul exercice.</item>
         <item quantity="other">Dans %d séances, les deux exercices sont présents : en les modifiant, ils apparaissent comme un seul exercice.</item>

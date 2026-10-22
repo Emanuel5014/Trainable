@@ -34,8 +34,10 @@ import com.emanuel5014.trainable.data.local.entity.WeightLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.domain.exercise.ExercisePresets
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Database(
@@ -581,7 +583,8 @@ abstract class GymDatabase : RoomDatabase() {
 
         private suspend fun syncExercises(exerciseDao: ExerciseDao) {
             try {
-                exerciseDao.insertExercises(ExerciseData.initialExercises)
+                val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
+                exerciseDao.insertExercises(ExercisePresets.toInsert(ExerciseData.initialExercises, existing))
             } catch (e: Exception) {
                 // Exercises might already exist, ignore
             }

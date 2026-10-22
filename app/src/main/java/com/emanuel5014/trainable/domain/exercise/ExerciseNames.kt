@@ -24,6 +24,14 @@ object ExerciseNames {
     }
 
     /**
+     * True when a visible exercise other than [exercise] carries its name, stored or as shown in [languageCode]: bringing
+     * [exercise] back would leave two with one name.
+     */
+    fun takenByAnother(exercise: ExerciseEntity, exercises: List<ExerciseEntity>, languageCode: String): Boolean =
+        isTaken(exercise.nome, exercises, languageCode, excludeId = exercise.id) ||
+            isTaken(ExerciseTranslations.translate(exercise.nome, languageCode), exercises, languageCode, excludeId = exercise.id)
+
+    /**
      * The hidden exercise [name] brings back: the one whose stored name, or whose name in any language of the app, is [name]
      * once case, accents, spaces and punctuation are set aside (the same rule as [isTaken]). Exercises merged into another
      * ([mergedAwayIds]) are not brought back: their name belongs to the exercise they were merged into.

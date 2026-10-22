@@ -10,11 +10,14 @@ import com.emanuel5014.trainable.data.local.dao.ConsistencyRow
 import com.emanuel5014.trainable.data.local.dao.PeriodExerciseRow
 import com.emanuel5014.trainable.data.local.dao.PeriodMetrics
 import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
+import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
+import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +48,7 @@ class AnalyticsViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
+    private val mergeRepository: ExerciseMergeRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -120,7 +124,8 @@ class AnalyticsViewModel @Inject constructor(
         localeManager.currentLanguage,
         categoryVolumeTimeRange,
         periodComparisonRange,
-        bodyWeightTimeRange
+        bodyWeightTimeRange,
+        mergeRepository.observeMerges()
     ) { args ->
         val activePlan = args[0] as WorkoutPlanEntity?
         @Suppress("UNCHECKED_CAST")
@@ -135,6 +140,8 @@ class AnalyticsViewModel @Inject constructor(
         val catVolumeTimeRange = args[7] as AnalyticsTimeRange
         val pRange = args[8] as AnalyticsTimeRange
         val bwTimeRange = args[9] as AnalyticsTimeRange
+        @Suppress("UNCHECKED_CAST")
+        val merges = args[10] as List<ExerciseMergeEntity>
         
         val languageCode = localeManager.resolveLanguageForCompose(userLang)
         
@@ -188,7 +195,8 @@ class AnalyticsViewModel @Inject constructor(
             bodyWeightTimeRange = bwTimeRange,
             bodyWeightStartDate = bodyWeightStartDate,
             period1Range = pRange,
-            period2Range = pRange
+            period2Range = pRange,
+            merges = merges
         )
     }.flatMapLatest { context ->
         val consistencyFlow = context.activePlan?.let {
@@ -257,7 +265,7 @@ class AnalyticsViewModel @Inject constructor(
             .filter { it.startsWith("exercise_") }
             .map { idStr ->
                 val parts = idStr.split("_")
-                val exerciseId = parts[1].toInt()
+                val exerciseId = ExerciseMerges.widgetExerciseId(idStr, context.merges) ?: parts[1].toInt()
                 val timeRange = if (parts.size >= 3) {
                     try { AnalyticsTimeRange.valueOf(parts[2]) } catch (_: Exception) { AnalyticsTimeRange.OneMonth }
                 } else {
@@ -366,7 +374,8 @@ class AnalyticsViewModel @Inject constructor(
                     timePeriodComparison = timePeriodComparison,
                     period1Range = context.period1Range,
                     period2Range = context.period2Range,
-                    bodyWeightTimeRange = context.bodyWeightTimeRange
+                    bodyWeightTimeRange = context.bodyWeightTimeRange,
+                    merges = context.merges
                 )
             }
         }
@@ -611,7 +620,8 @@ class AnalyticsViewModel @Inject constructor(
         timePeriodComparison: TimePeriodComparisonSnapshot,
         period1Range: AnalyticsTimeRange,
         period2Range: AnalyticsTimeRange,
-        bodyWeightTimeRange: AnalyticsTimeRange
+        bodyWeightTimeRange: AnalyticsTimeRange,
+        merges: List<ExerciseMergeEntity>
     ): AnalyticsUiState {
         val completedSessions = consistency?.completedSessions ?: 0
         val targetSessionsPerWeek = consistency?.targetSessionsPerWeek ?: 0
@@ -661,7 +671,7 @@ class AnalyticsViewModel @Inject constructor(
                 }
                 id.startsWith("exercise_") -> {
                     val parts = id.split("_")
-                    val exerciseId = parts[1].toInt()
+                    val exerciseId = ExerciseMerges.widgetExerciseId(id, merges) ?: parts[1].toInt()
                     val timeRangeWidget = if (parts.size >= 3) {
                         try { AnalyticsTimeRange.valueOf(parts[2]) } catch (_: Exception) { AnalyticsTimeRange.OneMonth }
                     } else {
@@ -835,7 +845,9 @@ class AnalyticsViewModel @Inject constructor(
         val bodyWeightTimeRange: AnalyticsTimeRange,
         val bodyWeightStartDate: Long,
         val period1Range: AnalyticsTimeRange,
-        val period2Range: AnalyticsTimeRange
+        val period2Range: AnalyticsTimeRange,
+        /** A chart pinned for an exercise merged into another shows the one it went into. */
+        val merges: List<ExerciseMergeEntity>
     )
 
     private data class CoreAnalyticsSnapshot(

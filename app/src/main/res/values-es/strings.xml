@@ -1533,13 +1533,12 @@
     <string name="exercise_detail_empty">Aún no has hecho este ejercicio</string>
     <string name="exercise_detail_last">Última: %s</string>
     <string name="exercise_detail_top">Máx. %s</string>
-    <string name="exercise_detail_warmup">Calentamiento</string>
     <string name="exercise_record_heaviest">Serie más pesada</string>
     <string name="exercise_record_best_e1rm">Mejor 1RM estimado</string>
     <string name="exercise_record_best_volume">Mejor volumen en una sesión</string>
     <string name="exercise_record_most_reps_set">Más repeticiones en una serie</string>
     <string name="exercise_record_most_reps_session">Más repeticiones en una sesión</string>
-    <string name="exercise_record_longest_hold">Mantenimiento más largo</string>
+    <string name="exercise_record_longest_hold">Mayor tiempo sostenido</string>
     <string name="exercise_record_most_reps_interval">Más repeticiones en un intervalo</string>
     <plurals name="exercise_detail_sessions">
         <item quantity="one">%d sesión</item>
@@ -1551,22 +1550,23 @@
     </plurals>
     <!-- Merge and hide exercises -->
     <string name="exercise_more_actions">Más acciones</string>
-    <string name="exercise_action_merge">Fusionar con…</string>
+    <string name="exercise_action_merge">Fusionar en…</string>
     <string name="exercise_action_hide">Ocultar</string>
     <string name="exercise_action_delete">Eliminar de la biblioteca</string>
     <string name="exercise_action_restore">Restaurar</string>
     <string name="exercise_merge_pick_hint">Todo lo de %s pasa al ejercicio que elijas</string>
-    <string name="exercise_merge_preview_title">¿Fusionar %1$s con %2$s?</string>
+    <string name="exercise_merge_preview_title">¿Fusionar %1$s en %2$s?</string>
     <string name="exercise_merge_nothing">Nada que mover: %s solo se oculta</string>
     <string name="exercise_merge_footer">%s se ocultará. Puedes deshacer la fusión desde cualquiera de los dos ejercicios.</string>
     <string name="exercise_merge_confirm">Fusionar</string>
     <string name="exercise_merge_undo">Deshacer fusión</string>
+    <string name="exercise_merge_undo_blocked">Para deshacer esta fusión, deshaz antes la posterior</string>
     <string name="exercise_merged_in_row">Fusionado: %1$s, %2$s</string>
-    <string name="exercise_merged_into_row">Fusionado con %s</string>
+    <string name="exercise_merged_into_row">Fusionado en %s</string>
     <string name="exercise_manage_hide_title">¿Ocultar %s?</string>
     <string name="exercise_manage_hide_message">Los entrenamientos y las rutinas lo conservan. Puedes restaurarlo desde Ajustes › Ejercicios, filtro Ocultos.</string>
     <string name="exercise_manage_delete_message">%s no se usa en ningún sitio y se eliminará definitivamente.</string>
-    <string name="exercise_msg_merged">Fusionado con %s</string>
+    <string name="exercise_msg_merged">Fusionado en %s</string>
     <string name="exercise_msg_undone">Fusión deshecha</string>
     <string name="exercise_msg_hidden">Oculto</string>
     <string name="exercise_msg_deleted">Eliminado</string>
@@ -1595,6 +1595,7 @@
         <item quantity="other">%d otros registros</item>
     </plurals>
     <string name="exercise_msg_cannot_merge_workout">Termina antes el entrenamiento en curso</string>
+    <string name="exercise_msg_cannot_restore_name">Otro ejercicio ya tiene este nombre. Renómbralo antes.</string>
     <plurals name="exercise_merge_shared_warning">
         <item quantity="one">En %d entrenamiento están los dos ejercicios: al editarlo aparecen como uno solo.</item>
         <item quantity="other">En %d entrenamientos están los dos ejercicios: al editarlos aparecen como uno solo.</item>

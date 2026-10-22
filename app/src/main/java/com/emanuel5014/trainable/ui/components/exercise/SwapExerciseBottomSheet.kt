@@ -262,7 +262,7 @@ fun SwapExerciseBottomSheet(
                                 showCurrent = exercise.id == currentExerciseId,
                                 showThumbnail = showThumbnails,
                                 onThumbnailClick = { exerciseMediaToView = exercise },
-                        onInfoClick = { detailExerciseId = exercise.id }
+                                onInfoClick = { detailExerciseId = exercise.id }
                             )
                         }
                     }
@@ -343,7 +343,7 @@ fun SwapExerciseBottomSheet(
         ExerciseFormDialog(
             title = stringResource(R.string.new_exercise),
             categories = allCategories,
-            existingExercises = availableExercises,
+            existingExercises = rememberNamesInUse(),
             languageCode = languageCode,
             showDescription = false,
             onConfirm = { form ->

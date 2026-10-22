@@ -185,6 +185,13 @@ private fun MergeRow(text: String, info: ExerciseMergeInfo, onUndo: (Int) -> Uni
             TextButton(onClick = { onUndo(info.mergeId) }, modifier = Modifier.align(Alignment.End)) {
                 Text(stringResource(R.string.exercise_merge_undo).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
+        } else {
+            // A later merge builds on this one: without the line the button would just be missing
+            Text(
+                text = stringResource(R.string.exercise_merge_undo_blocked),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant.copy(alpha = 0.7f)
+            )
         }
     }
 }

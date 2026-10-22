@@ -8,7 +8,6 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.toMessage
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -47,10 +45,8 @@ class ExercisesViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     /** The exercises as the form checks a name against them: the library plus the names of merged-away exercises. */
-    val namesInUse: StateFlow<List<ExerciseEntity>> =
-        combine(exerciseRepository.getAllExercisesIncludingDeleted(), mergeRepository.observeMerges()) { all, merges ->
-            ExerciseMerges.aliasView(all, merges)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val namesInUse: StateFlow<List<ExerciseEntity>> = mergeRepository.observeNamesInUse()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Every category the exercise form can offer, built-in and custom. */
     val categories: StateFlow<List<String>> = exerciseRepository.getCategories()

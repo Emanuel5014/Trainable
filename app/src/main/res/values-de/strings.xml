@@ -1530,7 +1530,6 @@
     <string name="exercise_detail_empty">Du hast diese Übung noch nicht gemacht</string>
     <string name="exercise_detail_last">Zuletzt: %s</string>
     <string name="exercise_detail_top">Max. %s</string>
-    <string name="exercise_detail_warmup">Aufwärmen</string>
     <string name="exercise_record_heaviest">Schwerster Satz</string>
     <string name="exercise_record_best_e1rm">Bestes geschätztes 1RM</string>
     <string name="exercise_record_best_volume">Bestes Volumen einer Einheit</string>
@@ -1548,22 +1547,23 @@
     </plurals>
     <!-- Merge and hide exercises -->
     <string name="exercise_more_actions">Weitere Aktionen</string>
-    <string name="exercise_action_merge">Zusammenführen mit…</string>
+    <string name="exercise_action_merge">Zusammenführen in…</string>
     <string name="exercise_action_hide">Ausblenden</string>
     <string name="exercise_action_delete">Aus der Bibliothek löschen</string>
     <string name="exercise_action_restore">Wiederherstellen</string>
     <string name="exercise_merge_pick_hint">Alles von %s geht auf die Übung über, die du wählst</string>
-    <string name="exercise_merge_preview_title">%1$s mit %2$s zusammenführen?</string>
+    <string name="exercise_merge_preview_title">%1$s in %2$s zusammenführen?</string>
     <string name="exercise_merge_nothing">Nichts zu verschieben: %s wird nur ausgeblendet</string>
     <string name="exercise_merge_footer">%s wird ausgeblendet. Du kannst das Zusammenführen bei einer der beiden Übungen rückgängig machen.</string>
     <string name="exercise_merge_confirm">Zusammenführen</string>
     <string name="exercise_merge_undo">Zusammenführen rückgängig</string>
+    <string name="exercise_merge_undo_blocked">Um dieses Zusammenführen rückgängig zu machen, mach zuerst das spätere rückgängig</string>
     <string name="exercise_merged_in_row">Zusammengeführt: %1$s, %2$s</string>
-    <string name="exercise_merged_into_row">Zusammengeführt mit %s</string>
+    <string name="exercise_merged_into_row">Zusammengeführt in %s</string>
     <string name="exercise_manage_hide_title">%s ausblenden?</string>
     <string name="exercise_manage_hide_message">Trainings und Routinen behalten sie. Du kannst sie unter Einstellungen › Übungen mit dem Filter Ausgeblendet wiederherstellen.</string>
     <string name="exercise_manage_delete_message">%s wird nirgends verwendet und endgültig gelöscht.</string>
-    <string name="exercise_msg_merged">Zusammengeführt mit %s</string>
+    <string name="exercise_msg_merged">Zusammengeführt in %s</string>
     <string name="exercise_msg_undone">Zusammenführen rückgängig gemacht</string>
     <string name="exercise_msg_hidden">Ausgeblendet</string>
     <string name="exercise_msg_deleted">Gelöscht</string>
@@ -1592,6 +1592,7 @@
         <item quantity="other">%d weitere Einträge</item>
     </plurals>
     <string name="exercise_msg_cannot_merge_workout">Beende zuerst das laufende Training</string>
+    <string name="exercise_msg_cannot_restore_name">Eine andere Übung hat schon diesen Namen. Benenne sie zuerst um.</string>
     <plurals name="exercise_merge_shared_warning">
         <item quantity="one">In %d Training sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
         <item quantity="other">In %d Trainings sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>

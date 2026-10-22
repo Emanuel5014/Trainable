@@ -5,6 +5,7 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
 import com.emanuel5014.trainable.data.local.dao.MergeOutcome
 import com.emanuel5014.trainable.data.local.dao.MergePreview
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
@@ -41,6 +42,15 @@ class ExerciseMergeRepository @Inject constructor(
     fun observeState(exerciseId: Int): Flow<ExerciseMergeState> =
         combine(mergeDao.observeAllMerges(), exerciseDao.getAllExercisesIncludingDeleted()) { merges, exercises ->
             ExerciseMerges.stateFor(exerciseId, merges, exercises)
+        }
+
+    /**
+     * The exercises as a form checks a new name against them: the library, hidden ones too, plus the names of the
+     * exercises merged into another, which belong to the one they went into.
+     */
+    fun observeNamesInUse(): Flow<List<ExerciseEntity>> =
+        combine(exerciseDao.getAllExercisesIncludingDeleted(), mergeDao.observeAllMerges()) { all, merges ->
+            ExerciseMerges.aliasView(all, merges)
         }
 
     /**

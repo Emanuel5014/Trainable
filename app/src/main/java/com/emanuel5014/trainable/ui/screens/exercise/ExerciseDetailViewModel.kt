@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseForm
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
+import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import com.emanuel5014.trainable.domain.exercise.MergeCheck
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
@@ -66,7 +67,7 @@ data class ExerciseDetailActions(
 }
 
 /** Tells the screen what just happened, to show a short confirmation. */
-enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT, SAVED }
+enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT, CANNOT_RESTORE_NAME, SAVED }
 
 /**
  * What the exercise detail screen shows. [exerciseId] says which exercise the state is about: the screen shows nothing
@@ -110,10 +111,8 @@ class ExerciseDetailViewModel @Inject constructor(
      */
     val categories: StateFlow<List<String>> = exerciseRepository.getCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val namesInUse: StateFlow<List<ExerciseEntity>> =
-        combine(exerciseRepository.getAllExercisesIncludingDeleted(), mergeRepository.observeMerges()) { all, merges ->
-            ExerciseMerges.aliasView(all, merges)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val namesInUse: StateFlow<List<ExerciseEntity>> = mergeRepository.observeNamesInUse()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _mediaMessages = MutableSharedFlow<ExerciseMediaMessage>(extraBufferCapacity = 4)
     val mediaMessages: SharedFlow<ExerciseMediaMessage> = _mediaMessages.asSharedFlow()
@@ -142,7 +141,9 @@ class ExerciseDetailViewModel @Inject constructor(
                 )
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExerciseDetailUiState())
+        // replayExpirationMillis = 0: once the upstream has stopped, the old state goes too, so a screen opened again
+        // does not show the previous content for a moment before the spinner
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000, replayExpirationMillis = 0), ExerciseDetailUiState())
 
     /** The exercises this one can be merged into: in the library, and passing the merge rules. */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -228,14 +229,20 @@ class ExerciseDetailViewModel @Inject constructor(
     fun remove() {
         val exercise = state.value.exercise ?: return
         viewModelScope.launch {
+            // Said before the row goes: a deleted exercise closes the screen at once, and nobody would be left to hear it
+            _messages.tryEmit(if (willBeDeletedForGood()) ExerciseDetailMessage.DELETED else ExerciseDetailMessage.HIDDEN)
             exerciseRepository.deleteExercise(exercise)
-            val stillThere = exerciseRepository.getExercise(exercise.id) != null
-            _messages.tryEmit(if (stillThere) ExerciseDetailMessage.HIDDEN else ExerciseDetailMessage.DELETED)
         }
     }
 
     fun restore() {
-        val exercise = state.value.exercise ?: return
+        val current = state.value
+        val exercise = current.exercise ?: return
+        // A rename may have taken the name of a hidden exercise: two exercises with one name would make every name check ambiguous
+        if (ExerciseNames.takenByAnother(exercise, namesInUse.value, current.languageCode)) {
+            _messages.tryEmit(ExerciseDetailMessage.CANNOT_RESTORE_NAME)
+            return
+        }
         viewModelScope.launch {
             exerciseRepository.restoreExercise(exercise.id)
             _messages.tryEmit(ExerciseDetailMessage.RESTORED)

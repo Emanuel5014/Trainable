@@ -150,7 +150,7 @@ class EditWorkoutViewModel @Inject constructor(
                             it.copy(
                                 isLoading = false,
                                 sessionId = sessionId,
-                                planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome,
+                                planName = sessionName(sessionDetails.session.noteSessione, sessionDetails.plan.nome),
                                 sessionTimestamp = sessionDetails.session.timestamp,
                                 sessionDurationMs = sessionDetails.session.durationMs,
                                 exercises = exercises,

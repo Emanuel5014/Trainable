@@ -1533,7 +1533,6 @@
     <string name="exercise_detail_empty">Você ainda não fez este exercício</string>
     <string name="exercise_detail_last">Última: %s</string>
     <string name="exercise_detail_top">Máx. %s</string>
-    <string name="exercise_detail_warmup">Aquecimento</string>
     <string name="exercise_record_heaviest">Série mais pesada</string>
     <string name="exercise_record_best_e1rm">Melhor 1RM estimado</string>
     <string name="exercise_record_best_volume">Melhor volume numa sessão</string>
@@ -1561,6 +1560,7 @@
     <string name="exercise_merge_footer">%s será ocultado. Você pode desfazer a mesclagem em qualquer um dos dois exercícios.</string>
     <string name="exercise_merge_confirm">Mesclar</string>
     <string name="exercise_merge_undo">Desfazer mesclagem</string>
+    <string name="exercise_merge_undo_blocked">Para desfazer esta mesclagem, desfaça primeiro a mais recente</string>
     <string name="exercise_merged_in_row">Mesclado: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Mesclado em %s</string>
     <string name="exercise_manage_hide_title">Ocultar %s?</string>
@@ -1595,6 +1595,7 @@
         <item quantity="other">%d outros registros</item>
     </plurals>
     <string name="exercise_msg_cannot_merge_workout">Termine antes o treino em andamento</string>
+    <string name="exercise_msg_cannot_restore_name">Outro exercício já tem este nome. Renomeie-o primeiro.</string>
     <plurals name="exercise_merge_shared_warning">
         <item quantity="one">Em %d treino estão os dois exercícios: ao editá-lo aparecem como um só.</item>
         <item quantity="other">Em %d treinos estão os dois exercícios: ao editá-los aparecem como um só.</item>

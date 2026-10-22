@@ -7,9 +7,12 @@ import com.emanuel5014.trainable.domain.csvimport.ResolvedExercise
 
 /**
  * Why two exercises can or cannot be merged. [CARDIO_EXERCISE]: the cardio history is linked to an exercise by its name,
- * which a merge does not move. [LOSER_IN_ACTIVE_WORKOUT] is decided by the database (it needs the workouts in progress).
+ * which a merge does not move. [WINNER_MERGED_AWAY]: the target was itself merged into another exercise, which is where
+ * its history is. [LOSER_IN_ACTIVE_WORKOUT] is decided by the database (it needs the workouts in progress).
  */
-enum class MergeCheck { OK, SAME_EXERCISE, NOT_FOUND, WINNER_HIDDEN, LOSER_ALREADY_MERGED, CARDIO_EXERCISE, LOSER_IN_ACTIVE_WORKOUT }
+enum class MergeCheck {
+    OK, SAME_EXERCISE, NOT_FOUND, WINNER_HIDDEN, WINNER_MERGED_AWAY, LOSER_ALREADY_MERGED, CARDIO_EXERCISE, LOSER_IN_ACTIVE_WORKOUT
+}
 
 /** One merge as an exercise sees it: the exercise on the other side, and whether the merge can be undone now. */
 data class ExerciseMergeInfo(
@@ -45,6 +48,7 @@ object ExerciseMerges {
         if (winner == null || loser == null) return MergeCheck.NOT_FOUND
         if (winner.id == loser.id) return MergeCheck.SAME_EXERCISE
         if (merges.any { it.loserId == loser.id }) return MergeCheck.LOSER_ALREADY_MERGED
+        if (merges.any { it.loserId == winner.id }) return MergeCheck.WINNER_MERGED_AWAY
         if (winner.isDeleted) return MergeCheck.WINNER_HIDDEN
         if (isCardio(winner) || isCardio(loser)) return MergeCheck.CARDIO_EXERCISE
         return MergeCheck.OK
@@ -88,6 +92,16 @@ object ExerciseMerges {
                 ExerciseMergeInfo(it.id, it.winnerId, names[it.winnerId].orEmpty(), it.timestamp, canUndo(it.id, merges))
             }
         )
+    }
+
+    /**
+     * The exercise a pinned Analytics chart ([widgetId] like `exercise_<id>_<range>_<n>`) shows now: the exercise it was
+     * pinned for, or the one that took its history in a merge. Null when [widgetId] is not an exercise chart.
+     */
+    fun widgetExerciseId(widgetId: String, merges: List<ExerciseMergeEntity>): Int? {
+        if (!widgetId.startsWith("exercise_")) return null
+        val pinned = widgetId.split("_").getOrNull(1)?.toIntOrNull() ?: return null
+        return winnerOf(pinned, merges)
     }
 
     /** Analytics keeps a set of selected exercises: the winner joins it when the loser was in it. */

@@ -1530,7 +1530,6 @@
     <string name="exercise_detail_empty">You haven\'t done this exercise yet</string>
     <string name="exercise_detail_last">Last: %s</string>
     <string name="exercise_detail_top">Top %s</string>
-    <string name="exercise_detail_warmup">Warm-up</string>
     <string name="exercise_record_heaviest">Heaviest set</string>
     <string name="exercise_record_best_e1rm">Best estimated 1RM</string>
     <string name="exercise_record_best_volume">Best session volume</string>
@@ -1558,6 +1557,7 @@
     <string name="exercise_merge_footer">%s will be hidden. You can undo the merge from either exercise.</string>
     <string name="exercise_merge_confirm">Merge</string>
     <string name="exercise_merge_undo">Undo merge</string>
+    <string name="exercise_merge_undo_blocked">To undo this merge, undo the later one first</string>
     <string name="exercise_merged_in_row">Merged: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Merged into %s</string>
     <string name="exercise_manage_hide_title">Hide %s?</string>
@@ -1592,6 +1592,7 @@
         <item quantity="other">%d other records</item>
     </plurals>
     <string name="exercise_msg_cannot_merge_workout">Finish the workout in progress first</string>
+    <string name="exercise_msg_cannot_restore_name">Another exercise already has this name. Rename it first.</string>
     <plurals name="exercise_merge_shared_warning">
         <item quantity="one">%d workout has both exercises: when you edit it they appear as a single exercise.</item>
         <item quantity="other">%d workouts have both exercises: when you edit them they appear as a single exercise.</item>

@@ -92,9 +92,7 @@ fun ExercisePickerBottomSheet(
     /** Only to choose one: no way to add, edit, delete or open the details of an exercise (e.g. picking what to merge into). */
     pickOnly: Boolean = false,
     /** Replaces the line under the title, e.g. to say what the choice is for. */
-    hint: String? = null,
-    /** What a new name is checked against, when [exercises] is only part of the library (the 1RM list leaves cardio out). */
-    namesInUse: List<ExerciseEntity>? = null
+    hint: String? = null
 ) {
     rememberResponsiveSize()
 
@@ -306,7 +304,7 @@ fun ExercisePickerBottomSheet(
         ExerciseFormDialog(
             title = stringResource(R.string.new_exercise),
             categories = categories,
-            existingExercises = namesInUse ?: exercises,
+            existingExercises = rememberNamesInUse(),
             languageCode = languageCode,
             showDescription = false,
             onConfirm = { form ->

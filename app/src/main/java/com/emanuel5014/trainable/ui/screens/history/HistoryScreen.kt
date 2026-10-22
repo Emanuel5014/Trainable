@@ -552,7 +552,7 @@ fun HistoryScreen(
 
                         itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
                             val session = sessionDetails.session
-                            val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
+                            val planName = sessionName(sessionDetails.session.noteSessione, sessionDetails.plan.nome)
                             val isExpanded = expandedSessionId == session.id
 
                             val dismissState = rememberSwipeToDismissBoxState()
