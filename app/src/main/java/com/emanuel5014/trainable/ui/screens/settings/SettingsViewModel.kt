@@ -16,10 +16,8 @@ import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.local.GymDatabase
-import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.data.remote.GitHubRelease
-import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -56,7 +54,6 @@ class SettingsViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userPrefsRepository: UserPreferencesRepository,
     private val workoutRepository: WorkoutRepository,
-    private val exerciseRepository: ExerciseRepository,
     private val localeManager: AppLocaleManager,
     private val backupManager: BackupManager,
     private val nextcloudBackupManager: NextcloudBackupManager,
@@ -311,12 +308,6 @@ class SettingsViewModel @Inject constructor(
         initialValue = false
     )
 
-    val editablePresetExercises = userPrefsRepository.editablePresetExercises.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
-
     val workoutTimerEnabled = userPrefsRepository.workoutTimerEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -556,12 +547,6 @@ class SettingsViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = true
-    )
-
-    val customCategories = exerciseRepository.getCustomCategories().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
     )
 
     val webServerState = webServerManager.state.stateIn(
@@ -982,12 +967,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setEditablePresetExercises(enabled: Boolean) {
-        viewModelScope.launch {
-            userPrefsRepository.setEditablePresetExercises(enabled)
-        }
-    }
-
     fun setWorkoutTimerEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setWorkoutTimerEnabled(enabled)
@@ -1021,31 +1000,6 @@ class SettingsViewModel @Inject constructor(
     fun setKeepScreenOnSetTimer(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setKeepScreenOnSetTimer(enabled)
-        }
-    }
-
-    fun resetPresetExerciseNames(onComplete: () -> Unit) {
-        viewModelScope.launch {
-            exerciseRepository.resetPresetExerciseNames()
-            onComplete()
-        }
-    }
-
-    fun addCustomCategory(name: String) {
-        viewModelScope.launch {
-            exerciseRepository.addCustomCategory(name)
-        }
-    }
-
-    fun updateCustomCategory(category: CustomCategoryEntity) {
-        viewModelScope.launch {
-            exerciseRepository.updateCustomCategory(category)
-        }
-    }
-
-    fun deleteCustomCategory(category: CustomCategoryEntity) {
-        viewModelScope.launch {
-            exerciseRepository.deleteCustomCategory(category.id)
         }
     }
 

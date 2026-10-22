@@ -154,8 +154,6 @@
     <string name="reset_exercise_names">Restablecer Nombres de Ejercicios</string>
     <string name="reset_exercise_names_confirm">¿Restablecer nombres de ejercicios?</string>
     <string name="reset_exercise_names_message">Esto restaurará los nombres de todos los ejercicios predefinidos a sus valores predeterminados. Tus ejercicios personalizados no se verán afectados.</string>
-    <string name="exercise_customization">Personalización de Ejercicios</string>
-    <string name="exercise_customization_desc">Gestiona las opciones de personalización de nombres de ejercicios</string>
     <string name="custom_categories">Categorías Personalizadas</string>
     <string name="custom_categories_desc">Agrega o elimina categorías personalizadas para tus ejercicios</string>
     <string name="add_category">Agregar Categoría</string>
@@ -251,11 +249,9 @@
     <string name="keep_screen_on_set_timer_desc">Evita que la pantalla se apague mientras el temporizador de la serie está en marcha</string>
     <string name="inline_exercise_modifications">Modificaciones en línea</string>
     <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
-    <string name="exercise_media">Multimedia de ejercicios</string>
     <string name="exercise_media_desc">Muestra tu propia imagen o GIF de cada ejercicio durante el entrenamiento</string>
     <string name="exercise_media_large">Vista previa grande</string>
     <string name="exercise_media_large_desc">Rellena el espacio libre bajo las series con una imagen grande cuando hay sitio</string>
-    <string name="exercise_media_manage_desc">Añade, reemplaza o quita la imagen o el GIF de cada ejercicio</string>
     <string name="exercise_media_show">Mostrar en los entrenamientos</string>
     <string name="exercise_media_filter_with">Con multimedia</string>
     <string name="exercise_media_filter_without">Sin multimedia</string>

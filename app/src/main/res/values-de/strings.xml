@@ -154,8 +154,6 @@
     <string name="reset_exercise_names">Übungsnamen Zurücksetzen</string>
     <string name="reset_exercise_names_confirm">Übungsnamen zurücksetzen?</string>
     <string name="reset_exercise_names_message">Dies stellt die Namen aller voreingestellten Übungen auf ihre Standardwerte wieder her. Deine benutzerdefinierten Übungen bleiben unverändert.</string>
-    <string name="exercise_customization">Übungsanpassung</string>
-    <string name="exercise_customization_desc">Verwalten Sie die Optionen zur Anpassung von Übungsnamen</string>
     <string name="custom_categories">Benutzerdefinierte Kategorien</string>
     <string name="custom_categories_desc">Fügen Sie benutzerdefinierte Kategorien für Ihre Übungen hinzu oder entfernen Sie sie</string>
     <string name="add_category">Kategorie Hinzufügen</string>
@@ -251,11 +249,9 @@
     <string name="keep_screen_on_set_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Satz-Timer läuft</string>
     <string name="inline_exercise_modifications">Inline-Änderungen</string>
     <string name="inline_exercise_modifications_desc">Sätze und Übungen während normaler Workouts hinzufügen</string>
-    <string name="exercise_media">Übungsmedien</string>
     <string name="exercise_media_desc">Zeige beim Training dein eigenes Bild oder GIF zu jeder Übung</string>
     <string name="exercise_media_large">Große Vorschau</string>
     <string name="exercise_media_large_desc">Füllt den freien Platz unter den Sätzen mit einem großen Bild, wenn genug Platz ist</string>
-    <string name="exercise_media_manage_desc">Bild oder GIF jeder Übung hinzufügen, ersetzen oder entfernen</string>
     <string name="exercise_media_show">Im Training anzeigen</string>
     <string name="exercise_media_filter_with">Mit Medien</string>
     <string name="exercise_media_filter_without">Ohne Medien</string>

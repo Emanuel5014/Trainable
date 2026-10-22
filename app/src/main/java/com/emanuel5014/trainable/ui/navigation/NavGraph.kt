@@ -21,8 +21,7 @@ import com.emanuel5014.trainable.ui.screens.history.EditWorkoutScreen
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailScreen
 import com.emanuel5014.trainable.ui.screens.routines.ReportScreen
 import com.emanuel5014.trainable.ui.screens.settings.SettingsScreen
-import com.emanuel5014.trainable.ui.screens.settings.ExerciseCustomizationScreen
-import com.emanuel5014.trainable.ui.screens.settings.ExerciseMediaScreen
+import com.emanuel5014.trainable.ui.screens.exercises.ExercisesScreen
 import com.emanuel5014.trainable.ui.screens.settings.JournalTagsScreen
 import com.emanuel5014.trainable.ui.screens.settings.HistoryImportScreen
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsScreen
@@ -61,7 +60,7 @@ fun MainNavGraph(
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToWorkoutSettings = { navController.navigate(WorkoutSettings) },
-                onNavigateToExerciseMedia = { navController.navigate(ExerciseMediaSettings) },
+                onNavigateToExercises = { navController.navigate(Exercises) },
                 onNavigateToAiSettings = { navController.navigate(AiSettings) },
                 onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                 onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
@@ -84,15 +83,9 @@ fun MainNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable<ExerciseCustomization> {
-            ExerciseCustomizationScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
         composable<WorkoutSettings> {
             WorkoutSettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToExerciseCustomization = { navController.navigate(ExerciseCustomization) },
                 onNavigateToOneRepMaxes = { navController.navigate(OneRepMaxes) },
                 onNavigateToJournalTags = { navController.navigate(JournalTags) }
             )
@@ -102,8 +95,8 @@ fun MainNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable<ExerciseMediaSettings> {
-            ExerciseMediaScreen(
+        composable<Exercises> {
+            ExercisesScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

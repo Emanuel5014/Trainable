@@ -135,7 +135,7 @@ import kotlin.system.exitProcess
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToWorkoutSettings: () -> Unit,
-    onNavigateToExerciseMedia: () -> Unit,
+    onNavigateToExercises: () -> Unit,
     onNavigateToAiSettings: () -> Unit,
     onNavigateToPersonalizationSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
@@ -1760,7 +1760,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onNavigateToExerciseMedia() },
+                                .clickable { onNavigateToExercises() },
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -1773,8 +1773,8 @@ fun SettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
-                                    Text(stringResource(R.string.exercise_media), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                                    Text(stringResource(R.string.exercise_media_manage_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                                    Text(stringResource(R.string.exercises_title), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                                    Text(stringResource(R.string.exercises_manage_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)

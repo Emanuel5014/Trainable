@@ -69,7 +69,6 @@ import com.emanuel5014.trainable.util.WeightUnitConverter
 @Composable
 fun WorkoutSettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToExerciseCustomization: () -> Unit,
     onNavigateToOneRepMaxes: () -> Unit = {},
     onNavigateToJournalTags: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
@@ -120,7 +119,6 @@ fun WorkoutSettingsScreen(
             SettingsSection(title = stringResource(R.string.workout_section_programming)) {
                 RoutinesAndExercisesCard(
                     viewModel = viewModel,
-                    onNavigateToExerciseCustomization = onNavigateToExerciseCustomization,
                     onNavigateToOneRepMaxes = onNavigateToOneRepMaxes
                 )
             }
@@ -321,11 +319,10 @@ private fun TimersAndCardioCard(viewModel: SettingsViewModel) {
     }
 }
 
-/** How routines are written: exercise names, a weight to start from and the %1RM programming tools. */
+/** How routines are written: a weight to start from and the %1RM programming tools. */
 @Composable
 private fun RoutinesAndExercisesCard(
     viewModel: SettingsViewModel,
-    onNavigateToExerciseCustomization: () -> Unit,
     onNavigateToOneRepMaxes: () -> Unit
 ) {
     val weightUnit by viewModel.weightUnit.collectAsState()
@@ -335,15 +332,6 @@ private fun RoutinesAndExercisesCard(
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            SettingNavRow(
-                icon = Icons.Rounded.Edit,
-                title = stringResource(R.string.exercise_customization),
-                description = stringResource(R.string.exercise_customization_desc),
-                onClick = onNavigateToExerciseCustomization
-            )
-
-            SettingDivider()
-
             // A weight per exercise of a routine for its first workouts
             SettingSwitchRow(
                 icon = Icons.Rounded.Scale,

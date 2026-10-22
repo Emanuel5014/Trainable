@@ -50,9 +50,6 @@ object PhysicalCheck
 object PhysicalCheckSettings
 
 @Serializable
-object ExerciseCustomization
-
-@Serializable
 object WorkoutSettings
 
 @Serializable
@@ -65,7 +62,7 @@ object PersonalizationSettings
 object NotificationSettings
 
 @Serializable
-object ExerciseMediaSettings
+object Exercises
 
 @Serializable
 object JournalTags

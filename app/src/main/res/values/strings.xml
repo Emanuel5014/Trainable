@@ -154,8 +154,6 @@
     <string name="reset_exercise_names">Reset Exercise Names</string>
     <string name="reset_exercise_names_confirm">Reset Exercise Names?</string>
     <string name="reset_exercise_names_message">This will restore all preset exercise names to their defaults. Your custom exercises will not be affected.</string>
-    <string name="exercise_customization">Exercise Customization</string>
-    <string name="exercise_customization_desc">Manage exercise name customization options</string>
     <string name="custom_categories">Custom Categories</string>
     <string name="custom_categories_desc">Add or remove custom categories for your exercises</string>
     <string name="add_category">Add Category</string>
@@ -251,11 +249,9 @@
     <string name="keep_screen_on_set_timer_desc">Prevent the screen from turning off while the set timer is running</string>
     <string name="inline_exercise_modifications">Inline Modifications</string>
     <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
-    <string name="exercise_media">Exercise Media</string>
     <string name="exercise_media_desc">Show your own image or GIF of each exercise during workouts</string>
     <string name="exercise_media_large">Large Preview</string>
     <string name="exercise_media_large_desc">Fill the free space under the sets with a big image when there is room</string>
-    <string name="exercise_media_manage_desc">Add, replace or remove the image or GIF of each exercise</string>
     <string name="exercise_media_show">Show in Workouts</string>
     <string name="exercise_media_filter_with">With media</string>
     <string name="exercise_media_filter_without">Without media</string>
