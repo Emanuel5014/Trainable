@@ -63,20 +63,16 @@ import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -107,7 +103,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
 import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -119,7 +114,6 @@ import com.emanuel5014.trainable.ui.components.LoadPercentChip
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -1223,46 +1217,3 @@ fun LogSetButton(
 }
 
 
-/** The reps of a Time & Reps set in its timer card: big − / + so they can be counted up mid-interval with one thumb. */
-@Composable
-internal fun RepsDoneStepper(reps: Int, onRepsChange: (Int) -> Unit, hapticEnabled: Boolean) {
-    val haptic = LocalHapticFeedback.current
-    fun change(to: Int) {
-        if (to < 0 || to > TimeAndReps.MAX_REPS) return
-        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        onRepsChange(to)
-    }
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = stringResource(R.string.reps_done_label).uppercase(),
-            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-            color = OnSurfaceVariant,
-            fontWeight = FontWeight.ExtraBold
-        )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            FilledIconButton(
-                onClick = { change(reps - 1) },
-                enabled = reps > 0,
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = SurfaceContainerHigh, contentColor = OnSurface),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.reps_decrease))
-            }
-            Text(
-                text = "$reps",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = Primary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.widthIn(min = 56.dp)
-            )
-            FilledIconButton(
-                onClick = { change(reps + 1) },
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Primary, contentColor = OnPrimary),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.reps_increase))
-            }
-        }
-    }
-}

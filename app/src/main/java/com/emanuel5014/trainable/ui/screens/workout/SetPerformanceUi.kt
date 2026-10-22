@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.height
+import com.emanuel5014.trainable.ui.components.motion.RollingText
 import com.emanuel5014.trainable.ui.components.HubChip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,7 +52,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.Technique
@@ -123,7 +128,10 @@ internal fun MiniSetEntry(
     }
 }
 
-/** − value +, the big version for the reps of a mini-set, the small one for assisted and partial reps. */
+/**
+ * − value +, as one connected group: the big version for the reps of a mini-set or of a Time & Reps set, the small one
+ * for assisted and partial reps. The value rolls when it changes.
+ */
 @Composable
 internal fun CountStepper(
     value: Int,
@@ -140,33 +148,44 @@ internal fun CountStepper(
         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         onValueChange(to)
     }
-    val buttonSize = if (big) 48.dp else 36.dp
+    val height = if (big) 48.dp else 36.dp
+    val outer = height / 2
+    val inner = 6.dp
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         label?.let {
             Text(text = it.uppercase(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontWeight = FontWeight.ExtraBold)
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (big) 16.dp else 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
             FilledIconButton(
                 onClick = { change(value - 1) },
                 enabled = value > min,
+                shape = RoundedCornerShape(topStart = outer, bottomStart = outer, topEnd = inner, bottomEnd = inner),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = SurfaceContainerHighest, contentColor = OnSurface),
-                modifier = Modifier.size(buttonSize)
+                modifier = Modifier.size(width = if (big) 56.dp else 44.dp, height = height)
             ) {
                 Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.reps_decrease), modifier = Modifier.size(if (big) 24.dp else 18.dp))
             }
-            Text(
-                text = "$value",
-                style = if (big) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = if (value > 0 || big) Primary else OnSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.widthIn(min = if (big) 56.dp else 28.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .height(height)
+                    .widthIn(min = if (big) 64.dp else 36.dp)
+                    .clip(RoundedCornerShape(inner))
+                    .background(SurfaceContainerHigh),
+                contentAlignment = Alignment.Center
+            ) {
+                RollingText(
+                    text = "$value",
+                    style = if (big) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    color = if (value > 0 || big) Primary else OnSurfaceVariant
+                )
+            }
             FilledIconButton(
                 onClick = { change(value + 1) },
                 enabled = value < max,
+                shape = RoundedCornerShape(topStart = inner, bottomStart = inner, topEnd = outer, bottomEnd = outer),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (big) Primary else SurfaceContainerHighest, contentColor = if (big) OnPrimary else OnSurface),
-                modifier = Modifier.size(buttonSize)
+                modifier = Modifier.size(width = if (big) 56.dp else 44.dp, height = height)
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.reps_increase), modifier = Modifier.size(if (big) 24.dp else 18.dp))
             }

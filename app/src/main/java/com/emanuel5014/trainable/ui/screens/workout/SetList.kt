@@ -1,7 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.components.SegmentedShapes
-import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListState
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
@@ -393,10 +393,14 @@ internal fun ColumnScope.SetList(
 
                                 if (set.isTimeAndReps) {
                                     // What was done in the interval: counted while the clock runs, fixed up once it stops
-                                    RepsDoneStepper(
-                                        reps = set.reps,
-                                        onRepsChange = { viewModel.updateSetReps(targetIndex, index, it) },
-                                        hapticEnabled = state.hapticEnabled
+                                    CountStepper(
+                                        value = set.reps,
+                                        onValueChange = { viewModel.updateSetReps(targetIndex, index, it) },
+                                        min = 0,
+                                        max = TimeAndReps.MAX_REPS,
+                                        hapticEnabled = state.hapticEnabled,
+                                        big = true,
+                                        label = stringResource(R.string.reps_done_label)
                                     )
                                 }
 
