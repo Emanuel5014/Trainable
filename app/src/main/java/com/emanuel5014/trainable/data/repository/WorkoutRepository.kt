@@ -27,6 +27,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
@@ -732,6 +733,9 @@ class WorkoutRepository @Inject constructor(
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getLastFinishedSetsForExercise(exerciseId)
+
+    /** Every completed set of the exercise in a finished workout, newest first (see [WorkoutDao.getSetHistoryForExercise]). */
+    fun getSetHistoryForExercise(exerciseId: Int): Flow<List<ExerciseSetWithSession>> = workoutDao.getSetHistoryForExercise(exerciseId)
 
     /** Weight in kg the exercise was last lifted with in any routine, null if never. */
     suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float? = workoutDao.getLastWorkingWeightForExercise(exerciseId)
