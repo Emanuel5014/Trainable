@@ -41,7 +41,12 @@ sealed interface ResolvedExercise {
  * in the language it had at export time, so a name is looked up as stored, then through the translations of every
  * language; custom exercises are told by their name alone (their ids mean nothing on another device).
  */
-class HistoryExerciseResolver(known: List<ExerciseEntity>, customCategories: List<String>) {
+class HistoryExerciseResolver(
+    known: List<ExerciseEntity>,
+    customCategories: List<String>,
+    /** The exercises as they are, when [known] carries merged-away ones under their old names (see ExerciseMerges.aliasView). */
+    realExercises: List<ExerciseEntity> = known
+) {
     private val byName: Map<String, List<ExerciseEntity>> =
         known.sortedBy { it.id }.groupBy { HistoryCsvColumns.fold(it.nome) }
 
@@ -52,6 +57,8 @@ class HistoryExerciseResolver(known: List<ExerciseEntity>, customCategories: Lis
         known.forEach { putIfAbsent(HistoryCsvColumns.fold(it.categoria), it.categoria) }
         customCategories.forEach { putIfAbsent(HistoryCsvColumns.fold(it), it) }
     }
+
+    private val realById: Map<Int, ExerciseEntity> = realExercises.associateBy { it.id }
 
     private val resolved = mutableMapOf<Triple<String, String, Boolean?>, ResolvedExercise>()
 
@@ -108,8 +115,9 @@ class HistoryExerciseResolver(known: List<ExerciseEntity>, customCategories: Lis
     fun categoryOf(text: String): String? = categories[HistoryCsvColumns.fold(text)]
 
     // Two spellings of the same exercise ("Pull-ups", "Trazioni") are one exercise of the file
+    // The match may be a winner under the name of an exercise merged into it: what is reported is the exercise itself
     private fun existing(exercise: ExerciseEntity, viaTranslation: Boolean) =
-        ResolvedExercise.Existing("exercise:${exercise.id}", exercise, viaTranslation)
+        ResolvedExercise.Existing("exercise:${exercise.id}", realById[exercise.id] ?: exercise, viaTranslation)
 
     companion object {
         /** The stored (English) name an exercise name of any language stands for, the name itself when it is none. */

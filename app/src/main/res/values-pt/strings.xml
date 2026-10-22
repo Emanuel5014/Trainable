@@ -1578,7 +1578,7 @@
     <string name="exercise_msg_deleted">Excluído</string>
     <string name="exercise_msg_restored">Restaurado</string>
     <string name="exercise_msg_cannot_merge">Esses exercícios não podem ser mesclados</string>
-    <string name="exercise_msg_cannot_merge_cardio">Um exercício de cardio e um de força não podem ser mesclados</string>
+    <string name="exercise_msg_cannot_merge_cardio">Exercícios de cardio não podem ser mesclados</string>
     <string name="exercise_media_filter_hidden">Ocultos</string>
     <plurals name="exercise_merge_n_sets">
         <item quantity="one">%d série</item>
@@ -1599,5 +1599,10 @@
     <plurals name="exercise_merge_n_others">
         <item quantity="one">%d outro registro</item>
         <item quantity="other">%d outros registros</item>
+    </plurals>
+    <string name="exercise_msg_cannot_merge_workout">Termine antes o treino em andamento</string>
+    <plurals name="exercise_merge_shared_warning">
+        <item quantity="one">Em %d treino estão os dois exercícios: ao editá-lo aparecem como um só.</item>
+        <item quantity="other">Em %d treinos estão os dois exercícios: ao editá-los aparecem como um só.</item>
     </plurals>
 </resources>

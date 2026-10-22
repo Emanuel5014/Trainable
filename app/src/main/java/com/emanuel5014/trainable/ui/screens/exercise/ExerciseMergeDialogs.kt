@@ -53,6 +53,13 @@ fun MergePreviewDialog(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(mergePreviewText(preview, loserName))
+                    if (preview.sharedWorkouts > 0) {
+                        Text(
+                            text = pluralStringResource(R.plurals.exercise_merge_shared_warning, preview.sharedWorkouts, preview.sharedWorkouts),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurface
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.exercise_merge_footer, loserName),
                         style = MaterialTheme.typography.bodySmall,

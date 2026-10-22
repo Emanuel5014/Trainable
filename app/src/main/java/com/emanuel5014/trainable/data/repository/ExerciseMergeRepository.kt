@@ -23,8 +23,8 @@ class ExerciseMergeRepository @Inject constructor(
     private val exerciseDao: ExerciseDao,
     @ApplicationContext private val context: Context
 ) {
-    /** What merging [loserId] into another exercise would move. */
-    suspend fun preview(loserId: Int): MergePreview = mergeDao.preview(loserId)
+    /** What merging [loserId] into [winnerId] would move. */
+    suspend fun preview(loserId: Int, winnerId: Int): MergePreview = mergeDao.preview(loserId, winnerId)
 
     suspend fun merge(winnerId: Int, loserId: Int): MergeOutcome {
         val outcome = mergeDao.merge(winnerId, loserId, System.currentTimeMillis())

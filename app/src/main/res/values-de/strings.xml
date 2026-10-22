@@ -1575,7 +1575,7 @@
     <string name="exercise_msg_deleted">Gelöscht</string>
     <string name="exercise_msg_restored">Wiederhergestellt</string>
     <string name="exercise_msg_cannot_merge">Diese Übungen lassen sich nicht zusammenführen</string>
-    <string name="exercise_msg_cannot_merge_cardio">Eine Cardio- und eine Kraftübung lassen sich nicht zusammenführen</string>
+    <string name="exercise_msg_cannot_merge_cardio">Cardio-Übungen lassen sich nicht zusammenführen</string>
     <string name="exercise_media_filter_hidden">Ausgeblendet</string>
     <plurals name="exercise_merge_n_sets">
         <item quantity="one">%d Satz</item>
@@ -1596,5 +1596,10 @@
     <plurals name="exercise_merge_n_others">
         <item quantity="one">%d weiterer Eintrag</item>
         <item quantity="other">%d weitere Einträge</item>
+    </plurals>
+    <string name="exercise_msg_cannot_merge_workout">Beende zuerst das laufende Training</string>
+    <plurals name="exercise_merge_shared_warning">
+        <item quantity="one">In %d Training sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
+        <item quantity="other">In %d Trainings sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
     </plurals>
 </resources>

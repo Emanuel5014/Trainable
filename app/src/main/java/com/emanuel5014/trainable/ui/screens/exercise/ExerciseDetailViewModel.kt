@@ -48,7 +48,7 @@ data class ExerciseDetailActions(
         fun of(exercise: ExerciseEntity, merges: ExerciseMergeState): ExerciseDetailActions {
             val mergedAway = merges.asLoser != null
             return ExerciseDetailActions(
-                canMerge = !mergedAway,
+                canMerge = !mergedAway && !ExerciseMerges.isCardio(exercise),
                 canRemove = !exercise.isDeleted && !mergedAway,
                 canRestore = exercise.isDeleted && !mergedAway
             )
@@ -57,7 +57,7 @@ data class ExerciseDetailActions(
 }
 
 /** Tells the screen what just happened, to show a short confirmation. */
-enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO }
+enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT }
 
 /**
  * What the exercise detail screen shows. [exerciseId] says which exercise the state is about: the screen shows nothing
@@ -139,9 +139,9 @@ class ExerciseDetailViewModel @Inject constructor(
         requestedId.value = exerciseId
     }
 
-    /** What merging the open exercise into another would move. */
-    suspend fun previewMerge(): MergePreview =
-        mergeRepository.preview(requireNotNull(requestedId.value) { "No exercise is open" })
+    /** What merging the open exercise into [winnerId] would move. */
+    suspend fun previewMerge(winnerId: Int): MergePreview =
+        mergeRepository.preview(loserId = requireNotNull(requestedId.value) { "No exercise is open" }, winnerId = winnerId)
 
     /** Merges the open exercise into [winnerId]; [onMerged] gets the id to show next (the winner). */
     fun merge(winnerId: Int, onMerged: (Int) -> Unit) {
@@ -153,8 +153,11 @@ class ExerciseDetailViewModel @Inject constructor(
                     onMerged(winnerId)
                 }
                 is MergeOutcome.Rejected -> _messages.tryEmit(
-                    if (outcome.check == MergeCheck.CARDIO_MISMATCH) ExerciseDetailMessage.CANNOT_MERGE_CARDIO
-                    else ExerciseDetailMessage.CANNOT_MERGE
+                    when (outcome.check) {
+                        MergeCheck.CARDIO_EXERCISE -> ExerciseDetailMessage.CANNOT_MERGE_CARDIO
+                        MergeCheck.LOSER_IN_ACTIVE_WORKOUT -> ExerciseDetailMessage.CANNOT_MERGE_WORKOUT
+                        else -> ExerciseDetailMessage.CANNOT_MERGE
+                    }
                 )
             }
         }

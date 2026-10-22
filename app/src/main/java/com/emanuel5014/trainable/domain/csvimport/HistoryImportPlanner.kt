@@ -45,7 +45,9 @@ data class KnownData(
     val customCategories: List<String>,
     val plans: List<WorkoutPlanEntity>,
     /** Finished workouts, to tell what an import would add twice. */
-    val sessions: List<KnownSession>
+    val sessions: List<KnownSession>,
+    /** The exercises as they are: [exercises] may carry merged-away ones under their old names to match against. */
+    val realExercises: List<ExerciseEntity> = exercises
 )
 
 /** A set reduced to what tells two copies of a workout apart. */
@@ -181,7 +183,7 @@ object HistoryImportPlanner {
         zone: ZoneId = ZoneId.systemDefault()
     ): ImportPlan {
         val issues = history.issues.toMutableList()
-        val resolver = HistoryExerciseResolver(known.exercises, known.customCategories)
+        val resolver = HistoryExerciseResolver(known.exercises, known.customCategories, known.realExercises)
         val valid = history.rows.mapNotNull { validate(it, resolver, options, issues) }
 
         val userPlans = known.plans.filter { !it.isSystemPlan }

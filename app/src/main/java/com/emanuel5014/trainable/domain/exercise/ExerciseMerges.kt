@@ -5,8 +5,11 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvColumns
 import com.emanuel5014.trainable.domain.csvimport.ResolvedExercise
 
-/** Why two exercises can or cannot be merged. */
-enum class MergeCheck { OK, SAME_EXERCISE, NOT_FOUND, WINNER_HIDDEN, LOSER_ALREADY_MERGED, CARDIO_MISMATCH }
+/**
+ * Why two exercises can or cannot be merged. [CARDIO_EXERCISE]: the cardio history is linked to an exercise by its name,
+ * which a merge does not move. [LOSER_IN_ACTIVE_WORKOUT] is decided by the database (it needs the workouts in progress).
+ */
+enum class MergeCheck { OK, SAME_EXERCISE, NOT_FOUND, WINNER_HIDDEN, LOSER_ALREADY_MERGED, CARDIO_EXERCISE, LOSER_IN_ACTIVE_WORKOUT }
 
 /** One merge as an exercise sees it: the exercise on the other side, and whether the merge can be undone now. */
 data class ExerciseMergeInfo(
@@ -43,7 +46,7 @@ object ExerciseMerges {
         if (winner.id == loser.id) return MergeCheck.SAME_EXERCISE
         if (merges.any { it.loserId == loser.id }) return MergeCheck.LOSER_ALREADY_MERGED
         if (winner.isDeleted) return MergeCheck.WINNER_HIDDEN
-        if (winner.isCardio() != loser.isCardio()) return MergeCheck.CARDIO_MISMATCH
+        if (isCardio(winner) || isCardio(loser)) return MergeCheck.CARDIO_EXERCISE
         return MergeCheck.OK
     }
 
@@ -91,5 +94,5 @@ object ExerciseMerges {
     fun selectionAfterMerge(selected: Set<Int>, loserId: Int, winnerId: Int): Set<Int> =
         if (loserId in selected) selected + winnerId else selected
 
-    private fun ExerciseEntity.isCardio() = categoria.equals(ResolvedExercise.CARDIO, ignoreCase = true)
+    fun isCardio(exercise: ExerciseEntity): Boolean = exercise.categoria.equals(ResolvedExercise.CARDIO, ignoreCase = true)
 }

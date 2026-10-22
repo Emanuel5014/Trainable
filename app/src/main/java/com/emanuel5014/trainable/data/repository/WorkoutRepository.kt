@@ -350,7 +350,8 @@ class WorkoutRepository @Inject constructor(
                             if (match.exercise.isDeleted) {
                                 exerciseDao.setExerciseDeleted(match.exercise.id, false)
                                 val index = knownExercises.indexOfFirst { it.id == match.exercise.id }
-                                if (index >= 0) knownExercises[index] = match.exercise.copy(isDeleted = false)
+                                // The real row, not the match: it can be a winner under the name of an exercise merged into it
+                                if (index >= 0) knownExercises[index] = knownExercises[index].copy(isDeleted = false)
                             }
                             match.exercise.id
                         }

@@ -125,6 +125,7 @@ fun ExerciseDetailDialog(
                 ExerciseDetailMessage.RESTORED -> context.getString(R.string.exercise_msg_restored)
                 ExerciseDetailMessage.CANNOT_MERGE -> context.getString(R.string.exercise_msg_cannot_merge)
                 ExerciseDetailMessage.CANNOT_MERGE_CARDIO -> context.getString(R.string.exercise_msg_cannot_merge_cardio)
+                ExerciseDetailMessage.CANNOT_MERGE_WORKOUT -> context.getString(R.string.exercise_msg_cannot_merge_workout)
             }
             snackbarHost.showSnackbar(text)
         }
@@ -184,7 +185,7 @@ fun ExerciseDetailDialog(
     mergeTarget?.let { winner ->
         LaunchedEffect(winner.id) {
             preview = null
-            preview = viewModel.previewMerge()
+            preview = viewModel.previewMerge(winner.id)
         }
         MergePreviewDialog(
             loserName = name,

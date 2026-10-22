@@ -1578,7 +1578,7 @@
     <string name="exercise_msg_deleted">Eliminato</string>
     <string name="exercise_msg_restored">Ripristinato</string>
     <string name="exercise_msg_cannot_merge">Questi esercizi non si possono unire</string>
-    <string name="exercise_msg_cannot_merge_cardio">Un esercizio cardio e uno di forza non si possono unire</string>
+    <string name="exercise_msg_cannot_merge_cardio">Gli esercizi cardio non si possono unire</string>
     <string name="exercise_media_filter_hidden">Nascosti</string>
     <plurals name="exercise_merge_n_sets">
         <item quantity="one">%d serie</item>
@@ -1599,5 +1599,10 @@
     <plurals name="exercise_merge_n_others">
         <item quantity="one">%d altro record</item>
         <item quantity="other">%d altri record</item>
+    </plurals>
+    <string name="exercise_msg_cannot_merge_workout">Termina prima l\'allenamento in corso</string>
+    <plurals name="exercise_merge_shared_warning">
+        <item quantity="one">In %d allenamento ci sono entrambi gli esercizi: quando lo modifichi compaiono come un solo esercizio.</item>
+        <item quantity="other">In %d allenamenti ci sono entrambi gli esercizi: quando li modifichi compaiono come un solo esercizio.</item>
     </plurals>
 </resources>

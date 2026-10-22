@@ -19,7 +19,9 @@ data class MergePreview(
     val routines: Int,
     val maxes: Int,
     val swaps: Int,
-    val programEdits: Int
+    val programEdits: Int,
+    /** Workouts that have both exercises: they show as one exercise when edited. */
+    val sharedWorkouts: Int = 0
 ) {
     val isEmpty: Boolean get() = sets + routineEntries + maxes + swaps + programEdits == 0
 
@@ -90,15 +92,33 @@ interface ExerciseMergeDao {
     @Query("SELECT COUNT(*) FROM session_prescription_edits WHERE exercise_id = :id")
     suspend fun countProgramEdits(id: Int): Int
 
+    /** Workouts with sets of both exercises. */
+    @Query("SELECT COUNT(*) FROM (SELECT session_id FROM set_logs WHERE exercise_id IN (:loserId, :winnerId) GROUP BY session_id HAVING COUNT(DISTINCT exercise_id) = 2)")
+    suspend fun countSharedWorkouts(loserId: Int, winnerId: Int): Int
+
+    /**
+     * True when a workout not yet finished uses the exercise (sets, a place in its routine, or a swap to it). A workout in
+     * progress holds the exercise ids it loaded: merged under its feet, it would go on writing to the one that is hidden.
+     */
+    @Query(
+        """
+        SELECT EXISTS(SELECT 1 FROM set_logs sl JOIN workout_sessions ws ON ws.id = sl.session_id WHERE sl.exercise_id = :id AND ws.is_finished = 0)
+            OR EXISTS(SELECT 1 FROM plan_exercises pe JOIN workout_sessions ws ON ws.plan_id = pe.plan_id WHERE pe.exercise_id = :id AND ws.is_finished = 0)
+            OR EXISTS(SELECT 1 FROM session_exercise_swaps sw JOIN workout_sessions ws ON ws.id = sw.session_id WHERE sw.replacement_exercise_id = :id AND ws.is_finished = 0)
+        """
+    )
+    suspend fun isUsedByUnfinishedWorkout(id: Int): Boolean
+
     @Transaction
-    suspend fun preview(loserId: Int): MergePreview = MergePreview(
+    suspend fun preview(loserId: Int, winnerId: Int): MergePreview = MergePreview(
         sets = countSets(loserId),
         workouts = countWorkouts(loserId),
         routineEntries = countRoutineEntries(loserId),
         routines = countRoutines(loserId),
         maxes = countMaxes(loserId),
         swaps = countSwaps(loserId),
-        programEdits = countProgramEdits(loserId)
+        programEdits = countProgramEdits(loserId),
+        sharedWorkouts = countSharedWorkouts(loserId, winnerId)
     )
 
     // --- note which rows move ---
@@ -160,6 +180,7 @@ interface ExerciseMergeDao {
         val check = ExerciseMerges.check(winner, loser, getAllMerges())
         if (check != MergeCheck.OK) return MergeOutcome.Rejected(check)
         requireNotNull(loser)
+        if (isUsedByUnfinishedWorkout(loserId)) return MergeOutcome.Rejected(MergeCheck.LOSER_IN_ACTIVE_WORKOUT)
 
         val mergeId = insertMerge(
             ExerciseMergeEntity(
