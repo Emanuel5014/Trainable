@@ -42,6 +42,10 @@ object HeaderCollapse {
     /** Where the header goes when the list is moved by code (not by a finger): away from the top it collapses. */
     fun snapTarget(listScrolled: Boolean): Float = if (listScrolled) 1f else 0f
 
+    /** The offset that keeps the same fraction when the travel changes (the header got taller or shorter). */
+    fun rescaleOffset(offsetPx: Float, oldTravelPx: Float, newTravelPx: Float): Float =
+        if (oldTravelPx <= 0f || newTravelPx <= 0f) 0f else fraction(offsetPx, oldTravelPx) * newTravelPx
+
     /** Where a header let go half way ends up: the nearer end, 0 (expanded) or 1 (one row). */
     fun settleTarget(offsetPx: Float, travelPx: Float): Float = if (fraction(offsetPx, travelPx) >= 0.5f) 1f else 0f
 
@@ -72,6 +76,12 @@ class HeaderCollapseState {
     var offsetPx by mutableFloatStateOf(0f)
 
     val fraction: Float get() = HeaderCollapse.fraction(offsetPx, travelPx)
+
+    /** The header measured another height: it stays as collapsed as it was. */
+    fun updateTravel(newTravelPx: Float) {
+        offsetPx = HeaderCollapse.rescaleOffset(offsetPx, travelPx, newTravelPx)
+        travelPx = newTravelPx
+    }
 
     /** Whether scrolling up may collapse the header: not when every set already fits on screen, it would only hide the name. */
     var canCollapse: () -> Boolean = { true }

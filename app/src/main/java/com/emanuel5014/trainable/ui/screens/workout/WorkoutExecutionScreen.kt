@@ -1,7 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.runtime.derivedStateOf
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
@@ -139,7 +140,7 @@ internal const val MEDIA_CARD_KEY = "exercise_media_card"
 /** The large media card only appears when at least this much room is left under the sets. */
 private val MEDIA_CARD_MIN_HEIGHT = 140.dp
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, kotlinx.coroutines.FlowPreview::class)
 @Composable
 fun WorkoutExecutionScreen(
     onNavigateBack: () -> Unit,
@@ -510,12 +511,19 @@ fun WorkoutExecutionScreen(
                                 // Only a list that does not fit on screen has anything to gain from a collapsed header
                                 headerCollapse.canCollapse = { exerciseListState.canScrollForward || exerciseListState.canScrollBackward }
 
-                                // A list moved by code (to the set being done) away from the top takes the header with it
-                                val listScrolled by remember(exerciseListState) {
-                                    derivedStateOf { exerciseListState.firstVisibleItemIndex > 0 || exerciseListState.firstVisibleItemScrollOffset > 0 }
+                                // A list moved by code (to the set being done) away from the top takes the header with it.
+                                // Each step runs to its end: a list that settles back while the header collapses must not
+                                // leave the header half way.
+                                LaunchedEffect(headerCollapse, exerciseListState) {
+                                    snapshotFlow { exerciseListState.firstVisibleItemIndex > 0 || exerciseListState.firstVisibleItemScrollOffset > 0 }
+                                        .filter { it }
+                                        .collect { headerCollapse.snapTo(HeaderCollapse.snapTarget(listScrolled = true)) }
                                 }
-                                LaunchedEffect(listScrolled) {
-                                    if (listScrolled) headerCollapse.snapTo(HeaderCollapse.snapTarget(listScrolled = true))
+                                // Whatever leaves the header half way (a drag that stopped, a list that settled) ends at the nearer end
+                                LaunchedEffect(headerCollapse, exerciseListState) {
+                                    snapshotFlow { headerCollapse.offsetPx }
+                                        .debounce(400)
+                                        .collect { if (!exerciseListState.isScrollInProgress) headerCollapse.settle() }
                                 }
 
                                 SetList(

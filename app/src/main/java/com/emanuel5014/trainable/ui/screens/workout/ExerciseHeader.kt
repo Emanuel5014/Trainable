@@ -125,7 +125,7 @@ internal fun ExerciseHeader(
             ?.measure(Constraints(minWidth = width, maxWidth = width, minHeight = 0, maxHeight = Constraints.Infinity))
         if (expanded != null) {
             val travel = (expanded.height - compactPx).coerceAtLeast(0).toFloat()
-            if (abs(collapse.travelPx - travel) > 0.5f) collapse.travelPx = travel
+            if (abs(collapse.travelPx - travel) > 0.5f) collapse.updateTravel(travel)
         }
         val compact = measurables.firstOrNull { it.layoutId == COMPACT_ID }?.measure(Constraints.fixed(width, compactPx))
         val expandedHeight = expanded?.height ?: (compactPx + collapse.travelPx.roundToInt())
