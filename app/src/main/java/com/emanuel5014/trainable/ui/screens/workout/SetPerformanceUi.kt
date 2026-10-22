@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.components.HubChip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,17 +66,11 @@ import com.emanuel5014.trainable.ui.theme.Tertiary
  */
 @Composable
 internal fun MiniSetOfferButton(missing: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    GymButton(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        containerColor = Tertiary.copy(alpha = 0.15f),
-        contentColor = Tertiary,
-        height = 44
-    ) {
-        Icon(Icons.Rounded.Replay, contentDescription = null, modifier = Modifier.size(18.dp))
-        Spacer(modifier = Modifier.width(8.dp))
+    HubChip(onClick = onClick, containerColor = Tertiary.copy(alpha = 0.15f), modifier = modifier) {
+        Icon(Icons.Rounded.Replay, contentDescription = null, tint = Tertiary, modifier = Modifier.size(18.dp))
         Text(
             text = if (missing > 0) stringResource(R.string.mini_set_offer, missing) else stringResource(R.string.mini_set_offer_free),
+            color = Tertiary,
             fontWeight = FontWeight.ExtraBold,
             style = MaterialTheme.typography.labelLarge
         )

@@ -487,7 +487,7 @@ internal fun SetEditorPanel(
     afterPercentChip: @Composable () -> Unit = {},
     afterExtras: @Composable () -> Unit = {}
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (exercise?.isTimeAndReps == true) {
             TimeRepsInput(
                 seconds = set.timeSeconds ?: exercise.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
@@ -584,6 +584,7 @@ private fun SetPanel(
                 expansion = expansion,
                 prescriptionLabels = prescriptionLabels,
                 onClick = if (editing) null else ({ ui.isEditingValues = true }),
+                showDetail = !editing,
                 trailing = {
                     if (editing) {
                         // The rest card is hidden while a tapped set is edited: keep the countdown in sight
@@ -757,6 +758,8 @@ private fun SetCard(
     expansion: () -> Float,
     prescriptionLabels: PrescriptionLabels,
     onClick: (() -> Unit)?,
+    /** What the set asks (percentage, techniques) under its value; the editor leaves it out, the list above has it. */
+    showDetail: Boolean,
     trailing: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -817,7 +820,7 @@ private fun SetCard(
                 set.repsRange?.let { stringResource(R.string.reps_goal, it.text) }
             ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
                 listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
-            if (detail.isNotEmpty()) {
+            if (showDetail && detail.isNotEmpty()) {
                 HubSlot(expansion = expansion, from = 0.25f, to = 0.5f) {
                     Text(
                         text = detail.joinToString(" · "),
