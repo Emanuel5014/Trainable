@@ -1,10 +1,17 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.ui.graphics.Shape
+import com.emanuel5014.trainable.ui.components.motion.RollingText
+import com.emanuel5014.trainable.ui.components.motion.RestWave
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,8 +68,10 @@ fun RestTimerSection(
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+        enter = scaleIn(WorkoutMotion.spatial(), initialScale = 0.92f) + fadeIn(WorkoutMotion.effects()) +
+            expandVertically(WorkoutMotion.spatial(), expandFrom = Alignment.Bottom),
+        exit = scaleOut(WorkoutMotion.spatial(), targetScale = 0.92f) + fadeOut(WorkoutMotion.effects()) +
+            shrinkVertically(WorkoutMotion.spatial(), shrinkTowards = Alignment.Bottom),
         modifier = modifier
     ) {
         val e = expansion()
@@ -89,7 +98,9 @@ fun RestTimerSection(
                             color = OnTertiary,
                             trackColor = OnTertiary.copy(alpha = 0.2f),
                             stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                            trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
+                            trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
+                            // The wave swells over the last ten seconds
+                            amplitude = { RestWave.amplitude(remainingSeconds) }
                         )
                         Icon(
                             imageVector = Icons.Rounded.Timer,
@@ -110,7 +121,7 @@ fun RestTimerSection(
                         }
                         val minutes = remainingSeconds / 60
                         val seconds = remainingSeconds % 60
-                        Text(
+                        RollingText(
                             text = String.format("%d:%02d", minutes, seconds),
                             style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
                             color = OnTertiary,
@@ -122,8 +133,14 @@ fun RestTimerSection(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    if (showSubtract) TimerAdjustButton(label = "−${subtractSeconds}s", onClick = onSubtractTime)
-                    if (showAdd) TimerAdjustButton(label = "+${addSeconds}s", onClick = onAddTime)
+                    TimerAdjustButtons(
+                        showSubtract = showSubtract,
+                        subtractLabel = "−${subtractSeconds}s",
+                        onSubtract = onSubtractTime,
+                        showAdd = showAdd,
+                        addLabel = "+${addSeconds}s",
+                        onAdd = onAddTime
+                    )
 
                     FilledIconButton(
                         onClick = onSkip,
@@ -145,15 +162,35 @@ fun RestTimerSection(
 
 /** A small text button on a timer card that moves the countdown, e.g. "+30s" or "−10s". */
 @Composable
-fun TimerAdjustButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun TimerAdjustButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, shape: Shape = IconButtonDefaults.filledShape) {
     FilledIconButton(
         onClick = onClick,
         modifier = modifier,
+        shape = shape,
         colors = IconButtonDefaults.filledIconButtonColors(
             containerColor = OnTertiary.copy(alpha = 0.1f),
             contentColor = OnTertiary
         )
     ) {
         Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+/** The two time buttons of a timer card; when both are there they are one connected pair. */
+@Composable
+fun TimerAdjustButtons(
+    showSubtract: Boolean,
+    subtractLabel: String,
+    onSubtract: () -> Unit,
+    showAdd: Boolean,
+    addLabel: String,
+    onAdd: () -> Unit
+) {
+    val pair = showSubtract && showAdd
+    val start = if (pair) RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 6.dp, bottomEnd = 6.dp) else IconButtonDefaults.filledShape
+    val end = if (pair) RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp, topEnd = 20.dp, bottomEnd = 20.dp) else IconButtonDefaults.filledShape
+    Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+        if (showSubtract) TimerAdjustButton(label = subtractLabel, onClick = onSubtract, shape = start)
+        if (showAdd) TimerAdjustButton(label = addLabel, onClick = onAdd, shape = end)
     }
 }

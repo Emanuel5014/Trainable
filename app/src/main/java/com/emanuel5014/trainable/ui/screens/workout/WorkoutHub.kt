@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import com.emanuel5014.trainable.ui.components.TimerAdjustButtons
+import com.emanuel5014.trainable.ui.components.motion.RestWave
 import androidx.compose.runtime.remember
 import com.emanuel5014.trainable.ui.components.BadgeShape
 import com.emanuel5014.trainable.ui.components.SetNumberBadge
@@ -68,7 +72,6 @@ import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import com.emanuel5014.trainable.ui.components.RestTimerSection
-import com.emanuel5014.trainable.ui.components.TimerAdjustButton
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
 import com.emanuel5014.trainable.ui.components.WeightTimeInput
 import com.emanuel5014.trainable.ui.components.TimeRepsInput
@@ -139,8 +142,10 @@ internal fun BoxScope.WorkoutHub(
     ) { expansion ->
             AnimatedVisibility(
                 visible = state.warmupTimerEnabled && state.warmupTimerRemaining > 0,
-                enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-                exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+                enter = scaleIn(WorkoutMotion.spatial(), initialScale = 0.92f) + fadeIn(WorkoutMotion.effects()) +
+                    expandVertically(WorkoutMotion.spatial(), expandFrom = Alignment.Top),
+                exit = scaleOut(WorkoutMotion.spatial(), targetScale = 0.92f) + fadeOut(WorkoutMotion.effects()) +
+                    shrinkVertically(WorkoutMotion.spatial(), shrinkTowards = Alignment.Top)
             ) {
                 val warmupProgress = if (state.warmupTimerTotalSeconds > 0)
                     1f - (state.warmupTimerRemaining.toFloat() / state.warmupTimerTotalSeconds.toFloat()) else 0f
@@ -169,7 +174,8 @@ internal fun BoxScope.WorkoutHub(
                                     color = OnTertiary,
                                     trackColor = OnTertiary.copy(alpha = 0.2f),
                                     stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
+                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
+                                    amplitude = { RestWave.amplitude(state.warmupTimerRemaining) }
                                 )
                                 Icon(
                                     imageVector = Icons.Rounded.Timer,
@@ -192,7 +198,7 @@ internal fun BoxScope.WorkoutHub(
                                 }
                                 val wMinutes = state.warmupTimerRemaining / 60
                                 val wSeconds = state.warmupTimerRemaining % 60
-                                Text(
+                                RollingText(
                                     text = String.format("%d:%02d", wMinutes, wSeconds),
                                     style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
                                     color = OnTertiary,
@@ -201,18 +207,14 @@ internal fun BoxScope.WorkoutHub(
                             }
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (state.showTimerSubtract) {
-                                TimerAdjustButton(
-                                    label = "−${state.timerSubtractSeconds}s",
-                                    onClick = { viewModel.adjustWarmupTime(-state.timerSubtractSeconds) }
-                                )
-                            }
-                            if (state.showTimerAdd) {
-                                TimerAdjustButton(
-                                    label = "+${state.timerAddSeconds}s",
-                                    onClick = { viewModel.adjustWarmupTime(state.timerAddSeconds) }
-                                )
-                            }
+                            TimerAdjustButtons(
+                                showSubtract = state.showTimerSubtract,
+                                subtractLabel = "−${state.timerSubtractSeconds}s",
+                                onSubtract = { viewModel.adjustWarmupTime(-state.timerSubtractSeconds) },
+                                showAdd = state.showTimerAdd,
+                                addLabel = "+${state.timerAddSeconds}s",
+                                onAdd = { viewModel.adjustWarmupTime(state.timerAddSeconds) }
+                            )
                             FilledIconButton(
                                 onClick = { viewModel.skipWarmupTimer() },
                                 colors = IconButtonDefaults.filledIconButtonColors(
