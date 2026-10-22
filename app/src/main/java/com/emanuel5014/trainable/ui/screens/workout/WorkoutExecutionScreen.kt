@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.derivedStateOf
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
@@ -382,10 +384,13 @@ fun WorkoutExecutionScreen(
                         }
 
                         val swipeOffset = remember { Animatable(0f) }
+                        // The header of this exercise shrinks to one row while its sets are scrolled
+                        val headerCollapse = rememberHeaderCollapseState(targetIndex)
 
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .nestedScroll(headerCollapse.connection)
                                 .then(
                                     if (state.swipeActionsEnabled) {
                                         Modifier
@@ -480,7 +485,7 @@ fun WorkoutExecutionScreen(
                                         } else {
                                             val info = exerciseListState.layoutInfo
                                             info.visibleItemsInfo.firstOrNull { it.key == MEDIA_CARD_KEY }
-                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx }
+                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx - headerCollapse.offsetPx.roundToInt() }
                                                 ?.coerceAtLeast(0)
                                                 ?: 0
                                         }
@@ -498,8 +503,20 @@ fun WorkoutExecutionScreen(
                                     largeMediaVisible = largeMediaVisible,
                                     pickMedia = pickMedia,
                                     prescriptionLabels = prescriptionLabels,
-                                    onOpenDetail = { detailExerciseId = it }
+                                    onOpenDetail = { detailExerciseId = it },
+                                    collapse = headerCollapse
                                 )
+
+                                // Only a list that does not fit on screen has anything to gain from a collapsed header
+                                headerCollapse.canCollapse = { exerciseListState.canScrollForward || exerciseListState.canScrollBackward }
+
+                                // A list moved by code (to the set being done) away from the top takes the header with it
+                                val listScrolled by remember(exerciseListState) {
+                                    derivedStateOf { exerciseListState.firstVisibleItemIndex > 0 || exerciseListState.firstVisibleItemScrollOffset > 0 }
+                                }
+                                LaunchedEffect(listScrolled) {
+                                    if (listScrolled) headerCollapse.snapTo(HeaderCollapse.snapTarget(listScrolled = true))
+                                }
 
                                 SetList(
                                     targetExState = targetExState,
