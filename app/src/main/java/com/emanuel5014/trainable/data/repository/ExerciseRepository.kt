@@ -60,6 +60,9 @@ class ExerciseRepository @Inject constructor(
     /** The exercise with this id, also when it was deleted from the library: its history stays and can still be opened. */
     suspend fun getExercise(id: Int): ExerciseEntity? = exerciseDao.getExerciseById(id)
 
+    /** True when a workout, a routine or anything else still refers to the exercise (it would be hidden, not deleted). */
+    suspend fun isExerciseInUse(id: Int): Boolean = exerciseDao.isExerciseInUse(id)
+
     /** The exercise with this id as it changes (hidden, restored, renamed); emits null once it is gone for good. */
     fun observeExercise(id: Int): Flow<ExerciseEntity?> = exerciseDao.observeExercise(id)
 

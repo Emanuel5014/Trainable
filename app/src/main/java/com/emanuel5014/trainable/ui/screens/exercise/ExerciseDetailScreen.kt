@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,12 +16,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Notes
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,10 +36,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +56,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.dao.MergePreview
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseKind
 import com.emanuel5014.trainable.domain.exercise.ExercisePerformance
@@ -55,6 +67,7 @@ import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.SetLogBadges
+import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
 import com.emanuel5014.trainable.ui.components.setValueText
 import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint
@@ -79,13 +92,43 @@ fun ExerciseDetailDialog(
     onDismiss: () -> Unit,
     viewModel: ExerciseDetailViewModel = hiltViewModel()
 ) {
+    // After a merge the dialog goes on with the exercise the open one was merged into, whichever screen opened it
+    var shownId by rememberSaveable(exerciseId) { mutableIntStateOf(exerciseId) }
     val state by viewModel.state.collectAsState()
-    LaunchedEffect(exerciseId) { viewModel.load(exerciseId) }
-    val isThisExercise = state.exerciseId == exerciseId
+    val candidates by viewModel.mergeCandidates.collectAsState()
+    LaunchedEffect(shownId) { viewModel.load(shownId) }
+    val isThisExercise = state.exerciseId == shownId
     // The exercise went away while the screen was opening: nothing to show
     LaunchedEffect(isThisExercise, state.notFound) { if (isThisExercise && state.notFound) onDismiss() }
     var mediaOpen by remember { mutableStateOf(false) }
     val exercise = state.exercise.takeIf { isThisExercise && !state.loading }
+    val languageCode = state.languageCode
+    val name = exercise?.let { ExerciseTranslations.translate(it.nome, languageCode) }.orEmpty()
+
+    var pickerOpen by remember { mutableStateOf(false) }
+    var mergeTarget by remember { mutableStateOf<ExerciseEntity?>(null) }
+    var preview by remember { mutableStateOf<MergePreview?>(null) }
+    var removeOpen by remember { mutableStateOf(false) }
+    var willBeDeleted by remember { mutableStateOf<Boolean?>(null) }
+    var lastMergeTarget by remember { mutableStateOf("") }
+
+    val snackbarHost = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val mergedInto by rememberUpdatedState(lastMergeTarget)
+    LaunchedEffect(viewModel) {
+        viewModel.messages.collect { message ->
+            val text = when (message) {
+                ExerciseDetailMessage.MERGED -> context.getString(R.string.exercise_msg_merged, mergedInto)
+                ExerciseDetailMessage.UNDONE -> context.getString(R.string.exercise_msg_undone)
+                ExerciseDetailMessage.HIDDEN -> context.getString(R.string.exercise_msg_hidden)
+                ExerciseDetailMessage.DELETED -> context.getString(R.string.exercise_msg_deleted)
+                ExerciseDetailMessage.RESTORED -> context.getString(R.string.exercise_msg_restored)
+                ExerciseDetailMessage.CANNOT_MERGE -> context.getString(R.string.exercise_msg_cannot_merge)
+                ExerciseDetailMessage.CANNOT_MERGE_CARDIO -> context.getString(R.string.exercise_msg_cannot_merge_cardio)
+            }
+            snackbarHost.showSnackbar(text)
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -93,11 +136,23 @@ fun ExerciseDetailDialog(
     ) {
         Surface(modifier = Modifier.fillMaxSize(), color = Surface) {
             ExerciseDetailScaffold(
-                title = exercise?.let { ExerciseTranslations.translate(it.nome, state.languageCode) }.orEmpty(),
-                onBack = onDismiss
+                title = name,
+                onBack = onDismiss,
+                snackbarHost = snackbarHost,
+                actions = {
+                    if (exercise != null) {
+                        ExerciseActionsMenu(
+                            actions = state.actions,
+                            isPreset = exercise.id < ExerciseEntity.FIRST_CUSTOM_ID,
+                            onMerge = { pickerOpen = true },
+                            onRemove = { removeOpen = true },
+                            onRestore = viewModel::restore
+                        )
+                    }
+                }
             ) {
                 if (exercise != null) {
-                    ExerciseDetailContent(state = state, onOpenMedia = { mediaOpen = true })
+                    ExerciseDetailContent(state = state, onOpenMedia = { mediaOpen = true }, onUndoMerge = viewModel::undoMerge)
                 } else if (!state.notFound) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 }
@@ -109,17 +164,122 @@ fun ExerciseDetailDialog(
     if (mediaOpen && exercise != null && mediaFile != null) {
         ExerciseMediaViewer(
             fileName = mediaFile,
-            exerciseName = ExerciseTranslations.translate(exercise.nome, state.languageCode),
+            exerciseName = name,
             onDismiss = { mediaOpen = false }
         )
+    }
+
+    if (pickerOpen && exercise != null) {
+        ExercisePickerBottomSheet(
+            exercises = candidates,
+            categories = remember(candidates) { candidates.map { it.categoria }.distinct().sorted() },
+            onExerciseSelected = { mergeTarget = it },
+            onDismiss = { pickerOpen = false },
+            languageCode = languageCode,
+            pickOnly = true,
+            hint = stringResource(R.string.exercise_merge_pick_hint, name)
+        )
+    }
+
+    mergeTarget?.let { winner ->
+        LaunchedEffect(winner.id) {
+            preview = null
+            preview = viewModel.previewMerge()
+        }
+        MergePreviewDialog(
+            loserName = name,
+            winnerName = ExerciseTranslations.translate(winner.nome, languageCode),
+            preview = preview,
+            onConfirm = {
+                lastMergeTarget = ExerciseTranslations.translate(winner.nome, languageCode)
+                mergeTarget = null
+                viewModel.merge(winner.id) { shownId = it }
+            },
+            onDismiss = { mergeTarget = null }
+        )
+    }
+
+    if (removeOpen && exercise != null) {
+        LaunchedEffect(exercise.id) { willBeDeleted = viewModel.willBeDeletedForGood() }
+        RemoveExerciseDialog(
+            name = name,
+            willBeDeleted = willBeDeleted,
+            onConfirm = {
+                removeOpen = false
+                willBeDeleted = null
+                viewModel.remove()
+            },
+            onDismiss = {
+                removeOpen = false
+                willBeDeleted = null
+            }
+        )
+    }
+}
+
+/** The ⋮ menu of the detail screen; nothing is drawn when the exercise offers no action. */
+@Composable
+private fun ExerciseActionsMenu(
+    actions: ExerciseDetailActions,
+    isPreset: Boolean,
+    onMerge: () -> Unit,
+    onRemove: () -> Unit,
+    onRestore: () -> Unit
+) {
+    if (actions == ExerciseDetailActions.NONE) return
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(
+                imageVector = Icons.Rounded.MoreVert,
+                contentDescription = stringResource(R.string.exercise_more_actions),
+                tint = OnSurface
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (actions.canMerge) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.exercise_action_merge)) },
+                    onClick = {
+                        open = false
+                        onMerge()
+                    }
+                )
+            }
+            if (actions.canRemove) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (isPreset) R.string.exercise_action_hide else R.string.exercise_action_delete)) },
+                    onClick = {
+                        open = false
+                        onRemove()
+                    }
+                )
+            }
+            if (actions.canRestore) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.exercise_action_restore)) },
+                    onClick = {
+                        open = false
+                        onRestore()
+                    }
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExerciseDetailScaffold(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
+private fun ExerciseDetailScaffold(
+    title: String,
+    onBack: () -> Unit,
+    snackbarHost: SnackbarHostState,
+    actions: @Composable RowScope.() -> Unit,
+    content: @Composable () -> Unit
+) {
     Scaffold(
         containerColor = Surface,
+        snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             TopAppBar(
                 title = {
@@ -140,10 +300,12 @@ private fun ExerciseDetailScaffold(title: String, onBack: () -> Unit, content: @
                         )
                     }
                 },
+                actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Surface,
                     titleContentColor = OnSurface,
-                    navigationIconContentColor = OnSurface
+                    navigationIconContentColor = OnSurface,
+                    actionIconContentColor = OnSurface
                 )
             )
         }
@@ -154,7 +316,7 @@ private fun ExerciseDetailScaffold(title: String, onBack: () -> Unit, content: @
 
 /** The body of the detail screen; the dialog around it is [ExerciseDetailDialog]. */
 @Composable
-internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: () -> Unit) {
+internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: () -> Unit, onUndoMerge: (Int) -> Unit) {
     val exercise = state.exercise ?: return
     val history = state.history ?: return
     LazyColumn(
@@ -186,6 +348,9 @@ internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: ()
                     Text(text = it, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
                 }
             }
+        }
+        if (state.merges.asWinner.isNotEmpty() || state.merges.asLoser != null) {
+            item(key = "merges") { MergeRows(state = state.merges, languageCode = state.languageCode, onUndo = onUndoMerge) }
         }
         if (history.performances.isEmpty()) {
             item(key = "empty") {

@@ -166,6 +166,12 @@ class ExerciseDetailViewModel @Inject constructor(
         }
     }
 
+    /** Whether [remove] would delete the open exercise for good (a custom one nothing refers to) rather than hide it. */
+    suspend fun willBeDeletedForGood(): Boolean {
+        val exercise = state.value.exercise ?: return false
+        return exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID && !exerciseRepository.isExerciseInUse(exercise.id)
+    }
+
     /** Takes the open exercise out of the library: hidden when it is a preset or anything refers to it, otherwise deleted. */
     fun remove() {
         val exercise = state.value.exercise ?: return

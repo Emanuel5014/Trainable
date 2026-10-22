@@ -92,7 +92,9 @@ fun ExercisePickerBottomSheet(
     languageCode: String = "en",
     editablePresetExercises: Boolean = false,
     /** Only to choose one: no way to add, edit, delete or open the details of an exercise (e.g. picking what to merge into). */
-    pickOnly: Boolean = false
+    pickOnly: Boolean = false,
+    /** Replaces the line under the title, e.g. to say what the choice is for. */
+    hint: String? = null
 ) {
     rememberResponsiveSize()
 
@@ -156,7 +158,7 @@ fun ExercisePickerBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(Spacing.xtraSmall))
                 Text(
-                    text = stringResource(R.string.choose_from_library),
+                    text = hint ?: stringResource(R.string.choose_from_library),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = ResponsiveSize.headlineMediumSize
                     ),
