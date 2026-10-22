@@ -1555,4 +1555,49 @@
         <item quantity="one">%d série</item>
         <item quantity="other">%d séries</item>
     </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">Plus d\'actions</string>
+    <string name="exercise_action_merge">Fusionner dans…</string>
+    <string name="exercise_action_hide">Masquer</string>
+    <string name="exercise_action_delete">Supprimer de la bibliothèque</string>
+    <string name="exercise_action_restore">Restaurer</string>
+    <string name="exercise_merge_pick_hint">Tout ce qui concerne %s passe à l\'exercice que vous choisissez</string>
+    <string name="exercise_merge_preview_title">Fusionner %1$s dans %2$s ?</string>
+    <string name="exercise_merge_nothing">Rien à déplacer : %s est seulement masqué</string>
+    <string name="exercise_merge_footer">%s sera masqué. Vous pouvez annuler la fusion depuis l\'un ou l\'autre des exercices.</string>
+    <string name="exercise_merge_confirm">Fusionner</string>
+    <string name="exercise_merge_undo">Annuler la fusion</string>
+    <string name="exercise_merged_in_row">Fusionné : %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Fusionné dans %s</string>
+    <string name="exercise_manage_hide_title">Masquer %s ?</string>
+    <string name="exercise_manage_hide_message">Les séances et les routines le gardent. Vous pouvez le restaurer depuis Médias des exercices, filtre Masqués.</string>
+    <string name="exercise_manage_delete_message">%s n\'est utilisé nulle part et sera supprimé définitivement.</string>
+    <string name="exercise_msg_merged">Fusionné dans %s</string>
+    <string name="exercise_msg_undone">Fusion annulée</string>
+    <string name="exercise_msg_hidden">Masqué</string>
+    <string name="exercise_msg_deleted">Supprimé</string>
+    <string name="exercise_msg_restored">Restauré</string>
+    <string name="exercise_msg_cannot_merge">Ces exercices ne peuvent pas être fusionnés</string>
+    <string name="exercise_msg_cannot_merge_cardio">Un exercice de cardio et un exercice de force ne peuvent pas être fusionnés</string>
+    <string name="exercise_media_filter_hidden">Masqués</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d série</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d séance</item>
+        <item quantity="other">%d séances</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d routine</item>
+        <item quantity="other">%d routines</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d maximum</item>
+        <item quantity="other">%d maximums</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d autre enregistrement</item>
+        <item quantity="other">%d autres enregistrements</item>
+    </plurals>
 </resources>

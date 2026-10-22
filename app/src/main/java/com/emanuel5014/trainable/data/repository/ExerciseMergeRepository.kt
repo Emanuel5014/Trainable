@@ -5,6 +5,7 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
 import com.emanuel5014.trainable.data.local.dao.MergeOutcome
 import com.emanuel5014.trainable.data.local.dao.MergePreview
+import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,6 +34,8 @@ class ExerciseMergeRepository @Inject constructor(
 
     /** @return false when the merge is unknown or a later merge builds on it (that one is undone first). */
     suspend fun undo(mergeId: Int): Boolean = mergeDao.undo(mergeId)
+
+    fun observeMerges(): Flow<List<ExerciseMergeEntity>> = mergeDao.observeAllMerges()
 
     /** The merges [exerciseId] took part in, as they change. */
     fun observeState(exerciseId: Int): Flow<ExerciseMergeState> =

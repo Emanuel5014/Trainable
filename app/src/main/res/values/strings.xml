@@ -1552,4 +1552,49 @@
         <item quantity="one">%d set</item>
         <item quantity="other">%d sets</item>
     </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">More actions</string>
+    <string name="exercise_action_merge">Merge into…</string>
+    <string name="exercise_action_hide">Hide</string>
+    <string name="exercise_action_delete">Delete from library</string>
+    <string name="exercise_action_restore">Restore</string>
+    <string name="exercise_merge_pick_hint">Everything of %s moves to the exercise you choose</string>
+    <string name="exercise_merge_preview_title">Merge %1$s into %2$s?</string>
+    <string name="exercise_merge_nothing">Nothing to move: %s is only hidden</string>
+    <string name="exercise_merge_footer">%s will be hidden. You can undo the merge from either exercise.</string>
+    <string name="exercise_merge_confirm">Merge</string>
+    <string name="exercise_merge_undo">Undo merge</string>
+    <string name="exercise_merged_in_row">Merged: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Merged into %s</string>
+    <string name="exercise_manage_hide_title">Hide %s?</string>
+    <string name="exercise_manage_hide_message">Workouts and routines keep it. You can restore it from Exercise Media, filter Hidden.</string>
+    <string name="exercise_manage_delete_message">%s is not used anywhere and will be deleted for good.</string>
+    <string name="exercise_msg_merged">Merged into %s</string>
+    <string name="exercise_msg_undone">Merge undone</string>
+    <string name="exercise_msg_hidden">Hidden</string>
+    <string name="exercise_msg_deleted">Deleted</string>
+    <string name="exercise_msg_restored">Restored</string>
+    <string name="exercise_msg_cannot_merge">These exercises can\'t be merged</string>
+    <string name="exercise_msg_cannot_merge_cardio">Cardio and strength exercises can\'t be merged</string>
+    <string name="exercise_media_filter_hidden">Hidden</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d workout</item>
+        <item quantity="other">%d workouts</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d routine</item>
+        <item quantity="other">%d routines</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d max</item>
+        <item quantity="other">%d maxes</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d other record</item>
+        <item quantity="other">%d other records</item>
+    </plurals>
 </resources>

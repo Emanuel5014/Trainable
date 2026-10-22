@@ -1555,4 +1555,49 @@
         <item quantity="one">%d serie</item>
         <item quantity="other">%d serie</item>
     </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">Altre azioni</string>
+    <string name="exercise_action_merge">Unisci in…</string>
+    <string name="exercise_action_hide">Nascondi</string>
+    <string name="exercise_action_delete">Elimina dalla libreria</string>
+    <string name="exercise_action_restore">Ripristina</string>
+    <string name="exercise_merge_pick_hint">Tutto ciò che riguarda %s passa all\'esercizio che scegli</string>
+    <string name="exercise_merge_preview_title">Unire %1$s in %2$s?</string>
+    <string name="exercise_merge_nothing">Niente da spostare: %s viene solo nascosto</string>
+    <string name="exercise_merge_footer">%s verrà nascosto. Puoi annullare l\'unione da uno dei due esercizi.</string>
+    <string name="exercise_merge_confirm">Unisci</string>
+    <string name="exercise_merge_undo">Annulla unione</string>
+    <string name="exercise_merged_in_row">Unito: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Unito in %s</string>
+    <string name="exercise_manage_hide_title">Nascondere %s?</string>
+    <string name="exercise_manage_hide_message">Allenamenti e routine lo mantengono. Lo ripristini da Media degli Esercizi, filtro Nascosti.</string>
+    <string name="exercise_manage_delete_message">%s non è usato da nessuna parte e verrà eliminato definitivamente.</string>
+    <string name="exercise_msg_merged">Unito in %s</string>
+    <string name="exercise_msg_undone">Unione annullata</string>
+    <string name="exercise_msg_hidden">Nascosto</string>
+    <string name="exercise_msg_deleted">Eliminato</string>
+    <string name="exercise_msg_restored">Ripristinato</string>
+    <string name="exercise_msg_cannot_merge">Questi esercizi non si possono unire</string>
+    <string name="exercise_msg_cannot_merge_cardio">Un esercizio cardio e uno di forza non si possono unire</string>
+    <string name="exercise_media_filter_hidden">Nascosti</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d serie</item>
+        <item quantity="other">%d serie</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d allenamento</item>
+        <item quantity="other">%d allenamenti</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d routine</item>
+        <item quantity="other">%d routine</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d massimale</item>
+        <item quantity="other">%d massimali</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d altro record</item>
+        <item quantity="other">%d altri record</item>
+    </plurals>
 </resources>

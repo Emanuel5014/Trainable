@@ -1555,4 +1555,49 @@
         <item quantity="one">%d série</item>
         <item quantity="other">%d séries</item>
     </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">Mais ações</string>
+    <string name="exercise_action_merge">Mesclar em…</string>
+    <string name="exercise_action_hide">Ocultar</string>
+    <string name="exercise_action_delete">Excluir da biblioteca</string>
+    <string name="exercise_action_restore">Restaurar</string>
+    <string name="exercise_merge_pick_hint">Tudo de %s passa para o exercício que você escolher</string>
+    <string name="exercise_merge_preview_title">Mesclar %1$s em %2$s?</string>
+    <string name="exercise_merge_nothing">Nada a mover: %s só será ocultado</string>
+    <string name="exercise_merge_footer">%s será ocultado. Você pode desfazer a mesclagem em qualquer um dos dois exercícios.</string>
+    <string name="exercise_merge_confirm">Mesclar</string>
+    <string name="exercise_merge_undo">Desfazer mesclagem</string>
+    <string name="exercise_merged_in_row">Mesclado: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Mesclado em %s</string>
+    <string name="exercise_manage_hide_title">Ocultar %s?</string>
+    <string name="exercise_manage_hide_message">Treinos e rotinas o mantêm. Você pode restaurá-lo em Mídia dos exercícios, filtro Ocultos.</string>
+    <string name="exercise_manage_delete_message">%s não é usado em lugar nenhum e será excluído definitivamente.</string>
+    <string name="exercise_msg_merged">Mesclado em %s</string>
+    <string name="exercise_msg_undone">Mesclagem desfeita</string>
+    <string name="exercise_msg_hidden">Oculto</string>
+    <string name="exercise_msg_deleted">Excluído</string>
+    <string name="exercise_msg_restored">Restaurado</string>
+    <string name="exercise_msg_cannot_merge">Esses exercícios não podem ser mesclados</string>
+    <string name="exercise_msg_cannot_merge_cardio">Um exercício de cardio e um de força não podem ser mesclados</string>
+    <string name="exercise_media_filter_hidden">Ocultos</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d série</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d treino</item>
+        <item quantity="other">%d treinos</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d rotina</item>
+        <item quantity="other">%d rotinas</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d máximo</item>
+        <item quantity="other">%d máximos</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d outro registro</item>
+        <item quantity="other">%d outros registros</item>
+    </plurals>
 </resources>

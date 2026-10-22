@@ -1552,4 +1552,49 @@
         <item quantity="one">%d Satz</item>
         <item quantity="other">%d Sätze</item>
     </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">Weitere Aktionen</string>
+    <string name="exercise_action_merge">Zusammenführen mit…</string>
+    <string name="exercise_action_hide">Ausblenden</string>
+    <string name="exercise_action_delete">Aus der Bibliothek löschen</string>
+    <string name="exercise_action_restore">Wiederherstellen</string>
+    <string name="exercise_merge_pick_hint">Alles von %s geht auf die Übung über, die du wählst</string>
+    <string name="exercise_merge_preview_title">%1$s mit %2$s zusammenführen?</string>
+    <string name="exercise_merge_nothing">Nichts zu verschieben: %s wird nur ausgeblendet</string>
+    <string name="exercise_merge_footer">%s wird ausgeblendet. Du kannst das Zusammenführen bei einer der beiden Übungen rückgängig machen.</string>
+    <string name="exercise_merge_confirm">Zusammenführen</string>
+    <string name="exercise_merge_undo">Zusammenführen rückgängig</string>
+    <string name="exercise_merged_in_row">Zusammengeführt: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Zusammengeführt mit %s</string>
+    <string name="exercise_manage_hide_title">%s ausblenden?</string>
+    <string name="exercise_manage_hide_message">Trainings und Routinen behalten sie. Du kannst sie unter Übungsmedien mit dem Filter Ausgeblendet wiederherstellen.</string>
+    <string name="exercise_manage_delete_message">%s wird nirgends verwendet und endgültig gelöscht.</string>
+    <string name="exercise_msg_merged">Zusammengeführt mit %s</string>
+    <string name="exercise_msg_undone">Zusammenführen rückgängig gemacht</string>
+    <string name="exercise_msg_hidden">Ausgeblendet</string>
+    <string name="exercise_msg_deleted">Gelöscht</string>
+    <string name="exercise_msg_restored">Wiederhergestellt</string>
+    <string name="exercise_msg_cannot_merge">Diese Übungen lassen sich nicht zusammenführen</string>
+    <string name="exercise_msg_cannot_merge_cardio">Eine Cardio- und eine Kraftübung lassen sich nicht zusammenführen</string>
+    <string name="exercise_media_filter_hidden">Ausgeblendet</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d Satz</item>
+        <item quantity="other">%d Sätze</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d Einheit</item>
+        <item quantity="other">%d Einheiten</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d Routine</item>
+        <item quantity="other">%d Routinen</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d Maximum</item>
+        <item quantity="other">%d Maxima</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d weiterer Eintrag</item>
+        <item quantity="other">%d weitere Einträge</item>
+    </plurals>
 </resources>
