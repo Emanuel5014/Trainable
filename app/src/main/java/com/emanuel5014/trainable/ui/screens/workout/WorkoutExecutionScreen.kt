@@ -124,13 +124,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -139,12 +133,10 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.toPath
+import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
@@ -2381,29 +2373,6 @@ fun WorkoutExecutionScreen(
 }
 
 enum class HubMode { Logging, Editing, EditingSet, Resting, MiniSet, Completed, Cardio }
-
-@Composable
-fun rememberAnimatedShape(
-    morph: Morph,
-    progress: Float
-): Shape {
-    return remember(morph, progress) {
-        object : Shape {
-            override fun createOutline(
-                size: Size,
-                layoutDirection: LayoutDirection,
-                density: Density
-            ): Outline {
-                val path = morph.toPath(progress).asComposePath()
-                val matrix = Matrix()
-                matrix.scale(size.width, size.height)
-                path.transform(matrix)
-                path.translate(size.center - path.getBounds().center)
-                return Outline.Generic(path)
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
