@@ -2226,14 +2226,7 @@ fun WorkoutExecutionScreen(
                     onAddCustomExercise = { nome, categoria, onCreated ->
                         viewModel.addCustomExercise(nome, categoria, onCreated)
                     },
-                    onEditCustomExercise = { exercise ->
-                        viewModel.updateCustomExercise(exercise)
-                    },
-                    onDeleteCustomExercise = { exercise ->
-                        viewModel.deleteCustomExercise(exercise)
-                    },
                     onDismiss = { showSwapExerciseSheet = false },
-                    editablePresetExercises = state.editablePresetExercises,
                     categories = categories,
                     onCardioExerciseSelected = { newExercise, durationMinutes, rest, sets ->
                         viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest, sets)
@@ -2268,14 +2261,11 @@ fun WorkoutExecutionScreen(
                 onAddCustomExercise = { nome, categoria, onCreated ->
                     viewModel.addCustomExercise(nome, categoria, onCreated)
                 },
-                onEditCustomExercise = viewModel::updateCustomExercise,
-                onDeleteCustomExercise = viewModel::deleteCustomExercise,
                 onDismiss = {
                     isAddingAfterCurrent = false
                     showAddExerciseSheet = false
                 },
                 isAdding = true,
-                editablePresetExercises = state.editablePresetExercises,
                 categories = categories,
                 onCardioExerciseSelected = { exercise, durationMinutes, rest, sets ->
                     if (isAddingAfterCurrent) {

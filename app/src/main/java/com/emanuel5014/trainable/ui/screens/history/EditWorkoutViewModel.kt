@@ -100,12 +100,6 @@ class EditWorkoutViewModel @Inject constructor(
         initialValue = false
     )
 
-    val editablePresetExercises = userPreferencesRepository.editablePresetExercises.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
-
     init {
         loadSessionData()
         loadAvailableExercises()
@@ -659,21 +653,9 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun updateCustomExercise(exercise: ExerciseEntity) {
-        viewModelScope.launch {
-            exerciseRepository.saveExercise(exercise)
-        }
-    }
-
     /** Adds an exercise the user deleted from the exercise list back, from a workout that still has it. */
     fun restoreExercise(exerciseId: Int) {
         viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
-    }
-
-    fun deleteCustomExercise(exercise: ExerciseEntity) {
-        viewModelScope.launch {
-            exerciseRepository.deleteExercise(exercise)
-        }
     }
 
     fun moveExerciseUp(exerciseId: Int) {

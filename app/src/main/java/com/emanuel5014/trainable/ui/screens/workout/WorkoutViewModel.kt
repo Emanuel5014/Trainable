@@ -138,7 +138,6 @@ data class WorkoutState(
     val warmupTimerTotalSeconds: Int = 0,
     /** Next real execution order to hand out, see [WorkoutExerciseState.executionOrder]. */
     val nextExecutionOrder: Int = 0,
-    val editablePresetExercises: Boolean = false,
     val categories: List<String> = emptyList(),
     val workoutTimerEnabled: Boolean = false,
     val inlineExerciseModificationsEnabled: Boolean = false,
@@ -736,12 +735,6 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.workoutTimerEnabled.collect { enabled ->
                 _state.update { it.copy(workoutTimerEnabled = enabled) }
-            }
-        }
-
-        viewModelScope.launch {
-            userPreferencesRepository.editablePresetExercises.collect { enabled ->
-                _state.update { it.copy(editablePresetExercises = enabled) }
             }
         }
 
@@ -3490,17 +3483,6 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             val newId = exerciseRepository.addCustomExercise(nome, categoria)
             onCreated(ExerciseEntity(id = newId, nome = nome, categoria = categoria))
-        }
-    }
-
-    fun updateCustomExercise(exercise: ExerciseEntity) {
-        viewModelScope.launch {
-            exerciseRepository.saveExercise(exercise)
-        }
-    }
-    fun deleteCustomExercise(exercise: ExerciseEntity) {
-        viewModelScope.launch {
-            exerciseRepository.deleteExercise(exercise)
         }
     }
 

@@ -86,12 +86,9 @@ fun ExercisePickerBottomSheet(
     categories: List<String>,
     onExerciseSelected: (ExerciseEntity) -> Unit,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit = { _, _, _ -> },
-    onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
-    onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     languageCode: String = "en",
-    editablePresetExercises: Boolean = false,
     /** Only to choose one: no way to add, edit, delete or open the details of an exercise (e.g. picking what to merge into). */
     pickOnly: Boolean = false,
     /** Replaces the line under the title, e.g. to say what the choice is for. */
@@ -103,8 +100,6 @@ fun ExercisePickerBottomSheet(
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
     var showAddCustomDialog by remember { mutableStateOf(false) }
-    var exerciseToEdit by remember { mutableStateOf<ExerciseEntity?>(null) }
-    var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
@@ -271,12 +266,6 @@ fun ExercisePickerBottomSheet(
                             onExerciseSelected(exercise)
                             onDismiss()
                         },
-                        onEditClick = if (!pickOnly && onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
-                            { exerciseToEdit = exercise }
-                        } else null,
-                        onDeleteClick = if (!pickOnly && onDeleteCustomExercise != null && exercise.id >= 1000) {
-                            { exerciseToDelete = exercise }
-                        } else null,
                         languageCode = languageCode,
                         showThumbnail = showThumbnails,
                         onThumbnailClick = { exerciseMediaToView = exercise },
@@ -312,11 +301,14 @@ fun ExercisePickerBottomSheet(
     }
 
     if (showAddCustomDialog) {
-        AddCustomExerciseDialog(
+        ExerciseFormDialog(
+            title = stringResource(R.string.new_exercise),
             categories = categories,
+            existingExercises = exercises,
             languageCode = languageCode,
-            onConfirm = { name, category ->
-                onAddCustomExercise(name, category) { createdExercise ->
+            showDescription = false,
+            onConfirm = { form ->
+                onAddCustomExercise(form.name, form.category) { createdExercise ->
                     onExerciseSelected(createdExercise)
                     onDismiss()
                 }
@@ -326,57 +318,15 @@ fun ExercisePickerBottomSheet(
         )
     }
 
-    if (exerciseToEdit != null) {
-        EditCustomExerciseDialog(
-            exercise = exerciseToEdit!!,
-            categories = categories,
-            languageCode = languageCode,
-            onConfirm = { updatedExercise ->
-                onEditCustomExercise?.invoke(updatedExercise)
-                exerciseToEdit = null
-            },
-            onDismiss = { exerciseToEdit = null }
-        )
-    }
-
     ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
     detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
-    if (exerciseToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { exerciseToDelete = null },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(stringResource(R.string.delete_exercise_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-            },
-            text = {
-                Text(stringResource(R.string.delete_exercise_message, exerciseToDelete!!.nome), color = OnSurfaceVariant)
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDeleteCustomExercise?.invoke(exerciseToDelete!!)
-                        exerciseToDelete = null
-                    }
-                ) {
-                    Text(stringResource(R.string.delete).uppercase(), color = Error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { exerciseToDelete = null }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
-                }
-            }
-        )
-    }
 }
 
 @Composable
 private fun ExercisePickerItem(
     exercise: ExerciseEntity,
     onClick: () -> Unit,
-    onEditClick: (() -> Unit)? = null,
-    onDeleteClick: (() -> Unit)? = null,
     languageCode: String = "en",
     showThumbnail: Boolean = false,
     onThumbnailClick: () -> Unit = {},
@@ -431,28 +381,6 @@ private fun ExercisePickerItem(
                 )
             }
             if (onInfoClick != null) ExerciseInfoButton(onClick = onInfoClick)
-            if (onEditClick != null || onDeleteClick != null) {
-                Row {
-                    if (onEditClick != null) {
-                        IconButton(onClick = onEditClick) {
-                            Icon(
-                                Icons.Rounded.Edit,
-                                contentDescription = "Edit",
-                                tint = OnSurfaceVariant
-                            )
-                        }
-                    }
-                    if (onDeleteClick != null) {
-                        IconButton(onClick = onDeleteClick) {
-                            Icon(
-                                Icons.Rounded.Delete,
-                                contentDescription = "Delete",
-                                tint = Error.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-                }
-            }
             Icon(
                 Icons.Rounded.Add,
                 contentDescription = "Add",
@@ -460,216 +388,4 @@ private fun ExercisePickerItem(
             )
         }
     }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun AddCustomExerciseDialog(
-    categories: List<String>,
-    languageCode: String,
-    onConfirm: (String, String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var exerciseName by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: "Altro") }
-    var categoryExpanded by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        modifier = Modifier.imePadding(),
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.new_exercise),
-                color = OnSurface,
-                fontWeight = FontWeight.ExtraBold
-            )
-        },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                OutlinedTextField(
-                    value = exerciseName,
-                    onValueChange = { exerciseName = it },
-                    label = { Text(stringResource(R.string.exercise_name)) },
-                    singleLine = true,
-                    shape = Shapes.large,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary,
-                        unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
-                        cursorColor = Primary
-                    )
-                )
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = !categoryExpanded }
-                ) {
-                    Box(
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            if (!categoryExpanded) categoryExpanded = true
-                        }
-                    ) {
-                        OutlinedTextField(
-                            value = ExerciseTranslations.translateCategory(selectedCategory, languageCode),
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = true,
-                            label = { Text(stringResource(R.string.category)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth(),
-                            shape = Shapes.large,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary,
-                                unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        )
-                    }
-                    ExposedDropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(ExerciseTranslations.translateCategory(category, languageCode)) },
-                                onClick = {
-                                    selectedCategory = category
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (exerciseName.isNotBlank()) {
-                        onConfirm(exerciseName.trim(), selectedCategory)
-                    }
-                },
-                enabled = exerciseName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.add).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
-        },
-        containerColor = SurfaceContainer
-    )
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun EditCustomExerciseDialog(
-    exercise: ExerciseEntity,
-    categories: List<String>,
-    languageCode: String,
-    onConfirm: (ExerciseEntity) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var exerciseName by remember { mutableStateOf(exercise.nome) }
-    var selectedCategory by remember { mutableStateOf(exercise.categoria) }
-    var categoryExpanded by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        modifier = Modifier.imePadding(),
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.edit_exercise_title),
-                color = OnSurface,
-                fontWeight = FontWeight.ExtraBold
-            )
-        },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                OutlinedTextField(
-                    value = exerciseName,
-                    onValueChange = { exerciseName = it },
-                    label = { Text(stringResource(R.string.exercise_name)) },
-                    singleLine = true,
-                    shape = Shapes.large,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary,
-                        unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
-                        cursorColor = Primary
-                    )
-                )
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = !categoryExpanded }
-                ) {
-                    Box(
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            if (!categoryExpanded) categoryExpanded = true
-                        }
-                    ) {
-                        OutlinedTextField(
-                            value = ExerciseTranslations.translateCategory(selectedCategory, languageCode),
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = true,
-                            label = { Text(stringResource(R.string.category)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth(),
-                            shape = Shapes.large,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary,
-                                unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        )
-                    }
-                    ExposedDropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(ExerciseTranslations.translateCategory(category, languageCode)) },
-                                onClick = {
-                                    selectedCategory = category
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (exerciseName.isNotBlank()) {
-                        onConfirm(
-                            exercise.copy(
-                                nome = exerciseName.trim(),
-                                categoria = selectedCategory
-                            )
-                        )
-                    }
-                },
-                enabled = exerciseName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.save).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
-        },
-        containerColor = SurfaceContainer
-    )
 }

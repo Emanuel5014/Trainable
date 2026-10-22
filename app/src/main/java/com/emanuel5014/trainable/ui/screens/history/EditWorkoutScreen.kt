@@ -150,7 +150,6 @@ fun EditWorkoutScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
-    val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
     val setPerformanceEnabled by viewModel.setPerformanceEnabled.collectAsState()
     val context = LocalContext.current
     val hapticEnabled by remember(context) {
@@ -505,7 +504,6 @@ fun EditWorkoutScreen(
             languageCode = languageCode,
             isAdding = exerciseToSwap == null,
             currentExerciseId = exerciseStateToSwap?.exercise?.id,
-            editablePresetExercises = editablePresetExercises,
             categories = state.categories,
             onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
                 val currentSwapId = exerciseToSwap
@@ -541,8 +539,6 @@ fun EditWorkoutScreen(
             onAddCustomExercise = { name, category, onCreated ->
                 viewModel.addCustomExercise(name, category, onCreated)
             },
-            onEditCustomExercise = viewModel::updateCustomExercise,
-            onDeleteCustomExercise = viewModel::deleteCustomExercise,
             onDismiss = {
                 exerciseToSwap = null
                 showExercisePicker = false

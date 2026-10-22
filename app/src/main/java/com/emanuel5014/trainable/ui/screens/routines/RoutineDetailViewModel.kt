@@ -101,12 +101,6 @@ class RoutineDetailViewModel @Inject constructor(
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
-    val editablePresetExercises = userPreferencesRepository.editablePresetExercises.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
-    )
-
     val aiScanAvailable = combine(
         userPreferencesRepository.aiScanEnabled,
         userPreferencesRepository.aiModelVariant,
@@ -533,21 +527,9 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
-    fun updateCustomExercise(exercise: ExerciseEntity) {
-        viewModelScope.launch {
-            exerciseRepository.saveExercise(exercise)
-        }
-    }
-
     /** Adds an exercise the user deleted from the exercise list back, for a routine that still uses it. */
     fun restoreExercise(exerciseId: Int) {
         viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
-    }
-
-    fun deleteCustomExercise(exercise: ExerciseEntity) {
-        viewModelScope.launch {
-            exerciseRepository.deleteExercise(exercise)
-        }
     }
 
     fun addExercise(
