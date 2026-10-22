@@ -121,8 +121,6 @@ internal fun ColumnScope.SetList(
             val isActive = index == targetActiveSetIndex && !set.isCompleted
             val position = positions.getOrNull(index)
             val corners = SegmentedShapes.corners(position?.index ?: 0, position?.count ?: 1, isActive)
-            // The active set steps out of its group
-            val rowMargin by animateDpAsState(if (isActive) 4.dp else 0.dp, WorkoutMotion.spatial(), label = "active_set_margin")
             var showDeleteConfirm by remember { mutableStateOf(false) }
 
             if (showDeleteConfirm) {
@@ -234,7 +232,6 @@ internal fun ColumnScope.SetList(
 
             val setPrescription = set.prescription
             SetLogRow(
-                modifier = Modifier.padding(vertical = rowMargin),
                 corners = corners,
                 repsLabel = if (set.isAmrap) stringResource(R.string.max_label) else null,
                 intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }

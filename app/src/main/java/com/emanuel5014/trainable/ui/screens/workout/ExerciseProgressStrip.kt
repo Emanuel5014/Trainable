@@ -98,11 +98,11 @@ private fun StripSegment(fraction: Float, isCurrent: Boolean, wavy: Boolean, mod
         val amplitude = remember { Animatable(0f) }
         LaunchedEffect(Unit) { amplitude.animateTo(1f, WorkoutMotion.spatial()) }
         LinearWavyProgressIndicator(
-            progress = { shown.value },
+            progress = { shown.value.coerceIn(0f, 1f) },
             modifier = modifier,
             color = Primary,
             trackColor = SurfaceContainerHighest,
-            amplitude = { amplitude.value }
+            amplitude = { amplitude.value.coerceIn(0f, 1f) }
         )
     } else {
         val fill = Primary
@@ -111,7 +111,7 @@ private fun StripSegment(fraction: Float, isCurrent: Boolean, wavy: Boolean, mod
                 .height(6.dp)
                 .clip(CircleShape)
                 .background(SurfaceContainerHighest)
-                .drawBehind { drawRect(fill, size = Size(size.width * shown.value, size.height)) }
+                .drawBehind { drawRect(fill, size = Size(size.width * shown.value.coerceIn(0f, 1f), size.height)) }
         )
     }
 }
