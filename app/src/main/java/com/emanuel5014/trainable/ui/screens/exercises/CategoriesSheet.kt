@@ -126,7 +126,7 @@ fun CategoriesSheet(
                             Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit_category_title), tint = Primary, modifier = Modifier.size(20.dp))
                         }
                         IconButton(onClick = { toDelete = category }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete_category_title), tint = Error.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = Error.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
                         }
                     }
                 }

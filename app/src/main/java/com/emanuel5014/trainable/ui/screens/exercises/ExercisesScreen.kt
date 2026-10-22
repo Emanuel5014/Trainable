@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -265,11 +267,13 @@ fun ExercisesScreen(
             )
         }
     ) { paddingValues ->
+        // On a wide screen the list keeps a readable width, centred
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .widthIn(max = 840.dp)
+                .fillMaxHeight()
                 .imePadding(),
             // Room at the bottom so the button never covers the last row
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 112.dp),
@@ -391,6 +395,7 @@ fun ExercisesScreen(
                     )
                 }
             }
+        }
         }
     }
 }
