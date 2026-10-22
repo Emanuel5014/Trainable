@@ -159,7 +159,7 @@ fun SetLogRow(
                 },
                 onLongClick = onLongClick
             )
-            .animateContentSize()
+            .animateContentSize(WorkoutMotion.spatial())
     ) {
         val hasPills = intensityBadge != null || badges.isNotEmpty()
         Row(

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import androidx.compose.animation.animateContentSize
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
@@ -306,7 +308,7 @@ private fun HeaderPills(
         }
     }
     FlowRow(
-        modifier = modifier,
+        modifier = modifier.animateContentSize(WorkoutMotion.spatial()),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         itemVerticalAlignment = Alignment.CenterVertically
