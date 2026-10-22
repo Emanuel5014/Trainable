@@ -1607,4 +1607,6 @@
     <string name="exercise_description">Description</string>
     <string name="exercise_name_taken">Un exercice porte déjà ce nom</string>
     <string name="exercise_msg_saved">Enregistré</string>
+    <string name="workout_progress_description">Exercice %1$d sur %2$d, %3$d terminés</string>
+    <string name="exercise_tools_group">Outils de l\'exercice</string>
 </resources>
