@@ -548,7 +548,7 @@ private fun SetPanel(
                                     viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                 }
                             },
-                            modifier = Modifier.width(if (LocalConfiguration.current.screenWidthDp < 360) 88.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
+                            modifier = Modifier.width(if (LocalConfiguration.current.screenWidthDp < 400) 76.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
                             compact = true
                         )
                     }
