@@ -75,7 +75,7 @@ internal fun HubNav(
             !isLast && nextName != null -> {
                 val translatedNext = ExerciseTranslations.translate(nextName, languageCode)
                 if (emphasis == HubNavEmphasis.Filled) {
-                    GymButton(onClick = onNext, modifier = Modifier.weight(1f), height = navHeight) {
+                    GymButton(onClick = onNext, modifier = Modifier.weight(1f), height = navHeight, pressMorph = true) {
                         NextLabel(translatedNext, labelColor = OnPrimary.copy(alpha = 0.75f), nameColor = OnPrimary, modifier = Modifier.weight(1f))
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
@@ -103,7 +103,7 @@ internal fun HubNav(
                 }
             }
             isLast && emphasis == HubNavEmphasis.Filled -> {
-                GymButton(onClick = onFinish, modifier = Modifier.weight(1f), height = navHeight) {
+                GymButton(onClick = onFinish, modifier = Modifier.weight(1f), height = navHeight, pressMorph = true) {
                     Icon(Icons.Rounded.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(

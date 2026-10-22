@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.emanuel5014.trainable.ui.components.motion.PressMorph
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -42,6 +45,8 @@ fun GymButton(
     enabled: Boolean = true,
     height: Int = if (ResponsiveSize.isCompact) 48 else 56,
     contentPadding: PaddingValues = PaddingValues(horizontal = if (ResponsiveSize.isCompact) 16.dp else 24.dp),
+    /** While pressed the corners tighten (from [shape]'s own 32 dp to 10 dp). Only the workout asks for it; [shape] is then ignored. */
+    pressMorph: Boolean = false,
     content: @Composable RowScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -54,6 +59,12 @@ fun GymButton(
     }.collectAsState(initial = true)
 
     val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "button_scale")
+    val pressedFraction by animateFloatAsState(if (isPressed) 1f else 0f, WorkoutMotion.fastSpatial(), label = "button_press_morph")
+    val buttonShape: Shape = if (pressMorph) {
+        RoundedCornerShape(PressMorph.cornerDp(PRESS_MORPH_REST_DP, pressedFraction).coerceAtLeast(0f).dp)
+    } else {
+        shape
+    }
 
     Button(
         onClick = {
@@ -69,7 +80,7 @@ fun GymButton(
             disabledContainerColor = containerColor.copy(alpha = 0.3f),
             disabledContentColor = contentColor.copy(alpha = 0.5f)
         ),
-        shape = shape,
+        shape = buttonShape,
         enabled = enabled,
         interactionSource = interactionSource,
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
@@ -83,3 +94,6 @@ fun GymButton(
         }
     }
 }
+
+/** The corner radius of [com.emanuel5014.trainable.ui.theme.Shapes.large], where a pressed workout button starts tightening from. */
+private const val PRESS_MORPH_REST_DP = 32f

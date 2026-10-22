@@ -340,7 +340,8 @@ internal fun BoxScope.WorkoutHub(
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         containerColor = SurfaceContainerHigh,
-                                        contentColor = Primary
+                                        contentColor = Primary,
+                                        pressMorph = true
                                     ) {
                                         Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
@@ -582,7 +583,8 @@ private fun SetPanel(
                             primaryAction = {
                                 GymButton(
                                     onClick = { ui.editingSetIndex = null },
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    pressMorph = true
                                 ) {
                                     Icon(Icons.Rounded.Check, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
