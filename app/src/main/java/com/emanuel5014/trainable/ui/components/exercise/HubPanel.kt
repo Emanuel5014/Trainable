@@ -59,14 +59,14 @@ import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.lerp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
-import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val GRABBER_HEIGHT = 32.dp
-private val PANEL_SHAPE = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+private val PANEL_SHAPE = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
 
 /**
  * Where the bottom hub of the workout screen is: [expansion] is 1 when it is open and 0 when it is a thin strip,
@@ -209,7 +209,7 @@ fun HubPanel(
                     sheet.onMeasured(it.height)
                     onHeightChanged(it.height)
                 },
-            color = Surface,
+            color = SurfaceContainerLow,
             shape = PANEL_SHAPE,
             tonalElevation = 8.dp,
             shadowElevation = 16.dp
