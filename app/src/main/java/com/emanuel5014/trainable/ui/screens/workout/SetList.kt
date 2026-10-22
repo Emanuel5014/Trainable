@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.components.SegmentedShapes
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListState
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
@@ -100,6 +102,12 @@ internal fun ColumnScope.SetList(
 ) {
     val localDensity = LocalDensity.current
     val context = LocalContext.current
+    // The sets of a block are one segmented list: where each stands in its block decides its corners
+    val positions = remember(targetExState.sets, targetExState.isAdvanced) {
+        SegmentedShapes.positions(
+            targetExState.sets.map { if (targetExState.isAdvanced) it.isExtra to it.prescription?.blockIndex else null }
+        )
+    }
     // Sets List
     LazyColumn(
         state = exerciseListState,
@@ -107,10 +115,14 @@ internal fun ColumnScope.SetList(
             .weight(1f)
             .fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         itemsIndexed(targetExState.sets) { index, set ->
             val isActive = index == targetActiveSetIndex && !set.isCompleted
+            val position = positions.getOrNull(index)
+            val corners = SegmentedShapes.corners(position?.index ?: 0, position?.count ?: 1, isActive)
+            // The active set steps out of its group
+            val rowMargin by animateDpAsState(if (isActive) 4.dp else 0.dp, WorkoutMotion.spatial(), label = "active_set_margin")
             var showDeleteConfirm by remember { mutableStateOf(false) }
 
             if (showDeleteConfirm) {
@@ -153,16 +165,18 @@ internal fun ColumnScope.SetList(
                     val loadEditable = block != null && p.blockIndex in
                         ProgramEditing.percentBlocksToDo(targetExState.sets, targetExState.blocks)
                     Column(
-                        modifier = Modifier.padding(top = if (index == 0) 0.dp else 6.dp),
+                        modifier = Modifier.padding(top = if (index == 0) 0.dp else 14.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                                 .then(
                                     if (loadEditable) Modifier.clickable { ui.loadSheetFor = targetIndex to p!!.blockIndex }
                                     else Modifier
-                                ),
+                                )
+                                .background(Primary.copy(alpha = 0.14f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
@@ -220,6 +234,8 @@ internal fun ColumnScope.SetList(
 
             val setPrescription = set.prescription
             SetLogRow(
+                modifier = Modifier.padding(vertical = rowMargin),
+                corners = corners,
                 repsLabel = if (set.isAmrap) stringResource(R.string.max_label) else null,
                 intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
                     ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -57,7 +59,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
-import com.emanuel5014.trainable.util.WeightUnitConverter
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -91,8 +92,13 @@ fun SetLogRow(
     /** Secondary badges: techniques, RPE, EXTRA. */
     badges: List<String> = emptyList(),
     /** A Time & Reps set: written "45s · 20 reps", without a weight. */
-    isTimeAndReps: Boolean = false
+    isTimeAndReps: Boolean = false,
+    /** Corner radii of the row, from its place in the segmented list of its block. */
+    corners: SegmentCorners = SegmentCorners(SegmentedShapes.OUTER_DP, SegmentedShapes.OUTER_DP)
 ) {
+    val topCorners by animateDpAsState(corners.topDp.dp, WorkoutMotion.spatial(), label = "set_row_top_corners")
+    val bottomCorners by animateDpAsState(corners.bottomDp.dp, WorkoutMotion.spatial(), label = "set_row_bottom_corners")
+    val rowShape = RoundedCornerShape(topStart = topCorners, topEnd = topCorners, bottomEnd = bottomCorners, bottomStart = bottomCorners)
     val backgroundColor by animateColorAsState(
         targetValue = when {
             isCompleted -> TertiaryContainer
@@ -123,11 +129,11 @@ fun SetLogRow(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(rowShape)
             .then(
                 when {
-                    isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                    isEditing -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
+                    isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), rowShape)
+                    isEditing -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), rowShape)
                     else -> Modifier
                 }
             )
