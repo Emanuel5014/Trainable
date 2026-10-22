@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
@@ -158,13 +159,24 @@ fun ExercisePickerBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(Spacing.xtraSmall))
                 Text(
-                    text = hint ?: stringResource(R.string.choose_from_library),
+                    text = stringResource(R.string.choose_from_library),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = ResponsiveSize.headlineMediumSize
                     ),
                     color = OnSurface,
                     fontWeight = FontWeight.Black
                 )
+
+                if (hint != null) {
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    Text(
+                        text = hint,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(Spacing.large))
                 }

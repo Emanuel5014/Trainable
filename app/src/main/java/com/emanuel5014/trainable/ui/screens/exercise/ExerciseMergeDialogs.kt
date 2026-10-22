@@ -2,7 +2,6 @@ package com.emanuel5014.trainable.ui.screens.exercise
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
@@ -172,19 +171,11 @@ fun MergeRows(
 
 @Composable
 private fun MergeRow(text: String, info: ExerciseMergeInfo, onUndo: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = OnSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
+    // The button goes under the text: beside it, on a small screen with a large font, it takes the width and squeezes the text
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
         if (info.canUndo) {
-            TextButton(onClick = { onUndo(info.mergeId) }) {
+            TextButton(onClick = { onUndo(info.mergeId) }, modifier = Modifier.align(Alignment.End)) {
                 Text(stringResource(R.string.exercise_merge_undo).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         }
