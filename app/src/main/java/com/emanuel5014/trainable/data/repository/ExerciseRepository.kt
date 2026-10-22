@@ -57,6 +57,9 @@ class ExerciseRepository @Inject constructor(
         return newId
     }
 
+    /** The exercise with this id, also when it was deleted from the library: its history stays and can still be opened. */
+    suspend fun getExercise(id: Int): ExerciseEntity? = exerciseDao.getExerciseById(id)
+
     suspend fun saveExercise(exercise: ExerciseEntity) {
         exerciseDao.updateExercise(exercise)
     }
