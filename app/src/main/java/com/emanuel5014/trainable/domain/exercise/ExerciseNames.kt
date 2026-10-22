@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.domain.exercise
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvColumns
+import com.emanuel5014.trainable.domain.csvimport.HistoryExerciseResolver
 
 /** Names of exercises: two exercises with the same name are what the merge of issue #50 has to clean up, so none is made. */
 object ExerciseNames {
@@ -20,5 +21,18 @@ object ExerciseNames {
                 (HistoryCsvColumns.fold(exercise.nome) == wanted ||
                     HistoryCsvColumns.fold(ExerciseTranslations.translate(exercise.nome, languageCode)) == wanted)
         }
+    }
+
+    /**
+     * The hidden exercise [name] brings back: the one whose stored name, or whose name in any language of the app, is [name]
+     * once case, accents, spaces and punctuation are set aside (the same rule as [isTaken]). Exercises merged into another
+     * ([mergedAwayIds]) are not brought back: their name belongs to the exercise they were merged into.
+     */
+    fun findHidden(name: String, exercises: List<ExerciseEntity>, mergedAwayIds: Set<Int> = emptySet()): ExerciseEntity? {
+        val typed = HistoryCsvColumns.fold(name.trim())
+        if (typed.isEmpty()) return null
+        // A name in any language stands for the stored (English) one; the spelling as typed counts too
+        val wanted = setOf(typed, HistoryCsvColumns.fold(HistoryExerciseResolver.canonicalName(name.trim())))
+        return exercises.firstOrNull { it.isDeleted && it.id !in mergedAwayIds && HistoryCsvColumns.fold(it.nome) in wanted }
     }
 }

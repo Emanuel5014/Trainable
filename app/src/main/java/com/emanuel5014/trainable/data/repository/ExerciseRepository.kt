@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.data.local.ExerciseData
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import android.content.Context
 import android.net.Uri
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
@@ -11,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,10 +46,22 @@ class ExerciseRepository @Inject constructor(
         exerciseDao.getAllCustomCategories()
     
     suspend fun addCustomExercise(nome: String, categoria: String, description: String? = null): Int {
-        // Creating again an exercise that was deleted brings the old one back, so its history and routines go on with it
-        exerciseDao.findDeletedByName(nome.trim())?.let { deleted ->
-            exerciseDao.reviveExercise(deleted.id, categoria, description)
-            return deleted.id
+        // Creating again an exercise that was hidden brings the old one back, so its history and routines go on with it.
+        // A custom one takes the category picked now (issue #41); a preset keeps its own, since it cannot be edited while
+        // the presets are locked. The description it had stays unless one is typed now (a picker has no description field).
+        // A name in any language finds it, as the duplicate check does.
+        val hidden = ExerciseNames.findHidden(
+            nome,
+            exerciseDao.getAllExercisesIncludingDeleted().first(),
+            exerciseDao.getExerciseMerges().map { it.loserId }.toSet()
+        )
+        if (hidden != null) {
+            exerciseDao.reviveExercise(
+                hidden.id,
+                if (hidden.id < ExerciseEntity.FIRST_CUSTOM_ID) hidden.categoria else categoria,
+                description?.takeIf { it.isNotBlank() } ?: hidden.descrizione
+            )
+            return hidden.id
         }
         val maxId = exerciseDao.getMaxId()
         val newId = if (maxId < 1000) 1000 else maxId + 1

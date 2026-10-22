@@ -1566,7 +1566,7 @@
     <string name="exercise_merged_in_row">Unito: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Unito in %s</string>
     <string name="exercise_manage_hide_title">Nascondere %s?</string>
-    <string name="exercise_manage_hide_message">Allenamenti e routine lo mantengono. Lo ripristini da Media degli Esercizi, filtro Nascosti.</string>
+    <string name="exercise_manage_hide_message">Allenamenti e routine lo mantengono. Lo ripristini da Impostazioni › Esercizi, filtro Nascosti.</string>
     <string name="exercise_manage_delete_message">%s non è usato da nessuna parte e verrà eliminato definitivamente.</string>
     <string name="exercise_msg_merged">Unito in %s</string>
     <string name="exercise_msg_undone">Unione annullata</string>

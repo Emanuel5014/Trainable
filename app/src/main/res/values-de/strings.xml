@@ -1563,7 +1563,7 @@
     <string name="exercise_merged_in_row">Zusammengeführt: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Zusammengeführt mit %s</string>
     <string name="exercise_manage_hide_title">%s ausblenden?</string>
-    <string name="exercise_manage_hide_message">Trainings und Routinen behalten sie. Du kannst sie unter Übungsmedien mit dem Filter Ausgeblendet wiederherstellen.</string>
+    <string name="exercise_manage_hide_message">Trainings und Routinen behalten sie. Du kannst sie unter Einstellungen › Übungen mit dem Filter Ausgeblendet wiederherstellen.</string>
     <string name="exercise_manage_delete_message">%s wird nirgends verwendet und endgültig gelöscht.</string>
     <string name="exercise_msg_merged">Zusammengeführt mit %s</string>
     <string name="exercise_msg_undone">Zusammenführen rückgängig gemacht</string>

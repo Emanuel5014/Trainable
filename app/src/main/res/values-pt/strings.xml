@@ -1566,7 +1566,7 @@
     <string name="exercise_merged_in_row">Mesclado: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Mesclado em %s</string>
     <string name="exercise_manage_hide_title">Ocultar %s?</string>
-    <string name="exercise_manage_hide_message">Treinos e rotinas o mantêm. Você pode restaurá-lo em Mídia dos exercícios, filtro Ocultos.</string>
+    <string name="exercise_manage_hide_message">Treinos e rotinas o mantêm. Você pode restaurá-lo em Configurações › Exercícios, filtro Ocultos.</string>
     <string name="exercise_manage_delete_message">%s não é usado em lugar nenhum e será excluído definitivamente.</string>
     <string name="exercise_msg_merged">Mesclado em %s</string>
     <string name="exercise_msg_undone">Mesclagem desfeita</string>

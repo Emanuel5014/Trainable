@@ -1563,7 +1563,7 @@
     <string name="exercise_merged_in_row">Merged: %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Merged into %s</string>
     <string name="exercise_manage_hide_title">Hide %s?</string>
-    <string name="exercise_manage_hide_message">Workouts and routines keep it. You can restore it from Exercise Media, filter Hidden.</string>
+    <string name="exercise_manage_hide_message">Workouts and routines keep it. You can restore it from Settings › Exercises, filter Hidden.</string>
     <string name="exercise_manage_delete_message">%s is not used anywhere and will be deleted for good.</string>
     <string name="exercise_msg_merged">Merged into %s</string>
     <string name="exercise_msg_undone">Merge undone</string>

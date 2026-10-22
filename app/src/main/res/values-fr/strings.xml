@@ -1566,7 +1566,7 @@
     <string name="exercise_merged_in_row">Fusionné : %1$s, %2$s</string>
     <string name="exercise_merged_into_row">Fusionné dans %s</string>
     <string name="exercise_manage_hide_title">Masquer %s ?</string>
-    <string name="exercise_manage_hide_message">Les séances et les routines le gardent. Vous pouvez le restaurer depuis Médias des exercices, filtre Masqués.</string>
+    <string name="exercise_manage_hide_message">Les séances et les routines le gardent. Vous pouvez le restaurer depuis Paramètres › Exercices, filtre Masqués.</string>
     <string name="exercise_manage_delete_message">%s n\'est utilisé nulle part et sera supprimé définitivement.</string>
     <string name="exercise_msg_merged">Fusionné dans %s</string>
     <string name="exercise_msg_undone">Fusion annulée</string>
