@@ -4,6 +4,7 @@ import android.content.Context
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
+import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
@@ -34,6 +35,9 @@ object DatabaseModule {
 
     @Provides
     fun provideExerciseDao(database: GymDatabase): ExerciseDao = database.exerciseDao()
+
+    @Provides
+    fun provideExerciseMergeDao(database: GymDatabase): ExerciseMergeDao = database.exerciseMergeDao()
 
     @Provides
     fun provideWorkoutDao(database: GymDatabase): WorkoutDao = database.workoutDao()
