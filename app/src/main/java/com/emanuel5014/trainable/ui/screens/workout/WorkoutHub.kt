@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -64,8 +63,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
-import com.emanuel5014.trainable.data.ExerciseTranslations
-import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
 import com.emanuel5014.trainable.ui.components.PlateChip
@@ -324,9 +321,7 @@ internal fun BoxScope.WorkoutHub(
                     HubMode.Completed -> {
                         val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
                         val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
-                        // On the strip the exercise buttons are a little lower and Add and the mini-set offer are gone
-                        val navHeight = hubNavHeight(expansion())
-
+                        // On the strip Add and the mini-set offer are gone
                         Column(modifier = Modifier.fillMaxWidth()) {
                             // The last set of the workout has no rest to offer it in
                             state.miniSetOffer?.let { offer ->
@@ -355,87 +350,17 @@ internal fun BoxScope.WorkoutHub(
                                 }
                             }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                // Previous Exercise Button
-                                if (state.currentExerciseIndex > 0) {
-                                    val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
-                                    HubPreviousButton(
-                                        previousName = ExerciseTranslations.translate(prevName, languageCode),
-                                        expansion = expansion,
-                                        onClick = { viewModel.previousExercise() },
-                                        nameStyle = MaterialTheme.typography.bodyMedium,
-                                        nameWeight = FontWeight.Black,
-                                        height = navHeight
-                                    )
-                                }
-
-                                // Next / Finish Button
-                                if (!isLastExercise) {
-                                    val nextName = state.exercises[state.currentExerciseIndex + 1].exercise.nome
-                                    val translatedNext = ExerciseTranslations.translate(nextName, languageCode)
-                                    GymButton(
-                                        onClick = { viewModel.nextExercise() },
-                                        modifier = Modifier.weight(1f),
-                                        height = navHeight
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.End,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.next_exercise_btn).uppercase(),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = OnPrimary.copy(alpha = 0.75f),
-                                                fontWeight = FontWeight.ExtraBold
-                                            )
-                                            Text(
-                                                text = translatedNext,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = OnPrimary,
-                                                fontWeight = FontWeight.Black,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                            contentDescription = null
-                                        )
-                                    }
-                                } else if (state.isQuickWorkout) {
-                                    // Quick workout last exercise finish button
-                                    GymButton(
-                                        onClick = { ui.showFinishDialog = true },
-                                        modifier = Modifier.weight(1f),
-                                        height = navHeight
-                                    ) {
-                                        Icon(Icons.Rounded.Check, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.finish_workout).uppercase(),
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    }
-                                } else {
-                                    // Guided / Quick workout last exercise finish button
-                                    GymButton(
-                                        onClick = { ui.showFinishDialog = true },
-                                        modifier = Modifier.weight(1f),
-                                        height = navHeight
-                                    ) {
-                                        Icon(Icons.Rounded.Check, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.finish_workout).uppercase(),
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    }
-                                }
-                            }
+                            HubNav(
+                                emphasis = HubNavEmphasis.Filled,
+                                previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
+                                nextName = if (!isLastExercise) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
+                                isLast = isLastExercise,
+                                languageCode = languageCode,
+                                expansion = expansion,
+                                onPrevious = { viewModel.previousExercise() },
+                                onNext = { viewModel.nextExercise() },
+                                onFinish = { ui.showFinishDialog = true }
+                            )
                         }
                     }
                 }
@@ -444,20 +369,16 @@ internal fun BoxScope.WorkoutHub(
             // The first thing to leave when the hub shrinks: the strip keeps only the main action
             if ((!isExerciseCompleted && !isEmomActive) || isResting) {
                 HubSlot(expansion = expansion, from = 0.7f, to = 0.95f, gap = 16.dp) {
-                    ExerciseNavigation(
-                        onPrevious = { viewModel.previousExercise() },
-                        onNext = {
-                            if (state.currentExerciseIndex == state.exercises.size - 1) {
-                                ui.showFinishDialog = true
-                            } else {
-                                viewModel.nextExercise()
-                            }
-                        },
-                        hasPrevious = state.currentExerciseIndex > 0,
-                        hasNext = state.currentExerciseIndex < state.exercises.size - 1,
+                    HubNav(
+                        emphasis = HubNavEmphasis.Tonal,
                         previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
                         nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
-                        languageCode = languageCode
+                        isLast = state.currentExerciseIndex == state.exercises.size - 1,
+                        languageCode = languageCode,
+                        expansion = expansion,
+                        onPrevious = { viewModel.previousExercise() },
+                        onNext = { viewModel.nextExercise() },
+                        onFinish = { ui.showFinishDialog = true }
                     )
                 }
             }
