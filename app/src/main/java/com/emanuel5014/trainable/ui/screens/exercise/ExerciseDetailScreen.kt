@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -41,13 +45,22 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseKind
+import com.emanuel5014.trainable.domain.exercise.ExercisePerformance
 import com.emanuel5014.trainable.ui.components.DeletedExercisePill
 import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
 import com.emanuel5014.trainable.ui.components.GymCard
+import com.emanuel5014.trainable.ui.components.PrescriptionPill
+import com.emanuel5014.trainable.ui.components.SetLogBadges
 import com.emanuel5014.trainable.ui.components.setValueText
+import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
+import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint
+import com.emanuel5014.trainable.ui.screens.history.SessionTitle
+import com.emanuel5014.trainable.ui.screens.history.displayText
+import com.emanuel5014.trainable.ui.screens.history.sessionName
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -185,6 +198,105 @@ internal fun ExerciseDetailContent(state: ExerciseDetailUiState, onOpenMedia: ()
             }
         } else {
             item(key = "records") { RecordsCard(history = history, weightUnit = state.weightUnit) }
+            if (history.kind == ExerciseKind.STRENGTH && history.chartPoints.size >= 2) {
+                item(key = "progress") { ProgressCard(points = history.chartPoints, weightUnit = state.weightUnit) }
+            }
+            item(key = "history_title") { SectionTitle(stringResource(R.string.exercise_detail_history)) }
+            items(history.performances, key = { it.sessionId }) { performance ->
+                PerformanceCard(performance = performance, kind = history.kind, weightUnit = state.weightUnit)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressCard(points: List<AnalyticsChartPoint>, weightUnit: String) {
+    // The points carry kilograms: the chart and its figure are drawn in the unit the user chose
+    val shown = remember(points, weightUnit) { points.map { it.copy(value = WeightUnitConverter.convertDisplay(it.value, weightUnit)) } }
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        SectionTitle(stringResource(R.string.exercise_detail_progress))
+        Text(
+            text = WeightUnitConverter.formatWithUnit(shown.last().value, weightUnit),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color = OnSurface
+        )
+        AnalyticsLineChart(points = shown, modifier = Modifier.padding(top = 8.dp))
+    }
+}
+
+/** One workout of the exercise: when and under what name, its best figure, and every set as the history writes it. */
+@Composable
+private fun PerformanceCard(performance: ExercisePerformance, kind: ExerciseKind, weightUnit: String) {
+    val summary = when (kind) {
+        ExerciseKind.STRENGTH -> performance.topWeightKg.takeIf { it > 0f }
+            ?.let { stringResource(R.string.exercise_detail_top, weightText(it, weightUnit)) }
+        ExerciseKind.BODYWEIGHT, ExerciseKind.TIME_AND_REPS -> performance.totalReps.takeIf { it > 0 }
+            ?.let { stringResource(R.string.compare_reps_value, it) }
+        ExerciseKind.TIMED -> performance.longestHoldSeconds.takeIf { it > 0 }?.let { "${it}s" }
+    }
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = DateFormatter.format(performance.timestamp),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+                Text(
+                    text = SessionTitle.of(sessionName(performance.sessionNote, performance.planName)).displayText(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Primary,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            summary?.let { PrescriptionPill(text = it, containerColor = Primary.copy(alpha = 0.12f), contentColor = Primary, emphasized = true) }
+        }
+        Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            performance.sets.forEach { set -> PerformanceSetRow(set = set, weightUnit = weightUnit) }
+        }
+    }
+}
+
+@Composable
+private fun PerformanceSetRow(set: SetLogEntity, weightUnit: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.set_number, set.numeroSerie),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnSurfaceVariant
+                )
+                if (set.isWarmup) PrescriptionPill(text = stringResource(R.string.exercise_detail_warmup))
+            }
+            Text(
+                text = setValueText(set, weightUnit),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = OnSurface
+            )
+        }
+        SetLogBadges(set = set, modifier = Modifier.padding(top = 2.dp))
+        if (!set.note.isNullOrBlank()) {
+            Row(modifier = Modifier.padding(top = 2.dp, start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Notes,
+                    contentDescription = null,
+                    tint = OnSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(12.dp)
+                )
+                Text(
+                    text = set.note,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
         }
     }
 }
