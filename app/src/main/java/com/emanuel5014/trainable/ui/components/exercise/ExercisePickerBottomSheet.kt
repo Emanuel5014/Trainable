@@ -84,13 +84,15 @@ fun ExercisePickerBottomSheet(
     exercises: List<ExerciseEntity>,
     categories: List<String>,
     onExerciseSelected: (ExerciseEntity) -> Unit,
-    onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
+    onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit = { _, _, _ -> },
     onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     languageCode: String = "en",
-    editablePresetExercises: Boolean = false
+    editablePresetExercises: Boolean = false,
+    /** Only to choose one: no way to add, edit, delete or open the details of an exercise (e.g. picking what to merge into). */
+    pickOnly: Boolean = false
 ) {
     rememberResponsiveSize()
 
@@ -213,15 +215,17 @@ fun ExercisePickerBottomSheet(
                                 selectedLabelColor = OnPrimary
                             )
                         )
-                        FilterChip(
-                            selected = showOnlyCustom,
-                            onClick = { showOnlyCustom = !showOnlyCustom },
-                            label = { Text(stringResource(R.string.filter_custom)) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Primary,
-                                selectedLabelColor = OnPrimary
+                        if (!pickOnly) {
+                            FilterChip(
+                                selected = showOnlyCustom,
+                                onClick = { showOnlyCustom = !showOnlyCustom },
+                                label = { Text(stringResource(R.string.filter_custom)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary,
+                                    selectedLabelColor = OnPrimary
+                                )
                             )
-                        )
+                        }
                         categories.forEach { category ->
                             val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
                             FilterChip(
@@ -253,21 +257,21 @@ fun ExercisePickerBottomSheet(
                             onExerciseSelected(exercise)
                             onDismiss()
                         },
-                        onEditClick = if (onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
+                        onEditClick = if (!pickOnly && onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
                             { exerciseToEdit = exercise }
                         } else null,
-                        onDeleteClick = if (onDeleteCustomExercise != null && exercise.id >= 1000) {
+                        onDeleteClick = if (!pickOnly && onDeleteCustomExercise != null && exercise.id >= 1000) {
                             { exerciseToDelete = exercise }
                         } else null,
                         languageCode = languageCode,
                         showThumbnail = showThumbnails,
                         onThumbnailClick = { exerciseMediaToView = exercise },
-                        onInfoClick = { detailExerciseId = exercise.id }
+                        onInfoClick = if (pickOnly) null else { { detailExerciseId = exercise.id } }
                     )
                 }
             }
 
-            AnimatedVisibility(visible = !imeVisible) {
+            AnimatedVisibility(visible = !imeVisible && !pickOnly) {
                 Column {
                 Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -362,7 +366,7 @@ private fun ExercisePickerItem(
     languageCode: String = "en",
     showThumbnail: Boolean = false,
     onThumbnailClick: () -> Unit = {},
-    onInfoClick: () -> Unit = {}
+    onInfoClick: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
@@ -412,7 +416,7 @@ private fun ExercisePickerItem(
                     color = OnSurfaceVariant
                 )
             }
-            ExerciseInfoButton(onClick = onInfoClick)
+            if (onInfoClick != null) ExerciseInfoButton(onClick = onInfoClick)
             if (onEditClick != null || onDeleteClick != null) {
                 Row {
                     if (onEditClick != null) {
