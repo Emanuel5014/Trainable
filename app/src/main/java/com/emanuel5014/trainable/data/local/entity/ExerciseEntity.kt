@@ -31,4 +31,9 @@ data class ExerciseEntity(
      */
     @ColumnInfo(name = "is_deleted", defaultValue = "0")
     val isDeleted: Boolean = false
-)
+) {
+    companion object {
+        /** Built-in exercises have ids below this, the ones the user creates start from it. */
+        const val FIRST_CUSTOM_ID = 1000
+    }
+}
