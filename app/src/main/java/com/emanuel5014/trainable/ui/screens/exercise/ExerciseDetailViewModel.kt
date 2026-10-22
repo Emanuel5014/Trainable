@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.local.dao.MergeOutcome
@@ -13,7 +14,10 @@ import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.domain.exercise.MergeCheck
+import com.emanuel5014.trainable.ui.components.ExerciseForm
 import com.emanuel5014.trainable.util.AppLocaleManager
+import com.emanuel5014.trainable.util.ExerciseMediaMessage
+import com.emanuel5014.trainable.util.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,25 +43,30 @@ import javax.inject.Inject
 data class ExerciseDetailActions(
     val canMerge: Boolean = false,
     val canRemove: Boolean = false,
-    val canRestore: Boolean = false
+    val canRestore: Boolean = false,
+    val canEdit: Boolean = false
 ) {
     companion object {
         val NONE = ExerciseDetailActions()
 
-        /** An exercise merged into another one can only have the merge undone: it is not hidden or restored by itself. */
-        fun of(exercise: ExerciseEntity, merges: ExerciseMergeState): ExerciseDetailActions {
+        /**
+         * An exercise merged into another one can only have the merge undone: it is not hidden, restored or edited by itself.
+         * A preset is edited only while "Editable preset exercises" is on ([editablePresets]).
+         */
+        fun of(exercise: ExerciseEntity, merges: ExerciseMergeState, editablePresets: Boolean = false): ExerciseDetailActions {
             val mergedAway = merges.asLoser != null
             return ExerciseDetailActions(
                 canMerge = !mergedAway && !ExerciseMerges.isCardio(exercise),
                 canRemove = !exercise.isDeleted && !mergedAway,
-                canRestore = exercise.isDeleted && !mergedAway
+                canRestore = exercise.isDeleted && !mergedAway,
+                canEdit = !mergedAway && (exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID || editablePresets)
             )
         }
     }
 }
 
 /** Tells the screen what just happened, to show a short confirmation. */
-enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT }
+enum class ExerciseDetailMessage { MERGED, UNDONE, HIDDEN, DELETED, RESTORED, CANNOT_MERGE, CANNOT_MERGE_CARDIO, CANNOT_MERGE_WORKOUT, SAVED }
 
 /**
  * What the exercise detail screen shows. [exerciseId] says which exercise the state is about: the screen shows nothing
@@ -90,9 +99,19 @@ class ExerciseDetailViewModel @Inject constructor(
 
     private val weightUnit: Flow<String> = userPreferencesRepository.weightUnit
     private val languageCode: Flow<String> = userPreferencesRepository.userLanguage.map { localeManager.getResolvedLanguage() }
+    private val editablePresets: Flow<Boolean> = userPreferencesRepository.editablePresetExercises
 
     private val _messages = MutableSharedFlow<ExerciseDetailMessage>(extraBufferCapacity = 4)
     val messages: SharedFlow<ExerciseDetailMessage> = _messages.asSharedFlow()
+
+    /** Every category the form can offer, and the exercises of the library (to refuse a name already taken). */
+    val categories: StateFlow<List<String>> = exerciseRepository.getCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val library: StateFlow<List<ExerciseEntity>> = exerciseRepository.getAllExercises()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _mediaMessages = MutableSharedFlow<ExerciseMediaMessage>(extraBufferCapacity = 4)
+    val mediaMessages: SharedFlow<ExerciseMediaMessage> = _mediaMessages.asSharedFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ExerciseDetailUiState> = requestedId
@@ -106,11 +125,11 @@ class ExerciseDetailViewModel @Inject constructor(
                             flowOf(ExerciseDetailUiState(exerciseId = id, loading = false, notFound = true))
                         } else {
                             val history = workoutRepository.getSetHistoryForExercise(id).map { ExerciseHistory.of(it) }.flowOn(Dispatchers.Default)
-                            combine(history, weightUnit, languageCode, mergeRepository.observeState(id)) { history, unit, language, merges ->
+                            combine(history, weightUnit, languageCode, mergeRepository.observeState(id), editablePresets) { history, unit, language, merges, editable ->
                                 ExerciseDetailUiState(
                                     exerciseId = id, loading = false, exercise = exercise, history = history,
                                     weightUnit = unit, languageCode = language,
-                                    merges = merges, actions = ExerciseDetailActions.of(exercise, merges)
+                                    merges = merges, actions = ExerciseDetailActions.of(exercise, merges, editable)
                                 )
                             }
                         }
@@ -161,6 +180,36 @@ class ExerciseDetailViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /** Saves the edit of the open exercise, unless its actions do not allow one (a preset while the switch is off). */
+    fun save(form: ExerciseForm) {
+        val current = state.value
+        val exercise = current.exercise ?: return
+        if (!current.actions.canEdit || form.name.isBlank()) return
+        viewModelScope.launch {
+            exerciseRepository.saveExercise(
+                exercise.copy(
+                    nome = form.name.trim(),
+                    categoria = form.category,
+                    descrizione = form.description.trim().ifEmpty { null }
+                )
+            )
+            _messages.tryEmit(ExerciseDetailMessage.SAVED)
+        }
+    }
+
+    /** Stores the image or GIF the user picked as the media of the open exercise, replacing the one it had. */
+    fun attachMedia(uri: Uri) {
+        val id = requestedId.value ?: return
+        viewModelScope.launch {
+            exerciseRepository.attachExerciseMedia(id, uri).toMessage()?.let { _mediaMessages.emit(it) }
+        }
+    }
+
+    fun removeMedia() {
+        val id = requestedId.value ?: return
+        viewModelScope.launch { exerciseRepository.removeExerciseMedia(id) }
     }
 
     fun undoMerge(mergeId: Int) {

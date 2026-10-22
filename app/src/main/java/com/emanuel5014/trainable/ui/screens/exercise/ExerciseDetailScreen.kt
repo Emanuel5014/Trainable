@@ -126,6 +126,7 @@ fun ExerciseDetailDialog(
                 ExerciseDetailMessage.CANNOT_MERGE -> context.getString(R.string.exercise_msg_cannot_merge)
                 ExerciseDetailMessage.CANNOT_MERGE_CARDIO -> context.getString(R.string.exercise_msg_cannot_merge_cardio)
                 ExerciseDetailMessage.CANNOT_MERGE_WORKOUT -> context.getString(R.string.exercise_msg_cannot_merge_workout)
+                ExerciseDetailMessage.SAVED -> context.getString(R.string.exercise_msg_saved)
             }
             snackbarHost.showSnackbar(text)
         }
