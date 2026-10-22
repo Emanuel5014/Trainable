@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -49,6 +51,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
@@ -204,7 +207,9 @@ fun HubPanel(
     ) {
         Surface(
             modifier = Modifier
+                .limitHeight(MAX_HEIGHT_FRACTION)
                 .fillMaxWidth()
+                .testTag("hub_panel")
                 .onSizeChanged {
                     sheet.onMeasured(it.height)
                     onHeightChanged(it.height)
@@ -216,13 +221,33 @@ fun HubPanel(
         ) {
             Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
                 HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = horizontalPadding)) {
+                // On a short screen the open hub is taller than the room it may take: its content scrolls under the pill
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = horizontalPadding)
+                ) {
                     content(expansion)
                     Spacer(modifier = Modifier.hubSpace(expansion, closed = 8.dp, open = 16.dp))
                 }
             }
         }
     }
+}
+
+/** The part of the room above that the hub may take, so the exercise header stays in sight. */
+private const val MAX_HEIGHT_FRACTION = 0.8f
+
+private fun Modifier.limitHeight(fraction: Float): Modifier = layout { measurable, constraints ->
+    val limited = if (constraints.hasBoundedHeight) {
+        constraints.copy(maxHeight = (constraints.maxHeight * fraction).roundToInt().coerceAtLeast(constraints.minHeight))
+    } else {
+        constraints
+    }
+    val placeable = measurable.measure(limited)
+    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
 }
 
 /** The pill on top of the hub: drag it, or tap it to switch step. */

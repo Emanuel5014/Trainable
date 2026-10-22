@@ -10,6 +10,7 @@ import com.emanuel5014.trainable.ui.components.SetNumberBadge
 import com.emanuel5014.trainable.ui.components.motion.RollingText
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.ui.components.HubSheetState
@@ -24,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.components.hubScaled
@@ -64,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
@@ -545,7 +548,7 @@ private fun SetPanel(
                                     viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                 }
                             },
-                            modifier = Modifier.width(120.dp).height(lerp(44.dp, 48.dp, e)),
+                            modifier = Modifier.width(if (LocalConfiguration.current.screenWidthDp < 360) 88.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
                             compact = true
                         )
                     }
@@ -724,21 +727,36 @@ private fun SetCard(
                 Text(
                     text = if (isActiveSet) stringResource(R.string.active_set) else stringResource(R.string.adjust_set_number, set.setNumber),
                     style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
+                    color = OnSurfaceVariant,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
-            RollingText(
-                text = setValueText(
-                    kind = exercise?.setKind ?: SetLogKind.STRENGTH,
-                    weightKg = set.weight,
-                    reps = set.reps,
-                    seconds = if (exercise?.isTimed == true) set.timeSeconds ?: exercise.timeTargetSeconds ?: 45 else null,
-                    weightUnit = state.weightUnit,
-                    repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
-                ),
-                style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.82f, 1f, e)),
-                fontWeight = FontWeight.ExtraBold
+            val valueText = setValueText(
+                kind = exercise?.setKind ?: SetLogKind.STRENGTH,
+                weightKg = set.weight,
+                reps = set.reps,
+                seconds = if (exercise?.isTimed == true) set.timeSeconds ?: exercise.timeTargetSeconds ?: 45 else null,
+                weightUnit = state.weightUnit,
+                repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
             )
+            val valueStyle = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.82f, 1f, e))
+            // The digits roll on a line of their own; a value that does not fit on one line (narrow phone, large text) wraps instead
+            val measurer = rememberTextMeasurer()
+            BoxWithConstraints {
+                val fitsOnOneLine = remember(valueText, valueStyle, constraints.maxWidth) {
+                    measurer.measure(
+                        text = valueText,
+                        style = valueStyle.copy(fontWeight = FontWeight.ExtraBold),
+                        softWrap = false
+                    ).size.width <= constraints.maxWidth
+                }
+                if (fitsOnOneLine) {
+                    RollingText(text = valueText, style = valueStyle, fontWeight = FontWeight.ExtraBold)
+                } else {
+                    Text(text = valueText, style = valueStyle, fontWeight = FontWeight.ExtraBold)
+                }
+            }
             val p = set.prescription
             val detail = listOfNotNull(
                 p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) },

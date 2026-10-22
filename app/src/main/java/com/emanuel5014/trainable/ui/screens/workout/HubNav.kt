@@ -29,6 +29,7 @@ import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
+import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
 /** How loud the way to the next exercise is: quiet while sets are left to do, the main action once the exercise is done. */
@@ -102,6 +103,32 @@ internal fun HubNav(
                     }
                 }
             }
+            isLast && emphasis == HubNavEmphasis.Tonal -> {
+                // Sets are left on the last exercise: finishing stays one tap away, quietly
+                Surface(
+                    onClick = onFinish,
+                    shape = RoundedCornerShape(16.dp),
+                    color = SurfaceContainerHigh,
+                    modifier = Modifier.weight(1f).height(navHeight.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.finish).uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Primary,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
             isLast && emphasis == HubNavEmphasis.Filled -> {
                 GymButton(onClick = onFinish, modifier = Modifier.weight(1f), height = navHeight, pressMorph = true) {
                     Icon(Icons.Rounded.Check, contentDescription = null)
@@ -123,7 +150,9 @@ private fun NextLabel(name: String, labelColor: androidx.compose.ui.graphics.Col
             text = stringResource(R.string.next_exercise_btn).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = labelColor,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         Text(
             text = name,

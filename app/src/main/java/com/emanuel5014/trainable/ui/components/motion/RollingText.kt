@@ -14,6 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 
@@ -29,7 +32,8 @@ fun RollingText(
     color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null
 ) {
-    Row(modifier = modifier) {
+    // One node for the whole text: a screen reader would otherwise read it a character at a time
+    Row(modifier = modifier.clearAndSetSemantics { this.text = AnnotatedString(text) }) {
         text.forEachIndexed { index, char ->
             key(text.length - 1 - index) {
                 AnimatedContent(
