@@ -61,6 +61,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -130,6 +132,7 @@ fun SwapExerciseBottomSheet(
     var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filteredExercises = remember(availableExercises, searchQuery, selectedCategory, showOnlyCustom, languageCode, excludedExerciseIds) {
         availableExercises.filter { exercise ->
@@ -269,7 +272,8 @@ fun SwapExerciseBottomSheet(
                                 isSelected = isSelected,
                                 showCurrent = exercise.id == currentExerciseId,
                                 showThumbnail = showThumbnails,
-                                onThumbnailClick = { exerciseMediaToView = exercise }
+                                onThumbnailClick = { exerciseMediaToView = exercise },
+                        onInfoClick = { detailExerciseId = exercise.id }
                             )
                         }
                     }
@@ -344,6 +348,7 @@ fun SwapExerciseBottomSheet(
     }
 
     ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
+    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
     if (showAddCustomDialog) {
         AddCustomExerciseDialog(
@@ -412,7 +417,8 @@ private fun ExerciseListItem(
     isSelected: Boolean,
     showCurrent: Boolean,
     showThumbnail: Boolean = false,
-    onThumbnailClick: () -> Unit = {}
+    onThumbnailClick: () -> Unit = {},
+    onInfoClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -465,6 +471,7 @@ private fun ExerciseListItem(
                     color = OnSurfaceVariant
                 )
             }
+            ExerciseInfoButton(onClick = onInfoClick)
             if (onEditClick != null || onDeleteClick != null) {
                 Row {
                     if (onEditClick != null) {

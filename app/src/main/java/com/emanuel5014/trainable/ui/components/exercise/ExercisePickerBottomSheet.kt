@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.theme.Error
@@ -99,6 +101,7 @@ fun ExercisePickerBottomSheet(
     var exerciseToEdit by remember { mutableStateOf<ExerciseEntity?>(null) }
     var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filteredExercises = remember(exercises, searchQuery, selectedCategory, showOnlyCustom, languageCode) {
         exercises.filter { exercise ->
@@ -258,7 +261,8 @@ fun ExercisePickerBottomSheet(
                         } else null,
                         languageCode = languageCode,
                         showThumbnail = showThumbnails,
-                        onThumbnailClick = { exerciseMediaToView = exercise }
+                        onThumbnailClick = { exerciseMediaToView = exercise },
+                        onInfoClick = { detailExerciseId = exercise.id }
                     )
                 }
             }
@@ -318,6 +322,7 @@ fun ExercisePickerBottomSheet(
     }
 
     ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
+    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
     if (exerciseToDelete != null) {
         AlertDialog(
@@ -356,7 +361,8 @@ private fun ExercisePickerItem(
     onDeleteClick: (() -> Unit)? = null,
     languageCode: String = "en",
     showThumbnail: Boolean = false,
-    onThumbnailClick: () -> Unit = {}
+    onThumbnailClick: () -> Unit = {},
+    onInfoClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -406,6 +412,7 @@ private fun ExercisePickerItem(
                     color = OnSurfaceVariant
                 )
             }
+            ExerciseInfoButton(onClick = onInfoClick)
             if (onEditClick != null || onDeleteClick != null) {
                 Row {
                     if (onEditClick != null) {

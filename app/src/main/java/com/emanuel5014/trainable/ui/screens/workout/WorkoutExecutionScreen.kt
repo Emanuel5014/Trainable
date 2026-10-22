@@ -117,6 +117,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -148,7 +149,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
+import com.emanuel5014.trainable.ui.components.ExerciseInfoButton
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
@@ -288,6 +291,7 @@ fun WorkoutExecutionScreen(
     // The user's own image/GIF of each exercise (optional, see Workout settings -> Exercise media)
     val exerciseMedia by viewModel.exerciseMedia.collectAsState()
     var mediaViewer by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     // Height of the bottom interaction hub, so the large media card only takes the room left above it
     var hubHeightPx by remember { mutableIntStateOf(0) }
     // The lifter drags the hub between open and a thin strip; it stays where it was left while the screen is open
@@ -316,6 +320,8 @@ fun WorkoutExecutionScreen(
             )
         }
     }
+
+    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
     if (showRenameDialog) {
         AlertDialog(
@@ -862,6 +868,9 @@ fun WorkoutExecutionScreen(
                                                     tint = if (targetExState.lastProgramEdit != null) Primary else OnSurfaceVariant
                                                 )
                                             }
+                                        }
+                                        if (!targetExState.isCardio) {
+                                            ExerciseInfoButton(onClick = { detailExerciseId = targetExState.exercise.id })
                                         }
                                         IconButton(
                                             onClick = { showSwapExerciseSheet = true }
