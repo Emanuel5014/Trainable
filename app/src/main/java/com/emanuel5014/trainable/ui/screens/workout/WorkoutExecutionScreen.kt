@@ -10,10 +10,8 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
-import com.emanuel5014.trainable.ui.components.journal.FinishWorkoutSheet
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import androidx.compose.animation.core.animateFloatAsState
@@ -29,7 +27,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -54,7 +51,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -128,7 +124,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -142,43 +137,27 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
 import com.emanuel5014.trainable.ui.components.ExerciseInfoButton
-import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
-import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
-import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
 import com.emanuel5014.trainable.ui.components.LoadPercentChip
-import com.emanuel5014.trainable.ui.components.LoadPercentSheet
-import com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog
 import com.emanuel5014.trainable.ui.components.ProgramEditPill
-import com.emanuel5014.trainable.ui.components.ProgramEditScopeDialog
-import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
 import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
-import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.emanuel5014.trainable.ui.components.RestTimerSection
-import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.SetLogRow
-import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
 import com.emanuel5014.trainable.ui.components.TimerAdjustButton
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.rounded.FastForward
-import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material3.OutlinedButton
 import com.emanuel5014.trainable.ui.components.WeightTimeInput
 import com.emanuel5014.trainable.ui.components.TimeRepsInput
 import com.emanuel5014.trainable.ui.components.setValueText
 import com.emanuel5014.trainable.ui.components.setPerformanceBadges
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
-import com.emanuel5014.trainable.ui.components.RestSlider
-import com.emanuel5014.trainable.ui.components.formatRestTime
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -188,10 +167,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
-import com.emanuel5014.trainable.ui.theme.Shapes
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.emanuel5014.trainable.ui.theme.Tertiary
-import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
@@ -237,52 +213,15 @@ fun WorkoutExecutionScreen(
             activityWindow?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
-    var isEditingValues by remember { mutableStateOf(false) }
-    // Index of a set being edited in place in the bottom hub, done or still to do (none by default); it resets with the exercise
-    var editingSetIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
-    // The set whose technique-as-done dialog is open (exercise index, set index)
-    var techniqueDialogFor by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-    techniqueDialogFor?.let { (exIndex, setIndex) ->
-        state.exercises.getOrNull(exIndex)?.sets?.getOrNull(setIndex)?.let { set ->
-            PerformedTechniqueDialog(
-                planned = set.prescription?.techniques.orEmpty(),
-                performed = set.performedTechniques,
-                onDismiss = { techniqueDialogFor = null },
-                onSave = { techniques, applyToFollowing ->
-                    viewModel.setPerformedTechniques(exIndex, setIndex, techniques, applyToFollowing)
-                    techniqueDialogFor = null
-                }
-            )
-        }
-    }
-    var lastEditedIndex by remember { mutableIntStateOf(0) }
-    var showSwapExerciseSheet by remember { mutableStateOf(false) }
+    val ui = rememberWorkoutScreenUiState(state.currentExerciseIndex, state.planName)
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
     val plateExercises by viewModel.plateCalculatorExercises.collectAsState()
-    var showPlateSheet by remember { mutableStateOf(false) }
-    // Changing the program of an exercise: the exercise (index) whose blocks are open in the editor, the new blocks
-    // waiting for the answer to "update the routine or only this workout?", the exercise and block the load editor
     // is open for, and the exercise whose list of changes is shown
-    var programEditFor by remember { mutableStateOf<Int?>(null) }
-    var pendingProgram by remember { mutableStateOf<Pair<Int, List<com.emanuel5014.trainable.domain.prescription.PrescriptionBlock>>?>(null) }
-    var loadSheetFor by remember { mutableStateOf<Pair<Int, Int?>?>(null) }
-    var programHistoryFor by remember { mutableStateOf<Int?>(null) }
-    var showAddExerciseSheet by remember { mutableStateOf(false) }
-    var isAddingAfterCurrent by remember { mutableStateOf(false) }
-    var showCancelDialog by remember { mutableStateOf(false) }
-    var showFinishDialog by remember { mutableStateOf(false) }
-    var showRenameDialog by remember { mutableStateOf(false) }
-    var newSessionName by remember { mutableStateOf(state.planName) }
-    var showWarmupTimerDialog by remember { mutableStateOf(false) }
-    var warmupTimerDuration by remember { mutableStateOf(120) }
-    // Exercises whose EMOM sets the lifter logs by hand instead of with the minute clock.
-    var emomManualExercises by remember { mutableStateOf(emptySet<Int>()) }
     val usesEmomClock = { exercise: WorkoutExerciseState ->
-        !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in emomManualExercises
+        !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in ui.emomManualExercises
     }
     // The user's own image/GIF of each exercise (optional, see Workout settings -> Exercise media)
     val exerciseMedia by viewModel.exerciseMedia.collectAsState()
-    var mediaViewer by remember { mutableStateOf<Pair<Int, String>?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     // Height of the bottom interaction hub, so the large media card only takes the room left above it
     var hubHeightPx by remember { mutableIntStateOf(0) }
@@ -298,102 +237,22 @@ fun WorkoutExecutionScreen(
         )
     }
 
-    mediaViewer?.let { (exerciseId, exerciseName) ->
-        val mediaFile = exerciseMedia[exerciseId]
-        // The file disappears when the user removes it from the viewer: close it then
-        LaunchedEffect(mediaFile) { if (mediaFile == null) mediaViewer = null }
-        if (mediaFile != null) {
-            ExerciseMediaViewer(
-                fileName = mediaFile,
-                exerciseName = exerciseName,
-                onDismiss = { mediaViewer = null },
-                onReplace = { pickMedia(exerciseId) },
-                onRemove = { viewModel.removeExerciseMedia(exerciseId) }
-            )
-        }
-    }
+    WorkoutEarlyDialogs(
+        state = state,
+        ui = ui,
+        viewModel = viewModel,
+        languageCode = languageCode,
+        exerciseMedia = exerciseMedia,
+        pickMedia = pickMedia,
+        detailExerciseId = detailExerciseId,
+        onDetailDismiss = { detailExerciseId = null }
+    )
 
-    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
-    if (showRenameDialog) {
-        AlertDialog(
-            modifier = Modifier.imePadding(),
-            onDismissRequest = { showRenameDialog = false },
-            title = { Text(stringResource(R.string.rename_workout)) },
-            text = {
-                com.emanuel5014.trainable.ui.components.GymInputField(
-                    value = newSessionName,
-                    onValueChange = { newSessionName = it },
-                    label = stringResource(R.string.routine_name),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.updateSessionName(newSessionName)
-                    showRenameDialog = false
-                }) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase())
-                }
-            },
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
-    }
 
     val prescriptionLabels = rememberPrescriptionLabels(state.weightUnit)
 
-    state.oneRepMaxSuggestions.firstOrNull()?.let { suggestion ->
-        val fmt = { kg: Float -> WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(kg, state.weightUnit), state.weightUnit) }
-        AlertDialog(
-            onDismissRequest = { viewModel.resolveOneRepMaxSuggestion(accept = false) },
-            icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Primary) },
-            title = { Text(stringResource(R.string.new_one_rep_max_title), fontWeight = FontWeight.ExtraBold) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.new_one_rep_max_message,
-                        fmt(suggestion.weightKg), suggestion.reps, suggestion.exerciseName,
-                        fmt(suggestion.currentKg), fmt(suggestion.suggestedKg)
-                    )
-                )
-            },
-            confirmButton = {
-                GymButton(
-                    onClick = { viewModel.resolveOneRepMaxSuggestion(accept = true) },
-                    containerColor = Primary,
-                    contentColor = OnPrimary,
-                    modifier = Modifier.height(48.dp)
-                ) {
-                    Text(stringResource(R.string.save_new_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.resolveOneRepMaxSuggestion(accept = false) }) {
-                    Text(stringResource(R.string.not_now).uppercase(), color = OnSurfaceVariant)
-                }
-            },
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
-    }
 
-    // The routine has exercises the user deleted from the exercise list: offer to add them back
-    if (state.deletedExercises.isNotEmpty()) {
-        RestoreExerciseDialog(
-            exerciseNames = state.deletedExercises.map { ExerciseTranslations.translate(it.nome, languageCode) },
-            onRestore = { viewModel.restoreDeletedExercises() },
-            onSkip = { viewModel.dismissDeletedExercises() },
-            onDismiss = { viewModel.dismissDeletedExercises() }
-        )
-    }
 
     if (state.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -412,25 +271,25 @@ fun WorkoutExecutionScreen(
     val isExerciseCompleted = remember(activeSet) {
         activeSet == null || activeSet.isCompleted
     }
-    val setBeingEdited = remember(currentExState?.sets, editingSetIndex) {
-        editingSetIndex?.let { currentExState?.sets?.getOrNull(it) }
+    val setBeingEdited = remember(currentExState?.sets, ui.editingSetIndex) {
+        ui.editingSetIndex?.let { currentExState?.sets?.getOrNull(it) }
     }
     LaunchedEffect(setBeingEdited, activeSetIndex) {
         val editing = setBeingEdited
         when {
             // The set is gone (removed)
-            editing == null -> editingSetIndex = null
+            editing == null -> ui.editingSetIndex = null
             // The set being edited came up next: it moves to the panel of the active set, which can also log it
             // (while a rest is running that panel waits for the rest to end, so it is not opened behind it)
-            editingSetIndex == activeSetIndex && !editing.isCompleted -> {
-                editingSetIndex = null
-                isEditingValues = state.remainingRestSeconds <= 0
+            ui.editingSetIndex == activeSetIndex && !editing.isCompleted -> {
+                ui.editingSetIndex = null
+                ui.isEditingValues = state.remainingRestSeconds <= 0
             }
         }
     }
     // Kept so the hub still has something to show while it animates away
-    LaunchedEffect(editingSetIndex) {
-        editingSetIndex?.let { lastEditedIndex = it }
+    LaunchedEffect(ui.editingSetIndex) {
+        ui.editingSetIndex?.let { ui.lastEditedIndex = it }
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -466,7 +325,7 @@ fun WorkoutExecutionScreen(
     // Auto-collapse editing when a set is logged or timer starts
     LaunchedEffect(activeSetIndex, state.remainingRestSeconds > 0) {
         if (state.remainingRestSeconds > 0) {
-            isEditingValues = false
+            ui.isEditingValues = false
         }
     }
 
@@ -491,7 +350,7 @@ fun WorkoutExecutionScreen(
                                 .clip(RoundedCornerShape(4.dp))
                                 .clickable { 
                                 if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
-                                        showRenameDialog = true
+                                        ui.showRenameDialog = true
                                     } else {
                                         state.planId?.let { onNavigateToRoutine(it) }
                                     }
@@ -540,8 +399,8 @@ fun WorkoutExecutionScreen(
                         if (state.warmupTimerEnabled) {
                             IconButton(
                                 onClick = {
-                                    warmupTimerDuration = 120
-                                    showWarmupTimerDialog = true
+                                    ui.warmupTimerDuration = 120
+                                    ui.showWarmupTimerDialog = true
                                 },
                                 modifier = Modifier.size(40.dp)
                             ) {
@@ -556,7 +415,7 @@ fun WorkoutExecutionScreen(
                     }
 
                     Surface(
-                        onClick = { showCancelDialog = true },
+                        onClick = { ui.showCancelDialog = true },
                         shape = CircleShape,
                         color = Error.copy(alpha = 0.1f)
                     ) {
@@ -598,7 +457,7 @@ fun WorkoutExecutionScreen(
                             color = OnSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
-                        GymButton(onClick = { showAddExerciseSheet = true }) {
+                        GymButton(onClick = { ui.showAddExerciseSheet = true }) {
                             Text(stringResource(R.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                     }
@@ -649,8 +508,8 @@ fun WorkoutExecutionScreen(
                         }
 
                         // Bring the set being edited above the hub that opens under it
-                        LaunchedEffect(editingSetIndex) {
-                            val editing = editingSetIndex
+                        LaunchedEffect(ui.editingSetIndex) {
+                            val editing = ui.editingSetIndex
                             if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
                                 exerciseListState.animateScrollToItem(editing)
                             }
@@ -701,10 +560,10 @@ fun WorkoutExecutionScreen(
                                     languageCode = languageCode,
                                     state = state,
                                     viewModel = viewModel,
-                                    onSwap = { showSwapExerciseSheet = true },
+                                    onSwap = { ui.showSwapExerciseSheet = true },
                                     onAddExercise = {
-                                        isAddingAfterCurrent = false
-                                        showAddExerciseSheet = true
+                                        ui.isAddingAfterCurrent = false
+                                        ui.showAddExerciseSheet = true
                                     },
                                     distanceInput = cardioDistanceInput,
                                     onDistanceChange = { cardioDistanceInput = it },
@@ -720,8 +579,8 @@ fun WorkoutExecutionScreen(
                                     languageCode = languageCode,
                                     state = state,
                                     viewModel = viewModel,
-                                    onSwap = { showSwapExerciseSheet = true },
-                                    onLogManually = { emomManualExercises = emomManualExercises + targetExState.exercise.id },
+                                    onSwap = { ui.showSwapExerciseSheet = true },
+                                    onLogManually = { ui.emomManualExercises = ui.emomManualExercises + targetExState.exercise.id },
                                     bottomPadding = emomBottomPadding
                                 )
                             } else {
@@ -829,7 +688,7 @@ fun WorkoutExecutionScreen(
                                                 }
                                                 // The program of this exercise was changed during the workout: tap for the story
                                                 targetExState.lastProgramEdit?.let { edit ->
-                                                    ProgramEditPill(edit, Modifier.clickable { programHistoryFor = targetIndex })
+                                                    ProgramEditPill(edit, Modifier.clickable { ui.programHistoryFor = targetIndex })
                                                 }
                                             }
                                         } else Text(
@@ -853,7 +712,7 @@ fun WorkoutExecutionScreen(
                                             }
                                         }
                                         if (targetExState.isAdvanced && !targetExState.isCardio && !targetExState.isTimed) {
-                                            IconButton(onClick = { programEditFor = targetIndex }) {
+                                            IconButton(onClick = { ui.programEditFor = targetIndex }) {
                                                 Icon(
                                                     imageVector = Icons.Rounded.DesignServices,
                                                     contentDescription = stringResource(R.string.edit_program),
@@ -865,7 +724,7 @@ fun WorkoutExecutionScreen(
                                             ExerciseInfoButton(onClick = { detailExerciseId = targetExState.exercise.id })
                                         }
                                         IconButton(
-                                            onClick = { showSwapExerciseSheet = true }
+                                            onClick = { ui.showSwapExerciseSheet = true }
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.SwapHoriz,
@@ -892,7 +751,7 @@ fun WorkoutExecutionScreen(
                                             )
                                             ExerciseMediaSlot(
                                                 fileName = exerciseMedia[targetExState.exercise.id],
-                                                onOpen = { mediaViewer = targetExState.exercise.id to exerciseDisplayName },
+                                                onOpen = { ui.mediaViewer = targetExState.exercise.id to exerciseDisplayName },
                                                 onAdd = { pickMedia(targetExState.exercise.id) },
                                                 playing = !largeMediaVisible
                                             )
@@ -906,9 +765,9 @@ fun WorkoutExecutionScreen(
                                         )
                                     }
 
-                                    if (targetExState.emomStartIndex != null && targetExState.exercise.id in emomManualExercises) {
+                                    if (targetExState.emomStartIndex != null && targetExState.exercise.id in ui.emomManualExercises) {
                                         Surface(
-                                            onClick = { emomManualExercises = emomManualExercises - targetExState.exercise.id },
+                                            onClick = { ui.emomManualExercises = ui.emomManualExercises - targetExState.exercise.id },
                                             color = Tertiary.copy(alpha = 0.15f),
                                             shape = RoundedCornerShape(8.dp),
                                             modifier = Modifier.padding(top = 8.dp)
@@ -994,7 +853,7 @@ fun WorkoutExecutionScreen(
                                                 text = { Text(stringResource(R.string.remove_set_confirm)) },
                                                 confirmButton = {
                                                     TextButton(onClick = {
-                                                        editingSetIndex = null
+                                                        ui.editingSetIndex = null
                                                         viewModel.removeSetFromExercise(targetIndex, index)
                                                         showDeleteConfirm = false
                                                     }) {
@@ -1034,7 +893,7 @@ fun WorkoutExecutionScreen(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .then(
-                                                                if (loadEditable) Modifier.clickable { loadSheetFor = targetIndex to p!!.blockIndex }
+                                                                if (loadEditable) Modifier.clickable { ui.loadSheetFor = targetIndex to p!!.blockIndex }
                                                                 else Modifier
                                                             ),
                                                         verticalAlignment = Alignment.CenterVertically,
@@ -1116,7 +975,7 @@ fun WorkoutExecutionScreen(
                                             onToggleComplete = { 
                                                 if (set.isAmrap && !set.isCompleted && index == targetActiveSetIndex) {
                                                     // AMRAP: reps must be entered before logging
-                                                    isEditingValues = true
+                                                    ui.isEditingValues = true
                                                 } else if (targetExState.isTimed && !set.isCompleted) {
                                                     viewModel.skipTimerAndLogSet(
                                                         targetIndex,
@@ -1136,16 +995,16 @@ fun WorkoutExecutionScreen(
                                                 showDeleteConfirm = true
                                             },
                                             onEditValues = {
-                                                editingSetIndex = null
-                                                isEditingValues = !isEditingValues
+                                                ui.editingSetIndex = null
+                                                ui.isEditingValues = !ui.isEditingValues
                                             },
                                             // A tap on the card edits that set in place, done or still to do; the square
                                             // on the right is what checks and unchecks it
                                             onEdit = {
-                                                editingSetIndex = if (editingSetIndex == index) null else index
-                                                isEditingValues = false
+                                                ui.editingSetIndex = if (ui.editingSetIndex == index) null else index
+                                                ui.isEditingValues = false
                                             },
-                                            isEditing = editingSetIndex == index && targetIndex == state.currentExerciseIndex,
+                                            isEditing = ui.editingSetIndex == index && targetIndex == state.currentExerciseIndex,
                                             isActive = isActive,
                                             weightUnit = state.weightUnit,
                                             previousNote = set.previousNote,
@@ -1350,8 +1209,8 @@ fun WorkoutExecutionScreen(
                                                     val isLastExercise = targetIndex == state.exercises.size - 1
                                                     GymButton(
                                                         onClick = {
-                                                            isAddingAfterCurrent = !state.isQuickWorkout
-                                                            showAddExerciseSheet = true
+                                                            ui.isAddingAfterCurrent = !state.isQuickWorkout
+                                                            ui.showAddExerciseSheet = true
                                                         },
                                                         modifier = Modifier.weight(1f),
                                                         containerColor = SurfaceContainerHigh,
@@ -1385,7 +1244,7 @@ fun WorkoutExecutionScreen(
                                                 ExerciseMediaCard(
                                                     fileName = largeMediaFile,
                                                     onOpen = {
-                                                        mediaViewer = targetExState.exercise.id to
+                                                        ui.mediaViewer = targetExState.exercise.id to
                                                             ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
                                                     },
                                                     modifier = Modifier
@@ -1429,7 +1288,7 @@ fun WorkoutExecutionScreen(
                     // Cardio and the EMOM clock have their own screens: the hub only navigates.
                     isCardioActive || isEmomActive -> HubMode.Cardio
                     activeSet == null || activeSet.isCompleted -> HubMode.Completed
-                    isEditingValues -> HubMode.Editing
+                    ui.isEditingValues -> HubMode.Editing
                     else -> HubMode.Logging
                 }
                 // These ask the lifter to type something: the hub opens by itself and goes back to the strip afterwards
@@ -1553,17 +1412,17 @@ fun WorkoutExecutionScreen(
                                             state = state,
                                             viewModel = viewModel,
                                             languageCode = languageCode,
-                                            onFinishWorkout = { showFinishDialog = true },
+                                            onFinishWorkout = { ui.showFinishDialog = true },
                                             onAddExercise = {
-                                                isAddingAfterCurrent = false
-                                                showAddExerciseSheet = true
+                                                ui.isAddingAfterCurrent = false
+                                                ui.showAddExerciseSheet = true
                                             },
                                             expansion = expansion
                                         )
                                     }
                                 }
                                 HubMode.EditingSet -> {
-                                    val editedIndex = editingSetIndex ?: lastEditedIndex
+                                    val editedIndex = ui.editingSetIndex ?: ui.lastEditedIndex
                                     val exercise = currentExState
                                     val editedSet = exercise?.sets?.getOrNull(editedIndex)
                                     if (exercise != null && editedSet != null) {
@@ -1582,7 +1441,7 @@ fun WorkoutExecutionScreen(
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     // The rest card is hidden while editing: keep the countdown in sight
                                                     if (isResting) RestTimerPill(state.remainingRestSeconds)
-                                                    IconButton(onClick = { editingSetIndex = null }) {
+                                                    IconButton(onClick = { ui.editingSetIndex = null }) {
                                                         Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
                                                     }
                                                 }
@@ -1613,7 +1472,7 @@ fun WorkoutExecutionScreen(
                                                     weightUnit = state.weightUnit
                                                 )
                                                 SetPercentChip(exercise, editedSet) {
-                                                    loadSheetFor = state.currentExerciseIndex to editedSet.prescription?.blockIndex
+                                                    ui.loadSheetFor = state.currentExerciseIndex to editedSet.prescription?.blockIndex
                                                 }
                                                 RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
                                                 if (state.setPerformanceEnabled) {
@@ -1625,20 +1484,20 @@ fun WorkoutExecutionScreen(
                                                         hapticEnabled = state.hapticEnabled,
                                                         techniqueChanged = editedSet.performedTechniques != null,
                                                         onEditTechnique = if (editedSet.prescription?.techniques.isNullOrEmpty()) null else {
-                                                            { techniqueDialogFor = state.currentExerciseIndex to editedIndex }
+                                                            { ui.techniqueDialogFor = state.currentExerciseIndex to editedIndex }
                                                         }
                                                     )
                                                 }
                                                 // A set already done can still be finished after a short pause
                                                 if (state.setPerformanceEnabled && editedSet.isCompleted && !editedSet.isEmom) {
                                                     MiniSetOfferButton(missing = 0, onClick = {
-                                                        editingSetIndex = null
+                                                        ui.editingSetIndex = null
                                                         viewModel.startMiniSet(state.currentExerciseIndex, editedIndex)
                                                     })
                                                 }
                                             }
                                             GymButton(
-                                                onClick = { editingSetIndex = null },
+                                                onClick = { ui.editingSetIndex = null },
                                                 modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 Icon(Icons.Rounded.Check, contentDescription = null)
@@ -1680,7 +1539,7 @@ fun WorkoutExecutionScreen(
                                         }
                                         // The rest is the time to load the bar for the next set
                                         HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
-                                            ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
+                                            ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { ui.showPlateSheet = true }
                                         }
                                     }
                                 }
@@ -1698,7 +1557,7 @@ fun WorkoutExecutionScreen(
                                                     color = Primary,
                                                     fontWeight = FontWeight.ExtraBold
                                                 )
-                                                IconButton(onClick = { isEditingValues = false }) {
+                                                IconButton(onClick = { ui.isEditingValues = false }) {
                                                     Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
                                                 }
                                             }
@@ -1744,7 +1603,7 @@ fun WorkoutExecutionScreen(
                                                     weightUnit = state.weightUnit
                                                 )
                                                 SetPercentChip(currentExState, set) {
-                                                    loadSheetFor = state.currentExerciseIndex to set.prescription?.blockIndex
+                                                    ui.loadSheetFor = state.currentExerciseIndex to set.prescription?.blockIndex
                                                 }
                                                 if (state.plateCalculatorEnabled && currentExState != null) {
                                                     val exerciseId = currentExState.exercise.id
@@ -1754,12 +1613,12 @@ fun WorkoutExecutionScreen(
                                                             barKg = plateExercises[exerciseId],
                                                             weightUnit = state.weightUnit,
                                                             plates = state.availablePlates,
-                                                            onClick = { showPlateSheet = true }
+                                                            onClick = { ui.showPlateSheet = true }
                                                         )
                                                     } else {
                                                         PlateCalculatorEnableChip(onClick = {
                                                             viewModel.setPlateCalculator(exerciseId, true, null)
-                                                            showPlateSheet = true
+                                                            ui.showPlateSheet = true
                                                         })
                                                     }
                                                 }
@@ -1773,7 +1632,7 @@ fun WorkoutExecutionScreen(
                                                         hapticEnabled = state.hapticEnabled,
                                                         techniqueChanged = set.performedTechniques != null,
                                                         onEditTechnique = if (set.prescription?.techniques.isNullOrEmpty()) null else {
-                                                            { techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
+                                                            { ui.techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
                                                         }
                                                     )
                                                 }
@@ -1789,7 +1648,7 @@ fun WorkoutExecutionScreen(
                                                 } else {
                                                     viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                                 }
-                                                isEditingValues = false
+                                                ui.isEditingValues = false
                                             })
                                         }
                                     }
@@ -1804,7 +1663,7 @@ fun WorkoutExecutionScreen(
                                                     .fillMaxWidth()
                                                     .clip(RoundedCornerShape(lerp(18.dp, 24.dp, e)))
                                                     .background(SurfaceContainerHigh)
-                                                    .clickable { isEditingValues = true }
+                                                    .clickable { ui.isEditingValues = true }
                                                     .padding(lerp(8.dp, 12.dp, e)),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
@@ -1858,7 +1717,7 @@ fun WorkoutExecutionScreen(
                                                 LogSetButton(
                                                     onClick = {
                                                         if (set.isAmrap) {
-                                                            isEditingValues = true
+                                                            ui.isEditingValues = true
                                                         } else if (currentExState?.isTimed == true) {
                                                             viewModel.skipTimerAndLogSet(
                                                                 state.currentExerciseIndex,
@@ -1875,7 +1734,7 @@ fun WorkoutExecutionScreen(
                                                 )
                                             }
                                             HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
-                                                ActiveSetPlateChip(currentExState, set, state, plateExercises) { showPlateSheet = true }
+                                                ActiveSetPlateChip(currentExState, set, state, plateExercises) { ui.showPlateSheet = true }
                                             }
                                         }
                                     }
@@ -1912,8 +1771,8 @@ fun WorkoutExecutionScreen(
                                             HubSlot(expansion = expansion, from = 0.55f, to = 0.8f, gapBelow = 8.dp) {
                                                 GymButton(
                                                     onClick = {
-                                                        isAddingAfterCurrent = false
-                                                        showAddExerciseSheet = true
+                                                        ui.isAddingAfterCurrent = false
+                                                        ui.showAddExerciseSheet = true
                                                     },
                                                     modifier = Modifier.fillMaxWidth(),
                                                     containerColor = SurfaceContainerHigh,
@@ -1983,7 +1842,7 @@ fun WorkoutExecutionScreen(
                                             } else if (state.isQuickWorkout) {
                                                 // Quick workout last exercise finish button
                                                 GymButton(
-                                                    onClick = { showFinishDialog = true },
+                                                    onClick = { ui.showFinishDialog = true },
                                                     modifier = Modifier.weight(1f),
                                                     height = navHeight
                                                 ) {
@@ -1997,7 +1856,7 @@ fun WorkoutExecutionScreen(
                                             } else {
                                                 // Guided / Quick workout last exercise finish button
                                                 GymButton(
-                                                    onClick = { showFinishDialog = true },
+                                                    onClick = { ui.showFinishDialog = true },
                                                     modifier = Modifier.weight(1f),
                                                     height = navHeight
                                                 ) {
@@ -2022,7 +1881,7 @@ fun WorkoutExecutionScreen(
                                     onPrevious = { viewModel.previousExercise() },
                                     onNext = {
                                         if (state.currentExerciseIndex == state.exercises.size - 1) {
-                                            showFinishDialog = true
+                                            ui.showFinishDialog = true
                                         } else {
                                             viewModel.nextExercise()
                                         }
@@ -2048,327 +1907,19 @@ fun WorkoutExecutionScreen(
             }
         }
         
-        if (showWarmupTimerDialog) {
-            AlertDialog(
-                onDismissRequest = { showWarmupTimerDialog = false },
-                title = {
-                    Text(stringResource(R.string.warmup_timer), fontWeight = FontWeight.Black)
-                },
-                text = {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.warmup_timer_description),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = OnSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        val haptic = LocalHapticFeedback.current
-                        RestSlider(
-                            value = warmupTimerDuration,
-                            onValueChange = { warmupTimerDuration = it },
-                            hapticEnabled = true,
-                            haptic = haptic
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        viewModel.startWarmupTimer(warmupTimerDuration)
-                        showWarmupTimerDialog = false
-                    }) {
-                        Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showWarmupTimerDialog = false }) {
-                        Text(stringResource(R.string.cancel).uppercase())
-                    }
-                },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
-            )
-        }
-
-        if (showPlateSheet && activeSet != null) {
-            currentExState?.let { exState ->
-                val exerciseId = exState.exercise.id
-                PlateCalculatorSheet(
-                    exerciseName = ExerciseTranslations.translate(exState.exercise.nome, languageCode),
-                    weightKg = activeSet.weight,
-                    barKg = plateExercises[exerciseId],
-                    weightUnit = state.weightUnit,
-                    plates = state.availablePlates,
-                    onApply = { newWeightKg ->
-                        viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newWeightKg)
-                    },
-                    onBarChange = { barKg -> viewModel.setPlateCalculator(exerciseId, true, barKg) },
-                    onDisable = { viewModel.setPlateCalculator(exerciseId, false, plateExercises[exerciseId]) },
-                    onDismiss = { showPlateSheet = false }
-                )
-            }
-        }
-
-        // --- Changing the program of an exercise during the workout ---
-        programEditFor?.let { exerciseIndex ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            if (exercise == null || !exercise.isAdvanced) {
-                programEditFor = null
-            } else {
-                val editedName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode)
-                ExercisePrescriptionSheet(
-                    exerciseId = exercise.exercise.id,
-                    exerciseName = editedName,
-                    initialBlocks = exercise.blocks,
-                    subtitle = stringResource(R.string.program_edit_subtitle),
-                    onDismiss = { programEditFor = null },
-                    onSave = { blocks ->
-                        val canUpdateRoutine = exercise.planDetails != null && exercise.swappedExerciseId == null
-                        when {
-                            blocks == exercise.blocks -> programEditFor = null
-                            // An exercise that is not in the routine can only be a variation of this workout
-                            !canUpdateRoutine -> {
-                                viewModel.applyProgramEdit(exerciseIndex, blocks, ProgramEditScope.WORKOUT)
-                                programEditFor = null
-                            }
-                            else -> pendingProgram = exerciseIndex to blocks
-                        }
-                    },
-                    onRemove = null
-                )
-            }
-        }
-
-        pendingProgram?.let { (exerciseIndex, blocks) ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            if (exercise == null) {
-                pendingProgram = null
-            } else {
-                ProgramEditScopeDialog(
-                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
-                    week = state.programWeek,
-                    onChoose = { scope ->
-                        viewModel.applyProgramEdit(exerciseIndex, blocks, scope)
-                        pendingProgram = null
-                        programEditFor = null
-                    },
-                    onDismiss = { pendingProgram = null }
-                )
-            }
-        }
-
-        loadSheetFor?.let { (exerciseIndex, blockIndex) ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            val toDo = exercise?.let { ProgramEditing.percentBlocksToDo(it.sets, it.blocks) }.orEmpty()
-            if (exercise == null || toDo.isEmpty()) {
-                loadSheetFor = null
-            } else {
-                LoadPercentSheet(
-                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
-                    blocks = exercise.blocks,
-                    activeBlockIndex = blockIndex,
-                    blocksToDo = toDo,
-                    setsToDoByBlock = exercise.sets.filter { !it.isCompleted && !it.isExtra }
-                        .groupingBy { it.prescription?.blockIndex ?: -1 }.eachCount(),
-                    oneRepMaxKg = exercise.oneRepMaxKg,
-                    weightUnit = state.weightUnit,
-                    roundingIncrement = state.loadRoundingIncrement,
-                    programWeek = state.programWeek,
-                    canUpdatePlan = exercise.planDetails != null && exercise.swappedExerciseId == null,
-                    hapticEnabled = state.hapticEnabled,
-                    onApply = { blockIndices, delta, scope ->
-                        viewModel.shiftLoad(exerciseIndex, blockIndices, delta, scope)
-                        loadSheetFor = null
-                    },
-                    onDismiss = { loadSheetFor = null }
-                )
-            }
-        }
-
-        programHistoryFor?.let { exerciseIndex ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            if (exercise == null || exercise.programEdits.isEmpty()) {
-                programHistoryFor = null
-            } else {
-                ProgramEditHistoryDialog(
-                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
-                    edits = exercise.programEdits,
-                    weightUnit = state.weightUnit,
-                    onDismiss = { programHistoryFor = null }
-                )
-            }
-        }
-
-        if (showSwapExerciseSheet) {
-            currentExState?.let { exState ->
-                SwapExerciseBottomSheet(
-                    // A cardio exercise has no sets or reps to carry over
-                    currentSets = exState.sets.size.takeIf { it > 0 } ?: 3,
-                    currentReps = if (exState.isCardio) "8" else exState.currentReps.repsTarget,
-                    currentRepsMax = if (exState.isCardio) null else exState.currentReps.repsMax,
-                    availableExercises = availableExercises,
-                    languageCode = languageCode,
-                    onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                        viewModel.swapExercise(
-                            state.currentExerciseIndex, newExercise.id, sets, reps.repsTarget, rest, exerciseType, durataTargetSec,
-                            repsMax = reps.repsMax
-                        )
-                        showSwapExerciseSheet = false
-                    },
-                    onAddCustomExercise = { nome, categoria, onCreated ->
-                        viewModel.addCustomExercise(nome, categoria, onCreated)
-                    },
-                    onDismiss = { showSwapExerciseSheet = false },
-                    categories = categories,
-                    onCardioExerciseSelected = { newExercise, durationMinutes, rest, sets ->
-                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest, sets)
-                        showSwapExerciseSheet = false
-                    },
-                    onAdvancedExerciseSelected = { newExercise, blocks, rest ->
-                        val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
-                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, blocks = blocks)
-                        showSwapExerciseSheet = false
-                    },
-                    initialBlocks = exState.blocks,
-                    currentExerciseId = exState.exercise.id
-                )
-            }
-        }
-
-        if (showAddExerciseSheet) {
-            SwapExerciseBottomSheet(
-                currentSets = 3,
-                currentReps = "8",
-                availableExercises = availableExercises,
-                languageCode = languageCode,
-                onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                    if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
-                    } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
-                    }
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                },
-                onAddCustomExercise = { nome, categoria, onCreated ->
-                    viewModel.addCustomExercise(nome, categoria, onCreated)
-                },
-                onDismiss = {
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                },
-                isAdding = true,
-                categories = categories,
-                onCardioExerciseSelected = { exercise, durationMinutes, rest, sets ->
-                    if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
-                    } else {
-                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
-                    }
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                },
-                onAdvancedExerciseSelected = { exercise, blocks, rest ->
-                    val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
-                    if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, blocks = blocks)
-                    } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, blocks = blocks)
-                    }
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                }
-            )
-        }
-
-        if (showCancelDialog) {
-            AlertDialog(
-                onDismissRequest = { showCancelDialog = false },
-                title = { Text(stringResource(R.string.cancel_workout_title)) },
-                text = { Text(stringResource(R.string.cancel_workout_message)) },
-                confirmButton = {
-                    GymButton(
-                        onClick = {
-                            viewModel.cancelWorkout { safeNavigateBack() }
-                            showCancelDialog = false
-                        },
-                        containerColor = Error.copy(alpha = 0.1f),
-                        contentColor = Error,
-                        modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                dismissButton = {
-                    GymButton(
-                        onClick = { showCancelDialog = false },
-                        containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant,
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase())
-                    }
-                },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
-            )
-        }
-
-        if (showFinishDialog && state.journalEnabled && state.journalPromptAtFinish) {
-            FinishWorkoutSheet(
-                title = stringResource(R.string.finish_workout_title),
-                message = stringResource(
-                    if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
-                    else R.string.finish_workout_message_incomplete
-                ),
-                journal = state.journalDraft,
-                onJournalChange = viewModel::updateJournalDraft,
-                hapticEnabled = state.hapticEnabled,
-                onFinish = {
-                    viewModel.finishWorkout()
-                    showFinishDialog = false
-                },
-                onCancel = { showFinishDialog = false }
-            )
-        } else if (showFinishDialog) {
-            AlertDialog(
-                onDismissRequest = { showFinishDialog = false },
-                title = { Text(stringResource(R.string.finish_workout_title)) },
-                text = {
-                    Text(
-                        stringResource(
-                            if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
-                            else R.string.finish_workout_message_incomplete
-                        )
-                    )
-                },
-                confirmButton = {
-                    GymButton(
-                        onClick = {
-                            viewModel.finishWorkout()
-                            showFinishDialog = false
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                dismissButton = {
-                    GymButton(
-                        onClick = { showFinishDialog = false },
-                        containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant,
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase())
-                    }
-                },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
-            )
-        }
+        WorkoutDialogs(
+            state = state,
+            ui = ui,
+            viewModel = viewModel,
+            currentExState = currentExState,
+            activeSet = activeSet,
+            activeSetIndex = activeSetIndex,
+            plateExercises = plateExercises,
+            languageCode = languageCode,
+            availableExercises = availableExercises,
+            categories = categories,
+            safeNavigateBack = safeNavigateBack
+        )
     }
 }
 
