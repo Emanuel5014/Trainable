@@ -102,6 +102,8 @@ fun ExercisesScreen(
     val mediaEnabled by viewModel.mediaEnabled.collectAsState()
     val largePreview by viewModel.largePreview.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
+    val editablePresets by viewModel.editablePresetExercises.collectAsState()
+    val customCategories by viewModel.customCategories.collectAsState()
 
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(ExerciseFilter.ALL) }
@@ -109,6 +111,10 @@ fun ExercisesScreen(
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     var showRemoveAll by remember { mutableStateOf(false) }
     var showNewExercise by remember { mutableStateOf(false) }
+    var showCategories by remember { mutableStateOf(false) }
+    var showResetNames by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val resetDoneText = stringResource(R.string.reset_exercise_names)
     val scope = rememberCoroutineScope()
 
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.attach(exerciseId, uri) }
@@ -159,6 +165,28 @@ fun ExercisesScreen(
                 }
             },
             onDismiss = { showNewExercise = false }
+        )
+    }
+
+    if (showCategories) {
+        CategoriesSheet(
+            categories = customCategories,
+            onAdd = viewModel::addCategory,
+            onEdit = viewModel::updateCategory,
+            onDelete = viewModel::deleteCategory,
+            onDismiss = { showCategories = false }
+        )
+    }
+
+    if (showResetNames) {
+        ResetNamesDialog(
+            onConfirm = {
+                showResetNames = false
+                viewModel.resetPresetExerciseNames {
+                    android.widget.Toast.makeText(context, resetDoneText, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            },
+            onDismiss = { showResetNames = false }
         )
     }
 
@@ -253,6 +281,16 @@ fun ExercisesScreen(
                     largePreview = largePreview,
                     onMediaEnabledChange = viewModel::setMediaEnabled,
                     onLargePreviewChange = viewModel::setLargePreview,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            item(key = "personalization") {
+                PersonalizationCard(
+                    editablePresets = editablePresets,
+                    onEditablePresetsChange = viewModel::setEditablePresetExercises,
+                    onResetNames = { showResetNames = true },
+                    onOpenCategories = { showCategories = true },
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
