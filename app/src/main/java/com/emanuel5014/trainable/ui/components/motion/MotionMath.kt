@@ -33,15 +33,3 @@ object PressMorph {
 
     fun scale(pressed: Float): Float = 1f + (PRESSED_SCALE - 1f) * pressed.coerceIn(0f, 1f)
 }
-
-/** The wave of the rest ring is calm until the last ten seconds, then grows to its full height as the rest ends. */
-object RestWave {
-    private const val CALM = 0.6f
-    private const val LAST_SECONDS = 10
-
-    fun amplitude(remainingSeconds: Int): Float = when {
-        remainingSeconds >= LAST_SECONDS -> CALM
-        remainingSeconds <= 0 -> 1f
-        else -> CALM + (1f - CALM) * (1f - remainingSeconds / LAST_SECONDS.toFloat())
-    }
-}

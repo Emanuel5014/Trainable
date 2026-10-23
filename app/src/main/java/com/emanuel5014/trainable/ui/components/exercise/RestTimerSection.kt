@@ -7,7 +7,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.ui.graphics.Shape
 import com.emanuel5014.trainable.ui.components.motion.RollingText
-import com.emanuel5014.trainable.ui.components.motion.RestWave
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -98,9 +97,7 @@ fun RestTimerSection(
                             color = OnTertiary,
                             trackColor = OnTertiary.copy(alpha = 0.2f),
                             stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                            trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
-                            // The wave swells over the last ten seconds
-                            amplitude = { RestWave.amplitude(remainingSeconds) }
+                            trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
                         )
                         Icon(
                             imageVector = Icons.Rounded.Timer,

@@ -3,7 +3,6 @@ package com.emanuel5014.trainable.ui.screens.workout
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import com.emanuel5014.trainable.ui.components.TimerAdjustButtons
-import com.emanuel5014.trainable.ui.components.motion.RestWave
 import androidx.compose.runtime.remember
 import com.emanuel5014.trainable.ui.components.BadgeShape
 import com.emanuel5014.trainable.ui.components.SetNumberBadge
@@ -177,8 +176,7 @@ internal fun BoxScope.WorkoutHub(
                                     color = OnTertiary,
                                     trackColor = OnTertiary.copy(alpha = 0.2f),
                                     stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
-                                    amplitude = { RestWave.amplitude(state.warmupTimerRemaining) }
+                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
                                 )
                                 Icon(
                                     imageVector = Icons.Rounded.Timer,
