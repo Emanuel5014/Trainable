@@ -17,7 +17,9 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 2
-        versionName = "2.7.0"
+        versionName = "2.8.0"
+
+        manifestPlaceholders["appName"] = "Trainable"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -25,6 +27,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            manifestPlaceholders["appName"] = "Trainable"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -33,12 +36,14 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            manifestPlaceholders["appName"] = "Trainable (debug)"
         }
         // The debug build without the debugger. A debuggable app runs its code interpreted, so animations stutter on a
         // phone; this one runs like a release build. Same app id and signing key as debug, so the data stays.
         create("fast") {
             initWith(getByName("debug"))
             isDebuggable = false
+            manifestPlaceholders["appName"] = "Trainable (debug)"
         }
     }
     compileOptions {

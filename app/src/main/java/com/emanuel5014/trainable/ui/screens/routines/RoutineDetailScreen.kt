@@ -710,10 +710,9 @@ fun RoutineDetailScreen(
                             GymIconButton(
                                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                                 onClick = onNavigateBack,
-                                containerColor = SecondaryContainer,
-                                contentColor = OnSecondaryContainer,
-                                description = "Back",
-                                shape = RoundedCornerShape(16.dp)
+                                containerColor = Color.Transparent,
+                                contentColor = OnSurface,
+                                description = "Back"
                             )
                         },
                         actions = {

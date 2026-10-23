@@ -60,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,11 +84,9 @@ import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.screens.settings.SettingsSwitch
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
-import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
-import com.emanuel5014.trainable.ui.theme.SecondaryContainer
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
@@ -236,14 +235,15 @@ fun ExercisesScreen(
                     )
                 },
                 navigationIcon = {
-                    GymIconButton(
-                        icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                        onClick = onNavigateBack,
-                        containerColor = SecondaryContainer,
-                        contentColor = OnSecondaryContainer,
-                        description = stringResource(R.string.back),
-                        shape = RoundedCornerShape(16.dp)
-                    )
+                    Box(modifier = Modifier.padding(start = 8.dp)) {
+                        GymIconButton(
+                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                            onClick = onNavigateBack,
+                            containerColor = Color.Transparent,
+                            contentColor = OnSurface,
+                            description = stringResource(R.string.back)
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Surface,
