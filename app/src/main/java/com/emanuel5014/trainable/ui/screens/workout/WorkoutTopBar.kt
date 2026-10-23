@@ -133,7 +133,8 @@ internal fun WorkoutTopBar(
     ExerciseProgressStrip(
         fractions = fractions,
         currentIndex = state.currentExerciseIndex,
-        completedCount = state.completedExercises
+        completedCount = state.completedExercises,
+        waving = state.remainingRestSeconds > 0
     )
     }
 }

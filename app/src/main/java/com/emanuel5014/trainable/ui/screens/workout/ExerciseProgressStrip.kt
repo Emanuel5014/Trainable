@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,7 +50,9 @@ internal fun ExerciseProgressStrip(
     fractions: List<Float>,
     currentIndex: Int,
     completedCount: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** The wave of the current segment travels only while this is true (a rest is running): a travelling wave redraws the screen on every frame. */
+    waving: Boolean = false
 ) {
     if (fractions.isEmpty()) return
     val description = stringResource(R.string.workout_progress_description, currentIndex + 1, fractions.size, completedCount)
@@ -75,6 +78,7 @@ internal fun ExerciseProgressStrip(
                         fraction = fraction,
                         isCurrent = index == currentIndex,
                         wavy = wavy,
+                        waving = waving,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -91,7 +95,7 @@ internal fun ExerciseProgressStrip(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun StripSegment(fraction: Float, isCurrent: Boolean, wavy: Boolean, modifier: Modifier) {
+private fun StripSegment(fraction: Float, isCurrent: Boolean, wavy: Boolean, waving: Boolean, modifier: Modifier) {
     val shown = animateFloatAsState(fraction, WorkoutMotion.spatial(), label = "stripSegmentFill")
     if (isCurrent && wavy && fraction < 1f) {
         // The wave swells when the segment becomes the current one
@@ -102,7 +106,9 @@ private fun StripSegment(fraction: Float, isCurrent: Boolean, wavy: Boolean, mod
             modifier = modifier,
             color = Primary,
             trackColor = SurfaceContainerHighest,
-            amplitude = { amplitude.value.coerceIn(0f, 1f) }
+            amplitude = { amplitude.value.coerceIn(0f, 1f) },
+            // A wave that travels redraws the screen on every frame, so it stands still unless a rest is running
+            waveSpeed = if (waving) WavyProgressIndicatorDefaults.LinearDeterminateWavelength else 0.dp
         )
     } else {
         val fill = Primary

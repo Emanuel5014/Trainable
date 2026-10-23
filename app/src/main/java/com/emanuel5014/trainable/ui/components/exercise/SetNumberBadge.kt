@@ -25,6 +25,7 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
+import java.util.concurrent.ConcurrentHashMap
 
 internal enum class BadgeShape { Pending, Active, Done }
 
@@ -33,6 +34,13 @@ private fun BadgeShape.polygon(): RoundedPolygon = when (this) {
     BadgeShape.Pending -> MaterialShapes.Square
     BadgeShape.Active -> MaterialShapes.Cookie9Sided
     BadgeShape.Done -> MaterialShapes.Circle
+}
+
+/** One [Morph] for each pair of shapes: building one is the costly part of showing a row, and a list shows many rows over a handful of pairs. */
+internal object BadgeMorphs {
+    private val cache = ConcurrentHashMap<Pair<BadgeShape, BadgeShape>, Morph>()
+
+    fun of(from: BadgeShape, to: BadgeShape): Morph = cache.getOrPut(from to to) { Morph(from.polygon(), to.polygon()) }
 }
 
 /** The number of a set: a rounded square while it is to do, a cookie while it is the active one, a circle once done; it morphs between them. */
@@ -56,7 +64,7 @@ internal fun SetNumberBadge(
             progress.animateTo(1f, WorkoutMotion.spatial())
         }
     }
-    val morph = remember(from, to) { Morph(from.polygon(), to.polygon()) }
+    val morph = remember(from, to) { BadgeMorphs.of(from, to) }
     Box(
         modifier = modifier
             .size(size)
