@@ -239,6 +239,8 @@ private fun <T> WheelPickerBox(
     }.collectAsState(initial = true)
 
     val currentOnValueChange by rememberUpdatedState(onValueChange)
+    // The effect below outlives many values: it must compare with the value now, not the one it started with
+    val currentValue by rememberUpdatedState(value)
 
     val currentIndex = remember(range, value) {
         range.indexOfFirst { areEqual(it, value) }.coerceAtLeast(0)
@@ -274,7 +276,7 @@ private fun <T> WheelPickerBox(
             .collect { index ->
                 if (index != null && index in range.indices) {
                     val newValue = range[index]
-                    if (!areEqual(newValue, value)) {
+                    if (!areEqual(newValue, currentValue)) {
                         currentOnValueChange(newValue)
                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
