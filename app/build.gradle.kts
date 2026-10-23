@@ -34,6 +34,12 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
+        // The debug build without the debugger. A debuggable app runs its code interpreted, so animations stutter on a
+        // phone; this one runs like a release build. Same app id and signing key as debug, so the data stays.
+        create("fast") {
+            initWith(getByName("debug"))
+            isDebuggable = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
