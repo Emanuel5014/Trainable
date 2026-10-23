@@ -207,7 +207,6 @@ fun HubPanel(
     ) {
         Surface(
             modifier = Modifier
-                .limitHeight(MAX_HEIGHT_FRACTION)
                 .fillMaxWidth()
                 .testTag("hub_panel")
                 .onSizeChanged {
@@ -221,7 +220,7 @@ fun HubPanel(
         ) {
             Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
                 HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)
-                // On a short screen the open hub is taller than the room it may take: its content scrolls under the pill
+                // The open hub takes the room it needs; only when that is more than the screen has does its content scroll under the pill
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -235,19 +234,6 @@ fun HubPanel(
             }
         }
     }
-}
-
-/** The part of the room above that the hub may take, so the exercise header stays in sight. */
-private const val MAX_HEIGHT_FRACTION = 0.8f
-
-private fun Modifier.limitHeight(fraction: Float): Modifier = layout { measurable, constraints ->
-    val limited = if (constraints.hasBoundedHeight) {
-        constraints.copy(maxHeight = (constraints.maxHeight * fraction).roundToInt().coerceAtLeast(constraints.minHeight))
-    } else {
-        constraints
-    }
-    val placeable = measurable.measure(limited)
-    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
 }
 
 /** The pill on top of the hub: drag it, or tap it to switch step. */
