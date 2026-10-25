@@ -25,6 +25,7 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.DeletedExercisePill
 import com.emanuel5014.trainable.ui.components.ExerciseListThumbnail
 import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
+import com.emanuel5014.trainable.ui.components.FavoriteMarker
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -35,7 +36,8 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
  * A row of the exercises page: the thumbnail (its own click: open the media or add one), the name and category, and a
  * pill for a custom or a hidden exercise. The rest of the row opens the detail. No button sits beside the text, so a long
  * name keeps its room on a small screen. With [mediaAction] false the thumbnail is only a picture, for a list where the
- * whole row opens the detail (the hidden exercises).
+ * whole row opens the detail (the hidden exercises). A favorite shows a small star before the category: a sign, not a
+ * button, since the star is changed in the detail.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -48,7 +50,8 @@ internal fun ExerciseListRow(
     onThumbnailClick: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    mediaAction: Boolean = true
+    mediaAction: Boolean = true,
+    isFavorite: Boolean = false
 ) {
     Row(
         modifier = modifier
@@ -86,6 +89,7 @@ internal fun ExerciseListRow(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 itemVerticalAlignment = Alignment.CenterVertically
             ) {
+                if (isFavorite) FavoriteMarker()
                 Text(
                     text = category,
                     style = MaterialTheme.typography.bodySmall,

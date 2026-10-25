@@ -398,6 +398,7 @@ fun ExercisesScreen(
                         onClick = { detailExerciseId = exercise.id },
                         // A hidden exercise is not for picking media: its detail is where it is restored
                         mediaAction = filter != ExerciseFilter.HIDDEN,
+                        isFavorite = exercise.isFavorite,
                         modifier = Modifier.animateItem()
                     )
                 }
