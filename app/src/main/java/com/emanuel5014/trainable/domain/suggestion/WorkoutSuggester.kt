@@ -6,14 +6,10 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
 
-/**
- * What the dashboard offers to train: the routine assigned to today, or just the one that comes next.
- * [todayPlanDone] tells that the routine of the day was already done today (it stays on screen, the next one is suggested).
- */
+/** What the dashboard offers to train: the routine assigned to today, or just the one that comes next. */
 data class WorkoutSuggestion(
     val todayPlan: WorkoutPlanEntity?,
-    val suggestedPlan: WorkoutPlanEntity?,
-    val todayPlanDone: Boolean = false
+    val suggestedPlan: WorkoutPlanEntity?
 )
 
 /**
@@ -50,27 +46,17 @@ object WorkoutSuggester {
             scheduledToday.firstOrNull() ?: plans.first()
         }
 
+        // Any workout done today, a Quick or Cardio one too, takes today's workout off the screen: only the next
+        // routine is suggested
         val startOfToday = today.atStartOfDay(zone).toInstant().toEpochMilli()
         val startOfTomorrow = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val sessionsToday = finishedSessions.filter { it.timestamp in startOfToday until startOfTomorrow }
+        val trainedToday = finishedSessions.any { it.timestamp in startOfToday until startOfTomorrow }
 
-        if (sessionsToday.isEmpty()) {
-            return if (next in scheduledToday) {
-                WorkoutSuggestion(todayPlan = next, suggestedPlan = null)
-            } else {
-                WorkoutSuggestion(todayPlan = null, suggestedPlan = next)
-            }
+        return if (!trainedToday && next in scheduledToday) {
+            WorkoutSuggestion(todayPlan = next, suggestedPlan = null)
+        } else {
+            WorkoutSuggestion(todayPlan = null, suggestedPlan = next)
         }
-
-        // The routine of the day, if that is what was done, stays as today's workout; the next one follows it.
-        // Any other workout today (another routine, a Quick or Cardio one) leaves no card of the day.
-        val doneToday = sessionsToday.sortedByDescending { it.timestamp }
-            .firstNotNullOfOrNull { session -> scheduledToday.find { it.id == session.planId } }
-        return WorkoutSuggestion(
-            todayPlan = doneToday,
-            suggestedPlan = next.takeUnless { it == doneToday }, // a single routine would show twice
-            todayPlanDone = doneToday != null
-        )
     }
 
     /** The days a routine is assigned to, stored as "1,3,5" (1 = Monday ... 7 = Sunday). */
