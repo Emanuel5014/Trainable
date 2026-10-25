@@ -66,6 +66,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -91,6 +92,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
+import com.emanuel5014.trainable.util.RestSeconds
 import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,6 +148,10 @@ fun SwapExerciseBottomSheet(
     }
 
     val showThumbnails = rememberShowExerciseThumbnails(availableExercises, excludedExerciseIds)
+
+    // The rest last confirmed here; read while the lifter browses the list, so the slider of step 2 opens on it
+    val restMemory: RememberedRestViewModel = hiltViewModel()
+    val rememberedRest by restMemory.lastRestSeconds.collectAsState()
 
     val imeVisible = isKeyboardVisible
 
@@ -307,7 +313,9 @@ fun SwapExerciseBottomSheet(
                     SwapCardioConfigDialog(
                         exercise = selectedExercise!!,
                         languageCode = languageCode,
+                        initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                         onConfirm = { durationMinutes, rest, sets ->
+                            rest?.let { restMemory.remember(it) }
                             onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest, sets)
                             onDismiss()
                         },
@@ -325,11 +333,14 @@ fun SwapExerciseBottomSheet(
                             initialRepsMax = currentRepsMax,
                             initialBlocks = initialBlocks,
                             advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
+                            initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
+                                rest?.let { restMemory.remember(it) }
                                 onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
                                 onDismiss()
                             },
                             onConfirmAdvanced = { blocks, rest ->
+                                rest?.let { restMemory.remember(it) }
                                 onAdvancedExerciseSelected?.invoke(ex, blocks, rest)
                                 onDismiss()
                             },
@@ -478,6 +489,8 @@ private fun SwapExerciseConfigSheet(
     initialRepsMax: Int?,
     initialBlocks: List<PrescriptionBlock>,
     advancedEnabled: Boolean,
+    /** The rest the slider opens on: the one confirmed last time. */
+    initialRestSeconds: Int,
     onConfirm: (Int, RepsTarget, Int?, String, Int?) -> Unit,
     onConfirmAdvanced: (List<PrescriptionBlock>, Int?) -> Unit,
     onBack: () -> Unit,
@@ -492,7 +505,7 @@ private fun SwapExerciseConfigSheet(
     var repsDraft by remember { mutableStateOf(RepsDraft.from(initialReps, initialRepsMax).takeIf { it.isValid } ?: RepsDraft()) }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var repsGoalText by remember { mutableStateOf(TimeAndReps.goalOf(initialReps).toString()) }
-    var restText by remember { mutableStateOf("120") }
+    var restText by remember { mutableStateOf(initialRestSeconds.toString()) }
     var advancedBlocks by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -595,7 +608,7 @@ private fun SwapExerciseConfigSheet(
                 }
 
                 RestSlider(
-                    value = restText.toIntOrNull() ?: 120,
+                    value = restText.toIntOrNull() ?: RestSeconds.DEFAULT,
                     onValueChange = { restText = it.toString() },
                     hapticEnabled = hapticEnabled,
                     haptic = haptic,
@@ -665,6 +678,8 @@ private fun SwapExerciseConfigSheet(
 private fun SwapCardioConfigDialog(
     exercise: ExerciseEntity,
     languageCode: String,
+    /** The rest the slider opens on: the one confirmed last time. */
+    initialRestSeconds: Int,
     onConfirm: (minutes: Int, rest: Int?, sets: Int) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
@@ -672,7 +687,7 @@ private fun SwapCardioConfigDialog(
 ) {
     var durationText by remember { mutableStateOf("20") }
     var setsText by remember { mutableStateOf("1") }
-    var restText by remember { mutableStateOf("120") }
+    var restText by remember { mutableStateOf(initialRestSeconds.toString()) }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -754,7 +769,7 @@ private fun SwapCardioConfigDialog(
                 )
 
                 RestSlider(
-                    value = restText.toIntOrNull() ?: 120,
+                    value = restText.toIntOrNull() ?: RestSeconds.DEFAULT,
                     onValueChange = { restText = it.toString() },
                     hapticEnabled = hapticEnabled,
                     haptic = haptic,
@@ -787,10 +802,11 @@ fun RestSlider(
     onValueChange: (Int) -> Unit,
     hapticEnabled: Boolean,
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** The values the slider moves through; the warmup leaves out 0. */
+    steps: List<Int> = RestSeconds.EXERCISE_STEPS
 ) {
-    val steps = listOf(0, 30, 60, 90, 120, 180, 240, 300)
-    val currentIndex = remember(value) { steps.indexOf(value).coerceAtLeast(0) }
+    val currentIndex = remember(value, steps) { steps.indexOf(value).coerceAtLeast(0) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(

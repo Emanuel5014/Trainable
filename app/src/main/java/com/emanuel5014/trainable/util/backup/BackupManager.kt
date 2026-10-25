@@ -262,6 +262,9 @@ class BackupManager @Inject constructor(
                 json.put("timer_subtract_seconds", TimerAdjustment.sanitizeSubtract(prefs[UserPreferencesRepository.TIMER_SUBTRACT_SECONDS]))
                 json.put("timer_add_enabled", prefs[UserPreferencesRepository.TIMER_ADD_ENABLED] ?: true)
                 json.put("timer_subtract_enabled", prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] ?: true)
+                json.put("rest_timer_enabled", prefs[UserPreferencesRepository.REST_TIMER_ENABLED] ?: true)
+                prefs[UserPreferencesRepository.LAST_WARMUP_SECONDS]?.let { json.put("last_warmup_seconds", it) }
+                prefs[UserPreferencesRepository.LAST_ADDED_EXERCISE_REST_SECONDS]?.let { json.put("last_added_exercise_rest_seconds", it) }
                 json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
                 json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
                 json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
@@ -440,6 +443,12 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.TIMER_ADD_ENABLED] = jsonObject.getBoolean("timer_add_enabled")
                                             if (jsonObject.has("timer_subtract_enabled"))
                                                 prefs[UserPreferencesRepository.TIMER_SUBTRACT_ENABLED] = jsonObject.getBoolean("timer_subtract_enabled")
+                                            if (jsonObject.has("rest_timer_enabled"))
+                                                prefs[UserPreferencesRepository.REST_TIMER_ENABLED] = jsonObject.getBoolean("rest_timer_enabled")
+                                            if (jsonObject.has("last_warmup_seconds"))
+                                                prefs[UserPreferencesRepository.LAST_WARMUP_SECONDS] = jsonObject.getInt("last_warmup_seconds")
+                                            if (jsonObject.has("last_added_exercise_rest_seconds"))
+                                                prefs[UserPreferencesRepository.LAST_ADDED_EXERCISE_REST_SECONDS] = jsonObject.getInt("last_added_exercise_rest_seconds")
                                             if (jsonObject.has("timer_show_time_buttons"))
                                                 prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] = jsonObject.getBoolean("timer_show_time_buttons")
                                             if (jsonObject.has("timer_show_skip_button"))

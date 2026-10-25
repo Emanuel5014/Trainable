@@ -236,9 +236,10 @@ private fun DuringWorkoutCard(viewModel: SettingsViewModel) {
     }
 }
 
-/** Rest and warmup timer buttons, then the cardio and timed-set switches, each type side by side. */
+/** The rest timer switch, the rest and warmup timer buttons, then the cardio and timed-set switches, each type side by side. */
 @Composable
 private fun TimersAndCardioCard(viewModel: SettingsViewModel) {
+    val restTimerEnabled by viewModel.restTimerEnabled.collectAsState()
     val timerAddSeconds by viewModel.timerAddSeconds.collectAsState()
     val timerSubtractSeconds by viewModel.timerSubtractSeconds.collectAsState()
     val timerAddEnabled by viewModel.timerAddEnabled.collectAsState()
@@ -250,6 +251,17 @@ private fun TimersAndCardioCard(viewModel: SettingsViewModel) {
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // The countdown after each set; the warmup timer is its own thing
+            SettingSwitchRow(
+                icon = Icons.Rounded.Timer,
+                title = stringResource(R.string.rest_timer_setting),
+                description = stringResource(R.string.rest_timer_setting_desc),
+                checked = restTimerEnabled,
+                onCheckedChange = { viewModel.setRestTimerEnabled(it) }
+            )
+
+            SettingDivider()
+
             // How far the + and - buttons of the rest and warmup timers move the countdown
             SettingHeader(
                 icon = Icons.Rounded.Timer,

@@ -362,6 +362,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    val restTimerEnabled = userPrefsRepository.restTimerEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
+
+    fun setRestTimerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setRestTimerEnabled(enabled)
+        }
+    }
+
     val timerAddEnabled = userPrefsRepository.timerAddEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

@@ -244,6 +244,8 @@
     <string name="keep_screen_on_cardio_timer_desc">Impedisce lo spegnimento automatico dello schermo mentre il timer cardio è in corso</string>
     <string name="keep_screen_on_set_timer">Mantieni lo schermo acceso (serie a tempo)</string>
     <string name="keep_screen_on_set_timer_desc">Impedisce lo spegnimento automatico dello schermo mentre il timer della serie è in corso</string>
+    <string name="rest_timer_setting">Timer di recupero</string>
+    <string name="rest_timer_setting_desc">Fa partire il conto alla rovescia dopo ogni serie. Se lo spegni, passi da una serie all\'altra senza attese</string>
     <string name="inline_exercise_modifications">Modifiche Inline</string>
     <string name="inline_exercise_modifications_desc">Aggiungi serie ed esercizi durante gli allenamenti normali</string>
     <string name="exercise_media_desc">Mostra durante l\'allenamento una tua immagine o GIF di ogni esercizio</string>

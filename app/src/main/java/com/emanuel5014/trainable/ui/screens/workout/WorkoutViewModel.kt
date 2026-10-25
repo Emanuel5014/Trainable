@@ -65,6 +65,7 @@ import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import com.emanuel5014.trainable.util.notification.TimerNotificationReceiver
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
 import com.emanuel5014.trainable.util.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -137,6 +138,10 @@ data class WorkoutState(
     val warmupTimerRemaining: Int = 0,
     val warmupTimerEndTime: Long? = null,
     val warmupTimerTotalSeconds: Int = 0,
+    /** Off: no countdown after a set. The pause of a mini-set is part of the technique and still runs. */
+    val restTimerEnabled: Boolean = true,
+    /** The warmup the lifter started last: the warmup slider opens on it. */
+    val lastWarmupSeconds: Int = RestSeconds.DEFAULT,
     /** Next real execution order to hand out, see [WorkoutExerciseState.executionOrder]. */
     val nextExecutionOrder: Int = 0,
     val categories: List<String> = emptyList(),
@@ -730,6 +735,18 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.warmupTimerEnabled.collect { enabled ->
                 _state.update { it.copy(warmupTimerEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.restTimerEnabled.collect { enabled ->
+                _state.update { it.copy(restTimerEnabled = enabled) }
+            }
+        }
+
+        viewModelScope.launch {
+            userPreferencesRepository.lastWarmupSeconds.collect { seconds ->
+                _state.update { it.copy(lastWarmupSeconds = seconds) }
             }
         }
 
@@ -1850,8 +1867,9 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    /** Rest after a set: block override, EMOM (rest of the minute), then exercise / plan rest. */
+    /** Rest after a set: block override, EMOM (rest of the minute), then exercise / plan rest; none with the rest timer off. */
     private fun restSecondsAfter(exState: WorkoutExerciseState, set: WorkoutSetState): Int {
+        if (!_state.value.restTimerEnabled) return 0
         val p = set.prescription
         if (p != null && Technique.Emom in p.techniques) {
             return (60 - set.reps * 3).coerceIn(20, 55)
@@ -3037,6 +3055,7 @@ class WorkoutViewModel @Inject constructor(
 
     fun startWarmupTimer(seconds: Int) {
         if (seconds <= 0) return
+        viewModelScope.launch { userPreferencesRepository.setLastWarmupSeconds(seconds) }
         stopWarmupTimer()
         val endTime = System.currentTimeMillis() + (seconds * 1000L)
         _state.update { it.copy(warmupTimerRemaining = seconds, warmupTimerEndTime = endTime, warmupTimerTotalSeconds = seconds) }
@@ -4018,7 +4037,7 @@ class WorkoutViewModel @Inject constructor(
             persistCardioSets(currState.currentExerciseIndex)
         }
 
-        val restSeconds = currentEx.customRestSeconds ?: currentEx.planDetails?.recuperoTarget ?: 0
+        val restSeconds = if (currState.restTimerEnabled) (currentEx.customRestSeconds ?: currentEx.planDetails?.recuperoTarget ?: 0) else 0
         if (restSeconds > 0) {
             // The next set of this exercise, or the first of the next one
             val info = buildNextSetLabel()

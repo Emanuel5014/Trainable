@@ -48,6 +48,7 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
@@ -210,7 +211,8 @@ internal fun WorkoutDialogs(
                         value = ui.warmupTimerDuration,
                         onValueChange = { ui.warmupTimerDuration = it },
                         hapticEnabled = true,
-                        haptic = haptic
+                        haptic = haptic,
+                        steps = RestSeconds.WARMUP_STEPS
                     )
                 }
             },

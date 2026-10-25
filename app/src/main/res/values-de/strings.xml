@@ -244,6 +244,8 @@
     <string name="keep_screen_on_cardio_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Cardio-Timer läuft</string>
     <string name="keep_screen_on_set_timer">Bildschirm anlassen (Zeitsätze)</string>
     <string name="keep_screen_on_set_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Satz-Timer läuft</string>
+    <string name="rest_timer_setting">Pausentimer</string>
+    <string name="rest_timer_setting_desc">Startet nach jedem Satz einen Countdown. Ausgeschaltet geht es ohne Wartezeit zum nächsten Satz</string>
     <string name="inline_exercise_modifications">Inline-Änderungen</string>
     <string name="inline_exercise_modifications_desc">Sätze und Übungen während normaler Workouts hinzufügen</string>
     <string name="exercise_media_desc">Zeige beim Training dein eigenes Bild oder GIF zu jeder Übung</string>

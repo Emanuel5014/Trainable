@@ -244,6 +244,8 @@
     <string name="keep_screen_on_cardio_timer_desc">Evita que la pantalla se apague mientras el temporizador de cardio está en marcha</string>
     <string name="keep_screen_on_set_timer">Mantener la pantalla encendida (series temporizadas)</string>
     <string name="keep_screen_on_set_timer_desc">Evita que la pantalla se apague mientras el temporizador de la serie está en marcha</string>
+    <string name="rest_timer_setting">Temporizador de descanso</string>
+    <string name="rest_timer_setting_desc">Inicia una cuenta atrás después de cada serie. Si lo desactivas, pasas de una serie a otra sin esperas</string>
     <string name="inline_exercise_modifications">Modificaciones en línea</string>
     <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
     <string name="exercise_media_desc">Muestra tu propia imagen o GIF de cada ejercicio durante el entrenamiento</string>

@@ -244,6 +244,8 @@
     <string name="keep_screen_on_cardio_timer_desc">Empêche l\'extinction automatique de l\'écran pendant le minuteur cardio</string>
     <string name="keep_screen_on_set_timer">Garder l\'écran allumé (séries chronométrées)</string>
     <string name="keep_screen_on_set_timer_desc">Empêche l\'extinction automatique de l\'écran pendant le minuteur de série</string>
+    <string name="rest_timer_setting">Minuteur de repos</string>
+    <string name="rest_timer_setting_desc">Lance un compte à rebours après chaque série. Désactivé, vous enchaînez les séries sans attendre</string>
     <string name="inline_exercise_modifications">Modifications en ligne</string>
     <string name="inline_exercise_modifications_desc">Ajouter des séries et exercices pendant les entraînements normaux</string>
     <string name="exercise_media_desc">Afficher pendant l\'entraînement ta propre image ou GIF de chaque exercice</string>

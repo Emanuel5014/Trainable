@@ -245,6 +245,8 @@
     <string name="keep_screen_on_cardio_timer_desc">Prevent the screen from turning off while the cardio timer is running</string>
     <string name="keep_screen_on_set_timer">Keep screen on during timed sets</string>
     <string name="keep_screen_on_set_timer_desc">Prevent the screen from turning off while the set timer is running</string>
+    <string name="rest_timer_setting">Rest timer</string>
+    <string name="rest_timer_setting_desc">Start a countdown after each set. Turn it off to move through the workout without waiting</string>
     <string name="inline_exercise_modifications">Inline Modifications</string>
     <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
     <string name="exercise_media_desc">Show your own image or GIF of each exercise during workouts</string>

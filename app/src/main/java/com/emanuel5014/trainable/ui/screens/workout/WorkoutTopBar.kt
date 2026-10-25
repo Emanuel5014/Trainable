@@ -100,7 +100,7 @@ internal fun WorkoutTopBar(
                     GymIconButton(
                         icon = Icons.Rounded.Timer,
                         onClick = {
-                            ui.warmupTimerDuration = 120
+                            ui.warmupTimerDuration = state.lastWarmupSeconds
                             ui.showWarmupTimerDialog = true
                         },
                         containerColor = SecondaryContainer,
