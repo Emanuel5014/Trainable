@@ -44,7 +44,8 @@ sealed interface MergeOutcome {
 
 /**
  * The merge log and the SQL that merges two exercises and undoes it. A merge only ever changes the `exercise_id` of
- * rows: nothing is deleted, renumbered or copied, which is what makes undoing it exact.
+ * rows (and, when the loser was a favorite and the winner was not, stars the winner): nothing is deleted, renumbered or
+ * copied, which is what makes undoing it exact.
  */
 @Dao
 interface ExerciseMergeDao {
@@ -65,6 +66,9 @@ interface ExerciseMergeDao {
 
     @Query("UPDATE exercises SET is_deleted = :hidden WHERE id = :id")
     suspend fun setHidden(id: Int, hidden: Boolean)
+
+    @Query("UPDATE exercises SET is_favorite = :favorite WHERE id = :id")
+    suspend fun setFavorite(id: Int, favorite: Boolean)
 
     @Query("DELETE FROM exercise_merges WHERE id = :mergeId")
     suspend fun deleteMerge(mergeId: Int)
@@ -180,12 +184,15 @@ interface ExerciseMergeDao {
         val check = ExerciseMerges.check(winner, loser, getAllMerges())
         if (check != MergeCheck.OK) return MergeOutcome.Rejected(check)
         requireNotNull(loser)
+        requireNotNull(winner)
         if (isUsedByUnfinishedWorkout(loserId)) return MergeOutcome.Rejected(MergeCheck.LOSER_IN_ACTIVE_WORKOUT)
 
+        // The star of the loser goes to the winner; the log remembers it did, so that undoing takes back only that
+        val moveStar = loser.isFavorite && !winner.isFavorite
         val mergeId = insertMerge(
             ExerciseMergeEntity(
                 winnerId = winnerId, loserId = loserId, loserName = loser.nome,
-                loserWasHidden = loser.isDeleted, timestamp = now
+                loserWasHidden = loser.isDeleted, timestamp = now, favoriteMoved = moveStar
             )
         ).toInt()
         recordSetLogs(mergeId, loserId)
@@ -199,6 +206,7 @@ interface ExerciseMergeDao {
         repointSwaps(loserId, winnerId)
         repointProgramEdits(loserId, winnerId)
         if (!loser.isDeleted) setHidden(loserId, true)
+        if (moveStar) setFavorite(winnerId, true)
         return MergeOutcome.Merged(mergeId)
     }
 
@@ -215,6 +223,7 @@ interface ExerciseMergeDao {
         restoreSwaps(mergeId, merge.winnerId, merge.loserId)
         restoreProgramEdits(mergeId, merge.winnerId, merge.loserId)
         if (!merge.loserWasHidden) setHidden(merge.loserId, false)
+        if (merge.favoriteMoved) setFavorite(merge.winnerId, false)
         deleteMerge(mergeId)
         return true
     }
