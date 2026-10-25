@@ -8,6 +8,20 @@ import com.emanuel5014.trainable.domain.csvimport.HistoryExerciseResolver
 /** Names of exercises: two exercises with the same name are what the merge of issue #50 has to clean up, so none is made. */
 object ExerciseNames {
 
+    /** The name the app lists [exercise] under in [languageCode]: what the edit form starts from. */
+    fun shownName(exercise: ExerciseEntity, languageCode: String): String =
+        ExerciseTranslations.translate(exercise.nome, languageCode)
+
+    /**
+     * The name to store when the form of [exercise] gives back [typed]. The form starts from [shownName], so [typed] still
+     * equal to it means the user left the name alone and the stored one stays (a preset's translation hangs on it); anything
+     * else is a rename, stored as typed.
+     */
+    fun nameToStore(typed: String, exercise: ExerciseEntity, languageCode: String): String {
+        val name = typed.trim()
+        return if (name == shownName(exercise, languageCode)) exercise.nome else name
+    }
+
     /**
      * True when [name] is the name, stored or translated into [languageCode], of an exercise in the library (not hidden),
      * ignoring case, spaces and accents. [excludeId] is the exercise being edited, which may keep its own name.

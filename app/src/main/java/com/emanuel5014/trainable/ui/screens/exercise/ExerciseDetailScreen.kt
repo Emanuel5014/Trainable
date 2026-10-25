@@ -76,6 +76,7 @@ import com.emanuel5014.trainable.data.local.dao.MergePreview
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseKind
+import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import com.emanuel5014.trainable.domain.exercise.ExercisePerformance
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.ui.components.DeletedExercisePill
@@ -219,12 +220,16 @@ fun ExerciseDetailDialog(
             categories = categories,
             existingExercises = namesInUse,
             languageCode = languageCode,
-            initial = ExerciseForm(exercise.nome, exercise.categoria, exercise.descrizione.orEmpty(), traits.muscles, traits.equipment),
+            initial = ExerciseForm(
+                ExerciseNames.shownName(exercise, languageCode), exercise.categoria, exercise.descrizione.orEmpty(),
+                traits.muscles, traits.equipment
+            ),
             editingId = exercise.id,
             showTraits = true,
             onConfirm = { form ->
                 editOpen = false
-                viewModel.save(form)
+                // The name in the form is the one the list shows: left alone, the stored name stays
+                viewModel.save(form.copy(name = ExerciseNames.nameToStore(form.name, exercise, languageCode)))
             },
             onDismiss = { editOpen = false }
         )
