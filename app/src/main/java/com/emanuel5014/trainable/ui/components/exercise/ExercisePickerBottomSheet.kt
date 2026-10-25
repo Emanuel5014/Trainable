@@ -62,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
 import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
@@ -99,21 +100,13 @@ fun ExercisePickerBottomSheet(
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
+    var showOnlyFavorites by remember { mutableStateOf(false) }
     var showAddCustomDialog by remember { mutableStateOf(false) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val filteredExercises = remember(exercises, searchQuery, selectedCategory, showOnlyCustom, languageCode) {
-        exercises.filter { exercise ->
-            val exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode)
-            val matchesSearch = searchQuery.isBlank() ||
-                exercise.nome.contains(searchQuery, ignoreCase = true) ||
-                exerciseName.contains(searchQuery, ignoreCase = true)
-            val matchesCategory = selectedCategory == null ||
-                exercise.categoria == selectedCategory
-            val matchesCustom = !showOnlyCustom || exercise.id >= 1000
-            matchesSearch && matchesCategory && matchesCustom
-        }
+    val filteredExercises = remember(exercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode) {
+        ExercisePickerFilter.apply(exercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode)
     }
 
     val showThumbnails = rememberShowExerciseThumbnails(exercises)
@@ -213,10 +206,11 @@ fun ExercisePickerBottomSheet(
                         horizontalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
                         FilterChip(
-                            selected = selectedCategory == null && !showOnlyCustom,
+                            selected = selectedCategory == null && !showOnlyCustom && !showOnlyFavorites,
                             onClick = {
                                 selectedCategory = null
                                 showOnlyCustom = false
+                                showOnlyFavorites = false
                             },
                             label = { Text(stringResource(R.string.all_categories)) },
                             colors = FilterChipDefaults.filterChipColors(
@@ -224,6 +218,17 @@ fun ExercisePickerBottomSheet(
                                 selectedLabelColor = OnPrimary
                             )
                         )
+                        if (ExercisePickerFilter.showFavoritesChip(exercises, emptySet(), showOnlyFavorites)) {
+                            FilterChip(
+                                selected = showOnlyFavorites,
+                                onClick = { showOnlyFavorites = !showOnlyFavorites },
+                                label = { Text(stringResource(R.string.filter_favorites)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Primary,
+                                    selectedLabelColor = OnPrimary
+                                )
+                            )
+                        }
                         if (!pickOnly) {
                             FilterChip(
                                 selected = showOnlyCustom,
@@ -324,7 +329,7 @@ fun ExercisePickerBottomSheet(
 }
 
 @Composable
-private fun ExercisePickerItem(
+internal fun ExercisePickerItem(
     exercise: ExerciseEntity,
     onClick: () -> Unit,
     languageCode: String = "en",
@@ -356,7 +361,8 @@ private fun ExercisePickerItem(
                         text = ExerciseTranslations.translate(exercise.nome, languageCode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     if (exercise.id >= 1000) {
                         Spacer(modifier = Modifier.width(4.dp))
@@ -372,6 +378,10 @@ private fun ExercisePickerItem(
                                 modifier = Modifier.padding(4.dp).size(12.dp)
                             )
                         }
+                    }
+                    if (exercise.isFavorite) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        FavoriteMarker()
                     }
                 }
                 Text(

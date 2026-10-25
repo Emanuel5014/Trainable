@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -126,20 +127,16 @@ fun SwapExerciseBottomSheet(
 
     var showAddCustomDialog by remember { mutableStateOf(false) }
     var showOnlyCustom by remember { mutableStateOf(false) }
+    var showOnlyFavorites by remember { mutableStateOf(false) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val filteredExercises = remember(availableExercises, searchQuery, selectedCategory, showOnlyCustom, languageCode, excludedExerciseIds) {
-        availableExercises.filter { exercise ->
-            val exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode)
-            val matchesSearch = searchQuery.isBlank() || 
-                exercise.nome.contains(searchQuery, ignoreCase = true) ||
-                exerciseName.contains(searchQuery, ignoreCase = true)
-            val matchesCategory = selectedCategory == null || 
-                exercise.categoria == selectedCategory
-            val matchesCustom = !showOnlyCustom || exercise.id >= 1000
-            exercise.id !in excludedExerciseIds && matchesSearch && matchesCategory && matchesCustom
-        }
+    val filteredExercises = remember(
+        availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds
+    ) {
+        ExercisePickerFilter.apply(
+            availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds
+        )
     }
 
     val allCategories = categories ?: remember(availableExercises) {
@@ -217,13 +214,21 @@ fun SwapExerciseBottomSheet(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 FilterChip(
-                                    selected = selectedCategory == null && !showOnlyCustom,
+                                    selected = selectedCategory == null && !showOnlyCustom && !showOnlyFavorites,
                                     onClick = { 
                                         selectedCategory = null
                                         showOnlyCustom = false
+                                        showOnlyFavorites = false
                                     },
                                     label = { Text(stringResource(R.string.all_categories)) }
                                 )
+                                if (ExercisePickerFilter.showFavoritesChip(availableExercises, excludedExerciseIds, showOnlyFavorites)) {
+                                    FilterChip(
+                                        selected = showOnlyFavorites,
+                                        onClick = { showOnlyFavorites = !showOnlyFavorites },
+                                        label = { Text(stringResource(R.string.filter_favorites)) }
+                                    )
+                                }
                                 FilterChip(
                                     selected = showOnlyCustom,
                                     onClick = { showOnlyCustom = !showOnlyCustom },
@@ -360,7 +365,7 @@ fun SwapExerciseBottomSheet(
 }
 
 @Composable
-private fun ExerciseListItem(
+internal fun ExerciseListItem(
     exercise: ExerciseEntity,
     languageCode: String,
     onClick: () -> Unit,
@@ -397,7 +402,8 @@ private fun ExerciseListItem(
                         text = ExerciseTranslations.translate(exercise.nome, languageCode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     if (exercise.id >= 1000) {
                         Spacer(modifier = Modifier.width(4.dp))
@@ -413,6 +419,10 @@ private fun ExerciseListItem(
                                 modifier = Modifier.padding(4.dp).size(12.dp)
                             )
                         }
+                    }
+                    if (exercise.isFavorite) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        FavoriteMarker()
                     }
                 }
                 Text(
