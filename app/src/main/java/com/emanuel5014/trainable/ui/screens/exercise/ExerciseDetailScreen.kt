@@ -17,6 +17,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
@@ -75,6 +77,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseKind
 import com.emanuel5014.trainable.domain.exercise.ExercisePerformance
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.ui.components.DeletedExercisePill
 import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
@@ -82,6 +85,7 @@ import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.SetLogBadges
 import com.emanuel5014.trainable.ui.components.ExercisePickerBottomSheet
+import com.emanuel5014.trainable.ui.components.labelRes
 import com.emanuel5014.trainable.ui.components.setValueText
 import com.emanuel5014.trainable.ui.components.analytics.AnalyticsLineChart
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint
@@ -208,13 +212,16 @@ fun ExerciseDetailDialog(
     }
 
     if (editOpen && exercise != null) {
+        // The form starts from what the exercise has now (a preset: its catalog values), and saves only what differs
+        val traits = ExerciseTraits.of(exercise)
         ExerciseFormDialog(
             title = stringResource(R.string.edit_exercise_title),
             categories = categories,
             existingExercises = namesInUse,
             languageCode = languageCode,
-            initial = ExerciseForm(exercise.nome, exercise.categoria, exercise.descrizione.orEmpty()),
+            initial = ExerciseForm(exercise.nome, exercise.categoria, exercise.descrizione.orEmpty(), traits.muscles, traits.equipment),
             editingId = exercise.id,
+            showTraits = true,
             onConfirm = { form ->
                 editOpen = false
                 viewModel.save(form)
@@ -420,6 +427,7 @@ internal fun ExerciseDetailContent(
                 exercise.descrizione?.takeIf { it.isNotBlank() }?.let {
                     Text(text = it, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
                 }
+                ExerciseTraits.of(exercise).takeUnless { it.isEmpty }?.let { ExerciseTraitChips(it) }
             }
         }
         if (state.merges.asWinner.isNotEmpty() || state.merges.asLoser != null) {
@@ -444,6 +452,22 @@ internal fun ExerciseDetailContent(
                 PerformanceCard(performance = performance, kind = history.kind, weightUnit = state.weightUnit)
             }
         }
+    }
+}
+
+/** What the exercise targets, read-only: its equipment first, then its muscles in canonical order, wrapping onto more lines. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ExerciseTraitChips(traits: ExerciseTraits, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        traits.equipment?.let {
+            PrescriptionPill(text = stringResource(it.labelRes()), containerColor = Primary.copy(alpha = 0.16f), contentColor = Primary)
+        }
+        traits.muscles.forEach { PrescriptionPill(text = stringResource(it.labelRes())) }
     }
 }
 

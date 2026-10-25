@@ -61,13 +61,15 @@ import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseFilter
 import com.emanuel5014.trainable.domain.exercise.ExerciseListFilter
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
+import com.emanuel5014.trainable.domain.exercise.TraitFilter
 import com.emanuel5014.trainable.ui.components.ExerciseFormDialog
 import com.emanuel5014.trainable.ui.components.ExerciseEmptyState
 import com.emanuel5014.trainable.ui.components.ExerciseFilterBar
 import com.emanuel5014.trainable.ui.components.ExerciseFilterOption
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
-import com.emanuel5014.trainable.ui.components.ExerciseSearchField
+import com.emanuel5014.trainable.ui.components.ExerciseSearchWithTraitFilter
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
@@ -104,6 +106,7 @@ fun ExercisesScreen(
 
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(ExerciseFilter.ALL) }
+    var traitFilter by remember { mutableStateOf(TraitFilter.NONE) }
     var viewerExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     var showRemoveAll by remember { mutableStateOf(false) }
@@ -123,8 +126,8 @@ fun ExercisesScreen(
     val library = remember(all) { all.orEmpty().filter { !it.isDeleted } }
     val hiddenCount = all.orEmpty().size - library.size
     val withMediaCount = library.count { it.mediaPath != null }
-    val groups = remember(all, query, filter, languageCode) {
-        ExerciseListFilter.groups(all.orEmpty(), query, filter, languageCode)
+    val groups = remember(all, query, filter, languageCode, traitFilter) {
+        ExerciseListFilter.groups(all.orEmpty(), query, filter, languageCode, traitFilter)
     }
     val listState = rememberLazyListState()
     // The button shrinks to its icon as soon as the list scrolls, like the start button of a routine
@@ -156,9 +159,10 @@ fun ExercisesScreen(
             categories = categories,
             existingExercises = namesInUse,
             languageCode = languageCode,
+            showTraits = true,
             onConfirm = { form ->
                 showNewExercise = false
-                viewModel.createExercise(form.name, form.category, form.description)
+                viewModel.createExercise(form.name, form.category, form.description, ExerciseTraits(form.muscles, form.equipment))
             },
             onDismiss = { showNewExercise = false }
         )
@@ -326,7 +330,13 @@ fun ExercisesScreen(
             }
 
             item(key = "search") {
-                ExerciseSearchField(query = query, onQueryChange = { query = it })
+                ExerciseSearchWithTraitFilter(
+                    query = query,
+                    onQueryChange = { query = it },
+                    traitFilter = traitFilter,
+                    onTraitFilterChange = { traitFilter = it },
+                    resultCount = groups.sumOf { it.entries.size }
+                )
             }
 
             item(key = "filters") {
@@ -345,7 +355,9 @@ fun ExercisesScreen(
                     }
                 }
             } else if (groups.isEmpty()) {
-                item(key = "empty") { ExerciseEmptyState() }
+                item(key = "empty") {
+                    ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null)
+                }
             }
 
             groups.forEach { group ->

@@ -8,8 +8,8 @@ object ExercisePickerFilter {
 
     /**
      * The exercises that pass every active filter: [query] (the stored or the translated name, any case), the stored
-     * [category], [onlyCustom] (ids from [ExerciseEntity.FIRST_CUSTOM_ID]) and [onlyFavorites]; those in [excludedIds]
-     * are left out. Favorites come first, each group in the order received.
+     * [category], [onlyCustom] (ids from [ExerciseEntity.FIRST_CUSTOM_ID]), [onlyFavorites] and [traits] (muscles and
+     * equipment); those in [excludedIds] are left out. Favorites come first, each group in the order received.
      */
     fun apply(
         exercises: List<ExerciseEntity>,
@@ -18,10 +18,12 @@ object ExercisePickerFilter {
         onlyCustom: Boolean,
         onlyFavorites: Boolean,
         languageCode: String,
-        excludedIds: Set<Int> = emptySet()
+        excludedIds: Set<Int> = emptySet(),
+        traits: TraitFilter = TraitFilter.NONE
     ): List<ExerciseEntity> {
         val matching = exercises.filter { exercise ->
             exercise.id !in excludedIds &&
+                (!traits.isActive || traits.matches(ExerciseTraits.of(exercise))) &&
                 (query.isBlank() ||
                     exercise.nome.contains(query, ignoreCase = true) ||
                     ExerciseTranslations.translate(exercise.nome, languageCode).contains(query, ignoreCase = true)) &&

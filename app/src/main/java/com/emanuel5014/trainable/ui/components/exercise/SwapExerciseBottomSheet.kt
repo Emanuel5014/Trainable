@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.components
 
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
+import com.emanuel5014.trainable.domain.exercise.TraitFilter
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -118,14 +119,16 @@ fun SwapExerciseBottomSheet(
     var showAddCustomDialog by remember { mutableStateOf(false) }
     var showOnlyCustom by remember { mutableStateOf(false) }
     var showOnlyFavorites by remember { mutableStateOf(false) }
+    var traitFilter by remember { mutableStateOf(TraitFilter.NONE) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
     var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val filteredExercises = remember(
-        availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds
+        availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds, traitFilter
     ) {
         ExercisePickerFilter.apply(
-            availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds
+            availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds,
+            traits = traitFilter
         )
     }
 
@@ -215,7 +218,13 @@ fun SwapExerciseBottomSheet(
                         }
                     }
 
-                    ExerciseSearchField(query = searchQuery, onQueryChange = { searchQuery = it })
+                    ExerciseSearchWithTraitFilter(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        traitFilter = traitFilter,
+                        onTraitFilterChange = { traitFilter = it },
+                        resultCount = filteredExercises.size
+                    )
 
                     Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -233,7 +242,9 @@ fun SwapExerciseBottomSheet(
                             .weight(1f, fill = false),
                         verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
-                        if (filteredExercises.isEmpty()) item { ExerciseEmptyState() }
+                        if (filteredExercises.isEmpty()) {
+                            item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
+                        }
                         items(filteredExercises) { exercise ->
                             ExercisePickRow(
                                 exercise = exercise,

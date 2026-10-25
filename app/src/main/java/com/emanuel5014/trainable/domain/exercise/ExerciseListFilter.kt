@@ -16,13 +16,21 @@ data class ExerciseGroup(val category: String, val entries: List<ExerciseListEnt
 object ExerciseListFilter {
 
     /**
-     * The exercises that pass [filter] and match [query] (the stored or the translated name, any case), grouped by
-     * translated category: groups in alphabetical order, entries by translated name, both ignoring case.
+     * The exercises that pass [filter] and [traits] (muscles and equipment) and match [query] (the stored or the translated
+     * name, any case), grouped by translated category: groups in alphabetical order, entries by translated name, both
+     * ignoring case.
      */
-    fun groups(exercises: List<ExerciseEntity>, query: String, filter: ExerciseFilter, languageCode: String): List<ExerciseGroup> {
+    fun groups(
+        exercises: List<ExerciseEntity>,
+        query: String,
+        filter: ExerciseFilter,
+        languageCode: String,
+        traits: TraitFilter = TraitFilter.NONE
+    ): List<ExerciseGroup> {
         val needle = query.trim()
         return exercises.asSequence()
             .filter { if (filter == ExerciseFilter.HIDDEN) it.isDeleted else !it.isDeleted }
+            .filter { !traits.isActive || traits.matches(ExerciseTraits.of(it)) }
             .filter {
                 when (filter) {
                     ExerciseFilter.ALL, ExerciseFilter.HIDDEN -> true

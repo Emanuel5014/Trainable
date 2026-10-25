@@ -20,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -88,7 +89,7 @@ fun ExerciseFilterBar(options: List<ExerciseFilterOption>, modifier: Modifier = 
 /** What a list of exercises says when the search and the filters leave nothing. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ExerciseEmptyState(modifier: Modifier = Modifier) {
+fun ExerciseEmptyState(modifier: Modifier = Modifier, onReset: (() -> Unit)? = null) {
     Column(
         modifier = modifier.fillMaxWidth().padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -109,5 +110,11 @@ fun ExerciseEmptyState(modifier: Modifier = Modifier) {
             color = OnSurfaceVariant,
             textAlign = TextAlign.Center
         )
+        // With the muscle and equipment filter on, the way out is one tap away instead of a dead end
+        if (onReset != null) {
+            TextButton(onClick = onReset) {
+                Text(stringResource(R.string.exercise_filters_reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+            }
+        }
     }
 }
