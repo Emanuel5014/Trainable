@@ -45,7 +45,9 @@ data class ExerciseDetailActions(
     val canMerge: Boolean = false,
     val canRemove: Boolean = false,
     val canRestore: Boolean = false,
-    val canEdit: Boolean = false
+    val canEdit: Boolean = false,
+    /** The star: offered for an exercise that is in the library and was not merged into another. */
+    val canFavorite: Boolean = false
 ) {
     companion object {
         val NONE = ExerciseDetailActions()
@@ -60,7 +62,8 @@ data class ExerciseDetailActions(
                 canMerge = !mergedAway && !ExerciseMerges.isCardio(exercise),
                 canRemove = !exercise.isDeleted && !mergedAway,
                 canRestore = exercise.isDeleted && !mergedAway,
-                canEdit = !mergedAway && (exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID || editablePresets)
+                canEdit = !mergedAway && (exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID || editablePresets),
+                canFavorite = !exercise.isDeleted && !mergedAway
             )
         }
     }

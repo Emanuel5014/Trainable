@@ -352,7 +352,7 @@ fun ExercisesScreen(
 
             item(key = "filters") {
                 FilterBar(
-                    filters = ExerciseListFilter.filtersToShow(hiddenCount, filter),
+                    filters = ExerciseListFilter.filtersToShow(hiddenCount, library.count { it.isFavorite }, filter),
                     selected = filter,
                     onSelect = { filter = it }
                 )
@@ -440,6 +440,7 @@ private fun FilterBar(
 
 private fun labelOf(filter: ExerciseFilter): Int = when (filter) {
     ExerciseFilter.ALL -> R.string.all
+    ExerciseFilter.FAVORITES -> R.string.filter_favorites
     ExerciseFilter.CUSTOM -> R.string.filter_custom
     ExerciseFilter.WITH_MEDIA -> R.string.exercise_media_filter_with
     ExerciseFilter.WITHOUT_MEDIA -> R.string.exercise_media_filter_without

@@ -1608,4 +1608,9 @@
     <string name="exercise_msg_saved">Guardado</string>
     <string name="workout_progress_description">Ejercicio %1$d de %2$d, %3$d completados</string>
     <string name="exercise_tools_group">Herramientas del ejercicio</string>
+    <!-- Favorite exercises -->
+    <string name="filter_favorites">Favoritos</string>
+    <string name="exercise_favorite_add">Añadir a favoritos</string>
+    <string name="exercise_favorite_remove">Quitar de favoritos</string>
+    <string name="exercise_favorite_marker">Favorito</string>
 </resources>
