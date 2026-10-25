@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.datastore.preferences.core.edit
 import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.local.RetiredPresetsMarker
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
@@ -291,6 +292,8 @@ class BackupManager @Inject constructor(
     private suspend fun importDatabaseFromStream(inputStream: InputStream): Boolean = withContext(Dispatchers.IO) {
         try {
             GymDatabase.closeDatabase()
+            // The backup may predate the retired presets: the clean-up has to run again on the database restored
+            RetiredPresetsMarker.forget(context)
             val dbDir = context.getDatabasePath(dbName).parentFile ?: return@withContext false
             if (!dbDir.exists()) {
                 dbDir.mkdirs()

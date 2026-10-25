@@ -35,6 +35,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.domain.exercise.ExercisePresets
+import com.emanuel5014.trainable.domain.exercise.RetiredPresets
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -532,7 +533,7 @@ abstract class GymDatabase : RoomDatabase() {
                             val dbInstance = INSTANCE
                             if (dbInstance != null) {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    populateInitialData(dbInstance.exerciseDao(), dbInstance.userDao())
+                                    populateInitialData(context.applicationContext, dbInstance.exerciseDao(), dbInstance.userDao())
                                 }
                             }
                         }
@@ -542,7 +543,7 @@ abstract class GymDatabase : RoomDatabase() {
                             val dbInstance = INSTANCE
                             if (dbInstance != null) {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    syncExercises(dbInstance.exerciseDao())
+                                    syncExercises(context.applicationContext, dbInstance.exerciseDao())
                                 }
                             }
                         }
@@ -560,7 +561,8 @@ abstract class GymDatabase : RoomDatabase() {
 
         suspend fun resetDatabase(context: Context) {
             closeDatabase()
-            
+            RetiredPresetsMarker.forget(context)
+
             val dbFile = context.getDatabasePath(DATABASE_NAME)
             val walFile = context.getDatabasePath("$DATABASE_NAME-wal")
             val shmFile = context.getDatabasePath("$DATABASE_NAME-shm")
@@ -573,7 +575,7 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
-        private suspend fun populateInitialData(exerciseDao: ExerciseDao, userDao: UserDao) {
+        private suspend fun populateInitialData(context: Context, exerciseDao: ExerciseDao, userDao: UserDao) {
             try {
                 userDao.insertUser(
                     UserEntity(
@@ -586,15 +588,32 @@ abstract class GymDatabase : RoomDatabase() {
                 // User might already exist, ignore
             }
 
-            syncExercises(exerciseDao)
+            syncExercises(context, exerciseDao)
         }
 
-        private suspend fun syncExercises(exerciseDao: ExerciseDao) {
+        private suspend fun syncExercises(context: Context, exerciseDao: ExerciseDao) {
             try {
                 val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
                 exerciseDao.insertExercises(ExercisePresets.toInsert(ExerciseData.initialExercises, existing))
             } catch (e: Exception) {
                 // Exercises might already exist, ignore
+            }
+            hideRetiredPresets(context, exerciseDao)
+        }
+
+        /**
+         * Once per [RetiredPresets.VERSION] and database, hides the retired presets this install still lists unused and as
+         * shipped. The ones a workout, a routine or a max uses are left alone. It is marked done only when it went through.
+         */
+        private suspend fun hideRetiredPresets(context: Context, exerciseDao: ExerciseDao) {
+            if (RetiredPresetsMarker.applied(context) >= RetiredPresets.VERSION) return
+            try {
+                val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
+                val used = RetiredPresets.ids.filterTo(hashSetOf()) { exerciseDao.isExerciseInUse(it) }
+                RetiredPresets.toHide(existing, ExerciseData.initialExercises, used).forEach { exerciseDao.setExerciseDeleted(it, true) }
+                RetiredPresetsMarker.markApplied(context, RetiredPresets.VERSION)
+            } catch (e: Exception) {
+                // Not marked, so the next launch tries again
             }
         }
     }
