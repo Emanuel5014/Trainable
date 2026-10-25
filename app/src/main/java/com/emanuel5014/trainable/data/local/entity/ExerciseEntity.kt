@@ -30,7 +30,10 @@ data class ExerciseEntity(
      * the row stays, so that history and routines keep their exercise (shown greyed out until it is restored).
      */
     @ColumnInfo(name = "is_deleted", defaultValue = "0")
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    /** The user starred it: the pickers list it first and the exercises page can filter on it. */
+    @ColumnInfo(name = "is_favorite", defaultValue = "0")
+    val isFavorite: Boolean = false
 ) {
     companion object {
         /** Built-in exercises have ids below this, the ones the user creates start from it. */

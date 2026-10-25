@@ -43,7 +43,10 @@ data class ExerciseMergeEntity(
     @ColumnInfo(name = "loser_was_hidden")
     val loserWasHidden: Boolean,
     @ColumnInfo(name = "timestamp")
-    val timestamp: Long
+    val timestamp: Long,
+    /** The loser was a favorite and the winner was not: the merge starred the winner, and undoing it takes the star back. */
+    @ColumnInfo(name = "favorite_moved", defaultValue = "0")
+    val favoriteMoved: Boolean = false
 )
 
 /** A row that a merge moved from the loser to the winner: [source] says which table, [rowId] which row. */

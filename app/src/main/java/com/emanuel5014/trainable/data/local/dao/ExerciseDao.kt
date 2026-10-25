@@ -120,6 +120,10 @@ interface ExerciseDao {
     @Query("UPDATE exercises SET nome = :nome WHERE id = :id")
     suspend fun updateExerciseName(id: Int, nome: String)
 
+    /** Stars or unstars an exercise: only that column, so nothing changed meanwhile is written back. */
+    @Query("UPDATE exercises SET is_favorite = :favorite WHERE id = :id")
+    suspend fun setFavorite(id: Int, favorite: Boolean)
+
     @Query("SELECT media_path FROM exercises WHERE id = :id")
     suspend fun getExerciseMedia(id: Int): String?
 

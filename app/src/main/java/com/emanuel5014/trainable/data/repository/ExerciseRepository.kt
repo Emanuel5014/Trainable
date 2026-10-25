@@ -85,6 +85,11 @@ class ExerciseRepository @Inject constructor(
         exerciseDao.updateExerciseDetails(id, nome, categoria, descrizione)
     }
 
+    /** Stars or unstars the exercise; the rest of its row is not touched. */
+    suspend fun setFavorite(id: Int, favorite: Boolean) {
+        exerciseDao.setFavorite(id, favorite)
+    }
+
     /**
      * Removes [exercise] from the library. The workouts, routines and maxes that use it keep it (it is only hidden and
      * can be [restoreExercise]d, so its media stays too); one nothing uses is deleted for good with its media.
