@@ -15,6 +15,7 @@ import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseForm
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.domain.exercise.MergeCheck
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
@@ -198,7 +199,9 @@ class ExerciseDetailViewModel @Inject constructor(
         if (!current.actions.canEdit || form.name.isBlank()) return
         viewModelScope.launch {
             exerciseRepository.updateExerciseDetails(
-                exercise.id, form.name.trim(), form.category, form.description.trim().ifEmpty { null }
+                exercise.id, form.name.trim(), form.category, form.description.trim().ifEmpty { null },
+                // A preset keeps NULL while its traits are the catalog's, so renaming it never freezes them
+                ExerciseTraits.forStorage(exercise.id, ExerciseTraits(form.muscles, form.equipment))
             )
             _messages.tryEmit(ExerciseDetailMessage.SAVED)
         }

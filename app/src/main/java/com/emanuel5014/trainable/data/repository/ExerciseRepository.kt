@@ -5,6 +5,8 @@ import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
+import com.emanuel5014.trainable.domain.exercise.StoredTraits
 import android.content.Context
 import android.net.Uri
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
@@ -45,11 +47,16 @@ class ExerciseRepository @Inject constructor(
     fun getCustomCategories(): Flow<List<CustomCategoryEntity>> =
         exerciseDao.getAllCustomCategories()
     
-    suspend fun addCustomExercise(nome: String, categoria: String, description: String? = null): Int {
+    suspend fun addCustomExercise(
+        nome: String,
+        categoria: String,
+        description: String? = null,
+        traits: ExerciseTraits = ExerciseTraits.EMPTY
+    ): Int {
         // Creating again an exercise that was hidden brings the old one back, so its history and routines go on with it.
         // A custom one takes the category picked now (issue #41); a preset keeps its own, since it cannot be edited while
-        // the presets are locked. The description it had stays unless one is typed now (a picker has no description field).
-        // A name in any language finds it, as the duplicate check does.
+        // the presets are locked. The description it had stays unless one is typed now (a picker has no description field),
+        // and its muscles and equipment stay as they were. A name in any language finds it, as the duplicate check does.
         val hidden = ExerciseNames.findHidden(
             nome,
             exerciseDao.getAllExercisesIncludingDeleted().first(),
@@ -65,8 +72,12 @@ class ExerciseRepository @Inject constructor(
         }
         val maxId = exerciseDao.getMaxId()
         val newId = if (maxId < 1000) 1000 else maxId + 1
+        val stored = ExerciseTraits.forStorage(newId, traits)
         exerciseDao.insertExercise(
-            ExerciseEntity(id = newId, nome = nome, categoria = categoria, descrizione = description)
+            ExerciseEntity(
+                id = newId, nome = nome, categoria = categoria, descrizione = description,
+                muscles = stored.muscles, equipment = stored.equipment
+            )
         )
         return newId
     }
@@ -80,9 +91,9 @@ class ExerciseRepository @Inject constructor(
     /** The exercise with this id as it changes (hidden, restored, renamed); emits null once it is gone for good. */
     fun observeExercise(id: Int): Flow<ExerciseEntity?> = exerciseDao.observeExercise(id)
 
-    /** Saves what the exercise form edits (name, category, description) and nothing else of the row. */
-    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?) {
-        exerciseDao.updateExerciseDetails(id, nome, categoria, descrizione)
+    /** Saves what the exercise form edits (name, category, description, muscles and equipment) and nothing else of the row. */
+    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?, traits: StoredTraits) {
+        exerciseDao.updateExerciseDetails(id, nome, categoria, descrizione, traits.muscles, traits.equipment)
     }
 
     /** Stars or unstars the exercise; the rest of its row is not touched. */

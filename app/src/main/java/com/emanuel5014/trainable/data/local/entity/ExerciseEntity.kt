@@ -33,7 +33,16 @@ data class ExerciseEntity(
     val isDeleted: Boolean = false,
     /** The user starred it: the pickers list it first and the exercises page can filter on it. */
     @ColumnInfo(name = "is_favorite", defaultValue = "0")
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    /**
+     * The target muscles the user chose, as stable keys joined by commas. Null: the user set nothing, so a preset has the
+     * muscles of the catalog; empty: the user chose none. Read it through `ExerciseTraits.of`.
+     */
+    @ColumnInfo(name = "muscles")
+    val muscles: String? = null,
+    /** The equipment the user chose, as a stable key. Null: nothing set (a preset has the catalog's); empty: none chosen. */
+    @ColumnInfo(name = "equipment")
+    val equipment: String? = null
 ) {
     companion object {
         /** Built-in exercises have ids below this, the ones the user creates start from it. */

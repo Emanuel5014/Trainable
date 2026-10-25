@@ -37,6 +37,7 @@ import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
 import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -212,10 +213,15 @@ class WorkoutRepository @Inject constructor(
                     }
                 } else emptyList(),
                 exercises = planWithDetails.exercises.map { exerciseWithDetails ->
+                    // Only a custom exercise carries its muscles and equipment in the file: a preset has them in the catalog
+                    val traits = exerciseWithDetails.exercise.takeIf { it.id >= ExerciseEntity.FIRST_CUSTOM_ID }
+                        ?.let { ExerciseTraits.of(it) } ?: ExerciseTraits.EMPTY
                     PlanExerciseExportDto(
                         exerciseId = exerciseWithDetails.exercise.id,
                         exerciseName = exerciseWithDetails.exercise.nome,
                         exerciseCategory = exerciseWithDetails.exercise.categoria,
+                        exerciseMuscles = traits.muscles.map { it.key }.ifEmpty { null },
+                        exerciseEquipment = traits.equipment?.key,
                         serieTarget = exerciseWithDetails.planExercise.serieTarget,
                         repsTarget = exerciseWithDetails.planExercise.repsTarget,
                         repsMax = exerciseWithDetails.planExercise.repsMax,
@@ -359,10 +365,16 @@ class WorkoutRepository @Inject constructor(
                         ImportedExerciseMatcher.Match.CreateCustom -> try {
                             val maxId = knownExercises.maxOfOrNull { it.id } ?: exerciseDao.getMaxId()
                             val newId = if (maxId < ImportedExerciseMatcher.FIRST_CUSTOM_ID) ImportedExerciseMatcher.FIRST_CUSTOM_ID else maxId + 1
+                            // Unknown keys of a file from another version are dropped, never an error
+                            val traits = ExerciseTraits.forStorage(
+                                newId, ExerciseTraits.fromKeys(exerciseDto.exerciseMuscles.orEmpty(), exerciseDto.exerciseEquipment)
+                            )
                             val newExercise = ExerciseEntity(
                                 id = newId,
                                 nome = exerciseDto.exerciseName!!.trim(),
-                                categoria = exerciseDto.exerciseCategory ?: "Custom"
+                                categoria = exerciseDto.exerciseCategory ?: "Custom",
+                                muscles = traits.muscles,
+                                equipment = traits.equipment
                             )
                             exerciseDao.insertExercise(newExercise)
                             knownExercises.add(newExercise)

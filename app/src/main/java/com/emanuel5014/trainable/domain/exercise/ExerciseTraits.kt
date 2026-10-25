@@ -42,6 +42,10 @@ data class ExerciseTraits(val muscles: Set<Muscle> = emptySet(), val equipment: 
             )
         }
 
+        /** What [exercise] has: [of] on the columns of its row. */
+        fun of(exercise: ExerciseEntity, catalog: Map<Int, ExerciseTraits> = ExerciseTraitsCatalog.entries): ExerciseTraits =
+            of(exercise.id, exercise.muscles, exercise.equipment, catalog)
+
         /**
          * The column values to store when the user saved [chosen] for exercise [exerciseId]. A preset stores only what
          * differs from its catalog entry, so saving it for another reason (a rename) never freezes its traits. A custom

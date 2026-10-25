@@ -28,6 +28,9 @@ data class PlanExerciseExportDto(
     val exerciseId: Int,
     val exerciseName: String? = null,
     val exerciseCategory: String? = null,
+    /** Muscle keys of a custom exercise; presets bring theirs from the catalog, so they are not written. */
+    val exerciseMuscles: List<String>? = null,
+    val exerciseEquipment: String? = null,
     val serieTarget: Int,
     val repsTarget: String,
     /** Top of a rep range: [repsTarget] is then its bottom. The starting weight is personal and never exported. */

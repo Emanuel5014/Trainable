@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.ExerciseMediaMessage
 import com.emanuel5014.trainable.util.toMessage
@@ -131,11 +132,13 @@ class ExercisesViewModel @Inject constructor(
     /**
      * Creates an exercise (or brings back a hidden one with the same name, with its history) and announces its id on
      * [createdExerciseId]. It runs in the view model, so a rotation between the tap and the end does not lose it.
-     * [description] is stored as it is; blank means none.
+     * [description] is stored as it is; blank means none. [traits] are the muscles and equipment chosen in the form.
      */
-    fun createExercise(name: String, category: String, description: String?) {
+    fun createExercise(name: String, category: String, description: String?, traits: ExerciseTraits = ExerciseTraits.EMPTY) {
         viewModelScope.launch {
-            _created.send(exerciseRepository.addCustomExercise(name.trim(), category, description?.trim()?.ifEmpty { null }))
+            _created.send(
+                exerciseRepository.addCustomExercise(name.trim(), category, description?.trim()?.ifEmpty { null }, traits)
+            )
         }
     }
 }
