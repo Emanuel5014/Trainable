@@ -159,60 +159,42 @@ fun PlateChip(
         else -> Primary
     }
 
-    Surface(
+    HubChip(
         onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = if (result.belowBar) SurfaceContainerHigh else accent.copy(alpha = 0.12f),
-        modifier = modifier.fillMaxWidth()
+        containerColor = if (result.belowBar) SurfaceContainerHigh else accent.copy(alpha = 0.12f),
+        modifier = modifier
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                color = accent,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = if (short) 2 else 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = accent,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = if (short) 2 else 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
 /** Shown where the weight is edited for an exercise that does not use the calculator yet. */
 @Composable
 fun PlateCalculatorEnableChip(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = SurfaceContainerHigh,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
-            Text(
-                text = stringResource(R.string.plate_calculator_use),
-                style = MaterialTheme.typography.labelLarge,
-                color = OnSurfaceVariant,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.weight(1f)
-            )
-        }
+    HubChip(onClick = onClick, containerColor = SurfaceContainerHigh, modifier = modifier) {
+        Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
+        Text(
+            text = stringResource(R.string.plate_calculator_use),
+            style = MaterialTheme.typography.labelLarge,
+            color = OnSurfaceVariant,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 

@@ -258,7 +258,6 @@ fun RoutineDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
-    val editablePresetExercises by viewModel.editablePresetExercises.collectAsState()
     val aiScanAvailable by viewModel.aiScanAvailable.collectAsState()
     val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiScanState by viewModel.aiScanState.collectAsState()
@@ -711,10 +710,9 @@ fun RoutineDetailScreen(
                             GymIconButton(
                                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                                 onClick = onNavigateBack,
-                                containerColor = SecondaryContainer,
-                                contentColor = OnSecondaryContainer,
-                                description = "Back",
-                                shape = RoundedCornerShape(16.dp)
+                                containerColor = Color.Transparent,
+                                contentColor = OnSurface,
+                                description = "Back"
                             )
                         },
                         actions = {
@@ -1706,15 +1704,8 @@ fun RoutineDetailScreen(
             onAddCustomExercise = { nome, categoria, onCreated ->
                 viewModel.addCustomExercise(nome, categoria, onCreated)
             },
-            onEditCustomExercise = { exercise ->
-                viewModel.updateCustomExercise(exercise)
-            },
-            onDeleteCustomExercise = { exercise ->
-                viewModel.deleteCustomExercise(exercise)
-            },
             onDismiss = { showExercisePicker = false },
             languageCode = languageCode,
-            editablePresetExercises = editablePresetExercises
         )
     }
 
@@ -2134,7 +2125,6 @@ fun RoutineDetailScreen(
                 exercises = uiState.availableExercises,
                 categories = uiState.categories,
                 languageCode = languageCode,
-                editablePresetExercises = editablePresetExercises,
                 onAddCustomExercise = { nome, categoria, onCreated ->
                     viewModel.addCustomExercise(nome, categoria, onCreated)
                 },

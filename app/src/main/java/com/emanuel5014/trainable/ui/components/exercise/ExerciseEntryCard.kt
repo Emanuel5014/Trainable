@@ -60,7 +60,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Tertiary
-import com.emanuel5014.trainable.ui.screens.workout.rememberAnimatedShape
+import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import com.emanuel5014.trainable.R
 import androidx.compose.ui.res.stringResource
 

@@ -552,7 +552,7 @@ fun HistoryScreen(
 
                         itemsIndexed(uiState.filteredSessions, key = { _, s -> s.session.id }) { index, sessionDetails ->
                             val session = sessionDetails.session
-                            val planName = sessionDetails.session.noteSessione ?: sessionDetails.plan.nome
+                            val planName = sessionName(sessionDetails.session.noteSessione, sessionDetails.plan.nome)
                             val isExpanded = expandedSessionId == session.id
 
                             val dismissState = rememberSwipeToDismissBoxState()
@@ -1358,11 +1358,7 @@ fun SessionHistoryCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = when (planName) {
-                                    "Cardio" -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-                                    "Custom Workout" -> stringResource(R.string.custom_workout)
-                                    else -> planName
-                                },
+                                text = SessionTitle.of(planName).displayText(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Primary,
                                 fontWeight = FontWeight.ExtraBold,

@@ -69,7 +69,6 @@ import com.emanuel5014.trainable.util.WeightUnitConverter
 @Composable
 fun WorkoutSettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToExerciseCustomization: () -> Unit,
     onNavigateToOneRepMaxes: () -> Unit = {},
     onNavigateToJournalTags: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
@@ -120,7 +119,6 @@ fun WorkoutSettingsScreen(
             SettingsSection(title = stringResource(R.string.workout_section_programming)) {
                 RoutinesAndExercisesCard(
                     viewModel = viewModel,
-                    onNavigateToExerciseCustomization = onNavigateToExerciseCustomization,
                     onNavigateToOneRepMaxes = onNavigateToOneRepMaxes
                 )
             }
@@ -238,9 +236,10 @@ private fun DuringWorkoutCard(viewModel: SettingsViewModel) {
     }
 }
 
-/** Rest and warmup timer buttons, then the cardio and timed-set switches, each type side by side. */
+/** The rest timer switch, the rest and warmup timer buttons, then the cardio and timed-set switches, each type side by side. */
 @Composable
 private fun TimersAndCardioCard(viewModel: SettingsViewModel) {
+    val restTimerEnabled by viewModel.restTimerEnabled.collectAsState()
     val timerAddSeconds by viewModel.timerAddSeconds.collectAsState()
     val timerSubtractSeconds by viewModel.timerSubtractSeconds.collectAsState()
     val timerAddEnabled by viewModel.timerAddEnabled.collectAsState()
@@ -252,6 +251,17 @@ private fun TimersAndCardioCard(viewModel: SettingsViewModel) {
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // The countdown after each set; the warmup timer is its own thing
+            SettingSwitchRow(
+                icon = Icons.Rounded.Timer,
+                title = stringResource(R.string.rest_timer_setting),
+                description = stringResource(R.string.rest_timer_setting_desc),
+                checked = restTimerEnabled,
+                onCheckedChange = { viewModel.setRestTimerEnabled(it) }
+            )
+
+            SettingDivider()
+
             // How far the + and - buttons of the rest and warmup timers move the countdown
             SettingHeader(
                 icon = Icons.Rounded.Timer,
@@ -321,11 +331,10 @@ private fun TimersAndCardioCard(viewModel: SettingsViewModel) {
     }
 }
 
-/** How routines are written: exercise names, a weight to start from and the %1RM programming tools. */
+/** How routines are written: a weight to start from and the %1RM programming tools. */
 @Composable
 private fun RoutinesAndExercisesCard(
     viewModel: SettingsViewModel,
-    onNavigateToExerciseCustomization: () -> Unit,
     onNavigateToOneRepMaxes: () -> Unit
 ) {
     val weightUnit by viewModel.weightUnit.collectAsState()
@@ -335,15 +344,6 @@ private fun RoutinesAndExercisesCard(
 
     GymCard(containerColor = SurfaceContainerHigh) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            SettingNavRow(
-                icon = Icons.Rounded.Edit,
-                title = stringResource(R.string.exercise_customization),
-                description = stringResource(R.string.exercise_customization_desc),
-                onClick = onNavigateToExerciseCustomization
-            )
-
-            SettingDivider()
-
             // A weight per exercise of a routine for its first workouts
             SettingSwitchRow(
                 icon = Icons.Rounded.Scale,

@@ -4,6 +4,9 @@ import com.emanuel5014.trainable.data.local.ExerciseData
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.ExerciseNames
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
+import com.emanuel5014.trainable.domain.exercise.StoredTraits
 import android.content.Context
 import android.net.Uri
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
@@ -11,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,22 +47,62 @@ class ExerciseRepository @Inject constructor(
     fun getCustomCategories(): Flow<List<CustomCategoryEntity>> =
         exerciseDao.getAllCustomCategories()
     
-    suspend fun addCustomExercise(nome: String, categoria: String, description: String? = null): Int {
-        // Creating again an exercise that was deleted brings the old one back, so its history and routines go on with it
-        exerciseDao.findDeletedByName(nome.trim())?.let { deleted ->
-            exerciseDao.reviveExercise(deleted.id, categoria, description)
-            return deleted.id
+    suspend fun addCustomExercise(
+        nome: String,
+        categoria: String,
+        description: String? = null,
+        traits: ExerciseTraits = ExerciseTraits.EMPTY
+    ): Int {
+        // Creating again an exercise that was hidden brings the old one back, so its history and routines go on with it.
+        // A custom one takes the category picked now (issue #41); a preset keeps its own, since it cannot be edited while
+        // the presets are locked. The description it had stays unless one is typed now (a picker has no description field);
+        // likewise a custom one takes the muscles and equipment chosen now, and a preset keeps its own. A name in any
+        // language finds it, as the duplicate check does.
+        val hidden = ExerciseNames.findHidden(
+            nome,
+            exerciseDao.getAllExercisesIncludingDeleted().first(),
+            exerciseDao.getExerciseMerges().map { it.loserId }.toSet()
+        )
+        if (hidden != null) {
+            val revived = ExerciseTraits.forRevival(hidden.id, StoredTraits(hidden.muscles, hidden.equipment), traits)
+            exerciseDao.reviveExercise(
+                hidden.id,
+                if (hidden.id < ExerciseEntity.FIRST_CUSTOM_ID) hidden.categoria else categoria,
+                description?.takeIf { it.isNotBlank() } ?: hidden.descrizione,
+                revived.muscles,
+                revived.equipment
+            )
+            return hidden.id
         }
         val maxId = exerciseDao.getMaxId()
         val newId = if (maxId < 1000) 1000 else maxId + 1
+        val stored = ExerciseTraits.forStorage(newId, traits)
         exerciseDao.insertExercise(
-            ExerciseEntity(id = newId, nome = nome, categoria = categoria, descrizione = description)
+            ExerciseEntity(
+                id = newId, nome = nome, categoria = categoria, descrizione = description,
+                muscles = stored.muscles, equipment = stored.equipment
+            )
         )
         return newId
     }
 
-    suspend fun saveExercise(exercise: ExerciseEntity) {
-        exerciseDao.updateExercise(exercise)
+    /** The exercise with this id, also when it was deleted from the library: its history stays and can still be opened. */
+    suspend fun getExercise(id: Int): ExerciseEntity? = exerciseDao.getExerciseById(id)
+
+    /** True when a workout, a routine or anything else still refers to the exercise (it would be hidden, not deleted). */
+    suspend fun isExerciseInUse(id: Int): Boolean = exerciseDao.isExerciseInUse(id)
+
+    /** The exercise with this id as it changes (hidden, restored, renamed); emits null once it is gone for good. */
+    fun observeExercise(id: Int): Flow<ExerciseEntity?> = exerciseDao.observeExercise(id)
+
+    /** Saves what the exercise form edits (name, category, description, muscles and equipment) and nothing else of the row. */
+    suspend fun updateExerciseDetails(id: Int, nome: String, categoria: String, descrizione: String?, traits: StoredTraits) {
+        exerciseDao.updateExerciseDetails(id, nome, categoria, descrizione, traits.muscles, traits.equipment)
+    }
+
+    /** Stars or unstars the exercise; the rest of its row is not touched. */
+    suspend fun setFavorite(id: Int, favorite: Boolean) {
+        exerciseDao.setFavorite(id, favorite)
     }
 
     /**

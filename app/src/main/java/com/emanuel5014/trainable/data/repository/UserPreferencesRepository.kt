@@ -14,6 +14,7 @@ import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.PlateCalculator
+import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -113,6 +114,12 @@ class UserPreferencesRepository @Inject constructor(
     /** Each of the two time buttons on its own: with both off the timers carry neither. On by default. */
     val TIMER_ADD_ENABLED = booleanPreferencesKey("timer_add_enabled")
     val TIMER_SUBTRACT_ENABLED = booleanPreferencesKey("timer_subtract_enabled")
+    /** The rest countdown after each set of a workout. On by default; the warmup timer does not depend on it. */
+    val REST_TIMER_ENABLED = booleanPreferencesKey("rest_timer_enabled")
+    /** The last warmup the lifter started, in seconds: the warmup slider opens on it. */
+    val LAST_WARMUP_SECONDS = intPreferencesKey("last_warmup_seconds")
+    /** The last rest chosen when adding or swapping an exercise in a workout, in seconds: that slider opens on it. */
+    val LAST_ADDED_EXERCISE_REST_SECONDS = intPreferencesKey("last_added_exercise_rest_seconds")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** Old RPE setting (0 = advanced exercises only, 1 = every exercise, 2 = never): only [RpePreferenceMigration] and old backups read it. */
@@ -447,6 +454,33 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setTimerSubtractEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[TIMER_SUBTRACT_ENABLED] = enabled
+        }
+    }
+
+    val restTimerEnabled: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[REST_TIMER_ENABLED] ?: true }
+
+    suspend fun setRestTimerEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[REST_TIMER_ENABLED] = enabled
+        }
+    }
+
+    val lastWarmupSeconds: Flow<Int> = dataStore.data
+        .map { preferences -> RestSeconds.snap(preferences[LAST_WARMUP_SECONDS], RestSeconds.WARMUP_STEPS) }
+
+    suspend fun setLastWarmupSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[LAST_WARMUP_SECONDS] = RestSeconds.snap(seconds, RestSeconds.WARMUP_STEPS)
+        }
+    }
+
+    val lastAddedExerciseRestSeconds: Flow<Int> = dataStore.data
+        .map { preferences -> RestSeconds.snap(preferences[LAST_ADDED_EXERCISE_REST_SECONDS], RestSeconds.EXERCISE_STEPS) }
+
+    suspend fun setLastAddedExerciseRestSeconds(seconds: Int) {
+        dataStore.edit { preferences ->
+            preferences[LAST_ADDED_EXERCISE_REST_SECONDS] = RestSeconds.snap(seconds, RestSeconds.EXERCISE_STEPS)
         }
     }
 

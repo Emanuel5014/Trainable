@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -29,17 +30,41 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE id = :id")
     suspend fun getExerciseById(id: Int): ExerciseEntity?
 
-    @Query("SELECT * FROM exercises WHERE is_deleted = 1 AND LOWER(nome) = LOWER(:nome) LIMIT 1")
+    /** One exercise, also when hidden; null once the row is gone. */
+    @Query("SELECT * FROM exercises WHERE id = :id")
+    fun observeExercise(id: Int): Flow<ExerciseEntity?>
+
+    /** A hidden exercise with this name, except those merged into another: their name belongs to the winner now. */
+    @Query(
+        """
+        SELECT * FROM exercises
+        WHERE is_deleted = 1 AND LOWER(nome) = LOWER(:nome) AND id NOT IN (SELECT loser_id FROM exercise_merges)
+        LIMIT 1
+        """
+    )
     suspend fun findDeletedByName(nome: String): ExerciseEntity?
+
+    /** Every merge of an exercise into another that has not been undone: imports use them to recognise old names. */
+    @Query("SELECT * FROM exercise_merges ORDER BY id")
+    suspend fun getExerciseMerges(): List<ExerciseMergeEntity>
 
     @Query("UPDATE exercises SET is_deleted = :deleted WHERE id = :id")
     suspend fun setExerciseDeleted(id: Int, deleted: Boolean)
 
     /** Brings a deleted exercise back to the library as the one the user is creating now. */
-    @Query("UPDATE exercises SET is_deleted = 0, categoria = :categoria, descrizione = :descrizione WHERE id = :id")
-    suspend fun reviveExercise(id: Int, categoria: String, descrizione: String?)
+    @Query(
+        """
+        UPDATE exercises
+        SET is_deleted = 0, categoria = :categoria, descrizione = :descrizione, muscles = :muscles, equipment = :equipment
+        WHERE id = :id
+        """
+    )
+    suspend fun reviveExercise(id: Int, categoria: String, descrizione: String?, muscles: String?, equipment: String?)
 
-    /** True when a workout, a routine, a swap, a program change or a 1RM still refers to the exercise. */
+    /**
+     * True when a workout, a routine, a swap, a program change or a 1RM still refers to the exercise, or a merge with
+     * another exercise is on record (deleting the row would cascade into the merge log and make it impossible to undo).
+     */
     @Query(
         """
         SELECT EXISTS(SELECT 1 FROM set_logs WHERE exercise_id = :id)
@@ -47,19 +72,21 @@ interface ExerciseDao {
             OR EXISTS(SELECT 1 FROM one_rep_maxes WHERE exercise_id = :id)
             OR EXISTS(SELECT 1 FROM session_exercise_swaps WHERE replacement_exercise_id = :id)
             OR EXISTS(SELECT 1 FROM session_prescription_edits WHERE exercise_id = :id)
+            OR EXISTS(SELECT 1 FROM exercise_merges WHERE winner_id = :id OR loser_id = :id)
         """
     )
     suspend fun isExerciseInUse(id: Int): Boolean
 
     /**
      * Takes the exercise out of the library without touching the history and the routines that use it: those keep it
-     * (the row is only hidden, the foreign keys cascade on a real delete). An exercise nothing refers to is deleted for real.
+     * (the row is only hidden, the foreign keys cascade on a real delete). An exercise nothing refers to is deleted for real,
+     * except a preset: the library sync would insert it again at the next launch, so a preset is always only hidden.
      *
      * @return true when the row was deleted for good, false when it was only hidden.
      */
     @Transaction
     suspend fun removeFromLibrary(id: Int): Boolean {
-        if (isExerciseInUse(id)) {
+        if (id < ExerciseEntity.FIRST_CUSTOM_ID || isExerciseInUse(id)) {
             setExerciseDeleted(id, true)
             return false
         }
@@ -92,8 +119,24 @@ interface ExerciseDao {
     @Query("DELETE FROM custom_categories WHERE id IN (:ids)")
     suspend fun deleteCustomCategoriesByIds(ids: List<Int>)
 
+    /** An edit of the exercise form: only these fields, so a media or a hidden flag changed meanwhile is not reverted. */
+    @Query(
+        """
+        UPDATE exercises
+        SET nome = :nome, categoria = :categoria, descrizione = :descrizione, muscles = :muscles, equipment = :equipment
+        WHERE id = :id
+        """
+    )
+    suspend fun updateExerciseDetails(
+        id: Int, nome: String, categoria: String, descrizione: String?, muscles: String?, equipment: String?
+    )
+
     @Query("UPDATE exercises SET nome = :nome WHERE id = :id")
     suspend fun updateExerciseName(id: Int, nome: String)
+
+    /** Stars or unstars an exercise: only that column, so nothing changed meanwhile is written back. */
+    @Query("UPDATE exercises SET is_favorite = :favorite WHERE id = :id")
+    suspend fun setFavorite(id: Int, favorite: Boolean)
 
     @Query("SELECT media_path FROM exercises WHERE id = :id")
     suspend fun getExerciseMedia(id: Int): String?

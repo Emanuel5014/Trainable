@@ -52,7 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.journal.JournalRating
-import com.emanuel5014.trainable.ui.screens.workout.rememberAnimatedShape
+import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import kotlinx.coroutines.delay

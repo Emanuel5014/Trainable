@@ -27,6 +27,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
@@ -36,6 +37,7 @@ import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
 import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -50,6 +52,7 @@ import com.emanuel5014.trainable.util.ImageStorageUtils
 import com.emanuel5014.trainable.util.UriMigrationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -210,10 +213,15 @@ class WorkoutRepository @Inject constructor(
                     }
                 } else emptyList(),
                 exercises = planWithDetails.exercises.map { exerciseWithDetails ->
+                    // Only a custom exercise carries its muscles and equipment in the file: a preset has them in the catalog
+                    val traits = exerciseWithDetails.exercise.takeIf { it.id >= ExerciseEntity.FIRST_CUSTOM_ID }
+                        ?.let { ExerciseTraits.of(it) } ?: ExerciseTraits.EMPTY
                     PlanExerciseExportDto(
                         exerciseId = exerciseWithDetails.exercise.id,
                         exerciseName = exerciseWithDetails.exercise.nome,
                         exerciseCategory = exerciseWithDetails.exercise.categoria,
+                        exerciseMuscles = traits.muscles.map { it.key }.ifEmpty { null },
+                        exerciseEquipment = traits.equipment?.key,
                         serieTarget = exerciseWithDetails.planExercise.serieTarget,
                         repsTarget = exerciseWithDetails.planExercise.repsTarget,
                         repsMax = exerciseWithDetails.planExercise.repsMax,
@@ -262,6 +270,8 @@ class WorkoutRepository @Inject constructor(
         val currentPlans = workoutDao.getAllPlans().first()
         // Also the exercises deleted from the library: an imported routine that uses one brings it back instead of duplicating it
         val knownExercises = exerciseDao.getAllExercisesIncludingDeleted().first().toMutableList()
+        // Exercises merged into another are looked up under their old name and id, and land on the one they were merged into
+        val merges = exerciseDao.getExerciseMerges()
         var nextOrder = (currentPlans.maxOfOrNull { it.ordine } ?: -1) + 1
         var imported = 0
 
@@ -336,13 +346,18 @@ class WorkoutRepository @Inject constructor(
 
                 dto.exercises.forEach { exerciseDto ->
                     val finalExerciseId: Int? = when (
-                        val match = ImportedExerciseMatcher.match(knownExercises, exerciseDto.exerciseId, exerciseDto.exerciseName)
+                        val match = ImportedExerciseMatcher.match(
+                            ExerciseMerges.aliasView(knownExercises, merges),
+                            ExerciseMerges.winnerOf(exerciseDto.exerciseId, merges),
+                            exerciseDto.exerciseName
+                        )
                     ) {
                         is ImportedExerciseMatcher.Match.Existing -> {
                             if (match.exercise.isDeleted) {
                                 exerciseDao.setExerciseDeleted(match.exercise.id, false)
                                 val index = knownExercises.indexOfFirst { it.id == match.exercise.id }
-                                if (index >= 0) knownExercises[index] = match.exercise.copy(isDeleted = false)
+                                // The real row, not the match: it can be a winner under the name of an exercise merged into it
+                                if (index >= 0) knownExercises[index] = knownExercises[index].copy(isDeleted = false)
                             }
                             match.exercise.id
                         }
@@ -350,10 +365,16 @@ class WorkoutRepository @Inject constructor(
                         ImportedExerciseMatcher.Match.CreateCustom -> try {
                             val maxId = knownExercises.maxOfOrNull { it.id } ?: exerciseDao.getMaxId()
                             val newId = if (maxId < ImportedExerciseMatcher.FIRST_CUSTOM_ID) ImportedExerciseMatcher.FIRST_CUSTOM_ID else maxId + 1
+                            // Unknown keys of a file from another version are dropped, never an error
+                            val traits = ExerciseTraits.forStorage(
+                                newId, ExerciseTraits.fromKeys(exerciseDto.exerciseMuscles.orEmpty(), exerciseDto.exerciseEquipment)
+                            )
                             val newExercise = ExerciseEntity(
                                 id = newId,
                                 nome = exerciseDto.exerciseName!!.trim(),
-                                categoria = exerciseDto.exerciseCategory ?: "Custom"
+                                categoria = exerciseDto.exerciseCategory ?: "Custom",
+                                muscles = traits.muscles,
+                                equipment = traits.equipment
                             )
                             exerciseDao.insertExercise(newExercise)
                             knownExercises.add(newExercise)
@@ -732,6 +753,9 @@ class WorkoutRepository @Inject constructor(
     fun getPreviousSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getPreviousSetsForExercise(exerciseId)
 
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>> = workoutDao.getLastFinishedSetsForExercise(exerciseId)
+
+    /** Every completed set of the exercise in a finished workout, newest first (see [WorkoutDao.getSetHistoryForExercise]). */
+    fun getSetHistoryForExercise(exerciseId: Int): Flow<List<ExerciseSetWithSession>> = workoutDao.getSetHistoryForExercise(exerciseId)
 
     /** Weight in kg the exercise was last lifted with in any routine, null if never. */
     suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float? = workoutDao.getLastWorkingWeightForExercise(exerciseId)

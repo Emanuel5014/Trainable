@@ -98,7 +98,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Whether "Show in Workouts" is switched on in the Exercise Media settings. Provided once at the app root, like
+ * Whether "Show in Workouts" is switched on on the exercises page of the settings. Provided once at the app root, like
  * [LocalAdvancedProgramming], so lists outside the workout screen (the exercise picker) follow the same switch.
  */
 val LocalExerciseMediaEnabled = staticCompositionLocalOf { false }
@@ -288,21 +288,29 @@ fun rememberShowExerciseThumbnails(exercises: List<ExerciseEntity>, excludedIds:
 
 /**
  * The user's image for the exercise, which opens full screen when tapped, or a neutral tile when it has none. Still
- * on purpose (like the list in the exercise media settings): a GIF is shown by its first frame, so a long list does
- * not animate all at once; the full-screen look plays it. Tapping anywhere else on the row picks the exercise.
+ * on purpose (like the list on the exercises page): a GIF is shown by its first frame, so a long list does not animate
+ * all at once; the full-screen look plays it. Tapping anywhere else on the row picks the exercise. With a null [onClick]
+ * the tile is only a picture: the row around it has the one action.
  */
 @Composable
-fun ExerciseListThumbnail(fileName: String?, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
+fun ExerciseListThumbnail(fileName: String?, onClick: (() -> Unit)?, size: Dp = ExerciseListThumbnailSize) {
+    val shape = RoundedCornerShape(if (size < 56.dp) 12.dp else 16.dp)
     if (fileName != null) {
         val description = stringResource(R.string.exercise_media_open)
         Box(
             modifier = Modifier
-                .size(ExerciseListThumbnailSize)
+                .size(size)
                 .clip(shape)
                 .background(SurfaceContainerHighest)
-                .clickable(role = Role.Button, onClick = onClick)
-                .semantics { contentDescription = description }
+                .then(
+                    if (onClick != null) {
+                        Modifier
+                            .clickable(role = Role.Button, onClick = onClick)
+                            .semantics { contentDescription = description }
+                    } else {
+                        Modifier.clearAndSetSemantics { }
+                    }
+                )
         ) {
             ExerciseMediaImage(
                 fileName = fileName,
@@ -314,7 +322,7 @@ fun ExerciseListThumbnail(fileName: String?, onClick: () -> Unit) {
     } else {
         Box(
             modifier = Modifier
-                .size(ExerciseListThumbnailSize)
+                .size(size)
                 .clip(shape)
                 .background(SurfaceContainerHighest)
                 .clearAndSetSemantics { },
@@ -330,7 +338,7 @@ fun ExerciseListThumbnail(fileName: String?, onClick: () -> Unit) {
     }
 }
 
-private val ExerciseListThumbnailSize = 44.dp
+private val ExerciseListThumbnailSize = 56.dp
 
 /** The full-screen, look-only viewer of [exercise]'s media; nothing while [exercise] is null or has no media. */
 @Composable

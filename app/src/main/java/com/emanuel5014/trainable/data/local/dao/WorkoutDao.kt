@@ -17,6 +17,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
@@ -341,6 +342,20 @@ interface WorkoutDao {
         ORDER BY sl.numero_serie ASC
     """)
     fun getLastFinishedSetsForExercise(exerciseId: Int): Flow<List<SetLogEntity>>
+
+    /**
+     * Every completed set of the exercise in a finished workout, newest workout first and in set order within it.
+     * Reads only: the exercise detail screen builds its records and history from this.
+     */
+    @Query("""
+        SELECT sl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name
+        FROM set_logs sl
+        INNER JOIN workout_sessions ws ON sl.session_id = ws.id
+        INNER JOIN workout_plans wp ON ws.plan_id = wp.id
+        WHERE sl.exercise_id = :exerciseId AND ws.is_finished = 1 AND sl.is_completed = 1
+        ORDER BY ws.timestamp DESC, ws.id DESC, sl.numero_serie ASC
+    """)
+    fun getSetHistoryForExercise(exerciseId: Int): Flow<List<ExerciseSetWithSession>>
 
     /**
      * Weight (kg) of the first working set of the exercise in its most recent finished workout, in any routine.

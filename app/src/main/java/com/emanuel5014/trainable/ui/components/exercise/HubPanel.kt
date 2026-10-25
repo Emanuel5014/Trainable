@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -49,6 +51,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Constraints
@@ -59,14 +62,14 @@ import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.lerp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
-import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private val GRABBER_HEIGHT = 32.dp
-private val PANEL_SHAPE = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+private val PANEL_SHAPE = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
 
 /**
  * Where the bottom hub of the workout screen is: [expansion] is 1 when it is open and 0 when it is a thin strip,
@@ -205,18 +208,26 @@ fun HubPanel(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("hub_panel")
                 .onSizeChanged {
                     sheet.onMeasured(it.height)
                     onHeightChanged(it.height)
                 },
-            color = Surface,
+            color = SurfaceContainerLow,
             shape = PANEL_SHAPE,
             tonalElevation = 8.dp,
             shadowElevation = 16.dp
         ) {
             Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
                 HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = horizontalPadding)) {
+                // The open hub takes the room it needs; only when that is more than the screen has does its content scroll under the pill
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = horizontalPadding)
+                ) {
                     content(expansion)
                     Spacer(modifier = Modifier.hubSpace(expansion, closed = 8.dp, open = 16.dp))
                 }

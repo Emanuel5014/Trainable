@@ -1,7 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.ui.components.HubChip
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,7 +47,6 @@ import com.emanuel5014.trainable.domain.prescription.ProgramDiff
 import com.emanuel5014.trainable.domain.prescription.LoadShift
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
-import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.domain.prescription.ProgramEditKind
 import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
 import com.emanuel5014.trainable.ui.theme.Error
@@ -78,26 +77,15 @@ fun ProgramEditPill(edit: SessionPrescriptionEditEntity, modifier: Modifier = Mo
 /** The line under the weight and reps of a set with a %1RM: how much it asks for, and the way into the load editor. */
 @Composable
 fun LoadPercentChip(percentText: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    M3Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = Primary.copy(alpha = 0.12f),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(Icons.Rounded.Tune, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
-            Text(
-                text = stringResource(R.string.change_percent_button, percentText),
-                style = MaterialTheme.typography.labelLarge,
-                color = Primary,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.weight(1f)
-            )
-        }
+    HubChip(onClick = onClick, containerColor = Primary.copy(alpha = 0.12f), modifier = modifier) {
+        Icon(Icons.Rounded.Tune, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
+        Text(
+            text = stringResource(R.string.change_percent_button, percentText),
+            style = MaterialTheme.typography.labelLarge,
+            color = Primary,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 

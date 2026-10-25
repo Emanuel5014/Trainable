@@ -8,6 +8,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
+import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
@@ -22,6 +23,8 @@ import com.emanuel5014.trainable.data.local.entity.PhysicalCheckEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
+import com.emanuel5014.trainable.data.local.entity.ExerciseMergeMoveEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
@@ -31,12 +34,15 @@ import com.emanuel5014.trainable.data.local.entity.WeightLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.domain.exercise.ExercisePresets
+import com.emanuel5014.trainable.domain.exercise.RetiredPresets
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [ // 17 Entities
+    entities = [ // 19 Entities
         UserEntity::class,
         WeightLogEntity::class,
         ExerciseEntity::class,
@@ -53,9 +59,11 @@ import kotlinx.coroutines.launch
         OneRepMaxEntity::class,
         SessionPrescriptionEditEntity::class,
         SessionTagEntity::class,
-        SessionTagRefEntity::class
+        SessionTagRefEntity::class,
+        ExerciseMergeEntity::class,
+        ExerciseMergeMoveEntity::class
     ],
-    version = 37,
+    version = 40,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -68,6 +76,7 @@ abstract class GymDatabase : RoomDatabase() {
     abstract fun physicalCheckDao(): PhysicalCheckDao
     abstract fun oneRepMaxDao(): OneRepMaxDao
     abstract fun journalDao(): JournalDao
+    abstract fun exerciseMergeDao(): ExerciseMergeDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -468,6 +477,43 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_37_38 = object : Migration(37, 38) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The log of exercise merges (loser merged into winner) and the rows each one moved, to undo it
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `exercise_merges` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`winner_id` INTEGER NOT NULL, `loser_id` INTEGER NOT NULL, `loser_name` TEXT NOT NULL, " +
+                        "`loser_was_hidden` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, " +
+                        "FOREIGN KEY(`winner_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                        "FOREIGN KEY(`loser_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercise_merges_winner_id` ON `exercise_merges` (`winner_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercise_merges_loser_id` ON `exercise_merges` (`loser_id`)")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `exercise_merge_moves` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`merge_id` INTEGER NOT NULL, `source` TEXT NOT NULL, `row_id` INTEGER NOT NULL, " +
+                        "FOREIGN KEY(`merge_id`) REFERENCES `exercise_merges`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_exercise_merge_moves_merge_id` ON `exercise_merge_moves` (`merge_id`)")
+            }
+        }
+
+        val MIGRATION_38_39 = object : Migration(38, 39) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The favorite star of an exercise, and whether a merge moved a star to the winner (to take it back on undo)
+                db.execSQL("ALTER TABLE exercises ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE exercise_merges ADD COLUMN favorite_moved INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_39_40 = object : Migration(39, 40) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The muscles and the equipment the user chose for an exercise; null leaves a preset with its catalog values
+                db.execSQL("ALTER TABLE exercises ADD COLUMN muscles TEXT")
+                db.execSQL("ALTER TABLE exercises ADD COLUMN equipment TEXT")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -486,7 +532,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
                         MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37, MIGRATION_37_38, MIGRATION_38_39, MIGRATION_39_40
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {
@@ -495,7 +541,7 @@ abstract class GymDatabase : RoomDatabase() {
                             val dbInstance = INSTANCE
                             if (dbInstance != null) {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    populateInitialData(dbInstance.exerciseDao(), dbInstance.userDao())
+                                    populateInitialData(context.applicationContext, dbInstance.exerciseDao(), dbInstance.userDao())
                                 }
                             }
                         }
@@ -505,7 +551,7 @@ abstract class GymDatabase : RoomDatabase() {
                             val dbInstance = INSTANCE
                             if (dbInstance != null) {
                                 CoroutineScope(Dispatchers.IO).launch {
-                                    syncExercises(dbInstance.exerciseDao())
+                                    syncExercises(context.applicationContext, dbInstance.exerciseDao())
                                 }
                             }
                         }
@@ -523,7 +569,8 @@ abstract class GymDatabase : RoomDatabase() {
 
         suspend fun resetDatabase(context: Context) {
             closeDatabase()
-            
+            RetiredPresetsMarker.forget(context)
+
             val dbFile = context.getDatabasePath(DATABASE_NAME)
             val walFile = context.getDatabasePath("$DATABASE_NAME-wal")
             val shmFile = context.getDatabasePath("$DATABASE_NAME-shm")
@@ -536,7 +583,7 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
-        private suspend fun populateInitialData(exerciseDao: ExerciseDao, userDao: UserDao) {
+        private suspend fun populateInitialData(context: Context, exerciseDao: ExerciseDao, userDao: UserDao) {
             try {
                 userDao.insertUser(
                     UserEntity(
@@ -549,14 +596,32 @@ abstract class GymDatabase : RoomDatabase() {
                 // User might already exist, ignore
             }
 
-            syncExercises(exerciseDao)
+            syncExercises(context, exerciseDao)
         }
 
-        private suspend fun syncExercises(exerciseDao: ExerciseDao) {
+        private suspend fun syncExercises(context: Context, exerciseDao: ExerciseDao) {
             try {
-                exerciseDao.insertExercises(ExerciseData.initialExercises)
+                val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
+                exerciseDao.insertExercises(ExercisePresets.toInsert(ExerciseData.initialExercises, existing))
             } catch (e: Exception) {
                 // Exercises might already exist, ignore
+            }
+            hideRetiredPresets(context, exerciseDao)
+        }
+
+        /**
+         * Once per [RetiredPresets.VERSION] and database, hides the retired presets this install still lists unused and as
+         * shipped. The ones a workout, a routine or a max uses are left alone. It is marked done only when it went through.
+         */
+        private suspend fun hideRetiredPresets(context: Context, exerciseDao: ExerciseDao) {
+            if (RetiredPresetsMarker.applied(context) >= RetiredPresets.VERSION) return
+            try {
+                val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
+                val used = RetiredPresets.ids.filterTo(hashSetOf()) { exerciseDao.isExerciseInUse(it) }
+                RetiredPresets.toHide(existing, ExerciseData.initialExercises, used).forEach { exerciseDao.setExerciseDeleted(it, true) }
+                RetiredPresetsMarker.markApplied(context, RetiredPresets.VERSION)
+            } catch (e: Exception) {
+                // Not marked, so the next launch tries again
             }
         }
     }

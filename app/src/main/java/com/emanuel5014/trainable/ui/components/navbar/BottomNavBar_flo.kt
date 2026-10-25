@@ -1,18 +1,18 @@
 package com.emanuel5014.trainable.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.horizontalDrag
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,22 +21,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +64,9 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+
+private val BarPadding = 6.dp
+private val PillInset = 3.dp
 
 @Composable
 fun BottomNavBarFlo(
@@ -75,14 +83,24 @@ fun BottomNavBarFlo(
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
-    val scope = rememberCoroutineScope()
 
     val isOnMainTabs = currentRoute?.contains("MainTabs") == true || currentRoute == null
-    val selectedIndex = if (isOnMainTabs) pagerState.currentPage else 0
     val items = localizedNavItems()
+    val pillState = rememberNavPillState(pagerState, items.size)
     val hazeTintColor = SurfaceContainerHigh.copy(alpha = if (isDark) 0.65f else 0.95f)
     val barShape = MaterialTheme.shapes.extraLarge
     val itemHeight = 64.dp
+    val pillColor = Primary
+
+    // The pill swells a little while a finger holds it. Kept as State so only the draw phase reads it.
+    val grab = animateFloatAsState(
+        targetValue = if (pillState.isDragging) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "pillGrab"
+    )
 
     Surface(
         modifier = modifier
@@ -108,73 +126,87 @@ fun BottomNavBarFlo(
                     shape = barShape
                 )
         ) {
-            BoxWithConstraints(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 6.dp)
+                    // Both of these see the whole bar (before the padding): the finger and the pill
+                    // share one coordinate space. Taps never reach this gesture, only a horizontal drag does.
+                    .pointerInput(pillState) {
+                        val barPadding = BarPadding.toPx()
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val dragStart = awaitHorizontalTouchSlopOrCancellation(down.id) { change, _ ->
+                                change.consume()
+                            } ?: return@awaitEachGesture
+
+                            val cellWidth = (size.width - 2 * barPadding) / pillState.count
+                            fun fingerPosition(x: Float) =
+                                NavPillMath.positionForFinger(x - barPadding, cellWidth, pillState.count)
+
+                            var tickIndex = NavPillMath.nearestIndex(
+                                fingerPosition(dragStart.position.x), pillState.count
+                            )
+                            pillState.beginDrag(fingerPosition(dragStart.position.x))
+                            val finished = horizontalDrag(dragStart.id) { change ->
+                                val position = fingerPosition(change.position.x)
+                                pillState.dragTo(position)
+                                change.consume()
+
+                                val index = NavPillMath.closestIndexWithHysteresis(
+                                    tickIndex, position, pillState.count
+                                )
+                                if (index != tickIndex) {
+                                    tickIndex = index
+                                    if (hapticEnabled) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    }
+                                }
+                            }
+                            pillState.endDrag(cancelled = !finished)
+                        }
+                    }
+                    // Active indicator: a capsule nearly as tall as the bar that follows the finger,
+                    // the pager or its settle spring. Drawn here so moving it never recomposes anything.
+                    .drawBehind {
+                        val barPadding = BarPadding.toPx()
+                        val inset = PillInset.toPx()
+                        val cellWidth = (size.width - 2 * barPadding) / pillState.count
+                        val pillSize = Size(
+                            width = cellWidth + 2 * (barPadding - inset),
+                            height = size.height - 2 * inset
+                        )
+                        val topLeft = Offset(inset + pillState.position * cellWidth, inset)
+                        val swell = 1f + 0.03f * grab.value
+                        scale(swell, swell, pivot = topLeft + Offset(pillSize.width / 2, pillSize.height / 2)) {
+                            drawRoundRect(
+                                color = pillColor.copy(alpha = lerp(0.14f, 0.22f, grab.value)),
+                                topLeft = topLeft,
+                                size = pillSize,
+                                cornerRadius = CornerRadius(pillSize.height / 2)
+                            )
+                        }
+                    }
+                    .padding(horizontal = BarPadding, vertical = BarPadding)
             ) {
-                val totalWidth = maxWidth
-                val itemWidth = totalWidth / items.size
-
-                // Active indicator — pill that glides with an expressive spring
-                val indicatorOffset by animateDpAsState(
-                    targetValue = itemWidth * selectedIndex,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioLowBouncy,
-                        stiffness = Spring.StiffnessMediumLow
-                    ),
-                    label = "indicatorOffset"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .offset(x = indicatorOffset)
-                        .width(itemWidth)
-                        .height(itemHeight)
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
-                        .clip(ShapeFull)
-                        .background(Primary.copy(alpha = 0.14f))
-                )
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     items.forEachIndexed { index, item ->
-                        val isSelected = isOnMainTabs && selectedIndex == index
                         val interactionSource = remember { MutableInteractionSource() }
                         val isPressed by interactionSource.collectIsPressedAsState()
 
-                        // Icon/label color morphs smoothly between onSurfaceVariant and primary
-                        val itemTint by animateColorAsState(
-                            targetValue = if (isSelected) Primary
-                            else OnSurfaceVariant.copy(alpha = 0.55f),
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            label = "itemTint"
+                        // 1 with the pill right on this item, fading to 0 one item away: tint, weight and
+                        // icon lift all follow it, so the item lights up as the pill passes
+                        val proximity by remember(index) {
+                            derivedStateOf { NavPillMath.proximity(pillState.position, index) }
+                        }
+                        val itemTint = lerpColor(
+                            OnSurfaceVariant.copy(alpha = 0.55f), Primary, proximity
                         )
-
-                        // Selected icon grows and lifts slightly (expressive emphasis)
-                        val iconScale by animateFloatAsState(
-                            targetValue = if (isSelected) 1.18f else 1f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            ),
-                            label = "iconScale"
-                        )
-
-                        val iconOffsetY by animateDpAsState(
-                            targetValue = if (isSelected) (-3).dp else 0.dp,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            ),
-                            label = "iconOffsetY"
-                        )
+                        val iconScale = lerp(1f, 1.18f, proximity)
+                        val iconOffsetY = (-3).dp * proximity
 
                         // Squeeze feedback on press, snapping back with a spring
                         val pressScale by animateFloatAsState(
@@ -184,16 +216,6 @@ fun BottomNavBarFlo(
                                 stiffness = Spring.StiffnessHigh
                             ),
                             label = "pressScale"
-                        )
-
-                        // Label weight animates 600 -> 800 using the variable font
-                        val labelWeight by animateFloatAsState(
-                            targetValue = if (isSelected) 1f else 0f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            label = "labelWeight"
                         )
 
                         Column(
@@ -207,7 +229,7 @@ fun BottomNavBarFlo(
                                     interactionSource = interactionSource,
                                     indication = null
                                 ) {
-                                    if (!isSelected) {
+                                    if (!isOnMainTabs || index != pagerState.targetPage) {
                                         if (hapticEnabled) {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         }
@@ -216,9 +238,7 @@ fun BottomNavBarFlo(
                                                 launchSingleTop = true
                                             }
                                         }
-                                        scope.launch {
-                                            pagerState.animateScrollToPage(index)
-                                        }
+                                        pillState.settleOn(index)
                                     }
                                 }
                         ) {
@@ -242,7 +262,8 @@ fun BottomNavBarFlo(
                                 text = item.title,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight(lerp(600, 800, labelWeight)),
+                                    // label weight 600 -> 800 using the variable font
+                                    fontWeight = FontWeight(lerp(600, 800, proximity)),
                                     letterSpacing = 0.1.sp
                                 ),
                                 color = itemTint,

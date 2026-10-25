@@ -162,7 +162,6 @@ fun AiScanPreviewSheet(
     exercises: List<ExerciseEntity>,
     categories: List<String>,
     languageCode: String,
-    editablePresetExercises: Boolean,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
     onConfirm: (List<ScannedExerciseEntry>, Boolean) -> Unit,
     onDismiss: () -> Unit,
@@ -494,11 +493,8 @@ fun AiScanPreviewSheet(
                     onCreated(created)
                 }
             },
-            onEditCustomExercise = { },
-            onDeleteCustomExercise = { },
             onDismiss = { pickingIndex = null },
             languageCode = languageCode,
-            editablePresetExercises = editablePresetExercises
         )
     }
 
@@ -528,11 +524,8 @@ fun AiScanPreviewSheet(
                     onCreated(created)
                 }
             },
-            onEditCustomExercise = { },
-            onDeleteCustomExercise = { },
             onDismiss = { isAddingNewExercise = false },
             languageCode = languageCode,
-            editablePresetExercises = editablePresetExercises
         )
     }
 }

@@ -147,6 +147,12 @@ object ExerciseData {
         ExerciseEntity(id = 154, nome = "Rowing Machine", categoria = "Cardio"),
         ExerciseEntity(id = 155, nome = "Assault Bike", categoria = "Cardio"),
         ExerciseEntity(id = 156, nome = "SkiErg", categoria = "Cardio"),
-        ExerciseEntity(id = 157, nome = "Jump Rope", categoria = "Cardio")
+        ExerciseEntity(id = 157, nome = "Jump Rope", categoria = "Cardio"),
+
+        // Variants of the presets that mixed two exercises (4 stays as it is)
+        ExerciseEntity(id = 158, nome = "Seated Lateral Raise", categoria = "Shoulders"),
+        ExerciseEntity(id = 159, nome = "Standing Lateral Raise", categoria = "Shoulders"),
+        ExerciseEntity(id = 160, nome = "Rear Delt Fly (Machine)", categoria = "Shoulders"),
+        ExerciseEntity(id = 161, nome = "Rear Delt Fly (Dumbbell)", categoria = "Shoulders")
     )
 }

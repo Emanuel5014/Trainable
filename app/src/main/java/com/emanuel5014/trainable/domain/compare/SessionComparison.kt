@@ -7,6 +7,7 @@ import com.emanuel5014.trainable.data.local.entity.isTimeAndReps
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
+import com.emanuel5014.trainable.domain.exercise.ExerciseKind
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import java.util.Locale
 import kotlin.math.abs
@@ -71,21 +72,6 @@ data class ComparedMetric(val kind: MetricKind, val a: Float?, val b: Float?) {
                 Trend.DOWN -> if (higherIsBetter) Outcome.WORSE else Outcome.BETTER
             }
         }
-}
-
-/** How an exercise is measured, which decides what is compared and how its sets are written. */
-enum class ExerciseKind {
-    /** Weight × reps. */
-    STRENGTH,
-
-    /** Reps with no added load (pull-ups, push-ups). */
-    BODYWEIGHT,
-
-    /** Time & Weight: how long a set was held, with an optional load (planks, carries). */
-    TIMED,
-
-    /** Time & Reps: the reps done in a timed interval, no load (burpees for 60 s). */
-    TIME_AND_REPS
 }
 
 /** A logged set reduced to what the comparison needs; [log] keeps the prescription snapshot and RPE for display. */
@@ -256,15 +242,8 @@ data class SessionComparison(
             }
         )
 
-        private fun kindOf(sides: List<ExerciseSide>): ExerciseKind {
-            val sets = sides.flatMap { it.workingSets.ifEmpty { it.sets } }
-            return when {
-                sets.any { it.log.isTimeAndReps } -> ExerciseKind.TIME_AND_REPS
-                sets.any { it.durationSeconds != null } -> ExerciseKind.TIMED
-                sets.any { it.weightKg > 0f } -> ExerciseKind.STRENGTH
-                else -> ExerciseKind.BODYWEIGHT
-            }
-        }
+        private fun kindOf(sides: List<ExerciseSide>): ExerciseKind =
+            ExerciseKind.of(sides.flatMap { it.workingSets.ifEmpty { it.sets } }.map { it.log })
 
         // ---- cardio -------------------------------------------------------------------------------
 

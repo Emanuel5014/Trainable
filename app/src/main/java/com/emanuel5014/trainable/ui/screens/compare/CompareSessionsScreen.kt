@@ -69,7 +69,7 @@ import com.emanuel5014.trainable.domain.compare.CardioComparison
 import com.emanuel5014.trainable.domain.compare.ComparedMetric
 import com.emanuel5014.trainable.domain.compare.ComparedSet
 import com.emanuel5014.trainable.domain.compare.ExerciseComparison
-import com.emanuel5014.trainable.domain.compare.ExerciseKind
+import com.emanuel5014.trainable.domain.exercise.ExerciseKind
 import com.emanuel5014.trainable.domain.compare.MetricKind
 import com.emanuel5014.trainable.domain.compare.Outcome
 import com.emanuel5014.trainable.domain.compare.SessionComparison

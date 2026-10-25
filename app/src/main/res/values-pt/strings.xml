@@ -2,7 +2,6 @@
 <resources>
 
     <!-- App -->
-    <string name="app_name">Trainable</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Painel</string>
@@ -154,8 +153,6 @@
     <string name="reset_exercise_names">Redefinir Nomes dos Exercícios</string>
     <string name="reset_exercise_names_confirm">Redefinir nomes dos exercícios?</string>
     <string name="reset_exercise_names_message">Isso restaurará os nomes de todos os exercícios predefinidos para seus valores padrão. Seus exercícios personalizados não serão afetados.</string>
-    <string name="exercise_customization">Personalização de Exercícios</string>
-    <string name="exercise_customization_desc">Gerencie as opções de personalização de nomes de exercícios</string>
     <string name="custom_categories">Categorias Personalizadas</string>
     <string name="custom_categories_desc">Adicione ou remova categorias personalizadas para seus exercícios</string>
     <string name="add_category">Adicionar Categoria</string>
@@ -186,11 +183,10 @@
     <string name="search_exercises">Pesquisar exercícios</string>
     <string name="all_categories">Todos</string>
     <string name="no_exercises_found">Nenhum exercício encontrado</string>
+    <string name="exercise_picked_badge">Selecionado</string>
     <string name="choose_from_library">Escolher da biblioteca</string>
     <string name="filter_custom">Personalizados</string>
     <string name="new_exercise">Novo Exercício</string>
-    <string name="delete_exercise_title">Excluir exercício?</string>
-    <string name="delete_exercise_message">Excluir \"%1$s\" da sua lista de exercícios? Os treinos e rotinas que já o usam continuam com ele.</string>
     <string name="exercise_deleted_badge">Excluído</string>
     <string name="deleted_exercise_title">Exercício excluído</string>
     <string name="deleted_exercise_message">\"%1$s\" foi excluído da sua lista de exercícios, mas ainda está nas suas rotinas e treinos. Adicioná-lo de volta à lista?</string>
@@ -249,13 +245,13 @@
     <string name="keep_screen_on_cardio_timer_desc">Evita que a tela desligue enquanto o temporizador de cardio estiver em execução</string>
     <string name="keep_screen_on_set_timer">Manter a tela ligada (séries cronometradas)</string>
     <string name="keep_screen_on_set_timer_desc">Evita que a tela desligue enquanto o temporizador da série estiver em execução</string>
+    <string name="rest_timer_setting">Temporizador de descanso</string>
+    <string name="rest_timer_setting_desc">Inicia uma contagem regressiva depois de cada série. Desligado, você passa de uma série para outra sem esperar</string>
     <string name="inline_exercise_modifications">Modificações inline</string>
     <string name="inline_exercise_modifications_desc">Adicionar séries e exercícios durante treinos normais</string>
-    <string name="exercise_media">Mídia dos exercícios</string>
     <string name="exercise_media_desc">Mostrar durante o treino sua própria imagem ou GIF de cada exercício</string>
     <string name="exercise_media_large">Pré-visualização grande</string>
     <string name="exercise_media_large_desc">Preencher o espaço livre abaixo das séries com uma imagem grande quando houver espaço</string>
-    <string name="exercise_media_manage_desc">Adicione, substitua ou remova a imagem ou o GIF de cada exercício</string>
     <string name="exercise_media_show">Mostrar nos treinos</string>
     <string name="exercise_media_filter_with">Com mídia</string>
     <string name="exercise_media_filter_without">Sem mídia</string>
@@ -1531,4 +1527,128 @@
     </plurals>
     <string name="routine_header_expand">Mostrar detalhes</string>
     <string name="routine_header_collapse">Ocultar detalhes</string>
+    <!-- Exercise detail -->
+    <string name="exercise_detail_open">Detalhes do exercício</string>
+    <string name="exercise_detail_records">Recordes</string>
+    <string name="exercise_detail_progress">Progresso (1RM estimado)</string>
+    <string name="exercise_detail_history">Histórico</string>
+    <string name="exercise_detail_empty">Você ainda não fez este exercício</string>
+    <string name="exercise_detail_last">Última: %s</string>
+    <string name="exercise_detail_top">Máx. %s</string>
+    <string name="exercise_record_heaviest">Série mais pesada</string>
+    <string name="exercise_record_best_e1rm">Melhor 1RM estimado</string>
+    <string name="exercise_record_best_volume">Melhor volume numa sessão</string>
+    <string name="exercise_record_most_reps_set">Mais repetições numa série</string>
+    <string name="exercise_record_most_reps_session">Mais repetições numa sessão</string>
+    <string name="exercise_record_longest_hold">Maior tempo de sustentação</string>
+    <string name="exercise_record_most_reps_interval">Mais repetições num intervalo</string>
+    <plurals name="exercise_detail_sessions">
+        <item quantity="one">%d sessão</item>
+        <item quantity="other">%d sessões</item>
+    </plurals>
+    <plurals name="exercise_detail_sets">
+        <item quantity="one">%d série</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">Mais ações</string>
+    <string name="exercise_action_merge">Mesclar em…</string>
+    <string name="exercise_action_hide">Ocultar</string>
+    <string name="exercise_action_delete">Excluir da biblioteca</string>
+    <string name="exercise_action_restore">Restaurar</string>
+    <string name="exercise_merge_pick_hint">Tudo de %s passa para o exercício que você escolher</string>
+    <string name="exercise_merge_preview_title">Mesclar %1$s em %2$s?</string>
+    <string name="exercise_merge_nothing">Nada a mover: %s só será ocultado</string>
+    <string name="exercise_merge_footer">%s será ocultado. Você pode desfazer a mesclagem em qualquer um dos dois exercícios.</string>
+    <string name="exercise_merge_confirm">Mesclar</string>
+    <string name="exercise_merge_undo">Desfazer mesclagem</string>
+    <string name="exercise_merge_undo_blocked">Para desfazer esta mesclagem, desfaça primeiro a mais recente</string>
+    <string name="exercise_merged_in_row">Mesclado: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Mesclado em %s</string>
+    <string name="exercise_manage_hide_title">Ocultar %s?</string>
+    <string name="exercise_manage_hide_message">Treinos e rotinas o mantêm. Você pode restaurá-lo em Configurações › Exercícios, filtro Ocultos.</string>
+    <string name="exercise_manage_delete_message">%s não é usado em lugar nenhum e será excluído definitivamente.</string>
+    <string name="exercise_msg_merged">Mesclado em %s</string>
+    <string name="exercise_msg_undone">Mesclagem desfeita</string>
+    <string name="exercise_msg_hidden">Oculto</string>
+    <string name="exercise_msg_deleted">Excluído</string>
+    <string name="exercise_msg_restored">Restaurado</string>
+    <string name="exercise_msg_cannot_merge">Esses exercícios não podem ser mesclados</string>
+    <string name="exercise_msg_cannot_merge_cardio">Exercícios de cardio não podem ser mesclados</string>
+    <string name="exercise_media_filter_hidden">Ocultos</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d série</item>
+        <item quantity="other">%d séries</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d treino</item>
+        <item quantity="other">%d treinos</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d rotina</item>
+        <item quantity="other">%d rotinas</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d máximo</item>
+        <item quantity="other">%d máximos</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d outro registro</item>
+        <item quantity="other">%d outros registros</item>
+    </plurals>
+    <string name="exercise_msg_cannot_merge_workout">Termine antes o treino em andamento</string>
+    <string name="exercise_msg_cannot_restore_name">Outro exercício já tem este nome. Renomeie-o primeiro.</string>
+    <plurals name="exercise_merge_shared_warning">
+        <item quantity="one">Em %d treino estão os dois exercícios: ao editá-lo aparecem como um só.</item>
+        <item quantity="other">Em %d treinos estão os dois exercícios: ao editá-los aparecem como um só.</item>
+    </plurals>
+    <!-- Exercises page -->
+    <string name="exercises_title">Exercícios</string>
+    <string name="exercises_manage_desc">Crie exercícios, adicione mídia e gerencie categorias</string>
+    <string name="exercise_action_edit">Editar</string>
+    <string name="exercise_description">Descrição</string>
+    <string name="exercise_name_taken">Já existe um exercício com este nome</string>
+    <string name="exercise_msg_saved">Salvo</string>
+    <string name="workout_progress_description">Exercício %1$d de %2$d, %3$d concluídos</string>
+    <string name="exercise_tools_group">Ferramentas do exercício</string>
+    <!-- Favorite exercises -->
+    <string name="filter_favorites">Favoritos</string>
+    <string name="exercise_favorite_add">Adicionar aos favoritos</string>
+    <string name="exercise_favorite_remove">Remover dos favoritos</string>
+    <string name="exercise_favorite_marker">Favorito</string>
+    <!-- Muscles and equipment of an exercise -->
+    <string name="muscle_chest">Peito</string>
+    <string name="muscle_lats">Dorsais</string>
+    <string name="muscle_traps">Trapézios</string>
+    <string name="muscle_upper_back">Costas superiores</string>
+    <string name="muscle_lower_back">Lombar</string>
+    <string name="muscle_front_delts">Deltoides anteriores</string>
+    <string name="muscle_side_delts">Deltoides laterais</string>
+    <string name="muscle_rear_delts">Deltoides posteriores</string>
+    <string name="muscle_biceps">Bíceps</string>
+    <string name="muscle_triceps">Tríceps</string>
+    <string name="muscle_forearms">Antebraços</string>
+    <string name="muscle_abs">Abdominais</string>
+    <string name="muscle_obliques">Oblíquos</string>
+    <string name="muscle_quads">Quadríceps</string>
+    <string name="muscle_hamstrings">Isquiotibiais</string>
+    <string name="muscle_glutes">Glúteos</string>
+    <string name="muscle_calves">Panturrilhas</string>
+    <string name="muscle_adductors">Adutores</string>
+    <string name="equipment_barbell">Barra</string>
+    <string name="equipment_dumbbell">Halteres</string>
+    <string name="equipment_cable">Polia</string>
+    <string name="equipment_machine">Máquina</string>
+    <string name="equipment_smith_machine">Máquina Smith</string>
+    <string name="equipment_bodyweight">Peso corporal</string>
+    <string name="equipment_landmine">Landmine</string>
+    <string name="equipment_other">Outro</string>
+    <string name="exercise_traits_muscles">Músculos</string>
+    <string name="exercise_traits_equipment">Equipamento</string>
+    <string name="exercise_traits_not_set">Não definido</string>
+    <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
+    <string name="exercise_filters_title">Filtros</string>
+    <string name="exercise_filters_reset">Limpar</string>
+    <string name="exercise_filters_results">Resultados: %1$d</string>
+    <string name="exercise_filters_active_count">%1$d ativos</string>
 </resources>

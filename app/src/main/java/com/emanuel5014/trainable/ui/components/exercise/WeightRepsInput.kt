@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
+import com.emanuel5014.trainable.ui.components.motion.WheelLens
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
+import kotlin.math.abs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -8,13 +15,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -111,28 +116,9 @@ fun WeightRepsInput(
                     val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
                     onWeightChange(kgWeight) 
                 },
+                onRequestCustom = { customWeightText = ""; showCustomWeightDialog = true },
                 format = { WeightUnitConverter.format(it) }
             )
-            TextButton(
-                onClick = { 
-                    customWeightText = ""
-                    showCustomWeightDialog = true 
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = OnSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    stringResource(R.string.custom),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
         }
         
         Column(modifier = Modifier.weight(1f)) {
@@ -142,28 +128,9 @@ fun WeightRepsInput(
                 range = (0..100).map { it.toFloat() },
                 onValueChange = { onRepsChange(it.toInt()) },
                 modifier = Modifier.fillMaxWidth(),
+                onRequestCustom = { customRepsText = ""; showCustomRepsDialog = true },
                 format = { it.toInt().toString() }
             )
-            TextButton(
-                onClick = { 
-                    customRepsText = ""
-                    showCustomRepsDialog = true 
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = OnSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    stringResource(R.string.custom),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
         }
     }
 
@@ -261,7 +228,9 @@ private fun <T> WheelPickerBox(
     range: List<T>,
     onValueChange: (T) -> Unit,
     format: (T) -> String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Opens the dialog to type a value the wheel does not offer: from the pencil and from a tap on the chosen value. */
+    onRequestCustom: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -270,6 +239,8 @@ private fun <T> WheelPickerBox(
     }.collectAsState(initial = true)
 
     val currentOnValueChange by rememberUpdatedState(onValueChange)
+    // The effect below outlives many values: it must compare with the value now, not the one it started with
+    val currentValue by rememberUpdatedState(value)
 
     val currentIndex = remember(range, value) {
         range.indexOfFirst { areEqual(it, value) }.coerceAtLeast(0)
@@ -305,7 +276,7 @@ private fun <T> WheelPickerBox(
             .collect { index ->
                 if (index != null && index in range.indices) {
                     val newValue = range[index]
-                    if (!areEqual(newValue, value)) {
+                    if (!areEqual(newValue, currentValue)) {
                         currentOnValueChange(newValue)
                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
@@ -313,18 +284,43 @@ private fun <T> WheelPickerBox(
             }
     }
 
+    // A little bounce of the lens each time a value settles
+    val bounce = remember { Animatable(1f) }
+    var firstValue by remember { mutableStateOf(true) }
+    LaunchedEffect(value) {
+        if (!firstValue) {
+            bounce.snapTo(1.04f)
+            bounce.animateTo(1f, WorkoutMotion.spatial())
+        }
+        firstValue = false
+    }
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = OnSurfaceVariant,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = OnSurfaceVariant,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            IconButton(onClick = onRequestCustom, modifier = Modifier.size(48.dp).testTag("wheel_edit")) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = stringResource(R.string.custom),
+                    tint = OnSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -338,7 +334,11 @@ private fun <T> WheelPickerBox(
                     .fillMaxWidth()
                     .height(48.dp)
                     .padding(horizontal = 8.dp)
-                    .background(Primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                    .graphicsLayer {
+                        scaleX = bounce.value
+                        scaleY = bounce.value
+                    }
+                    .background(Primary.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
             )
 
             LazyColumn(
@@ -353,24 +353,42 @@ private fun <T> WheelPickerBox(
                 ) { index ->
                     val item = range[index]
                     val isSelected = currentIndex == index
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
                             .clickable {
-                                coroutineScope.launch {
-                                    listState.animateScrollToItem(index)
+                                // The chosen value opens the field to type one; any other one comes to the centre
+                                if (isSelected) {
+                                    onRequestCustom()
+                                } else {
+                                    coroutineScope.launch {
+                                        listState.animateScrollToItem(index)
+                                    }
                                 }
+                            }
+                            .graphicsLayer {
+                                // The rows shrink and fade the further they are from the centre line
+                                val info = listState.layoutInfo
+                                val row = info.visibleItemsInfo.firstOrNull { it.index == index }
+                                val distance = if (row == null || row.size == 0) WHEEL_FAR_ROWS else {
+                                    val centre = (info.viewportStartOffset + info.viewportEndOffset) / 2f
+                                    abs(row.offset + row.size / 2f - centre) / row.size
+                                }
+                                val rowScale = WheelLens.scale(distance)
+                                scaleX = rowScale
+                                scaleY = rowScale
+                                alpha = WheelLens.alpha(distance)
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = format(item),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = if (isSelected) Primary else OnSurface.copy(alpha = 0.3f),
+                            color = if (isSelected) Primary else OnSurface,
                             fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
-                            fontSize = if (isSelected) 24.sp else 18.sp
+                            fontSize = 24.sp
                         )
                     }
                 }
@@ -378,6 +396,9 @@ private fun <T> WheelPickerBox(
         }
     }
 }
+
+/** Distance, in rows, past which a row is as small and faint as the lens makes it. */
+private const val WHEEL_FAR_ROWS = 2f
 
 private fun <T> areEqual(a: T, b: T): Boolean =
     if (a is Float && b is Float) kotlin.math.abs(a - b) < 0.001f else a == b
@@ -427,28 +448,9 @@ fun WeightTimeInput(
                     val kgWeight = WeightUnitConverter.convertStorage(it, weightUnit)
                     onWeightChange(kgWeight) 
                 },
+                onRequestCustom = { customWeightText = ""; showCustomWeightDialog = true },
                 format = { WeightUnitConverter.format(it) }
             )
-            TextButton(
-                onClick = { 
-                    customWeightText = ""
-                    showCustomWeightDialog = true 
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = OnSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    stringResource(R.string.custom),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
         }
         
         Column(modifier = Modifier.weight(1f)) {
@@ -470,28 +472,9 @@ fun WeightTimeInput(
                 range = secondsRange,
                 onValueChange = { onSecondsChange(it.toInt()) },
                 modifier = Modifier.fillMaxWidth(),
+                onRequestCustom = { customSecondsText = ""; showCustomSecondsDialog = true },
                 format = { "${it.toInt()}s" }
             )
-            TextButton(
-                onClick = { 
-                    customSecondsText = ""
-                    showCustomSecondsDialog = true 
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = OnSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    stringResource(R.string.custom),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
         }
     }
 
@@ -607,9 +590,9 @@ fun TimeRepsInput(
                 range = secondsRange,
                 onValueChange = { onSecondsChange(it.toInt()) },
                 modifier = Modifier.fillMaxWidth(),
+                onRequestCustom = { customSeconds = true },
                 format = { "${it.toInt()}s" }
             )
-            CustomValueButton(onClick = { customSeconds = true }, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
         Column(modifier = Modifier.weight(1f)) {
             val repsRange = remember(reps) {
@@ -622,9 +605,9 @@ fun TimeRepsInput(
                 range = repsRange,
                 onValueChange = { onRepsChange(it.toInt()) },
                 modifier = Modifier.fillMaxWidth(),
+                onRequestCustom = { customReps = true },
                 format = { it.toInt().toString() }
             )
-            CustomValueButton(onClick = { customReps = true }, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
     }
 
@@ -649,15 +632,6 @@ fun TimeRepsInput(
 }
 
 private const val TIME_REPS_WHEEL_MAX = 300
-
-@Composable
-private fun CustomValueButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    TextButton(onClick = onClick, modifier = modifier.padding(top = 4.dp)) {
-        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = OnSurfaceVariant)
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(stringResource(R.string.custom), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-    }
-}
 
 @Composable
 private fun CustomNumberDialog(

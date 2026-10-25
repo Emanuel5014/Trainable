@@ -1,15 +1,16 @@
-package com.emanuel5014.trainable.ui.screens.settings
+package com.emanuel5014.trainable.ui.screens.exercises
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,20 +18,21 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Collections
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,92 +41,100 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.domain.exercise.ExerciseFilter
+import com.emanuel5014.trainable.domain.exercise.ExerciseListFilter
+import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
+import com.emanuel5014.trainable.domain.exercise.TraitFilter
+import com.emanuel5014.trainable.ui.components.ExerciseFormDialog
+import com.emanuel5014.trainable.ui.components.ExerciseEmptyState
+import com.emanuel5014.trainable.ui.components.ExerciseFilterBar
+import com.emanuel5014.trainable.ui.components.ExerciseFilterOption
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
-import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
+import com.emanuel5014.trainable.ui.components.ExerciseSearchWithTraitFilter
 import com.emanuel5014.trainable.ui.components.GymCard
-import com.emanuel5014.trainable.ui.components.GymInputField
+import com.emanuel5014.trainable.ui.components.GymIconButton
+import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
+import com.emanuel5014.trainable.ui.screens.settings.SettingsSwitch
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
+import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
-private enum class MediaFilter { ALL, WITH_MEDIA, WITHOUT_MEDIA }
-
-/** Side of the thumbnail at the start of each exercise row. */
-private val RowThumbSize = 56.dp
-
 /**
- * Settings -> Exercise Media: the display switches, plus the image/GIF of every exercise in one searchable,
- * category-grouped list. Tap a row to add a file (no media yet) or to view, replace or remove it.
+ * Where the exercises are managed: the list with its filters, a way to create one, the media of each, and (further down)
+ * the preset switch and the custom categories. Replaces the old media and customization screens.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun ExerciseMediaScreen(
+fun ExercisesScreen(
     onNavigateBack: () -> Unit,
-    viewModel: ExerciseMediaViewModel = hiltViewModel()
+    viewModel: ExercisesViewModel = hiltViewModel()
 ) {
     val exercises by viewModel.exercises.collectAsState()
+    val categories by viewModel.categories.collectAsState()
+    val namesInUse by viewModel.namesInUse.collectAsState()
     val mediaEnabled by viewModel.mediaEnabled.collectAsState()
     val largePreview by viewModel.largePreview.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
+    val editablePresets by viewModel.editablePresetExercises.collectAsState()
+    val customCategories by viewModel.customCategories.collectAsState()
 
     var query by rememberSaveable { mutableStateOf("") }
-    var filter by rememberSaveable { mutableStateOf(MediaFilter.ALL) }
+    var filter by rememberSaveable { mutableStateOf(ExerciseFilter.ALL) }
+    var traitFilter by remember { mutableStateOf(TraitFilter.NONE) }
     var viewerExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     var showRemoveAll by remember { mutableStateOf(false) }
+    var showNewExercise by remember { mutableStateOf(false) }
+    var showCategories by remember { mutableStateOf(false) }
+    var showResetNames by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val resetDoneText = stringResource(R.string.reset_exercise_names)
+
+    // A new exercise opens its detail, where the media is added
+    LaunchedEffect(viewModel) { viewModel.createdExerciseId.collect { detailExerciseId = it } }
 
     val pickMedia = rememberExerciseMediaPicker { exerciseId, uri -> viewModel.attach(exerciseId, uri) }
     ExerciseMediaMessageToasts(viewModel.messages)
 
-    val withMediaCount = exercises.count { it.mediaPath != null }
-
-    // Category -> (exercise, translated name), both ends sorted so the list reads like a glossary
-    val groups = remember(exercises, query, filter, languageCode) {
-        val needle = query.trim()
-        exercises.asSequence()
-            .filter {
-                when (filter) {
-                    MediaFilter.ALL -> true
-                    MediaFilter.WITH_MEDIA -> it.mediaPath != null
-                    MediaFilter.WITHOUT_MEDIA -> it.mediaPath == null
-                }
-            }
-            .map { it to ExerciseTranslations.translate(it.nome, languageCode) }
-            .filter { (exercise, name) ->
-                needle.isEmpty() || name.contains(needle, ignoreCase = true) || exercise.nome.contains(needle, ignoreCase = true)
-            }
-            .groupBy { (exercise, _) -> ExerciseTranslations.translateCategory(exercise.categoria, languageCode) }
-            .toSortedMap(String.CASE_INSENSITIVE_ORDER)
-            .mapValues { (_, items) -> items.sortedBy { it.second.lowercase() } }
+    val all = exercises
+    val library = remember(all) { all.orEmpty().filter { !it.isDeleted } }
+    val hiddenCount = all.orEmpty().size - library.size
+    val withMediaCount = library.count { it.mediaPath != null }
+    val groups = remember(all, query, filter, languageCode, traitFilter) {
+        ExerciseListFilter.groups(all.orEmpty(), query, filter, languageCode, traitFilter)
     }
+    val listState = rememberLazyListState()
+    // The button shrinks to its icon as soon as the list scrolls, like the start button of a routine
+    val fabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
 
     viewerExerciseId?.let { exerciseId ->
-        val exercise = exercises.firstOrNull { it.id == exerciseId }
+        val exercise = all.orEmpty().firstOrNull { it.id == exerciseId }
         val mediaFile = exercise?.mediaPath
         // The file goes away when it is removed from the viewer: close it then
         LaunchedEffect(mediaFile) { if (mediaFile == null) viewerExerciseId = null }
@@ -139,10 +149,52 @@ fun ExerciseMediaScreen(
         }
     }
 
+    detailExerciseId?.let { exerciseId ->
+        ExerciseDetailDialog(exerciseId = exerciseId, onDismiss = { detailExerciseId = null })
+    }
+
+    if (showNewExercise) {
+        ExerciseFormDialog(
+            title = stringResource(R.string.new_exercise),
+            categories = categories,
+            existingExercises = namesInUse,
+            languageCode = languageCode,
+            showTraits = true,
+            onConfirm = { form ->
+                showNewExercise = false
+                viewModel.createExercise(form.name, form.category, form.description, ExerciseTraits(form.muscles, form.equipment))
+            },
+            onDismiss = { showNewExercise = false }
+        )
+    }
+
+    if (showCategories) {
+        CategoriesSheet(
+            categories = customCategories,
+            onAdd = viewModel::addCategory,
+            onEdit = viewModel::updateCategory,
+            onDelete = viewModel::deleteCategory,
+            onDismiss = { showCategories = false }
+        )
+    }
+
+    if (showResetNames) {
+        ResetNamesDialog(
+            onConfirm = {
+                showResetNames = false
+                viewModel.resetPresetExerciseNames {
+                    Toast.makeText(context, resetDoneText, Toast.LENGTH_SHORT).show()
+                }
+            },
+            onDismiss = { showResetNames = false }
+        )
+    }
+
     if (showRemoveAll) {
         AlertDialog(
             onDismissRequest = { showRemoveAll = false },
             containerColor = SurfaceContainerHigh,
+            shape = Shapes.extraLarge,
             title = {
                 Text(
                     stringResource(R.string.exercise_media_remove_all_title),
@@ -150,9 +202,7 @@ fun ExerciseMediaScreen(
                     color = OnSurface
                 )
             },
-            text = {
-                Text(stringResource(R.string.exercise_media_remove_all_message), color = OnSurfaceVariant)
-            },
+            text = { Text(stringResource(R.string.exercise_media_remove_all_message), color = OnSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = {
                     showRemoveAll = false
@@ -175,18 +225,19 @@ fun ExerciseMediaScreen(
             TopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.exercise_media),
+                        stringResource(R.string.exercises_title),
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            tint = OnSurface
+                    Box(modifier = Modifier.padding(start = 8.dp)) {
+                        GymIconButton(
+                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                            onClick = onNavigateBack,
+                            containerColor = Color.Transparent,
+                            contentColor = OnSurface,
+                            description = stringResource(R.string.back)
                         )
                     }
                 },
@@ -196,14 +247,42 @@ fun ExerciseMediaScreen(
                     navigationIconContentColor = OnSurface
                 )
             )
+        },
+        floatingActionButton = {
+            // Not before the list is there: the name check of the form needs it
+            if (all != null) ExtendedFloatingActionButton(
+                onClick = { showNewExercise = true },
+                expanded = fabExpanded,
+                // Shrunk to its icon, the button still says what it does
+                icon = {
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = if (fabExpanded) null else stringResource(R.string.new_exercise)
+                    )
+                },
+                text = {
+                    Text(
+                        stringResource(R.string.new_exercise),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                },
+                containerColor = Primary,
+                contentColor = OnPrimary,
+                shape = RoundedCornerShape(20.dp)
+            )
         }
     ) { paddingValues ->
+        // On a wide screen the list keeps a readable width, centred
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
+            state = listState,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .widthIn(max = 840.dp)
+                .fillMaxHeight()
                 .imePadding(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
+            // Room at the bottom so the button never covers the last row
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item(key = "display_settings") {
@@ -216,6 +295,16 @@ fun ExerciseMediaScreen(
                 )
             }
 
+            item(key = "personalization") {
+                PersonalizationCard(
+                    editablePresets = editablePresets,
+                    onEditablePresetsChange = viewModel::setEditablePresetExercises,
+                    onResetNames = { showResetNames = true },
+                    onOpenCategories = { showCategories = true },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
             item(key = "summary") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -223,7 +312,7 @@ fun ExerciseMediaScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.exercise_media_count, withMediaCount, exercises.size),
+                        text = stringResource(R.string.exercise_media_count, withMediaCount, library.size),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant,
                         modifier = Modifier.weight(1f)
@@ -241,51 +330,38 @@ fun ExerciseMediaScreen(
             }
 
             item(key = "search") {
-                GymInputField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = stringResource(R.string.search_exercises),
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant) },
-                    trailingIcon = if (query.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { query = "" }) {
-                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.close), tint = OnSurfaceVariant)
-                            }
-                        }
-                    } else null
+                ExerciseSearchWithTraitFilter(
+                    query = query,
+                    onQueryChange = { query = it },
+                    traitFilter = traitFilter,
+                    onTraitFilterChange = { traitFilter = it },
+                    resultCount = groups.sumOf { it.entries.size }
                 )
             }
 
             item(key = "filters") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterOption(MediaFilter.ALL, filter, R.string.all) { filter = it }
-                    FilterOption(MediaFilter.WITH_MEDIA, filter, R.string.exercise_media_filter_with) { filter = it }
-                    FilterOption(MediaFilter.WITHOUT_MEDIA, filter, R.string.exercise_media_filter_without) { filter = it }
-                }
+                ExerciseFilterBar(
+                    options = ExerciseListFilter.filtersToShow(hiddenCount, library.count { it.isFavorite }, filter).map { option ->
+                        ExerciseFilterOption(label = stringResource(labelOf(option)), checked = option == filter) { filter = option }
+                    },
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
             }
 
-            if (groups.isEmpty()) {
+            if (all == null) {
+                item(key = "loading") {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
+                        GymLoadingIndicator()
+                    }
+                }
+            } else if (groups.isEmpty()) {
                 item(key = "empty") {
-                    Text(
-                        text = stringResource(R.string.no_exercises_found),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = OnSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp)
-                    )
+                    ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null)
                 }
             }
 
-            groups.forEach { (category, entries) ->
-                stickyHeader(key = "category_$category") {
+            groups.forEach { group ->
+                stickyHeader(key = "category_${group.category}") {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -293,29 +369,47 @@ fun ExerciseMediaScreen(
                             .padding(top = 12.dp, bottom = 6.dp)
                     ) {
                         Text(
-                            text = category.uppercase(),
-                            style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.sp),
+                            text = group.category.uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
                             color = Primary,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
-                items(entries, key = { (exercise, _) -> exercise.id }) { (exercise, name) ->
-                    val mediaFile = exercise.mediaPath
-                    ExerciseMediaRow(
-                        name = name,
-                        category = category,
-                        fileName = mediaFile,
-                        onClick = {
-                            if (mediaFile != null) viewerExerciseId = exercise.id else pickMedia(exercise.id)
-                        }
+                items(group.entries, key = { it.exercise.id }) { entry ->
+                    val exercise = entry.exercise
+                    ExerciseListRow(
+                        name = entry.name,
+                        category = group.category,
+                        mediaFile = exercise.mediaPath,
+                        isCustom = exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID,
+                        isHidden = exercise.isDeleted,
+                        onThumbnailClick = {
+                            if (exercise.mediaPath != null) viewerExerciseId = exercise.id else pickMedia(exercise.id)
+                        },
+                        onClick = { detailExerciseId = exercise.id },
+                        // A hidden exercise is not for picking media: its detail is where it is restored
+                        mediaAction = filter != ExerciseFilter.HIDDEN,
+                        isFavorite = exercise.isFavorite,
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
         }
+        }
     }
 }
 
+private fun labelOf(filter: ExerciseFilter): Int = when (filter) {
+    ExerciseFilter.ALL -> R.string.all
+    ExerciseFilter.FAVORITES -> R.string.filter_favorites
+    ExerciseFilter.CUSTOM -> R.string.filter_custom
+    ExerciseFilter.WITH_MEDIA -> R.string.exercise_media_filter_with
+    ExerciseFilter.WITHOUT_MEDIA -> R.string.exercise_media_filter_without
+    ExerciseFilter.HIDDEN -> R.string.exercise_media_filter_hidden
+}
+
+/** The two media display switches, moved here from the old media screen. */
 @Composable
 private fun DisplaySettingsCard(
     mediaEnabled: Boolean,
@@ -360,7 +454,7 @@ private fun DisplaySettingsCard(
             AnimatedVisibility(visible = mediaEnabled) {
                 Column {
                     Spacer(modifier = Modifier.height(16.dp))
-                    androidx.compose.material3.HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+                    HorizontalDivider(color = Surface.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(
                         modifier = Modifier
@@ -387,73 +481,6 @@ private fun DisplaySettingsCard(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun FilterOption(
-    option: MediaFilter,
-    selected: MediaFilter,
-    labelRes: Int,
-    onSelect: (MediaFilter) -> Unit
-) {
-    FilterChip(
-        selected = option == selected,
-        onClick = { onSelect(option) },
-        label = { Text(stringResource(labelRes)) },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = Primary,
-            selectedLabelColor = OnPrimary
-        )
-    )
-}
-
-@Composable
-private fun ExerciseMediaRow(
-    name: String,
-    category: String,
-    fileName: String?,
-    onClick: () -> Unit
-) {
-    val clickLabel = stringResource(if (fileName != null) R.string.exercise_media_open else R.string.exercise_media_add)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(SurfaceContainerHigh)
-            .clickable(onClickLabel = clickLabel, role = Role.Button, onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        // The whole row is the control: keep the thumbnail out of the accessibility tree so it is not read twice.
-        // Still images only here, so a long list of GIFs does not animate all at once.
-        Box(modifier = Modifier.clearAndSetSemantics { }) {
-            ExerciseMediaSlot(
-                fileName = fileName,
-                onOpen = onClick,
-                onAdd = onClick,
-                size = RowThumbSize,
-                playing = false
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                color = OnSurface,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = category,
-                style = MaterialTheme.typography.bodySmall,
-                color = OnSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }

@@ -97,10 +97,7 @@ class TrainableWidget : GlanceAppWidget() {
             }
 
             // Same choice as the dashboard: the sequence of routines, the days only shape the card
-            val suggestion = WorkoutSuggester.suggest(plans, allSessions, LocalDate.now())
-            // The widget starts a workout: once the routine of the day is done it offers the next one instead
-            val todayPlan = suggestion.todayPlan.takeUnless { suggestion.todayPlanDone }
-            val finalSuggestedPlan = suggestion.suggestedPlan ?: suggestion.todayPlan.takeIf { suggestion.todayPlanDone }
+            val (todayPlan, finalSuggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, LocalDate.now())
 
             GlanceTheme(colors = colors) {
                 WidgetContent(

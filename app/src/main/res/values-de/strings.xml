@@ -2,7 +2,6 @@
 <resources>
 
     <!-- App -->
-    <string name="app_name">Trainable</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Dashboard</string>
@@ -154,8 +153,6 @@
     <string name="reset_exercise_names">Übungsnamen Zurücksetzen</string>
     <string name="reset_exercise_names_confirm">Übungsnamen zurücksetzen?</string>
     <string name="reset_exercise_names_message">Dies stellt die Namen aller voreingestellten Übungen auf ihre Standardwerte wieder her. Deine benutzerdefinierten Übungen bleiben unverändert.</string>
-    <string name="exercise_customization">Übungsanpassung</string>
-    <string name="exercise_customization_desc">Verwalten Sie die Optionen zur Anpassung von Übungsnamen</string>
     <string name="custom_categories">Benutzerdefinierte Kategorien</string>
     <string name="custom_categories_desc">Fügen Sie benutzerdefinierte Kategorien für Ihre Übungen hinzu oder entfernen Sie sie</string>
     <string name="add_category">Kategorie Hinzufügen</string>
@@ -186,11 +183,10 @@
     <string name="search_exercises">Übungen suchen</string>
     <string name="all_categories">Alle</string>
     <string name="no_exercises_found">Keine Übungen gefunden</string>
+    <string name="exercise_picked_badge">Ausgewählt</string>
     <string name="choose_from_library">Aus der Bibliothek wählen</string>
     <string name="filter_custom">Benutzerdefiniert</string>
     <string name="new_exercise">Neue Übung</string>
-    <string name="delete_exercise_title">Übung löschen?</string>
-    <string name="delete_exercise_message">\"%1$s\" aus deiner Übungsliste löschen? Trainings und Pläne, die sie schon verwenden, behalten sie.</string>
     <string name="exercise_deleted_badge">Gelöscht</string>
     <string name="deleted_exercise_title">Übung gelöscht</string>
     <string name="deleted_exercise_message">\"%1$s\" wurde aus deiner Übungsliste gelöscht, ist aber noch in deinen Plänen und Trainings. Wieder zur Liste hinzufügen?</string>
@@ -249,13 +245,13 @@
     <string name="keep_screen_on_cardio_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Cardio-Timer läuft</string>
     <string name="keep_screen_on_set_timer">Bildschirm anlassen (Zeitsätze)</string>
     <string name="keep_screen_on_set_timer_desc">Verhindert das automatische Ausschalten des Bildschirms, während der Satz-Timer läuft</string>
+    <string name="rest_timer_setting">Pausentimer</string>
+    <string name="rest_timer_setting_desc">Startet nach jedem Satz einen Countdown. Ausgeschaltet geht es ohne Wartezeit zum nächsten Satz</string>
     <string name="inline_exercise_modifications">Inline-Änderungen</string>
     <string name="inline_exercise_modifications_desc">Sätze und Übungen während normaler Workouts hinzufügen</string>
-    <string name="exercise_media">Übungsmedien</string>
     <string name="exercise_media_desc">Zeige beim Training dein eigenes Bild oder GIF zu jeder Übung</string>
     <string name="exercise_media_large">Große Vorschau</string>
     <string name="exercise_media_large_desc">Füllt den freien Platz unter den Sätzen mit einem großen Bild, wenn genug Platz ist</string>
-    <string name="exercise_media_manage_desc">Bild oder GIF jeder Übung hinzufügen, ersetzen oder entfernen</string>
     <string name="exercise_media_show">Im Training anzeigen</string>
     <string name="exercise_media_filter_with">Mit Medien</string>
     <string name="exercise_media_filter_without">Ohne Medien</string>
@@ -1528,4 +1524,128 @@
     </plurals>
     <string name="routine_header_expand">Details anzeigen</string>
     <string name="routine_header_collapse">Details ausblenden</string>
+    <!-- Exercise detail -->
+    <string name="exercise_detail_open">Übungsdetails</string>
+    <string name="exercise_detail_records">Rekorde</string>
+    <string name="exercise_detail_progress">Fortschritt (geschätztes 1RM)</string>
+    <string name="exercise_detail_history">Verlauf</string>
+    <string name="exercise_detail_empty">Du hast diese Übung noch nicht gemacht</string>
+    <string name="exercise_detail_last">Zuletzt: %s</string>
+    <string name="exercise_detail_top">Max. %s</string>
+    <string name="exercise_record_heaviest">Schwerster Satz</string>
+    <string name="exercise_record_best_e1rm">Bestes geschätztes 1RM</string>
+    <string name="exercise_record_best_volume">Bestes Volumen einer Einheit</string>
+    <string name="exercise_record_most_reps_set">Meiste Wiederholungen in einem Satz</string>
+    <string name="exercise_record_most_reps_session">Meiste Wiederholungen in einer Einheit</string>
+    <string name="exercise_record_longest_hold">Längstes Halten</string>
+    <string name="exercise_record_most_reps_interval">Meiste Wiederholungen in einem Intervall</string>
+    <plurals name="exercise_detail_sessions">
+        <item quantity="one">%d Einheit</item>
+        <item quantity="other">%d Einheiten</item>
+    </plurals>
+    <plurals name="exercise_detail_sets">
+        <item quantity="one">%d Satz</item>
+        <item quantity="other">%d Sätze</item>
+    </plurals>
+    <!-- Merge and hide exercises -->
+    <string name="exercise_more_actions">Weitere Aktionen</string>
+    <string name="exercise_action_merge">Zusammenführen in…</string>
+    <string name="exercise_action_hide">Ausblenden</string>
+    <string name="exercise_action_delete">Aus der Bibliothek löschen</string>
+    <string name="exercise_action_restore">Wiederherstellen</string>
+    <string name="exercise_merge_pick_hint">Alles von %s geht auf die Übung über, die du wählst</string>
+    <string name="exercise_merge_preview_title">%1$s in %2$s zusammenführen?</string>
+    <string name="exercise_merge_nothing">Nichts zu verschieben: %s wird nur ausgeblendet</string>
+    <string name="exercise_merge_footer">%s wird ausgeblendet. Du kannst das Zusammenführen bei einer der beiden Übungen rückgängig machen.</string>
+    <string name="exercise_merge_confirm">Zusammenführen</string>
+    <string name="exercise_merge_undo">Zusammenführen rückgängig</string>
+    <string name="exercise_merge_undo_blocked">Um dieses Zusammenführen rückgängig zu machen, mach zuerst das spätere rückgängig</string>
+    <string name="exercise_merged_in_row">Zusammengeführt: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Zusammengeführt in %s</string>
+    <string name="exercise_manage_hide_title">%s ausblenden?</string>
+    <string name="exercise_manage_hide_message">Trainings und Routinen behalten sie. Du kannst sie unter Einstellungen › Übungen mit dem Filter Ausgeblendet wiederherstellen.</string>
+    <string name="exercise_manage_delete_message">%s wird nirgends verwendet und endgültig gelöscht.</string>
+    <string name="exercise_msg_merged">Zusammengeführt in %s</string>
+    <string name="exercise_msg_undone">Zusammenführen rückgängig gemacht</string>
+    <string name="exercise_msg_hidden">Ausgeblendet</string>
+    <string name="exercise_msg_deleted">Gelöscht</string>
+    <string name="exercise_msg_restored">Wiederhergestellt</string>
+    <string name="exercise_msg_cannot_merge">Diese Übungen lassen sich nicht zusammenführen</string>
+    <string name="exercise_msg_cannot_merge_cardio">Cardio-Übungen lassen sich nicht zusammenführen</string>
+    <string name="exercise_media_filter_hidden">Ausgeblendet</string>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%d Satz</item>
+        <item quantity="other">%d Sätze</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%d Einheit</item>
+        <item quantity="other">%d Einheiten</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%d Routine</item>
+        <item quantity="other">%d Routinen</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%d Maximum</item>
+        <item quantity="other">%d Maxima</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%d weiterer Eintrag</item>
+        <item quantity="other">%d weitere Einträge</item>
+    </plurals>
+    <string name="exercise_msg_cannot_merge_workout">Beende zuerst das laufende Training</string>
+    <string name="exercise_msg_cannot_restore_name">Eine andere Übung hat schon diesen Namen. Benenne sie zuerst um.</string>
+    <plurals name="exercise_merge_shared_warning">
+        <item quantity="one">In %d Training sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
+        <item quantity="other">In %d Trainings sind beide Übungen vorhanden: beim Bearbeiten erscheinen sie als eine Übung.</item>
+    </plurals>
+    <!-- Exercises page -->
+    <string name="exercises_title">Übungen</string>
+    <string name="exercises_manage_desc">Übungen erstellen, Medien hinzufügen und Kategorien verwalten</string>
+    <string name="exercise_action_edit">Bearbeiten</string>
+    <string name="exercise_description">Beschreibung</string>
+    <string name="exercise_name_taken">Eine Übung mit diesem Namen gibt es schon</string>
+    <string name="exercise_msg_saved">Gespeichert</string>
+    <string name="workout_progress_description">Übung %1$d von %2$d, %3$d abgeschlossen</string>
+    <string name="exercise_tools_group">Übungswerkzeuge</string>
+    <!-- Favorite exercises -->
+    <string name="filter_favorites">Favoriten</string>
+    <string name="exercise_favorite_add">Zu Favoriten hinzufügen</string>
+    <string name="exercise_favorite_remove">Aus Favoriten entfernen</string>
+    <string name="exercise_favorite_marker">Favorit</string>
+    <!-- Muscles and equipment of an exercise -->
+    <string name="muscle_chest">Brust</string>
+    <string name="muscle_lats">Latissimus</string>
+    <string name="muscle_traps">Trapez</string>
+    <string name="muscle_upper_back">Oberer Rücken</string>
+    <string name="muscle_lower_back">Unterer Rücken</string>
+    <string name="muscle_front_delts">Vordere Schulter</string>
+    <string name="muscle_side_delts">Seitliche Schulter</string>
+    <string name="muscle_rear_delts">Hintere Schulter</string>
+    <string name="muscle_biceps">Bizeps</string>
+    <string name="muscle_triceps">Trizeps</string>
+    <string name="muscle_forearms">Unterarme</string>
+    <string name="muscle_abs">Bauchmuskeln</string>
+    <string name="muscle_obliques">Schräge Bauchmuskeln</string>
+    <string name="muscle_quads">Quadrizeps</string>
+    <string name="muscle_hamstrings">Beinbeuger</string>
+    <string name="muscle_glutes">Gesäß</string>
+    <string name="muscle_calves">Waden</string>
+    <string name="muscle_adductors">Adduktoren</string>
+    <string name="equipment_barbell">Langhantel</string>
+    <string name="equipment_dumbbell">Kurzhanteln</string>
+    <string name="equipment_cable">Kabelzug</string>
+    <string name="equipment_machine">Maschine</string>
+    <string name="equipment_smith_machine">Multipresse</string>
+    <string name="equipment_bodyweight">Körpergewicht</string>
+    <string name="equipment_landmine">Landmine</string>
+    <string name="equipment_other">Sonstiges</string>
+    <string name="exercise_traits_muscles">Muskeln</string>
+    <string name="exercise_traits_equipment">Ausrüstung</string>
+    <string name="exercise_traits_not_set">Nicht festgelegt</string>
+    <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
+    <string name="exercise_filters_title">Filter</string>
+    <string name="exercise_filters_reset">Zurücksetzen</string>
+    <string name="exercise_filters_results">Ergebnisse: %1$d</string>
+    <string name="exercise_filters_active_count">%1$d aktiv</string>
 </resources>

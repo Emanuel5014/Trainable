@@ -1,12 +1,11 @@
 package com.emanuel5014.trainable.ui.components
 
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
+import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
+import com.emanuel5014.trainable.domain.exercise.TraitFilter
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,28 +19,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
@@ -53,7 +45,6 @@ import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,7 +52,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,12 +62,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.Error
-import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -86,6 +79,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
+import com.emanuel5014.trainable.util.RestSeconds
 import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,12 +92,9 @@ fun SwapExerciseBottomSheet(
     /** Receives the exercise, the sets, the reps (fixed, a range or one per set), the rest, the type and the target seconds. */
     onExerciseSelected: (ExerciseEntity, Int, RepsTarget, Int?, String, Int?) -> Unit,
     onAddCustomExercise: (String, String, (ExerciseEntity) -> Unit) -> Unit,
-    onEditCustomExercise: ((ExerciseEntity) -> Unit)? = null,
-    onDeleteCustomExercise: ((ExerciseEntity) -> Unit)? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     isAdding: Boolean = false,
-    editablePresetExercises: Boolean = false,
     categories: List<String>? = null,
     /** Receives the exercise, the minutes of each set, the rest in seconds and the number of sets. */
     onCardioExerciseSelected: ((ExerciseEntity, Int, Int?, Int) -> Unit)? = null,
@@ -126,22 +117,19 @@ fun SwapExerciseBottomSheet(
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     var showAddCustomDialog by remember { mutableStateOf(false) }
-    var exerciseToEdit by remember { mutableStateOf<ExerciseEntity?>(null) }
-    var exerciseToDelete by remember { mutableStateOf<ExerciseEntity?>(null) }
     var showOnlyCustom by remember { mutableStateOf(false) }
+    var showOnlyFavorites by remember { mutableStateOf(false) }
+    var traitFilter by remember { mutableStateOf(TraitFilter.NONE) }
     var exerciseMediaToView by remember { mutableStateOf<ExerciseEntity?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val filteredExercises = remember(availableExercises, searchQuery, selectedCategory, showOnlyCustom, languageCode, excludedExerciseIds) {
-        availableExercises.filter { exercise ->
-            val exerciseName = ExerciseTranslations.translate(exercise.nome, languageCode)
-            val matchesSearch = searchQuery.isBlank() || 
-                exercise.nome.contains(searchQuery, ignoreCase = true) ||
-                exerciseName.contains(searchQuery, ignoreCase = true)
-            val matchesCategory = selectedCategory == null || 
-                exercise.categoria == selectedCategory
-            val matchesCustom = !showOnlyCustom || exercise.id >= 1000
-            exercise.id !in excludedExerciseIds && matchesSearch && matchesCategory && matchesCustom
-        }
+    val filteredExercises = remember(
+        availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds, traitFilter
+    ) {
+        ExercisePickerFilter.apply(
+            availableExercises, searchQuery, selectedCategory, showOnlyCustom, showOnlyFavorites, languageCode, excludedExerciseIds,
+            traits = traitFilter
+        )
     }
 
     val allCategories = categories ?: remember(availableExercises) {
@@ -149,6 +137,35 @@ fun SwapExerciseBottomSheet(
     }
 
     val showThumbnails = rememberShowExerciseThumbnails(availableExercises, excludedExerciseIds)
+
+    // The rest last confirmed here; read while the lifter browses the list, so the slider of step 2 opens on it
+    val restMemory: RememberedRestViewModel = hiltViewModel()
+    val rememberedRest by restMemory.lastRestSeconds.collectAsState()
+
+    val allLabel = stringResource(R.string.all_categories)
+    val favoritesLabel = stringResource(R.string.filter_favorites)
+    val customLabel = stringResource(R.string.filter_custom)
+    // A category can combine with the favorites or the custom ones, so each button is on by itself
+    val filterOptions = buildList {
+        add(
+            ExerciseFilterOption(allLabel, selectedCategory == null && !showOnlyCustom && !showOnlyFavorites) {
+                selectedCategory = null
+                showOnlyCustom = false
+                showOnlyFavorites = false
+            }
+        )
+        if (ExercisePickerFilter.showFavoritesChip(availableExercises, excludedExerciseIds, showOnlyFavorites)) {
+            add(ExerciseFilterOption(favoritesLabel, showOnlyFavorites) { showOnlyFavorites = !showOnlyFavorites })
+        }
+        add(ExerciseFilterOption(customLabel, showOnlyCustom) { showOnlyCustom = !showOnlyCustom })
+        allCategories.forEach { category ->
+            add(
+                ExerciseFilterOption(ExerciseTranslations.translateCategory(category, languageCode), selectedCategory == category) {
+                    selectedCategory = category
+                }
+            )
+        }
+    }
 
     val imeVisible = isKeyboardVisible
 
@@ -201,45 +218,19 @@ fun SwapExerciseBottomSheet(
                         }
                     }
 
-                    GymInputField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = stringResource(R.string.search_exercises),
-                        modifier = Modifier.fillMaxWidth()
+                    ExerciseSearchWithTraitFilter(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        traitFilter = traitFilter,
+                        onTraitFilterChange = { traitFilter = it },
+                        resultCount = filteredExercises.size
                     )
 
                     Spacer(modifier = Modifier.height(Spacing.medium))
 
                     AnimatedVisibility(visible = !imeVisible) {
                         Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                FilterChip(
-                                    selected = selectedCategory == null && !showOnlyCustom,
-                                    onClick = { 
-                                        selectedCategory = null
-                                        showOnlyCustom = false
-                                    },
-                                    label = { Text(stringResource(R.string.all_categories)) }
-                                )
-                                FilterChip(
-                                    selected = showOnlyCustom,
-                                    onClick = { showOnlyCustom = !showOnlyCustom },
-                                    label = { Text(stringResource(R.string.filter_custom)) }
-                                )
-                                allCategories.forEach { category ->
-                                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                                    FilterChip(
-                                        selected = selectedCategory == category,
-                                        onClick = { selectedCategory = category },
-                                        label = { Text(translatedCategory) }
-                                    )
-                                }
-                            }
+                            ExerciseFilterBar(options = filterOptions)
 
                             Spacer(modifier = Modifier.height(Spacing.medium))
                         }
@@ -249,27 +240,24 @@ fun SwapExerciseBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
+                        if (filteredExercises.isEmpty()) {
+                            item { ExerciseEmptyState(onReset = if (traitFilter.isActive) ({ traitFilter = TraitFilter.NONE }) else null) }
+                        }
                         items(filteredExercises) { exercise ->
-                            val isSelected = exercise.id == selectedExercise?.id
-                            ExerciseListItem(
+                            ExercisePickRow(
                                 exercise = exercise,
                                 languageCode = languageCode,
-                                onClick = { 
+                                onClick = {
                                     selectedExercise = exercise
                                     step = 2
                                 },
-                                onEditClick = if (onEditCustomExercise != null && (exercise.id >= 1000 || editablePresetExercises)) {
-                                    { exerciseToEdit = exercise }
-                                } else null,
-                                onDeleteClick = if (onDeleteCustomExercise != null && exercise.id >= 1000) {
-                                    { exerciseToDelete = exercise }
-                                } else null,
-                                isSelected = isSelected,
-                                showCurrent = exercise.id == currentExerciseId,
+                                isSelected = exercise.id == selectedExercise?.id,
+                                isCurrent = exercise.id == currentExerciseId,
                                 showThumbnail = showThumbnails,
-                                onThumbnailClick = { exerciseMediaToView = exercise }
+                                onThumbnailClick = { exerciseMediaToView = exercise },
+                                onInfoClick = { detailExerciseId = exercise.id }
                             )
                         }
                     }
@@ -278,21 +266,14 @@ fun SwapExerciseBottomSheet(
                         Column {
                             Spacer(modifier = Modifier.height(Spacing.medium))
 
-                            OutlinedButton(
+                            GymButton(
                                 onClick = { showAddCustomDialog = true },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = Shapes.large,
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Primary
-                                ),
-                                border = BorderStroke(1.dp, Primary)
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = OnSurface
                             ) {
-                                Icon(
-                                    Icons.Rounded.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(Spacing.small))
+                                Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
+                                Spacer(modifier = Modifier.width(Spacing.medium))
                                 Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
                             }
                         }
@@ -307,7 +288,9 @@ fun SwapExerciseBottomSheet(
                     SwapCardioConfigDialog(
                         exercise = selectedExercise!!,
                         languageCode = languageCode,
+                        initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                         onConfirm = { durationMinutes, rest, sets ->
+                            rest?.let { restMemory.remember(it) }
                             onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest, sets)
                             onDismiss()
                         },
@@ -325,11 +308,14 @@ fun SwapExerciseBottomSheet(
                             initialRepsMax = currentRepsMax,
                             initialBlocks = initialBlocks,
                             advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
+                            initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
+                                rest?.let { restMemory.remember(it) }
                                 onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
                                 onDismiss()
                             },
                             onConfirmAdvanced = { blocks, rest ->
+                                rest?.let { restMemory.remember(it) }
                                 onAdvancedExerciseSelected?.invoke(ex, blocks, rest)
                                 onDismiss()
                             },
@@ -344,13 +330,17 @@ fun SwapExerciseBottomSheet(
     }
 
     ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
+    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
     if (showAddCustomDialog) {
-        AddCustomExerciseDialog(
+        ExerciseFormDialog(
+            title = stringResource(R.string.new_exercise),
             categories = allCategories,
+            existingExercises = rememberNamesInUse(),
             languageCode = languageCode,
-            onConfirm = { name, category ->
-                onAddCustomExercise(name, category) { createdExercise ->
+            showDescription = false,
+            onConfirm = { form ->
+                onAddCustomExercise(form.name, form.category) { createdExercise ->
                     selectedExercise = createdExercise
                     step = 2
                 }
@@ -360,360 +350,6 @@ fun SwapExerciseBottomSheet(
         )
     }
 
-    if (exerciseToEdit != null) {
-        EditCustomExerciseDialog(
-            exercise = exerciseToEdit!!,
-            categories = allCategories,
-            languageCode = languageCode,
-            onConfirm = { updatedExercise ->
-                onEditCustomExercise?.invoke(updatedExercise)
-                exerciseToEdit = null
-            },
-            onDismiss = { exerciseToEdit = null }
-        )
-    }
-
-    if (exerciseToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { exerciseToDelete = null },
-            containerColor = SurfaceContainerHigh,
-            title = {
-                Text(stringResource(R.string.delete_exercise_title), fontWeight = FontWeight.ExtraBold, color = OnSurface)
-            },
-            text = {
-                Text(stringResource(R.string.delete_exercise_message, exerciseToDelete!!.nome), color = OnSurfaceVariant)
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDeleteCustomExercise?.invoke(exerciseToDelete!!)
-                        exerciseToDelete = null
-                    }
-                ) {
-                    Text(stringResource(R.string.delete).uppercase(), color = Error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { exerciseToDelete = null }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
-                }
-            }
-        )
-    }
-}
-
-@Composable
-private fun ExerciseListItem(
-    exercise: ExerciseEntity,
-    languageCode: String,
-    onClick: () -> Unit,
-    onEditClick: (() -> Unit)? = null,
-    onDeleteClick: (() -> Unit)? = null,
-    isSelected: Boolean,
-    showCurrent: Boolean,
-    showThumbnail: Boolean = false,
-    onThumbnailClick: () -> Unit = {}
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        color = when {
-            isSelected -> Primary.copy(alpha = 0.1f)
-            else -> SurfaceContainerHigh
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (showThumbnail) {
-                ExerciseListThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick)
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = ExerciseTranslations.translate(exercise.nome, languageCode),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = OnSurface,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (exercise.id >= 1000) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Surface(
-                            color = SurfaceContainerHighest,
-                            shape = CircleShape,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                Icons.Rounded.Person,
-                                contentDescription = "Custom",
-                                tint = OnSurfaceVariant,
-                                modifier = Modifier.padding(4.dp).size(12.dp)
-                            )
-                        }
-                    }
-                }
-                Text(
-                    text = ExerciseTranslations.translateCategory(exercise.categoria, languageCode).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
-            if (onEditClick != null || onDeleteClick != null) {
-                Row {
-                    if (onEditClick != null) {
-                        IconButton(onClick = onEditClick) {
-                            Icon(
-                                Icons.Rounded.Edit,
-                                contentDescription = "Edit",
-                                tint = OnSurfaceVariant
-                            )
-                        }
-                    }
-                    if (onDeleteClick != null) {
-                        IconButton(onClick = onDeleteClick) {
-                            Icon(
-                                Icons.Rounded.Delete,
-                                contentDescription = "Delete",
-                                tint = Error.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-                }
-            }
-            if (isSelected) {
-                Surface(
-                    color = Primary,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Selected",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnPrimary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            } else if (showCurrent) {
-                Surface(
-                    color = Surface,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.current_badge),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun AddCustomExerciseDialog(
-    categories: List<String>,
-    languageCode: String,
-    onConfirm: (String, String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var exerciseName by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: "Altro") }
-    var categoryExpanded by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        modifier = Modifier.imePadding(),
-        onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = stringResource(R.string.new_exercise),
-                    color = OnSurface,
-                    fontWeight = FontWeight.ExtraBold
-                )
-            },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                GymInputField(
-                    value = exerciseName,
-                    onValueChange = { exerciseName = it },
-                    label = stringResource(R.string.exercise_name),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = !categoryExpanded }
-                ) {
-                    Box(
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            if (!categoryExpanded) categoryExpanded = true
-                        }
-                    ) {
-                        OutlinedTextField(
-                            value = ExerciseTranslations.translateCategory(selectedCategory, languageCode),
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = true,
-                            label = { Text(stringResource(R.string.category)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth(),
-                            shape = Shapes.large,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary,
-                                unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        )
-                    }
-                    ExposedDropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(ExerciseTranslations.translateCategory(category, languageCode)) },
-                                onClick = {
-                                    selectedCategory = category
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (exerciseName.isNotBlank()) {
-                        onConfirm(exerciseName.trim(), selectedCategory)
-                    }
-                },
-                enabled = exerciseName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.add).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
-        },
-        containerColor = SurfaceContainer
-    )
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun EditCustomExerciseDialog(
-    exercise: ExerciseEntity,
-    categories: List<String>,
-    languageCode: String,
-    onConfirm: (ExerciseEntity) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var exerciseName by remember { mutableStateOf(exercise.nome) }
-    var selectedCategory by remember { mutableStateOf(exercise.categoria) }
-    var categoryExpanded by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        modifier = Modifier.imePadding(),
-        onDismissRequest = onDismiss,
-            title = {
-                Text(
-                    text = stringResource(R.string.edit_exercise_title),
-                    color = OnSurface,
-                    fontWeight = FontWeight.ExtraBold
-                )
-            },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                GymInputField(
-                    value = exerciseName,
-                    onValueChange = { exerciseName = it },
-                    label = stringResource(R.string.exercise_name),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = !categoryExpanded }
-                ) {
-                    Box(
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            if (!categoryExpanded) categoryExpanded = true
-                        }
-                    ) {
-                        OutlinedTextField(
-                            value = ExerciseTranslations.translateCategory(selectedCategory, languageCode),
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = true,
-                            label = { Text(stringResource(R.string.category)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier
-                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth(),
-                            shape = Shapes.large,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary,
-                                unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                        )
-                    }
-                    ExposedDropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(ExerciseTranslations.translateCategory(category, languageCode)) },
-                                onClick = {
-                                    selectedCategory = category
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (exerciseName.isNotBlank()) {
-                        onConfirm(
-                            exercise.copy(
-                                nome = exerciseName.trim(),
-                                categoria = selectedCategory
-                            )
-                        )
-                    }
-                },
-                enabled = exerciseName.isNotBlank()
-            ) {
-                Text(stringResource(R.string.save).uppercase(), color = if (exerciseName.isNotBlank()) Primary else OnSurfaceVariant)
-            }
-        },
-            dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
-            }
-        },
-        containerColor = SurfaceContainer
-    )
 }
 
 /**
@@ -730,6 +366,8 @@ private fun SwapExerciseConfigSheet(
     initialRepsMax: Int?,
     initialBlocks: List<PrescriptionBlock>,
     advancedEnabled: Boolean,
+    /** The rest the slider opens on: the one confirmed last time. */
+    initialRestSeconds: Int,
     onConfirm: (Int, RepsTarget, Int?, String, Int?) -> Unit,
     onConfirmAdvanced: (List<PrescriptionBlock>, Int?) -> Unit,
     onBack: () -> Unit,
@@ -744,7 +382,7 @@ private fun SwapExerciseConfigSheet(
     var repsDraft by remember { mutableStateOf(RepsDraft.from(initialReps, initialRepsMax).takeIf { it.isValid } ?: RepsDraft()) }
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var repsGoalText by remember { mutableStateOf(TimeAndReps.goalOf(initialReps).toString()) }
-    var restText by remember { mutableStateOf("120") }
+    var restText by remember { mutableStateOf(initialRestSeconds.toString()) }
     var advancedBlocks by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -847,7 +485,7 @@ private fun SwapExerciseConfigSheet(
                 }
 
                 RestSlider(
-                    value = restText.toIntOrNull() ?: 120,
+                    value = restText.toIntOrNull() ?: RestSeconds.DEFAULT,
                     onValueChange = { restText = it.toString() },
                     hapticEnabled = hapticEnabled,
                     haptic = haptic,
@@ -917,6 +555,8 @@ private fun SwapExerciseConfigSheet(
 private fun SwapCardioConfigDialog(
     exercise: ExerciseEntity,
     languageCode: String,
+    /** The rest the slider opens on: the one confirmed last time. */
+    initialRestSeconds: Int,
     onConfirm: (minutes: Int, rest: Int?, sets: Int) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
@@ -924,7 +564,7 @@ private fun SwapCardioConfigDialog(
 ) {
     var durationText by remember { mutableStateOf("20") }
     var setsText by remember { mutableStateOf("1") }
-    var restText by remember { mutableStateOf("120") }
+    var restText by remember { mutableStateOf(initialRestSeconds.toString()) }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -1006,7 +646,7 @@ private fun SwapCardioConfigDialog(
                 )
 
                 RestSlider(
-                    value = restText.toIntOrNull() ?: 120,
+                    value = restText.toIntOrNull() ?: RestSeconds.DEFAULT,
                     onValueChange = { restText = it.toString() },
                     hapticEnabled = hapticEnabled,
                     haptic = haptic,
@@ -1039,10 +679,11 @@ fun RestSlider(
     onValueChange: (Int) -> Unit,
     hapticEnabled: Boolean,
     haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** The values the slider moves through; the warmup leaves out 0. */
+    steps: List<Int> = RestSeconds.EXERCISE_STEPS
 ) {
-    val steps = listOf(0, 30, 60, 90, 120, 180, 240, 300)
-    val currentIndex = remember(value) { steps.indexOf(value).coerceAtLeast(0) }
+    val currentIndex = remember(value, steps) { steps.indexOf(value).coerceAtLeast(0) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(

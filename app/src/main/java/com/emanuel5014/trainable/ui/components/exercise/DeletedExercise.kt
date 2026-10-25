@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -18,8 +19,8 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
 /** Marks an exercise the user deleted from the exercise list while a routine or a workout still has it. */
 @Composable
-fun DeletedExercisePill(modifier: Modifier = Modifier) {
-    PrescriptionPill(text = stringResource(R.string.exercise_deleted_badge), modifier = modifier)
+fun DeletedExercisePill(modifier: Modifier = Modifier, containerColor: Color = SurfaceContainerHigh) {
+    PrescriptionPill(text = stringResource(R.string.exercise_deleted_badge), modifier = modifier, containerColor = containerColor)
 }
 
 /**

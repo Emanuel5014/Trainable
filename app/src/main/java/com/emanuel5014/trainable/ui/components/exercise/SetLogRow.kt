@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.ui.platform.testTag
+import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.core.animateDpAsState
+import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -53,11 +60,9 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SecondaryContainer
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainer
-import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
-import com.emanuel5014.trainable.util.WeightUnitConverter
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
@@ -91,8 +96,18 @@ fun SetLogRow(
     /** Secondary badges: techniques, RPE, EXTRA. */
     badges: List<String> = emptyList(),
     /** A Time & Reps set: written "45s · 20 reps", without a weight. */
-    isTimeAndReps: Boolean = false
+    isTimeAndReps: Boolean = false,
+    /** Corner radii of the row, from its place in the segmented list of its block. */
+    corners: SegmentCorners = SegmentCorners(SegmentedShapes.OUTER_DP, SegmentedShapes.OUTER_DP)
 ) {
+    val topCorners by animateDpAsState(corners.topDp.dp, WorkoutMotion.spatial(), label = "set_row_top_corners")
+    val bottomCorners by animateDpAsState(corners.bottomDp.dp, WorkoutMotion.spatial(), label = "set_row_bottom_corners")
+    // The active set steps out of its group
+    val activeMargin by animateDpAsState(if (isActive) 4.dp else 0.dp, WorkoutMotion.spatial(), label = "set_row_active_margin")
+    // The springs overshoot: a size never goes below zero
+    val top = topCorners.coerceAtLeast(0.dp)
+    val bottom = bottomCorners.coerceAtLeast(0.dp)
+    val rowShape = RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
     val backgroundColor by animateColorAsState(
         targetValue = when {
             isCompleted -> TertiaryContainer
@@ -122,12 +137,14 @@ fun SetLogRow(
 
     Column(
         modifier = modifier
+            .padding(vertical = activeMargin.coerceAtLeast(0.dp))
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .testTag("set_row")
+            .clip(rowShape)
             .then(
                 when {
-                    isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                    isEditing -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
+                    isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), rowShape)
+                    isEditing -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), rowShape)
                     else -> Modifier
                 }
             )
@@ -142,33 +159,30 @@ fun SetLogRow(
                 },
                 onLongClick = onLongClick
             )
-            .animateContentSize()
+            .animateContentSize(WorkoutMotion.spatial())
     ) {
+        val hasPills = intensityBadge != null || badges.isNotEmpty()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(start = 12.dp, top = 12.dp, end = 12.dp, bottom = if (hasPills) 8.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
         // Set Number Badge
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(numberContainerColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "$setNumber",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = when {
-                    isCompleted -> OnTertiary
-                    isActive -> OnPrimary
-                    else -> OnSurfaceVariant
-                }
-            )
-        }
+        SetNumberBadge(
+            number = setNumber,
+            shape = when {
+                isCompleted -> BadgeShape.Done
+                isActive -> BadgeShape.Active
+                else -> BadgeShape.Pending
+            },
+            containerColor = numberContainerColor,
+            contentColor = when {
+                isCompleted -> OnTertiary
+                isActive -> OnPrimary
+                else -> OnSurfaceVariant
+            }
+        )
 
         Spacer(modifier = Modifier.width(16.dp))
 
@@ -210,29 +224,6 @@ fun SetLogRow(
                     }
                 }
             }
-            if (intensityBadge != null || badges.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier.padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    intensityBadge?.let {
-                        PrescriptionPill(
-                            text = it,
-                            containerColor = if (isCompleted) Tertiary.copy(alpha = 0.3f) else Primary.copy(alpha = 0.14f),
-                            contentColor = if (isCompleted) OnTertiaryContainer else Primary,
-                            emphasized = true
-                        )
-                    }
-                    badges.forEach {
-                        PrescriptionPill(
-                            text = it,
-                            containerColor = if (isCompleted) OnTertiaryContainer.copy(alpha = 0.1f) else SurfaceContainerHighest,
-                            contentColor = if (isCompleted) OnTertiaryContainer else OnSurfaceVariant
-                        )
-                    }
-                }
-            }
         }
 
         // Optional Expand/Collapse Button (next to Note icon)
@@ -264,23 +255,32 @@ fun SetLogRow(
         Spacer(modifier = Modifier.width(8.dp))
 
         // Checkbox area
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (isCompleted) Tertiary else SurfaceContainerHigh)
-                .clickable { onToggleComplete() },
-            contentAlignment = Alignment.Center
-        ) {
-            if (isCompleted) {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = "Completed",
-                    tint = OnTertiary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+        SetCheckTarget(isCompleted = isCompleted, isActive = isActive, onClick = onToggleComplete)
         }
+
+        // What the set asks on top of its weight and reps, under the whole row
+        if (hasPills) {
+            FlowRow(
+                modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                intensityBadge?.let {
+                    PrescriptionPill(
+                        text = it,
+                        containerColor = if (isCompleted) Tertiary.copy(alpha = 0.3f) else Primary.copy(alpha = 0.14f),
+                        contentColor = if (isCompleted) OnTertiaryContainer else Primary,
+                        emphasized = true
+                    )
+                }
+                badges.forEach {
+                    PrescriptionPill(
+                        text = it,
+                        containerColor = if (isCompleted) OnTertiaryContainer.copy(alpha = 0.1f) else SurfaceContainerHighest,
+                        contentColor = if (isCompleted) OnTertiaryContainer else OnSurfaceVariant
+                    )
+                }
+            }
         }
 
         // Expanded Content (e.g. Timer for Time & Weight)
@@ -357,5 +357,60 @@ fun SetLogRow(
                 }
             }
         }
+    }
+}
+
+/** The square on the right that checks and unchecks the set: an outline with a faint check to do, filled with a check popping in once done. */
+@Composable
+private fun SetCheckTarget(isCompleted: Boolean, isActive: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    val fill by animateColorAsState(if (isCompleted) Tertiary else Color.Transparent, label = "set_check_fill")
+    val outline by animateColorAsState(
+        when {
+            isCompleted -> Color.Transparent
+            isActive -> Primary.copy(alpha = 0.5f)
+            else -> OnSurfaceVariant.copy(alpha = 0.25f)
+        },
+        label = "set_check_outline"
+    )
+    val tint by animateColorAsState(
+        when {
+            isCompleted -> OnTertiary
+            isActive -> Primary.copy(alpha = 0.5f)
+            else -> OnSurfaceVariant.copy(alpha = 0.3f)
+        },
+        label = "set_check_tint"
+    )
+    // The check pops in when the set is logged, not when a done set first appears
+    val pop = remember { Animatable(1f) }
+    var firstComposition by remember { mutableStateOf(true) }
+    LaunchedEffect(isCompleted) {
+        if (isCompleted && !firstComposition) {
+            pop.snapTo(0.6f)
+            pop.animateTo(1f, WorkoutMotion.spatial())
+        }
+        firstComposition = false
+    }
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(shape)
+            .background(fill)
+            .border(1.5.dp, outline, shape)
+            .testTag("set_check")
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Check,
+            contentDescription = if (isCompleted) "Completed" else null,
+            tint = tint,
+            modifier = Modifier
+                .size(24.dp)
+                .graphicsLayer {
+                    scaleX = pop.value
+                    scaleY = pop.value
+                }
+        )
     }
 }

@@ -1,35 +1,30 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
-import com.emanuel5014.trainable.ui.components.journal.FinishWorkoutSheet
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -40,9 +35,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import kotlin.math.roundToInt
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.components.rememberHubSheetState
-import com.emanuel5014.trainable.ui.components.hubScaled
 import com.emanuel5014.trainable.ui.components.HubSlot
-import com.emanuel5014.trainable.ui.components.HubPanel
 import com.emanuel5014.trainable.ui.components.HubMotion
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.unit.lerp
@@ -54,13 +47,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,45 +59,25 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DoneAll
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.DesignServices
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
-import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -117,74 +87,33 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.toPath
+import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
-import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
-import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
-import com.emanuel5014.trainable.ui.components.ExerciseNavigation
 import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
-import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
 import com.emanuel5014.trainable.ui.components.LoadPercentChip
-import com.emanuel5014.trainable.ui.components.LoadPercentSheet
-import com.emanuel5014.trainable.ui.components.ProgramEditHistoryDialog
-import com.emanuel5014.trainable.ui.components.ProgramEditPill
-import com.emanuel5014.trainable.ui.components.ProgramEditScopeDialog
-import com.emanuel5014.trainable.domain.prescription.ProgramEditScope
-import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
-import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
-import com.emanuel5014.trainable.ui.components.PlateCalculatorSheet
 import com.emanuel5014.trainable.ui.components.PlateChip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import com.emanuel5014.trainable.ui.components.RestTimerSection
-import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
-import com.emanuel5014.trainable.ui.components.SetLogRow
-import com.emanuel5014.trainable.ui.components.SwapExerciseBottomSheet
-import com.emanuel5014.trainable.ui.components.TimerAdjustButton
-import com.emanuel5014.trainable.ui.components.WeightRepsInput
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.rounded.FastForward
-import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material3.OutlinedButton
-import com.emanuel5014.trainable.ui.components.WeightTimeInput
-import com.emanuel5014.trainable.ui.components.TimeRepsInput
-import com.emanuel5014.trainable.ui.components.setValueText
-import com.emanuel5014.trainable.ui.components.setPerformanceBadges
-import com.emanuel5014.trainable.data.local.entity.SetLogKind
-import com.emanuel5014.trainable.domain.prescription.TimeAndReps
-import com.emanuel5014.trainable.ui.components.RestSlider
-import com.emanuel5014.trainable.ui.components.formatRestTime
-import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -192,29 +121,20 @@ import com.emanuel5014.trainable.ui.theme.OnTertiary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
-import com.emanuel5014.trainable.ui.theme.Shapes
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.emanuel5014.trainable.ui.theme.Tertiary
-import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.IntensityType
-import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
-import com.emanuel5014.trainable.domain.prescription.RepMode
-import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.RpeSelector
-import com.emanuel5014.trainable.ui.components.rpeBadgeText
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
-import com.emanuel5014.trainable.ui.components.techniqueLabel
 import kotlinx.coroutines.launch
 
 /** Key of the large exercise media item in the sets list, used to read where the sets end. */
-private const val MEDIA_CARD_KEY = "exercise_media_card"
+internal const val MEDIA_CARD_KEY = "exercise_media_card"
 
 /** The large media card only appears when at least this much room is left under the sets. */
 private val MEDIA_CARD_MIN_HEIGHT = 140.dp
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, kotlinx.coroutines.FlowPreview::class)
 @Composable
 fun WorkoutExecutionScreen(
     onNavigateBack: () -> Unit,
@@ -242,52 +162,16 @@ fun WorkoutExecutionScreen(
             activityWindow?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
-    var isEditingValues by remember { mutableStateOf(false) }
-    // Index of a set being edited in place in the bottom hub, done or still to do (none by default); it resets with the exercise
-    var editingSetIndex by remember(state.currentExerciseIndex) { mutableStateOf<Int?>(null) }
-    // The set whose technique-as-done dialog is open (exercise index, set index)
-    var techniqueDialogFor by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-    techniqueDialogFor?.let { (exIndex, setIndex) ->
-        state.exercises.getOrNull(exIndex)?.sets?.getOrNull(setIndex)?.let { set ->
-            PerformedTechniqueDialog(
-                planned = set.prescription?.techniques.orEmpty(),
-                performed = set.performedTechniques,
-                onDismiss = { techniqueDialogFor = null },
-                onSave = { techniques, applyToFollowing ->
-                    viewModel.setPerformedTechniques(exIndex, setIndex, techniques, applyToFollowing)
-                    techniqueDialogFor = null
-                }
-            )
-        }
-    }
-    var lastEditedIndex by remember { mutableIntStateOf(0) }
-    var showSwapExerciseSheet by remember { mutableStateOf(false) }
+    val ui = rememberWorkoutScreenUiState(state.currentExerciseIndex, state.planName)
     // Exercises that use the plate calculator (Workout settings -> Plate calculator) and their bar weight in kg
     val plateExercises by viewModel.plateCalculatorExercises.collectAsState()
-    var showPlateSheet by remember { mutableStateOf(false) }
-    // Changing the program of an exercise: the exercise (index) whose blocks are open in the editor, the new blocks
-    // waiting for the answer to "update the routine or only this workout?", the exercise and block the load editor
     // is open for, and the exercise whose list of changes is shown
-    var programEditFor by remember { mutableStateOf<Int?>(null) }
-    var pendingProgram by remember { mutableStateOf<Pair<Int, List<com.emanuel5014.trainable.domain.prescription.PrescriptionBlock>>?>(null) }
-    var loadSheetFor by remember { mutableStateOf<Pair<Int, Int?>?>(null) }
-    var programHistoryFor by remember { mutableStateOf<Int?>(null) }
-    var showAddExerciseSheet by remember { mutableStateOf(false) }
-    var isAddingAfterCurrent by remember { mutableStateOf(false) }
-    var showCancelDialog by remember { mutableStateOf(false) }
-    var showFinishDialog by remember { mutableStateOf(false) }
-    var showRenameDialog by remember { mutableStateOf(false) }
-    var newSessionName by remember { mutableStateOf(state.planName) }
-    var showWarmupTimerDialog by remember { mutableStateOf(false) }
-    var warmupTimerDuration by remember { mutableStateOf(120) }
-    // Exercises whose EMOM sets the lifter logs by hand instead of with the minute clock.
-    var emomManualExercises by remember { mutableStateOf(emptySet<Int>()) }
     val usesEmomClock = { exercise: WorkoutExerciseState ->
-        !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in emomManualExercises
+        !exercise.isCardio && exercise.emomStartIndex != null && exercise.exercise.id !in ui.emomManualExercises
     }
     // The user's own image/GIF of each exercise (optional, see Workout settings -> Exercise media)
     val exerciseMedia by viewModel.exerciseMedia.collectAsState()
-    var mediaViewer by remember { mutableStateOf<Pair<Int, String>?>(null) }
+    var detailExerciseId by rememberSaveable { mutableStateOf<Int?>(null) }
     // Height of the bottom interaction hub, so the large media card only takes the room left above it
     var hubHeightPx by remember { mutableIntStateOf(0) }
     // The lifter drags the hub between open and a thin strip; it stays where it was left while the screen is open
@@ -302,100 +186,22 @@ fun WorkoutExecutionScreen(
         )
     }
 
-    mediaViewer?.let { (exerciseId, exerciseName) ->
-        val mediaFile = exerciseMedia[exerciseId]
-        // The file disappears when the user removes it from the viewer: close it then
-        LaunchedEffect(mediaFile) { if (mediaFile == null) mediaViewer = null }
-        if (mediaFile != null) {
-            ExerciseMediaViewer(
-                fileName = mediaFile,
-                exerciseName = exerciseName,
-                onDismiss = { mediaViewer = null },
-                onReplace = { pickMedia(exerciseId) },
-                onRemove = { viewModel.removeExerciseMedia(exerciseId) }
-            )
-        }
-    }
+    WorkoutEarlyDialogs(
+        state = state,
+        ui = ui,
+        viewModel = viewModel,
+        languageCode = languageCode,
+        exerciseMedia = exerciseMedia,
+        pickMedia = pickMedia,
+        detailExerciseId = detailExerciseId,
+        onDetailDismiss = { detailExerciseId = null }
+    )
 
-    if (showRenameDialog) {
-        AlertDialog(
-            modifier = Modifier.imePadding(),
-            onDismissRequest = { showRenameDialog = false },
-            title = { Text(stringResource(R.string.rename_workout)) },
-            text = {
-                com.emanuel5014.trainable.ui.components.GymInputField(
-                    value = newSessionName,
-                    onValueChange = { newSessionName = it },
-                    label = stringResource(R.string.routine_name),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.updateSessionName(newSessionName)
-                    showRenameDialog = false
-                }) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase())
-                }
-            },
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
-    }
+
 
     val prescriptionLabels = rememberPrescriptionLabels(state.weightUnit)
 
-    state.oneRepMaxSuggestions.firstOrNull()?.let { suggestion ->
-        val fmt = { kg: Float -> WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(kg, state.weightUnit), state.weightUnit) }
-        AlertDialog(
-            onDismissRequest = { viewModel.resolveOneRepMaxSuggestion(accept = false) },
-            icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Primary) },
-            title = { Text(stringResource(R.string.new_one_rep_max_title), fontWeight = FontWeight.ExtraBold) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.new_one_rep_max_message,
-                        fmt(suggestion.weightKg), suggestion.reps, suggestion.exerciseName,
-                        fmt(suggestion.currentKg), fmt(suggestion.suggestedKg)
-                    )
-                )
-            },
-            confirmButton = {
-                GymButton(
-                    onClick = { viewModel.resolveOneRepMaxSuggestion(accept = true) },
-                    containerColor = Primary,
-                    contentColor = OnPrimary,
-                    modifier = Modifier.height(48.dp)
-                ) {
-                    Text(stringResource(R.string.save_new_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.resolveOneRepMaxSuggestion(accept = false) }) {
-                    Text(stringResource(R.string.not_now).uppercase(), color = OnSurfaceVariant)
-                }
-            },
-            containerColor = SurfaceContainerHigh,
-            titleContentColor = OnSurface,
-            textContentColor = OnSurfaceVariant
-        )
-    }
 
-    // The routine has exercises the user deleted from the exercise list: offer to add them back
-    if (state.deletedExercises.isNotEmpty()) {
-        RestoreExerciseDialog(
-            exerciseNames = state.deletedExercises.map { ExerciseTranslations.translate(it.nome, languageCode) },
-            onRestore = { viewModel.restoreDeletedExercises() },
-            onSkip = { viewModel.dismissDeletedExercises() },
-            onDismiss = { viewModel.dismissDeletedExercises() }
-        )
-    }
 
     if (state.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -414,25 +220,25 @@ fun WorkoutExecutionScreen(
     val isExerciseCompleted = remember(activeSet) {
         activeSet == null || activeSet.isCompleted
     }
-    val setBeingEdited = remember(currentExState?.sets, editingSetIndex) {
-        editingSetIndex?.let { currentExState?.sets?.getOrNull(it) }
+    val setBeingEdited = remember(currentExState?.sets, ui.editingSetIndex) {
+        ui.editingSetIndex?.let { currentExState?.sets?.getOrNull(it) }
     }
     LaunchedEffect(setBeingEdited, activeSetIndex) {
         val editing = setBeingEdited
         when {
             // The set is gone (removed)
-            editing == null -> editingSetIndex = null
+            editing == null -> ui.editingSetIndex = null
             // The set being edited came up next: it moves to the panel of the active set, which can also log it
             // (while a rest is running that panel waits for the rest to end, so it is not opened behind it)
-            editingSetIndex == activeSetIndex && !editing.isCompleted -> {
-                editingSetIndex = null
-                isEditingValues = state.remainingRestSeconds <= 0
+            ui.editingSetIndex == activeSetIndex && !editing.isCompleted -> {
+                ui.editingSetIndex = null
+                ui.isEditingValues = state.remainingRestSeconds <= 0
             }
         }
     }
     // Kept so the hub still has something to show while it animates away
-    LaunchedEffect(editingSetIndex) {
-        editingSetIndex?.let { lastEditedIndex = it }
+    LaunchedEffect(ui.editingSetIndex) {
+        ui.editingSetIndex?.let { ui.lastEditedIndex = it }
     }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -468,7 +274,7 @@ fun WorkoutExecutionScreen(
     // Auto-collapse editing when a set is logged or timer starts
     LaunchedEffect(activeSetIndex, state.remainingRestSeconds > 0) {
         if (state.remainingRestSeconds > 0) {
-            isEditingValues = false
+            ui.isEditingValues = false
         }
     }
 
@@ -485,97 +291,11 @@ fun WorkoutExecutionScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { 
-                                if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
-                                        showRenameDialog = true
-                                    } else {
-                                        state.planId?.let { onNavigateToRoutine(it) }
-                                    }
-                                },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = state.planName, 
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.weight(1f, fill = false)
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.session_in_progress_title), 
-                            style = MaterialTheme.typography.labelSmall, 
-                            color = OnSurfaceVariant,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                },
-                navigationIcon = {
-                    GymIconButton(
-                        icon = Icons.Rounded.Close,
-                        onClick = safeNavigateBack,
-                        containerColor = Color.Transparent,
-                        description = stringResource(R.string.close_workout)
-                    )
-                },
-                actions = {
-                    if (state.totalExercises > 0) {
-                        Surface(
-                            color = Primary.copy(alpha = 0.1f),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                text = "${state.completedExercises}/${state.totalExercises}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Primary,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        if (state.warmupTimerEnabled) {
-                            IconButton(
-                                onClick = {
-                                    warmupTimerDuration = 120
-                                    showWarmupTimerDialog = true
-                                },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Timer,
-                                    contentDescription = stringResource(R.string.warmup_timer),
-                                    tint = if (state.warmupTimerRemaining > 0) Primary else OnSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-                    }
-
-                    Surface(
-                        onClick = { showCancelDialog = true },
-                        shape = CircleShape,
-                        color = Error.copy(alpha = 0.1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Delete,
-                            contentDescription = stringResource(R.string.cancel_workout),
-                            tint = Error,
-                            modifier = Modifier.padding(10.dp).size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
-                    titleContentColor = OnSurface,
-                    navigationIconContentColor = OnSurface
-                )
+            WorkoutTopBar(
+                state = state,
+                ui = ui,
+                onClose = safeNavigateBack,
+                onNavigateToRoutine = onNavigateToRoutine
             )
         },
         containerColor = Surface
@@ -600,7 +320,7 @@ fun WorkoutExecutionScreen(
                             color = OnSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
-                        GymButton(onClick = { showAddExerciseSheet = true }) {
+                        GymButton(onClick = { ui.showAddExerciseSheet = true }) {
                             Text(stringResource(R.string.add_exercise_to_workout).uppercase(), fontWeight = FontWeight.ExtraBold)
                         }
                     }
@@ -651,18 +371,21 @@ fun WorkoutExecutionScreen(
                         }
 
                         // Bring the set being edited above the hub that opens under it
-                        LaunchedEffect(editingSetIndex) {
-                            val editing = editingSetIndex
+                        LaunchedEffect(ui.editingSetIndex) {
+                            val editing = ui.editingSetIndex
                             if (editing != null && targetIndex == state.currentExerciseIndex && editing in targetExState.sets.indices) {
                                 exerciseListState.animateScrollToItem(editing)
                             }
                         }
 
                         val swipeOffset = remember { Animatable(0f) }
+                        // The header of this exercise shrinks to one row while its sets are scrolled
+                        val headerCollapse = rememberHeaderCollapseState(targetIndex)
 
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .nestedScroll(headerCollapse.connection)
                                 .then(
                                     if (state.swipeActionsEnabled) {
                                         Modifier
@@ -703,10 +426,10 @@ fun WorkoutExecutionScreen(
                                     languageCode = languageCode,
                                     state = state,
                                     viewModel = viewModel,
-                                    onSwap = { showSwapExerciseSheet = true },
+                                    onSwap = { ui.showSwapExerciseSheet = true },
                                     onAddExercise = {
-                                        isAddingAfterCurrent = false
-                                        showAddExerciseSheet = true
+                                        ui.isAddingAfterCurrent = false
+                                        ui.showAddExerciseSheet = true
                                     },
                                     distanceInput = cardioDistanceInput,
                                     onDistanceChange = { cardioDistanceInput = it },
@@ -722,8 +445,8 @@ fun WorkoutExecutionScreen(
                                     languageCode = languageCode,
                                     state = state,
                                     viewModel = viewModel,
-                                    onSwap = { showSwapExerciseSheet = true },
-                                    onLogManually = { emomManualExercises = emomManualExercises + targetExState.exercise.id },
+                                    onSwap = { ui.showSwapExerciseSheet = true },
+                                    onLogManually = { ui.emomManualExercises = ui.emomManualExercises + targetExState.exercise.id },
                                     bottomPadding = emomBottomPadding
                                 )
                             } else {
@@ -757,655 +480,64 @@ fun WorkoutExecutionScreen(
                                         } else {
                                             val info = exerciseListState.layoutInfo
                                             info.visibleItemsInfo.firstOrNull { it.key == MEDIA_CARD_KEY }
-                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx }
+                                                ?.let { card -> info.viewportSize.height - card.offset - hubHeightPx - bottomGapPx - headerCollapse.offsetPx.roundToInt() }
                                                 ?.coerceAtLeast(0)
                                                 ?: 0
                                         }
                                     }.collect { free -> if (free != null) freeMediaPx = free }
                                 }
 
-                                // Exercise Header
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp, vertical = 16.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // An advanced exercise reads what the current week prescribes: the plan's own
-                                        // sets and reps targets are only kept in step with the first week
-                                        val weekTargets = if (targetExState.isAdvanced) {
-                                            PrescriptionExpander.legacyTargets(targetExState.blocks)
-                                        } else null
-                                        val setsCount = weekTargets?.first ?: targetExState.sets.size
-                                        val repsCount = if (targetExState.isTimeAndReps) {
-                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
-                                            stringResource(R.string.time_reps_value, sec, targetExState.repsGoal ?: 0)
-                                        } else if (targetExState.isTimeAndWeight) {
-                                            val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
-                                            "${sec}s"
-                                        } else {
-                                            weekTargets?.second ?: targetExState.repsDisplay.takeIf { it.isNotBlank() } ?: run {
-                                                if (targetExState.sets.isEmpty()) "0"
-                                                else {
-                                                    val allReps = targetExState.sets.map { it.reps }
-                                                    if (allReps.distinct().size == 1) allReps.first().toString()
-                                                    else allReps.joinToString("-")
-                                                }
-                                            }
-                                        }
-                                        if (targetExState.isAdvanced) {
-                                            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-                                            androidx.compose.foundation.layout.FlowRow(
-                                                modifier = Modifier.weight(1f),
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                                                itemVerticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                state.programWeek?.let { week ->
-                                                    PrescriptionPill(
-                                                        text = stringResource(R.string.week_short, week),
-                                                        containerColor = Primary,
-                                                        contentColor = OnPrimary,
-                                                        emphasized = true
-                                                    )
-                                                }
-                                                val usesPercent = targetExState.blocks.any { it.intensityType == IntensityType.PERCENT }
-                                                if (usesPercent) {
-                                                    PrescriptionPill(
-                                                        text = targetExState.oneRepMaxKg?.let { stringResource(R.string.one_rep_max_value, prescriptionLabels.weight(it)) }
-                                                            ?: stringResource(R.string.one_rep_max_missing),
-                                                        containerColor = if (targetExState.oneRepMaxKg != null) Primary.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f),
-                                                        contentColor = if (targetExState.oneRepMaxKg != null) Primary else Error
-                                                    )
-                                                } else {
-                                                    Text(
-                                                        text = "$setsCount × $repsCount",
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                }
-                                                // The program of this exercise was changed during the workout: tap for the story
-                                                targetExState.lastProgramEdit?.let { edit ->
-                                                    ProgramEditPill(edit, Modifier.clickable { programHistoryFor = targetIndex })
-                                                }
-                                            }
-                                        } else Text(
-                                            text = "$setsCount × $repsCount",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = Primary,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        if (targetIndex < state.exercises.lastIndex) {
-                                            val nextEx = state.exercises[targetIndex + 1]
-                                            val isLinked = targetExState.supersetId != null && targetExState.supersetId == nextEx.supersetId
-                                            IconButton(
-                                                onClick = { viewModel.toggleSupersetWithNext(targetIndex) }
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
-                                                    contentDescription = stringResource(R.string.toggle_superset_with_next),
-                                                    tint = if (isLinked) Primary else OnSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        if (targetExState.isAdvanced && !targetExState.isCardio && !targetExState.isTimed) {
-                                            IconButton(onClick = { programEditFor = targetIndex }) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.DesignServices,
-                                                    contentDescription = stringResource(R.string.edit_program),
-                                                    tint = if (targetExState.lastProgramEdit != null) Primary else OnSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        IconButton(
-                                            onClick = { showSwapExerciseSheet = true }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.SwapHoriz,
-                                                contentDescription = stringResource(R.string.swap_exercise),
-                                                tint = OnSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                    val exerciseDisplayName = ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
-                                    if (state.exerciseMediaEnabled) {
-                                        // The thumbnail takes width from the name, so the name steps down one size
-                                        // to wrap onto the same number of lines it did at full width.
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.Top,
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            Text(
-                                                text = exerciseDisplayName,
-                                                style = MaterialTheme.typography.headlineMedium,
-                                                color = OnSurface,
-                                                fontWeight = FontWeight.Black,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            ExerciseMediaSlot(
-                                                fileName = exerciseMedia[targetExState.exercise.id],
-                                                onOpen = { mediaViewer = targetExState.exercise.id to exerciseDisplayName },
-                                                onAdd = { pickMedia(targetExState.exercise.id) },
-                                                playing = !largeMediaVisible
-                                            )
-                                        }
-                                    } else {
-                                        Text(
-                                            text = exerciseDisplayName,
-                                            style = MaterialTheme.typography.displaySmall,
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
+                                ExerciseHeader(
+                                    targetExState = targetExState,
+                                    targetIndex = targetIndex,
+                                    state = state,
+                                    ui = ui,
+                                    viewModel = viewModel,
+                                    languageCode = languageCode,
+                                    exerciseMedia = exerciseMedia,
+                                    largeMediaVisible = largeMediaVisible,
+                                    pickMedia = pickMedia,
+                                    prescriptionLabels = prescriptionLabels,
+                                    onOpenDetail = { detailExerciseId = it },
+                                    collapse = headerCollapse
+                                )
 
-                                    if (targetExState.emomStartIndex != null && targetExState.exercise.id in emomManualExercises) {
-                                        Surface(
-                                            onClick = { emomManualExercises = emomManualExercises - targetExState.exercise.id },
-                                            color = Tertiary.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            modifier = Modifier.padding(top = 8.dp)
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Timer,
-                                                    contentDescription = null,
-                                                    tint = Tertiary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.emom_use_timer),
-                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                    color = Tertiary,
-                                                    fontWeight = FontWeight.Black
-                                                )
-                                            }
-                                        }
-                                    }
+                                // Only a list that does not fit on screen has anything to gain from a collapsed header
+                                headerCollapse.canCollapse = { exerciseListState.canScrollForward || exerciseListState.canScrollBackward }
 
-                                    if (targetExState.supersetId != null) {
-                                        Surface(
-                                            color = Primary.copy(alpha = 0.1f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            modifier = Modifier.padding(top = 8.dp)
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Timer,
-                                                    contentDescription = null,
-                                                    tint = Primary,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = stringResource(R.string.superset),
-                                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                    color = Primary,
-                                                    fontWeight = FontWeight.Black
-                                                )
-                                            }
-                                        }
-                                    }
+                                // A list moved by code (to the set being done) away from the top takes the header with it.
+                                // Each step runs to its end: a list that settles back while the header collapses must not
+                                // leave the header half way.
+                                LaunchedEffect(headerCollapse, exerciseListState) {
+                                    snapshotFlow { exerciseListState.firstVisibleItemIndex > 0 || exerciseListState.firstVisibleItemScrollOffset > 0 }
+                                        .filter { it }
+                                        .collect { headerCollapse.snapTo(HeaderCollapse.snapTarget(listScrolled = true)) }
                                 }
-                                
-                                targetExState.progressionToShow?.let { suggestion ->
-                                    ProgressionSuggestionCard(
-                                        suggestion = suggestion,
-                                        weightUnit = state.weightUnit,
-                                        onApply = { viewModel.applyProgression(targetIndex) },
-                                        onDismiss = { viewModel.dismissProgression(targetIndex) },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
-                                    )
+                                // Whatever leaves the header half way (a drag that stopped, a list that settled) ends at the nearer end
+                                LaunchedEffect(headerCollapse, exerciseListState) {
+                                    snapshotFlow { headerCollapse.offsetPx }
+                                        .debounce(400)
+                                        .collect { if (!exerciseListState.isScrollInProgress) headerCollapse.settle() }
                                 }
 
-                                // Sets List
-                                LazyColumn(
-                                    state = exerciseListState,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxWidth(),
-                                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    itemsIndexed(targetExState.sets) { index, set ->
-                                        val isActive = index == targetActiveSetIndex && !set.isCompleted
-                                        var showDeleteConfirm by remember { mutableStateOf(false) }
-
-                                        if (showDeleteConfirm) {
-                                            AlertDialog(
-                                                onDismissRequest = { showDeleteConfirm = false },
-                                                title = { Text(stringResource(R.string.remove_set)) },
-                                                text = { Text(stringResource(R.string.remove_set_confirm)) },
-                                                confirmButton = {
-                                                    TextButton(onClick = {
-                                                        editingSetIndex = null
-                                                        viewModel.removeSetFromExercise(targetIndex, index)
-                                                        showDeleteConfirm = false
-                                                    }) {
-                                                        Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
-                                                    }
-                                                },
-                                                dismissButton = {
-                                                    TextButton(onClick = { showDeleteConfirm = false }) {
-                                                        Text(stringResource(R.string.cancel).uppercase())
-                                                    }
-                                                },
-                                                containerColor = SurfaceContainerHigh,
-                                                titleContentColor = OnSurface,
-                                                textContentColor = OnSurfaceVariant
-                                            )
-                                        }
-
-                                        val haptic = LocalHapticFeedback.current
-                                        val isExpanded = targetExState.isTimed && (expandedSetIndex == index) && !set.isCompleted
-
-                                        if (targetExState.isAdvanced) {
-                                            val previous = targetExState.sets.getOrNull(index - 1)
-                                            val p = set.prescription
-                                            val startsGroup = index == 0 ||
-                                                previous?.isExtra != set.isExtra ||
-                                                previous?.prescription?.blockIndex != p?.blockIndex
-                                            if (startsGroup) {
-                                                val block = p?.let { targetExState.blocks.getOrNull(it.blockIndex) }
-                                                // The load of a block that still has sets to do can be moved from its title
-                                                val loadEditable = block != null && p.blockIndex in
-                                                    ProgramEditing.percentBlocksToDo(targetExState.sets, targetExState.blocks)
-                                                Column(
-                                                    modifier = Modifier.padding(top = if (index == 0) 0.dp else 6.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .then(
-                                                                if (loadEditable) Modifier.clickable { loadSheetFor = targetIndex to p!!.blockIndex }
-                                                                else Modifier
-                                                            ),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                    ) {
-                                                        Text(
-                                                            text = when {
-                                                                block != null -> stringResource(
-                                                                    R.string.block_header, p.blockIndex + 1,
-                                                                    (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
-                                                                        block.techniques.map { techniqueLabel(context, it) }).joinToString(" · ")
-                                                                ).uppercase()
-                                                                set.isExtra -> stringResource(R.string.extra_badge)
-                                                                else -> ""
-                                                            },
-                                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                                                            color = Primary,
-                                                            fontWeight = FontWeight.Black,
-                                                            modifier = Modifier.weight(1f, fill = false)
-                                                        )
-                                                        if (loadEditable) {
-                                                            Icon(
-                                                                Icons.Rounded.Tune,
-                                                                contentDescription = stringResource(R.string.load_sheet_title),
-                                                                tint = Primary,
-                                                                modifier = Modifier.size(14.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                    if (block?.repMode == RepMode.TOTAL) {
-                                                        val total = block.totalReps ?: 0
-                                                        val done = targetExState.sets
-                                                            .filter { it.prescription?.blockIndex == p.blockIndex && it.isCompleted }
-                                                            .sumOf { it.reps }
-                                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                                            androidx.compose.material3.LinearWavyProgressIndicator(
-                                                                progress = { if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 0f },
-                                                                modifier = Modifier.weight(1f),
-                                                                color = Primary,
-                                                                trackColor = SurfaceContainerHighest
-                                                            )
-                                                            Spacer(modifier = Modifier.width(12.dp))
-                                                            Text(
-                                                                text = stringResource(R.string.total_reps_progress, done, total),
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = Primary,
-                                                                fontWeight = FontWeight.ExtraBold
-                                                            )
-                                                        }
-                                                    }
-                                                    block?.note?.let { note ->
-                                                        Text(note, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        val setPrescription = set.prescription
-                                        SetLogRow(
-                                            repsLabel = if (set.isAmrap) stringResource(R.string.max_label) else null,
-                                            intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
-                                                ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },
-                                            badges = buildList {
-                                                // The goal of a rep range stays visible until the set is done
-                                                if (!set.isCompleted) set.repsRange?.let { add(it.text) }
-                                                if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
-                                                setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
-                                                set.rpe?.let { add(rpeBadgeText(context, it, state.rpeScale)) }
-                                                if (set.isExtra) add(stringResource(R.string.extra_badge))
-                                                // How the set really went: parts after short pauses, help, partials, technique as done
-                                                addAll(setPerformanceBadges(context, set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
-                                            },
-                                            setNumber = set.setNumber,
-                                            weight = set.weight,
-                                            reps = set.reps,
-                                            note = set.note,
-                                            isWarmup = set.isWarmup,
-                                            isCompleted = set.isCompleted,
-                                            onToggleComplete = { 
-                                                if (set.isAmrap && !set.isCompleted && index == targetActiveSetIndex) {
-                                                    // AMRAP: reps must be entered before logging
-                                                    isEditingValues = true
-                                                } else if (targetExState.isTimed && !set.isCompleted) {
-                                                    viewModel.skipTimerAndLogSet(
-                                                        targetIndex,
-                                                        index,
-                                                        set.weight,
-                                                        set.timeSeconds ?: targetExState.timeTargetSeconds ?: 45
-                                                    )
-                                                } else {
-                                                    viewModel.toggleSetComplete(targetIndex, index) 
-                                                }
-                                            },
-                                            onNoteChange = { newNote ->
-                                                viewModel.updateSetNote(targetIndex, index, newNote)
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                showDeleteConfirm = true
-                                            },
-                                            onEditValues = {
-                                                editingSetIndex = null
-                                                isEditingValues = !isEditingValues
-                                            },
-                                            // A tap on the card edits that set in place, done or still to do; the square
-                                            // on the right is what checks and unchecks it
-                                            onEdit = {
-                                                editingSetIndex = if (editingSetIndex == index) null else index
-                                                isEditingValues = false
-                                            },
-                                            isEditing = editingSetIndex == index && targetIndex == state.currentExerciseIndex,
-                                            isActive = isActive,
-                                            weightUnit = state.weightUnit,
-                                            previousNote = set.previousNote,
-                                            timeSeconds = set.timeSeconds,
-                                            isExpanded = isExpanded,
-                                            isTimeAndReps = set.isTimeAndReps,
-                                            onToggleExpanded = if (targetExState.isTimed && !set.isCompleted) {
-                                                { expandedSetIndex = if (expandedSetIndex == index) null else index }
-                                            } else null,
-                                            expandedContent = if (isExpanded) {
-                                                {
-                                                    val targetSeconds = set.timeSeconds ?: targetExState.timeTargetSeconds ?: 45
-                                                    val isCurrentActive = index == targetActiveSetIndex
-                                                    val timerSeconds = if (isCurrentActive) state.setTimerSeconds else 0
-                                                    val isRunning = isCurrentActive && state.setTimerRunning
-                                                    val isPaused = isCurrentActive && state.setTimerPaused
-                                                    val isTargetReached = targetSeconds > 0 && timerSeconds >= targetSeconds
-                                                    val timerColor = if (isTargetReached) Color(0xFF4CAF50) else Primary
-                                                    val timerTrackColor = if (isTargetReached) Color(0xFF4CAF50).copy(alpha = 0.25f) else Primary.copy(alpha = 0.2f)
-                                                    val progress = if (targetSeconds > 0) (timerSeconds.toFloat() / targetSeconds.toFloat()).coerceIn(0f, 1f) else 0f
-
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .clip(RoundedCornerShape(16.dp))
-                                                            .background(SurfaceContainerHighest.copy(alpha = 0.5f))
-                                                            .padding(vertical = 16.dp, horizontal = 12.dp),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Column(
-                                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                                                        ) {
-                                                            Box(
-                                                                contentAlignment = Alignment.Center,
-                                                                modifier = Modifier.size(130.dp)
-                                                            ) {
-                                                                CircularWavyProgressIndicator(
-                                                                    progress = { progress },
-                                                                    modifier = Modifier.size(130.dp),
-                                                                    color = timerColor,
-                                                                    trackColor = timerTrackColor,
-                                                                    stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                                                                    trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke,
-                                                                    gapSize = 8.dp,
-                                                                    wavelength = 28.dp,
-                                                                    amplitude = { p ->
-                                                                        if (!isRunning) 0f
-                                                                        else if (p <= 0.1f) 0f
-                                                                        else 1f
-                                                                    }
-                                                                )
-                                                                if (state.autoStopTimeWeightAtTarget && isTargetReached) {
-                                                                    Box(
-                                                                        modifier = Modifier
-                                                                            .size(80.dp)
-                                                                            .background(timerColor, CircleShape),
-                                                                        contentAlignment = Alignment.Center
-                                                                    ) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Rounded.ThumbUp,
-                                                                            contentDescription = null,
-                                                                            tint = Color.White,
-                                                                            modifier = Modifier.size(36.dp)
-                                                                        )
-                                                                    }
-                                                                } else {
-                                                                    CardioToggleButton(
-                                                                        isRunning = isRunning,
-                                                                        isPaused = isPaused,
-                                                                        onToggle = {
-                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                            when {
-                                                                                isRunning -> viewModel.pauseSetTimer()
-                                                                                else -> viewModel.startSetTimer()
-                                                                            }
-                                                                        },
-                                                                        modifier = Modifier.size(80.dp),
-                                                                        activeColor = timerColor,
-                                                                        onActiveColor = if (isTargetReached) Color.White else OnPrimary
-                                                                    )
-                                                                }
-                                                            }
-
-                                                            val curFormatted = String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)
-                                                            val tarFormatted = String.format("%02d:%02d", targetSeconds / 60, targetSeconds % 60)
-                                                            Row(
-                                                                verticalAlignment = Alignment.Bottom,
-                                                                horizontalArrangement = Arrangement.Center
-                                                            ) {
-                                                                Text(
-                                                                    text = curFormatted,
-                                                                    style = MaterialTheme.typography.headlineMedium,
-                                                                    fontWeight = FontWeight.Black,
-                                                                    color = if (isTargetReached) timerColor else if (isRunning) Primary else OnSurface
-                                                                )
-                                                                Spacer(modifier = Modifier.width(6.dp))
-                                                                Text(
-                                                                    text = "/ $tarFormatted",
-                                                                    style = MaterialTheme.typography.titleMedium,
-                                                                    color = OnSurfaceVariant,
-                                                                    fontWeight = FontWeight.Bold,
-                                                                    modifier = Modifier.padding(bottom = 2.dp)
-                                                                )
-                                                            }
-
-                                                            if (set.isTimeAndReps) {
-                                                                // What was done in the interval: counted while the clock runs, fixed up once it stops
-                                                                RepsDoneStepper(
-                                                                    reps = set.reps,
-                                                                    onRepsChange = { viewModel.updateSetReps(targetIndex, index, it) },
-                                                                    hapticEnabled = state.hapticEnabled
-                                                                )
-                                                            }
-
-                                                            if (isRunning || isPaused || timerSeconds > 0) {
-                                                                Row(
-                                                                    modifier = Modifier.fillMaxWidth(),
-                                                                    horizontalArrangement = Arrangement.Center,
-                                                                    verticalAlignment = Alignment.CenterVertically
-                                                                ) {
-                                                                    FilledIconButton(
-                                                                        onClick = {
-                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                            viewModel.resetSetTimer()
-                                                                        },
-                                                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                                                            containerColor = SurfaceContainerHigh,
-                                                                            contentColor = OnSurfaceVariant
-                                                                        ),
-                                                                        modifier = Modifier.size(42.dp)
-                                                                    ) {
-                                                                        Icon(
-                                                                            imageVector = Icons.Rounded.Replay,
-                                                                            contentDescription = stringResource(R.string.time_weight_reset_timer),
-                                                                            modifier = Modifier.size(20.dp)
-                                                                        )
-                                                                    }
-
-                                                                    Spacer(modifier = Modifier.width(12.dp))
-
-                                                                    GymButton(
-                                                                        onClick = {
-                                                                            if (state.hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                            viewModel.finishSetTimer(targetIndex, index, set.weight)
-                                                                        },
-                                                                        containerColor = timerColor,
-                                                                        contentColor = if (isTargetReached) Color.White else OnPrimary,
-                                                                        modifier = Modifier.fillMaxWidth(0.72f),
-                                                                        height = 42
-                                                                    ) {
-                                                                        Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                                                                        Spacer(modifier = Modifier.width(6.dp))
-                                                                        Text(
-                                                                            stringResource(R.string.time_weight_finish_set),
-                                                                            style = MaterialTheme.typography.labelLarge,
-                                                                            fontWeight = FontWeight.ExtraBold
-                                                                        )
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            } else null
-                                        )
-                                    }
-                                    if (targetExState.isAdvanced) {
-                                        item {
-                                            GymButton(
-                                                onClick = { viewModel.addExtraSet(targetIndex) },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                containerColor = Primary.copy(alpha = 0.1f),
-                                                contentColor = Primary,
-                                                height = 48
-                                            ) {
-                                                Icon(Icons.Rounded.Add, contentDescription = null)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(stringResource(R.string.add_extra_set).uppercase(), fontWeight = FontWeight.ExtraBold)
-                                            }
-                                        }
-                                    }
-                                     if (state.isQuickWorkout || state.inlineExerciseModificationsEnabled) {
-                                        item {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 8.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-                                                GymButton(
-                                                    onClick = { viewModel.addSetToExercise(targetIndex) },
-                                                    modifier = Modifier.weight(1f),
-                                                    containerColor = SurfaceContainerHigh,
-                                                    contentColor = Primary
-                                                ) {
-                                                    Icon(Icons.Rounded.Add, contentDescription = null)
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
-                                                }
-                                                if (!isExerciseCompleted) {
-                                                    val isLastExercise = targetIndex == state.exercises.size - 1
-                                                    GymButton(
-                                                        onClick = {
-                                                            isAddingAfterCurrent = !state.isQuickWorkout
-                                                            showAddExerciseSheet = true
-                                                        },
-                                                        modifier = Modifier.weight(1f),
-                                                        containerColor = SurfaceContainerHigh,
-                                                        contentColor = Primary
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Rounded.KeyboardDoubleArrowRight,
-                                                            contentDescription = null
-                                                        )
-                                                        Spacer(modifier = Modifier.width(8.dp))
-                                                        Text(
-                                                            text = stringResource(
-                                                                if (state.isQuickWorkout) {
-                                                                    if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk
-                                                                } else {
-                                                                    R.string.add_exercise
-                                                                }
-                                                            ).uppercase(),
-                                                            fontWeight = FontWeight.ExtraBold
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (largeMediaFile != null) {
-                                        item(key = MEDIA_CARD_KEY) {
-                                            val targetHeight = if (largeMediaVisible) with(localDensity) { freeMediaPx.toDp() } else 0.dp
-                                            val cardHeight by animateDpAsState(targetHeight, label = "exerciseMediaCardHeight")
-                                            if (cardHeight > 0.dp) {
-                                                ExerciseMediaCard(
-                                                    fileName = largeMediaFile,
-                                                    onOpen = {
-                                                        mediaViewer = targetExState.exercise.id to
-                                                            ExerciseTranslations.translate(targetExState.exercise.nome, languageCode)
-                                                    },
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(cardHeight)
-                                                )
-                                            }
-                                        }
-                                    }
-                                    item(key = "hub_spacer") {
-                                        // The list ends above the hub, whatever step it is on: with the large media card
-                                        // exactly above it, otherwise with a little air
-                                        val hubSpacer = when {
-                                            largeMediaVisible -> with(localDensity) { hubHeightPx.toDp() }
-                                            hubHeightPx > 0 -> with(localDensity) { hubHeightPx.toDp() } + 16.dp
-                                            com.emanuel5014.trainable.ui.theme.ResponsiveSize.isShortHeight -> 220.dp
-                                            else -> 280.dp
-                                        }
-                                        Spacer(modifier = Modifier.height(hubSpacer)) // Space for the dynamic hub
-                                    }
-                                }
+                                SetList(
+                                    targetExState = targetExState,
+                                    targetIndex = targetIndex,
+                                    targetActiveSetIndex = targetActiveSetIndex,
+                                    exerciseListState = exerciseListState,
+                                    expandedSetIndex = expandedSetIndex,
+                                    onExpandedSetIndexChange = { expandedSetIndex = it },
+                                    largeMediaFile = largeMediaFile,
+                                    largeMediaVisible = largeMediaVisible,
+                                    freeMediaPx = freeMediaPx,
+                                    hubHeightPx = hubHeightPx,
+                                    isExerciseCompleted = isExerciseCompleted,
+                                    state = state,
+                                    ui = ui,
+                                    viewModel = viewModel,
+                                    languageCode = languageCode,
+                                    prescriptionLabels = prescriptionLabels
+                                )
                             }
                         }
                     }
@@ -1413,628 +545,22 @@ fun WorkoutExecutionScreen(
 
                 // DYNAMIC INTERACTION HUB
                 val currentExState = state.currentExercise
-                val isCardioActive = currentExState?.isCardio == true
-                val isEmomActive = currentExState != null && usesEmomClock(currentExState)
-                // While the minute clock runs, its screen has everything the lifter needs.
-                val showBottomHub = (!isCardioActive || currentExState.isCardioCompleted || (!state.cardioTimerRunning && !state.cardioTimerPaused)) &&
-                    !(isEmomActive && state.emomRun != null)
-                val isResting = state.remainingRestSeconds > 0
-                val hubMode = when {
-                    // The pause of a mini-set is over: how many reps did it have?
-                    state.miniSet?.awaitingReps == true -> HubMode.MiniSet
-                    // A set being edited wins over the rest card, which stays visible in a slim form
-                    setBeingEdited != null && !isCardioActive && !isEmomActive -> HubMode.EditingSet
-                    isResting -> HubMode.Resting
-                    // Cardio and the EMOM clock have their own screens: the hub only navigates.
-                    isCardioActive || isEmomActive -> HubMode.Cardio
-                    activeSet == null || activeSet.isCompleted -> HubMode.Completed
-                    isEditingValues -> HubMode.Editing
-                    else -> HubMode.Logging
-                }
-                // These ask the lifter to type something: the hub opens by itself and goes back to the strip afterwards
-                val hubNeedsInput = hubMode == HubMode.MiniSet || hubMode == HubMode.EditingSet || hubMode == HubMode.Editing
-
-                HubPanel(
-                    sheet = hubSheet,
-                    visible = showBottomHub,
-                    locked = hubNeedsInput,
-                    hapticEnabled = state.hapticEnabled,
-                    horizontalPadding = com.emanuel5014.trainable.ui.theme.ResponsiveSize.horizontalPadding,
-                    onHeightChanged = { hubHeightPx = it },
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                ) { expansion ->
-                        AnimatedVisibility(
-                            visible = state.warmupTimerEnabled && state.warmupTimerRemaining > 0,
-                            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-                            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
-                        ) {
-                            val warmupProgress = if (state.warmupTimerTotalSeconds > 0)
-                                1f - (state.warmupTimerRemaining.toFloat() / state.warmupTimerTotalSeconds.toFloat()) else 0f
-                            val e = expansion()
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp)
-                                    .clip(RoundedCornerShape(lerp(14.dp, 18.dp, e)))
-                                    .background(Tertiary)
-                                    .padding(lerp(9.dp, 16.dp, e))
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            CircularWavyProgressIndicator(
-                                                progress = { warmupProgress },
-                                                modifier = Modifier.size(lerp(32.dp, 48.dp, e)),
-                                                color = OnTertiary,
-                                                trackColor = OnTertiary.copy(alpha = 0.2f),
-                                                stroke = WavyProgressIndicatorDefaults.circularIndicatorStroke,
-                                                trackStroke = WavyProgressIndicatorDefaults.circularTrackStroke
-                                            )
-                                            Icon(
-                                                imageVector = Icons.Rounded.Timer,
-                                                contentDescription = null,
-                                                tint = OnTertiary,
-                                                modifier = Modifier.size(lerp(14.dp, 20.dp, e))
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(lerp(10.dp, 14.dp, e)))
-                                        Column {
-                                            HubSlot(expansion = expansion, from = 0.3f, to = 0.55f) {
-                                                Text(
-                                                    text = stringResource(R.string.warmup_label).uppercase(),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = OnTertiary.copy(alpha = 0.7f),
-                                                    fontWeight = FontWeight.ExtraBold,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-                                            val wMinutes = state.warmupTimerRemaining / 60
-                                            val wSeconds = state.warmupTimerRemaining % 60
-                                            Text(
-                                                text = String.format("%d:%02d", wMinutes, wSeconds),
-                                                style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
-                                                color = OnTertiary,
-                                                fontWeight = FontWeight.ExtraBold
-                                            )
-                                        }
-                                    }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        if (state.showTimerSubtract) {
-                                            TimerAdjustButton(
-                                                label = "−${state.timerSubtractSeconds}s",
-                                                onClick = { viewModel.adjustWarmupTime(-state.timerSubtractSeconds) }
-                                            )
-                                        }
-                                        if (state.showTimerAdd) {
-                                            TimerAdjustButton(
-                                                label = "+${state.timerAddSeconds}s",
-                                                onClick = { viewModel.adjustWarmupTime(state.timerAddSeconds) }
-                                            )
-                                        }
-                                        FilledIconButton(
-                                            onClick = { viewModel.skipWarmupTimer() },
-                                            colors = IconButtonDefaults.filledIconButtonColors(
-                                                containerColor = OnTertiary,
-                                                contentColor = Tertiary
-                                            )
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Close,
-                                                contentDescription = stringResource(R.string.cancel)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        AnimatedContent(
-                            targetState = hubMode,
-                            label = "HubTransition",
-                            transitionSpec = {
-                                (fadeIn() + expandVertically(expandFrom = Alignment.Bottom))
-                                    .togetherWith(fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom))
-                            }
-                        ) { mode ->
-                            when (mode) {
-                                HubMode.Cardio -> {
-                                    currentExState?.let { ex ->
-                                        CardioHubSection(
-                                            exerciseState = ex,
-                                            state = state,
-                                            viewModel = viewModel,
-                                            languageCode = languageCode,
-                                            onFinishWorkout = { showFinishDialog = true },
-                                            onAddExercise = {
-                                                isAddingAfterCurrent = false
-                                                showAddExerciseSheet = true
-                                            },
-                                            expansion = expansion
-                                        )
-                                    }
-                                }
-                                HubMode.EditingSet -> {
-                                    val editedIndex = editingSetIndex ?: lastEditedIndex
-                                    val exercise = currentExState
-                                    val editedSet = exercise?.sets?.getOrNull(editedIndex)
-                                    if (exercise != null && editedSet != null) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    stringResource(R.string.adjust_set_number, editedSet.setNumber),
-                                                    style = MaterialTheme.typography.labelLarge,
-                                                    color = Primary,
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    // The rest card is hidden while editing: keep the countdown in sight
-                                                    if (isResting) RestTimerPill(state.remainingRestSeconds)
-                                                    IconButton(onClick = { editingSetIndex = null }) {
-                                                        Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
-                                                    }
-                                                }
-                                            }
-                                            if (exercise.isTimeAndReps) {
-                                                TimeRepsInput(
-                                                    seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
-                                                    reps = editedSet.reps,
-                                                    onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
-                                                    onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) }
-                                                )
-                                                RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
-                                            } else if (exercise.isTimeAndWeight) {
-                                                WeightTimeInput(
-                                                    weight = editedSet.weight,
-                                                    seconds = editedSet.timeSeconds ?: exercise.timeTargetSeconds ?: 45,
-                                                    onWeightChange = { viewModel.editSetWeight(state.currentExerciseIndex, editedIndex, it) },
-                                                    onSecondsChange = { viewModel.editSetSeconds(state.currentExerciseIndex, editedIndex, it) },
-                                                    weightUnit = state.weightUnit
-                                                )
-                                                RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
-                                            } else {
-                                                WeightRepsInput(
-                                                    weight = editedSet.weight,
-                                                    reps = editedSet.reps,
-                                                    onWeightChange = { viewModel.editSetWeight(state.currentExerciseIndex, editedIndex, it) },
-                                                    onRepsChange = { viewModel.editSetReps(state.currentExerciseIndex, editedIndex, it) },
-                                                    weightUnit = state.weightUnit
-                                                )
-                                                SetPercentChip(exercise, editedSet) {
-                                                    loadSheetFor = state.currentExerciseIndex to editedSet.prescription?.blockIndex
-                                                }
-                                                RpeInput(state, editedSet.rpe) { viewModel.editSetRpe(state.currentExerciseIndex, editedIndex, it) }
-                                                if (state.setPerformanceEnabled) {
-                                                    SetExtrasRow(
-                                                        assisted = editedSet.assistedReps,
-                                                        partial = editedSet.partialReps,
-                                                        onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, editedIndex, it) },
-                                                        onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, editedIndex, it) },
-                                                        hapticEnabled = state.hapticEnabled,
-                                                        techniqueChanged = editedSet.performedTechniques != null,
-                                                        onEditTechnique = if (editedSet.prescription?.techniques.isNullOrEmpty()) null else {
-                                                            { techniqueDialogFor = state.currentExerciseIndex to editedIndex }
-                                                        }
-                                                    )
-                                                }
-                                                // A set already done can still be finished after a short pause
-                                                if (state.setPerformanceEnabled && editedSet.isCompleted && !editedSet.isEmom) {
-                                                    MiniSetOfferButton(missing = 0, onClick = {
-                                                        editingSetIndex = null
-                                                        viewModel.startMiniSet(state.currentExerciseIndex, editedIndex)
-                                                    })
-                                                }
-                                            }
-                                            GymButton(
-                                                onClick = { editingSetIndex = null },
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Icon(Icons.Rounded.Check, contentDescription = null)
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    stringResource(R.string.done).uppercase(),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                HubMode.Resting -> {
-                                    Column {
-                                        RestTimerSection(
-                                            remainingSeconds = state.remainingRestSeconds,
-                                            totalRestSeconds = state.totalRestSeconds,
-                                            onAddTime = { viewModel.adjustRestTime(state.timerAddSeconds) },
-                                            onSubtractTime = { viewModel.adjustRestTime(-state.timerSubtractSeconds) },
-                                            addSeconds = state.timerAddSeconds,
-                                            subtractSeconds = state.timerSubtractSeconds,
-                                            showAdd = state.showTimerAdd,
-                                            showSubtract = state.showTimerSubtract,
-                                            onSkip = { viewModel.skipRestTimer() },
-                                            expansion = expansion
-                                        )
-                                        val miniSet = state.miniSet
-                                        val offer = state.miniSetOffer
-                                        if (miniSet != null) {
-                                            val miniSetNumber = state.exercises.getOrNull(miniSet.exerciseIndex)?.sets?.getOrNull(miniSet.setIndex)?.setNumber ?: 0
-                                            HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                                                MiniSetPauseLabel(miniSetNumber)
-                                            }
-                                        } else if (offer != null) {
-                                            HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
-                                                MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
-                                            }
-                                        }
-                                        // The rest is the time to load the bar for the next set
-                                        HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
-                                            ActiveSetPlateChip(currentExState, activeSet, state, plateExercises) { showPlateSheet = true }
-                                        }
-                                    }
-                                }
-                                HubMode.Editing -> {
-                                    activeSet?.let { set ->
-                                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    stringResource(R.string.adjust_set_number, set.setNumber),
-                                                    style = MaterialTheme.typography.labelLarge,
-                                                    color = Primary,
-                                                    fontWeight = FontWeight.ExtraBold
-                                                )
-                                                IconButton(onClick = { isEditingValues = false }) {
-                                                    Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
-                                                }
-                                            }
-                                            if (currentExState?.isTimeAndReps == true) {
-                                                TimeRepsInput(
-                                                    seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: TimeAndReps.DEFAULT_SECONDS,
-                                                    reps = set.reps,
-                                                    onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
-                                                    onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) }
-                                                )
-                                                RpeInput(state, set.rpe) { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
-                                            } else if (currentExState?.isTimeAndWeight == true) {
-                                                WeightTimeInput(
-                                                    weight = set.weight,
-                                                    seconds = set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45,
-                                                    onWeightChange = { newW -> viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newW) },
-                                                    onSecondsChange = { newT -> viewModel.updateSetTimeSeconds(state.currentExerciseIndex, activeSetIndex, newT) },
-                                                    weightUnit = state.weightUnit
-                                                )
-                                                RpeInput(state, set.rpe) { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
-                                            } else {
-                                                if (set.isAmrap) {
-                                                    Text(
-                                                        text = stringResource(R.string.amrap_enter_reps),
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                                set.repsRange?.let { range ->
-                                                    Text(
-                                                        text = stringResource(R.string.reps_goal, range.text),
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color = Primary,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-                                                WeightRepsInput(
-                                                    weight = set.weight,
-                                                    reps = set.reps,
-                                                    onWeightChange = { newW -> viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newW) },
-                                                    onRepsChange = { newR -> viewModel.updateSetReps(state.currentExerciseIndex, activeSetIndex, newR) },
-                                                    weightUnit = state.weightUnit
-                                                )
-                                                SetPercentChip(currentExState, set) {
-                                                    loadSheetFor = state.currentExerciseIndex to set.prescription?.blockIndex
-                                                }
-                                                if (state.plateCalculatorEnabled && currentExState != null) {
-                                                    val exerciseId = currentExState.exercise.id
-                                                    if (exerciseId in plateExercises) {
-                                                        PlateChip(
-                                                            weightKg = set.weight,
-                                                            barKg = plateExercises[exerciseId],
-                                                            weightUnit = state.weightUnit,
-                                                            plates = state.availablePlates,
-                                                            onClick = { showPlateSheet = true }
-                                                        )
-                                                    } else {
-                                                        PlateCalculatorEnableChip(onClick = {
-                                                            viewModel.setPlateCalculator(exerciseId, true, null)
-                                                            showPlateSheet = true
-                                                        })
-                                                    }
-                                                }
-                                                RpeInput(state, set.rpe) { viewModel.updateSetRpe(state.currentExerciseIndex, activeSetIndex, it) }
-                                                if (state.setPerformanceEnabled) {
-                                                    SetExtrasRow(
-                                                        assisted = set.assistedReps,
-                                                        partial = set.partialReps,
-                                                        onAssistedChange = { viewModel.updateSetAssistedReps(state.currentExerciseIndex, activeSetIndex, it) },
-                                                        onPartialChange = { viewModel.updateSetPartialReps(state.currentExerciseIndex, activeSetIndex, it) },
-                                                        hapticEnabled = state.hapticEnabled,
-                                                        techniqueChanged = set.performedTechniques != null,
-                                                        onEditTechnique = if (set.prescription?.techniques.isNullOrEmpty()) null else {
-                                                            { techniqueDialogFor = state.currentExerciseIndex to activeSetIndex }
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                            LogSetButton(onClick = {
-                                                if (currentExState?.isTimed == true) {
-                                                    viewModel.skipTimerAndLogSet(
-                                                        state.currentExerciseIndex,
-                                                        activeSetIndex,
-                                                        set.weight,
-                                                        set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
-                                                    )
-                                                } else {
-                                                    viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
-                                                }
-                                                isEditingValues = false
-                                            })
-                                        }
-                                    }
-                                }
-                                HubMode.Logging -> {
-                                    activeSet?.let { set ->
-                                        // The card keeps its place all the way down to the strip: what goes around it leaves first
-                                        val e = expansion()
-                                        Column {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clip(RoundedCornerShape(lerp(18.dp, 24.dp, e)))
-                                                    .background(SurfaceContainerHigh)
-                                                    .clickable { isEditingValues = true }
-                                                    .padding(lerp(8.dp, 12.dp, e)),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(lerp(36.dp, 48.dp, e))
-                                                        .clip(CircleShape)
-                                                        .background(Primary.copy(alpha = 0.1f)),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text("${set.setNumber}", color = Primary, fontWeight = FontWeight.ExtraBold)
-                                                }
-                                                Spacer(modifier = Modifier.width(lerp(10.dp, 16.dp, e)))
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    HubSlot(expansion = expansion, from = 0.3f, to = 0.6f) {
-                                                        Text(stringResource(R.string.active_set), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
-                                                    }
-                                                    Text(
-                                                        text = setValueText(
-                                                            kind = currentExState?.setKind ?: SetLogKind.STRENGTH,
-                                                            weightKg = set.weight,
-                                                            reps = set.reps,
-                                                            seconds = if (currentExState?.isTimed == true) set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45 else null,
-                                                            weightUnit = state.weightUnit,
-                                                            repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
-                                                        ),
-                                                        style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.82f, 1f, e)),
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                    val p = set.prescription
-                                                    val detail = listOfNotNull(
-                                                        p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) },
-                                                        set.repsRange?.let { stringResource(R.string.reps_goal, it.text) }
-                                                    ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
-                                                        listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
-                                                    if (detail.isNotEmpty()) {
-                                                        HubSlot(expansion = expansion, from = 0.25f, to = 0.5f) {
-                                                            Text(
-                                                                text = detail.joinToString(" · "),
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = Primary,
-                                                                fontWeight = FontWeight.ExtraBold,
-                                                                maxLines = 1,
-                                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                                Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
-                                                Spacer(modifier = Modifier.width(12.dp))
-                                                LogSetButton(
-                                                    onClick = {
-                                                        if (set.isAmrap) {
-                                                            isEditingValues = true
-                                                        } else if (currentExState?.isTimed == true) {
-                                                            viewModel.skipTimerAndLogSet(
-                                                                state.currentExerciseIndex,
-                                                                activeSetIndex,
-                                                                set.weight,
-                                                                set.timeSeconds ?: currentExState.timeTargetSeconds ?: 45
-                                                            )
-                                                        } else {
-                                                            viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
-                                                        }
-                                                    },
-                                                    modifier = Modifier.width(120.dp).height(lerp(44.dp, 48.dp, e)),
-                                                    compact = true
-                                                )
-                                            }
-                                            HubSlot(expansion = expansion, from = 0.45f, to = 0.7f, gap = 8.dp) {
-                                                ActiveSetPlateChip(currentExState, set, state, plateExercises) { showPlateSheet = true }
-                                            }
-                                        }
-                                    }
-                                }
-                                HubMode.MiniSet -> {
-                                    state.miniSet?.let { run ->
-                                        val miniSetSet = state.exercises.getOrNull(run.exerciseIndex)?.sets?.getOrNull(run.setIndex)
-                                        if (miniSetSet != null) {
-                                            MiniSetEntry(
-                                                setNumber = miniSetSet.setNumber,
-                                                soFar = miniSetSet.repParts.ifEmpty { listOf(miniSetSet.reps) }.joinToString("+"),
-                                                initialReps = run.missing,
-                                                hapticEnabled = state.hapticEnabled,
-                                                onLog = { viewModel.logMiniSet(it) },
-                                                onEnd = { viewModel.endMiniSet() }
-                                            )
-                                        }
-                                    }
-                                }
-                                HubMode.Completed -> {
-                                    val isLastExercise = state.currentExerciseIndex == state.exercises.size - 1
-                                    val allowModify = state.isQuickWorkout || state.inlineExerciseModificationsEnabled
-                                    // On the strip the exercise buttons are a little lower and Add and the mini-set offer are gone
-                                    val navHeight = hubNavHeight(expansion())
-
-                                    Column(modifier = Modifier.fillMaxWidth()) {
-                                        // The last set of the workout has no rest to offer it in
-                                        state.miniSetOffer?.let { offer ->
-                                            HubSlot(expansion = expansion, from = 0.55f, to = 0.8f, gapBelow = 8.dp) {
-                                                MiniSetOfferButton(missing = offer.missing, onClick = { viewModel.startMiniSet(offer.exerciseIndex, offer.setIndex) })
-                                            }
-                                        }
-                                        if (allowModify) {
-                                            HubSlot(expansion = expansion, from = 0.55f, to = 0.8f, gapBelow = 8.dp) {
-                                                GymButton(
-                                                    onClick = {
-                                                        isAddingAfterCurrent = false
-                                                        showAddExerciseSheet = true
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    containerColor = SurfaceContainerHigh,
-                                                    contentColor = Primary
-                                                ) {
-                                                    Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(
-                                                        text = stringResource(R.string.add_exercise).uppercase(),
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                        ) {
-                                            // Previous Exercise Button
-                                            if (state.currentExerciseIndex > 0) {
-                                                val prevName = state.exercises[state.currentExerciseIndex - 1].exercise.nome
-                                                HubPreviousButton(
-                                                    previousName = ExerciseTranslations.translate(prevName, languageCode),
-                                                    expansion = expansion,
-                                                    onClick = { viewModel.previousExercise() },
-                                                    nameStyle = MaterialTheme.typography.bodyMedium,
-                                                    nameWeight = FontWeight.Black,
-                                                    height = navHeight
-                                                )
-                                            }
-
-                                            // Next / Finish Button
-                                            if (!isLastExercise) {
-                                                val nextName = state.exercises[state.currentExerciseIndex + 1].exercise.nome
-                                                val translatedNext = ExerciseTranslations.translate(nextName, languageCode)
-                                                GymButton(
-                                                    onClick = { viewModel.nextExercise() },
-                                                    modifier = Modifier.weight(1f),
-                                                    height = navHeight
-                                                ) {
-                                                    Column(
-                                                        horizontalAlignment = Alignment.End,
-                                                        modifier = Modifier.weight(1f)
-                                                    ) {
-                                                        Text(
-                                                            text = stringResource(R.string.next_exercise_btn).uppercase(),
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = OnPrimary.copy(alpha = 0.75f),
-                                                            fontWeight = FontWeight.ExtraBold
-                                                        )
-                                                        Text(
-                                                            text = translatedNext,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = OnPrimary,
-                                                            fontWeight = FontWeight.Black,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    }
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Icon(
-                                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                                        contentDescription = null
-                                                    )
-                                                }
-                                            } else if (state.isQuickWorkout) {
-                                                // Quick workout last exercise finish button
-                                                GymButton(
-                                                    onClick = { showFinishDialog = true },
-                                                    modifier = Modifier.weight(1f),
-                                                    height = navHeight
-                                                ) {
-                                                    Icon(Icons.Rounded.Check, contentDescription = null)
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(
-                                                        text = stringResource(R.string.finish_workout).uppercase(),
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                }
-                                            } else {
-                                                // Guided / Quick workout last exercise finish button
-                                                GymButton(
-                                                    onClick = { showFinishDialog = true },
-                                                    modifier = Modifier.weight(1f),
-                                                    height = navHeight
-                                                ) {
-                                                    Icon(Icons.Rounded.Check, contentDescription = null)
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(
-                                                        text = stringResource(R.string.finish_workout).uppercase(),
-                                                        fontWeight = FontWeight.ExtraBold
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // The first thing to leave when the hub shrinks: the strip keeps only the main action
-                        if ((!isExerciseCompleted && !isEmomActive) || isResting) {
-                            HubSlot(expansion = expansion, from = 0.7f, to = 0.95f, gap = 16.dp) {
-                                ExerciseNavigation(
-                                    onPrevious = { viewModel.previousExercise() },
-                                    onNext = {
-                                        if (state.currentExerciseIndex == state.exercises.size - 1) {
-                                            showFinishDialog = true
-                                        } else {
-                                            viewModel.nextExercise()
-                                        }
-                                    },
-                                    hasPrevious = state.currentExerciseIndex > 0,
-                                    hasNext = state.currentExerciseIndex < state.exercises.size - 1,
-                                    previousName = if (state.currentExerciseIndex > 0) state.exercises[state.currentExerciseIndex - 1].exercise.nome else null,
-                                    nextName = if (state.currentExerciseIndex < state.exercises.size - 1) state.exercises[state.currentExerciseIndex + 1].exercise.nome else null,
-                                    languageCode = languageCode
-                                )
-                            }
-                        }
-                }
+                WorkoutHub(
+                    state = state,
+                    ui = ui,
+                    viewModel = viewModel,
+                    currentExState = currentExState,
+                    activeSet = activeSet,
+                    activeSetIndex = activeSetIndex,
+                    isExerciseCompleted = isExerciseCompleted,
+                    setBeingEdited = setBeingEdited,
+                    usesEmomClock = usesEmomClock,
+                    hubSheet = hubSheet,
+                    onHubHeightChanged = { hubHeightPx = it },
+                    languageCode = languageCode,
+                    prescriptionLabels = prescriptionLabels,
+                    plateExercises = plateExercises
+                )
             }
 
             if (state.isFinishing) {
@@ -2047,364 +573,23 @@ fun WorkoutExecutionScreen(
             }
         }
         
-        if (showWarmupTimerDialog) {
-            AlertDialog(
-                onDismissRequest = { showWarmupTimerDialog = false },
-                title = {
-                    Text(stringResource(R.string.warmup_timer), fontWeight = FontWeight.Black)
-                },
-                text = {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.warmup_timer_description),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = OnSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        val haptic = LocalHapticFeedback.current
-                        RestSlider(
-                            value = warmupTimerDuration,
-                            onValueChange = { warmupTimerDuration = it },
-                            hapticEnabled = true,
-                            haptic = haptic
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        viewModel.startWarmupTimer(warmupTimerDuration)
-                        showWarmupTimerDialog = false
-                    }) {
-                        Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showWarmupTimerDialog = false }) {
-                        Text(stringResource(R.string.cancel).uppercase())
-                    }
-                },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
-            )
-        }
-
-        if (showPlateSheet && activeSet != null) {
-            currentExState?.let { exState ->
-                val exerciseId = exState.exercise.id
-                PlateCalculatorSheet(
-                    exerciseName = ExerciseTranslations.translate(exState.exercise.nome, languageCode),
-                    weightKg = activeSet.weight,
-                    barKg = plateExercises[exerciseId],
-                    weightUnit = state.weightUnit,
-                    plates = state.availablePlates,
-                    onApply = { newWeightKg ->
-                        viewModel.updateSetWeight(state.currentExerciseIndex, activeSetIndex, newWeightKg)
-                    },
-                    onBarChange = { barKg -> viewModel.setPlateCalculator(exerciseId, true, barKg) },
-                    onDisable = { viewModel.setPlateCalculator(exerciseId, false, plateExercises[exerciseId]) },
-                    onDismiss = { showPlateSheet = false }
-                )
-            }
-        }
-
-        // --- Changing the program of an exercise during the workout ---
-        programEditFor?.let { exerciseIndex ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            if (exercise == null || !exercise.isAdvanced) {
-                programEditFor = null
-            } else {
-                val editedName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode)
-                ExercisePrescriptionSheet(
-                    exerciseId = exercise.exercise.id,
-                    exerciseName = editedName,
-                    initialBlocks = exercise.blocks,
-                    subtitle = stringResource(R.string.program_edit_subtitle),
-                    onDismiss = { programEditFor = null },
-                    onSave = { blocks ->
-                        val canUpdateRoutine = exercise.planDetails != null && exercise.swappedExerciseId == null
-                        when {
-                            blocks == exercise.blocks -> programEditFor = null
-                            // An exercise that is not in the routine can only be a variation of this workout
-                            !canUpdateRoutine -> {
-                                viewModel.applyProgramEdit(exerciseIndex, blocks, ProgramEditScope.WORKOUT)
-                                programEditFor = null
-                            }
-                            else -> pendingProgram = exerciseIndex to blocks
-                        }
-                    },
-                    onRemove = null
-                )
-            }
-        }
-
-        pendingProgram?.let { (exerciseIndex, blocks) ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            if (exercise == null) {
-                pendingProgram = null
-            } else {
-                ProgramEditScopeDialog(
-                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
-                    week = state.programWeek,
-                    onChoose = { scope ->
-                        viewModel.applyProgramEdit(exerciseIndex, blocks, scope)
-                        pendingProgram = null
-                        programEditFor = null
-                    },
-                    onDismiss = { pendingProgram = null }
-                )
-            }
-        }
-
-        loadSheetFor?.let { (exerciseIndex, blockIndex) ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            val toDo = exercise?.let { ProgramEditing.percentBlocksToDo(it.sets, it.blocks) }.orEmpty()
-            if (exercise == null || toDo.isEmpty()) {
-                loadSheetFor = null
-            } else {
-                LoadPercentSheet(
-                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
-                    blocks = exercise.blocks,
-                    activeBlockIndex = blockIndex,
-                    blocksToDo = toDo,
-                    setsToDoByBlock = exercise.sets.filter { !it.isCompleted && !it.isExtra }
-                        .groupingBy { it.prescription?.blockIndex ?: -1 }.eachCount(),
-                    oneRepMaxKg = exercise.oneRepMaxKg,
-                    weightUnit = state.weightUnit,
-                    roundingIncrement = state.loadRoundingIncrement,
-                    programWeek = state.programWeek,
-                    canUpdatePlan = exercise.planDetails != null && exercise.swappedExerciseId == null,
-                    hapticEnabled = state.hapticEnabled,
-                    onApply = { blockIndices, delta, scope ->
-                        viewModel.shiftLoad(exerciseIndex, blockIndices, delta, scope)
-                        loadSheetFor = null
-                    },
-                    onDismiss = { loadSheetFor = null }
-                )
-            }
-        }
-
-        programHistoryFor?.let { exerciseIndex ->
-            val exercise = state.exercises.getOrNull(exerciseIndex)
-            if (exercise == null || exercise.programEdits.isEmpty()) {
-                programHistoryFor = null
-            } else {
-                ProgramEditHistoryDialog(
-                    exerciseName = ExerciseTranslations.translate(exercise.exercise.nome, languageCode),
-                    edits = exercise.programEdits,
-                    weightUnit = state.weightUnit,
-                    onDismiss = { programHistoryFor = null }
-                )
-            }
-        }
-
-        if (showSwapExerciseSheet) {
-            currentExState?.let { exState ->
-                SwapExerciseBottomSheet(
-                    // A cardio exercise has no sets or reps to carry over
-                    currentSets = exState.sets.size.takeIf { it > 0 } ?: 3,
-                    currentReps = if (exState.isCardio) "8" else exState.currentReps.repsTarget,
-                    currentRepsMax = if (exState.isCardio) null else exState.currentReps.repsMax,
-                    availableExercises = availableExercises,
-                    languageCode = languageCode,
-                    onExerciseSelected = { newExercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                        viewModel.swapExercise(
-                            state.currentExerciseIndex, newExercise.id, sets, reps.repsTarget, rest, exerciseType, durataTargetSec,
-                            repsMax = reps.repsMax
-                        )
-                        showSwapExerciseSheet = false
-                    },
-                    onAddCustomExercise = { nome, categoria, onCreated ->
-                        viewModel.addCustomExercise(nome, categoria, onCreated)
-                    },
-                    onEditCustomExercise = { exercise ->
-                        viewModel.updateCustomExercise(exercise)
-                    },
-                    onDeleteCustomExercise = { exercise ->
-                        viewModel.deleteCustomExercise(exercise)
-                    },
-                    onDismiss = { showSwapExerciseSheet = false },
-                    editablePresetExercises = state.editablePresetExercises,
-                    categories = categories,
-                    onCardioExerciseSelected = { newExercise, durationMinutes, rest, sets ->
-                        viewModel.swapToCardioExercise(state.currentExerciseIndex, newExercise.id, durationMinutes, rest, sets)
-                        showSwapExerciseSheet = false
-                    },
-                    onAdvancedExerciseSelected = { newExercise, blocks, rest ->
-                        val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
-                        viewModel.swapExercise(state.currentExerciseIndex, newExercise.id, sets, reps, rest, blocks = blocks)
-                        showSwapExerciseSheet = false
-                    },
-                    initialBlocks = exState.blocks,
-                    currentExerciseId = exState.exercise.id
-                )
-            }
-        }
-
-        if (showAddExerciseSheet) {
-            SwapExerciseBottomSheet(
-                currentSets = 3,
-                currentReps = "8",
-                availableExercises = availableExercises,
-                languageCode = languageCode,
-                onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                    if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
-                    } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps.repsTarget, rest, exerciseType = exerciseType, durataTargetSecondi = durataTargetSec, repsMax = reps.repsMax)
-                    }
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                },
-                onAddCustomExercise = { nome, categoria, onCreated ->
-                    viewModel.addCustomExercise(nome, categoria, onCreated)
-                },
-                onEditCustomExercise = viewModel::updateCustomExercise,
-                onDeleteCustomExercise = viewModel::deleteCustomExercise,
-                onDismiss = {
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                },
-                isAdding = true,
-                editablePresetExercises = state.editablePresetExercises,
-                categories = categories,
-                onCardioExerciseSelected = { exercise, durationMinutes, rest, sets ->
-                    if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
-                    } else {
-                        viewModel.addExerciseToActiveSession(exercise, 1, "1", rest, durationMinutes, cardioSetsCount = sets)
-                    }
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                },
-                onAdvancedExerciseSelected = { exercise, blocks, rest ->
-                    val (sets, reps) = com.emanuel5014.trainable.domain.prescription.PrescriptionExpander.legacyTargets(blocks)
-                    if (isAddingAfterCurrent) {
-                        viewModel.addExerciseAfterCurrent(exercise, sets, reps, rest, blocks = blocks)
-                    } else {
-                        viewModel.addExerciseToActiveSession(exercise, sets, reps, rest, blocks = blocks)
-                    }
-                    isAddingAfterCurrent = false
-                    showAddExerciseSheet = false
-                }
-            )
-        }
-
-        if (showCancelDialog) {
-            AlertDialog(
-                onDismissRequest = { showCancelDialog = false },
-                title = { Text(stringResource(R.string.cancel_workout_title)) },
-                text = { Text(stringResource(R.string.cancel_workout_message)) },
-                confirmButton = {
-                    GymButton(
-                        onClick = {
-                            viewModel.cancelWorkout { safeNavigateBack() }
-                            showCancelDialog = false
-                        },
-                        containerColor = Error.copy(alpha = 0.1f),
-                        contentColor = Error,
-                        modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                dismissButton = {
-                    GymButton(
-                        onClick = { showCancelDialog = false },
-                        containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant,
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase())
-                    }
-                },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
-            )
-        }
-
-        if (showFinishDialog && state.journalEnabled && state.journalPromptAtFinish) {
-            FinishWorkoutSheet(
-                title = stringResource(R.string.finish_workout_title),
-                message = stringResource(
-                    if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
-                    else R.string.finish_workout_message_incomplete
-                ),
-                journal = state.journalDraft,
-                onJournalChange = viewModel::updateJournalDraft,
-                hapticEnabled = state.hapticEnabled,
-                onFinish = {
-                    viewModel.finishWorkout()
-                    showFinishDialog = false
-                },
-                onCancel = { showFinishDialog = false }
-            )
-        } else if (showFinishDialog) {
-            AlertDialog(
-                onDismissRequest = { showFinishDialog = false },
-                title = { Text(stringResource(R.string.finish_workout_title)) },
-                text = {
-                    Text(
-                        stringResource(
-                            if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
-                            else R.string.finish_workout_message_incomplete
-                        )
-                    )
-                },
-                confirmButton = {
-                    GymButton(
-                        onClick = {
-                            viewModel.finishWorkout()
-                            showFinishDialog = false
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                dismissButton = {
-                    GymButton(
-                        onClick = { showFinishDialog = false },
-                        containerColor = Color.Transparent,
-                        contentColor = OnSurfaceVariant,
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel).uppercase())
-                    }
-                },
-                containerColor = SurfaceContainerHigh,
-                titleContentColor = OnSurface,
-                textContentColor = OnSurfaceVariant
-            )
-        }
+        WorkoutDialogs(
+            state = state,
+            ui = ui,
+            viewModel = viewModel,
+            currentExState = currentExState,
+            activeSet = activeSet,
+            activeSetIndex = activeSetIndex,
+            plateExercises = plateExercises,
+            languageCode = languageCode,
+            availableExercises = availableExercises,
+            categories = categories,
+            safeNavigateBack = safeNavigateBack
+        )
     }
 }
 
 enum class HubMode { Logging, Editing, EditingSet, Resting, MiniSet, Completed, Cardio }
-
-@Composable
-fun rememberAnimatedShape(
-    morph: Morph,
-    progress: Float
-): Shape {
-    return remember(morph, progress) {
-        object : Shape {
-            override fun createOutline(
-                size: Size,
-                layoutDirection: LayoutDirection,
-                density: Density
-            ): Outline {
-                val path = morph.toPath(progress).asComposePath()
-                val matrix = Matrix()
-                matrix.scale(size.width, size.height)
-                path.transform(matrix)
-                path.translate(size.center - path.getBounds().center)
-                return Outline.Generic(path)
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -2728,13 +913,13 @@ fun CardioExerciseContent(
 
 /** The RPE selector of a set, with the scale the user chose; nothing while the RPE switch is off. */
 @Composable
-private fun RpeInput(state: WorkoutState, value: Float?, onValueChange: (Float?) -> Unit) {
+internal fun RpeInput(state: WorkoutState, value: Float?, onValueChange: (Float?) -> Unit) {
     if (state.rpeEnabled) RpeSelector(value = value, onValueChange = onValueChange, scale = state.rpeScale, hapticEnabled = state.hapticEnabled)
 }
 
 /** The rest countdown in a small pill, for when the bottom hub is busy with something else. */
 @Composable
-private fun RestTimerPill(remainingSeconds: Int, modifier: Modifier = Modifier) {
+internal fun RestTimerPill(remainingSeconds: Int, modifier: Modifier = Modifier) {
     val time = String.format("%d:%02d", remainingSeconds / 60, remainingSeconds % 60)
     val description = stringResource(R.string.rest_timer_remaining, time)
     Row(
@@ -2758,7 +943,7 @@ private fun RestTimerPill(remainingSeconds: Int, modifier: Modifier = Modifier) 
 
 /** The way into the load editor for a set that asks for a %1RM and is still to do. */
 @Composable
-private fun SetPercentChip(exercise: WorkoutExerciseState?, set: WorkoutSetState?, onClick: () -> Unit) {
+internal fun SetPercentChip(exercise: WorkoutExerciseState?, set: WorkoutSetState?, onClick: () -> Unit) {
     val prescription = set?.prescription ?: return
     if (exercise == null || set.isCompleted || set.isExtra || prescription.intensityType != IntensityType.PERCENT) return
     if (prescription.blockIndex !in ProgramEditing.percentBlocksToDo(exercise.sets, exercise.blocks)) return
@@ -2770,7 +955,7 @@ private fun SetPercentChip(exercise: WorkoutExerciseState?, set: WorkoutSetState
 
 /** The plate calculator line for the set about to be done, when this exercise uses the calculator. */
 @Composable
-private fun ActiveSetPlateChip(
+internal fun ActiveSetPlateChip(
     exercise: WorkoutExerciseState?,
     set: WorkoutSetState?,
     state: WorkoutState,
@@ -2956,14 +1141,14 @@ fun CardioHubSection(
 }
 
 /** Height of the exercise buttons in the bottom hub: a little lower on the strip. */
-private fun hubNavHeight(expansion: Float): Int = lerp(52f, 64f, expansion).roundToInt()
+internal fun hubNavHeight(expansion: Float): Int = lerp(52f, 64f, expansion).roundToInt()
 
 /**
  * "Previous exercise" in the bottom hub. As the hub shrinks to its strip the button gives up its label and most
  * of its width and keeps only the arrow, so "next" can take the room.
  */
 @Composable
-private fun RowScope.HubPreviousButton(
+internal fun RowScope.HubPreviousButton(
     previousName: String,
     expansion: () -> Float,
     onClick: () -> Unit,
@@ -3020,6 +1205,7 @@ fun LogSetButton(
     GymButton(
         onClick = onClick,
         modifier = modifier.then(if (!compact) Modifier.fillMaxWidth() else Modifier.height(48.dp)),
+        pressMorph = true,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(if (compact) 20.dp else 24.dp))
@@ -3032,46 +1218,3 @@ fun LogSetButton(
 }
 
 
-/** The reps of a Time & Reps set in its timer card: big − / + so they can be counted up mid-interval with one thumb. */
-@Composable
-private fun RepsDoneStepper(reps: Int, onRepsChange: (Int) -> Unit, hapticEnabled: Boolean) {
-    val haptic = LocalHapticFeedback.current
-    fun change(to: Int) {
-        if (to < 0 || to > TimeAndReps.MAX_REPS) return
-        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        onRepsChange(to)
-    }
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = stringResource(R.string.reps_done_label).uppercase(),
-            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-            color = OnSurfaceVariant,
-            fontWeight = FontWeight.ExtraBold
-        )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            FilledIconButton(
-                onClick = { change(reps - 1) },
-                enabled = reps > 0,
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = SurfaceContainerHigh, contentColor = OnSurface),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.reps_decrease))
-            }
-            Text(
-                text = "$reps",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = Primary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.widthIn(min = 56.dp)
-            )
-            FilledIconButton(
-                onClick = { change(reps + 1) },
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Primary, contentColor = OnPrimary),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.reps_increase))
-            }
-        }
-    }
-}
