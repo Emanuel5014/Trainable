@@ -55,18 +55,22 @@ class ExerciseRepository @Inject constructor(
     ): Int {
         // Creating again an exercise that was hidden brings the old one back, so its history and routines go on with it.
         // A custom one takes the category picked now (issue #41); a preset keeps its own, since it cannot be edited while
-        // the presets are locked. The description it had stays unless one is typed now (a picker has no description field),
-        // and its muscles and equipment stay as they were. A name in any language finds it, as the duplicate check does.
+        // the presets are locked. The description it had stays unless one is typed now (a picker has no description field);
+        // likewise a custom one takes the muscles and equipment chosen now, and a preset keeps its own. A name in any
+        // language finds it, as the duplicate check does.
         val hidden = ExerciseNames.findHidden(
             nome,
             exerciseDao.getAllExercisesIncludingDeleted().first(),
             exerciseDao.getExerciseMerges().map { it.loserId }.toSet()
         )
         if (hidden != null) {
+            val revived = ExerciseTraits.forRevival(hidden.id, StoredTraits(hidden.muscles, hidden.equipment), traits)
             exerciseDao.reviveExercise(
                 hidden.id,
                 if (hidden.id < ExerciseEntity.FIRST_CUSTOM_ID) hidden.categoria else categoria,
-                description?.takeIf { it.isNotBlank() } ?: hidden.descrizione
+                description?.takeIf { it.isNotBlank() } ?: hidden.descrizione,
+                revived.muscles,
+                revived.equipment
             )
             return hidden.id
         }

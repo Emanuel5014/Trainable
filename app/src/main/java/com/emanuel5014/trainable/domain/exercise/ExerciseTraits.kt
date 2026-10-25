@@ -74,6 +74,20 @@ data class ExerciseTraits(val muscles: Set<Muscle> = emptySet(), val equipment: 
             )
         }
 
+        /**
+         * The columns to keep when the exercise [exerciseId], hidden and holding [current] columns, is brought back by
+         * creating it again with [chosen] in the form. A custom exercise takes what was typed now, column by column
+         * (muscles and equipment not typed stay as they were), like its category and description; a preset keeps its own.
+         */
+        fun forRevival(exerciseId: Int, current: StoredTraits, chosen: ExerciseTraits): StoredTraits {
+            if (exerciseId < ExerciseEntity.FIRST_CUSTOM_ID) return current
+            val typed = forStorage(exerciseId, chosen)
+            return StoredTraits(
+                muscles = if (chosen.muscles.isNotEmpty()) typed.muscles else current.muscles,
+                equipment = if (chosen.equipment != null) typed.equipment else current.equipment
+            )
+        }
+
         private fun musclesOf(column: String?, shipped: Set<Muscle>): Set<Muscle> = when {
             column == null -> shipped
             column.isEmpty() -> emptySet()

@@ -52,8 +52,14 @@ interface ExerciseDao {
     suspend fun setExerciseDeleted(id: Int, deleted: Boolean)
 
     /** Brings a deleted exercise back to the library as the one the user is creating now. */
-    @Query("UPDATE exercises SET is_deleted = 0, categoria = :categoria, descrizione = :descrizione WHERE id = :id")
-    suspend fun reviveExercise(id: Int, categoria: String, descrizione: String?)
+    @Query(
+        """
+        UPDATE exercises
+        SET is_deleted = 0, categoria = :categoria, descrizione = :descrizione, muscles = :muscles, equipment = :equipment
+        WHERE id = :id
+        """
+    )
+    suspend fun reviveExercise(id: Int, categoria: String, descrizione: String?, muscles: String?, equipment: String?)
 
     /**
      * True when a workout, a routine, a swap, a program change or a 1RM still refers to the exercise, or a merge with
