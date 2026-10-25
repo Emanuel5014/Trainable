@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.screens.exercise
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
+import com.emanuel5014.trainable.ui.components.FavoriteToggle
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
@@ -166,6 +167,7 @@ fun ExerciseDetailDialog(
                 snackbarHost = snackbarHost,
                 actions = {
                     if (exercise != null) {
+                        if (state.actions.canFavorite) FavoriteToggle(exercise.isFavorite, viewModel::setFavorite)
                         ExerciseActionsMenu(
                             actions = state.actions,
                             isPreset = exercise.id < ExerciseEntity.FIRST_CUSTOM_ID,

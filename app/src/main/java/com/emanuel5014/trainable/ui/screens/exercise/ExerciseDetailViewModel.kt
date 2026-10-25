@@ -204,6 +204,14 @@ class ExerciseDetailViewModel @Inject constructor(
         }
     }
 
+    /** Stars or unstars the open exercise, unless its actions do not allow it (hidden, or merged into another). */
+    fun setFavorite(favorite: Boolean) {
+        val current = state.value
+        val exercise = current.exercise ?: return
+        if (!current.actions.canFavorite) return
+        viewModelScope.launch { exerciseRepository.setFavorite(exercise.id, favorite) }
+    }
+
     /** Stores the image or GIF the user picked as the media of [exerciseId], replacing the one it had. */
     fun attachMedia(exerciseId: Int, uri: Uri) {
         viewModelScope.launch {
