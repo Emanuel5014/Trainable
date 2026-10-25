@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
@@ -364,6 +366,7 @@ fun SwapExerciseBottomSheet(
 
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ExerciseListItem(
     exercise: ExerciseEntity,
@@ -397,16 +400,19 @@ internal fun ExerciseListItem(
                 Spacer(modifier = Modifier.width(16.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // The name takes the whole width it needs; the badge and the star follow it, or wrap under it when there is no room
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = ExerciseTranslations.translate(exercise.nome, languageCode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurface,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f, fill = false)
+                        fontWeight = FontWeight.SemiBold
                     )
                     if (exercise.id >= 1000) {
-                        Spacer(modifier = Modifier.width(4.dp))
                         Surface(
                             color = SurfaceContainerHighest,
                             shape = CircleShape,
@@ -420,10 +426,7 @@ internal fun ExerciseListItem(
                             )
                         }
                     }
-                    if (exercise.isFavorite) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        FavoriteMarker()
-                    }
+                    if (exercise.isFavorite) FavoriteMarker()
                 }
                 Text(
                     text = ExerciseTranslations.translateCategory(exercise.categoria, languageCode).uppercase(),
