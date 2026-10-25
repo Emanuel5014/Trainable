@@ -183,6 +183,7 @@
     <string name="search_exercises">Übungen suchen</string>
     <string name="all_categories">Alle</string>
     <string name="no_exercises_found">Keine Übungen gefunden</string>
+    <string name="exercise_picked_badge">Ausgewählt</string>
     <string name="choose_from_library">Aus der Bibliothek wählen</string>
     <string name="filter_custom">Benutzerdefiniert</string>
     <string name="new_exercise">Neue Übung</string>

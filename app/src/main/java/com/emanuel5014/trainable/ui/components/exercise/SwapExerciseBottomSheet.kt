@@ -1,15 +1,10 @@
 package com.emanuel5014.trainable.ui.components
 
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,28 +18,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.verticalScroll
@@ -56,7 +44,6 @@ import com.emanuel5014.trainable.ui.components.exercise.TimeAndRepsEditor
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -80,7 +67,6 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.Error
-import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -153,6 +139,31 @@ fun SwapExerciseBottomSheet(
     val restMemory: RememberedRestViewModel = hiltViewModel()
     val rememberedRest by restMemory.lastRestSeconds.collectAsState()
 
+    val allLabel = stringResource(R.string.all_categories)
+    val favoritesLabel = stringResource(R.string.filter_favorites)
+    val customLabel = stringResource(R.string.filter_custom)
+    // A category can combine with the favorites or the custom ones, so each button is on by itself
+    val filterOptions = buildList {
+        add(
+            ExerciseFilterOption(allLabel, selectedCategory == null && !showOnlyCustom && !showOnlyFavorites) {
+                selectedCategory = null
+                showOnlyCustom = false
+                showOnlyFavorites = false
+            }
+        )
+        if (ExercisePickerFilter.showFavoritesChip(availableExercises, excludedExerciseIds, showOnlyFavorites)) {
+            add(ExerciseFilterOption(favoritesLabel, showOnlyFavorites) { showOnlyFavorites = !showOnlyFavorites })
+        }
+        add(ExerciseFilterOption(customLabel, showOnlyCustom) { showOnlyCustom = !showOnlyCustom })
+        allCategories.forEach { category ->
+            add(
+                ExerciseFilterOption(ExerciseTranslations.translateCategory(category, languageCode), selectedCategory == category) {
+                    selectedCategory = category
+                }
+            )
+        }
+    }
+
     val imeVisible = isKeyboardVisible
 
     when (step) {
@@ -204,53 +215,13 @@ fun SwapExerciseBottomSheet(
                         }
                     }
 
-                    GymInputField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = stringResource(R.string.search_exercises),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    ExerciseSearchField(query = searchQuery, onQueryChange = { searchQuery = it })
 
                     Spacer(modifier = Modifier.height(Spacing.medium))
 
                     AnimatedVisibility(visible = !imeVisible) {
                         Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                FilterChip(
-                                    selected = selectedCategory == null && !showOnlyCustom && !showOnlyFavorites,
-                                    onClick = { 
-                                        selectedCategory = null
-                                        showOnlyCustom = false
-                                        showOnlyFavorites = false
-                                    },
-                                    label = { Text(stringResource(R.string.all_categories)) }
-                                )
-                                if (ExercisePickerFilter.showFavoritesChip(availableExercises, excludedExerciseIds, showOnlyFavorites)) {
-                                    FilterChip(
-                                        selected = showOnlyFavorites,
-                                        onClick = { showOnlyFavorites = !showOnlyFavorites },
-                                        label = { Text(stringResource(R.string.filter_favorites)) }
-                                    )
-                                }
-                                FilterChip(
-                                    selected = showOnlyCustom,
-                                    onClick = { showOnlyCustom = !showOnlyCustom },
-                                    label = { Text(stringResource(R.string.filter_custom)) }
-                                )
-                                allCategories.forEach { category ->
-                                    val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                                    FilterChip(
-                                        selected = selectedCategory == category,
-                                        onClick = { selectedCategory = category },
-                                        label = { Text(translatedCategory) }
-                                    )
-                                }
-                            }
+                            ExerciseFilterBar(options = filterOptions)
 
                             Spacer(modifier = Modifier.height(Spacing.medium))
                         }
@@ -260,19 +231,19 @@ fun SwapExerciseBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.small)
                     ) {
+                        if (filteredExercises.isEmpty()) item { ExerciseEmptyState() }
                         items(filteredExercises) { exercise ->
-                            val isSelected = exercise.id == selectedExercise?.id
-                            ExerciseListItem(
+                            ExercisePickRow(
                                 exercise = exercise,
                                 languageCode = languageCode,
-                                onClick = { 
+                                onClick = {
                                     selectedExercise = exercise
                                     step = 2
                                 },
-                                isSelected = isSelected,
-                                showCurrent = exercise.id == currentExerciseId,
+                                isSelected = exercise.id == selectedExercise?.id,
+                                isCurrent = exercise.id == currentExerciseId,
                                 showThumbnail = showThumbnails,
                                 onThumbnailClick = { exerciseMediaToView = exercise },
                                 onInfoClick = { detailExerciseId = exercise.id }
@@ -284,21 +255,14 @@ fun SwapExerciseBottomSheet(
                         Column {
                             Spacer(modifier = Modifier.height(Spacing.medium))
 
-                            OutlinedButton(
+                            GymButton(
                                 onClick = { showAddCustomDialog = true },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = Shapes.large,
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Primary
-                                ),
-                                border = BorderStroke(1.dp, Primary)
+                                containerColor = SurfaceContainerHigh,
+                                contentColor = OnSurface
                             ) {
-                                Icon(
-                                    Icons.Rounded.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(Spacing.small))
+                                Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
+                                Spacer(modifier = Modifier.width(Spacing.medium))
                                 Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
                             }
                         }
@@ -375,104 +339,6 @@ fun SwapExerciseBottomSheet(
         )
     }
 
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun ExerciseListItem(
-    exercise: ExerciseEntity,
-    languageCode: String,
-    onClick: () -> Unit,
-    isSelected: Boolean,
-    showCurrent: Boolean,
-    showThumbnail: Boolean = false,
-    onThumbnailClick: () -> Unit = {},
-    onInfoClick: () -> Unit = {}
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        color = when {
-            isSelected -> Primary.copy(alpha = 0.1f)
-            else -> SurfaceContainerHigh
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (showThumbnail) {
-                ExerciseListThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick)
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                // The name takes the whole width it needs; the badge and the star follow it, or wrap under it when there is no room
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = ExerciseTranslations.translate(exercise.nome, languageCode),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = OnSurface,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (exercise.id >= 1000) {
-                        Surface(
-                            color = SurfaceContainerHighest,
-                            shape = CircleShape,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                Icons.Rounded.Person,
-                                contentDescription = "Custom",
-                                tint = OnSurfaceVariant,
-                                modifier = Modifier.padding(4.dp).size(12.dp)
-                            )
-                        }
-                    }
-                    if (exercise.isFavorite) FavoriteMarker()
-                }
-                Text(
-                    text = ExerciseTranslations.translateCategory(exercise.categoria, languageCode).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = OnSurfaceVariant
-                )
-            }
-            ExerciseInfoButton(onClick = onInfoClick)
-            if (isSelected) {
-                Surface(
-                    color = Primary,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Selected",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnPrimary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            } else if (showCurrent) {
-                Surface(
-                    color = Surface,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.current_badge),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = OnSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        }
-    }
 }
 
 /**

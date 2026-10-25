@@ -338,7 +338,7 @@ fun ExerciseListThumbnail(fileName: String?, onClick: (() -> Unit)?, size: Dp = 
     }
 }
 
-private val ExerciseListThumbnailSize = 44.dp
+private val ExerciseListThumbnailSize = 56.dp
 
 /** The full-screen, look-only viewer of [exercise]'s media; nothing while [exercise] is null or has no media. */
 @Composable

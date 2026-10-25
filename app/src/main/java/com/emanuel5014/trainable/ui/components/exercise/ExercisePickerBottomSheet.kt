@@ -1,62 +1,33 @@
 package com.emanuel5014.trainable.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -64,22 +35,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
-import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
-import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
-import com.emanuel5014.trainable.ui.theme.Error
-import com.emanuel5014.trainable.ui.theme.OnPrimary
+import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
+import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
-import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
-import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,6 +78,31 @@ fun ExercisePickerBottomSheet(
     }
 
     val showThumbnails = rememberShowExerciseThumbnails(exercises)
+
+    val allLabel = stringResource(R.string.all_categories)
+    val favoritesLabel = stringResource(R.string.filter_favorites)
+    val customLabel = stringResource(R.string.filter_custom)
+    // A category can combine with the favorites or the custom ones, so each button is on by itself
+    val filterOptions = buildList {
+        add(
+            ExerciseFilterOption(allLabel, selectedCategory == null && !showOnlyCustom && !showOnlyFavorites) {
+                selectedCategory = null
+                showOnlyCustom = false
+                showOnlyFavorites = false
+            }
+        )
+        if (ExercisePickerFilter.showFavoritesChip(exercises, emptySet(), showOnlyFavorites)) {
+            add(ExerciseFilterOption(favoritesLabel, showOnlyFavorites) { showOnlyFavorites = !showOnlyFavorites })
+        }
+        if (!pickOnly) add(ExerciseFilterOption(customLabel, showOnlyCustom) { showOnlyCustom = !showOnlyCustom })
+        categories.forEach { category ->
+            add(
+                ExerciseFilterOption(ExerciseTranslations.translateCategory(category, languageCode), selectedCategory == category) {
+                    selectedCategory = category
+                }
+            )
+        }
+    }
 
     val imeVisible = isKeyboardVisible
 
@@ -172,89 +163,13 @@ fun ExercisePickerBottomSheet(
                 }
             }
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text(stringResource(R.string.search_exercises)) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Rounded.Search,
-                        contentDescription = null,
-                        tint = OnSurfaceVariant
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = Shapes.large,
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = OnSurface,
-                    unfocusedTextColor = OnSurface,
-                    focusedBorderColor = Primary,
-                    unfocusedBorderColor = OnSurfaceVariant.copy(alpha = 0.5f),
-                    focusedLeadingIconColor = Primary,
-                    unfocusedLeadingIconColor = OnSurfaceVariant,
-                    cursorColor = Primary
-                )
-            )
+            ExerciseSearchField(query = searchQuery, onQueryChange = { searchQuery = it })
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
             AnimatedVisibility(visible = !imeVisible) {
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                    ) {
-                        FilterChip(
-                            selected = selectedCategory == null && !showOnlyCustom && !showOnlyFavorites,
-                            onClick = {
-                                selectedCategory = null
-                                showOnlyCustom = false
-                                showOnlyFavorites = false
-                            },
-                            label = { Text(stringResource(R.string.all_categories)) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Primary,
-                                selectedLabelColor = OnPrimary
-                            )
-                        )
-                        if (ExercisePickerFilter.showFavoritesChip(exercises, emptySet(), showOnlyFavorites)) {
-                            FilterChip(
-                                selected = showOnlyFavorites,
-                                onClick = { showOnlyFavorites = !showOnlyFavorites },
-                                label = { Text(stringResource(R.string.filter_favorites)) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Primary,
-                                    selectedLabelColor = OnPrimary
-                                )
-                            )
-                        }
-                        if (!pickOnly) {
-                            FilterChip(
-                                selected = showOnlyCustom,
-                                onClick = { showOnlyCustom = !showOnlyCustom },
-                                label = { Text(stringResource(R.string.filter_custom)) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Primary,
-                                    selectedLabelColor = OnPrimary
-                                )
-                            )
-                        }
-                        categories.forEach { category ->
-                            val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                            FilterChip(
-                                selected = selectedCategory == category,
-                                onClick = { selectedCategory = category },
-                                label = { Text(translatedCategory) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Primary,
-                                    selectedLabelColor = OnPrimary
-                                )
-                            )
-                        }
-                    }
+                    ExerciseFilterBar(options = filterOptions)
 
                     Spacer(modifier = Modifier.height(Spacing.medium))
                 }
@@ -266,14 +181,15 @@ fun ExercisePickerBottomSheet(
                     .weight(1f, fill = false),
                 verticalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
+                if (filteredExercises.isEmpty()) item { ExerciseEmptyState() }
                 items(filteredExercises) { exercise ->
-                    ExercisePickerItem(
+                    ExercisePickRow(
                         exercise = exercise,
+                        languageCode = languageCode,
                         onClick = {
                             onExerciseSelected(exercise)
                             onDismiss()
                         },
-                        languageCode = languageCode,
                         showThumbnail = showThumbnails,
                         onThumbnailClick = { exerciseMediaToView = exercise },
                         onInfoClick = if (pickOnly) null else { { detailExerciseId = exercise.id } }
@@ -283,25 +199,18 @@ fun ExercisePickerBottomSheet(
 
             AnimatedVisibility(visible = !imeVisible && !pickOnly) {
                 Column {
-                Spacer(modifier = Modifier.height(Spacing.medium))
+                    Spacer(modifier = Modifier.height(Spacing.medium))
 
-                OutlinedButton(
-                    onClick = { showAddCustomDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = Shapes.large,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Primary
-                    ),
-                    border = BorderStroke(1.dp, Primary)
-                ) {
-                    Icon(
-                        Icons.Rounded.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(Spacing.small))
-                    Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
-                }
+                    GymButton(
+                        onClick = { showAddCustomDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = SurfaceContainerHigh,
+                        contentColor = OnSurface
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
+                        Spacer(modifier = Modifier.width(Spacing.medium))
+                        Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                    }
                 }
             }
         }
@@ -328,77 +237,4 @@ fun ExercisePickerBottomSheet(
     ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
     detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun ExercisePickerItem(
-    exercise: ExerciseEntity,
-    onClick: () -> Unit,
-    languageCode: String = "en",
-    showThumbnail: Boolean = false,
-    onThumbnailClick: () -> Unit = {},
-    onInfoClick: (() -> Unit)? = null
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.large)
-            .clickable(onClick = onClick),
-        color = SurfaceContainerHigh
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Spacing.medium),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (showThumbnail) {
-                ExerciseListThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick)
-                Spacer(modifier = Modifier.width(Spacing.medium))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                // The name takes the whole width it needs; the badge and the star follow it, or wrap under it when there is no room
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = ExerciseTranslations.translate(exercise.nome, languageCode),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = OnSurface,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (exercise.id >= 1000) {
-                        Surface(
-                            color = SurfaceContainerHighest,
-                            shape = CircleShape,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                Icons.Rounded.Person,
-                                contentDescription = "Custom",
-                                tint = OnSurfaceVariant,
-                                modifier = Modifier.padding(4.dp).size(12.dp)
-                            )
-                        }
-                    }
-                    if (exercise.isFavorite) FavoriteMarker()
-                }
-                Text(
-                    text = ExerciseTranslations.translateCategory(exercise.categoria, languageCode),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OnSurfaceVariant
-                )
-            }
-            if (onInfoClick != null) ExerciseInfoButton(onClick = onInfoClick)
-            Icon(
-                Icons.Rounded.Add,
-                contentDescription = "Add",
-                tint = Primary
-            )
-        }
-    }
 }

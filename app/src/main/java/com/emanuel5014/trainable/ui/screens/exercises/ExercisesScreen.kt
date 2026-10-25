@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,31 +22,23 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Collections
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -59,12 +50,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
@@ -73,11 +62,14 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseFilter
 import com.emanuel5014.trainable.domain.exercise.ExerciseListFilter
 import com.emanuel5014.trainable.ui.components.ExerciseFormDialog
+import com.emanuel5014.trainable.ui.components.ExerciseEmptyState
+import com.emanuel5014.trainable.ui.components.ExerciseFilterBar
+import com.emanuel5014.trainable.ui.components.ExerciseFilterOption
 import com.emanuel5014.trainable.ui.components.ExerciseMediaMessageToasts
 import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
+import com.emanuel5014.trainable.ui.components.ExerciseSearchField
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
-import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
 import com.emanuel5014.trainable.ui.components.rememberExerciseMediaPicker
 import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
@@ -334,27 +326,15 @@ fun ExercisesScreen(
             }
 
             item(key = "search") {
-                GymInputField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = stringResource(R.string.search_exercises),
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant) },
-                    trailingIcon = if (query.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { query = "" }) {
-                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.close), tint = OnSurfaceVariant)
-                            }
-                        }
-                    } else null
-                )
+                ExerciseSearchField(query = query, onQueryChange = { query = it })
             }
 
             item(key = "filters") {
-                FilterBar(
-                    filters = ExerciseListFilter.filtersToShow(hiddenCount, library.count { it.isFavorite }, filter),
-                    selected = filter,
-                    onSelect = { filter = it }
+                ExerciseFilterBar(
+                    options = ExerciseListFilter.filtersToShow(hiddenCount, library.count { it.isFavorite }, filter).map { option ->
+                        ExerciseFilterOption(label = stringResource(labelOf(option)), checked = option == filter) { filter = option }
+                    },
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
             }
 
@@ -365,7 +345,7 @@ fun ExercisesScreen(
                     }
                 }
             } else if (groups.isEmpty()) {
-                item(key = "empty") { EmptyState() }
+                item(key = "empty") { ExerciseEmptyState() }
             }
 
             groups.forEach { group ->
@@ -408,37 +388,6 @@ fun ExercisesScreen(
     }
 }
 
-/** The filters as a connected group of toggle buttons that scrolls sideways when the labels do not fit. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun FilterBar(
-    filters: List<ExerciseFilter>,
-    selected: ExerciseFilter,
-    onSelect: (ExerciseFilter) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-    ) {
-        filters.forEachIndexed { index, option ->
-            ToggleButton(
-                checked = option == selected,
-                onCheckedChange = { onSelect(option) },
-                shapes = when (index) {
-                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    filters.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                }
-            ) {
-                Text(stringResource(labelOf(option)), fontWeight = FontWeight.ExtraBold)
-            }
-        }
-    }
-}
-
 private fun labelOf(filter: ExerciseFilter): Int = when (filter) {
     ExerciseFilter.ALL -> R.string.all
     ExerciseFilter.FAVORITES -> R.string.filter_favorites
@@ -446,32 +395,6 @@ private fun labelOf(filter: ExerciseFilter): Int = when (filter) {
     ExerciseFilter.WITH_MEDIA -> R.string.exercise_media_filter_with
     ExerciseFilter.WITHOUT_MEDIA -> R.string.exercise_media_filter_without
     ExerciseFilter.HIDDEN -> R.string.exercise_media_filter_hidden
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun EmptyState() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(MaterialShapes.Cookie9Sided.toShape())
-                .background(Primary.copy(alpha = 0.16f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(Icons.Rounded.Search, contentDescription = null, tint = Primary, modifier = Modifier.size(32.dp))
-        }
-        Text(
-            text = stringResource(R.string.no_exercises_found),
-            style = MaterialTheme.typography.bodyLarge,
-            color = OnSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-    }
 }
 
 /** The two media display switches, moved here from the old media screen. */

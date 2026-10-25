@@ -184,6 +184,7 @@
     <string name="search_exercises">Search exercises</string>
     <string name="all_categories">All</string>
     <string name="no_exercises_found">No exercises found</string>
+    <string name="exercise_picked_badge">Selected</string>
     <string name="choose_from_library">Choose from library</string>
     <string name="filter_custom">Custom</string>
     <string name="new_exercise">New Exercise</string>
