@@ -21,6 +21,7 @@ import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.SessionExerciseSwapEntity
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.forExercise
+import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
@@ -986,7 +987,10 @@ class WorkoutViewModel @Inject constructor(
                         exerciseType = "strength",
                         blocks = rebuilt,
                         oneRepMaxKg = resumeOneRepMaxKg,
-                        programEdits = prescriptionEdits.forExercise(exercise.id)
+                        // A quick workout can hold the exercise twice: each run keeps the edits made to it
+                        programEdits = prescriptionEdits.forRun(
+                            exercise.id, executionOrder, sessionWithSets.sets.filter { it.exerciseId == exercise.id }.map { it.ordineEsercizio }.distinct()
+                        )
                     )
                 }
             }
@@ -1792,7 +1796,8 @@ class WorkoutViewModel @Inject constructor(
                             // A change that cannot reach a routine (a swapped or added exercise) is a variation of the workout
                             scope = if (plan == null) ProgramEditScope.WORKOUT else scope,
                             before = exercise.blocks,
-                            after = newBlocks
+                            after = newBlocks,
+                            order = exercise.executionOrder
                         )
                     }
                     val updated = exercise.copy(sets = result.sets, blocks = newBlocks, oneRepMaxKg = oneRepMaxKg)

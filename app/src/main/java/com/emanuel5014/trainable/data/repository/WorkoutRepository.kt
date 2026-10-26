@@ -11,6 +11,7 @@ import android.content.Context
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
+import com.emanuel5014.trainable.data.local.dao.RunMove
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
@@ -788,8 +789,14 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun updateExerciseOrderInSession(sessionId: Int, exerciseId: Int, order: Int) = workoutDao.updateExerciseOrderInSession(sessionId, exerciseId, order)
 
-    suspend fun moveExerciseRows(sessionId: Int, exerciseId: Int, from: Int, to: Int) =
+    /** Moves the rows of one exercise of the session to a new order, with the program edits made to it. */
+    suspend fun moveExerciseRows(sessionId: Int, exerciseId: Int, from: Int, to: Int) {
         workoutDao.moveExerciseRows(sessionId, exerciseId, from, to)
+        workoutDao.moveEditRows(sessionId, exerciseId, from, to)
+    }
+
+    /** Follows runs that got a new order with the program edits made to them. */
+    suspend fun moveRunEdits(sessionId: Int, moves: List<RunMove>) = workoutDao.moveRunEdits(sessionId, moves)
 
     suspend fun moveCardioRows(sessionId: Int, categoria: String, from: Int, to: Int) =
         workoutDao.moveCardioRows(sessionId, categoria, from, to)

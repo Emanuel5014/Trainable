@@ -1,6 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.relation.SetWithExercise
 
 /**
@@ -33,3 +35,7 @@ fun List<SetWithExercise>.toEditExercises(): List<EditExerciseState> =
         .map { rows -> EditExerciseState(exercise = rows.first().exercise, sets = rows.map { it.setLog }.sortedBy { it.numeroSerie }) }
         .sortedBy { it.sets.firstOrNull()?.ordineEsercizio ?: 0 }
         .numbered()
+
+/** The program edits made to this run of an exercise, among the runs on screen: an exercise done twice has a story per run. */
+fun List<SessionPrescriptionEditEntity>.forRunOf(run: EditExerciseState, all: List<EditExerciseState>): List<SessionPrescriptionEditEntity> =
+    forRun(run.exercise.id, run.key.order, all.filter { it.exercise.id == run.exercise.id }.map { it.key.order })

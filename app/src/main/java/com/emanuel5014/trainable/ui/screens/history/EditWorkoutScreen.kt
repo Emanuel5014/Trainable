@@ -100,7 +100,6 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.data.local.entity.repsRange
-import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.toPrescriptionBlocks
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
@@ -384,7 +383,7 @@ fun EditWorkoutScreen(
                                         onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.key) },
                                         onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.key) },
                                         onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.key) },
-                                        programEdits = state.prescriptionEdits.forExercise(exerciseState.exercise.id),
+                                        programEdits = state.prescriptionEdits.forRunOf(exerciseState, state.exercises),
                                         onRestoreExercise = { viewModel.restoreExercise(exerciseState.exercise.id) }
                                     )
                                 }

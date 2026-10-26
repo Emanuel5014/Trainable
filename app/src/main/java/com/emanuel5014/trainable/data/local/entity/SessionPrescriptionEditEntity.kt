@@ -60,7 +60,13 @@ data class SessionPrescriptionEditEntity(
     val beforeBlocks: String,
     /** The blocks after the change. */
     @ColumnInfo(name = "after_blocks")
-    val afterBlocks: String
+    val afterBlocks: String,
+    /**
+     * The order the exercise had in the workout when it was changed ([SetLogEntity.ordineEsercizio]): it tells the runs
+     * of an exercise done twice apart. Null for an edit saved before runs were told apart.
+     */
+    @ColumnInfo(name = "ordine_esercizio")
+    val order: Int? = null
 ) {
     val editKind: ProgramEditKind get() = ProgramEditKind.fromCode(kind)
     val editScope: ProgramEditScope get() = ProgramEditScope.fromCode(scope)
@@ -77,7 +83,8 @@ data class SessionPrescriptionEditEntity(
             scope: ProgramEditScope,
             before: List<PrescriptionBlock>,
             after: List<PrescriptionBlock>,
-            createdAt: Long = System.currentTimeMillis()
+            createdAt: Long = System.currentTimeMillis(),
+            order: Int? = null
         ) = SessionPrescriptionEditEntity(
             sessionId = sessionId,
             exerciseId = exerciseId,
@@ -87,7 +94,8 @@ data class SessionPrescriptionEditEntity(
             kind = kind.code,
             scope = scope.code,
             beforeBlocks = BlocksCodec.encode(before),
-            afterBlocks = BlocksCodec.encode(after)
+            afterBlocks = BlocksCodec.encode(after),
+            order = order
         )
     }
 }
@@ -95,6 +103,14 @@ data class SessionPrescriptionEditEntity(
 /** The edits of one exercise of a session, oldest first. */
 fun List<SessionPrescriptionEditEntity>.forExercise(exerciseId: Int): List<SessionPrescriptionEditEntity> =
     filter { it.exerciseId == exerciseId }.sortedWith(compareBy({ it.createdAt }, { it.id }))
+
+/**
+ * The edits of one run of an exercise in a session, oldest first. An exercise done twice in the workout has a story per
+ * run: the edits made at that run's [order]. An edit saved before runs were told apart (no order), or whose order no run
+ * of the exercise has any more ([runOrders] are the orders of all of them), is shown on every run, as it always was.
+ */
+fun List<SessionPrescriptionEditEntity>.forRun(exerciseId: Int, order: Int, runOrders: Collection<Int>): List<SessionPrescriptionEditEntity> =
+    forExercise(exerciseId).filter { it.order == null || it.order == order || it.order !in runOrders }
 
 /**
  * The prescription an exercise of the session was really done against when it was changed along the way: what the last

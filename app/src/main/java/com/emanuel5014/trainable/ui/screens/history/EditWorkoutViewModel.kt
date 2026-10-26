@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.dao.RunMove
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.nextSet
 import com.emanuel5014.trainable.data.local.entity.setsOf
@@ -179,6 +180,11 @@ class EditWorkoutViewModel @Inject constructor(
             if (setsToUpdate.isNotEmpty()) {
                 workoutRepository.updateSetOrders(setsToUpdate)
             }
+            // The program edits made to a run follow its new order
+            val moves = exercises.mapIndexedNotNull { index, exerciseState ->
+                exerciseState.key.takeIf { it.order != index }?.let { RunMove(it.exerciseId, it.order, index) }
+            }
+            if (moves.isNotEmpty()) workoutRepository.moveRunEdits(sessionId, moves)
         }
     }
 
@@ -539,7 +545,8 @@ class EditWorkoutViewModel @Inject constructor(
                         scope = ProgramEditScope.WORKOUT,
                         // What the exercise was done against as its sets show it now (sets never done are gone by now)
                         before = before,
-                        after = blocks
+                        after = blocks,
+                        order = key.order
                     )
                 )
             }
@@ -690,6 +697,13 @@ class EditWorkoutViewModel @Inject constructor(
                 if (setsToUpdate.isNotEmpty()) {
                     workoutRepository.updateSetOrders(setsToUpdate)
                 }
+                // The program edits made to the two runs go with them
+                if (currentOrder != prevOrder) {
+                    workoutRepository.moveRunEdits(
+                        sessionId,
+                        listOf(RunMove(currentEx.exercise.id, currentOrder, finalPrevOrder), RunMove(prevEx.exercise.id, prevOrder, finalCurrentOrder))
+                    )
+                }
             }
         }
     }
@@ -723,6 +737,13 @@ class EditWorkoutViewModel @Inject constructor(
                 nextEx.sets.forEach { setsToUpdate.add(it.copy(ordineEsercizio = finalCurrentOrder)) }
                 if (setsToUpdate.isNotEmpty()) {
                     workoutRepository.updateSetOrders(setsToUpdate)
+                }
+                // The program edits made to the two runs go with them
+                if (currentOrder != nextOrder) {
+                    workoutRepository.moveRunEdits(
+                        sessionId,
+                        listOf(RunMove(currentEx.exercise.id, currentOrder, finalNextOrder), RunMove(nextEx.exercise.id, nextOrder, finalCurrentOrder))
+                    )
                 }
             }
         }
@@ -903,6 +924,10 @@ class EditWorkoutViewModel @Inject constructor(
             val cardioToUpdate = mutableListOf<CardioLogEntity>()
             val updatedExercises = mutableListOf<EditExerciseState>()
             val updatedCardioLogs = mutableListOf<CardioLogEntity>()
+            // The program edits made to a run follow it to its new place
+            val runMoves = orderedItems.mapIndexedNotNull { index, item ->
+                (item as? EditExerciseState)?.key?.takeIf { it.order != index }?.let { RunMove(it.exerciseId, it.order, index) }
+            }
 
             orderedItems.forEachIndexed { index, item ->
                 when (item) {
@@ -930,6 +955,7 @@ class EditWorkoutViewModel @Inject constructor(
             if (setsToUpdate.isNotEmpty()) {
                 workoutRepository.updateSetOrders(setsToUpdate)
             }
+            if (runMoves.isNotEmpty()) workoutRepository.moveRunEdits(sessionId, runMoves)
             cardioToUpdate.forEach { cardio ->
                 workoutRepository.updateCardioLog(cardio)
             }
