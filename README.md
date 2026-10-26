@@ -247,6 +247,7 @@ com/emanuel5014/trainable/
 ### Prerequisites
 *   Android Studio Ladybug or newer.
 *   Android SDK 28 or higher.
+*   JDK 21: Gradle finds an installed one or downloads it, no path to configure.
 *   A device/emulator running Android 12+ (for Dynamic Color support).
 
 ### Setup
