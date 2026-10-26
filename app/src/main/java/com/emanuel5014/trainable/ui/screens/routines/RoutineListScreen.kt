@@ -766,7 +766,7 @@ fun RoutineListScreen(
                                     showSheet = false
                                 }
                             },
-                            enabled = routineName.isNotBlank(),
+                            enabled = !com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current || routineName.isNotBlank(),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(

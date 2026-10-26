@@ -51,6 +51,10 @@ const val GlassHighlightStrength = .70f
 val ScreenSurface: Color
     @Composable get() = if (LocalLiquidGlassEnabled.current || LocalAppBackground.current.isCustom) Color.Transparent else Surface
 
+/** Standard screens keep their own tinted gradients; glass and custom backgrounds replace them with one uniform backdrop. */
+val UsesStandardBackdrop: Boolean
+    @Composable get() = !LocalLiquidGlassEnabled.current && !LocalAppBackground.current.isCustom
+
 @Composable
 fun LiquidGlassBackdrop(state: HazeState?, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme

@@ -247,6 +247,21 @@ fun OnboardingScreen(
             .fillMaxSize()
             .background(com.emanuel5014.trainable.ui.theme.ScreenSurface)
     ) {
+        if (com.emanuel5014.trainable.ui.theme.UsesStandardBackdrop) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Primary.copy(alpha = 0.15f),
+                                Surface,
+                                Surface
+                            )
+                        )
+                    )
+            )
+        }
 
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -380,7 +395,11 @@ fun OnboardingScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .height(28.dp)
-                        .background(com.emanuel5014.trainable.ui.theme.ScreenSurface)
+                        .then(
+                            if (com.emanuel5014.trainable.ui.theme.UsesStandardBackdrop)
+                                Modifier.background(Brush.verticalGradient(listOf(Color.Transparent, Surface)))
+                            else Modifier
+                        )
                 )
             }
 

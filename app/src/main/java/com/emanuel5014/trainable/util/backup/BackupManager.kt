@@ -238,7 +238,7 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED]?.let { json.put("dynamic_color_seed", it) }
                 json.put("theme_palette", prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0)
                 json.put("theme_style", prefs[UserPreferencesRepository.THEME_STYLE] ?: 0)
-                json.put("liquid_glass_enabled", prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED] ?: true)
+                json.put("liquid_glass_enabled", prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED] ?: UserPreferencesRepository.DEFAULT_LIQUID_GLASS_ENABLED)
                 json.put("glass_intensity", prefs[UserPreferencesRepository.GLASS_INTENSITY] ?: 0.75f)
                 json.put("glass_motion_enabled", prefs[UserPreferencesRepository.GLASS_MOTION_ENABLED] ?: true)
                 val wallpaperName = prefs[UserPreferencesRepository.BACKGROUND_WALLPAPER]

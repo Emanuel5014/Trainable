@@ -63,7 +63,9 @@ fun OneRepMaxCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().glassPanelBackground(Primary.copy(alpha = .08f), Shapes.medium).clickable(onClick = onEdit),
+        modifier = modifier.fillMaxWidth()
+            .then(if (LocalLiquidGlassEnabled.current) Modifier.glassPanelBackground(Primary.copy(alpha = .08f), Shapes.medium) else Modifier)
+            .clickable(onClick = onEdit),
         shape = Shapes.medium,
         color = if (LocalLiquidGlassEnabled.current) Color.Transparent else Primary.copy(alpha = 0.08f)
     ) {

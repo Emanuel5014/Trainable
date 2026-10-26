@@ -101,6 +101,10 @@ import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import androidx.compose.material3.ToggleFloatingActionButton
 import com.emanuel5014.trainable.ui.components.glass.GlassFloatingActionButtonMenuItem as FloatingActionButtonMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -372,20 +376,41 @@ fun HistoryScreen(
                                 tooltip = { PlainTooltip { Text(stringResource(if (fabMenuExpanded) R.string.close else R.string.add)) } },
                                 state = rememberTooltipState()
                             ) {
-                                FloatingActionButton(
-                                    onClick = {
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        fabMenuExpanded = !fabMenuExpanded 
-                                    },
-                                    modifier = Modifier.size(56.dp),
-                                    shape = RoundedCornerShape(20.dp),
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ) {
-                                    Icon(
-                                        imageVector = if (fabMenuExpanded) Icons.Rounded.Close else Icons.Rounded.Add,
-                                        contentDescription = stringResource(if (fabMenuExpanded) R.string.close else R.string.add)
-                                    )
+                                if (LocalLiquidGlassEnabled.current) {
+                                    FloatingActionButton(
+                                        onClick = {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            fabMenuExpanded = !fabMenuExpanded
+                                        },
+                                        modifier = Modifier.size(56.dp),
+                                        shape = RoundedCornerShape(20.dp),
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ) {
+                                        Icon(
+                                            imageVector = if (fabMenuExpanded) Icons.Rounded.Close else Icons.Rounded.Add,
+                                            contentDescription = stringResource(if (fabMenuExpanded) R.string.close else R.string.add)
+                                        )
+                                    }
+                                } else {
+                                    ToggleFloatingActionButton(
+                                        checked = fabMenuExpanded,
+                                        onCheckedChange = {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            fabMenuExpanded = !fabMenuExpanded
+                                        }
+                                    ) {
+                                        val imageVector by remember {
+                                            derivedStateOf {
+                                                if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
+                                            }
+                                        }
+                                        Icon(
+                                            painter = rememberVectorPainter(imageVector),
+                                            contentDescription = null,
+                                            modifier = Modifier.animateIcon({ checkedProgress })
+                                        )
+                                    }
                                 }
                             }
                         }

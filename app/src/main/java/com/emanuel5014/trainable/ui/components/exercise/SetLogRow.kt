@@ -152,8 +152,9 @@ fun SetLogRow(
             .clip(rowShape)
             .then(
                 when {
-                    isActive && !isCompleted -> Modifier.border(1.dp, Primary.copy(alpha = 0.45f), rowShape)
-                    isEditing -> Modifier.border(1.dp, Primary.copy(alpha = 0.7f), rowShape)
+                    isActive && !isCompleted -> if (glass) Modifier.border(1.dp, Primary.copy(alpha = 0.45f), rowShape)
+                        else Modifier.border(2.dp, Primary.copy(alpha = 0.3f), rowShape)
+                    isEditing -> Modifier.border(if (glass) 1.dp else 2.dp, Primary.copy(alpha = 0.7f), rowShape)
                     else -> Modifier
                 }
             )
@@ -249,17 +250,24 @@ fun SetLogRow(
 
         // Note Icon Button
         val hasPreviousHint = !isCompleted && note.isNullOrBlank() && !previousNote.isNullOrBlank()
-        GymIconButton(
+        val noteTint = when {
+            isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
+            !note.isNullOrBlank() -> Primary
+            hasPreviousHint -> OnSurfaceVariant.copy(alpha = 0.4f)
+            else -> OnSurfaceVariant.copy(alpha = 0.6f)
+        }
+        val noteIcon = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote
+        if (glass) {
+            GymIconButton(
                 onClick = { isNoteEditing = !isNoteEditing },
-                icon = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote,
-                description = "Edit Note", shape = RoundedCornerShape(14.dp), quiet = true,
-                contentColor = when {
-                    isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
-                    !note.isNullOrBlank() -> Primary
-                    hasPreviousHint -> OnSurfaceVariant.copy(alpha = 0.4f)
-                    else -> OnSurfaceVariant.copy(alpha = 0.6f)
-                }
-        )
+                icon = noteIcon, description = "Edit Note", shape = RoundedCornerShape(14.dp), quiet = true,
+                contentColor = noteTint
+            )
+        } else {
+            IconButton(onClick = { isNoteEditing = !isNoteEditing }) {
+                Icon(imageVector = noteIcon, contentDescription = "Edit Note", tint = noteTint)
+            }
+        }
 
         Spacer(modifier = Modifier.width(8.dp))
 
@@ -387,8 +395,8 @@ private fun SetCheckTarget(isCompleted: Boolean, isActive: Boolean, onClick: () 
         when {
             glass && isCompleted -> Tertiary
             isCompleted -> OnTertiary
-            isActive -> Primary.copy(alpha = 0.9f)
-            else -> OnSurfaceVariant.copy(alpha = 0.75f)
+            isActive -> Primary.copy(alpha = if (glass) 0.9f else 0.5f)
+            else -> OnSurfaceVariant.copy(alpha = if (glass) 0.75f else 0.3f)
         },
         label = "set_check_tint"
     )

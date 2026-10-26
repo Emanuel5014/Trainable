@@ -809,7 +809,7 @@ fun RoutineDetailScreen(
                                             )
                                         }
                                     }
-                                    IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(48.dp)) {
+                                    IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(if (com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current) 48.dp else 36.dp)) {
                                         Icon(
                                             Icons.Rounded.Delete,
                                             contentDescription = stringResource(R.string.delete_week),
@@ -1933,7 +1933,7 @@ fun RoutineDetailScreen(
                                     }
                                 }
                             },
-                            enabled = routineName.isNotBlank(),
+                            enabled = !com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current || routineName.isNotBlank(),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(

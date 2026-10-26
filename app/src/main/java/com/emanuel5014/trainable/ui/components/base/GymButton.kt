@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
@@ -56,7 +57,8 @@ fun GymButton(
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    
+    val glass = LocalLiquidGlassEnabled.current
+
     val hapticEnabled by remember(context) {
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
@@ -80,8 +82,9 @@ fun GymButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
-            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = .10f),
-            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = .60f)
+            // A clear glass fill has no tint to fade, so it greys out instead.
+            disabledContainerColor = if (glass) MaterialTheme.colorScheme.onSurface.copy(alpha = .10f) else containerColor.copy(alpha = 0.3f),
+            disabledContentColor = if (glass) MaterialTheme.colorScheme.onSurface.copy(alpha = .60f) else contentColor.copy(alpha = 0.5f)
         ),
         shape = buttonShape,
         quiet = quiet,

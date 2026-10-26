@@ -532,12 +532,18 @@ private fun SetPanel(
                         }
                     } else {
                         val e = expansion()
-                        com.emanuel5014.trainable.ui.components.GymIconButton(
-                            icon = Icons.Rounded.Edit, description = stringResource(R.string.edit),
-                            onClick = { ui.isEditingValues = true }, quiet = true,
-                            shape = RoundedCornerShape(14.dp), contentColor = OnSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        val glass = com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current
+                        if (glass) {
+                            com.emanuel5014.trainable.ui.components.GymIconButton(
+                                icon = Icons.Rounded.Edit, description = stringResource(R.string.edit),
+                                onClick = { ui.isEditingValues = true }, quiet = true,
+                                shape = RoundedCornerShape(14.dp), contentColor = OnSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                        }
                         LogSetButton(
                             onClick = {
                                 if (shownSet.isAmrap) {
@@ -553,7 +559,8 @@ private fun SetPanel(
                                     viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                 }
                             },
-                            modifier = Modifier.size(48.dp),
+                            modifier = if (glass) Modifier.size(48.dp)
+                                else Modifier.width(if (LocalConfiguration.current.screenWidthDp < 400) 76.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
                             compact = true
                         )
                     }

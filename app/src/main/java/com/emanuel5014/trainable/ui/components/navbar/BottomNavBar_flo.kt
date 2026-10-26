@@ -63,6 +63,7 @@ private class WaterTouchState {
     var stretch by mutableFloatStateOf(0f)
 }
 
+/** The floating bar: the standard one while glass is off, the liquid-glass lens otherwise. */
 @Composable
 fun BottomNavBarFlo(
     navController: NavHostController,
@@ -70,6 +71,21 @@ fun BottomNavBarFlo(
     hazeState: HazeState,
     isDark: Boolean = true,
     modifier: Modifier = Modifier
+) {
+    if (LocalLiquidGlassEnabled.current) {
+        BottomNavBarFloGlass(navController, pagerState, hazeState, isDark, modifier)
+    } else {
+        BottomNavBarFloClassic(navController, pagerState, hazeState, isDark, modifier)
+    }
+}
+
+@Composable
+private fun BottomNavBarFloGlass(
+    navController: NavHostController,
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    hazeState: HazeState,
+    isDark: Boolean,
+    modifier: Modifier
 ) {
     val entry by navController.currentBackStackEntryAsState()
     val route = entry?.destination?.route

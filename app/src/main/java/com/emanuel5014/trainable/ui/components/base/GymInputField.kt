@@ -61,7 +61,7 @@ fun GymInputField(
         readOnly = readOnly,
         enabled = enabled,
         isError = isError,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+        shape = if (glass) androidx.compose.foundation.shape.RoundedCornerShape(18.dp) else Shapes.large,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = OnSurface,
             unfocusedTextColor = OnSurface,

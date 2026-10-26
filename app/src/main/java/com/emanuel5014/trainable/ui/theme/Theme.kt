@@ -423,7 +423,7 @@ fun GymTrackingTheme(
     paletteIndex: Int = 0,
     seedColor: Int? = null,
     themeStyle: Int = 0,
-    liquidGlassEnabled: Boolean = true,
+    liquidGlassEnabled: Boolean = false,
     glassIntensity: Float = DefaultGlassIntensity,
     darkTheme: Boolean = true,
     oledTheme: Boolean = false,
@@ -528,7 +528,8 @@ fun GymTrackingTheme(
             }
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !resolvedDark
-                isAppearanceLightNavigationBars = !resolvedDark
+                // The standard theme never set this; only the glass/custom looks need the icons to follow it.
+                isAppearanceLightNavigationBars = (liquidGlassEnabled || appBackground.isCustom) && !resolvedDark
             }
         }
     }
@@ -549,7 +550,9 @@ fun GymTrackingTheme(
                 LocalGlassMotionPreference provides glassMotionEnabled,
                 // Transparent scaffolds inherit their foreground from this root, just
                 // as they did from the opaque Surface before glass was introduced.
-                androidx.compose.material3.LocalContentColor provides colorScheme.onSurface
+                androidx.compose.material3.LocalContentColor provides
+                    if (liquidGlassEnabled || appBackground.isCustom) colorScheme.onSurface
+                    else androidx.compose.material3.LocalContentColor.current
             ) {
                 androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize().background(colorScheme.background)) {
                     if ((liquidGlassEnabled && glassIntensity > 0f) || appBackground.isCustom) {

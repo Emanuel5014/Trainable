@@ -55,6 +55,8 @@ class UserPreferencesRepository @Inject constructor(
         val BACKGROUND_WALLPAPER = stringPreferencesKey("background_wallpaper")
         val BACKGROUND_DIMMING = floatPreferencesKey("background_dimming")
         val LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
+        /** Liquid Glass is opt-in: a missing preference keeps the standard look. */
+        const val DEFAULT_LIQUID_GLASS_ENABLED = false
         val THEME_STYLE = intPreferencesKey("theme_style")
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
@@ -318,7 +320,7 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     val liquidGlassEnabled: Flow<Boolean> = dataStore.data
-        .map { it[LIQUID_GLASS_ENABLED] ?: true }
+        .map { it[LIQUID_GLASS_ENABLED] ?: DEFAULT_LIQUID_GLASS_ENABLED }
 
     suspend fun setLiquidGlassEnabled(enabled: Boolean) {
         dataStore.edit { it[LIQUID_GLASS_ENABLED] = enabled }

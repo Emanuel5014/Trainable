@@ -192,7 +192,7 @@ class MainActivity : FragmentActivity() {
             val glassIntensity by userPreferencesRepository.glassIntensity.collectAsState(initial = 0.75f)
             val glassMotionEnabled by userPreferencesRepository.glassMotionEnabled.collectAsState(initial = true)
             val appBackground by userPreferencesRepository.appBackground.collectAsState(initial = com.emanuel5014.trainable.data.model.AppBackground())
-            val liquidGlassEnabled by userPreferencesRepository.liquidGlassEnabled.collectAsState(initial = true)
+            val liquidGlassEnabled by userPreferencesRepository.liquidGlassEnabled.collectAsState(initial = UserPreferencesRepository.DEFAULT_LIQUID_GLASS_ENABLED)
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
             val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
@@ -360,7 +360,7 @@ class MainActivity : FragmentActivity() {
                                 pagerState = pagerState,
                                 startDestination = MainTabs,
                                 modifier = Modifier.fillMaxSize().then(
-                                    if (showBottomBar && !glassActive) Modifier.hazeSource(state = hazeState) else Modifier
+                                    if (!glassActive) Modifier.hazeSource(state = hazeState) else Modifier
                                 )
                             )
 
