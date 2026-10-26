@@ -411,10 +411,15 @@ internal fun ExerciseTools(
     onOpenDetail: (Int) -> Unit
 ) {
     val groupLabel = stringResource(R.string.exercise_tools_group)
+    val glass = LocalLiquidGlassEnabled.current
     Row(
         modifier = Modifier
+            .then(
+                if (glass) Modifier
+                else Modifier.clip(RoundedCornerShape(16.dp)).background(SecondaryContainer)
+            )
             .semantics { contentDescription = groupLabel },
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(if (glass) 8.dp else 0.dp)
     ) {
         if (targetIndex < state.exercises.lastIndex) {
             val nextEx = state.exercises[targetIndex + 1]
@@ -453,9 +458,20 @@ internal fun ExerciseTools(
 
 @Composable
 private fun ToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: String, tint: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
-    com.emanuel5014.trainable.ui.components.GymIconButton(
-        icon = icon, description = description, contentColor = tint, onClick = onClick,
-        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp), quiet = true
-    )
+    if (LocalLiquidGlassEnabled.current) {
+        com.emanuel5014.trainable.ui.components.GymIconButton(
+            icon = icon, description = description, contentColor = tint, onClick = onClick,
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(14.dp), quiet = true
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(width = 44.dp, height = 48.dp)
+                .clickable(role = Role.Button, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = icon, contentDescription = description, tint = tint, modifier = Modifier.size(24.dp))
+        }
+    }
 }

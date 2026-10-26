@@ -80,6 +80,7 @@ import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButt
 import com.emanuel5014.trainable.ui.components.glass.GlassTextField as TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -1254,6 +1255,20 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            if (!LocalLiquidGlassEnabled.current) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Primary.copy(alpha = 0.05f)
+                                )
+                            )
+                        )
+                )
+            }
 
             Column(
                 modifier = Modifier

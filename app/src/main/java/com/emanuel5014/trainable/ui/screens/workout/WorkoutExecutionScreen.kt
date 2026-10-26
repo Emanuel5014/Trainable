@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
 import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
 import com.emanuel5014.trainable.ui.theme.glassControlContentColor
 
@@ -1210,13 +1211,15 @@ fun LogSetButton(
     modifier: Modifier = Modifier,
     compact: Boolean = false
 ) {
+    val glass = LocalLiquidGlassEnabled.current
     GymButton(
         onClick = onClick,
         modifier = modifier.then(if (!compact) Modifier.fillMaxWidth() else Modifier.height(48.dp)),
-        pressMorph = !compact,
-        quiet = compact,
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = PaddingValues(horizontal = if (compact) 0.dp else if (ResponsiveSize.isCompact) 16.dp else 24.dp),
+        pressMorph = if (glass) !compact else true,
+        quiet = glass && compact,
+        shape = if (glass) RoundedCornerShape(14.dp) else Shapes.large,
+        contentPadding = if (glass) PaddingValues(horizontal = if (compact) 0.dp else if (ResponsiveSize.isCompact) 16.dp else 24.dp)
+            else PaddingValues(horizontal = if (ResponsiveSize.isCompact) 16.dp else 24.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Icon(Icons.Rounded.Check, contentDescription = if (compact) stringResource(R.string.log_set) else null, modifier = Modifier.size(if (compact) 20.dp else 24.dp))

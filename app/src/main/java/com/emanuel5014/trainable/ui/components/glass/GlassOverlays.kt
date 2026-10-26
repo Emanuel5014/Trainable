@@ -77,7 +77,7 @@ fun GlassModalBottomSheet(
             sheetState, sheetMaxWidth, sheetGesturesEnabled, shape,
             sheetColor, contentColor,
             if (glass) 0.dp else tonalElevation, scrimColor,
-            if (dragHandle == null) null else {
+            if (dragHandle == null || !glass) dragHandle else {
                 { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { dragHandle() } }
             }, contentWindowInsets, properties, content
         )

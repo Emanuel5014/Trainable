@@ -37,6 +37,7 @@ import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.exercise.Equipment
 import com.emanuel5014.trainable.domain.exercise.Muscle
 import com.emanuel5014.trainable.domain.exercise.TraitFilter
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -57,9 +58,18 @@ fun ExerciseSearchWithTraitFilter(
     modifier: Modifier = Modifier
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    val glass = LocalLiquidGlassEnabled.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (glass) Arrangement.spacedBy(8.dp) else Arrangement.Start
+    ) {
         ExerciseSearchField(query = query, onQueryChange = onQueryChange, modifier = Modifier.weight(1f))
-        ExerciseTraitFilterButton(filter = traitFilter, onClick = { sheetOpen = true }, modifier = Modifier.padding(top = 8.dp))
+        ExerciseTraitFilterButton(
+            filter = traitFilter,
+            onClick = { sheetOpen = true },
+            modifier = if (glass) Modifier.padding(top = 8.dp) else Modifier
+        )
     }
     if (sheetOpen) {
         ExerciseTraitFilterSheet(
@@ -77,10 +87,22 @@ fun ExerciseTraitFilterButton(filter: TraitFilter, onClick: () -> Unit, modifier
     val title = stringResource(R.string.exercise_filters_title)
     val description =
         if (filter.isActive) "$title, ${stringResource(R.string.exercise_filters_active_count, filter.activeCount)}" else title
-    BadgedBox(modifier = modifier, badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
-        GymIconButton(icon = Icons.Rounded.FilterList, description = description, onClick = onClick,
-            contentColor = if (filter.isActive) Primary else OnSurfaceVariant,
-            shape = RoundedCornerShape(14.dp), quiet = true)
+    if (LocalLiquidGlassEnabled.current) {
+        BadgedBox(modifier = modifier, badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
+            GymIconButton(icon = Icons.Rounded.FilterList, description = description, onClick = onClick,
+                contentColor = if (filter.isActive) Primary else OnSurfaceVariant,
+                shape = RoundedCornerShape(14.dp), quiet = true)
+        }
+    } else {
+        IconButton(onClick = onClick, modifier = modifier) {
+            BadgedBox(badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
+                Icon(
+                    imageVector = Icons.Rounded.FilterList,
+                    contentDescription = description,
+                    tint = if (filter.isActive) Primary else OnSurfaceVariant
+                )
+            }
+        }
     }
 }
 
