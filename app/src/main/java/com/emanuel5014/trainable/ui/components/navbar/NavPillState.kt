@@ -52,13 +52,18 @@ class NavPillState(
 
     /** [fingerPosition] is where the pill would sit centred under the finger. */
     fun beginDrag(fingerPosition: Float) {
-        carryOver(from = position, to = fingerPosition)
-        dragFinger = fingerPosition
+        // A finger has exclusive ownership. Stop a previous tap's spring/pager animation
+        // before tracking another gesture, instead of letting both keep updating the pill.
+        ++settleToken
+        settleJob?.cancel()
+        isSettling = false
+        clearBridge()
+        dragFinger = fingerPosition.coerceIn(0f, lastIndex.toFloat())
         isDragging = true
     }
 
     fun dragTo(fingerPosition: Float) {
-        dragFinger = fingerPosition
+        dragFinger = fingerPosition.coerceIn(0f, lastIndex.toFloat())
     }
 
     /** A cancelled gesture goes back to the page the pager was heading to instead of committing the drop. */
@@ -89,8 +94,8 @@ class NavPillState(
                             initialValue = shown,
                             targetValue = target.toFloat(),
                             animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
+                                dampingRatio = 0.85f,
+                                stiffness = Spring.StiffnessMedium
                             )
                         ) { value, _ -> shown = value }
                     }

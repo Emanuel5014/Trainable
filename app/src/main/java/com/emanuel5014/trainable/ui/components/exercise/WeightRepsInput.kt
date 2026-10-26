@@ -1,7 +1,8 @@
 package com.emanuel5014.trainable.ui.components
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import com.emanuel5014.trainable.ui.components.motion.WheelLens
@@ -27,13 +28,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -326,7 +327,7 @@ private fun <T> WheelPickerBox(
                 .fillMaxWidth()
                 .height(120.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(SurfaceContainerHigh),
+                .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(24.dp)),
             contentAlignment = Alignment.Center
         ) {
             Box(

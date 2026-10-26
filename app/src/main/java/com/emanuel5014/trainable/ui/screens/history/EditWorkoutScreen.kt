@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.history
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import com.emanuel5014.trainable.ui.components.cardioSetValueText
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
@@ -51,24 +52,24 @@ import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timelapse
 import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFloatingActionButton as FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -238,7 +239,7 @@ fun EditWorkoutScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = com.emanuel5014.trainable.ui.theme.ScreenSurface)
             )
         },
         floatingActionButton = {
@@ -1035,7 +1036,7 @@ fun EditSetRow(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(SurfaceContainerHigh),
+                .glassPanelBackground(SurfaceContainerHigh, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -1224,7 +1225,7 @@ private fun CardioSetEditRow(set: CardioLogEntity, number: Int, onClick: () -> U
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(SurfaceContainerHigh),
+                .glassPanelBackground(SurfaceContainerHigh, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(text = number.toString(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = OnSurface)

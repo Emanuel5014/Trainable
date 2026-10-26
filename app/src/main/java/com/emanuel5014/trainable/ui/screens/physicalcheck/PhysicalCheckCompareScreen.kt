@@ -14,6 +14,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment

@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.components
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import android.Manifest
 import android.app.Activity
@@ -14,7 +15,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -49,11 +50,11 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassRadioButton as RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -134,7 +135,7 @@ fun AiProgramScanButton(
     }.collectAsState(initial = 0)
     val isDark = when (themeMode) {
         1 -> false
-        2 -> true
+        2, 3 -> true
         else -> androidx.compose.foundation.isSystemInDarkTheme()
     }
 
@@ -386,7 +387,7 @@ private fun ProgramScanReviewDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(Shapes.medium)
-                            .background(SurfaceContainerHigh)
+                            .glassPanelBackground(SurfaceContainerHigh, Shapes.medium)
                             .clickable { saveMax = !saveMax }
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -427,7 +428,7 @@ private fun ProgramScanReviewDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(Shapes.medium)
-                            .background(SurfaceContainerHigh)
+                            .glassPanelBackground(SurfaceContainerHigh, Shapes.medium)
                             .border(
                                 width = if (checked) 2.dp else 1.dp,
                                 color = if (checked) Primary else OutlineVariant,

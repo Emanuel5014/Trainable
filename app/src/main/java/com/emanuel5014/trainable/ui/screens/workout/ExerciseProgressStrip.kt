@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.workout
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState

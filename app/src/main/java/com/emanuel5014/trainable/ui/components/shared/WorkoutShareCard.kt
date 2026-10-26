@@ -36,9 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
@@ -78,9 +75,7 @@ fun WorkoutShareCard(
     val shareLabels = com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels(weightUnit)
 
     // Curated dark obsidian brand palette
-    val obsidianBackground = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0C0C0E), Color(0xFF18181C))
-    )
+    val obsidianBackground = Color(0xFF0C0C0E)
     val cardBackground = Color(0xFF1E1E24).copy(alpha = 0.5f)
     val cardBorder = Color.White.copy(alpha = 0.06f)
     val textPrimary = Color.White
@@ -160,28 +155,6 @@ fun WorkoutShareCard(
             .widthIn(max = 420.dp)
             .wrapContentHeight()
             .background(obsidianBackground)
-            .drawBehind {
-                // Top-right glowing radial primary gradient
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(primaryColor.copy(alpha = 0.18f), Color.Transparent),
-                        center = Offset(size.width, 0f),
-                        radius = size.width * 0.9f
-                    ),
-                    center = Offset(size.width, 0f),
-                    radius = size.width * 0.9f
-                )
-                // Bottom-left glowing accent gradient
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(primaryColor.copy(alpha = 0.08f), Color.Transparent),
-                        center = Offset(0f, size.height),
-                        radius = size.width * 0.7f
-                    ),
-                    center = Offset(0f, size.height),
-                    radius = size.width * 0.7f
-                )
-            }
             .padding(26.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

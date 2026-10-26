@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.onerepmax
 
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,13 +29,13 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassExtendedFloatingActionButton as ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -95,7 +97,7 @@ fun OneRepMaxScreen(
     var detailExerciseId by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showPicker = true },

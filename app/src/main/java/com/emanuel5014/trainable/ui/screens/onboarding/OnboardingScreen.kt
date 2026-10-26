@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.onboarding
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import android.net.Uri
 import android.content.Intent
@@ -65,11 +66,11 @@ import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Vibration
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -78,7 +79,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -244,21 +245,8 @@ fun OnboardingScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Surface)
+            .background(com.emanuel5014.trainable.ui.theme.ScreenSurface)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Primary.copy(alpha = 0.15f),
-                            Surface,
-                            Surface
-                        )
-                    )
-                )
-        )
 
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -392,7 +380,7 @@ fun OnboardingScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .height(28.dp)
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Surface)))
+                        .background(com.emanuel5014.trainable.ui.theme.ScreenSurface)
                 )
             }
 
@@ -671,7 +659,7 @@ private fun ThemeSlide(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(RoundedCornerShape(18.dp))
-                            .background(SurfaceContainerHigh),
+                            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(18.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -688,6 +676,7 @@ private fun ThemeSlide(
                             when (themeMode) {
                                 0 -> stringResource(R.string.theme_mode_system)
                                 1 -> stringResource(R.string.theme_mode_light)
+                                3 -> stringResource(R.string.theme_mode_oled)
                                 else -> stringResource(R.string.theme_mode_dark)
                             },
                             style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -749,6 +738,17 @@ private fun ThemeSlide(
                                         Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
                                     }
                                 }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        onThemeModeChange(3)
+                                        showThemeModeDialog = false
+                                    }.padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(stringResource(R.string.theme_mode_oled), style = MaterialTheme.typography.bodyLarge, color = OnSurface)
+                                    if (themeMode == 3) Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
+                                }
                             }
                         },
                         confirmButton = {
@@ -775,7 +775,7 @@ private fun ThemeSlide(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(RoundedCornerShape(18.dp))
-                            .background(SurfaceContainerHigh),
+                            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(18.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
@@ -811,7 +811,7 @@ private fun ThemeSlide(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(RoundedCornerShape(18.dp))
-                                .background(SurfaceContainerHigh),
+                                .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(18.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
@@ -852,7 +852,7 @@ private fun ThemeSlide(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(RoundedCornerShape(18.dp))
-                                .background(SurfaceContainerHigh),
+                                .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(18.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Rounded.Palette, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
@@ -899,7 +899,7 @@ private fun ThemeSlide(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(RoundedCornerShape(18.dp))
-                            .background(SurfaceContainerHigh),
+                            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(18.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -1376,7 +1376,7 @@ private fun ProfileSetupSlide(
                         modifier = Modifier
                             .height(56.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(SurfaceContainerHigh)
+                            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(16.dp))
                             .padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1441,7 +1441,7 @@ internal fun FeatureItemExpressive(icon: ImageVector, title: String, desc: Strin
             modifier = Modifier
                 .size(56.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(SurfaceContainerHigh),
+                .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(28.dp))
@@ -1483,7 +1483,7 @@ internal fun CustomizeToggleItem(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(SurfaceContainerHigh),
+                    .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(18.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
@@ -1755,7 +1755,7 @@ private fun LocalAiSlide(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(SurfaceContainerHigh)
+                        .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(20.dp))
                         .padding(20.dp)
                 ) {
                     Row(
@@ -1766,7 +1766,7 @@ private fun LocalAiSlide(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(SurfaceContainerHighest),
+                                .glassPanelBackground(SurfaceContainerHighest, RoundedCornerShape(14.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -1871,7 +1871,7 @@ private fun LocalAiSlide(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(SurfaceContainerHigh)
+                                    .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(16.dp))
                                     .padding(14.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {

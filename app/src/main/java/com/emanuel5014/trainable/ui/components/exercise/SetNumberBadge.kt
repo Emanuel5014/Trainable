@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.components
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
@@ -53,6 +54,14 @@ internal fun SetNumberBadge(
     modifier: Modifier = Modifier,
     size: Dp = 40.dp
 ) {
+    if (com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current) {
+        Box(modifier.size(size).then(Modifier.liquidGlassSurface(androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            containerColor.copy(alpha = .30f), control = true, quiet = true)), contentAlignment = Alignment.Center) {
+            Text("$number", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold,
+                color = com.emanuel5014.trainable.ui.theme.glassControlContentColor(contentColor))
+        }
+        return
+    }
     var from by remember { mutableStateOf(shape) }
     var to by remember { mutableStateOf(shape) }
     val progress = remember { Animatable(1f) }

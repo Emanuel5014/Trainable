@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
+import com.emanuel5014.trainable.ui.theme.glassControlContentColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,7 +34,7 @@ import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -330,7 +334,8 @@ private fun IncrementButton(
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(SurfaceContainerHigh)
+            .liquidGlassSurface(CircleShape, SurfaceContainerHigh, control = true)
+            .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else SurfaceContainerHigh)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {

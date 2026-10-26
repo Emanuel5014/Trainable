@@ -1,4 +1,6 @@
 package com.emanuel5014.trainable.ui.theme
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
 import android.annotation.SuppressLint
 import android.content.Context
 import android.app.Activity
@@ -11,6 +13,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -419,23 +423,32 @@ fun GymTrackingTheme(
     paletteIndex: Int = 0,
     seedColor: Int? = null,
     themeStyle: Int = 0,
+    liquidGlassEnabled: Boolean = true,
+    glassIntensity: Float = DefaultGlassIntensity,
     darkTheme: Boolean = true,
+    oledTheme: Boolean = false,
+    appBackground: com.emanuel5014.trainable.data.model.AppBackground = com.emanuel5014.trainable.data.model.AppBackground(),
+    glassMotionEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     rememberResponsiveSize()
     val context = LocalContext.current
-    val colorScheme = getAppColorScheme(
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val resolvedDark = darkTheme || appBackground.isCustom
+    val glassLight = rememberGlassLight(glassMotionEnabled && liquidGlassEnabled && glassIntensity > 0f)
+    val colorScheme = remember(context, configuration, dynamicColor, paletteIndex, seedColor, themeStyle, resolvedDark, oledTheme) { getAppColorScheme(
         context = context,
         dynamicColor = dynamicColor,
         paletteIndex = paletteIndex,
         seedColor = seedColor,
         themeStyle = themeStyle,
-        isDark = darkTheme
-    )
+        isDark = resolvedDark
+    ).let { if (oledTheme && resolvedDark) it.copy(background = Color.Black, surface = Color.Black, surfaceDim = Color.Black) else it } }
 
     // Save both dark and light color schemes for the web server
-    SideEffect {
+    LaunchedEffect(context, configuration, dynamicColor, paletteIndex, seedColor, themeStyle, oledTheme) {
         val darkScheme = getAppColorScheme(context, dynamicColor, paletteIndex, seedColor, themeStyle, true)
+            .let { if (oledTheme) it.copy(background = Color.Black, surface = Color.Black) else it }
         val lightScheme = getAppColorScheme(context, dynamicColor, paletteIndex, seedColor, themeStyle, false)
 
         fun Color.toHex(): String = "#${Integer.toHexString(toArgb()).padStart(8, '0').substring(2)}"
@@ -513,7 +526,10 @@ fun GymTrackingTheme(
                 window.statusBarColor = Color.Transparent.toArgb()
                 window.navigationBarColor = Color.Transparent.toArgb()
             }
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !resolvedDark
+                isAppearanceLightNavigationBars = !resolvedDark
+            }
         }
     }
 
@@ -521,6 +537,27 @@ fun GymTrackingTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
         shapes = Shapes,
-        content = content
+        content = {
+            val backdrop = dev.chrisbanes.haze.rememberHazeState()
+            androidx.compose.runtime.CompositionLocalProvider(
+                LocalLiquidGlassEnabled provides (liquidGlassEnabled && glassIntensity > 0f),
+                LocalLiquidGlassPreference provides liquidGlassEnabled,
+                LocalGlassIntensity provides glassIntensity.coerceIn(0f, 1f),
+                LocalGlassBackdrop provides backdrop,
+                LocalAppBackground provides appBackground,
+                LocalGlassLight provides glassLight,
+                LocalGlassMotionPreference provides glassMotionEnabled,
+                // Transparent scaffolds inherit their foreground from this root, just
+                // as they did from the opaque Surface before glass was introduced.
+                androidx.compose.material3.LocalContentColor provides colorScheme.onSurface
+            ) {
+                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize().background(colorScheme.background)) {
+                    if ((liquidGlassEnabled && glassIntensity > 0f) || appBackground.isCustom) {
+                        LiquidGlassBackdrop(if (liquidGlassEnabled && glassIntensity > 0f) backdrop else null)
+                    }
+                    content()
+                }
+            }
+        }
     )
 }

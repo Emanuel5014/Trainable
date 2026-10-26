@@ -20,9 +20,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.ToggleButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassToggleButton as ToggleButton
 import androidx.compose.material3.toShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,13 +69,16 @@ fun ExerciseFilterBar(options: List<ExerciseFilterOption>, modifier: Modifier = 
         modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+        horizontalArrangement = Arrangement.spacedBy(if (com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current) 8.dp else ButtonGroupDefaults.ConnectedSpaceBetween)
     ) {
         options.forEachIndexed { index, option ->
             ToggleButton(
                 checked = option.checked,
                 onCheckedChange = { option.onClick() },
-                shapes = when (index) {
+                quiet = true,
+                shapes = if (com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current) {
+                    androidx.compose.material3.ToggleButtonShapes(RoundedCornerShape(14.dp), RoundedCornerShape(14.dp), RoundedCornerShape(14.dp))
+                } else when (index) {
                     0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
                     options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()

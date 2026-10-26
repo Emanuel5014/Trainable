@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.routines
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
@@ -47,24 +48,24 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Photo
 import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedButton as OutlinedButton
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.collectAsState
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -746,7 +747,7 @@ private fun ZoomablePhotoInspector(
     Box(
         modifier = modifier
             .clip(Shapes.medium)
-            .background(SurfaceContainerHighest)
+            .glassPanelBackground(SurfaceContainerHighest, Shapes.medium)
             .pointerInput(zoomState) {
                 detectTapGestures(
                     onDoubleTap = { tapOffset ->
@@ -1254,7 +1255,7 @@ private fun ScanEntryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(Shapes.large)
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, Shapes.large)
             .padding(Spacing.medium),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {

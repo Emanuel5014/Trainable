@@ -19,7 +19,7 @@ suspend fun loadSplashColors(context: Context): SplashColors {
     val prefs = context.dataStore.data.first()
     val isDark = when (prefs[UserPreferencesRepository.THEME_MODE] ?: 0) {
         1 -> false
-        2 -> true
+        2, 3 -> true
         else -> (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
     }
@@ -31,5 +31,5 @@ suspend fun loadSplashColors(context: Context): SplashColors {
         themeStyle = prefs[UserPreferencesRepository.THEME_STYLE] ?: 0,
         isDark = isDark
     )
-    return SplashColors(background = scheme.surface, logo = scheme.primary)
+    return SplashColors(background = if (prefs[UserPreferencesRepository.THEME_MODE] == 3) Color.Black else scheme.surface, logo = scheme.primary)
 }

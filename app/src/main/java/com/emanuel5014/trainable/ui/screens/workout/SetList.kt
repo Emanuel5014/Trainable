@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.workout
+import androidx.compose.ui.text.style.TextOverflow
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,15 +41,15 @@ import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFilledIconButton as FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -126,7 +127,7 @@ internal fun ColumnScope.SetList(
             .weight(1f)
             .fillMaxWidth(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(if (com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current) 8.dp else 2.dp)
     ) {
         itemsIndexed(targetExState.sets) { index, set ->
             val isActive = index == targetActiveSetIndex && !set.isCompleted
@@ -514,7 +515,8 @@ internal fun ColumnScope.SetList(
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(R.string.add_set), style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.ExtraBold)
                     }
                     if (!isExerciseCompleted) {
                         val isLastExercise = targetIndex == state.exercises.size - 1
@@ -540,6 +542,7 @@ internal fun ColumnScope.SetList(
                                         R.string.add_exercise
                                     }
                                 ).uppercase(),
+                                style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 fontWeight = FontWeight.ExtraBold
                             )
                         }

@@ -48,6 +48,13 @@ class UserPreferencesRepository @Inject constructor(
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")
         val THEME_PALETTE = intPreferencesKey("theme_palette")
+        val GLASS_INTENSITY = floatPreferencesKey("glass_intensity")
+        val GLASS_MOTION_ENABLED = booleanPreferencesKey("glass_motion_enabled")
+        val BACKGROUND_MODE = stringPreferencesKey("background_mode")
+        val BACKGROUND_COLOR = intPreferencesKey("background_color")
+        val BACKGROUND_WALLPAPER = stringPreferencesKey("background_wallpaper")
+        val BACKGROUND_DIMMING = floatPreferencesKey("background_dimming")
+        val LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
         val THEME_STYLE = intPreferencesKey("theme_style")
         val TIMER_NOTIFICATIONS_ENABLED = booleanPreferencesKey("timer_notifications_enabled")
         val SWIPE_ACTIONS_ENABLED = booleanPreferencesKey("swipe_actions_enabled")
@@ -271,6 +278,51 @@ class UserPreferencesRepository @Inject constructor(
         .map { preferences ->
             preferences[THEME_PALETTE] ?: 0
         }
+
+    val glassIntensity: Flow<Float> = dataStore.data
+        .map { (it[GLASS_INTENSITY] ?: 0.75f).let { value -> if (value.isFinite()) value.coerceIn(0f, 1f) else 0.75f } }
+
+    suspend fun setGlassIntensity(intensity: Float) {
+        dataStore.edit { it[GLASS_INTENSITY] = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0.75f }
+    }
+
+    val glassMotionEnabled: Flow<Boolean> = dataStore.data.map { it[GLASS_MOTION_ENABLED] ?: true }
+    suspend fun setGlassMotionEnabled(enabled: Boolean) {
+        dataStore.edit { it[GLASS_MOTION_ENABLED] = enabled }
+    }
+
+    val appBackground: Flow<com.emanuel5014.trainable.data.model.AppBackground> = dataStore.data.map { prefs ->
+        com.emanuel5014.trainable.data.model.AppBackground(
+            mode = prefs[BACKGROUND_MODE]?.takeIf { it in setOf("theme", "color", "wallpaper") } ?: "theme",
+            color = prefs[BACKGROUND_COLOR] ?: 0xFF35516B.toInt(),
+            wallpaperName = prefs[BACKGROUND_WALLPAPER]?.takeIf { com.emanuel5014.trainable.util.WallpaperStorage.file(context, it)?.isFile == true },
+            dimming = com.emanuel5014.trainable.data.model.AppBackground.safeDimming(prefs[BACKGROUND_DIMMING] ?: .72f)
+        )
+    }
+
+    suspend fun setBackgroundMode(mode: String) {
+        require(mode in setOf("theme", "color", "wallpaper"))
+        dataStore.edit { it[BACKGROUND_MODE] = mode }
+    }
+    suspend fun setBackgroundColor(color: Int) {
+        dataStore.edit { it[BACKGROUND_COLOR] = color; it[BACKGROUND_MODE] = "color" }
+    }
+    suspend fun setBackgroundDimming(value: Float) {
+        dataStore.edit { it[BACKGROUND_DIMMING] = com.emanuel5014.trainable.data.model.AppBackground.safeDimming(value) }
+    }
+    suspend fun setBackgroundWallpaper(name: String?) {
+        dataStore.edit {
+            if (name == null) { it.remove(BACKGROUND_WALLPAPER); it[BACKGROUND_MODE] = "theme" }
+            else { it[BACKGROUND_WALLPAPER] = name; it[BACKGROUND_MODE] = "wallpaper" }
+        }
+    }
+
+    val liquidGlassEnabled: Flow<Boolean> = dataStore.data
+        .map { it[LIQUID_GLASS_ENABLED] ?: true }
+
+    suspend fun setLiquidGlassEnabled(enabled: Boolean) {
+        dataStore.edit { it[LIQUID_GLASS_ENABLED] = enabled }
+    }
 
     val themeStyle: Flow<Int> = dataStore.data
         .map { preferences ->

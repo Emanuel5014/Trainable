@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.settings
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -36,18 +37,18 @@ import androidx.compose.material.icons.rounded.FileOpen
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -161,7 +162,7 @@ fun HistoryImportScreen(
     }.collectAsState(initial = 0)
     val isDark = when (themeMode) {
         1 -> false
-        2 -> true
+        2, 3 -> true
         else -> androidx.compose.foundation.isSystemInDarkTheme()
     }
 
@@ -189,7 +190,7 @@ fun HistoryImportScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Surface,
+                        containerColor = com.emanuel5014.trainable.ui.theme.ScreenSurface,
                         titleContentColor = OnSurface,
                         navigationIconContentColor = OnSurface
                     )
@@ -720,7 +721,7 @@ private fun RoutineRow(routine: PlannedRoutine, dateFormat: DateTimeFormatter, o
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(16.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -781,7 +782,7 @@ private fun WorkoutRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(16.dp))
             .clickable(onClick = onToggle)
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
@@ -870,7 +871,7 @@ private fun IssueRow(issue: ImportIssue) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Top
@@ -1110,7 +1111,7 @@ private fun SimpleRow(title: String, subtitle: String, extra: String? = null) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(16.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
         Text(title, style = MaterialTheme.typography.bodyLarge, color = OnSurface, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -1124,7 +1125,7 @@ private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceContainerHighest)
+            .glassPanelBackground(SurfaceContainerHighest, RoundedCornerShape(14.dp))
             .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

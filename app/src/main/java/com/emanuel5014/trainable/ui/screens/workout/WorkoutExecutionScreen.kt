@@ -1,5 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
+import com.emanuel5014.trainable.ui.theme.glassControlContentColor
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
+
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -69,15 +75,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -298,7 +304,7 @@ fun WorkoutExecutionScreen(
                 onNavigateToRoutine = onNavigateToRoutine
             )
         },
-        containerColor = Surface
+        containerColor = ScreenSurface
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (state.totalExercises == 0) {
@@ -628,6 +634,7 @@ fun CardioToggleButton(
 
     val morph = remember { Morph(MaterialShapes.Cookie4Sided, MaterialShapes.Cookie9Sided) }
     val animatedShape = rememberAnimatedShape(morph, shapeProgress)
+    val controlShape = if (LocalLiquidGlassEnabled.current) androidx.compose.foundation.shape.CircleShape else animatedShape
 
     val rotation = remember { Animatable(0f) }
     val transitionDuration = 1500
@@ -667,8 +674,9 @@ fun CardioToggleButton(
         modifier = modifier
             .aspectRatio(1f)
             .graphicsLayer { rotationZ = rotation.value }
-            .background(backgroundColor, animatedShape)
-            .clip(animatedShape)
+            .liquidGlassSurface(controlShape, backgroundColor, control = true)
+            .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else backgroundColor, controlShape)
+            .clip(controlShape)
             .clickable { onToggle() },
         contentAlignment = Alignment.Center
     ) {
@@ -682,7 +690,7 @@ fun CardioToggleButton(
                 else -> Icons.Rounded.PlayArrow
             },
             contentDescription = null,
-            tint = contentColor
+            tint = glassControlContentColor(contentColor)
         )
     }
 }
@@ -1205,10 +1213,13 @@ fun LogSetButton(
     GymButton(
         onClick = onClick,
         modifier = modifier.then(if (!compact) Modifier.fillMaxWidth() else Modifier.height(48.dp)),
-        pressMorph = true,
+        pressMorph = !compact,
+        quiet = compact,
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = PaddingValues(horizontal = if (compact) 0.dp else if (ResponsiveSize.isCompact) 16.dp else 24.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(if (compact) 20.dp else 24.dp))
+            Icon(Icons.Rounded.Check, contentDescription = if (compact) stringResource(R.string.log_set) else null, modifier = Modifier.size(if (compact) 20.dp else 24.dp))
             if (!compact) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.log_set), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)

@@ -1,4 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.compare
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,16 +35,16 @@ import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Timelapse
 import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material3.Card
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,7 +119,7 @@ fun CompareSessionsScreen(
     var swapped by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         topBar = {
             TopAppBar(
                 title = {
@@ -143,7 +146,7 @@ fun CompareSessionsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = com.emanuel5014.trainable.ui.theme.ScreenSurface)
             )
         }
     ) { paddingValues ->

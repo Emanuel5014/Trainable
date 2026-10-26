@@ -254,6 +254,70 @@ class SettingsViewModel @Inject constructor(
         initialValue = 0
     )
 
+    val glassIntensity: StateFlow<Float?> = userPrefsRepository.glassIntensity.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    fun setGlassIntensity(intensity: Float) {
+        viewModelScope.launch { userPrefsRepository.setGlassIntensity(intensity) }
+    }
+
+    val liquidGlassEnabled: StateFlow<Boolean?> = userPrefsRepository.liquidGlassEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+    fun setLiquidGlassEnabled(enabled: Boolean) {
+        viewModelScope.launch { userPrefsRepository.setLiquidGlassEnabled(enabled) }
+    }
+
+    val glassMotionEnabled: StateFlow<Boolean?> = userPrefsRepository.glassMotionEnabled.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val appBackground: StateFlow<com.emanuel5014.trainable.data.model.AppBackground?> = userPrefsRepository.appBackground.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    private val _wallpaperImporting = MutableStateFlow(false)
+    val wallpaperImporting = _wallpaperImporting.asStateFlow()
+    private val _wallpaperImportFailed = MutableStateFlow(false)
+    val wallpaperImportFailed = _wallpaperImportFailed.asStateFlow()
+
+    fun setGlassMotionEnabled(enabled: Boolean) { viewModelScope.launch { userPrefsRepository.setGlassMotionEnabled(enabled) } }
+    fun setBackgroundMode(mode: String) { viewModelScope.launch { userPrefsRepository.setBackgroundMode(mode) } }
+    fun setBackgroundColor(color: Int) { viewModelScope.launch { userPrefsRepository.setBackgroundColor(color) } }
+    fun setBackgroundDimming(value: Float) { viewModelScope.launch { userPrefsRepository.setBackgroundDimming(value) } }
+
+    fun importWallpaper(uri: android.net.Uri) {
+        if (_wallpaperImporting.value) return
+        _wallpaperImporting.value = true
+        _wallpaperImportFailed.value = false
+        viewModelScope.launch {
+            try {
+                val name = com.emanuel5014.trainable.util.WallpaperStorage.import(context, uri)
+                userPrefsRepository.setBackgroundWallpaper(name)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.emanuel5014.trainable.util.WallpaperStorage.directory(context).listFiles()
+                        ?.filter { it.name != name }?.forEach { it.delete() }
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _wallpaperImportFailed.value = true
+            } finally { _wallpaperImporting.value = false }
+        }
+    }
+
+    fun removeWallpaper() {
+        viewModelScope.launch {
+            val name = userPrefsRepository.appBackground.first().wallpaperName
+            userPrefsRepository.setBackgroundWallpaper(null)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.emanuel5014.trainable.util.WallpaperStorage.file(context, name)?.delete()
+            }
+        }
+    }
+
     val themeStyle = userPrefsRepository.themeStyle.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

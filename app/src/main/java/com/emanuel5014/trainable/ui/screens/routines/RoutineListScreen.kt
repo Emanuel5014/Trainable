@@ -1,4 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.routines
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -55,24 +58,24 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Unarchive
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExtendedFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassExtendedFloatingActionButton as ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
+import com.emanuel5014.trainable.ui.components.glass.GlassToggleButton as ToggleButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -217,7 +220,7 @@ fun RoutineListScreen(
     )
 
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         floatingActionButton = {
             val fabPadding = if (uiState.floatingNavBar) {
                 if (ResponsiveSize.isCompact) 2.dp else 8.dp
@@ -334,7 +337,7 @@ fun RoutineListScreen(
                     .padding(horizontal = ResponsiveSize.horizontalPadding)
                     .padding(bottom = 8.dp)
                     .clip(Shapes.large)
-                    .background(SurfaceContainerHigh)
+                    .glassPanelBackground(SurfaceContainerHigh)
                     .padding(4.dp)
             ) {
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -360,7 +363,7 @@ fun RoutineListScreen(
                             }
                             .shadow(2.dp, Shapes.medium, clip = false)
                             .clip(Shapes.medium)
-                            .background(Surface)
+                            .glassPanelBackground(Surface, Shapes.medium)
                     )
                 }
 
@@ -714,34 +717,13 @@ fun RoutineListScreen(
                                 color = OnSurfaceVariant,
                                 fontWeight = FontWeight.ExtraBold
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                            ) {
-                                DayOfWeek.entries.forEachIndexed { index, day ->
-                                    val isSelected = selectedDays.contains(day)
-                                    ToggleButton(
-                                        checked = isSelected,
-                                        onCheckedChange = {
-                                            if (isSelected) selectedDays.remove(day)
-                                            else selectedDays.add(day)
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        shapes = when (index) {
-                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                        }
-                                    ) {
-                                        Text(
-                                            text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    }
+                            com.emanuel5014.trainable.ui.components.RoutineDayPicker(
+                                selectedDays = selectedDays.toSet(),
+                                onToggle = { day ->
+                                    if (day in selectedDays) selectedDays.remove(day) else selectedDays.add(day)
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 }
-                            }
+                            )
                         }
 
                         GymInputField(
@@ -784,6 +766,7 @@ fun RoutineListScreen(
                                     showSheet = false
                                 }
                             },
+                            enabled = routineName.isNotBlank(),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
@@ -1266,7 +1249,7 @@ private fun RoutineCard(
                         ) {
                             trainedMuscleGroups.forEach { category ->
                                 val translatedCategory = ExerciseTranslations.translateCategory(category, languageCode)
-                                androidx.compose.material3.Surface(
+                                com.emanuel5014.trainable.ui.components.glass.GlassSurface(
                                     color = Surface,
                                     contentColor = OnSurfaceVariant,
                                     shape = RoundedCornerShape(6.dp)

@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.components.journal
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -22,12 +23,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.EditNote
-import androidx.compose.material3.AssistChip
+import com.emanuel5014.trainable.ui.components.glass.GlassAssistChip as AssistChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -169,7 +170,7 @@ private fun NewTagChip(onCreate: (String) -> Unit) {
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, CircleShape)
             .padding(start = 14.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

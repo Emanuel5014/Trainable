@@ -45,6 +45,12 @@ android {
             isDebuggable = false
             manifestPlaceholders["appName"] = "Trainable (debug)"
         }
+        // Isolated, reproducible UI fixtures. No audit entry points or sample data ship in fast/release.
+        create("audit") {
+            initWith(getByName("fast"))
+            applicationIdSuffix = ".audit"
+            manifestPlaceholders["appName"] = "Trainable Audit"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -132,6 +138,8 @@ dependencies {
 
 // Haze - Frosted Glass Blur
     implementation(libs.haze)
+    implementation(libs.haze.blur)
+    implementation(libs.haze.glass)
 
     // Ktor Server (Local Web Dashboard)
     implementation(libs.ktor.server.core)

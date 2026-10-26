@@ -23,7 +23,7 @@ coil = "2.7.0"
 core-splashscreen = "1.2.0"
 okhttp = "5.5.0"
 material = "1.14.0"
-haze = "1.7.3"
+haze = "2.0.1"
 glance = "1.2.0"
 biometric = "1.2.0-alpha05"
 fragment = "1.9.1"
@@ -66,6 +66,8 @@ hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltNa
 hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltNavigationCompose" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
+haze-blur = { group = "dev.chrisbanes.haze", name = "haze-blur", version.ref = "haze" }
+haze-glass = { group = "dev.chrisbanes.haze", name = "haze-glass", version.ref = "haze" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-fragment = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }

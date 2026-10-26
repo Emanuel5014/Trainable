@@ -1,4 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.routines
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import android.Manifest
 import android.app.Activity
@@ -88,10 +91,10 @@ import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExtendedFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassExtendedFloatingActionButton as ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -116,23 +119,23 @@ import com.emanuel5014.trainable.ui.components.WeekSelector
 import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFloatingActionButton as FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedButton as OutlinedButton
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.ToggleButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassToggleButton as ToggleButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
@@ -221,8 +224,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
@@ -273,7 +274,7 @@ fun RoutineDetailScreen(
     }.collectAsState(initial = 0)
     val isDark = when (themeMode) {
         1 -> false
-        2 -> true
+        2, 3 -> true
         else -> androidx.compose.foundation.isSystemInDarkTheme()
     }
     val listState = rememberLazyListState()
@@ -648,7 +649,7 @@ fun RoutineDetailScreen(
             .then(
                 if (isScanActive) Modifier.hazeSource(state = scanHazeState) else Modifier
             ),
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
@@ -776,7 +777,7 @@ fun RoutineDetailScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = ResponsiveSize.horizontalPadding)
                                 .clip(Shapes.large)
-                                .background(SurfaceContainerHigh)
+                                .glassPanelBackground(SurfaceContainerHigh)
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -808,7 +809,7 @@ fun RoutineDetailScreen(
                                             )
                                         }
                                     }
-                                    IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(36.dp)) {
+                                    IconButton(onClick = { weekToDelete = viewWeek }, modifier = Modifier.size(48.dp)) {
                                         Icon(
                                             Icons.Rounded.Delete,
                                             contentDescription = stringResource(R.string.delete_week),
@@ -840,7 +841,7 @@ fun RoutineDetailScreen(
                                     .padding(horizontal = ResponsiveSize.horizontalPadding)
                                     .padding(top = 12.dp, bottom = 40.dp)
                                     .clip(Shapes.large)
-                                    .background(SurfaceContainerHigh)
+                                    .glassPanelBackground(SurfaceContainerHigh)
                                     .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1801,34 +1802,13 @@ fun RoutineDetailScreen(
                                 color = OnSurfaceVariant,
                                 fontWeight = FontWeight.ExtraBold
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                            ) {
-                                DayOfWeek.entries.forEachIndexed { index, day ->
-                                    val isSelected = selectedDays.contains(day)
-                                    ToggleButton(
-                                        checked = isSelected,
-                                        onCheckedChange = {
-                                            if (isSelected) selectedDays.remove(day)
-                                            else selectedDays.add(day)
-                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        shapes = when (index) {
-                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                            DayOfWeek.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                        }
-                                    ) {
-                                        Text(
-                                            text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                            style = MaterialTheme.typography.bodyLarge.copy(fontSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.bodyLarge.fontSize)),
-                                            fontWeight = FontWeight.ExtraBold
-                                        )
-                                    }
+                            com.emanuel5014.trainable.ui.components.RoutineDayPicker(
+                                selectedDays = selectedDays.toSet(),
+                                onToggle = { day ->
+                                    if (day in selectedDays) selectedDays.remove(day) else selectedDays.add(day)
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 }
-                            }
+                            )
                         }
 
                         if (advancedOn) {
@@ -1953,6 +1933,7 @@ fun RoutineDetailScreen(
                                     }
                                 }
                             },
+                            enabled = routineName.isNotBlank(),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
@@ -2604,7 +2585,7 @@ internal fun ScanOptionItem(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh)
             .clickable { onClick() }
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -2871,7 +2852,7 @@ private fun RoutineOverviewSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(Shapes.large)
-                .background(SurfaceContainerHigh)
+                .glassPanelBackground(SurfaceContainerHigh)
                 .clickable(onClickLabel = toggleLabel, onClick = onToggle)
                 .padding(16.dp)
         ) {

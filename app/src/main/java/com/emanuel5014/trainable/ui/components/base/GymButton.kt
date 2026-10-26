@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.emanuel5014.trainable.ui.components.motion.PressMorph
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
@@ -12,8 +13,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Button
+import com.emanuel5014.trainable.ui.components.glass.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +49,7 @@ fun GymButton(
     contentPadding: PaddingValues = PaddingValues(horizontal = if (ResponsiveSize.isCompact) 16.dp else 24.dp),
     /** While pressed the corners tighten (from [shape]'s own 32 dp to 10 dp). Only the workout asks for it; [shape] is then ignored. */
     pressMorph: Boolean = false,
+    quiet: Boolean = false,
     content: @Composable RowScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -77,10 +80,11 @@ fun GymButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
-            disabledContainerColor = containerColor.copy(alpha = 0.3f),
-            disabledContentColor = contentColor.copy(alpha = 0.5f)
+            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = .10f),
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = .60f)
         ),
         shape = buttonShape,
+        quiet = quiet,
         enabled = enabled,
         interactionSource = interactionSource,
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp),

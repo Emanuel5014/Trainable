@@ -14,14 +14,15 @@ import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.R
@@ -55,9 +57,9 @@ fun ExerciseSearchWithTraitFilter(
     modifier: Modifier = Modifier
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         ExerciseSearchField(query = query, onQueryChange = onQueryChange, modifier = Modifier.weight(1f))
-        ExerciseTraitFilterButton(filter = traitFilter, onClick = { sheetOpen = true })
+        ExerciseTraitFilterButton(filter = traitFilter, onClick = { sheetOpen = true }, modifier = Modifier.padding(top = 8.dp))
     }
     if (sheetOpen) {
         ExerciseTraitFilterSheet(
@@ -75,14 +77,10 @@ fun ExerciseTraitFilterButton(filter: TraitFilter, onClick: () -> Unit, modifier
     val title = stringResource(R.string.exercise_filters_title)
     val description =
         if (filter.isActive) "$title, ${stringResource(R.string.exercise_filters_active_count, filter.activeCount)}" else title
-    IconButton(onClick = onClick, modifier = modifier) {
-        BadgedBox(badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
-            Icon(
-                imageVector = Icons.Rounded.FilterList,
-                contentDescription = description,
-                tint = if (filter.isActive) Primary else OnSurfaceVariant
-            )
-        }
+    BadgedBox(modifier = modifier, badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
+        GymIconButton(icon = Icons.Rounded.FilterList, description = description, onClick = onClick,
+            contentColor = if (filter.isActive) Primary else OnSurfaceVariant,
+            shape = RoundedCornerShape(14.dp), quiet = true)
     }
 }
 

@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
+import com.emanuel5014.trainable.ui.theme.glassControlContentColor
+
 import androidx.compose.animation.animateContentSize
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.ui.layout.Layout
@@ -31,7 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -409,10 +413,8 @@ internal fun ExerciseTools(
     val groupLabel = stringResource(R.string.exercise_tools_group)
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(SecondaryContainer)
             .semantics { contentDescription = groupLabel },
-        horizontalArrangement = Arrangement.spacedBy(0.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (targetIndex < state.exercises.lastIndex) {
             val nextEx = state.exercises[targetIndex + 1]
@@ -451,12 +453,9 @@ internal fun ExerciseTools(
 
 @Composable
 private fun ToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: String, tint: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(width = 44.dp, height = 48.dp)
-            .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(imageVector = icon, contentDescription = description, tint = tint, modifier = Modifier.size(24.dp))
-    }
+    com.emanuel5014.trainable.ui.components.GymIconButton(
+        icon = icon, description = description, contentColor = tint, onClick = onClick,
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(14.dp), quiet = true
+    )
 }

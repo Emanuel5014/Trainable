@@ -19,14 +19,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
+import com.emanuel5014.trainable.ui.components.glass.GlassSwitch as Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -230,7 +230,8 @@ internal fun CustomColorPickerDialog(
     initialColor: Color?,
     initialStyle: Int,
     onDismiss: () -> Unit,
-    onApply: (colorSeed: Int, style: Int) -> Unit
+    onApply: (colorSeed: Int, style: Int) -> Unit,
+    showStyle: Boolean = true
 ) {
     val defaultHue = initialColor?.toHSV()?.get(0) ?: 220f
     var hue by remember { mutableFloatStateOf(defaultHue) }
@@ -271,7 +272,7 @@ internal fun CustomColorPickerDialog(
                     currentColor = currentColor
                 )
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (showStyle) Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                     Row(
                         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
