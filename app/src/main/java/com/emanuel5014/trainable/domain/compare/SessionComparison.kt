@@ -229,8 +229,9 @@ data class SessionComparison(
                 .map { it.exercise.id }
                 .distinct()
 
+        /** An exercise done twice in the workout puts its runs one after the other, each in set order, not interleaved. */
         private fun side(logs: List<SetLogEntity>) = ExerciseSide(
-            logs.sortedBy { it.numeroSerie }.map {
+            logs.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie })).map {
                 ComparedSet(
                     number = it.numeroSerie,
                     weightKg = it.pesoSollevato,
