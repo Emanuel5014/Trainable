@@ -420,7 +420,8 @@ class EditWorkoutViewModel @Inject constructor(
                             }
                         )
                     }
-                    curr.copy(exercises = mutableExercises)
+                    // The replacement may be an exercise that is in the workout already, as another run
+                    curr.copy(exercises = mutableExercises.numbered())
                 }
             }
 
@@ -561,7 +562,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Only this run: the same exercise done again elsewhere in the workout stays
             workoutRepository.deleteExerciseRows(sessionId, old.exerciseId, old.order)
             _state.update { curr ->
-                curr.copy(exercises = curr.exercises.filter { it.key != old })
+                curr.copy(exercises = curr.exercises.filter { it.key != old }.numbered())
             }
 
             val added = (1..sets.coerceAtLeast(1)).map { number ->
@@ -619,7 +620,8 @@ class EditWorkoutViewModel @Inject constructor(
             // Optimistic update
             if (exercise != null) {
                 _state.update { curr ->
-                    curr.copy(exercises = curr.exercises + EditExerciseState(exercise, newSets))
+                    // The exercise may already be in the workout: the new run gets the next number, so its list key is its own
+                    curr.copy(exercises = (curr.exercises + EditExerciseState(exercise, newSets)).numbered())
                 }
             }
 

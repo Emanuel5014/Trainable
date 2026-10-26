@@ -502,8 +502,6 @@ fun EditWorkoutScreen(
             currentSets = currentSets,
             currentReps = currentReps,
             currentRepsMax = currentRange?.max,
-            // The sheet picks by exercise: one that is already in the workout cannot be added or swapped in a second time
-            excludedExerciseIds = state.exercises.map { it.exercise.id }.toSet() - setOfNotNull(exerciseStateToSwap?.exercise?.id),
             availableExercises = state.availableExercises,
             languageCode = languageCode,
             isAdding = exerciseToSwap == null,
