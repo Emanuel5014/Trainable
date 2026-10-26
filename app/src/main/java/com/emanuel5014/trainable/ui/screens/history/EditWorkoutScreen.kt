@@ -135,9 +135,13 @@ import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.Date
 
-/** Stable lazy-list key of a row in the edit screen: exercises and cardio logs share one list. */
+/**
+ * Stable lazy-list key of a row in the edit screen: exercises and cardio logs share one list. An exercise done twice in
+ * the workout is two rows, so the second one carries its [EditExerciseState.instance]; the key does not use the order,
+ * which changes whenever the user drags a row.
+ */
 internal fun getWorkoutItemKey(item: Any): String = when (item) {
-    is EditExerciseState -> "exercise_${item.exercise.id}"
+    is EditExerciseState -> if (item.instance == 0) "exercise_${item.exercise.id}" else "exercise_${item.exercise.id}_${item.instance}"
     is CardioExerciseLogs -> "cardio_${item.first.id}"
     else -> item.toString()
 }
@@ -189,15 +193,15 @@ fun EditWorkoutScreen(
     var editingSet by remember { mutableStateOf<SetLogEntity?>(null) }
     var editingCardio by remember { mutableStateOf<CardioLogEntity?>(null) }
     var showExercisePicker by remember { mutableStateOf(false) }
-    var exerciseToSwap by remember { mutableStateOf<Int?>(null) }
-    var showDeleteExerciseDialog by remember { mutableStateOf<Int?>(null) }
+    var exerciseToSwap by remember { mutableStateOf<ExerciseKey?>(null) }
+    var showDeleteExerciseDialog by remember { mutableStateOf<ExerciseKey?>(null) }
     var showEditDetailsSheet by remember { mutableStateOf(false) }
     var showJournalSheet by remember { mutableStateOf(false) }
     var showAddCardio by remember { mutableStateOf(false) }
     var pendingCardioCategory by remember { mutableStateOf<String?>(null) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
-    var exerciseToEditPrescription by remember { mutableStateOf<Int?>(null) }
-    var pendingPrescription by remember { mutableStateOf<Pair<Int, List<PrescriptionBlock>>?>(null) }
+    var exerciseToEditPrescription by remember { mutableStateOf<ExerciseKey?>(null) }
+    var pendingPrescription by remember { mutableStateOf<Pair<ExerciseKey, List<PrescriptionBlock>>?>(null) }
 
     LaunchedEffect(reorderState.isDragging) {
         if (reorderState.isDragging) reorderState.driveWhileDragging()
@@ -368,18 +372,18 @@ fun EditWorkoutScreen(
                                         isDragging = isDragging,
                                         weightUnit = state.weightUnit,
                                         onEditSet = { editingSet = it },
-                                        onAddSet = { viewModel.addSet(exerciseState.exercise.id) },
+                                        onAddSet = { viewModel.addSet(exerciseState.key) },
                                         onSwapExercise = {
-                                            exerciseToSwap = exerciseState.exercise.id
+                                            exerciseToSwap = exerciseState.key
                                             showExercisePicker = true
                                         },
-                                        onEditPrescription = { exerciseToEditPrescription = exerciseState.exercise.id },
-                                        onDeleteExercise = { showDeleteExerciseDialog = exerciseState.exercise.id },
+                                        onEditPrescription = { exerciseToEditPrescription = exerciseState.key },
+                                        onDeleteExercise = { showDeleteExerciseDialog = exerciseState.key },
                                         onMoveSetUp = { viewModel.moveSetUp(it) },
                                         onMoveSetDown = { viewModel.moveSetDown(it) },
-                                        onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.exercise.id) },
-                                        onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.exercise.id) },
-                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.exercise.id) },
+                                        onMoveExerciseUp = { viewModel.moveExerciseUp(exerciseState.key) },
+                                        onMoveExerciseDown = { viewModel.moveExerciseDown(exerciseState.key) },
+                                        onToggleSuperset = { viewModel.toggleSupersetWithNext(exerciseState.key) },
                                         programEdits = state.prescriptionEdits.forExercise(exerciseState.exercise.id),
                                         onRestoreExercise = { viewModel.restoreExercise(exerciseState.exercise.id) }
                                     )
@@ -486,7 +490,7 @@ fun EditWorkoutScreen(
     }
 
     if (showExercisePicker) {
-        val exerciseStateToSwap = exerciseToSwap?.let { swapId -> state.exercises.find { it.exercise.id == swapId } }
+        val exerciseStateToSwap = exerciseToSwap?.let { swapKey -> state.exercises.find { it.key == swapKey } }
         val currentSets = exerciseStateToSwap?.sets?.size ?: 3
         // A range the exercise was done against is offered again (its bottom and top), otherwise the first set's reps
         val currentRange = exerciseStateToSwap?.sets?.firstNotNullOfOrNull { it.repsRange }
@@ -498,7 +502,7 @@ fun EditWorkoutScreen(
             currentSets = currentSets,
             currentReps = currentReps,
             currentRepsMax = currentRange?.max,
-            // The list is keyed by exercise: one that is already in the workout cannot be added or swapped in a second time
+            // The sheet picks by exercise: one that is already in the workout cannot be added or swapped in a second time
             excludedExerciseIds = state.exercises.map { it.exercise.id }.toSet() - setOfNotNull(exerciseStateToSwap?.exercise?.id),
             availableExercises = state.availableExercises,
             languageCode = languageCode,
@@ -506,9 +510,9 @@ fun EditWorkoutScreen(
             currentExerciseId = exerciseStateToSwap?.exercise?.id,
             categories = state.categories,
             onExerciseSelected = { exercise, sets, reps, rest, exerciseType, durataTargetSec ->
-                val currentSwapId = exerciseToSwap
-                if (currentSwapId != null) {
-                    viewModel.swapExercise(currentSwapId, exercise.id, exerciseType, durataTargetSec, repsRange = reps.range.takeIf { exerciseType == "strength" })
+                val currentSwapKey = exerciseToSwap
+                if (currentSwapKey != null) {
+                    viewModel.swapExercise(currentSwapKey, exercise.id, exerciseType, durataTargetSec, repsRange = reps.range.takeIf { exerciseType == "strength" })
                 } else {
                     viewModel.addExercise(exercise.id, sets, reps.repsTarget, exerciseType, durataTargetSec, repsMax = reps.repsMax)
                 }
@@ -516,9 +520,9 @@ fun EditWorkoutScreen(
                 showExercisePicker = false
             },
             onCardioExerciseSelected = { exercise, durationMinutes, _, sets ->
-                val currentSwapId = exerciseToSwap
-                if (currentSwapId != null) {
-                    viewModel.swapExerciseWithCardio(currentSwapId, exercise.nome, durationMinutes, sets)
+                val currentSwapKey = exerciseToSwap
+                if (currentSwapKey != null) {
+                    viewModel.swapExerciseWithCardio(currentSwapKey, exercise.nome, durationMinutes, sets)
                 } else {
                     viewModel.addCardioLog(exercise.nome, 0f, durationMinutes * 60, sets = sets)
                 }
@@ -526,9 +530,9 @@ fun EditWorkoutScreen(
                 showExercisePicker = false
             },
             onAdvancedExerciseSelected = { exercise, blocks, _ ->
-                val currentSwapId = exerciseToSwap
-                if (currentSwapId != null) {
-                    viewModel.swapExerciseAdvanced(currentSwapId, exercise.id, blocks)
+                val currentSwapKey = exerciseToSwap
+                if (currentSwapKey != null) {
+                    viewModel.swapExerciseAdvanced(currentSwapKey, exercise.id, blocks)
                 } else {
                     viewModel.addAdvancedExercise(exercise.id, blocks)
                 }
@@ -546,8 +550,8 @@ fun EditWorkoutScreen(
         )
     }
 
-    exerciseToEditPrescription?.let { editingId ->
-        val target = state.exercises.find { it.exercise.id == editingId }
+    exerciseToEditPrescription?.let { editingKey ->
+        val target = state.exercises.find { it.key == editingKey }
         if (target == null) {
             exerciseToEditPrescription = null
         } else {
@@ -565,22 +569,22 @@ fun EditWorkoutScreen(
                 )
             }
             ExercisePrescriptionSheet(
-                exerciseId = editingId,
+                exerciseId = editingKey.exerciseId,
                 exerciseName = ExerciseTranslations.translate(target.exercise.nome, languageCode),
                 initialBlocks = currentBlocks.ifEmpty { listOf(seeded) },
                 onDismiss = { exerciseToEditPrescription = null },
                 onSave = { blocks ->
-                    val removed = viewModel.removedSetsCount(editingId, blocks)
+                    val removed = viewModel.removedSetsCount(editingKey, blocks)
                     if (removed > 0) {
-                        pendingPrescription = editingId to blocks
+                        pendingPrescription = editingKey to blocks
                     } else {
-                        viewModel.applyPrescription(editingId, blocks)
+                        viewModel.applyPrescription(editingKey, blocks)
                         exerciseToEditPrescription = null
                     }
                 },
                 onRemove = if (currentBlocks.isNotEmpty()) {
                     {
-                        viewModel.applyPrescription(editingId, emptyList())
+                        viewModel.applyPrescription(editingKey, emptyList())
                         exerciseToEditPrescription = null
                     }
                 } else null
@@ -588,15 +592,15 @@ fun EditWorkoutScreen(
         }
     }
 
-    pendingPrescription?.let { (exerciseId, blocks) ->
+    pendingPrescription?.let { (exerciseKey, blocks) ->
         AlertDialog(
             onDismissRequest = { pendingPrescription = null },
             title = { Text(stringResource(R.string.prescription_remove_sets_title), fontWeight = FontWeight.ExtraBold) },
-            text = { Text(stringResource(R.string.prescription_remove_sets_message, viewModel.removedSetsCount(exerciseId, blocks))) },
+            text = { Text(stringResource(R.string.prescription_remove_sets_message, viewModel.removedSetsCount(exerciseKey, blocks))) },
             confirmButton = {
                 GymButton(
                     onClick = {
-                        viewModel.applyPrescription(exerciseId, blocks)
+                        viewModel.applyPrescription(exerciseKey, blocks)
                         pendingPrescription = null
                         exerciseToEditPrescription = null
                     },

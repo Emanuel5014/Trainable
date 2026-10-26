@@ -17,7 +17,11 @@ fun SetLogEntity.estimatedOneRepMaxKg(): Float =
     if (isWarmup || kind != SetLogKind.STRENGTH || repsEffettive <= 0 || isInParts) 0f
     else LoadCalculator.epley(pesoSollevato, repsEffettive)
 
-/** What one workout did for one exercise. Warm-ups are kept in [sets] but never count in the figures. */
+/**
+ * What one workout did for one exercise. Warm-ups are kept in [sets] but never count in the figures. An exercise done
+ * more than once in the workout (warm-ups first, heavy sets at the end) is still one performance: [sets] lists the
+ * runs one after the other, in the order they were done, and [groups] tells them apart.
+ */
 data class ExercisePerformance(
     val sessionId: Int,
     val timestamp: Long,
@@ -25,6 +29,9 @@ data class ExercisePerformance(
     val planName: String,
     val sets: List<SetLogEntity>
 ) {
+    /** The sets of each run of the exercise, every run numbered from its own first set. */
+    val groups: List<List<SetLogEntity>> = sets.groupBy { it.ordineEsercizio }.values.toList()
+
     val workingSets: List<SetLogEntity> = sets.filter { !it.isWarmup }
 
     val topWeightKg: Float = workingSets.maxOfOrNull { it.pesoSollevato } ?: 0f
@@ -66,7 +73,7 @@ data class ExerciseHistory(
     val chartPoints: List<AnalyticsChartPoint>
 ) {
     companion object {
-        /** [rows] are the sets of the exercise, the newest workout first and in set order within it. */
+        /** [rows] are the sets of the exercise, the newest workout first; within a workout they are put in the order done. */
         fun of(rows: List<ExerciseSetWithSession>): ExerciseHistory {
             val bySession = LinkedHashMap<Int, MutableList<ExerciseSetWithSession>>()
             rows.forEach { bySession.getOrPut(it.setLog.sessionId) { mutableListOf() }.add(it) }
@@ -77,7 +84,7 @@ data class ExerciseHistory(
                     timestamp = first.sessionTimestamp,
                     sessionNote = first.sessionNote,
                     planName = first.planName,
-                    sets = group.map { it.setLog }.sortedBy { it.numeroSerie }
+                    sets = group.map { it.setLog }.sortedWith(compareBy({ it.ordineEsercizio }, { it.numeroSerie }))
                 )
             }
             val allSets = rows.map { it.setLog }
