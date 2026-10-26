@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.settings
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
+
+import androidx.compose.foundation.border
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -23,16 +30,16 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestartAlt
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -72,6 +79,13 @@ fun PersonalizationSettingsScreen(
     val wallpaperColors by viewModel.wallpaperColors.collectAsState()
     val themePalette by viewModel.themePalette.collectAsState()
     val themeStyle by viewModel.themeStyle.collectAsState()
+    val savedGlassEnabled by viewModel.liquidGlassEnabled.collectAsState()
+    val savedGlassIntensity by viewModel.glassIntensity.collectAsState()
+    // Start with the already resolved app appearance, not a temporary 75%/enabled
+    // value that replaces the saved look for one frame whenever this screen opens.
+    val liquidGlassEnabled = savedGlassEnabled ?: com.emanuel5014.trainable.ui.theme.LocalLiquidGlassPreference.current
+    val glassIntensity = savedGlassIntensity ?: com.emanuel5014.trainable.ui.theme.LocalGlassIntensity.current
+    var glassPreview by remember(glassIntensity) { androidx.compose.runtime.mutableFloatStateOf(glassIntensity) }
     val themeMode by viewModel.themeMode.collectAsState()
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
@@ -99,8 +113,12 @@ fun PersonalizationSettingsScreen(
         )
     }
 
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.emanuel5014.trainable.ui.theme.LocalGlassIntensity provides glassPreview,
+        com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled provides (liquidGlassEnabled && glassPreview > 0f)
+    ) {
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         topBar = {
             TopAppBar(
                 title = {
@@ -121,7 +139,7 @@ fun PersonalizationSettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
+                    containerColor = ScreenSurface,
                     titleContentColor = OnSurface,
                     navigationIconContentColor = OnSurface
                 )
@@ -136,6 +154,44 @@ fun PersonalizationSettingsScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            GymCard(containerColor = SurfaceContainerHigh) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(R.string.liquid_glass_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text(stringResource(R.string.liquid_glass_description), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+                    }
+                    SettingsSwitch(checked = liquidGlassEnabled, onCheckedChange = viewModel::setLiquidGlassEnabled)
+                }
+                Spacer(Modifier.size(16.dp))
+                val intensityLabel = stringResource(R.string.glass_intensity)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(intensityLabel, color = OnSurface, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.glass_intensity_percent, (glassPreview * 100).toInt()), color = Primary, fontWeight = FontWeight.Bold)
+                }
+                androidx.compose.material3.Slider(
+                    value = glassPreview,
+                    onValueChange = { glassPreview = it },
+                    onValueChangeFinished = { viewModel.setGlassIntensity(glassPreview) },
+                    enabled = liquidGlassEnabled,
+                    valueRange = 0f..1f,
+                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = intensityLabel },
+                    thumb = {
+                        Box(Modifier.size(32.dp).liquidGlassSurface(CircleShape, SurfaceContainerHigh)
+                            .border(1.dp, Primary.copy(alpha = 0.65f), CircleShape))
+                    }
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.glass_solid), color = OnSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.glass_liquid), color = OnSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+                }
+                Spacer(Modifier.size(16.dp))
+                GlassMotionSettingsRow(viewModel, liquidGlassEnabled && glassPreview > 0f)
+            }
+            BackgroundAppearanceCard(viewModel)
             GymCard(containerColor = SurfaceContainerHigh) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     var showThemeModeDialog by remember { mutableStateOf(false) }
@@ -171,6 +227,14 @@ fun PersonalizationSettingsScreen(
                                             showThemeModeDialog = false
                                         }
                                     )
+                                    LanguageOption(
+                                        title = stringResource(R.string.theme_mode_oled),
+                                        isSelected = themeMode == 3,
+                                        onClick = {
+                                            viewModel.setThemeMode(3)
+                                            showThemeModeDialog = false
+                                        }
+                                    )
                                 }
                             },
                             confirmButton = {
@@ -202,6 +266,7 @@ fun PersonalizationSettingsScreen(
                                     when (themeMode) {
                                         0 -> stringResource(R.string.theme_mode_system)
                                         1 -> stringResource(R.string.theme_mode_light)
+                                        3 -> stringResource(R.string.theme_mode_oled)
                                         else -> stringResource(R.string.theme_mode_dark)
                                     },
                                     style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
@@ -261,7 +326,7 @@ fun PersonalizationSettingsScreen(
                                         modifier = Modifier
                                             .size(56.dp)
                                             .clip(CircleShape)
-                                            .background(SurfaceContainerHighest)
+                                            .glassPanelBackground(SurfaceContainerHighest, CircleShape)
                                             .clickable {
                                                 viewModel.setDynamicColorSeed(null)
                                                 viewModel.setThemeStyle(0)
@@ -429,5 +494,6 @@ fun PersonalizationSettingsScreen(
                 }
             }
         }
+    }
     }
 }

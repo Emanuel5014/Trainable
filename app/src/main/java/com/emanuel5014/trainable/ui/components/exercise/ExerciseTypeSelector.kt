@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.components
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
@@ -177,7 +178,7 @@ private fun ExerciseTypeTile(
     Column(
         modifier = modifier
             .clip(shape)
-            .background(container)
+            .glassPanelBackground(container, shape)
             .border(width = 1.5.dp, color = border, shape = shape)
             .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 14.dp),

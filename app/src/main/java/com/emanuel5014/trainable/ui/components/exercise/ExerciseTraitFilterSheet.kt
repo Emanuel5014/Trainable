@@ -14,14 +14,15 @@ import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,12 +30,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.exercise.Equipment
 import com.emanuel5014.trainable.domain.exercise.Muscle
 import com.emanuel5014.trainable.domain.exercise.TraitFilter
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -55,9 +58,18 @@ fun ExerciseSearchWithTraitFilter(
     modifier: Modifier = Modifier
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
-    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    val glass = LocalLiquidGlassEnabled.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (glass) Arrangement.spacedBy(8.dp) else Arrangement.Start
+    ) {
         ExerciseSearchField(query = query, onQueryChange = onQueryChange, modifier = Modifier.weight(1f))
-        ExerciseTraitFilterButton(filter = traitFilter, onClick = { sheetOpen = true })
+        ExerciseTraitFilterButton(
+            filter = traitFilter,
+            onClick = { sheetOpen = true },
+            modifier = if (glass) Modifier.padding(top = 8.dp) else Modifier
+        )
     }
     if (sheetOpen) {
         ExerciseTraitFilterSheet(
@@ -75,13 +87,21 @@ fun ExerciseTraitFilterButton(filter: TraitFilter, onClick: () -> Unit, modifier
     val title = stringResource(R.string.exercise_filters_title)
     val description =
         if (filter.isActive) "$title, ${stringResource(R.string.exercise_filters_active_count, filter.activeCount)}" else title
-    IconButton(onClick = onClick, modifier = modifier) {
-        BadgedBox(badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
-            Icon(
-                imageVector = Icons.Rounded.FilterList,
-                contentDescription = description,
-                tint = if (filter.isActive) Primary else OnSurfaceVariant
-            )
+    if (LocalLiquidGlassEnabled.current) {
+        BadgedBox(modifier = modifier, badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
+            GymIconButton(icon = Icons.Rounded.FilterList, description = description, onClick = onClick,
+                contentColor = if (filter.isActive) Primary else OnSurfaceVariant,
+                shape = RoundedCornerShape(14.dp), quiet = true)
+        }
+    } else {
+        IconButton(onClick = onClick, modifier = modifier) {
+            BadgedBox(badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
+                Icon(
+                    imageVector = Icons.Rounded.FilterList,
+                    contentDescription = description,
+                    tint = if (filter.isActive) Primary else OnSurfaceVariant
+                )
+            }
         }
     }
 }

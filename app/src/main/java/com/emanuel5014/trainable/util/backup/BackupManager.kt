@@ -93,7 +93,16 @@ class BackupManager @Inject constructor(
                 }
 
                 // 2c. Export App Preferences (Theme, Weight Unit, Language, Swipe Actions, etc.)
-                val appPrefs = buildAppPreferencesJson()
+                val appPrefs = buildAppPreferencesJson(includeImages)
+                // Restore the wallpaper before its preference so the first theme emission can use it.
+                if (includeImages) {
+                    val name = org.json.JSONObject(appPrefs).optString("background_wallpaper").takeIf { it.isNotBlank() }
+                    com.emanuel5014.trainable.util.WallpaperStorage.file(context, name)?.takeIf { it.isFile }?.let { file ->
+                        zos.putNextEntry(ZipEntry("appearance/${file.name}"))
+                        file.inputStream().use { it.copyTo(zos) }
+                        zos.closeEntry()
+                    }
+                }
                 zos.putNextEntry(ZipEntry("app_preferences.json"))
                 zos.write(appPrefs.toByteArray())
                 zos.closeEntry()
@@ -216,7 +225,7 @@ class BackupManager @Inject constructor(
         }
     }
 
-    private fun buildAppPreferencesJson(): String {
+    private fun buildAppPreferencesJson(includeImages: Boolean): String {
         return try {
             runBlocking {
                 val prefs = context.dataStore.data.first()
@@ -229,6 +238,16 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED]?.let { json.put("dynamic_color_seed", it) }
                 json.put("theme_palette", prefs[UserPreferencesRepository.THEME_PALETTE] ?: 0)
                 json.put("theme_style", prefs[UserPreferencesRepository.THEME_STYLE] ?: 0)
+                json.put("liquid_glass_enabled", prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED] ?: UserPreferencesRepository.DEFAULT_LIQUID_GLASS_ENABLED)
+                json.put("glass_intensity", prefs[UserPreferencesRepository.GLASS_INTENSITY] ?: 0.75f)
+                json.put("glass_motion_enabled", prefs[UserPreferencesRepository.GLASS_MOTION_ENABLED] ?: true)
+                val wallpaperName = prefs[UserPreferencesRepository.BACKGROUND_WALLPAPER]
+                    ?.takeIf { includeImages && com.emanuel5014.trainable.util.WallpaperStorage.file(context, it)?.isFile == true }
+                val backgroundMode = prefs[UserPreferencesRepository.BACKGROUND_MODE] ?: "theme"
+                json.put("background_mode", if (backgroundMode == "wallpaper" && wallpaperName == null) "theme" else backgroundMode)
+                json.put("background_color", prefs[UserPreferencesRepository.BACKGROUND_COLOR] ?: 0xFF35516B.toInt())
+                json.put("background_dimming", prefs[UserPreferencesRepository.BACKGROUND_DIMMING] ?: .72f)
+                wallpaperName?.let { json.put("background_wallpaper", it) }
                 json.put("haptic_enabled", prefs[UserPreferencesRepository.HAPTIC_ENABLED] ?: true)
                 json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
                 json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
@@ -374,6 +393,27 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.DYNAMIC_COLOR_SEED] = jsonObject.getInt("dynamic_color_seed")
                                             if (jsonObject.has("theme_palette"))
                                                 prefs[UserPreferencesRepository.THEME_PALETTE] = jsonObject.getInt("theme_palette")
+                                            if (jsonObject.has("glass_intensity")) {
+                                                val intensity = jsonObject.getDouble("glass_intensity").toFloat()
+                                                prefs[UserPreferencesRepository.GLASS_INTENSITY] = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0.75f
+                                            }
+                                            if (jsonObject.has("liquid_glass_enabled"))
+                                                prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED] = jsonObject.getBoolean("liquid_glass_enabled")
+                                            if (jsonObject.has("glass_motion_enabled"))
+                                                prefs[UserPreferencesRepository.GLASS_MOTION_ENABLED] = jsonObject.getBoolean("glass_motion_enabled")
+                                            if (jsonObject.has("background_mode")) {
+                                                prefs[UserPreferencesRepository.BACKGROUND_MODE] = jsonObject.getString("background_mode")
+                                                prefs.remove(UserPreferencesRepository.BACKGROUND_WALLPAPER)
+                                                if (jsonObject.has("background_wallpaper")) {
+                                                    val name = jsonObject.getString("background_wallpaper")
+                                                    if (com.emanuel5014.trainable.util.WallpaperStorage.file(context, name)?.isFile == true)
+                                                        prefs[UserPreferencesRepository.BACKGROUND_WALLPAPER] = name
+                                                }
+                                            }
+                                            if (jsonObject.has("background_color"))
+                                                prefs[UserPreferencesRepository.BACKGROUND_COLOR] = jsonObject.getInt("background_color")
+                                            if (jsonObject.has("background_dimming"))
+                                                prefs[UserPreferencesRepository.BACKGROUND_DIMMING] = com.emanuel5014.trainable.data.model.AppBackground.safeDimming(jsonObject.getDouble("background_dimming").toFloat())
                                             if (jsonObject.has("theme_style"))
                                                 prefs[UserPreferencesRepository.THEME_STYLE] = jsonObject.getInt("theme_style")
                                             if (jsonObject.has("haptic_enabled"))
@@ -476,6 +516,24 @@ class BackupManager @Inject constructor(
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
+                                }
+                            }
+                            entry.name.startsWith("appearance/") -> {
+                                val name = entry.name.removePrefix("appearance/")
+                                com.emanuel5014.trainable.util.WallpaperStorage.file(context, name)?.let { file ->
+                                    try {
+                                        file.outputStream().use { output ->
+                                            val buffer = ByteArray(8192)
+                                            var total = 0L
+                                            var count = zis.read(buffer)
+                                            while (count != -1) {
+                                                total += count
+                                                check(total <= 8L * 1024 * 1024) { "Wallpaper is too large" }
+                                                output.write(buffer, 0, count)
+                                                count = zis.read(buffer)
+                                            }
+                                        }
+                                    } catch (error: Exception) { file.delete(); throw error }
                                 }
                             }
                             entry.name.startsWith("physical_checks/") -> {

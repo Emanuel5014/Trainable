@@ -28,6 +28,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.raisedGlass
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -212,11 +214,14 @@ fun HubPanel(
                 .onSizeChanged {
                     sheet.onMeasured(it.height)
                     onHeightChanged(it.height)
-                },
-            color = SurfaceContainerLow,
+                }
+                // Editors sit over the set list; a thin panel fill lets unrelated labels
+                // show through wheel pickers. Keep the raised sheet body readable.
+                .then(if (LocalLiquidGlassEnabled.current) Modifier.raisedGlass(PANEL_SHAPE, SurfaceContainerLow) else Modifier),
+            color = if (LocalLiquidGlassEnabled.current) androidx.compose.ui.graphics.Color.Transparent else SurfaceContainerLow,
             shape = PANEL_SHAPE,
-            tonalElevation = 8.dp,
-            shadowElevation = 16.dp
+            tonalElevation = if (LocalLiquidGlassEnabled.current) 0.dp else 8.dp,
+            shadowElevation = if (LocalLiquidGlassEnabled.current) 0.dp else 16.dp
         ) {
             Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
                 HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)

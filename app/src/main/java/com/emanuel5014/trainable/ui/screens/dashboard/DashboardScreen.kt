@@ -1,14 +1,16 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
+
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +28,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
@@ -38,26 +39,23 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
-import androidx.compose.material3.toPath
-import androidx.compose.material3.ExtendedFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassExtendedFloatingActionButton as ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ripple
@@ -70,23 +68,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -121,6 +109,23 @@ import com.emanuel5014.trainable.ui.util.DateFormatter
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toPath
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -226,6 +231,7 @@ fun DashboardScreen(
             },
             confirmButton = {
                 GymButton(
+                    quiet = LocalLiquidGlassEnabled.current, shape = if (LocalLiquidGlassEnabled.current) RoundedCornerShape(18.dp) else Shapes.large,
                     onClick = {
                         onNavigateToQuickWorkout(quickWorkoutName.takeIf { it.isNotBlank() })
                         showQuickWorkoutDialog = false
@@ -238,6 +244,7 @@ fun DashboardScreen(
             },
             dismissButton = {
                 GymButton(
+                    quiet = LocalLiquidGlassEnabled.current, shape = if (LocalLiquidGlassEnabled.current) RoundedCornerShape(18.dp) else Shapes.large,
                     onClick = { showQuickWorkoutDialog = false },
                     containerColor = Color.Transparent,
                     contentColor = OnSurfaceVariant,
@@ -502,7 +509,7 @@ fun DashboardScreen(
             }
         } else {
             Scaffold(
-                containerColor = Surface,
+                containerColor = ScreenSurface,
                 floatingActionButton = {
                     if (showOwnFab) ExtendedFloatingActionButton(
                         onClick = { showQuickWorkoutDialog = true },
@@ -779,7 +786,410 @@ fun DashboardScreen(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
+private fun GlassGymMembershipCard(
+    expiryDateMillis: Long?,
+    username: String,
+    onClick: () -> Unit,
+    isActive: Boolean = true
+) {
+    val daysLeft = expiryDateMillis?.let {
+        val expiryDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+        ChronoUnit.DAYS.between(java.time.LocalDate.now(), expiryDate).toInt()
+    }
+
+    val isExpired = daysLeft != null && daysLeft < 0
+    val isExpiringSoon = daysLeft != null && daysLeft in 0..7
+    
+    val statusColor = when {
+        isExpired -> Error
+        isExpiringSoon -> Tertiary
+        else -> Primary
+    }
+    val membershipTint = androidx.compose.ui.graphics.lerp(SurfaceContainerHigh, statusColor, .12f)
+    val textColor = OnSurface
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp)
+            .liquidGlassSurface(Shapes.large, membershipTint, control = true)
+            .clickable(
+                onClick = onClick,
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = ripple(color = OnPrimary)
+            ),
+        shape = Shapes.large,
+        colors = CardDefaults.cardColors(containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else membershipTint),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Rounded.CreditCard,
+                            contentDescription = "Gym Membership",
+                            tint = textColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.gym_membership).uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = textColor.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = androidx.compose.ui.unit.TextUnit(2f, androidx.compose.ui.unit.TextUnitType.Sp)
+                        )
+                    }
+                    
+                    if (isExpired) {
+                        Icon(
+                            imageVector = Icons.Rounded.Warning,
+                            contentDescription = "Expired",
+                            tint = textColor
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column {
+                        Text(
+                            text = username.uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = textColor,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = androidx.compose.ui.unit.TextUnit(1f, androidx.compose.ui.unit.TextUnitType.Sp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        if (expiryDateMillis != null) {
+                            Text(
+                                text = "${stringResource(R.string.valid_thru)} ${DateFormatter.format(expiryDateMillis)}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = textColor.copy(alpha = 0.8f)
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.tap_to_set),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = textColor.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                    
+                    if (daysLeft != null) {
+                        Surface(
+                            color = Color.White.copy(alpha = 0.2f),
+                            shape = CircleShape
+                        ) {
+                            Text(
+                                text = when {
+                                    isExpired -> stringResource(R.string.expired)
+                                    isExpiringSoon -> stringResource(R.string.expires_in_days, daysLeft)
+                                    else -> stringResource(R.string.expires_in_days, daysLeft)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = textColor,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardSimpleHeader(
+    onSettingsClick: () -> Unit,
+    onLogoTripleClick: () -> Unit,
+    dynamicColor: Boolean,
+    themePalette: Int = 0,
+    isSelectionMode: Boolean = false,
+    selectedCount: Int = 0,
+    onClearSelection: () -> Unit = {},
+    onDeleteSelection: () -> Unit = {}
+) {
+    if (isSelectionMode) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.small),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "$selectedCount ${stringResource(R.string.selected)}",
+                style = MaterialTheme.typography.headlineMedium,
+                color = OnSurface,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1).sp
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GymIconButton(
+                    icon = Icons.Rounded.DeleteSweep,
+                    onClick = onDeleteSelection,
+                    containerColor = SurfaceContainerHigh,
+                    contentColor = Error
+                )
+                GymIconButton(
+                    icon = Icons.Rounded.Close,
+                    onClick = onClearSelection,
+                    containerColor = SurfaceContainerHigh
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.small),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val useCustomTint = dynamicColor || themePalette != 0
+                var clickCount by remember { mutableStateOf(0) }
+                var lastClickTime by remember { mutableStateOf(0L) }
+                
+                Icon(
+                    painter = painterResource(id = if (useCustomTint) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
+                    contentDescription = "Trainable Logo",
+                    tint = if (useCustomTint) Primary else Color.Unspecified,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastClickTime < 500L) {
+                                clickCount++
+                            } else {
+                                clickCount = 1
+                            }
+                            lastClickTime = currentTime
+                            if (clickCount >= 3) {
+                                clickCount = 0
+                                onLogoTripleClick()
+                            }
+                        }
+                )
+            }
+            GymIconButton(
+                icon = Icons.Default.Settings,
+                onClick = onSettingsClick,
+                description = stringResource(R.string.nav_settings)
+            )
+        }
+    }
+}
+
+@Composable
+private fun GlassWeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int, isActive: Boolean = true) {
+    val progress = if (weeklyGoal > 0) (workoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f) else 0f
+    val remaining = weeklyGoal - workoutsThisWeek
+    val goalMet = progress >= 1f
+    val primaryColor = Primary
+    val tertiaryColor = Tertiary
+    val progressColor = if (goalMet) tertiaryColor else primaryColor
+
+    Card(
+        modifier = Modifier.fillMaxWidth().liquidGlassSurface(Shapes.large, SurfaceContainerHigh),
+        shape = Shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else SurfaceContainerHigh,
+            contentColor = OnSurface,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp, horizontal = 20.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.weekly_goal),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = "$workoutsThisWeek",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface,
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "/ $weeklyGoal",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (goalMet) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = stringResource(R.string.goal_met),
+                            tint = tertiaryColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = when {
+                            goalMet -> stringResource(R.string.goal_met)
+                            remaining == 1 -> stringResource(R.string.workout_remaining, remaining)
+                            else -> stringResource(R.string.workouts_remaining, remaining)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = progressColor,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (cardioWorkoutsThisWeek > 0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "\u2022 $cardioWorkoutsThisWeek CARDIO",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OnSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun UnfinishedSessionCard(
+    session: SessionWithPlanName,
+    isSelected: Boolean,
+    isSelectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    GymCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(Shapes.extraLarge)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        containerColor = if (isSelected) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(if (isSelected) Primary else if (isSelectionMode) Primary.copy(alpha = 0.2f) else Primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Selected",
+                            tint = OnPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            contentDescription = null,
+                            tint = OnPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = session.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = OnSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        text = stringResource(R.string.started, DateFormatter.format(session.session.timestamp)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OnSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
 fun GymMembershipCard(
+    expiryDateMillis: Long?,
+    username: String,
+    onClick: () -> Unit,
+    isActive: Boolean = true
+) {
+    if (LocalLiquidGlassEnabled.current) {
+        GlassGymMembershipCard(expiryDateMillis, username, onClick, isActive)
+    } else {
+        ClassicGymMembershipCard(expiryDateMillis, username, onClick, isActive)
+    }
+}
+
+@Composable
+private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int, isActive: Boolean = true) {
+    if (LocalLiquidGlassEnabled.current) {
+        GlassWeeklyGoalCard(workoutsThisWeek, weeklyGoal, cardioWorkoutsThisWeek, isActive)
+    } else {
+        ClassicWeeklyGoalCard(workoutsThisWeek, weeklyGoal, cardioWorkoutsThisWeek, isActive)
+    }
+}
+
+/* The standard cards: how the dashboard looked before Liquid Glass, used while glass is off. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ClassicGymMembershipCard(
     expiryDateMillis: Long?,
     username: String,
     onClick: () -> Unit,
@@ -996,94 +1406,6 @@ fun GymMembershipCard(
     }
 }
 
-@Composable
-private fun DashboardSimpleHeader(
-    onSettingsClick: () -> Unit,
-    onLogoTripleClick: () -> Unit,
-    dynamicColor: Boolean,
-    themePalette: Int = 0,
-    isSelectionMode: Boolean = false,
-    selectedCount: Int = 0,
-    onClearSelection: () -> Unit = {},
-    onDeleteSelection: () -> Unit = {}
-) {
-    if (isSelectionMode) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = Spacing.small),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "$selectedCount ${stringResource(R.string.selected)}",
-                style = MaterialTheme.typography.headlineMedium,
-                color = OnSurface,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-1).sp
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GymIconButton(
-                    icon = Icons.Rounded.DeleteSweep,
-                    onClick = onDeleteSelection,
-                    containerColor = SurfaceContainerHigh,
-                    contentColor = Error
-                )
-                GymIconButton(
-                    icon = Icons.Rounded.Close,
-                    onClick = onClearSelection,
-                    containerColor = SurfaceContainerHigh
-                )
-            }
-        }
-    } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = Spacing.small),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val useCustomTint = dynamicColor || themePalette != 0
-                var clickCount by remember { mutableStateOf(0) }
-                var lastClickTime by remember { mutableStateOf(0L) }
-                
-                Icon(
-                    painter = painterResource(id = if (useCustomTint) R.drawable.ic_app_logo else R.drawable.ic_app_logo_static),
-                    contentDescription = "Trainable Logo",
-                    tint = if (useCustomTint) Primary else Color.Unspecified,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            val currentTime = System.currentTimeMillis()
-                            if (currentTime - lastClickTime < 500L) {
-                                clickCount++
-                            } else {
-                                clickCount = 1
-                            }
-                            lastClickTime = currentTime
-                            if (clickCount >= 3) {
-                                clickCount = 0
-                                onLogoTripleClick()
-                            }
-                        }
-                )
-            }
-            GymIconButton(
-                icon = Icons.Default.Settings,
-                onClick = onSettingsClick,
-                description = stringResource(R.string.nav_settings)
-            )
-        }
-    }
-}
-
 private fun DrawScope.drawWavyPattern(
     color: Color,
     percent: Float,
@@ -1143,7 +1465,7 @@ private fun DrawScope.drawWavyPattern(
 }
 
 @Composable
-private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int, isActive: Boolean = true) {
+private fun ClassicWeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkoutsThisWeek: Int, isActive: Boolean = true) {
     val progress = if (weeklyGoal > 0) (workoutsThisWeek.toFloat() / weeklyGoal.toFloat()).coerceIn(0f, 1f) else 0f
     val density = LocalDensity.current
     val periodPx = remember { with(density) { 42.dp.toPx() } }
@@ -1251,73 +1573,6 @@ private fun WeeklyGoalCard(workoutsThisWeek: Int, weeklyGoal: Int, cardioWorkout
                             fontWeight = FontWeight.SemiBold,
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun UnfinishedSessionCard(
-    session: SessionWithPlanName,
-    isSelected: Boolean,
-    isSelectionMode: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
-    GymCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.extraLarge)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        containerColor = if (isSelected) Primary.copy(alpha = 0.1f) else SurfaceContainerHigh
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(if (isSelected) Primary else if (isSelectionMode) Primary.copy(alpha = 0.2f) else Primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = "Selected",
-                            tint = OnPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.PlayArrow,
-                            contentDescription = null,
-                            tint = OnPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = session.displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = OnSurface,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = stringResource(R.string.started, DateFormatter.format(session.session.timestamp)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = OnSurfaceVariant
-                    )
                 }
             }
         }

@@ -1,4 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.analytics
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
@@ -54,7 +57,7 @@ import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.Card
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
@@ -62,21 +65,22 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFilledTonalIconButton as FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextField as TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -156,7 +160,7 @@ fun AnalyticsScreen(
     }.collectAsState(initial = 0)
     val isDark = when (themeMode) {
         1 -> false
-        2 -> true
+        2, 3 -> true
         else -> isSystemInDarkTheme()
     }
     val hapticEnabled by remember(context) {
@@ -200,7 +204,7 @@ fun AnalyticsScreen(
         if (reorderState.isDragging) reorderState.driveWhileDragging()
     }
 
-    Scaffold(containerColor = Surface) { paddingValues ->
+    Scaffold(containerColor = ScreenSurface) { paddingValues ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 GymLoadingIndicator()
@@ -637,7 +641,7 @@ fun ExerciseCarouselSection(
                     .height(200.dp)
                     .padding(Spacing.medium)
                     .clip(RoundedCornerShape(Spacing.medium))
-                    .background(SurfaceContainerHigh),
+                    .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(Spacing.medium)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1251,18 +1255,20 @@ fun ExerciseCarouselItem(exercise: PersonalBestUiModel, weightUnit: String) {
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color.Transparent,
-                                Primary.copy(alpha = 0.05f)
+            if (!LocalLiquidGlassEnabled.current) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Primary.copy(alpha = 0.05f)
+                                )
                             )
                         )
-                    )
-            )
+                )
+            }
 
             Column(
                 modifier = Modifier

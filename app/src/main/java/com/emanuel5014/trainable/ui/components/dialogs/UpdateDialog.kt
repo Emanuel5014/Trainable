@@ -16,15 +16,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NewReleases
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassButton as Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment

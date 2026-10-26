@@ -32,6 +32,7 @@ import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 /**
  * An exercise as every list shows it, the exercises page and both pickers alike: the [thumbnail] (when the list has them),
@@ -58,7 +59,7 @@ fun ExerciseRow(
         modifier = modifier
             .fillMaxWidth()
             .clip(Shapes.medium)
-            .background(containerColor)
+            .glassPanelBackground(containerColor, Shapes.medium)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,

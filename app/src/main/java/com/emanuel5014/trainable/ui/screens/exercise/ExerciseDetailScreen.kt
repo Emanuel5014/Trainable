@@ -1,4 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.exercise
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -38,14 +41,14 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -355,7 +358,7 @@ private fun ExerciseDetailScaffold(
     content: @Composable () -> Unit
 ) {
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             TopAppBar(
@@ -379,7 +382,7 @@ private fun ExerciseDetailScaffold(
                 },
                 actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
+                    containerColor = ScreenSurface,
                     titleContentColor = if (dimmed) OnSurfaceVariant.copy(alpha = 0.7f) else OnSurface,
                     navigationIconContentColor = OnSurface,
                     actionIconContentColor = OnSurface
@@ -485,7 +488,7 @@ private fun AddMediaCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .clip(Shapes.large)
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, Shapes.large)
             .clickable(onClickLabel = label, onClick = onClick)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

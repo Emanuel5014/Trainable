@@ -1,4 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.history
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import com.emanuel5014.trainable.data.local.entity.encodePerformed
 import com.emanuel5014.trainable.data.local.entity.parts
@@ -69,10 +74,8 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.AddBox
 import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.automirrored.rounded.CompareArrows
@@ -87,10 +90,10 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassButton as Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -98,20 +101,23 @@ import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
-import androidx.compose.material3.FloatingActionButtonMenuItem
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import androidx.compose.material3.ToggleFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFloatingActionButtonMenuItem as FloatingActionButtonMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedButton as OutlinedButton
 import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleFloatingActionButton
-import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
+import com.emanuel5014.trainable.ui.components.glass.GlassFloatingActionButton as FloatingActionButton
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -124,20 +130,16 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
@@ -153,7 +155,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
@@ -163,7 +164,6 @@ import com.emanuel5014.trainable.ui.components.journal.JournalDetail
 import com.emanuel5014.trainable.ui.components.journal.JournalSheet
 import com.emanuel5014.trainable.ui.components.journal.JournalSummaryLine
 import com.emanuel5014.trainable.ui.components.journal.journalHasContent
-import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.entity.isArchived
 import com.emanuel5014.trainable.data.local.entity.isSystemPlan
@@ -179,7 +179,6 @@ import com.emanuel5014.trainable.ui.components.EmptyState
 import com.emanuel5014.trainable.ui.components.RestoreExerciseDialog
 import com.emanuel5014.trainable.ui.components.ExerciseTypeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.GymLoadingIndicator
@@ -207,7 +206,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import com.emanuel5014.trainable.util.ShareUtils
-import com.emanuel5014.trainable.util.UriMigrationHelper
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -364,7 +362,7 @@ fun HistoryScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            containerColor = surfaceColor,
+            containerColor = ScreenSurface,
             floatingActionButton = {
                 if (showOwnFab && !uiState.isSelectionMode) {
                     FloatingActionButtonMenu(
@@ -378,23 +376,41 @@ fun HistoryScreen(
                                 tooltip = { PlainTooltip { Text(stringResource(if (fabMenuExpanded) R.string.close else R.string.add)) } },
                                 state = rememberTooltipState()
                             ) {
-                                ToggleFloatingActionButton(
-                                    checked = fabMenuExpanded,
-                                    onCheckedChange = { 
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        fabMenuExpanded = !fabMenuExpanded 
+                                if (LocalLiquidGlassEnabled.current) {
+                                    FloatingActionButton(
+                                        onClick = {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            fabMenuExpanded = !fabMenuExpanded
+                                        },
+                                        modifier = Modifier.size(56.dp),
+                                        shape = RoundedCornerShape(20.dp),
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ) {
+                                        Icon(
+                                            imageVector = if (fabMenuExpanded) Icons.Rounded.Close else Icons.Rounded.Add,
+                                            contentDescription = stringResource(if (fabMenuExpanded) R.string.close else R.string.add)
+                                        )
                                     }
-                                ) {
-                                    val imageVector by remember {
-                                        derivedStateOf {
-                                            if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
+                                } else {
+                                    ToggleFloatingActionButton(
+                                        checked = fabMenuExpanded,
+                                        onCheckedChange = {
+                                            if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            fabMenuExpanded = !fabMenuExpanded
                                         }
+                                    ) {
+                                        val imageVector by remember {
+                                            derivedStateOf {
+                                                if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
+                                            }
+                                        }
+                                        Icon(
+                                            painter = rememberVectorPainter(imageVector),
+                                            contentDescription = null,
+                                            modifier = Modifier.animateIcon({ checkedProgress })
+                                        )
                                     }
-                                    Icon(
-                                        painter = rememberVectorPainter(imageVector),
-                                        contentDescription = null,
-                                        modifier = Modifier.animateIcon({ checkedProgress })
-                                    )
                                 }
                             }
                         }
@@ -1715,7 +1731,7 @@ private fun ArchivedRoutineBadge(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(SurfaceContainerHighest)
+            .glassPanelBackground(SurfaceContainerHighest, CircleShape)
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -1898,7 +1914,7 @@ fun EditSetDialog(
                         }
                         if (plannedTechniques.isNotEmpty()) {
                             val techniqueContext = LocalContext.current
-                            androidx.compose.material3.TextButton(onClick = { showTechniqueDialog = true }) {
+                            com.emanuel5014.trainable.ui.components.glass.GlassTextButton(onClick = { showTechniqueDialog = true }) {
                                 Text(
                                     text = performed?.let { list ->
                                         if (list.isEmpty()) stringResource(R.string.performed_technique_none)

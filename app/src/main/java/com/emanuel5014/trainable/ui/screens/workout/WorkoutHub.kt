@@ -1,4 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -21,6 +23,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,7 +54,7 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFilledIconButton as FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -519,7 +522,7 @@ private fun SetPanel(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(SurfaceContainerHighest)
+                                .glassPanelBackground(SurfaceContainerHighest, RoundedCornerShape(12.dp))
                                 .clickable {
                                     if (editsTappedSet) ui.editingSetIndex = null else ui.isEditingValues = false
                                 },
@@ -529,8 +532,18 @@ private fun SetPanel(
                         }
                     } else {
                         val e = expansion()
-                        Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
+                        val glass = com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current
+                        if (glass) {
+                            com.emanuel5014.trainable.ui.components.GymIconButton(
+                                icon = Icons.Rounded.Edit, description = stringResource(R.string.edit),
+                                onClick = { ui.isEditingValues = true }, quiet = true,
+                                shape = RoundedCornerShape(14.dp), contentColor = OnSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(Icons.Rounded.Edit, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                        }
                         LogSetButton(
                             onClick = {
                                 if (shownSet.isAmrap) {
@@ -546,7 +559,8 @@ private fun SetPanel(
                                     viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                 }
                             },
-                            modifier = Modifier.width(if (LocalConfiguration.current.screenWidthDp < 400) 76.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
+                            modifier = if (glass) Modifier.size(48.dp)
+                                else Modifier.width(if (LocalConfiguration.current.screenWidthDp < 400) 76.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
                             compact = true
                         )
                     }
@@ -695,7 +709,8 @@ private fun SetCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(lerp(18.dp, 24.dp, e)))
-            .background(SurfaceContainerHigh)
+            .liquidGlassSurface(RoundedCornerShape(lerp(18.dp, 24.dp, e)), SurfaceContainerHigh, control = true, quiet = true)
+            .background(if (com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled.current) Color.Transparent else SurfaceContainerHigh)
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(lerp(8.dp, 12.dp, e)),
         verticalAlignment = Alignment.CenterVertically

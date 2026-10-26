@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.workout
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.foundation.layout.Box
@@ -27,17 +28,17 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.FilledIconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFilledIconButton as FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -170,7 +171,7 @@ internal fun CountStepper(
                     .height(height)
                     .widthIn(min = if (big) 64.dp else 36.dp)
                     .clip(RoundedCornerShape(inner))
-                    .background(SurfaceContainerHigh),
+                    .glassPanelBackground(SurfaceContainerHigh, RoundedCornerShape(inner)),
                 contentAlignment = Alignment.Center
             ) {
                 RollingText(

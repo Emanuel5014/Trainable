@@ -152,7 +152,8 @@ Available in **6 languages**: English, Italian, Portuguese, German, French, Span
 
 ### ⚙️ Premium UX & Tools
 *   **Dynamic Color**: Full support for Android 12+ wallpaper-based color extraction.
-*   **Light Mode & Custom Themes**: Switch between Dark/Light mode, customize themes, and choose from an extensive color palette in Settings.
+*   **Liquid Glass**: Translucent cards, uniform palette-based backgrounds, reflective edges and floating glass navigation in light and dark mode. Enabled by default; toggle it in Settings › Personalization. Includes a glass-intensity slider, optional motion-driven reflections, darkened custom photo/solid-color backgrounds, consistent routine/workout forms and dialogs, accessible weekday controls, and a touch-reactive navigation lens. Optical controls use Haze; large scrolling panels use lightweight translucent rendering.
+*   **Light Mode & Custom Themes**: Switch between System, Light, Dark and pure-black OLED modes; customize themes and choose from an extensive color palette in Settings.
 *   **Google Sans Font**: Clean, modern typography throughout the app.
 *   **Horizontal Pager Navigation**: Fluid swipe-based transitions between main tabs.
 *   **Backup & Restore**: Secure ZIP-based local backup system with photo compression and expanded preference sync (Theme, Units, Language).

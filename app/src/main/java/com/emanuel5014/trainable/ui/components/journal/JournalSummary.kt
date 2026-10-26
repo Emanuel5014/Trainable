@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.components.journal
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -106,7 +107,7 @@ fun JournalDetail(
         modifier = modifier
             .fillMaxWidth()
             .clip(Shapes.medium)
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, Shapes.medium)
             .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(8.dp)

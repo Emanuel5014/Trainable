@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
 
 import android.Manifest
 import android.content.Context
@@ -33,6 +34,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.Check
+import com.emanuel5014.trainable.ui.components.glass.GlassButton as Button
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassFloatingActionButton as FloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassExtendedFloatingActionButton as ExtendedFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableFloatStateOf

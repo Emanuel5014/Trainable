@@ -26,17 +26,17 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
 import com.emanuel5014.trainable.data.local.relation.TagWithUsage
 import com.emanuel5014.trainable.domain.journal.JournalFilters
 import com.emanuel5014.trainable.domain.journal.RatingBucket
 import com.emanuel5014.trainable.ui.components.journal.TagChip
-import androidx.compose.material3.SegmentedButton
+import com.emanuel5014.trainable.ui.components.glass.GlassSegmentedButton as SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text

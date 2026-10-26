@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,13 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import com.emanuel5014.trainable.ui.components.glass.GlassButton as Button
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment

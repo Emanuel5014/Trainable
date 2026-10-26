@@ -20,14 +20,14 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Speed
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,15 +32,15 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -74,7 +76,7 @@ fun WorkoutSettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         topBar = {
             TopAppBar(
                 title = {
@@ -95,7 +97,7 @@ fun WorkoutSettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
+                    containerColor = ScreenSurface,
                     titleContentColor = OnSurface,
                     navigationIconContentColor = OnSurface
                 )

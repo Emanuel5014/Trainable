@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.screens.exercises
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -19,14 +20,14 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import com.emanuel5014.trainable.ui.components.glass.GlassModalBottomSheet as ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -185,7 +186,7 @@ internal fun CategoryRow(name: String, onEdit: () -> Unit, onDelete: () -> Unit,
         modifier = modifier
             .fillMaxWidth()
             .clip(Shapes.medium)
-            .background(SurfaceContainerHigh)
+            .glassPanelBackground(SurfaceContainerHigh, Shapes.medium)
     ) {
         val stacked = maxWidth - CategoryButtonsWidth - CategoryRowInsets < CategoryNameMinWidth
         val nameText = @Composable { modifier: Modifier ->

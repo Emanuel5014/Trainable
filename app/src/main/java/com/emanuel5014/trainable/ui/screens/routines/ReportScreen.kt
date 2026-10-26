@@ -16,9 +16,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material3.ExtendedFloatingActionButton
+import com.emanuel5014.trainable.ui.components.glass.GlassExtendedFloatingActionButton as ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

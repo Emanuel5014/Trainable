@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable
 
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
+
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.res.ColorStateList
@@ -187,6 +189,10 @@ class MainActivity : FragmentActivity() {
             val dynamicColorSeed by userPreferencesRepository.dynamicColorSeed.collectAsState(initial = null)
             val themePalette by userPreferencesRepository.themePalette.collectAsState(initial = 0)
             val themeStyle by userPreferencesRepository.themeStyle.collectAsState(initial = 0)
+            val glassIntensity by userPreferencesRepository.glassIntensity.collectAsState(initial = 0.75f)
+            val glassMotionEnabled by userPreferencesRepository.glassMotionEnabled.collectAsState(initial = true)
+            val appBackground by userPreferencesRepository.appBackground.collectAsState(initial = com.emanuel5014.trainable.data.model.AppBackground())
+            val liquidGlassEnabled by userPreferencesRepository.liquidGlassEnabled.collectAsState(initial = UserPreferencesRepository.DEFAULT_LIQUID_GLASS_ENABLED)
             val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = null)
             val advancedProgramming by userPreferencesRepository.advancedProgrammingEnabled.collectAsState(initial = false)
             val exerciseMediaEnabled by userPreferencesRepository.exerciseMediaEnabled.collectAsState(initial = false)
@@ -261,10 +267,10 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            val isDark = when (themeMode) {
+            val isDark = appBackground.isCustom || when (themeMode) {
                 null -> true
                 1 -> false
-                2 -> true
+                2, 3 -> true
                 else -> androidx.compose.foundation.isSystemInDarkTheme()
             }
 
@@ -276,13 +282,18 @@ class MainActivity : FragmentActivity() {
                 paletteIndex = themePalette,
                 seedColor = dynamicColorSeed,
                 themeStyle = themeStyle,
-                darkTheme = isDark
+                liquidGlassEnabled = liquidGlassEnabled,
+                glassIntensity = glassIntensity,
+                glassMotionEnabled = glassMotionEnabled,
+                appBackground = appBackground,
+                darkTheme = isDark,
+                oledTheme = themeMode == 3
             ) {
               CompositionLocalProvider(
                   LocalAdvancedProgramming provides advancedProgramming,
                   LocalRpeSettings provides rpeSettings,
                   LocalExerciseMediaEnabled provides exerciseMediaEnabled,
-                  LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating)
+                  LocalNavBarStyle provides (if (liquidGlassEnabled && glassIntensity > 0f) NavBarStyle.Floating else navBarStyle ?: NavBarStyle.Floating)
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
@@ -321,7 +332,7 @@ class MainActivity : FragmentActivity() {
                 val resolvedOnboardingState = onboardingCompletedOverride.value ?: hasCompletedOnboarding
 
                 if (resolvedOnboardingState == null || navBarStyle == null) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                    Box(modifier = Modifier.fillMaxSize().background(ScreenSurface))
                     return@CompositionLocalProvider
                 }
 
@@ -332,22 +343,26 @@ class MainActivity : FragmentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
+                        .background(ScreenSurface)
                 ) {
                     if (resolvedOnboardingState == true) {
-                        MainNavGraph(
-                            navController = navController,
-                            pagerState = pagerState,
-                            startDestination = MainTabs,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .hazeSource(state = hazeState)
-                        )
-
-                        val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
-                            currentDestination?.route?.startsWith("MainTabs") == true) && 
+                        val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true ||
+                            currentDestination?.route?.startsWith("MainTabs") == true) &&
                             currentDestination.hasRoute(WorkoutExecution::class) == false &&
                             BottomBarManager.isVisibleOverride
+
+                        val glassActive = liquidGlassEnabled && glassIntensity > 0f
+                        // Glass lenses share the retained, static backdrop. Recapturing a
+                        // whole NavHost (including other glass effects) on every animation
+                        // frame is unnecessary and can stall the render thread.
+                        MainNavGraph(
+                                navController = navController,
+                                pagerState = pagerState,
+                                startDestination = MainTabs,
+                                modifier = Modifier.fillMaxSize().then(
+                                    if (!glassActive) Modifier.hazeSource(state = hazeState) else Modifier
+                                )
+                            )
 
                         AnimatedVisibility(
                             visible = showBottomBar,
@@ -355,11 +370,11 @@ class MainActivity : FragmentActivity() {
                             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                         ) {
-                            when (navBarStyle) {
+                            when (if (liquidGlassEnabled && glassIntensity > 0f) NavBarStyle.Floating else navBarStyle) {
                                 NavBarStyle.Floating -> BottomNavBarFlo(
                                     navController = navController,
                                     pagerState = pagerState,
-                                    hazeState = hazeState,
+                                    hazeState = if (glassActive) com.emanuel5014.trainable.ui.theme.LocalGlassBackdrop.current ?: hazeState else hazeState,
                                     isDark = isDark
                                 )
                                 NavBarStyle.Expressive -> BottomNavBarExpressive(

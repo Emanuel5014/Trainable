@@ -17,14 +17,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassFilterChip as FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +46,8 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.util.WeightUnitConverter
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
 
 /**
  * Tonal card showing the 1RM an exercise's percentages are computed from, with a quick
@@ -61,9 +63,11 @@ fun OneRepMaxCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onEdit),
+        modifier = modifier.fillMaxWidth()
+            .then(if (LocalLiquidGlassEnabled.current) Modifier.glassPanelBackground(Primary.copy(alpha = .08f), Shapes.medium) else Modifier)
+            .clickable(onClick = onEdit),
         shape = Shapes.medium,
-        color = Primary.copy(alpha = 0.08f)
+        color = if (LocalLiquidGlassEnabled.current) Color.Transparent else Primary.copy(alpha = 0.08f)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),

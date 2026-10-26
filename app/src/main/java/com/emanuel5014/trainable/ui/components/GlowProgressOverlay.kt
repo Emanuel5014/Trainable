@@ -33,9 +33,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.hazeBlur
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -107,11 +109,11 @@ fun GlowProgressOverlay(
             }
             .then(
                 if (hazeState != null) {
-                    Modifier.hazeEffect(state = hazeState) {
-                        blurRadius = 24.dp
-                        tints = listOf(HazeTint(scrimColor))
-                        noiseFactor = 0.05f
-                    }
+                    Modifier.hazeBlur(input = HazeInput.Sources(hazeState), style = HazeBlurStyle {
+                        blurRadius(24.dp)
+                        colorEffects(listOf(HazeColorEffect.tint(scrimColor)))
+                        noiseFactor(0.05f)
+                    })
                 } else {
                     Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = if (isDark) 0.92f else 0.95f))
                 }

@@ -1,4 +1,5 @@
 package com.emanuel5014.trainable.ui.components
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -138,7 +139,7 @@ fun ScreenHeader(
                         modifier = Modifier
                             .size(iconBox)
                             .clip(CircleShape)
-                            .background(SurfaceContainerHigh),
+                            .glassPanelBackground(SurfaceContainerHigh, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

@@ -13,6 +13,14 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
+import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,11 +42,11 @@ import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import com.emanuel5014.trainable.ui.components.glass.GlassSurface as Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import com.emanuel5014.trainable.ui.components.glass.GlassTextField as TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -100,14 +108,15 @@ fun SetLogRow(
     /** Corner radii of the row, from its place in the segmented list of its block. */
     corners: SegmentCorners = SegmentCorners(SegmentedShapes.OUTER_DP, SegmentedShapes.OUTER_DP)
 ) {
+    val glass = LocalLiquidGlassEnabled.current
     val topCorners by animateDpAsState(corners.topDp.dp, WorkoutMotion.spatial(), label = "set_row_top_corners")
     val bottomCorners by animateDpAsState(corners.bottomDp.dp, WorkoutMotion.spatial(), label = "set_row_bottom_corners")
     // The active set steps out of its group
-    val activeMargin by animateDpAsState(if (isActive) 4.dp else 0.dp, WorkoutMotion.spatial(), label = "set_row_active_margin")
+    val activeMargin by animateDpAsState(if (isActive && !glass) 4.dp else 0.dp, WorkoutMotion.spatial(), label = "set_row_active_margin")
     // The springs overshoot: a size never goes below zero
     val top = topCorners.coerceAtLeast(0.dp)
     val bottom = bottomCorners.coerceAtLeast(0.dp)
-    val rowShape = RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
+    val rowShape = if (glass) RoundedCornerShape(20.dp) else RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
     val backgroundColor by animateColorAsState(
         targetValue = when {
             isCompleted -> TertiaryContainer
@@ -143,12 +152,14 @@ fun SetLogRow(
             .clip(rowShape)
             .then(
                 when {
-                    isActive && !isCompleted -> Modifier.border(2.dp, Primary.copy(alpha = 0.3f), rowShape)
-                    isEditing -> Modifier.border(2.dp, Primary.copy(alpha = 0.7f), rowShape)
+                    isActive && !isCompleted -> if (glass) Modifier.border(1.dp, Primary.copy(alpha = 0.45f), rowShape)
+                        else Modifier.border(2.dp, Primary.copy(alpha = 0.3f), rowShape)
+                    isEditing -> Modifier.border(if (glass) 1.dp else 2.dp, Primary.copy(alpha = 0.7f), rowShape)
                     else -> Modifier
                 }
             )
-            .background(backgroundColor)
+            .liquidGlassSurface(rowShape, backgroundColor, control = true, quiet = true)
+            .background(if (glass) Color.Transparent else backgroundColor)
             .combinedClickable(
                 onClick = {
                     when {
@@ -239,17 +250,23 @@ fun SetLogRow(
 
         // Note Icon Button
         val hasPreviousHint = !isCompleted && note.isNullOrBlank() && !previousNote.isNullOrBlank()
-        IconButton(onClick = { isNoteEditing = !isNoteEditing }) {
-            Icon(
-                imageVector = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote,
-                contentDescription = "Edit Note",
-                tint = when {
-                    isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
-                    !note.isNullOrBlank() -> Primary
-                    hasPreviousHint -> OnSurfaceVariant.copy(alpha = 0.4f)
-                    else -> OnSurfaceVariant.copy(alpha = 0.6f)
-                }
+        val noteTint = when {
+            isCompleted -> OnTertiaryContainer.copy(alpha = if (!note.isNullOrBlank()) 1f else 0.7f)
+            !note.isNullOrBlank() -> Primary
+            hasPreviousHint -> OnSurfaceVariant.copy(alpha = 0.4f)
+            else -> OnSurfaceVariant.copy(alpha = 0.6f)
+        }
+        val noteIcon = if (!note.isNullOrBlank()) Icons.AutoMirrored.Rounded.Notes else Icons.Rounded.EditNote
+        if (glass) {
+            GymIconButton(
+                onClick = { isNoteEditing = !isNoteEditing },
+                icon = noteIcon, description = "Edit Note", shape = RoundedCornerShape(14.dp), quiet = true,
+                contentColor = noteTint
             )
+        } else {
+            IconButton(onClick = { isNoteEditing = !isNoteEditing }) {
+                Icon(imageVector = noteIcon, contentDescription = "Edit Note", tint = noteTint)
+            }
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -363,6 +380,7 @@ fun SetLogRow(
 /** The square on the right that checks and unchecks the set: an outline with a faint check to do, filled with a check popping in once done. */
 @Composable
 private fun SetCheckTarget(isCompleted: Boolean, isActive: Boolean, onClick: () -> Unit) {
+    val glass = LocalLiquidGlassEnabled.current
     val shape = RoundedCornerShape(16.dp)
     val fill by animateColorAsState(if (isCompleted) Tertiary else Color.Transparent, label = "set_check_fill")
     val outline by animateColorAsState(
@@ -375,12 +393,14 @@ private fun SetCheckTarget(isCompleted: Boolean, isActive: Boolean, onClick: () 
     )
     val tint by animateColorAsState(
         when {
+            glass && isCompleted -> Tertiary
             isCompleted -> OnTertiary
-            isActive -> Primary.copy(alpha = 0.5f)
-            else -> OnSurfaceVariant.copy(alpha = 0.3f)
+            isActive -> Primary.copy(alpha = if (glass) 0.9f else 0.5f)
+            else -> OnSurfaceVariant.copy(alpha = if (glass) 0.75f else 0.3f)
         },
         label = "set_check_tint"
     )
+    val actionLabel = stringResource(R.string.log_set)
     // The check pops in when the set is logged, not when a done set first appears
     val pop = remember { Animatable(1f) }
     var firstComposition by remember { mutableStateOf(true) }
@@ -395,10 +415,12 @@ private fun SetCheckTarget(isCompleted: Boolean, isActive: Boolean, onClick: () 
         modifier = Modifier
             .size(48.dp)
             .clip(shape)
-            .background(fill)
+            .liquidGlassSurface(shape, if (isCompleted) Tertiary.copy(alpha = .25f) else SurfaceContainerHighest, control = true, quiet = true)
+            .background(if (glass) Color.Transparent else fill)
             .border(1.5.dp, outline, shape)
             .testTag("set_check")
-            .clickable { onClick() },
+            .semantics { contentDescription = actionLabel }
+            .toggleable(value = isCompleted, role = Role.Checkbox, onValueChange = { onClick() }),
         contentAlignment = Alignment.Center
     ) {
         Icon(

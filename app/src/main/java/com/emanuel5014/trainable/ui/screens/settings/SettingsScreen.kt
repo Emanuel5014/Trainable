@@ -1,4 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.settings
+import com.emanuel5014.trainable.ui.components.glass.glassPanelBackground
+
+import com.emanuel5014.trainable.ui.theme.ScreenSurface
 
 import android.content.Intent
 import android.net.Uri
@@ -59,22 +62,22 @@ import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.VolunteerActivism
 import androidx.compose.material.icons.rounded.Wifi
-import androidx.compose.material3.AlertDialog
+import com.emanuel5014.trainable.ui.components.glass.GlassAlertDialog as AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.emanuel5014.trainable.ui.components.glass.GlassIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import com.emanuel5014.trainable.ui.components.glass.GlassOutlinedTextField as OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
+import com.emanuel5014.trainable.ui.components.glass.GlassScaffold as Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import com.emanuel5014.trainable.ui.components.glass.GlassTextButton as TextButton
+import com.emanuel5014.trainable.ui.components.glass.GlassTopAppBar as TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -121,7 +124,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Storage
-import androidx.compose.material3.Card
+import com.emanuel5014.trainable.ui.components.glass.GlassCard as Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -819,7 +822,7 @@ fun SettingsScreen(
                                 onClick = { viewModel.loadNextcloudBackups() },
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(SurfaceContainerHighest)
+                                    .glassPanelBackground(SurfaceContainerHighest, RoundedCornerShape(12.dp))
                             ) {
                                 Icon(
                                     Icons.Rounded.Refresh,
@@ -1267,7 +1270,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
-        containerColor = Surface,
+        containerColor = ScreenSurface,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -1291,7 +1294,7 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Surface,
+                    containerColor = ScreenSurface,
                     titleContentColor = OnSurface,
                     navigationIconContentColor = OnSurface
                 )
@@ -1405,7 +1408,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(SurfaceContainerHighest)
+                                    .glassPanelBackground(SurfaceContainerHighest, RoundedCornerShape(12.dp))
                                     .padding(4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

@@ -2,6 +2,9 @@ package com.emanuel5014.trainable.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import com.emanuel5014.trainable.ui.theme.LocalLiquidGlassEnabled
+import com.emanuel5014.trainable.ui.theme.glassControlContentColor
+import com.emanuel5014.trainable.ui.theme.liquidGlassSurface
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -38,7 +41,8 @@ fun GymIconButton(
     containerColor: Color = SurfaceContainerHigh,
     contentColor: Color = OnSurface,
     description: String? = null,
-    shape: Shape = CircleShape
+    shape: Shape = CircleShape,
+    quiet: Boolean = false
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -56,7 +60,8 @@ fun GymIconButton(
             .size(48.dp)
             .scale(scale)
             .clip(shape)
-            .background(containerColor)
+            .liquidGlassSurface(shape, containerColor, interactionSource, control = true, quiet = quiet)
+            .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -72,7 +77,7 @@ fun GymIconButton(
         Icon(
             imageVector = icon,
             contentDescription = description,
-            tint = contentColor,
+            tint = glassControlContentColor(contentColor),
             modifier = Modifier.size(24.dp)
         )
     }
