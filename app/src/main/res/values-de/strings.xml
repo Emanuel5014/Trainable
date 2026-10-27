@@ -1614,7 +1614,9 @@
     <string name="exercise_favorite_remove">Aus Favoriten entfernen</string>
     <string name="exercise_favorite_marker">Favorit</string>
     <!-- Muscles and equipment of an exercise -->
-    <string name="muscle_chest">Brust</string>
+    <string name="muscle_upper_chest">Obere Brust</string>
+    <string name="muscle_middle_chest">Mittlere Brust</string>
+    <string name="muscle_lower_chest">Untere Brust</string>
     <string name="muscle_lats">Latissimus</string>
     <string name="muscle_traps">Trapez</string>
     <string name="muscle_upper_back">Oberer Rücken</string>
@@ -1632,6 +1634,7 @@
     <string name="muscle_glutes">Gesäß</string>
     <string name="muscle_calves">Waden</string>
     <string name="muscle_adductors">Adduktoren</string>
+    <string name="muscle_abductors">Abduktoren</string>
     <string name="equipment_barbell">Langhantel</string>
     <string name="equipment_dumbbell">Kurzhanteln</string>
     <string name="equipment_cable">Kabelzug</string>

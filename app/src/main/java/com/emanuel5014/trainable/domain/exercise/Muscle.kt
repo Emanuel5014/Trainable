@@ -5,7 +5,11 @@ package com.emanuel5014.trainable.domain.exercise
  * [key] is what the database and the routine files hold, so it never changes once shipped.
  */
 enum class Muscle(val key: String) {
-    CHEST("chest"),
+    UPPER_CHEST("upper_chest"),
+
+    /** The whole chest before it was split in three zones: its key stays, so what was stored under it is the middle chest now. */
+    MIDDLE_CHEST("chest"),
+    LOWER_CHEST("lower_chest"),
     LATS("lats"),
     TRAPS("traps"),
     UPPER_BACK("upper_back"),
@@ -22,7 +26,8 @@ enum class Muscle(val key: String) {
     HAMSTRINGS("hamstrings"),
     GLUTES("glutes"),
     CALVES("calves"),
-    ADDUCTORS("adductors");
+    ADDUCTORS("adductors"),
+    ABDUCTORS("abductors");
 
     companion object {
         /** The muscle stored as [key]; null for a key this version does not know (a file or a backup of a newer one). */

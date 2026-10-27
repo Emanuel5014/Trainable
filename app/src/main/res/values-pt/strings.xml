@@ -1617,7 +1617,9 @@
     <string name="exercise_favorite_remove">Remover dos favoritos</string>
     <string name="exercise_favorite_marker">Favorito</string>
     <!-- Muscles and equipment of an exercise -->
-    <string name="muscle_chest">Peito</string>
+    <string name="muscle_upper_chest">Peito superior</string>
+    <string name="muscle_middle_chest">Peito médio</string>
+    <string name="muscle_lower_chest">Peito inferior</string>
     <string name="muscle_lats">Dorsais</string>
     <string name="muscle_traps">Trapézios</string>
     <string name="muscle_upper_back">Costas superiores</string>
@@ -1635,6 +1637,7 @@
     <string name="muscle_glutes">Glúteos</string>
     <string name="muscle_calves">Panturrilhas</string>
     <string name="muscle_adductors">Adutores</string>
+    <string name="muscle_abductors">Abdutores</string>
     <string name="equipment_barbell">Barra</string>
     <string name="equipment_dumbbell">Halteres</string>
     <string name="equipment_cable">Polia</string>

@@ -5,34 +5,34 @@ object ExerciseTraitsCatalog {
 
     val entries: Map<Int, ExerciseTraits> = mapOf(
         // Chest
-        1 to traits(Equipment.BARBELL, Muscle.CHEST, Muscle.TRICEPS),  // Flat Bench Press
-        2 to traits(Equipment.DUMBBELL, Muscle.CHEST, Muscle.TRICEPS),  // 45-Degree Incline Dumbbell Press
-        3 to traits(Equipment.DUMBBELL, Muscle.CHEST),  // Floor Flyes
-        4 to traits(Equipment.SMITH_MACHINE, Muscle.CHEST, Muscle.TRICEPS),  // Incline Multipower/Smith Machine Press
-        5 to traits(Equipment.DUMBBELL, Muscle.CHEST),  // Flat Bench Flyes
-        6 to traits(Equipment.CABLE, Muscle.CHEST),  // Low Cable Flyes
-        7 to traits(Equipment.MACHINE, Muscle.CHEST),  // Pec Deck Fly
-        56 to traits(Equipment.MACHINE, Muscle.CHEST, Muscle.TRICEPS),  // Chest Press Machine
-        57 to traits(Equipment.CABLE, Muscle.CHEST),  // Cable Crossover
-        64 to traits(Equipment.MACHINE, Muscle.CHEST),  // Incline Pec Deck Fly
-        76 to traits(Equipment.BARBELL, Muscle.CHEST, Muscle.TRICEPS),  // Decline Bench Press
-        91 to traits(Equipment.DUMBBELL, Muscle.CHEST, Muscle.LATS),  // Dumbbell Pullover (Chest Focus)
-        92 to traits(Equipment.BODYWEIGHT, Muscle.CHEST, Muscle.TRICEPS),  // Weighted Push-ups
-        117 to traits(Equipment.DUMBBELL, Muscle.CHEST, Muscle.TRICEPS),  // Dumbbell Bench Press
-        118 to traits(Equipment.DUMBBELL, Muscle.CHEST, Muscle.TRICEPS),  // Incline Dumbbell Bench Press
-        119 to traits(Equipment.DUMBBELL, Muscle.CHEST, Muscle.TRICEPS),  // Decline Dumbbell Press
-        120 to traits(Equipment.MACHINE, Muscle.CHEST),  // Machine Chest Fly
-        121 to traits(Equipment.BARBELL, Muscle.CHEST, Muscle.TRICEPS),  // Floor Press
-        122 to traits(Equipment.OTHER, Muscle.CHEST),  // Svend Press
-        123 to traits(Equipment.LANDMINE, Muscle.CHEST, Muscle.TRICEPS),  // Landmine Chest Press
-        124 to traits(Equipment.BODYWEIGHT, Muscle.CHEST, Muscle.TRICEPS),  // Wide Grip Push-ups
-        140 to traits(Equipment.BARBELL, Muscle.CHEST),  // Guillotine Press
-        143 to traits(Equipment.MACHINE, Muscle.CHEST),  // Multipurpose
+        1 to traits(Equipment.BARBELL, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Flat Bench Press
+        2 to traits(Equipment.DUMBBELL, Muscle.UPPER_CHEST, Muscle.TRICEPS),  // 45-Degree Incline Dumbbell Press
+        3 to traits(Equipment.DUMBBELL, Muscle.MIDDLE_CHEST),  // Floor Flyes
+        4 to traits(Equipment.SMITH_MACHINE, Muscle.UPPER_CHEST, Muscle.TRICEPS),  // Incline Multipower/Smith Machine Press
+        5 to traits(Equipment.DUMBBELL, Muscle.MIDDLE_CHEST),  // Flat Bench Flyes
+        6 to traits(Equipment.CABLE, Muscle.UPPER_CHEST),  // Low Cable Flyes
+        7 to traits(Equipment.MACHINE, Muscle.MIDDLE_CHEST),  // Pec Deck Fly
+        56 to traits(Equipment.MACHINE, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Chest Press Machine
+        57 to traits(Equipment.CABLE, Muscle.LOWER_CHEST),  // Cable Crossover
+        64 to traits(Equipment.MACHINE, Muscle.UPPER_CHEST),  // Incline Pec Deck Fly
+        76 to traits(Equipment.BARBELL, Muscle.LOWER_CHEST, Muscle.TRICEPS),  // Decline Bench Press
+        91 to traits(Equipment.DUMBBELL, Muscle.MIDDLE_CHEST, Muscle.LOWER_CHEST, Muscle.LATS),  // Dumbbell Pullover (Chest Focus)
+        92 to traits(Equipment.BODYWEIGHT, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Weighted Push-ups
+        117 to traits(Equipment.DUMBBELL, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Dumbbell Bench Press
+        118 to traits(Equipment.DUMBBELL, Muscle.UPPER_CHEST, Muscle.TRICEPS),  // Incline Dumbbell Bench Press
+        119 to traits(Equipment.DUMBBELL, Muscle.LOWER_CHEST, Muscle.TRICEPS),  // Decline Dumbbell Press
+        120 to traits(Equipment.MACHINE, Muscle.MIDDLE_CHEST),  // Machine Chest Fly
+        121 to traits(Equipment.BARBELL, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Floor Press
+        122 to traits(Equipment.OTHER, Muscle.MIDDLE_CHEST),  // Svend Press
+        123 to traits(Equipment.LANDMINE, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Landmine Chest Press
+        124 to traits(Equipment.BODYWEIGHT, Muscle.MIDDLE_CHEST, Muscle.TRICEPS),  // Wide Grip Push-ups
+        140 to traits(Equipment.BARBELL, Muscle.MIDDLE_CHEST),  // Guillotine Press
+        143 to traits(Equipment.MACHINE, Muscle.MIDDLE_CHEST),  // Multipurpose
         // Back
         8 to traits(Equipment.BODYWEIGHT, Muscle.LATS, Muscle.BICEPS),  // Pull-ups
         9 to traits(Equipment.CABLE, Muscle.LATS, Muscle.UPPER_BACK),  // Reverse Grip Seated Cable Row
         10 to traits(Equipment.MACHINE, Muscle.UPPER_BACK, Muscle.LATS),  // Machine Row
-        11 to traits(Equipment.DUMBBELL, Muscle.LATS, Muscle.CHEST),  // Dumbbell Pullover
+        11 to traits(Equipment.DUMBBELL, Muscle.LATS, Muscle.MIDDLE_CHEST),  // Dumbbell Pullover
         12 to traits(Equipment.CABLE, Muscle.LATS),  // Cable Pullover
         13 to traits(Equipment.DUMBBELL, Muscle.LATS),  // Max Stretch Pullover
         14 to traits(Equipment.BODYWEIGHT, Muscle.LOWER_BACK, Muscle.GLUTES),  // Back Extensions
@@ -56,8 +56,8 @@ object ExerciseTraitsCatalog {
         36 to traits(Equipment.DUMBBELL, Muscle.BICEPS),  // 45-Degree Incline Dumbbell Curl
         37 to traits(Equipment.DUMBBELL, Muscle.BICEPS),  // Incline Bench Dumbbell Curl
         38 to traits(Equipment.CABLE, Muscle.BICEPS),  // Single-Arm Cable Curl
-        39 to traits(Equipment.BODYWEIGHT, Muscle.TRICEPS, Muscle.CHEST),  // Dips
-        40 to traits(Equipment.BARBELL, Muscle.TRICEPS, Muscle.CHEST),  // Close-Grip Bench Press
+        39 to traits(Equipment.BODYWEIGHT, Muscle.TRICEPS, Muscle.MIDDLE_CHEST),  // Dips
+        40 to traits(Equipment.BARBELL, Muscle.TRICEPS, Muscle.MIDDLE_CHEST),  // Close-Grip Bench Press
         41 to traits(Equipment.CABLE, Muscle.TRICEPS),  // Cable Triceps Extensions
         42 to traits(Equipment.CABLE, Muscle.TRICEPS),  // Triceps Rope Pushdown
         49 to traits(Equipment.DUMBBELL, Muscle.BICEPS, Muscle.FOREARMS),  // Hammer Curls
@@ -68,7 +68,7 @@ object ExerciseTraitsCatalog {
         96 to traits(Equipment.MACHINE, Muscle.TRICEPS),  // Triceps Dip Machine
         131 to traits(Equipment.CABLE, Muscle.TRICEPS),  // Overhead Cable Triceps Extension
         132 to traits(Equipment.DUMBBELL, Muscle.BICEPS),  // Spider Curl
-        133 to traits(Equipment.BODYWEIGHT, Muscle.TRICEPS, Muscle.CHEST),  // Diamond Push-ups
+        133 to traits(Equipment.BODYWEIGHT, Muscle.TRICEPS, Muscle.MIDDLE_CHEST),  // Diamond Push-ups
         134 to traits(Equipment.BARBELL, Muscle.BICEPS),  // EZ-Bar Curl
         135 to traits(Equipment.BARBELL, Muscle.FOREARMS, Muscle.BICEPS),  // Reverse Barbell Curl
         136 to traits(Equipment.BARBELL, Muscle.TRICEPS),  // JM Press
@@ -148,6 +148,8 @@ object ExerciseTraitsCatalog {
         97 to traits(Equipment.DUMBBELL, Muscle.QUADS, Muscle.GLUTES),  // Step-ups
         98 to traits(Equipment.DUMBBELL, Muscle.QUADS, Muscle.GLUTES),  // Goblet Squat
         137 to traits(Equipment.CABLE, Muscle.GLUTES, Muscle.HAMSTRINGS),  // Cable Pull-Through
+        162 to traits(Equipment.MACHINE, Muscle.ADDUCTORS),  // Hip Adduction Machine
+        163 to traits(Equipment.MACHINE, Muscle.ABDUCTORS, Muscle.GLUTES),  // Hip Abduction Machine
         // Cardio
         150 to traits(Equipment.MACHINE),  // Treadmill
         151 to traits(Equipment.MACHINE),  // Stationary Bike

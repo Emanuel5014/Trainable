@@ -71,7 +71,7 @@ object ExerciseData {
         ExerciseEntity(id = 71, nome = "Straight Arm Pulldown", categoria = "Back"),
         ExerciseEntity(id = 73, nome = "Rear Delt Fly (Machine/Dumbbell)", categoria = "Shoulders"),
         ExerciseEntity(id = 74, nome = "Hip Thrust", categoria = "Legs"),
-        ExerciseEntity(id = 75, nome = "Smith Machine Shrugs", categoria = "Shoulders"),
+        ExerciseEntity(id = 75, nome = "Smith Machine Shrugs", categoria = "Back"),
         ExerciseEntity(id = 76, nome = "Decline Bench Press", categoria = "Chest"),
         ExerciseEntity(id = 77, nome = "Woodchopper", categoria = "Core"),
         ExerciseEntity(id = 78, nome = "Standing Smith Machine Calf Raise", categoria = "Legs"),
@@ -153,6 +153,10 @@ object ExerciseData {
         ExerciseEntity(id = 158, nome = "Seated Lateral Raise", categoria = "Shoulders"),
         ExerciseEntity(id = 159, nome = "Standing Lateral Raise", categoria = "Shoulders"),
         ExerciseEntity(id = 160, nome = "Rear Delt Fly (Machine)", categoria = "Shoulders"),
-        ExerciseEntity(id = 161, nome = "Rear Delt Fly (Dumbbell)", categoria = "Shoulders")
+        ExerciseEntity(id = 161, nome = "Rear Delt Fly (Dumbbell)", categoria = "Shoulders"),
+
+        // The hip machines: the adductors and the abductors had a filter chip and no exercise
+        ExerciseEntity(id = 162, nome = "Hip Adduction Machine", categoria = "Legs"),
+        ExerciseEntity(id = 163, nome = "Hip Abduction Machine", categoria = "Legs")
     )
 }

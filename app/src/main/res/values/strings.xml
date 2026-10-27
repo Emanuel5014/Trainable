@@ -1615,7 +1615,9 @@
     <string name="exercise_favorite_remove">Remove from favorites</string>
     <string name="exercise_favorite_marker">Favorite</string>
     <!-- Muscles and equipment of an exercise -->
-    <string name="muscle_chest">Chest</string>
+    <string name="muscle_upper_chest">Upper chest</string>
+    <string name="muscle_middle_chest">Middle chest</string>
+    <string name="muscle_lower_chest">Lower chest</string>
     <string name="muscle_lats">Lats</string>
     <string name="muscle_traps">Traps</string>
     <string name="muscle_upper_back">Upper back</string>
@@ -1633,6 +1635,7 @@
     <string name="muscle_glutes">Glutes</string>
     <string name="muscle_calves">Calves</string>
     <string name="muscle_adductors">Adductors</string>
+    <string name="muscle_abductors">Abductors</string>
     <string name="equipment_barbell">Barbell</string>
     <string name="equipment_dumbbell">Dumbbell</string>
     <string name="equipment_cable">Cable</string>

@@ -1617,7 +1617,9 @@
     <string name="exercise_favorite_remove">Retirer des favoris</string>
     <string name="exercise_favorite_marker">Favori</string>
     <!-- Muscles and equipment of an exercise -->
-    <string name="muscle_chest">Pectoraux</string>
+    <string name="muscle_upper_chest">Pectoraux supérieurs</string>
+    <string name="muscle_middle_chest">Pectoraux moyens</string>
+    <string name="muscle_lower_chest">Pectoraux inférieurs</string>
     <string name="muscle_lats">Dorsaux</string>
     <string name="muscle_traps">Trapèzes</string>
     <string name="muscle_upper_back">Haut du dos</string>
@@ -1635,6 +1637,7 @@
     <string name="muscle_glutes">Fessiers</string>
     <string name="muscle_calves">Mollets</string>
     <string name="muscle_adductors">Adducteurs</string>
+    <string name="muscle_abductors">Abducteurs</string>
     <string name="equipment_barbell">Barre</string>
     <string name="equipment_dumbbell">Haltères</string>
     <string name="equipment_cable">Poulie</string>

@@ -1617,7 +1617,9 @@
     <string name="exercise_favorite_remove">Togli dai preferiti</string>
     <string name="exercise_favorite_marker">Preferito</string>
     <!-- Muscles and equipment of an exercise -->
-    <string name="muscle_chest">Petto</string>
+    <string name="muscle_upper_chest">Petto alto</string>
+    <string name="muscle_middle_chest">Petto medio</string>
+    <string name="muscle_lower_chest">Petto basso</string>
     <string name="muscle_lats">Dorsali</string>
     <string name="muscle_traps">Trapezi</string>
     <string name="muscle_upper_back">Schiena alta</string>
@@ -1635,6 +1637,7 @@
     <string name="muscle_glutes">Glutei</string>
     <string name="muscle_calves">Polpacci</string>
     <string name="muscle_adductors">Adduttori</string>
+    <string name="muscle_abductors">Abduttori</string>
     <string name="equipment_barbell">Bilanciere</string>
     <string name="equipment_dumbbell">Manubri</string>
     <string name="equipment_cable">Cavi</string>
