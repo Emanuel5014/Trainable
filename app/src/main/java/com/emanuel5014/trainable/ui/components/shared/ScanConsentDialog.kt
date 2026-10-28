@@ -8,6 +8,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.backend.ConsentRequest
+import com.emanuel5014.trainable.data.ai.remote.GeminiEndpoint
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -31,8 +32,13 @@ fun ScanConsentDialog(
             )
         },
         text = {
+            val body = stringResource(R.string.ai_consent_body, request.host)
             Text(
-                stringResource(R.string.ai_consent_body, request.host),
+                if (request.host.equals(GeminiEndpoint.HOST, ignoreCase = true)) {
+                    "$body\n\n${stringResource(R.string.ai_consent_gemini_note)}"
+                } else {
+                    body
+                },
                 color = OnSurfaceVariant
             )
         },

@@ -1138,6 +1138,7 @@
     <string name="ai_err_bad_response">La réponse du fournisseur n\'a pas pu être lue</string>
     <string name="ai_consent_title">Envoyer la photo hors du téléphone ?</string>
     <string name="ai_consent_body">La photo de la fiche sera envoyée à %1$s. Un service cloud suit les règles de son fournisseur.</string>
+    <string name="ai_consent_gemini_note">Avec une clé Gemini gratuite, Google peut utiliser la photo pour améliorer ses produits. Pas avec une clé payante.</string>
     <string name="ai_consent_continue">Continuer</string>
     <string name="ai_where_title">Où tourne l\'IA</string>
     <string name="ai_backend_local">Sur ce téléphone</string>
@@ -1160,7 +1161,7 @@
     <string name="ai_provider_url_scheme">Utilisez http:// ou https://</string>
     <string name="ai_provider_key">Clé API</string>
     <string name="ai_provider_key_keep">Laissez vide pour garder la clé enregistrée</string>
-    <string name="ai_provider_key_required">Obligatoire pour Claude</string>
+    <string name="ai_provider_key_required">Obligatoire pour ce fournisseur</string>
     <string name="ai_provider_key_optional">Facultative pour les serveurs de votre PC</string>
     <string name="ai_provider_model">Modèle</string>
     <string name="ai_provider_model_hint">Choisissez un modèle qui accepte les images</string>

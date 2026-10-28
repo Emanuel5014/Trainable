@@ -1138,6 +1138,7 @@
     <string name="ai_err_bad_response">Non è stato possibile leggere la risposta del provider</string>
     <string name="ai_consent_title">Inviare la foto fuori dal telefono?</string>
     <string name="ai_consent_body">La foto della scheda verrà inviata a %1$s. Un servizio cloud segue le regole del suo fornitore.</string>
+    <string name="ai_consent_gemini_note">Con una chiave Gemini gratuita Google può usare la foto per migliorare i suoi prodotti. Con una chiave a pagamento no.</string>
     <string name="ai_consent_continue">Continua</string>
     <string name="ai_where_title">Dove gira l\'AI</string>
     <string name="ai_backend_local">Su questo telefono</string>
@@ -1160,7 +1161,7 @@
     <string name="ai_provider_url_scheme">Usa http:// o https://</string>
     <string name="ai_provider_key">Chiave API</string>
     <string name="ai_provider_key_keep">Lascia vuoto per tenere la chiave salvata</string>
-    <string name="ai_provider_key_required">Obbligatoria per Claude</string>
+    <string name="ai_provider_key_required">Obbligatoria per questo fornitore</string>
     <string name="ai_provider_key_optional">Facoltativa per i server sul tuo PC</string>
     <string name="ai_provider_model">Modello</string>
     <string name="ai_provider_model_hint">Scegli un modello che accetti immagini</string>

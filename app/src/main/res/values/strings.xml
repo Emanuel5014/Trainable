@@ -1139,6 +1139,7 @@
     <string name="ai_err_bad_response">The provider\'s answer couldn\'t be read</string>
     <string name="ai_consent_title">Send the photo outside your phone?</string>
     <string name="ai_consent_body">The photo of the sheet will be sent to %1$s. A cloud service follows its provider\'s rules.</string>
+    <string name="ai_consent_gemini_note">With a free Gemini key, Google may use the photo to improve its products. A paid key doesn\'t.</string>
     <string name="ai_consent_continue">Continue</string>
     <string name="ai_where_title">Where the AI runs</string>
     <string name="ai_backend_local">On this phone</string>
@@ -1161,7 +1162,7 @@
     <string name="ai_provider_url_scheme">Use http:// or https://</string>
     <string name="ai_provider_key">API key</string>
     <string name="ai_provider_key_keep">Leave empty to keep the saved key</string>
-    <string name="ai_provider_key_required">Required for Claude</string>
+    <string name="ai_provider_key_required">Required for this provider</string>
     <string name="ai_provider_key_optional">Optional for servers on your PC</string>
     <string name="ai_provider_model">Model</string>
     <string name="ai_provider_model_hint">Pick a model that accepts images</string>

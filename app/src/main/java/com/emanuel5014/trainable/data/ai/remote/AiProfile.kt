@@ -25,11 +25,15 @@ data class AiProfile(
     val consentGiven: Boolean = false
 )
 
-/** Address accepted by [BaseUrlPolicy], a model chosen, and a key where the protocol demands one (Claude). */
+/** Claude and Gemini refuse a request without a key; the servers on the user's PC usually don't need one. */
+fun requiresKey(protocol: AiProtocol, baseUrl: String): Boolean =
+    protocol == AiProtocol.ANTHROPIC || GeminiEndpoint.matches(baseUrl)
+
+/** Address accepted by [BaseUrlPolicy], a model chosen, and a key where the provider demands one. */
 fun AiProfile.isComplete(): Boolean =
     BaseUrlPolicy.check(baseUrl) is UrlCheck.Ok &&
         model.isNotBlank() &&
-        (protocol != AiProtocol.ANTHROPIC || !encryptedKey.isNullOrBlank())
+        (!requiresKey(protocol, baseUrl) || !encryptedKey.isNullOrBlank())
 
 /** The profile list and the choice of where the AI runs, as pure functions over what the preferences hold. */
 object AiProfileList {

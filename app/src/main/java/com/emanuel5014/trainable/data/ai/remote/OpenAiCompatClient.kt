@@ -22,6 +22,7 @@ class OpenAiCompatClient(
 
     private val base = BaseUrlPolicy.normalize(baseUrl)
     private val jsonType = "application/json".toMediaType()
+    private val gemini = GeminiEndpoint.matches(baseUrl)
 
     override fun buildScanRequest(payload: RemoteScanPayload, quirks: RequestQuirks): Request {
         val text = JSONObject().put("type", "text").put("text", payload.prompt)
@@ -31,9 +32,11 @@ class OpenAiCompatClient(
         val body = JSONObject()
             .put("model", model)
             .put("stream", true)
-            .put(tokenField(quirks), payload.maxOutputTokens ?: DEFAULT_MAX_OUTPUT_TOKENS)
+            .put(tokenField(quirks), tokenLimit(payload.maxOutputTokens ?: DEFAULT_MAX_OUTPUT_TOKENS))
             .put("messages", JSONArray().put(message))
-        if (payload.transcription && !quirks.omitTemperature) body.put("temperature", TRANSCRIPTION_TEMPERATURE)
+        // Gemini 3 asks to keep its default temperature: a low one can make it loop
+        if (payload.transcription && !quirks.omitTemperature && !gemini) body.put("temperature", TRANSCRIPTION_TEMPERATURE)
+        applyReasoning(body, quirks)
         return post("$base/chat/completions", body)
     }
 
@@ -85,7 +88,7 @@ class OpenAiCompatClient(
     override fun mapError(code: Int, body: String): ScanBackendException {
         val detail = ErrorDetail.clean(body, apiKey)
         return when {
-            code == 401 || code == 403 -> ScanBackendException.Unauthorized(detail)
+            code == 401 || code == 403 || isRejectedKey(body) -> ScanBackendException.Unauthorized(detail)
             // A bare 404 is a wrong path (an address without /v1), not an unknown model
             code == 404 -> if ("model" in body.lowercase()) ScanBackendException.ModelNotFound(detail) else ScanBackendException.Rejected(code, detail)
             code == 413 -> ScanBackendException.PayloadTooLarge(detail)
@@ -101,6 +104,7 @@ class OpenAiCompatClient(
         var next = current
         if ("temperature" in text && !next.omitTemperature) next = next.copy(omitTemperature = true)
         if ("max_tokens" in text && !next.useMaxCompletionTokens) next = next.copy(useMaxCompletionTokens = true)
+        if ("reasoning_effort" in text && !next.omitReasoningEffort) next = next.copy(omitReasoningEffort = true)
         return next.takeIf { it != current }
     }
 
@@ -109,7 +113,8 @@ class OpenAiCompatClient(
     override fun parseModels(body: String): List<String> = try {
         val data = JSONObject(body).optJSONArray("data")
         if (data == null) emptyList() else (0 until data.length()).mapNotNull { index ->
-            data.optJSONObject(index)?.stringOrEmpty("id")?.takeIf { it.isNotBlank() }
+            // Gemini lists "models/gemini-…"; the model field takes the bare name
+            data.optJSONObject(index)?.stringOrEmpty("id")?.removePrefix("models/")?.takeIf { it.isNotBlank() }
         }
     } catch (_: JSONException) {
         emptyList()
@@ -120,12 +125,27 @@ class OpenAiCompatClient(
         val body = JSONObject()
             .put("model", model)
             .put("stream", false)
-            .put(tokenField(quirks), PING_MAX_TOKENS)
+            .put(tokenField(quirks), tokenLimit(PING_MAX_TOKENS))
             .put("messages", JSONArray().put(message))
+        applyReasoning(body, quirks)
         return post("$base/chat/completions", body)
     }
 
     private fun tokenField(quirks: RequestQuirks) = if (quirks.useMaxCompletionTokens) "max_completion_tokens" else "max_tokens"
+
+    /** Gemini counts its thinking against the output limit, so the limit needs room for the answer too. */
+    private fun tokenLimit(answerTokens: Int) = if (gemini) answerTokens + GEMINI_THINKING_ALLOWANCE else answerTokens
+
+    /** Gemini always thinks; reading a sheet needs little of it, and `low` is the one level every Gemini model accepts. */
+    private fun applyReasoning(body: JSONObject, quirks: RequestQuirks) {
+        if (gemini && !quirks.omitReasoningEffort) body.put("reasoning_effort", GEMINI_REASONING_EFFORT)
+    }
+
+    /** Gemini answers a wrong key with a 400 instead of a 401. */
+    private fun isRejectedKey(body: String): Boolean {
+        val text = body.lowercase()
+        return "api key not valid" in text || "api_key_invalid" in text
+    }
 
     private fun throwIfError(json: JSONObject) {
         if (json.isNull("error")) return
@@ -147,5 +167,7 @@ class OpenAiCompatClient(
 
     private companion object {
         const val PING_MAX_TOKENS = 8
+        const val GEMINI_THINKING_ALLOWANCE = 2048
+        const val GEMINI_REASONING_EFFORT = "low"
     }
 }

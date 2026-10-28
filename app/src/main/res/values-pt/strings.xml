@@ -1138,6 +1138,7 @@
     <string name="ai_err_bad_response">Não foi possível ler a resposta do fornecedor</string>
     <string name="ai_consent_title">Enviar a foto para fora do telemóvel?</string>
     <string name="ai_consent_body">A foto da ficha será enviada para %1$s. Um serviço na nuvem segue as regras do seu fornecedor.</string>
+    <string name="ai_consent_gemini_note">Com uma chave Gemini gratuita, o Google pode usar a foto para melhorar os seus produtos. Com uma chave paga, não.</string>
     <string name="ai_consent_continue">Continuar</string>
     <string name="ai_where_title">Onde corre a IA</string>
     <string name="ai_backend_local">Neste telemóvel</string>
@@ -1160,7 +1161,7 @@
     <string name="ai_provider_url_scheme">Use http:// ou https://</string>
     <string name="ai_provider_key">Chave API</string>
     <string name="ai_provider_key_keep">Deixe vazio para manter a chave guardada</string>
-    <string name="ai_provider_key_required">Obrigatória para o Claude</string>
+    <string name="ai_provider_key_required">Obrigatória para este fornecedor</string>
     <string name="ai_provider_key_optional">Opcional para servidores no seu PC</string>
     <string name="ai_provider_model">Modelo</string>
     <string name="ai_provider_model_hint">Escolha um modelo que aceite imagens</string>

@@ -53,6 +53,7 @@ import com.emanuel5014.trainable.data.ai.remote.ProviderPreset
 import com.emanuel5014.trainable.data.ai.remote.ProviderPresets
 import com.emanuel5014.trainable.data.ai.remote.UrlCheck
 import com.emanuel5014.trainable.data.ai.remote.UrlRejection
+import com.emanuel5014.trainable.data.ai.remote.requiresKey
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.screens.routines.userText
 import com.emanuel5014.trainable.ui.theme.Error
@@ -94,7 +95,8 @@ fun ProviderEditorSheet(
     val savedKeyUsable = editing?.keyState == KeyState.PRESENT && !hostChanged && !clearKey
     val typedKey = AiProfileList.cleanKey(key)
     val keyInvalid = typedKey != null && !AiProfileList.isValidKey(typedKey)
-    val keyMissing = protocol == AiProtocol.ANTHROPIC && !savedKeyUsable && typedKey == null
+    val keyRequired = requiresKey(protocol, baseUrl)
+    val keyMissing = keyRequired && !savedKeyUsable && typedKey == null
     val canSave = urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing && !keyInvalid
 
     fun draft() = ProviderDraft(
@@ -119,6 +121,7 @@ fun ProviderEditorSheet(
         protocol = preset.protocol
         baseUrl = preset.baseUrl
         urlHint = preset.hint
+        if (model.isBlank()) preset.model?.let { model = it }
         models = emptyList()
         status = null
     }
@@ -235,7 +238,7 @@ fun ProviderEditorSheet(
                                 clearKey -> R.string.ai_provider_key_will_remove
                                 savedKeyExists && hostChanged -> R.string.ai_provider_key_host_changed
                                 savedKeyUsable -> R.string.ai_provider_key_keep
-                                protocol == AiProtocol.ANTHROPIC -> R.string.ai_provider_key_required
+                                keyRequired -> R.string.ai_provider_key_required
                                 else -> R.string.ai_provider_key_optional
                             }
                         )

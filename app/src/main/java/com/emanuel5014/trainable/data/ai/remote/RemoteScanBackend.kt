@@ -32,7 +32,7 @@ class RemoteScanBackend(
 
     override suspend fun prepare() {
         val missing = profile.baseUrl.isBlank() || profile.model.isBlank() ||
-            (profile.protocol == AiProtocol.ANTHROPIC && profile.encryptedKey.isNullOrBlank())
+            (requiresKey(profile.protocol, profile.baseUrl) && profile.encryptedKey.isNullOrBlank())
         if (missing) throw ScanBackendException.NotConfigured()
         (BaseUrlPolicy.check(profile.baseUrl) as? UrlCheck.Rejected)?.let { throw ScanBackendException.PolicyBlocked(it.reason) }
         if (keyState == KeyState.UNREADABLE) throw ScanBackendException.KeyUnreadable()

@@ -4,6 +4,7 @@ import com.emanuel5014.trainable.data.ai.LlmScanResult
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
 import okhttp3.Request
 import okio.BufferedSource
+import org.json.JSONArray
 import org.json.JSONObject
 
 /** A runaway answer is cut off here rather than filling the phone's memory. */
@@ -25,7 +26,8 @@ data class RemoteScanPayload(
 /** Parameters some providers refuse; set after a 400 that names them, for one retry. */
 data class RequestQuirks(
     val omitTemperature: Boolean = false,
-    val useMaxCompletionTokens: Boolean = false
+    val useMaxCompletionTokens: Boolean = false,
+    val omitReasoningEffort: Boolean = false
 )
 
 /**
@@ -68,11 +70,12 @@ object ErrorDetail {
     }
 
     private fun messageOf(raw: String): String? {
+        // Gemini wraps its error in an array: [{"error": {...}}]
         val json = try {
-            JSONObject(raw)
+            if (raw.trimStart().startsWith("[")) JSONArray(raw).optJSONObject(0) else JSONObject(raw)
         } catch (_: Exception) {
-            return null
-        }
+            null
+        } ?: return null
         val message = when (val error = json.opt("error")) {
             is JSONObject -> error.stringOrEmpty("message")
             is String -> error
