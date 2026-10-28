@@ -425,8 +425,9 @@ fun RoutineDetailScreen(
         if (state is AiScanState.Error) {
             Toast.makeText(
                 context,
-                if (state.message == null) context.getString(R.string.ai_scan_no_exercises)
-                else context.getString(R.string.ai_scan_failed),
+                state.failure?.userText(context)
+                    ?: if (state.message == null) context.getString(R.string.ai_scan_no_exercises)
+                    else context.getString(R.string.ai_scan_failed),
                 Toast.LENGTH_LONG
             ).show()
             viewModel.dismissScanResult()

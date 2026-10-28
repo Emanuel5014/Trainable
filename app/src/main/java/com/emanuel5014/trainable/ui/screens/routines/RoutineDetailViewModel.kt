@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
 import com.emanuel5014.trainable.data.ai.DeviceResourceMetrics
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScanPhase
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
@@ -61,7 +62,8 @@ sealed interface AiScanState {
         val entries: List<ScannedExerciseEntry>,
         val imageUri: Uri? = null
     ) : AiScanState
-    data class Error(val message: String?) : AiScanState
+    /** [failure] is set when a scan backend explained what went wrong. */
+    data class Error(val message: String?, val failure: ScanBackendException? = null) : AiScanState
 }
 
 data class AiScanStreamState(
@@ -290,6 +292,8 @@ class RoutineDetailViewModel @Inject constructor(
                 // Cancelled by user
                 _aiScanState.value = AiScanState.Idle
                 _aiScanStream.value = AiScanStreamState()
+            } catch (e: ScanBackendException) {
+                _aiScanState.value = AiScanState.Error(e.message, e)
             } catch (e: Exception) {
                 e.printStackTrace()
                 _aiScanState.value = AiScanState.Error(e.message)

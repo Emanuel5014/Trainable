@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
 import com.emanuel5014.trainable.data.ai.RoutineScanner
 import com.emanuel5014.trainable.data.ai.ScanPhase
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScannedProgram
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -28,7 +29,8 @@ sealed interface ProgramScanState {
     data object Idle : ProgramScanState
     data class Scanning(val phase: ScanPhase = ScanPhase.LOADING_MODEL) : ProgramScanState
     data class Result(val program: ScannedProgram) : ProgramScanState
-    data object Failed : ProgramScanState
+    /** [failure] is set when a scan backend explained what went wrong. */
+    data class Failed(val failure: ScanBackendException? = null) : ProgramScanState
 }
 
 /** Runs the on-device model on a photo of a program page for the advanced-prescription editor. */
@@ -108,13 +110,15 @@ class ProgramScanViewModel @Inject constructor(
                 )
                 metricsJob?.cancel()
                 emit(force = true)
-                _state.value = if (program == null) ProgramScanState.Failed else ProgramScanState.Result(program)
+                _state.value = if (program == null) ProgramScanState.Failed() else ProgramScanState.Result(program)
             } catch (e: CancellationException) {
                 _state.value = ProgramScanState.Idle
                 _stream.value = AiScanStreamState()
+            } catch (e: ScanBackendException) {
+                _state.value = ProgramScanState.Failed(e)
             } catch (e: Exception) {
                 e.printStackTrace()
-                _state.value = ProgramScanState.Failed
+                _state.value = ProgramScanState.Failed()
             }
         }
     }

@@ -83,6 +83,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.screens.routines.AiScanningOverlay
 import com.emanuel5014.trainable.ui.screens.routines.ProgramScanState
 import com.emanuel5014.trainable.ui.screens.routines.ProgramScanViewModel
+import com.emanuel5014.trainable.ui.screens.routines.userText
 import com.emanuel5014.trainable.ui.screens.routines.ScanOptionItem
 import com.emanuel5014.trainable.ui.screens.routines.createScanTempImageUri
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -176,8 +177,13 @@ fun AiProgramScanButton(
     }
 
     LaunchedEffect(state) {
-        if (state is ProgramScanState.Failed) {
-            Toast.makeText(context, context.getString(R.string.ai_program_scan_failed), Toast.LENGTH_LONG).show()
+        val failed = state as? ProgramScanState.Failed
+        if (failed != null) {
+            Toast.makeText(
+                context,
+                failed.failure?.userText(context) ?: context.getString(R.string.ai_program_scan_failed),
+                Toast.LENGTH_LONG
+            ).show()
             scanViewModel.reset()
         }
     }
