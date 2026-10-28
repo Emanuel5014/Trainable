@@ -851,6 +851,7 @@
     <string name="ai_scan_custom_label">No está en el catálogo: se creará como personalizado</string>
     <string name="ai_scan_tap_to_change">Toca para cambiar el ejercicio</string>
     <string name="ai_scan_phase_model">Cargando modelo…</string>
+    <string name="ai_scan_phase_connecting">Conectando…</string>
     <string name="ai_scan_phase_reading">Leyendo la hoja…</string>
     <string name="ai_scan_phase_generating">Extrayendo ejercicios…</string>
     <string name="ai_scan_show_thinking">Pensamiento del modelo</string>

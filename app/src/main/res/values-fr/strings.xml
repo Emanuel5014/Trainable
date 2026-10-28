@@ -851,6 +851,7 @@
     <string name="ai_scan_custom_label">Absent du catalogue — sera créé comme personnalisé</string>
     <string name="ai_scan_tap_to_change">Toucher pour changer l\'exercice</string>
     <string name="ai_scan_phase_model">Chargement du modèle…</string>
+    <string name="ai_scan_phase_connecting">Connexion…</string>
     <string name="ai_scan_phase_reading">Lecture de la fiche…</string>
     <string name="ai_scan_phase_generating">Extraction des exercices…</string>
     <string name="ai_scan_show_thinking">Réflexion du modèle</string>

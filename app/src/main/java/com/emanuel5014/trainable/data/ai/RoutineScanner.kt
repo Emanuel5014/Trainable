@@ -276,6 +276,8 @@ $exampleJson
 
 enum class ScanPhase {
     LOADING_MODEL,
+    /** Reaching a remote provider instead of loading the on-device model. */
+    CONNECTING,
     READING_SHEET,
     PARSING
 }

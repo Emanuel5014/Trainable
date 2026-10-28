@@ -2590,6 +2590,7 @@ private fun DeviceResourceAnalyticsCard(
 internal fun aiPhaseLabel(phase: com.emanuel5014.trainable.data.ai.ScanPhase): String =
     when (phase) {
         com.emanuel5014.trainable.data.ai.ScanPhase.LOADING_MODEL -> stringResource(R.string.ai_scan_phase_model)
+        com.emanuel5014.trainable.data.ai.ScanPhase.CONNECTING -> stringResource(R.string.ai_scan_phase_connecting)
         com.emanuel5014.trainable.data.ai.ScanPhase.READING_SHEET -> stringResource(R.string.ai_scan_phase_reading)
         com.emanuel5014.trainable.data.ai.ScanPhase.PARSING -> stringResource(R.string.ai_scan_phase_generating)
     }

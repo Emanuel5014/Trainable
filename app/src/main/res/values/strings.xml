@@ -852,6 +852,7 @@
     <string name="ai_scan_custom_label">Not in catalog — will be created as custom</string>
     <string name="ai_scan_tap_to_change">Tap to change exercise</string>
     <string name="ai_scan_phase_model">Loading model…</string>
+    <string name="ai_scan_phase_connecting">Connecting…</string>
     <string name="ai_scan_phase_reading">Reading the sheet…</string>
     <string name="ai_scan_phase_generating">Extracting exercises…</string>
     <string name="ai_scan_show_thinking">Model thinking</string>

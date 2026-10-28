@@ -851,6 +851,7 @@
     <string name="ai_scan_custom_label">Nicht im Katalog — wird als eigene Übung erstellt</string>
     <string name="ai_scan_tap_to_change">Tippen zum Ändern der Übung</string>
     <string name="ai_scan_phase_model">Modell wird geladen…</string>
+    <string name="ai_scan_phase_connecting">Verbindung wird hergestellt…</string>
     <string name="ai_scan_phase_reading">Plan wird gelesen…</string>
     <string name="ai_scan_phase_generating">Übungen werden extrahiert…</string>
     <string name="ai_scan_show_thinking">Gedanken des Modells</string>
