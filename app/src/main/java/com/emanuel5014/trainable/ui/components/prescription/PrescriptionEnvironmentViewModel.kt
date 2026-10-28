@@ -2,8 +2,7 @@ package com.emanuel5014.trainable.ui.components
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emanuel5014.trainable.data.ai.AiModelVariant
-import com.emanuel5014.trainable.data.ai.ModelFileManager
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
@@ -11,7 +10,6 @@ import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -25,7 +23,7 @@ import javax.inject.Inject
 class PrescriptionEnvironmentViewModel @Inject constructor(
     private val oneRepMaxRepository: OneRepMaxRepository,
     userPreferencesRepository: UserPreferencesRepository,
-    modelFileManager: ModelFileManager
+    backends: ScanBackendProvider
 ) : ViewModel() {
 
     val weightUnit: StateFlow<String> = userPreferencesRepository.weightUnit
@@ -43,14 +41,9 @@ class PrescriptionEnvironmentViewModel @Inject constructor(
     val estimatedOneRepMaxes: StateFlow<Map<Int, Float>> = oneRepMaxRepository.estimatedByExercise()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    /** The AI button is only offered when AI is enabled in settings and the model is on the device. */
-    val aiAvailable: StateFlow<Boolean> = combine(
-        userPreferencesRepository.aiScanEnabled,
-        userPreferencesRepository.aiModelVariant,
-        modelFileManager.filesUpdatedTrigger
-    ) { enabled, variantId, _ ->
-        enabled && modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    /** The AI button is only offered when AI is enabled in settings and the chosen place can read a photo. */
+    val aiAvailable: StateFlow<Boolean> = backends.isReady
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun saveOneRepMax(exerciseId: Int, weightKg: Float, source: String = OneRepMaxEntity.SOURCE_MANUAL) {
         viewModelScope.launch { oneRepMaxRepository.add(exerciseId = exerciseId, weightKg = weightKg, source = source) }

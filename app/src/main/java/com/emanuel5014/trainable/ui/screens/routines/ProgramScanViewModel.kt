@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
 import com.emanuel5014.trainable.data.ai.RoutineScanner
 import com.emanuel5014.trainable.data.ai.ScanPhase
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScannedProgram
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.Job
@@ -34,7 +36,8 @@ sealed interface ProgramScanState {
 class ProgramScanViewModel @Inject constructor(
     private val routineScanner: RoutineScanner,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val aiResourceTracker: AiResourceTracker
+    private val aiResourceTracker: AiResourceTracker,
+    private val backends: ScanBackendProvider
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<ProgramScanState>(ProgramScanState.Idle)
@@ -43,7 +46,11 @@ class ProgramScanViewModel @Inject constructor(
     private val _stream = MutableStateFlow(AiScanStreamState())
     val stream: StateFlow<AiScanStreamState> = _stream.asStateFlow()
 
-    val resourceAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled
+    /** The phone's live metrics only mean something while the on-device model is the one reading. */
+    val resourceAnalyticsEnabled = combine(
+        userPreferencesRepository.aiResourceAnalyticsEnabled,
+        backends.localActive
+    ) { enabled, local -> enabled && local }
 
     private var job: Job? = null
 
@@ -55,7 +62,7 @@ class ProgramScanViewModel @Inject constructor(
         job = viewModelScope.launch {
             try {
                 val startTime = System.currentTimeMillis()
-                val analytics = userPreferencesRepository.aiResourceAnalyticsEnabled.first()
+                val analytics = userPreferencesRepository.aiResourceAnalyticsEnabled.first() && backends.isLocalActive()
                 var latestOutput = ""
                 var latestThinking = ""
                 var lastEmit = 0L

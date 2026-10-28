@@ -6,11 +6,9 @@ import androidx.lifecycle.SavedStateHandle
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
-import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
 import com.emanuel5014.trainable.data.ai.DeviceResourceMetrics
-import com.emanuel5014.trainable.data.ai.ModelFileManager
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScanPhase
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
 import com.emanuel5014.trainable.data.ai.RoutineScanner
@@ -79,8 +77,7 @@ class RoutineDetailViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
     private val routineScanner: RoutineScanner,
-    private val modelFileManager: ModelFileManager,
-    private val deviceCapabilityChecker: DeviceCapabilityChecker,
+    private val backends: ScanBackendProvider,
     private val aiResourceTracker: AiResourceTracker,
     private val oneRepMaxRepository: OneRepMaxRepository,
     private val scanDraftStore: com.emanuel5014.trainable.data.ai.ScanDraftStore,
@@ -101,19 +98,17 @@ class RoutineDetailViewModel @Inject constructor(
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
-    val aiScanAvailable = combine(
-        userPreferencesRepository.aiScanEnabled,
-        userPreferencesRepository.aiModelVariant,
-        modelFileManager.filesUpdatedTrigger
-    ) { enabled, variantId, _ ->
-        enabled && modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))
-    }.stateIn(
+    val aiScanAvailable = backends.isReady.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
 
-    val aiResourceAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.stateIn(
+    /** The phone's live metrics only mean something while the on-device model is the one reading. */
+    val aiResourceAnalyticsEnabled = combine(
+        userPreferencesRepository.aiResourceAnalyticsEnabled,
+        backends.localActive
+    ) { enabled, local -> enabled && local }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
@@ -210,7 +205,7 @@ class RoutineDetailViewModel @Inject constructor(
         scanJob = viewModelScope.launch {
             try {
                 val startTime = System.currentTimeMillis()
-                val isAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.first()
+                val isAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.first() && backends.isLocalActive()
 
                 // Throttle stream state emissions to ~4 Hz so token-frequency
                 // updates don't trigger full-screen recomposition + blur recompute
