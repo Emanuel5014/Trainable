@@ -1170,6 +1170,11 @@
     <string name="ai_provider_test_ok">Funciona: o fornecedor respondeu</string>
     <string name="ai_provider_save">Guardar</string>
     <string name="ai_provider_hint_weak">Para digitalizar é preciso um fornecedor neste dispositivo: adicione um abaixo</string>
+    <string name="ai_provider_url_example">Exemplo: %1$s</string>
+    <string name="ai_provider_key_invalid">A chave tem carateres que não podem ser usados num pedido</string>
+    <string name="ai_provider_key_remove">Remover a chave guardada</string>
+    <string name="ai_provider_key_will_remove">A chave guardada será removida ao guardar</string>
+    <string name="ai_provider_key_host_changed">O endereço mudou: a chave guardada não será enviada para lá, volte a introduzi-la</string>
     <string name="ai_program_review_title">Programação reconhecida</string>
     <string name="ai_program_review_hint">Escolha as semanas a importar. Você poderá editar tudo depois.</string>
     <string name="ai_program_review_pick_week">Escolha a semana a importar. Você poderá editá-la depois.</string>

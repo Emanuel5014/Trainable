@@ -1171,6 +1171,11 @@
     <string name="ai_provider_test_ok">It works: the provider answered</string>
     <string name="ai_provider_save">Save</string>
     <string name="ai_provider_hint_weak">Scanning needs a provider on this device: add one below</string>
+    <string name="ai_provider_url_example">Example: %1$s</string>
+    <string name="ai_provider_key_invalid">The key has characters that can\'t be used in a request</string>
+    <string name="ai_provider_key_remove">Remove saved key</string>
+    <string name="ai_provider_key_will_remove">The saved key will be removed when you save</string>
+    <string name="ai_provider_key_host_changed">The address changed: the saved key won\'t be sent there, enter it again</string>
     <string name="ai_program_review_title">Program recognised</string>
     <string name="ai_program_review_hint">Choose the weeks to import. You can edit everything afterwards.</string>
     <string name="ai_program_review_pick_week">Pick the week to import. You can edit it afterwards.</string>

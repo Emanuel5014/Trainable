@@ -1170,6 +1170,11 @@
     <string name="ai_provider_test_ok">Funziona: il provider ha risposto</string>
     <string name="ai_provider_save">Salva</string>
     <string name="ai_provider_hint_weak">Per scansionare serve un provider su questo dispositivo: aggiungine uno qui sotto</string>
+    <string name="ai_provider_url_example">Esempio: %1$s</string>
+    <string name="ai_provider_key_invalid">La chiave contiene caratteri che non si possono usare in una richiesta</string>
+    <string name="ai_provider_key_remove">Rimuovi la chiave salvata</string>
+    <string name="ai_provider_key_will_remove">La chiave salvata verrà rimossa quando salvi</string>
+    <string name="ai_provider_key_host_changed">L\'indirizzo è cambiato: la chiave salvata non verrà inviata lì, inseriscila di nuovo</string>
     <string name="ai_program_review_title">Programmazione riconosciuta</string>
     <string name="ai_program_review_hint">Scegli le settimane da importare. Potrai modificare tutto dopo.</string>
     <string name="ai_program_review_pick_week">Scegli la settimana da importare. Potrai modificarla dopo.</string>

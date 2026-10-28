@@ -76,6 +76,8 @@ class AiProvidersViewModel @Inject constructor(
     /** A new provider becomes the active one; editing an existing one leaves the choice alone. */
     fun save(draft: ProviderDraft, onSaved: () -> Unit) {
         val check = BaseUrlPolicy.check(draft.baseUrl) as? UrlCheck.Ok ?: return
+        // A key a header can't carry is refused here too, not only greyed out in the editor
+        AiProfileList.cleanKey(draft.plainKey)?.let { if (!AiProfileList.isValidKey(it)) return }
         viewModelScope.launch {
             val profile = AiProfile(
                 id = draft.id ?: UUID.randomUUID().toString(),
@@ -102,8 +104,6 @@ class AiProvidersViewModel @Inject constructor(
             return Result.failure(ScanBackendException.PolicyBlocked(it.reason))
         }
         val stored = draft.id?.let { id -> store.profiles.first().firstOrNull { it.id == id } }
-        val key = AiProfileList.cleanKey(draft.plainKey)
-            ?: stored?.let { withContext(Dispatchers.IO) { store.readKey(it) } }
         val profile = AiProfile(
             id = draft.id ?: "draft",
             name = draft.name,
@@ -111,6 +111,10 @@ class AiProvidersViewModel @Inject constructor(
             baseUrl = BaseUrlPolicy.normalize(draft.baseUrl),
             model = draft.model.trim()
         )
+        // The saved key follows the profile only to the host it was saved for
+        val key = AiProfileList.cleanKey(draft.plainKey)
+            ?: stored?.takeIf { AiProfileList.keepsKey(it, profile) }?.let { withContext(Dispatchers.IO) { store.readKey(it) } }
+        if (key != null && !AiProfileList.isValidKey(key)) return Result.failure(ScanBackendException.KeyUnreadable())
         return block(createProtocolClient(profile, key))
     }
 

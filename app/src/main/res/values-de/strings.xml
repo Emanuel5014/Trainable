@@ -1170,6 +1170,11 @@
     <string name="ai_provider_test_ok">Es funktioniert: der Anbieter hat geantwortet</string>
     <string name="ai_provider_save">Speichern</string>
     <string name="ai_provider_hint_weak">Zum Scannen braucht dieses Gerät einen Anbieter: füge unten einen hinzu</string>
+    <string name="ai_provider_url_example">Beispiel: %1$s</string>
+    <string name="ai_provider_key_invalid">Der Schlüssel enthält Zeichen, die in einer Anfrage nicht verwendet werden können</string>
+    <string name="ai_provider_key_remove">Gespeicherten Schlüssel entfernen</string>
+    <string name="ai_provider_key_will_remove">Der gespeicherte Schlüssel wird beim Speichern entfernt</string>
+    <string name="ai_provider_key_host_changed">Die Adresse hat sich geändert: Der gespeicherte Schlüssel wird dorthin nicht gesendet, gib ihn erneut ein</string>
     <string name="ai_program_review_title">Programm erkannt</string>
     <string name="ai_program_review_hint">Wähle die zu importierenden Wochen. Danach kannst du alles bearbeiten.</string>
     <string name="ai_program_review_pick_week">Wähle die zu importierende Woche. Danach kannst du sie bearbeiten.</string>

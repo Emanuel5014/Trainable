@@ -58,19 +58,28 @@ object AiProfileList {
         list.filterNot { it.id == removeId } to (if (activeId == removeId) LOCAL else activeId)
 
     /** [edited] as it should be stored: consent carries over from [old] only while the host is unchanged. */
-    fun applyEdit(old: AiProfile?, edited: AiProfile): AiProfile {
-        val sameHost = old != null && hostOf(old.baseUrl) == hostOf(edited.baseUrl)
-        return edited.copy(consentGiven = old != null && old.consentGiven && sameHost)
-    }
+    fun applyEdit(old: AiProfile?, edited: AiProfile): AiProfile =
+        edited.copy(consentGiven = old != null && old.consentGiven && keepsKey(old, edited))
 
-    /** A key as pasted: no surrounding space or quotes; null when nothing is left. */
+    /**
+     * Whether a key saved on [old] may be used for [edited]: only while the address still points at the same
+     * host, so editing a profile can't send a key to a place the user never gave it to.
+     */
+    fun keepsKey(old: AiProfile?, edited: AiProfile): Boolean =
+        old != null && hostOf(old.baseUrl) == hostOf(edited.baseUrl)
+
+    private val QUOTE_PAIRS = mapOf('"' to '"', '\'' to '\'', '\u201C' to '\u201D', '\u2018' to '\u2019')
+    private val INVISIBLE = setOf('\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF')
+
+    /** A key as pasted: no surrounding quotes, no whitespace or invisible characters anywhere; null when nothing is left. */
     fun cleanKey(raw: String?): String? {
         var key = raw?.trim().orEmpty()
-        if (key.length >= 2 && (key.first() == '"' || key.first() == '\'') && key.last() == key.first()) {
-            key = key.substring(1, key.length - 1).trim()
-        }
-        return key.ifEmpty { null }
+        if (key.length >= 2 && QUOTE_PAIRS[key.first()] == key.last()) key = key.substring(1, key.length - 1)
+        return key.filterNot { it.isWhitespace() || it in INVISIBLE }.ifEmpty { null }
     }
+
+    /** A request header can only carry printable ASCII; anything else would make OkHttp throw with the key in its message. */
+    fun isValidKey(key: String): Boolean = key.isNotEmpty() && key.all { it.code in 0x21..0x7E }
 
     private fun hostOf(url: String): String {
         val normalized = BaseUrlPolicy.normalize(url)

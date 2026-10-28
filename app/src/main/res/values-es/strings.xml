@@ -1170,6 +1170,11 @@
     <string name="ai_provider_test_ok">Funciona: el proveedor ha respondido</string>
     <string name="ai_provider_save">Guardar</string>
     <string name="ai_provider_hint_weak">Para escanear hace falta un proveedor en este dispositivo: añade uno abajo</string>
+    <string name="ai_provider_url_example">Ejemplo: %1$s</string>
+    <string name="ai_provider_key_invalid">La clave tiene caracteres que no se pueden usar en una solicitud</string>
+    <string name="ai_provider_key_remove">Eliminar la clave guardada</string>
+    <string name="ai_provider_key_will_remove">La clave guardada se eliminará al guardar</string>
+    <string name="ai_provider_key_host_changed">La dirección ha cambiado: la clave guardada no se enviará allí, vuelve a introducirla</string>
     <string name="ai_program_review_title">Programación reconocida</string>
     <string name="ai_program_review_hint">Elige las semanas a importar. Podrás editarlo todo después.</string>
     <string name="ai_program_review_pick_week">Elige la semana a importar. Podrás editarla después.</string>

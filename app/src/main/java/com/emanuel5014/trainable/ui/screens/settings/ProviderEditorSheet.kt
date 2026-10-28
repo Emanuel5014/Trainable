@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
+import com.emanuel5014.trainable.data.ai.remote.AiProfileList
 import com.emanuel5014.trainable.data.ai.remote.AiProtocol
 import com.emanuel5014.trainable.data.ai.remote.BaseUrlPolicy
 import com.emanuel5014.trainable.data.ai.remote.KeyState
@@ -79,6 +80,7 @@ fun ProviderEditorSheet(
     var model by remember { mutableStateOf(profile?.model.orEmpty()) }
     var key by remember { mutableStateOf("") }
     var showKey by remember { mutableStateOf(false) }
+    var clearKey by remember { mutableStateOf(false) }
     var urlHint by remember { mutableStateOf<String?>(null) }
     var models by remember { mutableStateOf<List<String>>(emptyList()) }
     var busy by remember { mutableStateOf(false) }
@@ -86,9 +88,14 @@ fun ProviderEditorSheet(
 
     val urlCheck = BaseUrlPolicy.check(baseUrl)
     val urlTyped = baseUrl.trim().removePrefix("https://").removePrefix("http://").isNotEmpty()
-    val hasSavedKey = editing?.keyState == KeyState.PRESENT
-    val keyMissing = protocol == AiProtocol.ANTHROPIC && !hasSavedKey && key.isBlank()
-    val canSave = urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing
+    val savedKeyExists = profile?.encryptedKey != null
+    // The saved key only follows the profile to the host it was saved for
+    val hostChanged = profile != null && !AiProfileList.keepsKey(profile, profile.copy(baseUrl = baseUrl))
+    val savedKeyUsable = editing?.keyState == KeyState.PRESENT && !hostChanged && !clearKey
+    val typedKey = AiProfileList.cleanKey(key)
+    val keyInvalid = typedKey != null && !AiProfileList.isValidKey(typedKey)
+    val keyMissing = protocol == AiProtocol.ANTHROPIC && !savedKeyUsable && typedKey == null
+    val canSave = urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing && !keyInvalid
 
     fun draft() = ProviderDraft(
         id = profile?.id,
@@ -96,7 +103,12 @@ fun ProviderEditorSheet(
         protocol = protocol,
         baseUrl = baseUrl,
         model = model,
-        plainKey = key.takeIf { it.isNotBlank() }
+        // null keeps the saved key, blank removes it, anything else replaces it
+        plainKey = when {
+            key.isNotBlank() -> key
+            clearKey -> ""
+            else -> null
+        }
     )
 
     fun describe(error: Throwable): String =
@@ -187,9 +199,6 @@ fun ProviderEditorSheet(
                     status = null
                 },
                 label = { Text(stringResource(R.string.ai_provider_url)) },
-                placeholder = if (urlHint != null) {
-                    { Text(urlHint.orEmpty()) }
-                } else null,
                 isError = rejection != null && urlTyped,
                 supportingText = if (rejection != null && urlTyped) {
                     {
@@ -203,6 +212,8 @@ fun ProviderEditorSheet(
                             )
                         )
                     }
+                } else if (urlHint != null) {
+                    { Text(stringResource(R.string.ai_provider_url_example, urlHint.orEmpty())) }
                 } else null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, keyboardType = KeyboardType.Uri),
@@ -214,12 +225,16 @@ fun ProviderEditorSheet(
                 value = key,
                 onValueChange = { key = it },
                 label = { Text(stringResource(R.string.ai_provider_key)) },
-                placeholder = { Text(if (hasSavedKey) "••••••" else "") },
+                placeholder = { Text(if (savedKeyUsable) "••••••" else "") },
+                isError = keyInvalid,
                 supportingText = {
                     Text(
                         stringResource(
                             when {
-                                hasSavedKey -> R.string.ai_provider_key_keep
+                                keyInvalid -> R.string.ai_provider_key_invalid
+                                clearKey -> R.string.ai_provider_key_will_remove
+                                savedKeyExists && hostChanged -> R.string.ai_provider_key_host_changed
+                                savedKeyUsable -> R.string.ai_provider_key_keep
                                 protocol == AiProtocol.ANTHROPIC -> R.string.ai_provider_key_required
                                 else -> R.string.ai_provider_key_optional
                             }
@@ -241,6 +256,12 @@ fun ProviderEditorSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = fieldColors
             )
+
+            if (savedKeyExists && !clearKey) {
+                TextButton(onClick = { clearKey = true }) {
+                    Text(stringResource(R.string.ai_provider_key_remove).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                }
+            }
 
             OutlinedTextField(
                 value = model,
@@ -268,7 +289,7 @@ fun ProviderEditorSheet(
                         busy = false
                     }
                 },
-                enabled = !busy && urlCheck is UrlCheck.Ok
+                enabled = !busy && urlCheck is UrlCheck.Ok && !keyInvalid
             ) {
                 Text(stringResource(R.string.ai_provider_models_load).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
@@ -306,7 +327,7 @@ fun ProviderEditorSheet(
                     modifier = Modifier.weight(1f),
                     containerColor = Primary.copy(alpha = 0.12f),
                     contentColor = Primary,
-                    enabled = !busy && urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing
+                    enabled = !busy && urlCheck is UrlCheck.Ok && model.isNotBlank() && !keyMissing && !keyInvalid
                 ) {
                     Text(stringResource(R.string.ai_provider_test).uppercase(), fontWeight = FontWeight.ExtraBold, maxLines = 1)
                 }

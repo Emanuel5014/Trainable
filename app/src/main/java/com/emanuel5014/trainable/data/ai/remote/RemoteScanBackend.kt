@@ -36,6 +36,8 @@ class RemoteScanBackend(
         if (missing) throw ScanBackendException.NotConfigured()
         (BaseUrlPolicy.check(profile.baseUrl) as? UrlCheck.Rejected)?.let { throw ScanBackendException.PolicyBlocked(it.reason) }
         if (keyState == KeyState.UNREADABLE) throw ScanBackendException.KeyUnreadable()
+        // A key a header can't carry is as good as lost: ask for it again rather than let OkHttp throw with it in the message
+        if (apiKey != null && !AiProfileList.isValidKey(apiKey)) throw ScanBackendException.KeyUnreadable()
     }
 
     override suspend fun run(request: ScanRequest, onStreamUpdate: (String, String) -> Unit): LlmScanResult {
@@ -46,17 +48,23 @@ class RemoteScanBackend(
             maxOutputTokens = request.maxOutputTokens
         )
         var quirks = RequestQuirks()
-        var retried = false
+        var retries = 0
         while (true) {
-            val attempt = http.call(client.buildScanRequest(payload, quirks)) { response -> read(response, onStreamUpdate) }
+            val request = try {
+                client.buildScanRequest(payload, quirks)
+            } catch (_: IllegalArgumentException) {
+                // The address or a header value is unusable; such an exception's text can carry the value itself
+                throw ScanBackendException.NotConfigured()
+            }
+            val attempt = http.call(request) { response -> read(response, onStreamUpdate) }
             when (attempt) {
                 is Attempt.Done -> return attempt.result
                 is Attempt.Failed -> {
-                    // One more try, without what the provider just refused, and no more
-                    val next = if (retried) null else client.retryQuirks(attempt.code, attempt.body, quirks)
+                    // Some providers name one refused parameter per 400, so each retry drops what was just refused
+                    val next = if (retries >= MAX_RETRIES) null else client.retryQuirks(attempt.code, attempt.body, quirks)
                     if (next == null) throw client.mapError(attempt.code, attempt.body)
                     quirks = next
-                    retried = true
+                    retries++
                 }
             }
         }
@@ -82,5 +90,6 @@ class RemoteScanBackend(
 
     private companion object {
         const val ERROR_BODY_BYTES = 4096L
+        const val MAX_RETRIES = 2
     }
 }

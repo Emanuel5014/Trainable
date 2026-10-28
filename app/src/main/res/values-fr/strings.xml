@@ -1170,6 +1170,11 @@
     <string name="ai_provider_test_ok">Ça marche : le fournisseur a répondu</string>
     <string name="ai_provider_save">Enregistrer</string>
     <string name="ai_provider_hint_weak">La numérisation demande un fournisseur sur cet appareil : ajoutez-en un ci-dessous</string>
+    <string name="ai_provider_url_example">Exemple : %1$s</string>
+    <string name="ai_provider_key_invalid">La clé contient des caractères inutilisables dans une requête</string>
+    <string name="ai_provider_key_remove">Supprimer la clé enregistrée</string>
+    <string name="ai_provider_key_will_remove">La clé enregistrée sera supprimée à l\'enregistrement</string>
+    <string name="ai_provider_key_host_changed">L\'adresse a changé : la clé enregistrée ne sera pas envoyée là-bas, saisissez-la à nouveau</string>
     <string name="ai_program_review_title">Programme reconnu</string>
     <string name="ai_program_review_hint">Choisis les semaines à importer. Tu pourras tout modifier ensuite.</string>
     <string name="ai_program_review_pick_week">Choisis la semaine à importer. Tu pourras la modifier ensuite.</string>

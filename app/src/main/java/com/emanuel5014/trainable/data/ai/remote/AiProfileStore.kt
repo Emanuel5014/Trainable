@@ -27,7 +27,12 @@ class AiProfileStore @Inject constructor(
         val current = profiles.first()
         val old = current.firstOrNull { it.id == profile.id }
         val withKey = when {
-            plainKey == null -> profile.copy(encryptedKey = old?.encryptedKey, keyIv = old?.keyIv)
+            // Keep the saved key only while the address still points at the host it was given for
+            plainKey == null -> if (AiProfileList.keepsKey(old, profile)) {
+                profile.copy(encryptedKey = old?.encryptedKey, keyIv = old?.keyIv)
+            } else {
+                profile.copy(encryptedKey = null, keyIv = null)
+            }
             else -> {
                 val clean = AiProfileList.cleanKey(plainKey)
                 if (clean == null) {

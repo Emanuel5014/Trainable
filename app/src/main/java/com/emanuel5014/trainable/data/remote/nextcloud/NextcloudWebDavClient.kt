@@ -24,12 +24,12 @@ import javax.inject.Singleton
 class NextcloudWebDavClient @Inject constructor(
     baseOkHttpClient: OkHttpClient
 ) {
-    private val client: OkHttpClient = baseOkHttpClient.newBuilder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(120, TimeUnit.SECONDS)
-        .writeTimeout(120, TimeUnit.SECONDS)
-        .addInterceptor(CleartextGuard)
-        .build()
+    private val client: OkHttpClient = CleartextGuard.applyTo(
+        baseOkHttpClient.newBuilder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+    ).build()
 
     private val xmlMediaType = "application/xml; charset=utf-8".toMediaType()
     private val zipMediaType = "application/zip".toMediaType()

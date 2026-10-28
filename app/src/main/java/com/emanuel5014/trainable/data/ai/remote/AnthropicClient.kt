@@ -89,7 +89,8 @@ class AnthropicClient(
         val detail = ErrorDetail.clean(body, apiKey)
         return when {
             code == 401 || code == 403 -> ScanBackendException.Unauthorized(detail)
-            code == 404 -> ScanBackendException.ModelNotFound(detail)
+            // A bare 404 is a wrong path, not an unknown model
+            code == 404 -> if ("model" in body.lowercase()) ScanBackendException.ModelNotFound(detail) else ScanBackendException.Rejected(code, detail)
             code == 413 -> ScanBackendException.PayloadTooLarge(detail)
             code == 429 -> ScanBackendException.RateLimited(detail)
             code >= 500 -> ScanBackendException.Server(code, detail)
