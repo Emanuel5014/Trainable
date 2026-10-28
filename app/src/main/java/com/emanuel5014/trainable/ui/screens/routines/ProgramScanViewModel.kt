@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
 import com.emanuel5014.trainable.data.ai.RoutineScanner
 import com.emanuel5014.trainable.data.ai.ScanPhase
+import com.emanuel5014.trainable.data.ai.backend.ConsentRequest
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
 import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScannedProgram
@@ -56,7 +57,43 @@ class ProgramScanViewModel @Inject constructor(
 
     private var job: Job? = null
 
+    private val _consent = MutableStateFlow<ConsentRequest?>(null)
+
+    /** Set while the user is asked whether the photo may go to a remote provider. */
+    val consent: StateFlow<ConsentRequest?> = _consent.asStateFlow()
+
+    private var pendingScan: Pair<Uri, String?>? = null
+
+    /** Starts a scan; when the photo would go somewhere the user hasn't agreed to yet, asks first. */
     fun scan(imageUri: Uri, exerciseName: String?) {
+        if (_state.value is ProgramScanState.Scanning) return
+        viewModelScope.launch {
+            val request = backends.consentRequired()
+            if (request == null) {
+                startScan(imageUri, exerciseName)
+            } else {
+                pendingScan = imageUri to exerciseName
+                _consent.value = request
+            }
+        }
+    }
+
+    fun acceptConsent() {
+        val pending = pendingScan
+        pendingScan = null
+        _consent.value = null
+        viewModelScope.launch {
+            backends.acceptConsent()
+            pending?.let { (uri, name) -> startScan(uri, name) }
+        }
+    }
+
+    fun declineConsent() {
+        pendingScan = null
+        _consent.value = null
+    }
+
+    private fun startScan(imageUri: Uri, exerciseName: String?) {
         if (_state.value is ProgramScanState.Scanning) return
         _state.value = ProgramScanState.Scanning()
         _stream.value = AiScanStreamState()

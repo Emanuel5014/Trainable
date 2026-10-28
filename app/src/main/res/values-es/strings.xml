@@ -1136,6 +1136,9 @@
     <string name="ai_err_unreachable">No se puede contactar con el proveedor: revisa la conexión y la dirección</string>
     <string name="ai_err_stream">El proveedor se ha interrumpido a medias</string>
     <string name="ai_err_bad_response">No se pudo leer la respuesta del proveedor</string>
+    <string name="ai_consent_title">¿Enviar la foto fuera del teléfono?</string>
+    <string name="ai_consent_body">La foto de la hoja se enviará a %1$s. Un servicio en la nube sigue las reglas de su proveedor.</string>
+    <string name="ai_consent_continue">Continuar</string>
     <string name="ai_program_review_title">Programación reconocida</string>
     <string name="ai_program_review_hint">Elige las semanas a importar. Podrás editarlo todo después.</string>
     <string name="ai_program_review_pick_week">Elige la semana a importar. Podrás editarla después.</string>

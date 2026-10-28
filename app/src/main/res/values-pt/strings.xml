@@ -1136,6 +1136,9 @@
     <string name="ai_err_unreachable">Não foi possível contactar o fornecedor: verifique a ligação e o endereço</string>
     <string name="ai_err_stream">O fornecedor parou a meio</string>
     <string name="ai_err_bad_response">Não foi possível ler a resposta do fornecedor</string>
+    <string name="ai_consent_title">Enviar a foto para fora do telemóvel?</string>
+    <string name="ai_consent_body">A foto da ficha será enviada para %1$s. Um serviço na nuvem segue as regras do seu fornecedor.</string>
+    <string name="ai_consent_continue">Continuar</string>
     <string name="ai_program_review_title">Programação reconhecida</string>
     <string name="ai_program_review_hint">Escolha as semanas a importar. Você poderá editar tudo depois.</string>
     <string name="ai_program_review_pick_week">Escolha a semana a importar. Você poderá editá-la depois.</string>

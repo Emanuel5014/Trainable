@@ -1136,6 +1136,9 @@
     <string name="ai_err_unreachable">Impossible de joindre le fournisseur : vérifiez la connexion et l\'adresse</string>
     <string name="ai_err_stream">Le fournisseur s\'est interrompu en cours de route</string>
     <string name="ai_err_bad_response">La réponse du fournisseur n\'a pas pu être lue</string>
+    <string name="ai_consent_title">Envoyer la photo hors du téléphone ?</string>
+    <string name="ai_consent_body">La photo de la fiche sera envoyée à %1$s. Un service cloud suit les règles de son fournisseur.</string>
+    <string name="ai_consent_continue">Continuer</string>
     <string name="ai_program_review_title">Programme reconnu</string>
     <string name="ai_program_review_hint">Choisis les semaines à importer. Tu pourras tout modifier ensuite.</string>
     <string name="ai_program_review_pick_week">Choisis la semaine à importer. Tu pourras la modifier ensuite.</string>

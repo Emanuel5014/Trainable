@@ -126,6 +126,7 @@ fun AiProgramScanButton(
 
     val scanViewModel: ProgramScanViewModel = hiltViewModel(key = scanKey)
     val state by scanViewModel.state.collectAsState()
+    val consent by scanViewModel.consent.collectAsState()
     val stream by scanViewModel.stream.collectAsState()
     val analyticsEnabled by scanViewModel.resourceAnalyticsEnabled.collectAsState(initial = false)
 
@@ -186,6 +187,14 @@ fun AiProgramScanButton(
             ).show()
             scanViewModel.reset()
         }
+    }
+
+    consent?.let { request ->
+        com.emanuel5014.trainable.ui.components.shared.ScanConsentDialog(
+            request = request,
+            onAccept = scanViewModel::acceptConsent,
+            onDecline = scanViewModel::declineConsent
+        )
     }
 
     GymButton(

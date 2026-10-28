@@ -259,6 +259,7 @@ fun RoutineDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val aiScanAvailable by viewModel.aiScanAvailable.collectAsState()
+    val scanConsent by viewModel.consent.collectAsState()
     val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiScanState by viewModel.aiScanState.collectAsState()
     val scanDraft by viewModel.scanDraft.collectAsState()
@@ -432,6 +433,14 @@ fun RoutineDetailScreen(
             ).show()
             viewModel.dismissScanResult()
         }
+    }
+
+    scanConsent?.let { request ->
+        com.emanuel5014.trainable.ui.components.shared.ScanConsentDialog(
+            request = request,
+            onAccept = viewModel::acceptConsent,
+            onDecline = viewModel::declineConsent
+        )
     }
 
     fun openAddSheet() {

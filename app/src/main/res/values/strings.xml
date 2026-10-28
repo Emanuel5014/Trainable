@@ -1137,6 +1137,9 @@
     <string name="ai_err_unreachable">Can\'t reach the provider: check the connection and the address</string>
     <string name="ai_err_stream">The provider stopped midway</string>
     <string name="ai_err_bad_response">The provider\'s answer couldn\'t be read</string>
+    <string name="ai_consent_title">Send the photo outside your phone?</string>
+    <string name="ai_consent_body">The photo of the sheet will be sent to %1$s. A cloud service follows its provider\'s rules.</string>
+    <string name="ai_consent_continue">Continue</string>
     <string name="ai_program_review_title">Program recognised</string>
     <string name="ai_program_review_hint">Choose the weeks to import. You can edit everything afterwards.</string>
     <string name="ai_program_review_pick_week">Pick the week to import. You can edit it afterwards.</string>

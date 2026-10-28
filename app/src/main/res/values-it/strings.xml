@@ -1136,6 +1136,9 @@
     <string name="ai_err_unreachable">Il provider non risponde: controlla la connessione e l\'indirizzo</string>
     <string name="ai_err_stream">Il provider si è interrotto a metà</string>
     <string name="ai_err_bad_response">Non è stato possibile leggere la risposta del provider</string>
+    <string name="ai_consent_title">Inviare la foto fuori dal telefono?</string>
+    <string name="ai_consent_body">La foto della scheda verrà inviata a %1$s. Un servizio cloud segue le regole del suo fornitore.</string>
+    <string name="ai_consent_continue">Continua</string>
     <string name="ai_program_review_title">Programmazione riconosciuta</string>
     <string name="ai_program_review_hint">Scegli le settimane da importare. Potrai modificare tutto dopo.</string>
     <string name="ai_program_review_pick_week">Scegli la settimana da importare. Potrai modificarla dopo.</string>

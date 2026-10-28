@@ -1136,6 +1136,9 @@
     <string name="ai_err_unreachable">Anbieter nicht erreichbar: Prüfe Verbindung und Adresse</string>
     <string name="ai_err_stream">Der Anbieter hat mittendrin abgebrochen</string>
     <string name="ai_err_bad_response">Die Antwort des Anbieters konnte nicht gelesen werden</string>
+    <string name="ai_consent_title">Foto außerhalb des Telefons senden?</string>
+    <string name="ai_consent_body">Das Foto des Plans wird an %1$s gesendet. Ein Cloud-Dienst folgt den Regeln seines Anbieters.</string>
+    <string name="ai_consent_continue">Weiter</string>
     <string name="ai_program_review_title">Programm erkannt</string>
     <string name="ai_program_review_hint">Wähle die zu importierenden Wochen. Danach kannst du alles bearbeiten.</string>
     <string name="ai_program_review_pick_week">Wähle die zu importierende Woche. Danach kannst du sie bearbeiten.</string>
