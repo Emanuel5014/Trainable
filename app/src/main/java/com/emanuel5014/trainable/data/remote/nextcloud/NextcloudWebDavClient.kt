@@ -28,6 +28,7 @@ class NextcloudWebDavClient @Inject constructor(
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(120, TimeUnit.SECONDS)
+        .addInterceptor(CleartextGuard)
         .build()
 
     private val xmlMediaType = "application/xml; charset=utf-8".toMediaType()
