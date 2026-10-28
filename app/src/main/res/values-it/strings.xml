@@ -822,7 +822,7 @@
     <!-- AI Scan -->
     <string name="ai_section_title">IA</string>
     <string name="ai_scan_toggle">Scansione schede con IA</string>
-    <string name="ai_scan_desc">Compila la scheda automaticamente da una foto, completamente offline</string>
+    <string name="ai_scan_desc">Compila la scheda automaticamente da una foto</string>
     <string name="ai_device_unsupported">Questo dispositivo non soddisfa i requisiti di RAM per l\'IA on-device</string>
     <string name="ai_model_variant">Modello</string>
     <string name="ai_model_requirements">Download %1$s · richiede %2$d GB di RAM</string>

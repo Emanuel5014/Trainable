@@ -822,7 +822,7 @@
     <!-- AI Scan -->
     <string name="ai_section_title">KI</string>
     <string name="ai_scan_toggle">KI-Plan-Scan</string>
-    <string name="ai_scan_desc">Erstelle deinen Trainingsplan automatisch aus einem Foto, komplett offline</string>
+    <string name="ai_scan_desc">Erstelle deinen Trainingsplan automatisch aus einem Foto</string>
     <string name="ai_device_unsupported">Dieses Gerät erfüllt nicht die RAM-Anforderungen für On-Device-KI</string>
     <string name="ai_model_variant">Modell</string>
     <string name="ai_model_requirements">%1$s Download · benötigt %2$d GB RAM</string>

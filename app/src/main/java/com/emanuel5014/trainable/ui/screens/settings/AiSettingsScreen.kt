@@ -214,7 +214,8 @@ fun AiSettingsScreen(
                             )
                         }
 
-                        if (activeIsLocal) {
+                        // The phone's metrics only mean something where the on-device model can run
+                        if (activeIsLocal && aiDeviceSupported) {
                             HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                             Row(

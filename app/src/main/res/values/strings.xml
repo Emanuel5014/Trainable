@@ -823,7 +823,7 @@
     <!-- AI Scan -->
     <string name="ai_section_title">AI</string>
     <string name="ai_scan_toggle">AI sheet scan</string>
-    <string name="ai_scan_desc">Fill your routine automatically from a photo of your training sheet, fully offline</string>
+    <string name="ai_scan_desc">Fill your routine automatically from a photo of your training sheet</string>
     <string name="ai_device_unsupported">This device does not meet the RAM requirements for on-device AI</string>
     <string name="ai_model_variant">Model</string>
     <string name="ai_model_requirements">%1$s download · requires %2$d GB of RAM</string>

@@ -822,7 +822,7 @@
     <!-- AI Scan -->
     <string name="ai_section_title">IA</string>
     <string name="ai_scan_toggle">Escaneo de rutinas con IA</string>
-    <string name="ai_scan_desc">Completa tu rutina automáticamente desde una foto, totalmente sin conexión</string>
+    <string name="ai_scan_desc">Completa tu rutina automáticamente desde una foto</string>
     <string name="ai_device_unsupported">Este dispositivo no cumple los requisitos de RAM para IA local</string>
     <string name="ai_model_variant">Modelo</string>
     <string name="ai_model_requirements">%1$s de descarga · requiere %2$d GB de RAM</string>

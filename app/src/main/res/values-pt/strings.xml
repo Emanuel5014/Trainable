@@ -822,7 +822,7 @@
     <!-- AI Scan -->
     <string name="ai_section_title">IA</string>
     <string name="ai_scan_toggle">Digitalização de planos com IA</string>
-    <string name="ai_scan_desc">Preenche o teu plano automaticamente a partir de uma foto, totalmente offline</string>
+    <string name="ai_scan_desc">Preenche o teu plano automaticamente a partir de uma foto</string>
     <string name="ai_device_unsupported">Este dispositivo não cumpre os requisitos de RAM para IA no dispositivo</string>
     <string name="ai_model_variant">Modelo</string>
     <string name="ai_model_requirements">Download de %1$s · requer %2$d GB de RAM</string>
