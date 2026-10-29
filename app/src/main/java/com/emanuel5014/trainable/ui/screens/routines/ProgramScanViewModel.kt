@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
 import com.emanuel5014.trainable.data.ai.RoutineScanner
 import com.emanuel5014.trainable.data.ai.ScanPhase
+import com.emanuel5014.trainable.data.ai.backend.ConsentRequest
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScannedProgram
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.Job
@@ -26,7 +30,8 @@ sealed interface ProgramScanState {
     data object Idle : ProgramScanState
     data class Scanning(val phase: ScanPhase = ScanPhase.LOADING_MODEL) : ProgramScanState
     data class Result(val program: ScannedProgram) : ProgramScanState
-    data object Failed : ProgramScanState
+    /** [failure] is set when a scan backend explained what went wrong. */
+    data class Failed(val failure: ScanBackendException? = null) : ProgramScanState
 }
 
 /** Runs the on-device model on a photo of a program page for the advanced-prescription editor. */
@@ -34,7 +39,8 @@ sealed interface ProgramScanState {
 class ProgramScanViewModel @Inject constructor(
     private val routineScanner: RoutineScanner,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val aiResourceTracker: AiResourceTracker
+    private val aiResourceTracker: AiResourceTracker,
+    private val backends: ScanBackendProvider
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<ProgramScanState>(ProgramScanState.Idle)
@@ -43,11 +49,51 @@ class ProgramScanViewModel @Inject constructor(
     private val _stream = MutableStateFlow(AiScanStreamState())
     val stream: StateFlow<AiScanStreamState> = _stream.asStateFlow()
 
-    val resourceAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled
+    /** The phone's live metrics only mean something while the on-device model is the one reading. */
+    val resourceAnalyticsEnabled = combine(
+        userPreferencesRepository.aiResourceAnalyticsEnabled,
+        backends.localActive
+    ) { enabled, local -> enabled && local }
 
     private var job: Job? = null
 
+    private val _consent = MutableStateFlow<ConsentRequest?>(null)
+
+    /** Set while the user is asked whether the photo may go to a remote provider. */
+    val consent: StateFlow<ConsentRequest?> = _consent.asStateFlow()
+
+    private var pendingScan: Pair<Uri, String?>? = null
+
+    /** Starts a scan; when the photo would go somewhere the user hasn't agreed to yet, asks first. */
     fun scan(imageUri: Uri, exerciseName: String?) {
+        if (_state.value is ProgramScanState.Scanning) return
+        viewModelScope.launch {
+            val request = backends.consentRequired()
+            if (request == null) {
+                startScan(imageUri, exerciseName)
+            } else {
+                pendingScan = imageUri to exerciseName
+                _consent.value = request
+            }
+        }
+    }
+
+    fun acceptConsent() {
+        val pending = pendingScan
+        pendingScan = null
+        _consent.value = null
+        viewModelScope.launch {
+            backends.acceptConsent()
+            pending?.let { (uri, name) -> startScan(uri, name) }
+        }
+    }
+
+    fun declineConsent() {
+        pendingScan = null
+        _consent.value = null
+    }
+
+    private fun startScan(imageUri: Uri, exerciseName: String?) {
         if (_state.value is ProgramScanState.Scanning) return
         _state.value = ProgramScanState.Scanning()
         _stream.value = AiScanStreamState()
@@ -55,7 +101,7 @@ class ProgramScanViewModel @Inject constructor(
         job = viewModelScope.launch {
             try {
                 val startTime = System.currentTimeMillis()
-                val analytics = userPreferencesRepository.aiResourceAnalyticsEnabled.first()
+                val analytics = userPreferencesRepository.aiResourceAnalyticsEnabled.first() && backends.isLocalActive()
                 var latestOutput = ""
                 var latestThinking = ""
                 var lastEmit = 0L
@@ -101,13 +147,15 @@ class ProgramScanViewModel @Inject constructor(
                 )
                 metricsJob?.cancel()
                 emit(force = true)
-                _state.value = if (program == null) ProgramScanState.Failed else ProgramScanState.Result(program)
+                _state.value = if (program == null) ProgramScanState.Failed() else ProgramScanState.Result(program)
             } catch (e: CancellationException) {
                 _state.value = ProgramScanState.Idle
                 _stream.value = AiScanStreamState()
+            } catch (e: ScanBackendException) {
+                _state.value = ProgramScanState.Failed(e)
             } catch (e: Exception) {
                 e.printStackTrace()
-                _state.value = ProgramScanState.Failed
+                _state.value = ProgramScanState.Failed()
             }
         }
     }

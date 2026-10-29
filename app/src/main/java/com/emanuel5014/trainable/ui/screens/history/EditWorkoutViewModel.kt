@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.data.local.dao.RunMove
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.nextSet
 import com.emanuel5014.trainable.data.local.entity.setsOf
@@ -72,7 +73,9 @@ data class EditWorkoutState(
 
 data class EditExerciseState(
     val exercise: ExerciseEntity,
-    val sets: List<SetLogEntity> = emptyList()
+    val sets: List<SetLogEntity> = emptyList(),
+    /** 0 for the first time the exercise was done in the workout, 1 for the second...: keeps the list keys apart. */
+    val instance: Int = 0
 )
 
 @HiltViewModel
@@ -132,13 +135,7 @@ class EditWorkoutViewModel @Inject constructor(
             workoutRepository.getSessionWithDetails(sessionId)
                 .onEach { sessionDetails ->
                     if (sessionDetails != null) {
-                        val groupedSets = sessionDetails.sets.groupBy { it.exercise.id }
-                        val exercises = groupedSets.map { (exerciseId, setsWithEx) ->
-                            EditExerciseState(
-                                exercise = setsWithEx.first().exercise,
-                                sets = setsWithEx.map { it.setLog }.sortedBy { it.numeroSerie }
-                            )
-                        }.sortedBy { it.sets.firstOrNull()?.ordineEsercizio ?: 0 }
+                        val exercises = sessionDetails.sets.toEditExercises()
 
                         // Check if we need to normalize orders (e.g., after migration they might all be 0)
                         val orders = exercises.map { it.sets.firstOrNull()?.ordineEsercizio ?: 0 }
@@ -183,6 +180,11 @@ class EditWorkoutViewModel @Inject constructor(
             if (setsToUpdate.isNotEmpty()) {
                 workoutRepository.updateSetOrders(setsToUpdate)
             }
+            // The program edits made to a run follow its new order
+            val moves = exercises.mapIndexedNotNull { index, exerciseState ->
+                exerciseState.key.takeIf { it.order != index }?.let { RunMove(it.exerciseId, it.order, index) }
+            }
+            if (moves.isNotEmpty()) workoutRepository.moveRunEdits(sessionId, moves)
         }
     }
 
@@ -285,7 +287,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Optimistic update
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val index = mutableExercises.indexOfFirst { it.exercise.id == set.exerciseId }
+                val index = mutableExercises.indexOfFirst { it.key == set.exerciseKey }
                 if (index != -1) {
                     val exState = mutableExercises[index]
                     // Use equality instead of ID to avoid deleting all id=0 sets
@@ -297,13 +299,14 @@ class EditWorkoutViewModel @Inject constructor(
             
             workoutRepository.deleteSet(set)
             // After deleting, we might need to reorder remaining sets
-            reorderSets(set.exerciseId)
+            reorderSets(set.exerciseKey)
         }
     }
 
-    fun addSet(exerciseId: Int) {
+    fun addSet(key: ExerciseKey) {
         viewModelScope.launch {
-            val exerciseState = _state.value.exercises.find { it.exercise.id == exerciseId }
+            val exerciseId = key.exerciseId
+            val exerciseState = _state.value.exercises.find { it.key == key }
             val nextSerie = (exerciseState?.sets?.maxOfOrNull { it.numeroSerie } ?: 0) + 1
             val lastWeight = exerciseState?.sets?.lastOrNull()?.pesoSollevato ?: 0f
             val lastReps = exerciseState?.sets?.lastOrNull()?.repsEffettive ?: 8
@@ -343,7 +346,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Optimistic update to prevent duplicates on rapid clicks
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val index = mutableExercises.indexOfFirst { it.exercise.id == exerciseId }
+                val index = mutableExercises.indexOfFirst { it.key == key }
                 if (index != -1) {
                     val exState = mutableExercises[index]
                     mutableExercises[index] = exState.copy(sets = exState.sets + newSet)
@@ -356,7 +359,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Update the optimistic set with the real ID
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val exIndex = mutableExercises.indexOfFirst { it.exercise.id == exerciseId }
+                val exIndex = mutableExercises.indexOfFirst { it.key == key }
                 if (exIndex != -1) {
                     val exState = mutableExercises[exIndex]
                     val mutableSets = exState.sets.toMutableList()
@@ -371,13 +374,14 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
-    fun deleteExercise(exerciseId: Int) {
+    fun deleteExercise(key: ExerciseKey) {
         viewModelScope.launch {
             // Optimistic update
             _state.update { curr ->
-                curr.copy(exercises = curr.exercises.filter { it.exercise.id != exerciseId })
+                curr.copy(exercises = curr.exercises.filter { it.key != key })
             }
-            workoutRepository.deleteExerciseFromSession(sessionId, exerciseId)
+            // Only this run: the same exercise done again elsewhere in the workout stays
+            workoutRepository.deleteExerciseRows(sessionId, key.exerciseId, key.order)
         }
     }
 
@@ -388,7 +392,7 @@ class EditWorkoutViewModel @Inject constructor(
     }
 
     fun swapExercise(
-        oldExerciseId: Int,
+        old: ExerciseKey,
         newExerciseId: Int,
         exerciseType: String = "strength",
         durataTargetSecondi: Int? = null,
@@ -396,10 +400,10 @@ class EditWorkoutViewModel @Inject constructor(
         repsRange: RepRange? = null
     ) {
         viewModelScope.launch {
-            val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
+            val oldExerciseState = _state.value.exercises.find { it.key == old } ?: return@launch
             // The percentages referred to the old exercise's 1RM, so a plain swap drops the prescription
             val sets = oldExerciseState.sets.map { it.withoutPrescription().withRepsRange(repsRange) }
-            val exerciseOrder = sets.firstOrNull()?.ordineEsercizio ?: 0
+            val exerciseOrder = old.order
             val supersetId = sets.firstOrNull()?.supersetId
             val kind = SetLogKind.ofExerciseType(exerciseType)
             val targetSec = durataTargetSecondi ?: 45
@@ -409,7 +413,7 @@ class EditWorkoutViewModel @Inject constructor(
             if (replacementExercise != null) {
                 _state.update { curr ->
                     val mutableExercises = curr.exercises.toMutableList()
-                    val index = mutableExercises.indexOfFirst { it.exercise.id == oldExerciseId }
+                    val index = mutableExercises.indexOfFirst { it.key == old }
                     if (index != -1) {
                         mutableExercises[index] = EditExerciseState(
                             exercise = replacementExercise,
@@ -422,12 +426,13 @@ class EditWorkoutViewModel @Inject constructor(
                             }
                         )
                     }
-                    curr.copy(exercises = mutableExercises)
+                    // The replacement may be an exercise that is in the workout already, as another run
+                    curr.copy(exercises = mutableExercises.numbered())
                 }
             }
 
-            // Delete old sets
-            workoutRepository.deleteExerciseFromSession(sessionId, oldExerciseId)
+            // Delete old sets: only this run, the same exercise done again elsewhere in the workout stays
+            workoutRepository.deleteExerciseRows(sessionId, old.exerciseId, old.order)
 
             // Insert new sets with new exerciseId and same order, then update state with real IDs
             val newSetIds = sets.map { set ->
@@ -444,7 +449,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Update IDs in state
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val index = mutableExercises.indexOfFirst { it.exercise.id == newExerciseId }
+                val index = mutableExercises.indexOfFirst { it.key == ExerciseKey(newExerciseId, exerciseOrder) }
                 if (index != -1) {
                     val exState = mutableExercises[index]
                     mutableExercises[index] = exState.copy(
@@ -459,9 +464,9 @@ class EditWorkoutViewModel @Inject constructor(
     }
 
     /** Swaps the exercise keeping the logged rows and giving them the advanced prescription [blocks]. */
-    fun swapExerciseAdvanced(oldExerciseId: Int, newExerciseId: Int, blocks: List<PrescriptionBlock>) {
+    fun swapExerciseAdvanced(oldKey: ExerciseKey, newExerciseId: Int, blocks: List<PrescriptionBlock>) {
         viewModelScope.launch {
-            val old = _state.value.exercises.find { it.exercise.id == oldExerciseId } ?: return@launch
+            val old = _state.value.exercises.find { it.key == oldKey } ?: return@launch
             val first = old.sets.firstOrNull()
             val (unit, increment) = prescriptionEnvironment()
             val result = PrescriptionSetSync.apply(
@@ -508,9 +513,10 @@ class EditWorkoutViewModel @Inject constructor(
      * Gives an exercise of this session a new prescription (or removes it with empty [blocks]).
      * Weights, reps, RPE and notes that were logged are kept; the session list refreshes from the database.
      */
-    fun applyPrescription(exerciseId: Int, blocks: List<PrescriptionBlock>) {
+    fun applyPrescription(key: ExerciseKey, blocks: List<PrescriptionBlock>) {
         viewModelScope.launch {
-            val exercise = _state.value.exercises.find { it.exercise.id == exerciseId } ?: return@launch
+            val exerciseId = key.exerciseId
+            val exercise = _state.value.exercises.find { it.key == key } ?: return@launch
             val first = exercise.sets.firstOrNull()
             val (unit, increment) = prescriptionEnvironment()
             val result = PrescriptionSetSync.apply(
@@ -539,7 +545,8 @@ class EditWorkoutViewModel @Inject constructor(
                         scope = ProgramEditScope.WORKOUT,
                         // What the exercise was done against as its sets show it now (sets never done are gone by now)
                         before = before,
-                        after = blocks
+                        after = blocks,
+                        order = key.order
                     )
                 )
             }
@@ -547,22 +554,22 @@ class EditWorkoutViewModel @Inject constructor(
     }
 
     /** How many logged rows a new prescription would delete, so the screen can ask before applying it. */
-    fun removedSetsCount(exerciseId: Int, blocks: List<PrescriptionBlock>): Int {
-        val exercise = _state.value.exercises.find { it.exercise.id == exerciseId } ?: return 0
+    fun removedSetsCount(key: ExerciseKey, blocks: List<PrescriptionBlock>): Int {
+        val exercise = _state.value.exercises.find { it.key == key } ?: return 0
         return PrescriptionSetSync.removedCount(exercise.sets, blocks)
     }
 
     private suspend fun prescriptionEnvironment(): Pair<String, Float> =
         userPreferencesRepository.weightUnit.first() to userPreferencesRepository.loadRoundingIncrement.first()
 
-    fun swapExerciseWithCardio(oldExerciseId: Int, cardioCategory: String, durationMinutes: Int, sets: Int = 1) {
+    fun swapExerciseWithCardio(old: ExerciseKey, cardioCategory: String, durationMinutes: Int, sets: Int = 1) {
         viewModelScope.launch {
-            val oldExerciseState = _state.value.exercises.find { it.exercise.id == oldExerciseId }
-            val order = oldExerciseState?.sets?.firstOrNull()?.ordineEsercizio ?: 0
+            val order = old.order
 
-            workoutRepository.deleteExerciseFromSession(sessionId, oldExerciseId)
+            // Only this run: the same exercise done again elsewhere in the workout stays
+            workoutRepository.deleteExerciseRows(sessionId, old.exerciseId, old.order)
             _state.update { curr ->
-                curr.copy(exercises = curr.exercises.filter { it.exercise.id != oldExerciseId })
+                curr.copy(exercises = curr.exercises.filter { it.key != old }.numbered())
             }
 
             val added = (1..sets.coerceAtLeast(1)).map { number ->
@@ -620,7 +627,8 @@ class EditWorkoutViewModel @Inject constructor(
             // Optimistic update
             if (exercise != null) {
                 _state.update { curr ->
-                    curr.copy(exercises = curr.exercises + EditExerciseState(exercise, newSets))
+                    // The exercise may already be in the workout: the new run gets the next number, so its list key is its own
+                    curr.copy(exercises = (curr.exercises + EditExerciseState(exercise, newSets)).numbered())
                 }
             }
 
@@ -631,7 +639,7 @@ class EditWorkoutViewModel @Inject constructor(
 
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val index = mutableExercises.indexOfFirst { it.exercise.id == exerciseId }
+                val index = mutableExercises.indexOfFirst { it.key == ExerciseKey(exerciseId, nextOrder) }
                 if (index != -1) {
                     val exState = mutableExercises[index]
                     mutableExercises[index] = exState.copy(
@@ -658,9 +666,9 @@ class EditWorkoutViewModel @Inject constructor(
         viewModelScope.launch { exerciseRepository.restoreExercise(exerciseId) }
     }
 
-    fun moveExerciseUp(exerciseId: Int) {
+    fun moveExerciseUp(key: ExerciseKey) {
         val exercises = _state.value.exercises
-        val index = exercises.indexOfFirst { it.exercise.id == exerciseId }
+        val index = exercises.indexOfFirst { it.key == key }
         if (index > 0) {
             val currentEx = exercises[index]
             val prevEx = exercises[index - 1]
@@ -689,14 +697,21 @@ class EditWorkoutViewModel @Inject constructor(
                 if (setsToUpdate.isNotEmpty()) {
                     workoutRepository.updateSetOrders(setsToUpdate)
                 }
+                // The program edits made to the two runs go with them
+                if (currentOrder != prevOrder) {
+                    workoutRepository.moveRunEdits(
+                        sessionId,
+                        listOf(RunMove(currentEx.exercise.id, currentOrder, finalPrevOrder), RunMove(prevEx.exercise.id, prevOrder, finalCurrentOrder))
+                    )
+                }
             }
         }
     }
 
-    fun moveExerciseDown(exerciseId: Int) {
+    fun moveExerciseDown(key: ExerciseKey) {
         val exercises = _state.value.exercises
-        val index = exercises.indexOfFirst { it.exercise.id == exerciseId }
-        if (index < exercises.size - 1) {
+        val index = exercises.indexOfFirst { it.key == key }
+        if (index in 0 until exercises.size - 1) {
             val currentEx = exercises[index]
             val nextEx = exercises[index + 1]
             
@@ -723,12 +738,19 @@ class EditWorkoutViewModel @Inject constructor(
                 if (setsToUpdate.isNotEmpty()) {
                     workoutRepository.updateSetOrders(setsToUpdate)
                 }
+                // The program edits made to the two runs go with them
+                if (currentOrder != nextOrder) {
+                    workoutRepository.moveRunEdits(
+                        sessionId,
+                        listOf(RunMove(currentEx.exercise.id, currentOrder, finalNextOrder), RunMove(nextEx.exercise.id, nextOrder, finalCurrentOrder))
+                    )
+                }
             }
         }
     }
 
     fun moveSetUp(set: SetLogEntity) {
-        val exerciseState = _state.value.exercises.find { it.exercise.id == set.exerciseId } ?: return
+        val exerciseState = _state.value.exercises.find { it.key == set.exerciseKey } ?: return
         // Use indexOf(set) to correctly identify the set even if multiple have id=0
         val index = exerciseState.sets.indexOf(set)
         if (index > 0) {
@@ -737,7 +759,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Optimistic update
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val exIndex = mutableExercises.indexOfFirst { it.exercise.id == set.exerciseId }
+                val exIndex = mutableExercises.indexOfFirst { it.key == set.exerciseKey }
                 if (exIndex != -1) {
                     val exState = mutableExercises[exIndex]
                     val mutableSets = exState.sets.toMutableList()
@@ -758,7 +780,7 @@ class EditWorkoutViewModel @Inject constructor(
     }
 
     fun moveSetDown(set: SetLogEntity) {
-        val exerciseState = _state.value.exercises.find { it.exercise.id == set.exerciseId } ?: return
+        val exerciseState = _state.value.exercises.find { it.key == set.exerciseKey } ?: return
         // Use indexOf(set) to correctly identify the set even if multiple have id=0
         val index = exerciseState.sets.indexOf(set)
         if (index < exerciseState.sets.size - 1) {
@@ -767,7 +789,7 @@ class EditWorkoutViewModel @Inject constructor(
             // Optimistic update
             _state.update { curr ->
                 val mutableExercises = curr.exercises.toMutableList()
-                val exIndex = mutableExercises.indexOfFirst { it.exercise.id == set.exerciseId }
+                val exIndex = mutableExercises.indexOfFirst { it.key == set.exerciseKey }
                 if (exIndex != -1) {
                     val exState = mutableExercises[exIndex]
                     val mutableSets = exState.sets.toMutableList()
@@ -787,8 +809,8 @@ class EditWorkoutViewModel @Inject constructor(
         }
     }
 
-    private suspend fun reorderSets(exerciseId: Int) {
-        val exerciseState = _state.value.exercises.find { it.exercise.id == exerciseId } ?: return
+    private suspend fun reorderSets(key: ExerciseKey) {
+        val exerciseState = _state.value.exercises.find { it.key == key } ?: return
         val sets = exerciseState.sets.sortedBy { it.numeroSerie }
         
         val updatedSets = sets.mapIndexed { index, setLogEntity ->
@@ -798,7 +820,7 @@ class EditWorkoutViewModel @Inject constructor(
         // Optimistic update for reordering
         _state.update { curr ->
             val mutableExercises = curr.exercises.toMutableList()
-            val exIndex = mutableExercises.indexOfFirst { it.exercise.id == exerciseId }
+            val exIndex = mutableExercises.indexOfFirst { it.key == key }
             if (exIndex != -1) {
                 mutableExercises[exIndex] = exerciseState.copy(sets = updatedSets)
             }
@@ -808,10 +830,10 @@ class EditWorkoutViewModel @Inject constructor(
         workoutRepository.updateSetOrders(updatedSets)
     }
 
-    fun toggleSupersetWithNext(exerciseId: Int) {
+    fun toggleSupersetWithNext(key: ExerciseKey) {
         viewModelScope.launch {
             val exercises = _state.value.exercises
-            val index = exercises.indexOfFirst { it.exercise.id == exerciseId }
+            val index = exercises.indexOfFirst { it.key == key }
             if (index != -1 && index < exercises.size - 1) {
                 val currentEx = exercises[index]
                 val nextEx = exercises[index + 1]
@@ -902,6 +924,10 @@ class EditWorkoutViewModel @Inject constructor(
             val cardioToUpdate = mutableListOf<CardioLogEntity>()
             val updatedExercises = mutableListOf<EditExerciseState>()
             val updatedCardioLogs = mutableListOf<CardioLogEntity>()
+            // The program edits made to a run follow it to its new place
+            val runMoves = orderedItems.mapIndexedNotNull { index, item ->
+                (item as? EditExerciseState)?.key?.takeIf { it.order != index }?.let { RunMove(it.exerciseId, it.order, index) }
+            }
 
             orderedItems.forEachIndexed { index, item ->
                 when (item) {
@@ -929,6 +955,7 @@ class EditWorkoutViewModel @Inject constructor(
             if (setsToUpdate.isNotEmpty()) {
                 workoutRepository.updateSetOrders(setsToUpdate)
             }
+            if (runMoves.isNotEmpty()) workoutRepository.moveRunEdits(sessionId, runMoves)
             cardioToUpdate.forEach { cardio ->
                 workoutRepository.updateCardioLog(cardio)
             }

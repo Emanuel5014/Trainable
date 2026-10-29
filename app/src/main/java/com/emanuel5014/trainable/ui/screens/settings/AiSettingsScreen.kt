@@ -54,6 +54,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ai.AiModelStatus
 import com.emanuel5014.trainable.data.ai.AiModelVariant
+import com.emanuel5014.trainable.data.ai.ModelImportError
+import com.emanuel5014.trainable.data.ai.backend.ScanReadiness
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.components.shared.ModelImportOption
@@ -71,7 +73,8 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 @Composable
 fun AiSettingsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    providersViewModel: AiProvidersViewModel = hiltViewModel()
 ) {
     val aiScanEnabled by viewModel.aiScanEnabled.collectAsState()
     val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
@@ -79,6 +82,11 @@ fun AiSettingsScreen(
     val aiModelStatus by viewModel.aiModelStatus.collectAsState()
     val aiModelImportError by viewModel.aiModelImportError.collectAsState()
     val aiDeviceSupported = viewModel.aiDeviceSupported
+
+    val providerRows by providersViewModel.rows.collectAsState()
+    val activeId by providersViewModel.activeId.collectAsState()
+    // A profile that no longer exists leaves the phone as the place the scan runs
+    val activeIsLocal = ScanReadiness.resolveActive(activeId, providerRows.map { it.profile }) == null
 
     // An error left by an earlier visit is no news now
     LaunchedEffect(Unit) { viewModel.clearAiModelImportError() }
@@ -170,8 +178,7 @@ fun AiSettingsScreen(
                             Column {
                                 Text(stringResource(R.string.ai_scan_toggle), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                                 Text(
-                                    if (!aiDeviceSupported) stringResource(R.string.ai_device_unsupported)
-                                    else stringResource(R.string.ai_scan_desc),
+                                    stringResource(R.string.ai_scan_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = OnSurfaceVariant
                                 )
@@ -179,177 +186,71 @@ fun AiSettingsScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         SettingsSwitch(
-                            checked = aiScanEnabled && aiDeviceSupported,
-                            enabled = aiDeviceSupported,
+                            checked = aiScanEnabled,
                             onCheckedChange = { viewModel.setAiScanEnabled(it) }
                         )
                     }
 
-                    if (aiDeviceSupported && aiScanEnabled) {
+                    if (aiScanEnabled) {
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                        val selectedVariant = AiModelVariant.fromId(aiModelVariant)
+                        AiProvidersSection(
+                            rows = providerRows,
+                            activeId = activeId,
+                            activeIsLocal = activeIsLocal,
+                            deviceSupported = aiDeviceSupported,
+                            viewModel = providersViewModel
+                        )
 
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.ai_model_variant), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+                        if (activeIsLocal && aiDeviceSupported) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                            LocalModelControls(
+                                aiModelVariant = aiModelVariant,
+                                aiModelStatus = aiModelStatus,
+                                aiModelImportError = aiModelImportError,
+                                viewModel = viewModel,
+                                onDeleteModelClick = { showDeleteModelDialog = true }
+                            )
+                        }
+
+                        // The phone's metrics only mean something where the on-device model can run
+                        if (activeIsLocal && aiDeviceSupported) {
+                            HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
                             Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(SurfaceContainerHighest)
-                                    .padding(4.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                AiModelVariant.entries.forEach { variant ->
-                                    Text(
-                                        text = variant.displayName,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (selectedVariant == variant) Primary else Color.Transparent)
-                                            .clickable { viewModel.setAiModelVariant(variant.id) }
-                                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                                        color = if (selectedVariant == variant) OnPrimary else OnSurfaceVariant,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.ExtraBold
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(
+                                        Icons.Rounded.Analytics,
+                                        contentDescription = null,
+                                        tint = Primary,
+                                        modifier = Modifier.size(24.dp)
                                     )
-                                }
-                            }
-                            Text(
-                                text = stringResource(R.string.ai_model_requirements, selectedVariant.sizeLabel, selectedVariant.requiredRamGb),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OnSurfaceVariant
-                            )
-                        }
-
-                        when (val status = aiModelStatus) {
-                            is AiModelStatus.Downloading -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
                                         Text(
-                                            stringResource(
-                                                if (status.importing) R.string.ai_model_importing else R.string.ai_model_downloading,
-                                                (status.progress * 100).toInt()
-                                            ),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = Primary,
+                                            stringResource(R.string.ai_resource_analytics_toggle),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = OnSurface,
                                             fontWeight = FontWeight.ExtraBold
                                         )
-                                        TextButton(onClick = { viewModel.cancelAiModelDownload() }) {
-                                            Text(
-                                                stringResource(R.string.ai_download_cancel).uppercase(),
-                                                color = Error,
-                                                fontWeight = FontWeight.ExtraBold
-                                            )
-                                        }
-                                    }
-                                    LinearWavyProgressIndicator(
-                                        progress = { status.progress },
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                }
-                            }
-                            is AiModelStatus.Ready -> {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            stringResource(R.string.ai_model_ready),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = OnSurface
-                                        )
-                                    }
-                                    TextButton(onClick = { showDeleteModelDialog = true }) {
-                                        Text(
-                                            stringResource(R.string.ai_model_delete).uppercase(),
-                                            color = Error,
-                                            fontWeight = FontWeight.ExtraBold
+                                            stringResource(R.string.ai_resource_analytics_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = OnSurfaceVariant
                                         )
                                     }
                                 }
-                            }
-                            is AiModelStatus.Error -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(status.message, style = MaterialTheme.typography.bodySmall, color = Error)
-                                    GymButton(
-                                        onClick = { viewModel.downloadAiModel() },
-                                        containerColor = Primary.copy(alpha = 0.1f),
-                                        contentColor = Primary,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(stringResource(R.string.ai_model_download_retry))
-                                    }
-                                    ModelImportOption(
-                                        error = aiModelImportError,
-                                        onPicked = { viewModel.importAiModel(it) },
-                                        onClearError = { viewModel.clearAiModelImportError() }
-                                    )
-                                }
-                            }
-                            AiModelStatus.NotDownloaded -> {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    GymButton(
-                                        onClick = { viewModel.downloadAiModel() },
-                                        containerColor = Primary.copy(alpha = 0.1f),
-                                        contentColor = Primary,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
-                                    }
-                                    ModelImportOption(
-                                        error = aiModelImportError,
-                                        onPicked = { viewModel.importAiModel(it) },
-                                        onClearError = { viewModel.clearAiModelImportError() }
-                                    )
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = Surface.copy(alpha = 0.5f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    Icons.Rounded.Analytics,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
                                 Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        stringResource(R.string.ai_resource_analytics_toggle),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                    Text(
-                                        stringResource(R.string.ai_resource_analytics_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
+                                SettingsSwitch(
+                                    checked = aiResourceAnalyticsEnabled,
+                                    onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
+                                )
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            SettingsSwitch(
-                                checked = aiResourceAnalyticsEnabled,
-                                onCheckedChange = { viewModel.setAiResourceAnalyticsEnabled(it) }
-                            )
                         }
                     }
 
@@ -388,6 +289,146 @@ fun AiSettingsScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/** Which Gemma model runs on the phone, and getting it onto the phone (download or import). */
+@Composable
+private fun LocalModelControls(
+    aiModelVariant: String,
+    aiModelStatus: AiModelStatus,
+    aiModelImportError: ModelImportError?,
+    viewModel: SettingsViewModel,
+    onDeleteModelClick: () -> Unit
+) {
+    val selectedVariant = AiModelVariant.fromId(aiModelVariant)
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.ai_model_variant), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(SurfaceContainerHighest)
+                    .padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AiModelVariant.entries.forEach { variant ->
+                    Text(
+                        text = variant.displayName,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selectedVariant == variant) Primary else Color.Transparent)
+                            .clickable { viewModel.setAiModelVariant(variant.id) }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = if (selectedVariant == variant) OnPrimary else OnSurfaceVariant,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.ai_model_requirements, selectedVariant.sizeLabel, selectedVariant.requiredRamGb),
+                style = MaterialTheme.typography.bodySmall,
+                color = OnSurfaceVariant
+            )
+        }
+
+        when (val status = aiModelStatus) {
+            is AiModelStatus.Downloading -> {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(
+                                if (status.importing) R.string.ai_model_importing else R.string.ai_model_downloading,
+                                (status.progress * 100).toInt()
+                            ),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Primary,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        TextButton(onClick = { viewModel.cancelAiModelDownload() }) {
+                            Text(
+                                stringResource(R.string.ai_download_cancel).uppercase(),
+                                color = Error,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
+                    LinearWavyProgressIndicator(
+                        progress = { status.progress },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+            is AiModelStatus.Ready -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Primary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.ai_model_ready),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnSurface
+                        )
+                    }
+                    TextButton(onClick = onDeleteModelClick) {
+                        Text(
+                            stringResource(R.string.ai_model_delete).uppercase(),
+                            color = Error,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+            is AiModelStatus.Error -> {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(status.message, style = MaterialTheme.typography.bodySmall, color = Error)
+                    GymButton(
+                        onClick = { viewModel.downloadAiModel() },
+                        containerColor = Primary.copy(alpha = 0.1f),
+                        contentColor = Primary,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(stringResource(R.string.ai_model_download_retry))
+                    }
+                    ModelImportOption(
+                        error = aiModelImportError,
+                        onPicked = { viewModel.importAiModel(it) },
+                        onClearError = { viewModel.clearAiModelImportError() }
+                    )
+                }
+            }
+            AiModelStatus.NotDownloaded -> {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GymButton(
+                        onClick = { viewModel.downloadAiModel() },
+                        containerColor = Primary.copy(alpha = 0.1f),
+                        contentColor = Primary,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(stringResource(R.string.ai_model_download, selectedVariant.displayName))
+                    }
+                    ModelImportOption(
+                        error = aiModelImportError,
+                        onPicked = { viewModel.importAiModel(it) },
+                        onClearError = { viewModel.clearAiModelImportError() }
+                    )
                 }
             }
         }

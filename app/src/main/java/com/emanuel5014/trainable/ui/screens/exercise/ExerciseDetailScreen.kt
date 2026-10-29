@@ -37,6 +37,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -565,7 +566,11 @@ private fun PerformanceCard(performance: ExercisePerformance, kind: ExerciseKind
             summary?.let { PrescriptionPill(text = it, containerColor = Primary.copy(alpha = 0.12f), contentColor = Primary, emphasized = true) }
         }
         Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            performance.sets.forEach { set -> PerformanceSetRow(set = set, weightUnit = weightUnit) }
+            // An exercise done twice in the workout (warm-ups first, heavy sets last) lists each run on its own
+            performance.groups.forEachIndexed { index, run ->
+                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = Surface.copy(alpha = 0.5f))
+                run.forEach { set -> PerformanceSetRow(set = set, weightUnit = weightUnit) }
+            }
         }
     }
 }

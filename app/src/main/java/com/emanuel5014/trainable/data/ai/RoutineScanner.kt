@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.data.ai
 
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendRunner
+import com.emanuel5014.trainable.data.ai.backend.ScanRequest
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import android.net.Uri
@@ -276,14 +279,15 @@ $exampleJson
 
 enum class ScanPhase {
     LOADING_MODEL,
+    /** Reaching a remote provider instead of loading the on-device model. */
+    CONNECTING,
     READING_SHEET,
     PARSING
 }
 
 @Singleton
 class RoutineScanner @Inject constructor(
-    private val engine: LocalLlmEngine,
-    private val modelFileManager: ModelFileManager,
+    private val backends: ScanBackendProvider,
     private val userPreferencesRepository: UserPreferencesRepository
 ) {
 
@@ -295,105 +299,98 @@ class RoutineScanner @Inject constructor(
         onPhase: (ScanPhase) -> Unit = {},
         onStreamUpdate: (partialOutput: String, thinkingOutput: String) -> Unit = { _, _ -> }
     ): List<ScannedExerciseEntry> {
-        val variantId = userPreferencesRepository.aiModelVariant.first()
-        val variant = AiModelVariant.fromId(variantId)
-        val modelFile = modelFileManager.getModelFile(variant)
-        check(modelFileManager.isDownloaded(variant)) { "AI model not downloaded" }
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
 
-        try {
-            onPhase(ScanPhase.LOADING_MODEL)
-            engine.ensureReady(modelFile)
-
-            onPhase(ScanPhase.READING_SHEET)
-            val result = engine.scanRoutineSheet(
+        val result = ScanBackendRunner.execute(
+            backend = backends.current(),
+            request = ScanRequest(
                 imageUri = imageUri,
                 prompt = RoutineScanPrompt.build(languageCode, categories, advanced),
-                onStreamUpdate = onStreamUpdate
-            )
+                imageMode = ScanImageMode.FULL_PAGE,
+                transcription = false,
+                maxOutputTokens = null
+            ),
+            onPhase = onPhase,
+            onStreamUpdate = onStreamUpdate
+        )
 
-            onPhase(ScanPhase.PARSING)
-            // 1. Try parsing from main output
-            var parsed = RoutineScanParser.parse(result.output)
+        onPhase(ScanPhase.PARSING)
+        // 1. Try parsing from main output
+        var parsed = RoutineScanParser.parse(result.output)
 
-            // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
-            if (parsed.isEmpty() && result.thinking.isNotBlank()) {
-                parsed = RoutineScanParser.parse(result.thinking)
+        // 2. Fallback: if main output didn't yield exercises, try parsing from thinking channel
+        if (parsed.isEmpty() && result.thinking.isNotBlank()) {
+            parsed = RoutineScanParser.parse(result.thinking)
+        }
+
+        // 3. Fallback: try parsing combined output and thinking
+        if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
+            parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
+        }
+
+        val matcher = ExerciseMatcher(catalog, languageCode)
+        return parsed.map { item ->
+            // Technique qualifiers in the name ("Panca Piana PIEDI SU") are matched away and become techniques
+            val (baseName, nameTechniques) = splitNameQualifiers(item.name)
+            val match = matcher.resolve(baseName)
+            // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
+            val suggestedCategory = match?.categoria
+                ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
+                ?: matcher.suggestCategory(item.name, categories)
+
+            val program = if (advanced) item.notation?.let { PrescriptionNotationParser.parseProgram(it) } else null
+            val blocksByWeek = program?.weeks.orEmpty().mapValues { (_, blocks) ->
+                blocks.map { block -> block.copy(techniques = (nameTechniques + block.techniques).distinct()) }
             }
-
-            // 3. Fallback: try parsing combined output and thinking
-            if (parsed.isEmpty() && (result.output.isNotBlank() || result.thinking.isNotBlank())) {
-                parsed = RoutineScanParser.parse("${result.output}\n${result.thinking}")
-            }
-
-            val matcher = ExerciseMatcher(catalog, languageCode)
-            return parsed.map { item ->
-                // Technique qualifiers in the name ("Panca Piana PIEDI SU") are matched away and become techniques
-                val (baseName, nameTechniques) = splitNameQualifiers(item.name)
-                val match = matcher.resolve(baseName)
-                // Category priority: catalog match > LLM classification (mapped to a known category) > heuristic inference
-                val suggestedCategory = match?.categoria
-                    ?: item.category?.let { ExerciseMatcher.mapToKnownCategory(it, categories) }
-                    ?: matcher.suggestCategory(item.name, categories)
-
-                val program = if (advanced) item.notation?.let { PrescriptionNotationParser.parseProgram(it) } else null
-                val blocksByWeek = program?.weeks.orEmpty().mapValues { (_, blocks) ->
-                    blocks.map { block -> block.copy(techniques = (nameTechniques + block.techniques).distinct()) }
-                }
-                if (blocksByWeek.isNotEmpty()) {
-                    val (sets, reps) = PrescriptionExpander.legacyTargets(blocksByWeek.toSortedMap().values.first())
-                    return@map ScannedExerciseEntry(
-                        rawName = item.name,
-                        exerciseId = match?.id,
-                        matchedName = match?.nome,
-                        suggestedCategory = suggestedCategory,
-                        sets = sets.coerceIn(1, 30),
-                        reps = reps,
-                        restSeconds = item.restSeconds.coerceAtLeast(0),
-                        cardioMinutes = null,
-                        exerciseType = "strength",
-                        blocksByWeek = blocksByWeek,
-                        oneRepMaxKg = item.oneRepMaxKg ?: program?.oneRepMaxKg,
-                        isProgrammed = item.programmed
-                    )
-                }
-
-                val resolvedType = when {
-                    item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
-                    item.exerciseType == TIME_AND_REPS -> TIME_AND_REPS
-                    item.exerciseType == "time_and_weight" || item.timeSeconds != null || item.reps.endsWith("s", ignoreCase = true) -> "time_and_weight"
-                    else -> "strength"
-                }
-                val resolvedTimeSeconds = if (resolvedType == "time_and_weight") {
-                    item.timeSeconds ?: item.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
-                } else if (resolvedType == TIME_AND_REPS) {
-                    item.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS
-                } else null
-
-                ScannedExerciseEntry(
+            if (blocksByWeek.isNotEmpty()) {
+                val (sets, reps) = PrescriptionExpander.legacyTargets(blocksByWeek.toSortedMap().values.first())
+                return@map ScannedExerciseEntry(
                     rawName = item.name,
                     exerciseId = match?.id,
                     matchedName = match?.nome,
                     suggestedCategory = suggestedCategory,
-                    sets = item.sets.coerceIn(1, 30),
-                    reps = when {
-                        resolvedType == "time_and_weight" && !item.reps.endsWith("s") -> "${resolvedTimeSeconds ?: 45}s"
-                        // The goal only: a duration slipped into the reps ("45s") is not one
-                        resolvedType == TIME_AND_REPS -> TimeAndReps.goalOf(item.reps.takeUnless { it.endsWith("s", ignoreCase = true) }).toString()
-                        else -> item.reps.ifBlank { "8-12" }
-                    },
+                    sets = sets.coerceIn(1, 30),
+                    reps = reps,
                     restSeconds = item.restSeconds.coerceAtLeast(0),
-                    cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
-                    exerciseType = resolvedType,
-                    timeSeconds = resolvedTimeSeconds,
-                    oneRepMaxKg = item.oneRepMaxKg.takeIf { advanced },
-                    isProgrammed = item.programmed && advanced
+                    cardioMinutes = null,
+                    exerciseType = "strength",
+                    blocksByWeek = blocksByWeek,
+                    oneRepMaxKg = item.oneRepMaxKg ?: program?.oneRepMaxKg,
+                    isProgrammed = item.programmed
                 )
             }
-        } finally {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
-                engine.release()
+
+            val resolvedType = when {
+                item.cardioMinutes != null || item.exerciseType == "cardio" -> "cardio"
+                item.exerciseType == TIME_AND_REPS -> TIME_AND_REPS
+                item.exerciseType == "time_and_weight" || item.timeSeconds != null || item.reps.endsWith("s", ignoreCase = true) -> "time_and_weight"
+                else -> "strength"
             }
+            val resolvedTimeSeconds = if (resolvedType == "time_and_weight") {
+                item.timeSeconds ?: item.reps.filter { it.isDigit() }.toIntOrNull() ?: 45
+            } else if (resolvedType == TIME_AND_REPS) {
+                item.timeSeconds ?: TimeAndReps.DEFAULT_SECONDS
+            } else null
+
+            ScannedExerciseEntry(
+                rawName = item.name,
+                exerciseId = match?.id,
+                matchedName = match?.nome,
+                suggestedCategory = suggestedCategory,
+                sets = item.sets.coerceIn(1, 30),
+                reps = when {
+                    resolvedType == "time_and_weight" && !item.reps.endsWith("s") -> "${resolvedTimeSeconds ?: 45}s"
+                    // The goal only: a duration slipped into the reps ("45s") is not one
+                    resolvedType == TIME_AND_REPS -> TimeAndReps.goalOf(item.reps.takeUnless { it.endsWith("s", ignoreCase = true) }).toString()
+                    else -> item.reps.ifBlank { "8-12" }
+                },
+                restSeconds = item.restSeconds.coerceAtLeast(0),
+                cardioMinutes = item.cardioMinutes?.takeIf { it > 0 },
+                exerciseType = resolvedType,
+                timeSeconds = resolvedTimeSeconds,
+                oneRepMaxKg = item.oneRepMaxKg.takeIf { advanced },
+                isProgrammed = item.programmed && advanced
+            )
         }
     }
 
@@ -407,34 +404,23 @@ class RoutineScanner @Inject constructor(
         onPhase: (ScanPhase) -> Unit = {},
         onStreamUpdate: (partialOutput: String, thinkingOutput: String) -> Unit = { _, _ -> }
     ): ScannedProgram? {
-        val variantId = userPreferencesRepository.aiModelVariant.first()
-        val variant = AiModelVariant.fromId(variantId)
-        val modelFile = modelFileManager.getModelFile(variant)
-        check(modelFileManager.isDownloaded(variant)) { "AI model not downloaded" }
-
-        try {
-            onPhase(ScanPhase.LOADING_MODEL)
-            engine.ensureReady(modelFile)
-
-            onPhase(ScanPhase.READING_SHEET)
-            val result = engine.scanRoutineSheet(
+        val result = ScanBackendRunner.execute(
+            backend = backends.current(),
+            request = ScanRequest(
                 imageUri = imageUri,
                 prompt = ProgramScanPrompt.build(),
                 imageMode = ScanImageMode.HANDWRITING_BLOCK,
                 transcription = true,
-                maxOutputTokens = PROGRAM_MAX_OUTPUT_TOKENS,
-                onStreamUpdate = onStreamUpdate
-            )
+                maxOutputTokens = PROGRAM_MAX_OUTPUT_TOKENS
+            ),
+            onPhase = onPhase,
+            onStreamUpdate = onStreamUpdate
+        )
 
-            onPhase(ScanPhase.PARSING)
-            return ProgramScanParser.parse(result.output, exerciseName)
-                ?: ProgramScanParser.parse(result.thinking, exerciseName)
-                ?: ProgramScanParser.parse("${result.output}\n${result.thinking}", exerciseName)
-        } finally {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
-                engine.release()
-            }
-        }
+        onPhase(ScanPhase.PARSING)
+        return ProgramScanParser.parse(result.output, exerciseName)
+            ?: ProgramScanParser.parse(result.thinking, exerciseName)
+            ?: ProgramScanParser.parse("${result.output}\n${result.thinking}", exerciseName)
     }
 
     /** Splits technique qualifiers off an exercise name: "Panca Piana PIEDI SU" → ("Panca Piana", [FeetUp]). */
@@ -466,7 +452,7 @@ class RoutineScanner @Inject constructor(
 
     suspend fun release() {
         kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
-            engine.release()
+            backends.releaseLocal()
         }
     }
 }

@@ -24,6 +24,9 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import kotlinx.coroutines.flow.Flow
 
+/** One run of an exercise in a session going from the order [from] to the order [to]. */
+data class RunMove(val exerciseId: Int, val from: Int, val to: Int)
+
 data class ExcludedWeeksRow(
     val id: Int,
     @androidx.room.ColumnInfo(name = "excluded_weeks") val excludedWeeks: String?
@@ -442,6 +445,17 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM session_prescription_edits ORDER BY created_at ASC, id ASC")
     suspend fun getAllPrescriptionEdits(): List<SessionPrescriptionEditEntity>
+
+    /** Gives the edits made to one run of an exercise (identified by exercise and order) the new order of its rows. */
+    @Query("UPDATE session_prescription_edits SET ordine_esercizio = :to WHERE session_id = :sessionId AND exercise_id = :exerciseId AND ordine_esercizio = :from")
+    suspend fun moveEditRows(sessionId: Int, exerciseId: Int, from: Int, to: Int)
+
+    /** Moves several runs at once, also two that swap places: each one goes through an order nobody has. */
+    @Transaction
+    suspend fun moveRunEdits(sessionId: Int, moves: List<RunMove>) {
+        moves.forEachIndexed { index, move -> moveEditRows(sessionId, move.exerciseId, move.from, -(index + 1)) }
+        moves.forEachIndexed { index, move -> moveEditRows(sessionId, move.exerciseId, -(index + 1), move.to) }
+    }
 
     // --- Exercise Swaps ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -8,7 +8,9 @@ import com.emanuel5014.trainable.domain.exercise.Muscle
 /** The string that names a muscle. The `when` has no `else`: a new muscle does not compile until it has a label. */
 @StringRes
 fun Muscle.labelRes(): Int = when (this) {
-    Muscle.CHEST -> R.string.muscle_chest
+    Muscle.UPPER_CHEST -> R.string.muscle_upper_chest
+    Muscle.MIDDLE_CHEST -> R.string.muscle_middle_chest
+    Muscle.LOWER_CHEST -> R.string.muscle_lower_chest
     Muscle.LATS -> R.string.muscle_lats
     Muscle.TRAPS -> R.string.muscle_traps
     Muscle.UPPER_BACK -> R.string.muscle_upper_back
@@ -26,6 +28,7 @@ fun Muscle.labelRes(): Int = when (this) {
     Muscle.GLUTES -> R.string.muscle_glutes
     Muscle.CALVES -> R.string.muscle_calves
     Muscle.ADDUCTORS -> R.string.muscle_adductors
+    Muscle.ABDUCTORS -> R.string.muscle_abductors
 }
 
 /** The string that names a piece of equipment. The `when` has no `else`: a new one does not compile until it has a label. */

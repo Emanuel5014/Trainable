@@ -63,7 +63,7 @@ import kotlinx.coroutines.launch
         ExerciseMergeEntity::class,
         ExerciseMergeMoveEntity::class
     ],
-    version = 40,
+    version = 42,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -514,6 +514,21 @@ abstract class GymDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_40_41 = object : Migration(40, 41) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // The run of the exercise a program edit was made to, when it was done twice in the workout; null for the old ones
+                db.execSQL("ALTER TABLE session_prescription_edits ADD COLUMN ordine_esercizio INTEGER")
+            }
+        }
+
+        val MIGRATION_41_42 = object : Migration(41, 42) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Smith Machine Shrugs is a trapezius exercise, so a back one (issue #51). Data only: a shrug the user
+                // already moved to another category, and the custom exercises, are not touched.
+                db.execSQL("UPDATE exercises SET categoria = 'Back' WHERE id = 75 AND categoria = 'Shoulders'")
+            }
+        }
+
         @Volatile
         private var INSTANCE: GymDatabase? = null
 
@@ -532,7 +547,7 @@ abstract class GymDatabase : RoomDatabase() {
                         MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
                         MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37, MIGRATION_37_38, MIGRATION_38_39, MIGRATION_39_40
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37, MIGRATION_37_38, MIGRATION_38_39, MIGRATION_39_40, MIGRATION_40_41, MIGRATION_41_42
                     )
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .addCallback(object : RoomDatabase.Callback() {
@@ -610,15 +625,18 @@ abstract class GymDatabase : RoomDatabase() {
         }
 
         /**
-         * Once per [RetiredPresets.VERSION] and database, hides the retired presets this install still lists unused and as
-         * shipped. The ones a workout, a routine or a max uses are left alone. It is marked done only when it went through.
+         * Once per [RetiredPresets.VERSION] and database, hides the retired presets that joined the list since the last run
+         * and that this install still lists unused and as shipped. The ones a workout, a routine or a max uses are left alone.
+         * It is marked done only when it went through.
          */
         private suspend fun hideRetiredPresets(context: Context, exerciseDao: ExerciseDao) {
-            if (RetiredPresetsMarker.applied(context) >= RetiredPresets.VERSION) return
+            val applied = RetiredPresetsMarker.applied(context)
+            if (applied >= RetiredPresets.VERSION) return
             try {
                 val existing = exerciseDao.getAllExercisesIncludingDeleted().first()
-                val used = RetiredPresets.ids.filterTo(hashSetOf()) { exerciseDao.isExerciseInUse(it) }
-                RetiredPresets.toHide(existing, ExerciseData.initialExercises, used).forEach { exerciseDao.setExerciseDeleted(it, true) }
+                val used = RetiredPresets.idsSince(applied).filterTo(hashSetOf()) { exerciseDao.isExerciseInUse(it) }
+                RetiredPresets.toHide(existing, ExerciseData.initialExercises, used, applied)
+                    .forEach { exerciseDao.setExerciseDeleted(it, true) }
                 RetiredPresetsMarker.markApplied(context, RetiredPresets.VERSION)
             } catch (e: Exception) {
                 // Not marked, so the next launch tries again

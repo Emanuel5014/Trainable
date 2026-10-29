@@ -6,11 +6,11 @@ import androidx.lifecycle.SavedStateHandle
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emanuel5014.trainable.data.ai.AiModelVariant
 import com.emanuel5014.trainable.data.ai.AiResourceTracker
-import com.emanuel5014.trainable.data.ai.DeviceCapabilityChecker
 import com.emanuel5014.trainable.data.ai.DeviceResourceMetrics
-import com.emanuel5014.trainable.data.ai.ModelFileManager
+import com.emanuel5014.trainable.data.ai.backend.ConsentRequest
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendException
+import com.emanuel5014.trainable.data.ai.backend.ScanBackendProvider
 import com.emanuel5014.trainable.data.ai.ScanPhase
 import com.emanuel5014.trainable.data.ai.ScannedExerciseEntry
 import com.emanuel5014.trainable.data.ai.RoutineScanner
@@ -63,7 +63,8 @@ sealed interface AiScanState {
         val entries: List<ScannedExerciseEntry>,
         val imageUri: Uri? = null
     ) : AiScanState
-    data class Error(val message: String?) : AiScanState
+    /** [failure] is set when a scan backend explained what went wrong. */
+    data class Error(val message: String?, val failure: ScanBackendException? = null) : AiScanState
 }
 
 data class AiScanStreamState(
@@ -79,8 +80,7 @@ class RoutineDetailViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val localeManager: AppLocaleManager,
     private val routineScanner: RoutineScanner,
-    private val modelFileManager: ModelFileManager,
-    private val deviceCapabilityChecker: DeviceCapabilityChecker,
+    private val backends: ScanBackendProvider,
     private val aiResourceTracker: AiResourceTracker,
     private val oneRepMaxRepository: OneRepMaxRepository,
     private val scanDraftStore: com.emanuel5014.trainable.data.ai.ScanDraftStore,
@@ -101,19 +101,17 @@ class RoutineDetailViewModel @Inject constructor(
     private val _languageCode = MutableStateFlow("en")
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
-    val aiScanAvailable = combine(
-        userPreferencesRepository.aiScanEnabled,
-        userPreferencesRepository.aiModelVariant,
-        modelFileManager.filesUpdatedTrigger
-    ) { enabled, variantId, _ ->
-        enabled && modelFileManager.isDownloaded(AiModelVariant.fromId(variantId))
-    }.stateIn(
+    val aiScanAvailable = backends.isReady.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
     )
 
-    val aiResourceAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.stateIn(
+    /** The phone's live metrics only mean something while the on-device model is the one reading. */
+    val aiResourceAnalyticsEnabled = combine(
+        userPreferencesRepository.aiResourceAnalyticsEnabled,
+        backends.localActive
+    ) { enabled, local -> enabled && local }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = false
@@ -202,7 +200,43 @@ class RoutineDetailViewModel @Inject constructor(
         }
     }
 
+    private val _consent = MutableStateFlow<ConsentRequest?>(null)
+
+    /** Set while the user is asked whether the photo may go to a remote provider. */
+    val consent: StateFlow<ConsentRequest?> = _consent.asStateFlow()
+
+    private var pendingScanUri: Uri? = null
+
+    /** Starts a scan; when the photo would go somewhere the user hasn't agreed to yet, asks first. */
     fun scanRoutineSheet(imageUri: Uri) {
+        if (_aiScanState.value is AiScanState.Scanning) return
+        viewModelScope.launch {
+            val request = backends.consentRequired()
+            if (request == null) {
+                startScan(imageUri)
+            } else {
+                pendingScanUri = imageUri
+                _consent.value = request
+            }
+        }
+    }
+
+    fun acceptConsent() {
+        val uri = pendingScanUri
+        pendingScanUri = null
+        _consent.value = null
+        viewModelScope.launch {
+            backends.acceptConsent()
+            uri?.let { startScan(it) }
+        }
+    }
+
+    fun declineConsent() {
+        pendingScanUri = null
+        _consent.value = null
+    }
+
+    private fun startScan(imageUri: Uri) {
         if (_aiScanState.value is AiScanState.Scanning) return
         _aiScanState.value = AiScanState.Scanning()
         _aiScanStream.value = AiScanStreamState()
@@ -210,7 +244,7 @@ class RoutineDetailViewModel @Inject constructor(
         scanJob = viewModelScope.launch {
             try {
                 val startTime = System.currentTimeMillis()
-                val isAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.first()
+                val isAnalyticsEnabled = userPreferencesRepository.aiResourceAnalyticsEnabled.first() && backends.isLocalActive()
 
                 // Throttle stream state emissions to ~4 Hz so token-frequency
                 // updates don't trigger full-screen recomposition + blur recompute
@@ -295,6 +329,8 @@ class RoutineDetailViewModel @Inject constructor(
                 // Cancelled by user
                 _aiScanState.value = AiScanState.Idle
                 _aiScanStream.value = AiScanStreamState()
+            } catch (e: ScanBackendException) {
+                _aiScanState.value = AiScanState.Error(e.message, e)
             } catch (e: Exception) {
                 e.printStackTrace()
                 _aiScanState.value = AiScanState.Error(e.message)

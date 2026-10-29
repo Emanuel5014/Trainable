@@ -8,7 +8,7 @@ import com.emanuel5014.trainable.data.local.entity.isInParts
 import com.emanuel5014.trainable.domain.prescription.SetPerformance
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
-import com.emanuel5014.trainable.data.local.entity.forExercise
+import com.emanuel5014.trainable.data.local.entity.forRun
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
@@ -220,6 +220,13 @@ private data class ExerciseWithSets(
 private data class HistoryBlock(
     val supersetId: String?,
     val exercises: List<ExerciseWithSets>
+)
+
+/** The program edits made to one exercise of a session; an exercise done twice has the edits of each run on its own. */
+private fun List<SessionPrescriptionEditEntity>.forExerciseOf(block: ExerciseWithSets, all: List<ExerciseWithSets>) = forRun(
+    exerciseId = block.exercise.id,
+    order = block.sets.first().setLog.ordineEsercizio,
+    runOrders = all.filter { it.exercise.id == block.exercise.id }.map { it.sets.first().setLog.ordineEsercizio }
 )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -1586,7 +1593,7 @@ fun SessionHistoryCard(
                                                     languageCode = languageCode,
                                                     weightUnit = weightUnit,
                                                     modifier = Modifier.padding(bottom = if (exIndex < block.exercises.lastIndex) 16.dp else 0.dp),
-                                                    programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id),
+                                                    programEdits = details?.prescriptionEdits.orEmpty().forExerciseOf(exWithSets, exercisesWithSets),
                                                     onRestoreExercise = onRestoreExercise
                                                 )
                                             }
@@ -1601,7 +1608,7 @@ fun SessionHistoryCard(
                                                 modifier = Modifier
                                                     .padding(horizontal = ResponsiveSize.cardPadding)
                                                     .padding(bottom = 16.dp),
-                                                programEdits = details?.prescriptionEdits.orEmpty().forExercise(exWithSets.exercise.id),
+                                                programEdits = details?.prescriptionEdits.orEmpty().forExerciseOf(exWithSets, exercisesWithSets),
                                                 onRestoreExercise = onRestoreExercise
                                             )
                                         }

@@ -259,6 +259,7 @@ fun RoutineDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState(initial = "en")
     val aiScanAvailable by viewModel.aiScanAvailable.collectAsState()
+    val scanConsent by viewModel.consent.collectAsState()
     val aiResourceAnalyticsEnabled by viewModel.aiResourceAnalyticsEnabled.collectAsState()
     val aiScanState by viewModel.aiScanState.collectAsState()
     val scanDraft by viewModel.scanDraft.collectAsState()
@@ -425,12 +426,21 @@ fun RoutineDetailScreen(
         if (state is AiScanState.Error) {
             Toast.makeText(
                 context,
-                if (state.message == null) context.getString(R.string.ai_scan_no_exercises)
-                else context.getString(R.string.ai_scan_failed),
+                state.failure?.userText(context)
+                    ?: if (state.message == null) context.getString(R.string.ai_scan_no_exercises)
+                    else context.getString(R.string.ai_scan_failed),
                 Toast.LENGTH_LONG
             ).show()
             viewModel.dismissScanResult()
         }
+    }
+
+    scanConsent?.let { request ->
+        com.emanuel5014.trainable.ui.components.shared.ScanConsentDialog(
+            request = request,
+            onAccept = viewModel::acceptConsent,
+            onDecline = viewModel::declineConsent
+        )
     }
 
     fun openAddSheet() {
@@ -2590,6 +2600,7 @@ private fun DeviceResourceAnalyticsCard(
 internal fun aiPhaseLabel(phase: com.emanuel5014.trainable.data.ai.ScanPhase): String =
     when (phase) {
         com.emanuel5014.trainable.data.ai.ScanPhase.LOADING_MODEL -> stringResource(R.string.ai_scan_phase_model)
+        com.emanuel5014.trainable.data.ai.ScanPhase.CONNECTING -> stringResource(R.string.ai_scan_phase_connecting)
         com.emanuel5014.trainable.data.ai.ScanPhase.READING_SHEET -> stringResource(R.string.ai_scan_phase_reading)
         com.emanuel5014.trainable.data.ai.ScanPhase.PARSING -> stringResource(R.string.ai_scan_phase_generating)
     }

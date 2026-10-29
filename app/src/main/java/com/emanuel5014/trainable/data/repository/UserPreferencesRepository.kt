@@ -71,6 +71,10 @@ class UserPreferencesRepository @Inject constructor(
     val AI_SCAN_ENABLED = booleanPreferencesKey("ai_scan_enabled")
     val AI_RESOURCE_ANALYTICS_ENABLED = booleanPreferencesKey("ai_resource_analytics_enabled")
     val AI_MODEL_VARIANT = stringPreferencesKey("ai_model_variant")
+    /** The remote AI profiles as one JSON list (see `AiProfileList`); never exported with the app's backup. */
+    val AI_PROFILES = stringPreferencesKey("ai_profiles")
+    /** "local" or the id of the profile the scan runs on. */
+    val AI_ACTIVE_BACKEND = stringPreferencesKey("ai_active_backend")
     val AUTO_STOP_CARDIO_AT_TARGET = booleanPreferencesKey("auto_stop_cardio_at_target")
     val AUTO_STOP_TIME_WEIGHT_AT_TARGET = booleanPreferencesKey("auto_stop_time_weight_at_target")
     /** Master switch for %1RM / technique / weekly-program features. Off by default. */
@@ -327,6 +331,16 @@ class UserPreferencesRepository @Inject constructor(
             preferences[AI_MODEL_VARIANT] ?: "e2b"
         }
 
+    val aiProfilesJson: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[AI_PROFILES] ?: ""
+        }
+
+    val aiActiveBackend: Flow<String> = dataStore.data
+        .map { preferences ->
+            preferences[AI_ACTIVE_BACKEND] ?: "local"
+        }
+
     val autoStopCardioAtTarget: Flow<Boolean> = dataStore.data
         .map { preferences ->
             preferences[AUTO_STOP_CARDIO_AT_TARGET] ?: true
@@ -385,6 +399,20 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setAiModelVariant(variantId: String) {
         dataStore.edit { preferences ->
             preferences[AI_MODEL_VARIANT] = variantId
+        }
+    }
+
+    /** Both in one edit, so a deleted profile is never left as the active choice. */
+    suspend fun setAiProfilesAndActive(profilesJson: String, activeId: String) {
+        dataStore.edit { preferences ->
+            preferences[AI_PROFILES] = profilesJson
+            preferences[AI_ACTIVE_BACKEND] = activeId
+        }
+    }
+
+    suspend fun setAiActiveBackend(id: String) {
+        dataStore.edit { preferences ->
+            preferences[AI_ACTIVE_BACKEND] = id
         }
     }
 
