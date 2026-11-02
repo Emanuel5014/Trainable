@@ -133,7 +133,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
+import com.emanuel5014.trainable.ui.components.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -214,6 +214,8 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
+import com.emanuel5014.trainable.ui.theme.headerGlassOn
+import com.emanuel5014.trainable.ui.theme.headerGroupGlass
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -740,6 +742,25 @@ fun RoutineDetailScreen(
                             )
                         },
                         actions = {
+                            if (headerGlassOn()) {
+                                // One capsule of glass for the pair, as iOS groups its toolbar buttons
+                                Row(modifier = Modifier.headerGroupGlass()) {
+                                    GymIconButton(
+                                        icon = Icons.Rounded.RestartAlt,
+                                        onClick = { showResetConfirmDialog = true },
+                                        containerColor = Color.Transparent,
+                                        contentColor = Error,
+                                        description = "Reset Routine Content"
+                                    )
+                                    GymIconButton(
+                                        icon = Icons.Rounded.Edit,
+                                        onClick = { openRoutineEditSheet() },
+                                        containerColor = Color.Transparent,
+                                        contentColor = OnSurface,
+                                        description = "Edit Routine"
+                                    )
+                                }
+                            } else {
                             // Connected pair, like the day and week pickers
                             Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                                 GymIconButton(
@@ -758,6 +779,7 @@ fun RoutineDetailScreen(
                                     description = "Edit Routine",
                                     shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 24.dp, bottomEnd = 24.dp)
                                 )
+                            }
                             }
                         },
                         titleInRow = true,

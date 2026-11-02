@@ -36,6 +36,8 @@
     <string name="glass_part_tabs_desc">Programmes actifs et archivés : une goutte de verre glisse entre les onglets</string>
     <string name="glass_part_search_bars">Barres de recherche</string>
     <string name="glass_part_search_bars_desc">La recherche des listes et sélecteurs d\'exercices</string>
+    <string name="glass_part_sliders">Curseurs</string>
+    <string name="glass_part_sliders_desc">Le curseur devient une goutte de verre pendant que vous le faites glisser</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barre d\'outils Material 3 Expressive, avec l\'action principale de chaque onglet à côté</string>
 

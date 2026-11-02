@@ -25,12 +25,13 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.ToggleOn
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Slider
+import com.emanuel5014.trainable.ui.components.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -576,6 +577,13 @@ private fun LiquidGlassCard(
                     description = stringResource(R.string.glass_part_search_bars_desc),
                     checked = GlassPart.SearchBars in settings.parts,
                     onCheckedChange = { onPartChange(GlassPart.SearchBars, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Tune,
+                    title = stringResource(R.string.glass_part_sliders),
+                    description = stringResource(R.string.glass_part_sliders_desc),
+                    checked = GlassPart.Sliders in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.Sliders, it) }
                 )
             }
         }

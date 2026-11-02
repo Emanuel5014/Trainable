@@ -70,6 +70,8 @@ import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SecondaryContainer
+import com.emanuel5014.trainable.ui.theme.headerGlassOn
+import com.emanuel5014.trainable.ui.theme.headerGroupGlass
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import kotlin.math.abs
@@ -407,10 +409,15 @@ internal fun ExerciseTools(
     onOpenDetail: (Int) -> Unit
 ) {
     val groupLabel = stringResource(R.string.exercise_tools_group)
+    val glass = headerGlassOn()
+    // The neutral icon colour: on the tonal group it is the container's own, on glass it is the plain one
+    val neutral = if (glass) OnSurface else OnSecondaryContainer
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(SecondaryContainer)
+            .then(
+                if (glass) Modifier.headerGroupGlass()
+                else Modifier.clip(RoundedCornerShape(16.dp)).background(SecondaryContainer)
+            )
             .semantics { contentDescription = groupLabel },
         horizontalArrangement = Arrangement.spacedBy(0.dp)
     ) {
@@ -420,7 +427,7 @@ internal fun ExerciseTools(
             ToolButton(
                 icon = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
                 description = stringResource(R.string.toggle_superset_with_next),
-                tint = if (isLinked) Primary else OnSecondaryContainer,
+                tint = if (isLinked) Primary else neutral,
                 onClick = { viewModel.toggleSupersetWithNext(targetIndex) }
             )
         }
@@ -428,7 +435,7 @@ internal fun ExerciseTools(
             ToolButton(
                 icon = Icons.Rounded.DesignServices,
                 description = stringResource(R.string.edit_program),
-                tint = if (targetExState.lastProgramEdit != null) Primary else OnSecondaryContainer,
+                tint = if (targetExState.lastProgramEdit != null) Primary else neutral,
                 onClick = { ui.programEditFor = targetIndex }
             )
         }
@@ -436,14 +443,14 @@ internal fun ExerciseTools(
             ToolButton(
                 icon = Icons.Rounded.Info,
                 description = stringResource(R.string.exercise_detail_open),
-                tint = OnSecondaryContainer,
+                tint = neutral,
                 onClick = { onOpenDetail(targetExState.exercise.id) }
             )
         }
         ToolButton(
             icon = Icons.Rounded.SwapHoriz,
             description = stringResource(R.string.swap_exercise),
-            tint = OnSecondaryContainer,
+            tint = neutral,
             onClick = { ui.showSwapExerciseSheet = true }
         )
     }

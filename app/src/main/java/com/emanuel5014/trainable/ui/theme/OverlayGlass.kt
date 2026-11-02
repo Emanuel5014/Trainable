@@ -1,6 +1,8 @@
 package com.emanuel5014.trainable.ui.theme
 
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.WindowManager
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,6 +28,25 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.emanuel5014.trainable.data.model.GlassPart
+
+/** How many sheets or dialogs on screen asked to open without the blur behind them. */
+private object OverlayBlurSignal {
+    var suppressed by mutableIntStateOf(0)
+}
+
+/**
+ * Put inside a sheet or dialog that should open without the blur behind it. The count is given back a moment
+ * after the window is gone, once the app has its focus again, so the blur does not flash as the sheet closes.
+ */
+@Composable
+fun NoOverlayBlur() {
+    DisposableEffect(Unit) {
+        OverlayBlurSignal.suppressed++
+        onDispose {
+            Handler(Looper.getMainLooper()).postDelayed({ OverlayBlurSignal.suppressed-- }, 300)
+        }
+    }
+}
 
 /**
  * Blurs the app behind every sheet and dialog while the user has the overlays part on, as iOS does behind
@@ -47,8 +69,9 @@ fun Modifier.overlayGlassBlur(): Modifier {
     val amount = remember { Animatable(0f) }
 
     LaunchedEffect(amount) {
-        // in along with the sheet, out almost at once: the sheet is already on its way down
-        snapshotFlow { overlayOpen }.collect { open -> amount.animateTo(if (open) 1f else 0f, tween(if (open) 220 else 80)) }
+        // In along with the sheet, out almost at once
+        snapshotFlow { overlayOpen && OverlayBlurSignal.suppressed == 0 }
+            .collect { open -> amount.animateTo(if (open) 1f else 0f, tween(if (open) 200 else 60)) }
     }
     DisposableEffect(view, on) {
         if (!on) {

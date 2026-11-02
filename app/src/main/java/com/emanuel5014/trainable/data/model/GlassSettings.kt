@@ -26,7 +26,10 @@ enum class GlassPart {
     Tabs,
 
     /** The search bars of the exercise lists and pickers. */
-    SearchBars
+    SearchBars,
+
+    /** The sliders: their thumb turns into a drop of glass while it is held. */
+    Sliders
 }
 
 /** The user's Liquid Glass choices from Personalization. Off by default: the app then looks as it always did. */

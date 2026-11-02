@@ -625,7 +625,7 @@ private fun SwapCardioConfigDialog(
                     )
                 }
 
-                androidx.compose.material3.Slider(
+                com.emanuel5014.trainable.ui.components.Slider(
                     value = closestIndex.toFloat(),
                     onValueChange = { rawValue ->
                         val index = kotlin.math.round(rawValue).toInt()
@@ -718,7 +718,7 @@ fun RestSlider(
             )
         }
         
-        androidx.compose.material3.Slider(
+        com.emanuel5014.trainable.ui.components.Slider(
             value = currentIndex.toFloat(),
             onValueChange = { rawValue ->
                 val index = kotlin.math.round(rawValue).toInt()

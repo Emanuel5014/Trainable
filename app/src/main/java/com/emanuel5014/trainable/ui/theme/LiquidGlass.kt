@@ -4,11 +4,13 @@ import android.os.Build
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButtonElevation
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
@@ -106,6 +108,17 @@ fun Modifier.surfaceGlass(part: GlassPart): Modifier {
         .then(touch.light)
         .then(touch.gestures)
 }
+
+/** True when header buttons are glass: the places that group buttons then draw one capsule for the group. */
+@Composable
+fun headerGlassOn(): Boolean = LocalGlassSettings.current.isOn(GlassPart.HeaderButtons)
+
+/**
+ * The container of header buttons that belong together: one capsule of glass around them, as iOS 26 groups its
+ * toolbar buttons, instead of one glass circle each. Put the buttons inside with no fill of their own.
+ */
+@Composable
+fun Modifier.headerGroupGlass(): Modifier = surfaceGlass(GlassPart.HeaderButtons).clip(CircleShape)
 
 /**
  * What a screen's floating buttons bend: a copy of the screen's own content, recorded by

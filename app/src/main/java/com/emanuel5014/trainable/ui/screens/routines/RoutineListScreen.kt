@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.NoOverlayBlur
 import com.emanuel5014.trainable.ui.components.GlassSegmentedTabs
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.ui.theme.actionGlass
@@ -686,6 +687,8 @@ fun RoutineListScreen(
                 )
             }
         ) {
+            // This sheet has its own form and date pickers; the blur behind it was not worth the trouble
+            NoOverlayBlur()
             SheetFormLayout {
                 SheetFormBody(horizontalPadding = ResponsiveSize.horizontalPadding, spacing = 24.dp) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
