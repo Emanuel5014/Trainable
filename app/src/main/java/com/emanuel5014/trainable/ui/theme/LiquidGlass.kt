@@ -5,15 +5,21 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButtonElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastCoerceAtMost
 import androidx.compose.ui.util.lerp
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
+import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberCanvasBackdrop
@@ -26,17 +32,46 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangle
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.tanh
 
 /** The user's Liquid Glass choices, provided once at the root of the app. */
 val LocalGlassSettings = staticCompositionLocalOf { GlassSettings() }
 
+/**
+ * The app-wide copy of the screens, recorded behind the navigation (see MainActivity). Only what is
+ * drawn outside the screens may bend it, such as the expressive navbar's action button; null when nothing uses it.
+ */
+val LocalAppGlassBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
+
 /** Below Android 12 there is no blur, so glass needs a fuller body to keep its content readable. */
 val GlassCanBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
+/** The swell and the lean after the finger of a touched piece of glass, as on iOS 26. */
+private fun GraphicsLayerScope.followTouch(touch: GlassTouch) {
+    val width = size.width
+    val height = size.height
+    if (width <= 0f || height <= 0f) return
+    val scale = lerp(1f, 1f + 4.dp.toPx() / height, touch.press)
+
+    val maxOffset = size.minDimension
+    val offset = touch.offset
+    translationX = maxOffset * tanh(0.05f * offset.x / maxOffset)
+    translationY = maxOffset * tanh(0.05f * offset.y / maxOffset)
+
+    val maxDragScale = 4.dp.toPx() / height
+    val angle = atan2(offset.y, offset.x)
+    scaleX = scale + maxDragScale * abs(cos(angle) * offset.x / size.maxDimension) * (width / height).fastCoerceAtMost(1f)
+    scaleY = scale + maxDragScale * abs(sin(angle) * offset.y / size.maxDimension) * (height / width).fastCoerceAtMost(1f)
+}
+
 /**
- * Liquid Glass on a neutral round header button: a lit rim, a soft lift and a translucent body.
- * Headers scroll with their screen, so there is only the screen background beneath to show through.
- * Returns the receiver unchanged when the user has this part off.
+ * Liquid Glass on a neutral round header button: a lit rim, a soft lift and a translucent body that
+ * swells and lights up under the finger. Headers scroll with their screen, so there is only the screen
+ * background beneath to show through. Returns the receiver unchanged when the user has this part off.
  */
 @Composable
 fun Modifier.headerGlass(): Modifier {
@@ -47,14 +82,20 @@ fun Modifier.headerGlass(): Modifier {
     val dark = background.luminance() < 0.5f
     val body = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = lerp(0.9f, 0.35f, amount))
     val backdrop = rememberCanvasBackdrop { drawRect(background) }
-    return drawBackdrop(
-        backdrop = backdrop,
-        shape = { Capsule() },
-        effects = { vibrancy() },
-        highlight = { Highlight.Default.copy(alpha = lerp(0.6f, 1f, amount)) },
-        shadow = { Shadow(radius = 10.dp, color = Color.Black.copy(alpha = if (dark) 0.25f else 0.08f)) },
-        onDrawSurface = { drawRect(body) }
-    )
+    val scope = rememberCoroutineScope()
+    val touch = remember(scope) { GlassTouch(scope) }
+    return this
+        .drawBackdrop(
+            backdrop = backdrop,
+            shape = { Capsule() },
+            effects = { vibrancy() },
+            highlight = { Highlight.Default.copy(alpha = lerp(0.6f, 1f, amount)) },
+            shadow = { Shadow(radius = 10.dp, color = Color.Black.copy(alpha = if (dark) 0.25f else 0.08f)) },
+            layerBlock = { followTouch(touch) },
+            onDrawSurface = { drawRect(body) }
+        )
+        .then(touch.light)
+        .then(touch.gestures)
 }
 
 /**
@@ -80,36 +121,49 @@ fun Modifier.actionGlassSource(source: LayerBackdrop?): Modifier =
 
 /**
  * Tinted Liquid Glass for a floating action button, like the primary actions of iOS: [tint] stays the
- * button's colour, now translucent over the content it bends. Use together with [actionGlassContainer]
- * and [actionGlassElevation] so the button's own fill and shadow give way to the glass.
- * [cornerRadius] null means a pill or a circle.
+ * button's colour, now translucent over the content it bends, and the glass swells and lights up under
+ * the finger. Use together with [actionGlassContainer] and [actionGlassElevation] so the button's own fill
+ * and shadow give way to the glass. [cornerRadius] null means a pill or a circle.
  */
 @Composable
-fun Modifier.actionGlass(source: LayerBackdrop?, tint: Color, cornerRadius: Dp? = null): Modifier {
+fun Modifier.actionGlass(source: Backdrop?, tint: Color, cornerRadius: Dp? = null): Modifier {
     if (source == null) return this
     val amount = LocalGlassSettings.current.intensity
-    val body = tint.copy(alpha = if (GlassCanBlur) lerp(0.96f, 0.62f, amount) else 0.96f)
-    return drawBackdrop(
-        backdrop = source,
-        shape = { if (cornerRadius == null) Capsule() else RoundedRectangle(cornerRadius) },
-        effects = {
-            vibrancy()
-            blur(lerp(2f, 6f, amount).dp.toPx())
-            lens(lerp(6f, 16f, amount).dp.toPx(), lerp(8f, 26f, amount).dp.toPx())
-        },
-        shadow = { Shadow(radius = 16.dp, color = Color.Black.copy(alpha = 0.18f)) },
-        onDrawSurface = { drawRect(body) }
-    )
+    val veil = tint.copy(alpha = if (GlassCanBlur) lerp(0.92f, 0.6f, amount) else 0.95f)
+    val background = MaterialTheme.colorScheme.surface
+    val scope = rememberCoroutineScope()
+    val touch = remember(scope) { GlassTouch(scope) }
+    return this
+        .drawBackdrop(
+            backdrop = source,
+            shape = { if (cornerRadius == null) Capsule() else RoundedRectangle(cornerRadius) },
+            effects = {
+                vibrancy()
+                blur(lerp(2f, 6f, amount).dp.toPx())
+                lens(lerp(6f, 16f, amount).dp.toPx(), lerp(8f, 26f, amount).dp.toPx())
+            },
+            shadow = { Shadow(radius = 16.dp, color = Color.Black.copy(alpha = 0.18f)) },
+            layerBlock = { followTouch(touch) },
+            // A button that sticks out of the recorded list would otherwise show a hole there
+            onDrawBehind = { drawRect(background) },
+            onDrawSurface = {
+                // The tint colours what is beneath (hue), then a veil of it keeps the label readable
+                drawRect(tint, blendMode = BlendMode.Hue)
+                drawRect(veil)
+            }
+        )
+        .then(touch.light)
+        .then(touch.gestures)
 }
 
 /** The button's own fill: clear when the glass draws the body instead. */
-fun actionGlassContainer(source: LayerBackdrop?, color: Color): Color =
+fun actionGlassContainer(source: Backdrop?, color: Color): Color =
     if (source == null) color else Color.Transparent
 
 /** The button's own shadow: none when the glass casts its own. */
 @Composable
 fun actionGlassElevation(
-    source: LayerBackdrop?,
+    source: Backdrop?,
     default: FloatingActionButtonElevation = FloatingActionButtonDefaults.elevation()
 ): FloatingActionButtonElevation =
     if (source == null) default else FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)

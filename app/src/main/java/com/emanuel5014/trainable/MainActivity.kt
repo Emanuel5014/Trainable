@@ -45,6 +45,7 @@ import androidx.navigation.compose.rememberNavController
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
@@ -279,6 +280,9 @@ class MainActivity : FragmentActivity() {
             val glassSettings by userPreferencesRepository.glassSettings.collectAsState(initial = GlassSettings())
             // The floating bar turns to glass when the user wants glass on the navigation
             val glassNavBar = navBarStyle == NavBarStyle.Floating && glassSettings.isOn(GlassPart.NavBar)
+            // The expressive navbar's action button bends the same copy of the screens
+            val glassNavAction = navBarStyle == NavBarStyle.Expressive && glassSettings.isOn(GlassPart.ActionButtons)
+            val recordScreens = glassNavBar || glassNavAction
 
             GymTrackingTheme(
                 dynamicColor = dynamicColor,
@@ -358,7 +362,7 @@ class MainActivity : FragmentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .hazeSource(state = hazeState)
-                                .then(if (glassNavBar) Modifier.layerBackdrop(glassBackdrop) else Modifier)
+                                .then(if (recordScreens) Modifier.layerBackdrop(glassBackdrop) else Modifier)
                         )
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
@@ -389,10 +393,14 @@ class MainActivity : FragmentActivity() {
                                         isDark = isDark
                                     )
                                 }
-                                NavBarStyle.Expressive -> BottomNavBarExpressive(
-                                    navController = navController,
-                                    pagerState = pagerState
-                                )
+                                NavBarStyle.Expressive -> CompositionLocalProvider(
+                                    LocalAppGlassBackdrop provides (if (glassNavAction) glassBackdrop else null)
+                                ) {
+                                    BottomNavBarExpressive(
+                                        navController = navController,
+                                        pagerState = pagerState
+                                    )
+                                }
                                 else -> BottomNavBar(
                                     navController = navController,
                                     pagerState = pagerState

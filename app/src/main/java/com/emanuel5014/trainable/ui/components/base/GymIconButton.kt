@@ -52,10 +52,11 @@ fun GymIconButton(
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
 
-    val scale by animateFloatAsState(if (isPressed) 0.9f else 1f, label = "icon_button_scale")
     // Only the neutral round button turns to glass; a coloured one (delete, accent) keeps its fill
     val glass = containerColor == SurfaceContainerHigh && shape == CircleShape &&
         LocalGlassSettings.current.isOn(GlassPart.HeaderButtons)
+    // Glass swells under the finger instead of shrinking
+    val scale by animateFloatAsState(if (isPressed && !glass) 0.9f else 1f, label = "icon_button_scale")
 
     Box(
         modifier = modifier

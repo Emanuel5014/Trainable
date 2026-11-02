@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults
 import com.emanuel5014.trainable.data.local.entity.encodePerformed
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
@@ -369,6 +374,7 @@ fun HistoryScreen(
         )
     )
 
+    val actionGlass = rememberActionGlassSource()
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = surfaceColor,
@@ -385,12 +391,16 @@ fun HistoryScreen(
                                 tooltip = { PlainTooltip { Text(stringResource(if (fabMenuExpanded) R.string.close else R.string.add)) } },
                                 state = rememberTooltipState()
                             ) {
+                                val toggleTint = if (fabMenuExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
                                 ToggleFloatingActionButton(
                                     checked = fabMenuExpanded,
                                     onCheckedChange = { 
                                         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         fabMenuExpanded = !fabMenuExpanded 
-                                    }
+                                    },
+                                    // With the glass the button keeps one shape: its own morphing container is clear
+                                    modifier = Modifier.actionGlass(actionGlass, toggleTint, cornerRadius = 16.dp),
+                                    containerColor = if (actionGlass == null) ToggleFloatingActionButtonDefaults.containerColor() else { _ -> Color.Transparent }
                                 ) {
                                     val imageVector by remember {
                                         derivedStateOf {
@@ -412,6 +422,8 @@ fun HistoryScreen(
                                 fabMenuExpanded = false
                                 showCardioDialog = true
                             },
+                            modifier = Modifier.actionGlass(actionGlass, MaterialTheme.colorScheme.primaryContainer),
+                            containerColor = actionGlassContainer(actionGlass, MaterialTheme.colorScheme.primaryContainer),
                             icon = { Icon(Icons.AutoMirrored.Rounded.DirectionsRun, contentDescription = null) },
                             text = { Text(text = stringResource(R.string.add_cardio)) }
                         )
@@ -421,6 +433,8 @@ fun HistoryScreen(
                                 fabMenuExpanded = false
                                 showAddWorkoutSheet = true
                             },
+                            modifier = Modifier.actionGlass(actionGlass, MaterialTheme.colorScheme.primaryContainer),
+                            containerColor = actionGlassContainer(actionGlass, MaterialTheme.colorScheme.primaryContainer),
                             icon = { Icon(Icons.AutoMirrored.Rounded.Assignment, contentDescription = null) },
                             text = { Text(text = stringResource(R.string.add_workout)) }
                         )
@@ -431,6 +445,7 @@ fun HistoryScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .actionGlassSource(actionGlass)
                     .padding(paddingValues)
             ) {
                 ScreenHeader(
