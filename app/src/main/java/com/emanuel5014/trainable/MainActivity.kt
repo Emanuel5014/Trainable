@@ -47,7 +47,7 @@ import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
-import com.emanuel5014.trainable.ui.theme.OverlayGlassBlur
+import com.emanuel5014.trainable.ui.theme.overlayGlassBlur
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
@@ -299,7 +299,6 @@ class MainActivity : FragmentActivity() {
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
                   LocalGlassSettings provides glassSettings
               ) {
-                OverlayGlassBlur()
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
                 val navController = rememberNavController()
@@ -354,6 +353,7 @@ class MainActivity : FragmentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .overlayGlassBlur()
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     if (resolvedOnboardingState == true) {
