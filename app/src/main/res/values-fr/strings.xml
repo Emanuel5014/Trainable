@@ -14,6 +14,10 @@
     <string name="nav_bar_style_classic_desc">Barre de navigation inférieure Material 3</string>
     <string name="nav_bar_style_floating">Flottante</string>
     <string name="nav_bar_style_floating_desc">Barre floutée qui flotte au-dessus du contenu</string>
+    <string name="nav_bar_style_glass">Liquid Glass</string>
+    <string name="nav_bar_style_glass_desc">Barre en verre qui courbe le contenu en dessous, comme sur iOS</string>
+    <string name="glass_intensity">Intensité du verre</string>
+    <string name="glass_intensity_desc">D\'une barre presque opaque à un verre transparent</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barre d\'outils Material 3 Expressive, avec l\'action principale de chaque onglet à côté</string>
 

@@ -912,6 +912,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    val glassIntensity = userPrefsRepository.glassIntensity.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = UserPreferencesRepository.DEFAULT_GLASS_INTENSITY
+    )
+
+    fun setGlassIntensity(intensity: Float) {
+        viewModelScope.launch {
+            userPrefsRepository.setGlassIntensity(intensity)
+        }
+    }
+
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             userPrefsRepository.setDynamicColor(enabled)

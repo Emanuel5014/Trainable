@@ -71,6 +71,9 @@ import com.emanuel5014.trainable.util.AppLocaleManager
 import com.emanuel5014.trainable.util.UpdateManager
 import com.emanuel5014.trainable.util.notification.TimerNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
+import com.emanuel5014.trainable.ui.components.BottomNavBarGlass
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.Dispatchers
@@ -270,6 +273,9 @@ class MainActivity : FragmentActivity() {
 
             // Null until read, so the first frame never shows the wrong navbar
             val navBarStyle by userPreferencesRepository.navBarStyle.collectAsState(initial = null)
+            val glassIntensity by userPreferencesRepository.glassIntensity.collectAsState(
+                initial = UserPreferencesRepository.DEFAULT_GLASS_INTENSITY
+            )
 
             GymTrackingTheme(
                 dynamicColor = dynamicColor,
@@ -328,6 +334,12 @@ class MainActivity : FragmentActivity() {
                 val pagerState = rememberPagerState(pageCount = { 4 })
 
                 val hazeState = rememberHazeState()
+                // What the Liquid Glass bar bends: the screens over the window background
+                val backgroundColor = MaterialTheme.colorScheme.background
+                val glassBackdrop = rememberLayerBackdrop {
+                    drawRect(backgroundColor)
+                    drawContent()
+                }
 
                 Box(
                     modifier = Modifier
@@ -342,6 +354,7 @@ class MainActivity : FragmentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .hazeSource(state = hazeState)
+                                .then(if (navBarStyle == NavBarStyle.Glass) Modifier.layerBackdrop(glassBackdrop) else Modifier)
                         )
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
@@ -361,6 +374,13 @@ class MainActivity : FragmentActivity() {
                                     pagerState = pagerState,
                                     hazeState = hazeState,
                                     isDark = isDark
+                                )
+                                NavBarStyle.Glass -> BottomNavBarGlass(
+                                    navController = navController,
+                                    pagerState = pagerState,
+                                    backdrop = glassBackdrop,
+                                    isDark = isDark,
+                                    intensity = glassIntensity
                                 )
                                 NavBarStyle.Expressive -> BottomNavBarExpressive(
                                     navController = navController,

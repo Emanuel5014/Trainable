@@ -15,6 +15,10 @@
     <string name="nav_bar_style_classic_desc">Standard Material 3 bottom navigation</string>
     <string name="nav_bar_style_floating">Floating</string>
     <string name="nav_bar_style_floating_desc">Blurred bar floating above the content</string>
+    <string name="nav_bar_style_glass">Liquid Glass</string>
+    <string name="nav_bar_style_glass_desc">Glass bar that bends the content beneath it, like iOS</string>
+    <string name="glass_intensity">Glass intensity</string>
+    <string name="glass_intensity_desc">From a nearly solid bar to clear glass</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 

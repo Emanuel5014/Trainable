@@ -234,6 +234,7 @@ class BackupManager @Inject constructor(
                 json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
                 json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
                 prefs[UserPreferencesRepository.NAV_BAR_STYLE]?.let { json.put("nav_bar_style", it) }
+                prefs[UserPreferencesRepository.GLASS_INTENSITY]?.let { json.put("glass_intensity", it.toDouble()) }
                 json.put("theme_mode", prefs[UserPreferencesRepository.THEME_MODE] ?: 0)
                 json.put("timer_notifications_enabled", prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] ?: true)
                 json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
@@ -389,6 +390,9 @@ class BackupManager @Inject constructor(
                                             else if (jsonObject.has("floating_nav_bar"))
                                                 // Backup from before the third style: let the restored switch decide
                                                 prefs.remove(UserPreferencesRepository.NAV_BAR_STYLE)
+                                            if (jsonObject.has("glass_intensity"))
+                                                prefs[UserPreferencesRepository.GLASS_INTENSITY] =
+                                                    jsonObject.getDouble("glass_intensity").toFloat().coerceIn(0f, 1f)
                                             if (jsonObject.has("theme_mode"))
                                                 prefs[UserPreferencesRepository.THEME_MODE] = jsonObject.getInt("theme_mode")
                                             if (jsonObject.has("timer_notifications_enabled"))

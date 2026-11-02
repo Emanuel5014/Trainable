@@ -132,6 +132,8 @@ dependencies {
 
 // Haze - Frosted Glass Blur
     implementation(libs.haze)
+    implementation(libs.backdrop)
+    implementation(libs.kyant.shapes)
 
     // Ktor Server (Local Web Dashboard)
     implementation(libs.ktor.server.core)

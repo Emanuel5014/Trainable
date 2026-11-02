@@ -14,6 +14,10 @@
     <string name="nav_bar_style_classic_desc">Standard Material 3 untere Navigationsleiste</string>
     <string name="nav_bar_style_floating">Schwebend</string>
     <string name="nav_bar_style_floating_desc">Unscharfe Leiste, die über dem Inhalt schwebt</string>
+    <string name="nav_bar_style_glass">Liquid Glass</string>
+    <string name="nav_bar_style_glass_desc">Glasleiste, die den Inhalt darunter bricht, wie bei iOS</string>
+    <string name="glass_intensity">Glasintensität</string>
+    <string name="glass_intensity_desc">Von einer fast deckenden Leiste bis zu klarem Glas</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive Toolbar, mit der Hauptaktion jedes Tabs daneben</string>
 
