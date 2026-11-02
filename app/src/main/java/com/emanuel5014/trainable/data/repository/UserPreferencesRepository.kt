@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
@@ -46,8 +48,17 @@ class UserPreferencesRepository @Inject constructor(
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
         val NAV_BAR_STYLE = intPreferencesKey("nav_bar_style")
+        val LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
         val GLASS_INTENSITY = floatPreferencesKey("glass_intensity")
-        const val DEFAULT_GLASS_INTENSITY = 0.6f
+        val GLASS_NAV_BAR = booleanPreferencesKey("glass_nav_bar")
+        val GLASS_HEADER_BUTTONS = booleanPreferencesKey("glass_header_buttons")
+        val GLASS_ACTION_BUTTONS = booleanPreferencesKey("glass_action_buttons")
+
+        fun glassPartKey(part: GlassPart) = when (part) {
+            GlassPart.NavBar -> GLASS_NAV_BAR
+            GlassPart.HeaderButtons -> GLASS_HEADER_BUTTONS
+            GlassPart.ActionButtons -> GLASS_ACTION_BUTTONS
+        }
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")
         val THEME_PALETTE = intPreferencesKey("theme_palette")
@@ -264,11 +275,17 @@ class UserPreferencesRepository @Inject constructor(
                 ?: if (preferences[FLOATING_NAV_BAR] ?: true) NavBarStyle.Floating else NavBarStyle.Classic
         }
 
-    val floatingNavBar: Flow<Boolean> = navBarStyle.map { it.floats }
+    val floatingNavBar: Flow<Boolean> = navBarStyle.map { it == NavBarStyle.Floating }
 
-    /** How much of Liquid Glass the user wants: 0 is a nearly solid surface, 1 the clearest, most bending glass. */
-    val glassIntensity: Flow<Float> = dataStore.data
-        .map { preferences -> (preferences[GLASS_INTENSITY] ?: DEFAULT_GLASS_INTENSITY).coerceIn(0f, 1f) }
+    /** Liquid Glass from Personalization: off by default, every part on once the user turns it on. */
+    val glassSettings: Flow<GlassSettings> = dataStore.data
+        .map { preferences ->
+            GlassSettings(
+                enabled = preferences[LIQUID_GLASS_ENABLED] ?: false,
+                intensity = (preferences[GLASS_INTENSITY] ?: GlassSettings.DEFAULT_INTENSITY).coerceIn(0f, 1f),
+                parts = GlassPart.entries.filter { preferences[glassPartKey(it)] ?: true }.toSet()
+            )
+        }
 
     val dynamicColor: Flow<Boolean> = dataStore.data
         .map { preferences ->
@@ -752,13 +769,25 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { preferences ->
             preferences[NAV_BAR_STYLE] = style.id
             // Kept in sync for versions and backups that only know the floating/classic switch
-            preferences[FLOATING_NAV_BAR] = style.floats
+            preferences[FLOATING_NAV_BAR] = style == NavBarStyle.Floating
+        }
+    }
+
+    suspend fun setLiquidGlassEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[LIQUID_GLASS_ENABLED] = enabled
         }
     }
 
     suspend fun setGlassIntensity(intensity: Float) {
         dataStore.edit { preferences ->
             preferences[GLASS_INTENSITY] = intensity.coerceIn(0f, 1f)
+        }
+    }
+
+    suspend fun setGlassPart(part: GlassPart, on: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[glassPartKey(part)] = on
         }
     }
 

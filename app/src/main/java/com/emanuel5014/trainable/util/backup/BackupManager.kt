@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.RetiredPresetsMarker
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
+import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
@@ -234,7 +235,12 @@ class BackupManager @Inject constructor(
                 json.put("weekly_goal", prefs[UserPreferencesRepository.WEEKLY_GOAL] ?: 3)
                 json.put("floating_nav_bar", prefs[UserPreferencesRepository.FLOATING_NAV_BAR] ?: true)
                 prefs[UserPreferencesRepository.NAV_BAR_STYLE]?.let { json.put("nav_bar_style", it) }
+                prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED]?.let { json.put("liquid_glass_enabled", it) }
                 prefs[UserPreferencesRepository.GLASS_INTENSITY]?.let { json.put("glass_intensity", it.toDouble()) }
+                GlassPart.entries.forEach { part ->
+                    val key = UserPreferencesRepository.glassPartKey(part)
+                    prefs[key]?.let { json.put(key.name, it) }
+                }
                 json.put("theme_mode", prefs[UserPreferencesRepository.THEME_MODE] ?: 0)
                 json.put("timer_notifications_enabled", prefs[UserPreferencesRepository.TIMER_NOTIFICATIONS_ENABLED] ?: true)
                 json.put("warmup_timer_enabled", prefs[UserPreferencesRepository.WARMUP_TIMER_ENABLED] ?: true)
@@ -390,6 +396,12 @@ class BackupManager @Inject constructor(
                                             else if (jsonObject.has("floating_nav_bar"))
                                                 // Backup from before the third style: let the restored switch decide
                                                 prefs.remove(UserPreferencesRepository.NAV_BAR_STYLE)
+                                            if (jsonObject.has("liquid_glass_enabled"))
+                                                prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED] = jsonObject.getBoolean("liquid_glass_enabled")
+                                            GlassPart.entries.forEach { part ->
+                                                val key = UserPreferencesRepository.glassPartKey(part)
+                                                if (jsonObject.has(key.name)) prefs[key] = jsonObject.getBoolean(key.name)
+                                            }
                                             if (jsonObject.has("glass_intensity"))
                                                 prefs[UserPreferencesRepository.GLASS_INTENSITY] =
                                                     jsonObject.getDouble("glass_intensity").toFloat().coerceIn(0f, 1f)

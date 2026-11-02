@@ -14,10 +14,18 @@
     <string name="nav_bar_style_classic_desc">Barra di navigazione standard Material 3</string>
     <string name="nav_bar_style_floating">Fluttuante</string>
     <string name="nav_bar_style_floating_desc">Barra sfocata che fluttua sopra i contenuti</string>
-    <string name="nav_bar_style_glass">Liquid Glass</string>
-    <string name="nav_bar_style_glass_desc">Barra di vetro che piega i contenuti sotto di sé, come su iOS</string>
+    <string name="liquid_glass">Liquid Glass</string>
+    <string name="liquid_glass_desc">Vetro in stile iOS sui controlli che fluttuano sopra i contenuti</string>
     <string name="glass_intensity">Intensità del vetro</string>
-    <string name="glass_intensity_desc">Da una barra quasi piena a vetro trasparente</string>
+    <string name="glass_intensity_desc">Da una superficie quasi piena a vetro trasparente</string>
+    <string name="glass_parts">Dove usarlo</string>
+    <string name="glass_part_nav_bar">Barra di navigazione</string>
+    <string name="glass_part_nav_bar_desc">La barra fluttuante piega ciò che scorre sotto</string>
+    <string name="glass_part_nav_bar_needs_floating">Funziona con la barra di navigazione Fluttuante (Impostazioni)</string>
+    <string name="glass_part_header_buttons">Pulsanti delle intestazioni</string>
+    <string name="glass_part_header_buttons_desc">Impostazioni, filtri e pulsanti indietro</string>
+    <string name="glass_part_action_buttons">Pulsanti d\'azione</string>
+    <string name="glass_part_action_buttons_desc">Allenamento veloce, nuova scheda e gli altri pulsanti fluttuanti</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Toolbar Material 3 Expressive, con l\'azione principale di ogni scheda accanto</string>
 

@@ -14,10 +14,18 @@
     <string name="nav_bar_style_classic_desc">Barra de navegación inferior Material 3</string>
     <string name="nav_bar_style_floating">Flotante</string>
     <string name="nav_bar_style_floating_desc">Barra difuminada que flota sobre el contenido</string>
-    <string name="nav_bar_style_glass">Liquid Glass</string>
-    <string name="nav_bar_style_glass_desc">Barra de cristal que curva el contenido de debajo, como en iOS</string>
+    <string name="liquid_glass">Liquid Glass</string>
+    <string name="liquid_glass_desc">Cristal al estilo de iOS en los controles que flotan sobre el contenido</string>
     <string name="glass_intensity">Intensidad del cristal</string>
-    <string name="glass_intensity_desc">De una barra casi opaca a cristal transparente</string>
+    <string name="glass_intensity_desc">De una superficie casi opaca a cristal transparente</string>
+    <string name="glass_parts">Dónde usarlo</string>
+    <string name="glass_part_nav_bar">Barra de navegación</string>
+    <string name="glass_part_nav_bar_desc">La barra flotante curva lo que se desplaza debajo</string>
+    <string name="glass_part_nav_bar_needs_floating">Funciona con la barra de navegación Flotante (Ajustes)</string>
+    <string name="glass_part_header_buttons">Botones de cabecera</string>
+    <string name="glass_part_header_buttons_desc">Ajustes, filtros y botones de volver</string>
+    <string name="glass_part_action_buttons">Botones de acción</string>
+    <string name="glass_part_action_buttons_desc">Entrenamiento rápido, nueva rutina y los demás botones flotantes</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de herramientas Material 3 Expressive, con la acción principal de cada pestaña al lado</string>
 

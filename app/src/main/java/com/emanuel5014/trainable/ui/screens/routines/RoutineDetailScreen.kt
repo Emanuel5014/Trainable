@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -655,6 +660,7 @@ fun RoutineDetailScreen(
     // The Start button shrinks to its icon once the list is scrolled away from the top
     val startFabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -669,9 +675,11 @@ fun RoutineDetailScreen(
             ) {
                 FloatingActionButton(
                     onClick = { openAddSheet() },
-                    containerColor = SecondaryContainer,
+                    containerColor = actionGlassContainer(actionGlass, SecondaryContainer),
                     contentColor = OnSecondaryContainer,
-                    shape = RoundedCornerShape(18.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = actionGlassElevation(actionGlass),
+                    modifier = Modifier.actionGlass(actionGlass, SecondaryContainer, cornerRadius = 18.dp)
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_exercise))
                 }
@@ -692,9 +700,11 @@ fun RoutineDetailScreen(
                         expanded = startFabExpanded,
                         icon = { Icon(Icons.Rounded.PlayArrow, contentDescription = null) },
                         text = { Text(stringResource(R.string.start), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold) },
-                        containerColor = Primary,
+                        containerColor = actionGlassContainer(actionGlass, Primary),
                         contentColor = OnPrimary,
-                        shape = RoundedCornerShape(20.dp)
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = actionGlassElevation(actionGlass),
+                        modifier = Modifier.actionGlass(actionGlass, Primary, cornerRadius = 20.dp)
                     )
                 }
             }
@@ -711,6 +721,7 @@ fun RoutineDetailScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .actionGlassSource(actionGlass)
                     .padding(paddingValues),
                 contentPadding = PaddingValues(bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

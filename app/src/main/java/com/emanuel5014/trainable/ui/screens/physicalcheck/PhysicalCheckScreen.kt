@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.physicalcheck
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -392,6 +397,7 @@ fun PhysicalCheckScreen(
         }
         else -> {
             // Schermata principale timeline check fisici
+            val actionGlass = rememberActionGlassSource()
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -453,8 +459,10 @@ fun PhysicalCheckScreen(
                                 isSelectionMode = false
                                 selectedForCompare = emptySet()
                             },
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            containerColor = actionGlassContainer(actionGlass, MaterialTheme.colorScheme.primary),
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            elevation = actionGlassElevation(actionGlass),
+                            modifier = Modifier.actionGlass(actionGlass, MaterialTheme.colorScheme.primary, cornerRadius = 16.dp)
                         ) {
                             Icon(Icons.Default.Compare, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
@@ -466,8 +474,10 @@ fun PhysicalCheckScreen(
                                 viewModel.touch()
                                 showAddDialog = true
                             },
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            containerColor = actionGlassContainer(actionGlass, MaterialTheme.colorScheme.primary),
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            elevation = actionGlassElevation(actionGlass),
+                            modifier = Modifier.actionGlass(actionGlass, MaterialTheme.colorScheme.primary, cornerRadius = 16.dp)
                         ) {
                             Icon(Icons.Default.AddAPhoto, contentDescription = stringResource(R.string.physical_check_add_check_cd))
                         }
@@ -510,6 +520,7 @@ fun PhysicalCheckScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
+                            .actionGlassSource(actionGlass)
                             .padding(paddingValues),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)

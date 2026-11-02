@@ -87,10 +87,6 @@ import java.util.Locale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import kotlin.math.roundToInt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -1664,15 +1660,6 @@ fun SettingsScreen(
                                             }
                                         )
                                         SettingsChoiceOption(
-                                            title = stringResource(R.string.nav_bar_style_glass),
-                                            description = stringResource(R.string.nav_bar_style_glass_desc),
-                                            isSelected = navBarStyle == NavBarStyle.Glass,
-                                            onClick = {
-                                                viewModel.setNavBarStyle(NavBarStyle.Glass)
-                                                showNavBarStyleDialog = false
-                                            }
-                                        )
-                                        SettingsChoiceOption(
                                             title = stringResource(R.string.nav_bar_style_classic),
                                             description = stringResource(R.string.nav_bar_style_classic_desc),
                                             isSelected = navBarStyle == NavBarStyle.Classic,
@@ -1708,49 +1695,12 @@ fun SettingsScreen(
                                             NavBarStyle.Classic -> stringResource(R.string.nav_bar_style_classic)
                                             NavBarStyle.Floating -> stringResource(R.string.nav_bar_style_floating)
                                             NavBarStyle.Expressive -> stringResource(R.string.nav_bar_style_expressive)
-                                            NavBarStyle.Glass -> stringResource(R.string.nav_bar_style_glass)
                                         },
                                         style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant
                                     )
                                 }
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
-
-                        if (navBarStyle == NavBarStyle.Glass) {
-                            val glassIntensity by viewModel.glassIntensity.collectAsState()
-                            // Saved on release only, so dragging does not write to disk every frame
-                            var draftIntensity by remember(glassIntensity) { mutableFloatStateOf(glassIntensity) }
-                            Column(modifier = Modifier.fillMaxWidth().padding(start = 40.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(stringResource(R.string.glass_intensity), style = MaterialTheme.typography.titleSmall, color = OnSurface, fontWeight = FontWeight.Bold)
-                                        Text(stringResource(R.string.glass_intensity_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                                    }
-                                    Text(
-                                        "${(draftIntensity * 100).roundToInt()}%",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Primary,
-                                        fontWeight = FontWeight.Black,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
-                                }
-                                Slider(
-                                    value = draftIntensity,
-                                    onValueChange = { draftIntensity = it },
-                                    onValueChangeFinished = { viewModel.setGlassIntensity(draftIntensity) },
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = Primary,
-                                        activeTrackColor = Primary,
-                                        inactiveTrackColor = SurfaceContainerHighest
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
                         }
 
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))

@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
@@ -216,6 +221,7 @@ fun RoutineListScreen(
         }
     )
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
@@ -226,12 +232,14 @@ fun RoutineListScreen(
             if (showOwnFab && uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
                     onClick = { viewModel.shareSelectedPlans(context) },
-                    containerColor = Primary,
+                    containerColor = actionGlassContainer(actionGlass, Primary),
                     contentColor = OnPrimary,
                     shape = Shapes.large,
+                    elevation = actionGlassElevation(actionGlass),
                     modifier = Modifier
                         .padding(end = fabPadding)
                         .padding(bottom = 80.dp)
+                        .actionGlass(actionGlass, Primary)
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -240,12 +248,14 @@ fun RoutineListScreen(
             } else if (showOwnFab) {
                 ExtendedFloatingActionButton(
                     onClick = { openCreateSheet() },
-                    containerColor = Primary,
+                    containerColor = actionGlassContainer(actionGlass, Primary),
                     contentColor = OnPrimary,
                     shape = Shapes.large,
+                    elevation = actionGlassElevation(actionGlass),
                     modifier = Modifier
                         .padding(end = fabPadding)
                         .padding(bottom = 80.dp)
+                        .actionGlass(actionGlass, Primary)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -257,6 +267,7 @@ fun RoutineListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .actionGlassSource(actionGlass)
                 .padding(paddingValues)
         ) {
             // Header Section

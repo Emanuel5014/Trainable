@@ -28,6 +28,9 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.headerGlass
+import com.emanuel5014.trainable.data.model.GlassPart
 
 @Composable
 fun ScreenHeader(
@@ -134,11 +137,13 @@ fun ScreenHeader(
                 horizontalArrangement = Arrangement.spacedBy(if (ResponsiveSize.isCompact) 12.dp else 16.dp)
             ) {
                 if (icon != null) {
+                    val glass = LocalGlassSettings.current.isOn(GlassPart.HeaderButtons)
                     Box(
                         modifier = Modifier
                             .size(iconBox)
+                            .then(if (glass) Modifier.headerGlass() else Modifier)
                             .clip(CircleShape)
-                            .background(SurfaceContainerHigh),
+                            .then(if (glass) Modifier else Modifier.background(SurfaceContainerHigh)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

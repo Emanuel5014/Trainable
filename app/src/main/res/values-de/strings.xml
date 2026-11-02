@@ -14,10 +14,18 @@
     <string name="nav_bar_style_classic_desc">Standard Material 3 untere Navigationsleiste</string>
     <string name="nav_bar_style_floating">Schwebend</string>
     <string name="nav_bar_style_floating_desc">Unscharfe Leiste, die über dem Inhalt schwebt</string>
-    <string name="nav_bar_style_glass">Liquid Glass</string>
-    <string name="nav_bar_style_glass_desc">Glasleiste, die den Inhalt darunter bricht, wie bei iOS</string>
+    <string name="liquid_glass">Liquid Glass</string>
+    <string name="liquid_glass_desc">Glas im Stil von iOS auf den Bedienelementen, die über dem Inhalt schweben</string>
     <string name="glass_intensity">Glasintensität</string>
-    <string name="glass_intensity_desc">Von einer fast deckenden Leiste bis zu klarem Glas</string>
+    <string name="glass_intensity_desc">Von einer fast deckenden Fläche bis zu klarem Glas</string>
+    <string name="glass_parts">Wo verwenden</string>
+    <string name="glass_part_nav_bar">Navigationsleiste</string>
+    <string name="glass_part_nav_bar_desc">Die schwebende Leiste bricht, was darunter scrollt</string>
+    <string name="glass_part_nav_bar_needs_floating">Funktioniert mit der schwebenden Navigationsleiste (Einstellungen)</string>
+    <string name="glass_part_header_buttons">Kopfzeilen-Buttons</string>
+    <string name="glass_part_header_buttons_desc">Einstellungen, Filter und Zurück-Buttons</string>
+    <string name="glass_part_action_buttons">Aktionsbuttons</string>
+    <string name="glass_part_action_buttons_desc">Schnelles Training, neuer Plan und die anderen schwebenden Buttons</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive Toolbar, mit der Hauptaktion jedes Tabs daneben</string>
 

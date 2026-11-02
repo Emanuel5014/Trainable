@@ -42,7 +42,10 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
@@ -273,9 +276,9 @@ class MainActivity : FragmentActivity() {
 
             // Null until read, so the first frame never shows the wrong navbar
             val navBarStyle by userPreferencesRepository.navBarStyle.collectAsState(initial = null)
-            val glassIntensity by userPreferencesRepository.glassIntensity.collectAsState(
-                initial = UserPreferencesRepository.DEFAULT_GLASS_INTENSITY
-            )
+            val glassSettings by userPreferencesRepository.glassSettings.collectAsState(initial = GlassSettings())
+            // The floating bar turns to glass when the user wants glass on the navigation
+            val glassNavBar = navBarStyle == NavBarStyle.Floating && glassSettings.isOn(GlassPart.NavBar)
 
             GymTrackingTheme(
                 dynamicColor = dynamicColor,
@@ -288,7 +291,8 @@ class MainActivity : FragmentActivity() {
                   LocalAdvancedProgramming provides advancedProgramming,
                   LocalRpeSettings provides rpeSettings,
                   LocalExerciseMediaEnabled provides exerciseMediaEnabled,
-                  LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating)
+                  LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
+                  LocalGlassSettings provides glassSettings
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }
@@ -354,7 +358,7 @@ class MainActivity : FragmentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .hazeSource(state = hazeState)
-                                .then(if (navBarStyle == NavBarStyle.Glass) Modifier.layerBackdrop(glassBackdrop) else Modifier)
+                                .then(if (glassNavBar) Modifier.layerBackdrop(glassBackdrop) else Modifier)
                         )
 
                         val showBottomBar = (currentDestination?.hasRoute(MainTabs::class) == true || 
@@ -369,19 +373,22 @@ class MainActivity : FragmentActivity() {
                             exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                         ) {
                             when (navBarStyle) {
-                                NavBarStyle.Floating -> BottomNavBarFlo(
-                                    navController = navController,
-                                    pagerState = pagerState,
-                                    hazeState = hazeState,
-                                    isDark = isDark
-                                )
-                                NavBarStyle.Glass -> BottomNavBarGlass(
-                                    navController = navController,
-                                    pagerState = pagerState,
-                                    backdrop = glassBackdrop,
-                                    isDark = isDark,
-                                    intensity = glassIntensity
-                                )
+                                NavBarStyle.Floating -> if (glassNavBar) {
+                                    BottomNavBarGlass(
+                                        navController = navController,
+                                        pagerState = pagerState,
+                                        backdrop = glassBackdrop,
+                                        isDark = isDark,
+                                        intensity = glassSettings.intensity
+                                    )
+                                } else {
+                                    BottomNavBarFlo(
+                                        navController = navController,
+                                        pagerState = pagerState,
+                                        hazeState = hazeState,
+                                        isDark = isDark
+                                    )
+                                }
                                 NavBarStyle.Expressive -> BottomNavBarExpressive(
                                     navController = navController,
                                     pagerState = pagerState

@@ -18,6 +18,8 @@ import com.emanuel5014.trainable.data.ai.ModelImportError
 import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.data.remote.GitHubRelease
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -912,15 +914,27 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    val glassIntensity = userPrefsRepository.glassIntensity.stateIn(
+    val glassSettings = userPrefsRepository.glassSettings.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = UserPreferencesRepository.DEFAULT_GLASS_INTENSITY
+        initialValue = GlassSettings()
     )
+
+    fun setLiquidGlassEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setLiquidGlassEnabled(enabled)
+        }
+    }
 
     fun setGlassIntensity(intensity: Float) {
         viewModelScope.launch {
             userPrefsRepository.setGlassIntensity(intensity)
+        }
+    }
+
+    fun setGlassPart(part: GlassPart, on: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setGlassPart(part, on)
         }
     }
 

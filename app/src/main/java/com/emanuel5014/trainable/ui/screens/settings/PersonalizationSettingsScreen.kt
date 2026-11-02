@@ -20,7 +20,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.data.model.GlassSettings
+import com.emanuel5014.trainable.data.model.NavBarStyle
+import kotlin.math.roundToInt
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material3.AlertDialog
@@ -73,6 +85,8 @@ fun PersonalizationSettingsScreen(
     val themePalette by viewModel.themePalette.collectAsState()
     val themeStyle by viewModel.themeStyle.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
+    val glassSettings by viewModel.glassSettings.collectAsState()
+    val navBarStyle by viewModel.navBarStyle.collectAsState()
 
     val hasCustomColor = dynamicColorSeed != null && wallpaperColors.firstOrNull()?.let { dynamicColorSeed != it } ?: true
 
@@ -428,6 +442,134 @@ fun PersonalizationSettingsScreen(
                     }
                 }
             }
+
+            LiquidGlassCard(
+                settings = glassSettings,
+                floatingNavBar = navBarStyle == NavBarStyle.Floating,
+                onEnabledChange = viewModel::setLiquidGlassEnabled,
+                onIntensityChange = viewModel::setGlassIntensity,
+                onPartChange = viewModel::setGlassPart
+            )
         }
+    }
+}
+
+/** Liquid Glass on/off, how much of it, and on which parts of the app. */
+@Composable
+private fun LiquidGlassCard(
+    settings: GlassSettings,
+    floatingNavBar: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    onIntensityChange: (Float) -> Unit,
+    onPartChange: (GlassPart, Boolean) -> Unit
+) {
+    GymCard(containerColor = SurfaceContainerHigh) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            GlassSwitchRow(
+                icon = Icons.Rounded.AutoAwesome,
+                title = stringResource(R.string.liquid_glass),
+                description = stringResource(R.string.liquid_glass_desc),
+                checked = settings.enabled,
+                onCheckedChange = onEnabledChange,
+                emphasized = true
+            )
+
+            if (settings.enabled) {
+                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                // Saved on release only, so dragging does not write to disk every frame
+                var draft by remember(settings.intensity) { mutableFloatStateOf(settings.intensity) }
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.glass_intensity), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                            Text(stringResource(R.string.glass_intensity_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                        }
+                        Text(
+                            "${(draft * 100).roundToInt()}%",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Primary,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                    Slider(
+                        value = draft,
+                        onValueChange = { draft = it },
+                        onValueChangeFinished = { onIntensityChange(draft) },
+                        colors = SliderDefaults.colors(
+                            thumbColor = Primary,
+                            activeTrackColor = Primary,
+                            inactiveTrackColor = SurfaceContainerHighest
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                HorizontalDivider(color = Surface.copy(alpha = 0.5f))
+
+                Text(
+                    stringResource(R.string.glass_parts).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Primary,
+                    fontWeight = FontWeight.Black
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Dashboard,
+                    title = stringResource(R.string.glass_part_nav_bar),
+                    description = stringResource(
+                        if (floatingNavBar) R.string.glass_part_nav_bar_desc else R.string.glass_part_nav_bar_needs_floating
+                    ),
+                    checked = GlassPart.NavBar in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.NavBar, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Settings,
+                    title = stringResource(R.string.glass_part_header_buttons),
+                    description = stringResource(R.string.glass_part_header_buttons_desc),
+                    checked = GlassPart.HeaderButtons in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.HeaderButtons, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Add,
+                    title = stringResource(R.string.glass_part_action_buttons),
+                    description = stringResource(R.string.glass_part_action_buttons_desc),
+                    checked = GlassPart.ActionButtons in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.ActionButtons, it) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassSwitchRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    emphasized: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Icon(icon, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    title,
+                    style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall,
+                    color = OnSurface,
+                    fontWeight = if (emphasized) FontWeight.ExtraBold else FontWeight.Bold
+                )
+                Text(description, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        SettingsSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.onerepmax
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -94,21 +99,24 @@ fun OneRepMaxScreen(
     var dialogExerciseId by remember { mutableStateOf<Int?>(null) }
     var detailExerciseId by remember { mutableStateOf<Int?>(null) }
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showPicker = true },
-                containerColor = Primary,
+                containerColor = actionGlassContainer(actionGlass, Primary),
                 contentColor = OnPrimary,
                 shape = CircleShape,
+                elevation = actionGlassElevation(actionGlass),
+                modifier = Modifier.actionGlass(actionGlass, Primary),
                 icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.add_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold) }
             )
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize().actionGlassSource(actionGlass).padding(padding),
             contentPadding = PaddingValues(bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
