@@ -47,7 +47,8 @@ fun Modifier.overlayGlassBlur(): Modifier {
     val amount = remember { Animatable(0f) }
 
     LaunchedEffect(amount) {
-        snapshotFlow { overlayOpen }.collect { open -> amount.animateTo(if (open) 1f else 0f, tween(220)) }
+        // in along with the sheet, out almost at once: the sheet is already on its way down
+        snapshotFlow { overlayOpen }.collect { open -> amount.animateTo(if (open) 1f else 0f, tween(if (open) 220 else 80)) }
     }
     DisposableEffect(view, on) {
         if (!on) {
