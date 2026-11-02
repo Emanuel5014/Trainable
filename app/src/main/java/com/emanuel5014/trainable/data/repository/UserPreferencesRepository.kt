@@ -56,6 +56,8 @@ class UserPreferencesRepository @Inject constructor(
         val GLASS_WORKOUT_PANEL = booleanPreferencesKey("glass_workout_panel")
         val GLASS_OVERLAYS = booleanPreferencesKey("glass_overlays")
         val GLASS_SWITCHES = booleanPreferencesKey("glass_switches")
+        val GLASS_TABS = booleanPreferencesKey("glass_tabs")
+        val GLASS_SEARCH_BARS = booleanPreferencesKey("glass_search_bars")
 
         fun glassPartKey(part: GlassPart) = when (part) {
             GlassPart.NavBar -> GLASS_NAV_BAR
@@ -64,6 +66,8 @@ class UserPreferencesRepository @Inject constructor(
             GlassPart.WorkoutPanel -> GLASS_WORKOUT_PANEL
             GlassPart.Overlays -> GLASS_OVERLAYS
             GlassPart.Switches -> GLASS_SWITCHES
+            GlassPart.Tabs -> GLASS_TABS
+            GlassPart.SearchBars -> GLASS_SEARCH_BARS
         }
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")

@@ -33,6 +33,10 @@
     <string name="glass_part_overlays_desc">The screen behind them is blurred (Android 12+)</string>
     <string name="glass_part_switches">Switches</string>
     <string name="glass_part_switches_desc">The thumb turns into a drop of glass while it moves</string>
+    <string name="glass_part_tabs">Tab selectors</string>
+    <string name="glass_part_tabs_desc">Active and archived routines: a drop of glass slides between the tabs</string>
+    <string name="glass_part_search_bars">Search bars</string>
+    <string name="glass_part_search_bars_desc">The search of the exercise lists and pickers</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 

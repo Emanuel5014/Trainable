@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.components.GlassSegmentedTabs
+import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.ui.theme.actionGlass
 import com.emanuel5014.trainable.ui.theme.actionGlassContainer
 import com.emanuel5014.trainable.ui.theme.actionGlassElevation
@@ -339,6 +342,28 @@ fun RoutineListScreen(
             )
 
             // M3 Expressive segmented tabs — pill guidata dal pager per un glide sincronizzato
+            if (LocalGlassSettings.current.isOn(GlassPart.Tabs)) {
+                GlassSegmentedTabs(
+                    titles = listOf(
+                        stringResource(R.string.active_routines_tab),
+                        stringResource(R.string.archived_routines_tab)
+                    ),
+                    selectedIndex = pagerState.currentPage,
+                    progress = { (pagerState.currentPage + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f) },
+                    onSelect = { index ->
+                        if (pagerState.currentPage != index) {
+                            coroutineScope.launch {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                pagerState.animateScrollToPage(index)
+                            }
+                        }
+                    },
+                    labelSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize),
+                    modifier = Modifier
+                        .padding(horizontal = ResponsiveSize.horizontalPadding)
+                        .padding(bottom = 8.dp)
+                )
+            } else {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -431,6 +456,7 @@ fun RoutineListScreen(
                         }
                     }
                 }
+            }
             }
 
             Box(modifier = Modifier.fillMaxSize()) {

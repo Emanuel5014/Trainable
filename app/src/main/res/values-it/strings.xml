@@ -32,6 +32,10 @@
     <string name="glass_part_overlays_desc">Lo schermo dietro di loro viene sfocato (Android 12+)</string>
     <string name="glass_part_switches">Interruttori</string>
     <string name="glass_part_switches_desc">Il pallino diventa una goccia di vetro mentre si muove</string>
+    <string name="glass_part_tabs">Selettori a schede</string>
+    <string name="glass_part_tabs_desc">Schede attive e archiviate: una goccia di vetro scorre tra le schede</string>
+    <string name="glass_part_search_bars">Barre di ricerca</string>
+    <string name="glass_part_search_bars_desc">La ricerca negli esercizi e nei selettori di esercizi</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Toolbar Material 3 Expressive, con l\'azione principale di ogni scheda accanto</string>
 

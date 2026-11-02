@@ -1,10 +1,13 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.rotate
+import androidx.compose.animation.core.animateFloatAsState
+import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.emanuel5014.trainable.ui.theme.actionGlass
 import com.emanuel5014.trainable.ui.theme.actionGlassContainer
 import com.emanuel5014.trainable.ui.theme.actionGlassSource
 import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
-import androidx.compose.material3.ToggleFloatingActionButtonDefaults
 import com.emanuel5014.trainable.data.local.entity.encodePerformed
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
@@ -391,27 +394,34 @@ fun HistoryScreen(
                                 tooltip = { PlainTooltip { Text(stringResource(if (fabMenuExpanded) R.string.close else R.string.add)) } },
                                 state = rememberTooltipState()
                             ) {
-                                val toggleTint = if (fabMenuExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
-                                ToggleFloatingActionButton(
-                                    checked = fabMenuExpanded,
-                                    onCheckedChange = { 
-                                        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        fabMenuExpanded = !fabMenuExpanded 
-                                    },
-                                    // With the glass the button keeps one shape: its own morphing container is clear
-                                    modifier = Modifier.actionGlass(actionGlass, toggleTint, cornerRadius = 16.dp),
-                                    containerColor = if (actionGlass == null) ToggleFloatingActionButtonDefaults.containerColor() else { _ -> Color.Transparent }
-                                ) {
-                                    val imageVector by remember {
-                                        derivedStateOf {
-                                            if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
-                                        }
-                                    }
-                                    Icon(
-                                        painter = rememberVectorPainter(imageVector),
-                                        contentDescription = null,
-                                        modifier = Modifier.animateIcon({ checkedProgress })
+                                val onToggle = {
+                                    if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    fabMenuExpanded = !fabMenuExpanded
+                                }
+                                if (actionGlass != null) {
+                                    // Material's toggle button casts a shadow of its morphing shape through a clear
+                                    // fill, so the glass gets a plain button of its own
+                                    GlassMenuToggle(
+                                        expanded = fabMenuExpanded,
+                                        onClick = onToggle,
+                                        glass = actionGlass
                                     )
+                                } else {
+                                    ToggleFloatingActionButton(
+                                        checked = fabMenuExpanded,
+                                        onCheckedChange = { onToggle() }
+                                    ) {
+                                        val imageVector by remember {
+                                            derivedStateOf {
+                                                if (checkedProgress > 0.5f) Icons.Rounded.Close else Icons.Rounded.Add
+                                            }
+                                        }
+                                        Icon(
+                                            painter = rememberVectorPainter(imageVector),
+                                            contentDescription = null,
+                                            modifier = Modifier.animateIcon({ checkedProgress })
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -2071,3 +2081,25 @@ private sealed interface UnifiedHistoryItem {
     data class Cardio(val cardio: CardioExerciseLogs, override val order: Int) : UnifiedHistoryItem
 }
 
+/** The add button of the history menu in Liquid Glass: tinted glass that turns its plus into a cross when open. */
+@Composable
+private fun GlassMenuToggle(expanded: Boolean, onClick: () -> Unit, glass: LayerBackdrop) {
+    val tint = if (expanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
+    val content = if (expanded) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
+    val rotation by animateFloatAsState(if (expanded) 45f else 0f, label = "menuToggleRotation")
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .actionGlass(glass, tint, cornerRadius = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Add,
+            contentDescription = stringResource(if (expanded) R.string.close else R.string.add),
+            tint = content,
+            modifier = Modifier.rotate(rotation)
+        )
+    }
+}

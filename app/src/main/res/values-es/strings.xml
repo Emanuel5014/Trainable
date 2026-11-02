@@ -32,6 +32,10 @@
     <string name="glass_part_overlays_desc">La pantalla detrás de ellos se difumina (Android 12+)</string>
     <string name="glass_part_switches">Interruptores</string>
     <string name="glass_part_switches_desc">El botón se convierte en una gota de cristal al moverse</string>
+    <string name="glass_part_tabs">Selectores de pestañas</string>
+    <string name="glass_part_tabs_desc">Rutinas activas y archivadas: una gota de cristal se desliza entre las pestañas</string>
+    <string name="glass_part_search_bars">Barras de búsqueda</string>
+    <string name="glass_part_search_bars_desc">La búsqueda de las listas y selectores de ejercicios</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de herramientas Material 3 Expressive, con la acción principal de cada pestaña al lado</string>
 

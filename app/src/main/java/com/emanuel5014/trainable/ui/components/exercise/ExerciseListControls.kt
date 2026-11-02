@@ -1,5 +1,17 @@
 package com.emanuel5014.trainable.ui.components
 
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.OnSurface
+import com.emanuel5014.trainable.ui.theme.surfaceGlass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +50,10 @@ import com.emanuel5014.trainable.ui.theme.Primary
 /** The search box of every exercise list: a magnifier, and a cross that clears the text once there is some. */
 @Composable
 fun ExerciseSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    if (LocalGlassSettings.current.isOn(GlassPart.SearchBars)) {
+        GlassSearchField(query = query, onQueryChange = onQueryChange, modifier = modifier)
+        return
+    }
     GymInputField(
         value = query,
         onValueChange = onQueryChange,
@@ -52,6 +68,46 @@ fun ExerciseSearchField(query: String, onQueryChange: (String) -> Unit, modifier
             }
         } else null
     )
+}
+
+/** The search field as an iOS 26 search bar: a capsule of glass with the magnifier, the text and a clear button. */
+@Composable
+private fun GlassSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    val placeholder = stringResource(R.string.search_exercises)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .surfaceGlass(GlassPart.SearchBars)
+            .clip(RoundedCornerShape(50))
+            .padding(start = 16.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant)
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (query.isEmpty()) {
+                Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = OnSurfaceVariant, maxLines = 1)
+            }
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = OnSurface),
+                cursorBrush = SolidColor(Primary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = placeholder }
+            )
+        }
+        if (query.isNotEmpty()) {
+            IconButton(onClick = { onQueryChange("") }) {
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.close), tint = OnSurfaceVariant)
+            }
+        } else {
+            Spacer(modifier = Modifier.width(12.dp))
+        }
+    }
 }
 
 /** One button of an [ExerciseFilterBar]: it is [checked] when its filter is on, and [onClick] asks to switch it. */

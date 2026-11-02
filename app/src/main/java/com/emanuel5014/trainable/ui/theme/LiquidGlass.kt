@@ -75,9 +75,17 @@ private fun GraphicsLayerScope.followTouch(touch: GlassTouch) {
  * background beneath to show through. Returns the receiver unchanged when the user has this part off.
  */
 @Composable
-fun Modifier.headerGlass(): Modifier {
+fun Modifier.headerGlass(): Modifier = surfaceGlass(GlassPart.HeaderButtons)
+
+/**
+ * The neutral glass of a control that scrolls with its screen (header buttons, search bar, tab track): a lit
+ * rim, a soft lift and a translucent body over the screen background, that swells and lights up under the
+ * finger. Returns the receiver unchanged when the user has [part] off.
+ */
+@Composable
+fun Modifier.surfaceGlass(part: GlassPart): Modifier {
     val glass = LocalGlassSettings.current
-    if (!glass.isOn(GlassPart.HeaderButtons)) return this
+    if (!glass.isOn(part)) return this
     val amount = glass.intensity
     val background = MaterialTheme.colorScheme.surface
     val dark = background.luminance() < 0.5f

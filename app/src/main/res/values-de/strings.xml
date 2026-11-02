@@ -32,6 +32,10 @@
     <string name="glass_part_overlays_desc">Der Bildschirm dahinter wird unscharf (Android 12+)</string>
     <string name="glass_part_switches">Schalter</string>
     <string name="glass_part_switches_desc">Der Knopf wird beim Bewegen zu einem Glastropfen</string>
+    <string name="glass_part_tabs">Tab-Auswahl</string>
+    <string name="glass_part_tabs_desc">Aktive und archivierte Pläne: ein Glastropfen gleitet zwischen den Tabs</string>
+    <string name="glass_part_search_bars">Suchleisten</string>
+    <string name="glass_part_search_bars_desc">Die Suche in den Übungslisten und -auswahlen</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive Toolbar, mit der Hauptaktion jedes Tabs daneben</string>
 

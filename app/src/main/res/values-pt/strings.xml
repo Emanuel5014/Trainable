@@ -32,6 +32,10 @@
     <string name="glass_part_overlays_desc">A tela atrás deles fica desfocada (Android 12+)</string>
     <string name="glass_part_switches">Interruptores</string>
     <string name="glass_part_switches_desc">O botão vira uma gota de vidro enquanto se move</string>
+    <string name="glass_part_tabs">Seletores de abas</string>
+    <string name="glass_part_tabs_desc">Rotinas ativas e arquivadas: uma gota de vidro desliza entre as abas</string>
+    <string name="glass_part_search_bars">Barras de pesquisa</string>
+    <string name="glass_part_search_bars_desc">A pesquisa das listas e seletores de exercícios</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de ferramentas Material 3 Expressive, com a ação principal de cada aba ao lado</string>
 

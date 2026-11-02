@@ -20,7 +20,13 @@ enum class GlassPart {
     Overlays,
 
     /** The switches of the app, whose thumb turns into a drop of glass while it moves. */
-    Switches
+    Switches,
+
+    /** Tab selectors (active / archived): a glass track with a drop that slides between the tabs. */
+    Tabs,
+
+    /** The search bars of the exercise lists and pickers. */
+    SearchBars
 }
 
 /** The user's Liquid Glass choices from Personalization. Off by default: the app then looks as it always did. */
