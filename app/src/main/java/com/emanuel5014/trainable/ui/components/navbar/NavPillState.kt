@@ -50,9 +50,12 @@ class NavPillState(
     val position: Float
         get() = ((if (isDragging) dragFinger else shown) + bridge).coerceIn(0f, lastIndex.toFloat())
 
-    /** [fingerPosition] is where the pill would sit centred under the finger. */
-    fun beginDrag(fingerPosition: Float) {
-        carryOver(from = position, to = fingerPosition)
+    /**
+     * [fingerPosition] is where the pill would sit centred under the finger. With [snap] the pill is
+     * there at once (a finger landing on a tab); otherwise it glides there from where it was.
+     */
+    fun beginDrag(fingerPosition: Float, snap: Boolean = false) {
+        if (snap) clearBridge() else carryOver(from = position, to = fingerPosition)
         dragFinger = fingerPosition
         isDragging = true
     }
@@ -77,6 +80,8 @@ class NavPillState(
         val target = index.coerceIn(0, lastIndex)
         shown = position
         clearBridge()
+        // a tap that lands while the finger still holds the pill takes it over from there
+        isDragging = false
         val token = ++settleToken
         settleJob?.cancel()
         isSettling = true

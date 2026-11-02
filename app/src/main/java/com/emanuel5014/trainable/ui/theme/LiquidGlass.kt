@@ -138,7 +138,9 @@ fun Modifier.actionGlassSource(source: LayerBackdrop?): Modifier =
 fun Modifier.actionGlass(source: Backdrop?, tint: Color, cornerRadius: Dp? = null): Modifier {
     if (source == null) return this
     val amount = LocalGlassSettings.current.intensity
-    val veil = tint.copy(alpha = if (GlassCanBlur) lerp(0.92f, 0.6f, amount) else 0.95f)
+    // The label colours are the button's own (on-primary, on-container), picked against its solid tint: the veil
+    // stays dense enough that the glass never drifts far from it, whatever slides underneath
+    val veil = tint.copy(alpha = if (GlassCanBlur) lerp(0.97f, 0.86f, amount) else 0.97f)
     val background = MaterialTheme.colorScheme.surface
     val scope = rememberCoroutineScope()
     val touch = remember(scope) { GlassTouch(scope) }

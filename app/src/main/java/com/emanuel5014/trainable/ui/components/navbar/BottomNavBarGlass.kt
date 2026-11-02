@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -141,16 +142,27 @@ fun BottomNavBarGlass(
                 val barPadding = GlassBarPadding.toPx()
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
-                    val dragStart = awaitHorizontalTouchSlopOrCancellation(down.id) { change, _ ->
-                        change.consume()
-                    } ?: return@awaitEachGesture
-
                     val cellWidth = (size.width - 2 * barPadding) / pillState.count
                     fun fingerPosition(x: Float) =
                         NavPillMath.positionForFinger(x - barPadding, cellWidth, pillState.count)
 
+                    // The drop forms under the finger, not on the tab that was selected
+                    pillState.beginDrag(fingerPosition(down.position.x), snap = true)
+                    val dragStart = awaitHorizontalTouchSlopOrCancellation(down.id) { change, _ ->
+                        change.consume()
+                    }
+                    if (dragStart == null) {
+                        // A tap settles through the tab's own click; a finger lifted off the bar, or a stolen gesture, goes back
+                        val last = currentEvent.changes.firstOrNull { it.id == down.id }
+                        val liftedOnBar = last != null && last.changedToUpIgnoreConsumed() &&
+                            last.position.x in 0f..size.width.toFloat() &&
+                            last.position.y in 0f..size.height.toFloat()
+                        pillState.endDrag(cancelled = !liftedOnBar)
+                        return@awaitEachGesture
+                    }
+
                     var tickIndex = NavPillMath.nearestIndex(fingerPosition(dragStart.position.x), pillState.count)
-                    pillState.beginDrag(fingerPosition(dragStart.position.x))
+                    pillState.dragTo(fingerPosition(dragStart.position.x))
                     val finished = horizontalDrag(dragStart.id) { change ->
                         val position = fingerPosition(change.position.x)
                         pillState.dragTo(position)

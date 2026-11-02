@@ -39,6 +39,8 @@ fun OverlayGlassBlur() {
     }
 }
 
+private val RETRIES = listOf(150L to 1, 450L to 0)
+
 @RequiresApi(Build.VERSION_CODES.S)
 private fun blurOpenOverlays(appView: View, radiusPx: Int) {
     val windowManager = appView.context.getSystemService(WindowManager::class.java) ?: return
@@ -53,5 +55,14 @@ private fun blurOpenOverlays(appView: View, radiusPx: Int) {
         params.flags = params.flags or WindowManager.LayoutParams.FLAG_BLUR_BEHIND
         params.blurBehindRadius = radiusPx
         runCatching { windowManager.updateViewLayout(root, params) }
+        // A window that has not drawn its first frame yet can take the request without ever showing it (the
+        // first sheet after a cold start does), so ask again once it surely has; the 1 px nudge makes it a change
+        for ((delay, extra) in RETRIES) {
+            root.postDelayed({
+                if (!root.isAttachedToWindow) return@postDelayed
+                params.blurBehindRadius = radiusPx + extra
+                runCatching { windowManager.updateViewLayout(root, params) }
+            }, delay)
+        }
     }
 }

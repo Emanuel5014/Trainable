@@ -359,6 +359,16 @@ fun RoutineListScreen(
                         }
                     },
                     labelSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize),
+                    // Dragging the capsule pages the lists with it; letting go settles on the nearest tab
+                    onScrub = { position ->
+                        val pageSize = pagerState.layoutInfo.pageSize + pagerState.layoutInfo.pageSpacing
+                        val now = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        pagerState.dispatchRawDelta((position - now) * pageSize)
+                    },
+                    onScrubEnd = { index ->
+                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                    },
+                    onTick = { if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
                     modifier = Modifier
                         .padding(horizontal = ResponsiveSize.horizontalPadding)
                         .padding(bottom = 8.dp)
