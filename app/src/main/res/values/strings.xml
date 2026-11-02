@@ -27,6 +27,12 @@
     <string name="glass_part_header_buttons_desc">Settings, filters and back buttons</string>
     <string name="glass_part_action_buttons">Action buttons</string>
     <string name="glass_part_action_buttons_desc">Quick workout, new routine and the other floating buttons</string>
+    <string name="glass_part_workout_panel">Workout panel</string>
+    <string name="glass_part_workout_panel_desc">The bottom panel of the workout, frosted over your sets</string>
+    <string name="glass_part_overlays">Sheets and dialogs</string>
+    <string name="glass_part_overlays_desc">The screen behind them is blurred (Android 12+)</string>
+    <string name="glass_part_switches">Switches</string>
+    <string name="glass_part_switches_desc">The thumb turns into a drop of glass while it moves</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 

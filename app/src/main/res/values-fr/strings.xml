@@ -26,6 +26,12 @@
     <string name="glass_part_header_buttons_desc">Paramètres, filtres et boutons retour</string>
     <string name="glass_part_action_buttons">Boutons d\'action</string>
     <string name="glass_part_action_buttons_desc">Séance rapide, nouveau programme et les autres boutons flottants</string>
+    <string name="glass_part_workout_panel">Panneau d\'entraînement</string>
+    <string name="glass_part_workout_panel_desc">Le panneau du bas de la séance, dépoli au-dessus de vos séries</string>
+    <string name="glass_part_overlays">Feuilles et dialogues</string>
+    <string name="glass_part_overlays_desc">L\'écran derrière eux est flouté (Android 12+)</string>
+    <string name="glass_part_switches">Interrupteurs</string>
+    <string name="glass_part_switches_desc">Le curseur devient une goutte de verre quand il bouge</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barre d\'outils Material 3 Expressive, avec l\'action principale de chaque onglet à côté</string>
 

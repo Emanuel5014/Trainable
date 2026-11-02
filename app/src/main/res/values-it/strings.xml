@@ -26,6 +26,12 @@
     <string name="glass_part_header_buttons_desc">Impostazioni, filtri e pulsanti indietro</string>
     <string name="glass_part_action_buttons">Pulsanti d\'azione</string>
     <string name="glass_part_action_buttons_desc">Allenamento veloce, nuova scheda e gli altri pulsanti fluttuanti</string>
+    <string name="glass_part_workout_panel">Pannello allenamento</string>
+    <string name="glass_part_workout_panel_desc">Il pannello in basso dell\'allenamento, sfocato sopra i tuoi set</string>
+    <string name="glass_part_overlays">Pannelli e finestre</string>
+    <string name="glass_part_overlays_desc">Lo schermo dietro di loro viene sfocato (Android 12+)</string>
+    <string name="glass_part_switches">Interruttori</string>
+    <string name="glass_part_switches_desc">Il pallino diventa una goccia di vetro mentre si muove</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Toolbar Material 3 Expressive, con l\'azione principale di ogni scheda accanto</string>
 

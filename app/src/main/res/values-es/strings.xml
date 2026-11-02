@@ -26,6 +26,12 @@
     <string name="glass_part_header_buttons_desc">Ajustes, filtros y botones de volver</string>
     <string name="glass_part_action_buttons">Botones de acción</string>
     <string name="glass_part_action_buttons_desc">Entrenamiento rápido, nueva rutina y los demás botones flotantes</string>
+    <string name="glass_part_workout_panel">Panel de entrenamiento</string>
+    <string name="glass_part_workout_panel_desc">El panel inferior del entrenamiento, esmerilado sobre tus series</string>
+    <string name="glass_part_overlays">Hojas y diálogos</string>
+    <string name="glass_part_overlays_desc">La pantalla detrás de ellos se difumina (Android 12+)</string>
+    <string name="glass_part_switches">Interruptores</string>
+    <string name="glass_part_switches_desc">El botón se convierte en una gota de cristal al moverse</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de herramientas Material 3 Expressive, con la acción principal de cada pestaña al lado</string>
 

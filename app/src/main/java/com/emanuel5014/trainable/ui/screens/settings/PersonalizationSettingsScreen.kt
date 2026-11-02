@@ -24,6 +24,9 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.ToggleOn
+import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -536,6 +539,27 @@ private fun LiquidGlassCard(
                     description = stringResource(R.string.glass_part_action_buttons_desc),
                     checked = GlassPart.ActionButtons in settings.parts,
                     onCheckedChange = { onPartChange(GlassPart.ActionButtons, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.FitnessCenter,
+                    title = stringResource(R.string.glass_part_workout_panel),
+                    description = stringResource(R.string.glass_part_workout_panel_desc),
+                    checked = GlassPart.WorkoutPanel in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.WorkoutPanel, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.Layers,
+                    title = stringResource(R.string.glass_part_overlays),
+                    description = stringResource(R.string.glass_part_overlays_desc),
+                    checked = GlassPart.Overlays in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.Overlays, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.ToggleOn,
+                    title = stringResource(R.string.glass_part_switches),
+                    description = stringResource(R.string.glass_part_switches_desc),
+                    checked = GlassPart.Switches in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.Switches, it) }
                 )
             }
         }

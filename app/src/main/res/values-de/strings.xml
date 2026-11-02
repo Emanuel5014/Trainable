@@ -26,6 +26,12 @@
     <string name="glass_part_header_buttons_desc">Einstellungen, Filter und Zurück-Buttons</string>
     <string name="glass_part_action_buttons">Aktionsbuttons</string>
     <string name="glass_part_action_buttons_desc">Schnelles Training, neuer Plan und die anderen schwebenden Buttons</string>
+    <string name="glass_part_workout_panel">Trainingsbereich</string>
+    <string name="glass_part_workout_panel_desc">Der untere Bereich im Training, mattiert über deinen Sätzen</string>
+    <string name="glass_part_overlays">Blätter und Dialoge</string>
+    <string name="glass_part_overlays_desc">Der Bildschirm dahinter wird unscharf (Android 12+)</string>
+    <string name="glass_part_switches">Schalter</string>
+    <string name="glass_part_switches_desc">Der Knopf wird beim Bewegen zu einem Glastropfen</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive Toolbar, mit der Hauptaktion jedes Tabs daneben</string>
 

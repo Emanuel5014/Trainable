@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberPanelGlassSource
+import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -300,6 +304,7 @@ fun WorkoutExecutionScreen(
         },
         containerColor = Surface
     ) { paddingValues ->
+        val panelGlass = rememberPanelGlassSource()
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (state.totalExercises == 0) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -349,7 +354,8 @@ fun WorkoutExecutionScreen(
                         )
                     },
                     label = "exercise_transition",
-                    modifier = Modifier.fillMaxSize()
+                    // The bottom panel frosts this content
+                    modifier = Modifier.fillMaxSize().actionGlassSource(panelGlass)
                 ) { targetIndex ->
                     val targetExState = state.exercises.getOrNull(targetIndex)
                     if (targetExState != null) {
@@ -545,6 +551,7 @@ fun WorkoutExecutionScreen(
 
                 // DYNAMIC INTERACTION HUB
                 val currentExState = state.currentExercise
+                CompositionLocalProvider(LocalPanelGlassSource provides panelGlass) {
                 WorkoutHub(
                     state = state,
                     ui = ui,
@@ -561,6 +568,7 @@ fun WorkoutExecutionScreen(
                     prescriptionLabels = prescriptionLabels,
                     plateExercises = plateExercises
                 )
+                }
             }
 
             if (state.isFinishing) {

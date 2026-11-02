@@ -26,6 +26,12 @@
     <string name="glass_part_header_buttons_desc">Configurações, filtros e botões de voltar</string>
     <string name="glass_part_action_buttons">Botões de ação</string>
     <string name="glass_part_action_buttons_desc">Treino rápido, nova rotina e os outros botões flutuantes</string>
+    <string name="glass_part_workout_panel">Painel do treino</string>
+    <string name="glass_part_workout_panel_desc">O painel inferior do treino, fosco sobre as suas séries</string>
+    <string name="glass_part_overlays">Folhas e diálogos</string>
+    <string name="glass_part_overlays_desc">A tela atrás deles fica desfocada (Android 12+)</string>
+    <string name="glass_part_switches">Interruptores</string>
+    <string name="glass_part_switches_desc">O botão vira uma gota de vidro enquanto se move</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de ferramentas Material 3 Expressive, com a ação principal de cada aba ao lado</string>
 

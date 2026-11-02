@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
+import com.emanuel5014.trainable.ui.theme.panelGlass
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
@@ -205,6 +208,7 @@ fun HubPanel(
         exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
         modifier = modifier
     ) {
+        val glass = LocalPanelGlassSource.current
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -212,11 +216,12 @@ fun HubPanel(
                 .onSizeChanged {
                     sheet.onMeasured(it.height)
                     onHeightChanged(it.height)
-                },
-            color = SurfaceContainerLow,
+                }
+                .panelGlass(glass, PANEL_SHAPE, SurfaceContainerLow),
+            color = if (glass == null) SurfaceContainerLow else Color.Transparent,
             shape = PANEL_SHAPE,
-            tonalElevation = 8.dp,
-            shadowElevation = 16.dp
+            tonalElevation = if (glass == null) 8.dp else 0.dp,
+            shadowElevation = if (glass == null) 16.dp else 0.dp
         ) {
             Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
                 HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)

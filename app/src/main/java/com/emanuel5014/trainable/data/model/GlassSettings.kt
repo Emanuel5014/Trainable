@@ -11,7 +11,16 @@ enum class GlassPart {
     HeaderButtons,
 
     /** The floating action buttons (quick workout, new routine and the like). */
-    ActionButtons
+    ActionButtons,
+
+    /** The workout's bottom panel (active set, rest timer), frosted over the set list. */
+    WorkoutPanel,
+
+    /** Bottom sheets and dialogs: the screen behind them is blurred. */
+    Overlays,
+
+    /** The switches of the app, whose thumb turns into a drop of glass while it moves. */
+    Switches
 }
 
 /** The user's Liquid Glass choices from Personalization. Off by default: the app then looks as it always did. */

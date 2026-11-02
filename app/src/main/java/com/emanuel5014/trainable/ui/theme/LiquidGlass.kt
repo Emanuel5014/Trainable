@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -167,3 +168,42 @@ fun actionGlassElevation(
     default: FloatingActionButtonElevation = FloatingActionButtonDefaults.elevation()
 ): FloatingActionButtonElevation =
     if (source == null) default else FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+
+/** What the workout panel frosts: the exercise content beside it, recorded with [actionGlassSource]. */
+val LocalPanelGlassSource = staticCompositionLocalOf<LayerBackdrop?> { null }
+
+/** A copy of the workout's exercise content for its bottom panel; null when the user has this part off. */
+@Composable
+fun rememberPanelGlassSource(): LayerBackdrop? {
+    if (!LocalGlassSettings.current.isOn(GlassPart.WorkoutPanel)) return null
+    val background = MaterialTheme.colorScheme.surface
+    return rememberLayerBackdrop {
+        drawRect(background)
+        drawContent()
+    }
+}
+
+/**
+ * Frosted Liquid Glass for a large panel, as iOS and Telegram do for their big surfaces: a strong blur
+ * with vibrancy and a lit rim, no lens, so the numbers on it stay calm and readable. Make the panel's own
+ * fill and shadow clear when [source] is not null.
+ */
+@Composable
+fun Modifier.panelGlass(source: Backdrop?, shape: Shape, tint: Color): Modifier {
+    if (source == null) return this
+    val amount = LocalGlassSettings.current.intensity
+    val body = tint.copy(alpha = if (GlassCanBlur) lerp(0.96f, 0.7f, amount) else 0.97f)
+    val background = MaterialTheme.colorScheme.surface
+    return drawBackdrop(
+        backdrop = source,
+        shape = { shape },
+        effects = {
+            vibrancy()
+            blur(lerp(12f, 24f, amount).dp.toPx())
+        },
+        highlight = { Highlight.Default.copy(alpha = 0.8f) },
+        shadow = { Shadow(radius = 24.dp, color = Color.Black.copy(alpha = 0.25f)) },
+        onDrawBehind = { drawRect(background) },
+        onDrawSurface = { drawRect(body) }
+    )
+}
