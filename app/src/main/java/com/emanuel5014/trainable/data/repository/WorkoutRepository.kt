@@ -28,6 +28,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.CardioSetWithSession
 import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
@@ -38,6 +39,7 @@ import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
 import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
+import com.emanuel5014.trainable.domain.csvimport.SupersetCsv
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.domain.prescription.LegacyReps
@@ -758,6 +760,9 @@ class WorkoutRepository @Inject constructor(
     /** Every completed set of the exercise in a finished workout, newest first (see [WorkoutDao.getSetHistoryForExercise]). */
     fun getSetHistoryForExercise(exerciseId: Int): Flow<List<ExerciseSetWithSession>> = workoutDao.getSetHistoryForExercise(exerciseId)
 
+    /** Every completed cardio set of the activity in a finished workout, newest first (see [WorkoutDao.getCardioHistoryForActivity]). */
+    fun getCardioHistoryForActivity(activity: String): Flow<List<CardioSetWithSession>> = workoutDao.getCardioHistoryForActivity(activity)
+
     /** Weight in kg the exercise was last lifted with in any routine, null if never. */
     suspend fun getLastWorkingWeightForExercise(exerciseId: Int): Float? = workoutDao.getLastWorkingWeightForExercise(exerciseId)
 
@@ -832,8 +837,11 @@ class WorkoutRepository @Inject constructor(
         // Without advanced programming the file only gets an RPE column when there is an RPE to write
         val rpeColumn = !advanced && sessions.any { s -> s.sets.any { it.setLog.rpe != null } || s.cardio.any { it.rpe != null } }
 
+        // A column for supersets only when the history has one, like the RPE column: nobody else gets an empty column
+        val supersetColumn = sessions.any { s -> SupersetCsv.numbering(s.sets.map { it.setLog }).isNotEmpty() }
+
         val sb = StringBuilder()
-        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn))
+        sb.appendLine(HistoryCsvHeaders.full(languageCode, weightUnit, advanced, journalEnabled, rpeColumn, supersetColumn))
 
         fun escapeCsv(value: String): String {
             var v = value.replace("\r", " ").replace("\n", " ")
@@ -852,6 +860,8 @@ class WorkoutRepository @Inject constructor(
             val journalCells = if (journalEnabled) {
                 JournalCsv.cells(session.session.rating, session.tags.map { it.name }.sorted(), session.session.journalNote)
             } else ""
+            // The number of each superset of this workout, repeated on the rows of its exercises
+            val supersetNumbers = SupersetCsv.numbering(session.sets.map { it.setLog })
 
             session.sets.forEach { setWithExercise ->
                 val setLog = setWithExercise.setLog
@@ -900,7 +910,8 @@ class WorkoutRepository @Inject constructor(
                     else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells")
+                val supersetCell = if (supersetColumn) "," + SupersetCsv.cell(setLog.supersetId?.let { supersetNumbers[it] }) else ""
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells$supersetCell")
             }
 
             session.cardio.forEach { cardio ->
@@ -914,7 +925,7 @@ class WorkoutRepository @Inject constructor(
                     else -> ""
                 }
                 val note = escapeCsv(cardio.note ?: "")
-                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells")
+                sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells${if (supersetColumn) "," else ""}")
             }
         }
 

@@ -686,6 +686,7 @@
     <string name="cardio_stop_save">STOP &amp; SAVE</string>
     <string name="cardio_target_label">TARGET</string>
     <string name="cardio_dist_value">%1$s km</string>
+    <string name="cardio_speed_value">%1$s km/h</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Free-form</string>
     <string name="cardio_cat_label">Cardio</string>
@@ -1357,7 +1358,7 @@
     <string name="import_history_intro">Bring your past workouts into Trainable from a CSV file. Use the same file the app exports with EXPORT CSV: if your old app exports something different, adapt it to the columns below. You will see everything that is going to be imported before anything is saved.</string>
     <string name="import_history_columns_title">Columns it reads</string>
     <string name="import_history_columns_required">Needed: Date, Exercise, and at least one of Weight, Reps, Duration or Distance.</string>
-    <string name="import_history_columns_optional">Useful: Session ID (tells two workouts of the same day apart), Plan (the routine), Category, Type (strength, time_and_weight, time_and_reps, cardio), Set, Note, Session Duration (minutes).</string>
+    <string name="import_history_columns_optional">Useful: Session ID (tells two workouts of the same day apart), Plan (the routine), Category, Type (strength, time_and_weight, time_and_reps, cardio), Set, Note, Session Duration (minutes), Superset (the number of the superset in the workout).</string>
     <string name="import_history_rules_title">How the import works</string>
     <string name="import_history_rule_exercises">Exercises that are not in the app are created with the name and category from the file.</string>
     <string name="import_history_rule_routines">A workout goes to the routine with the same name; if it does not exist, it is created. Workouts without a routine become quick workouts.</string>
@@ -1384,6 +1385,7 @@
     <string name="import_history_col_parts">Mini-sets</string>
     <string name="import_history_col_type">Type</string>
     <string name="import_history_col_session_duration">Session duration</string>
+    <string name="import_history_col_superset">Superset</string>
     <string name="import_history_issue_line">Line %1$d</string>
     <string name="import_history_issue_missing_date">No date</string>
     <string name="import_history_issue_invalid_date">Date not understood: %1$s</string>
@@ -1458,6 +1460,10 @@
     <plurals name="import_history_sets_count">
         <item quantity="one">%d set</item>
         <item quantity="other">%d sets</item>
+    </plurals>
+    <plurals name="import_history_supersets_count">
+        <item quantity="one">%d superset</item>
+        <item quantity="other">%d supersets</item>
     </plurals>
     <plurals name="import_history_exercises_count">
         <item quantity="one">%d exercise</item>
@@ -1585,6 +1591,10 @@
     <string name="exercise_detail_progress">Progress (estimated 1RM)</string>
     <string name="exercise_detail_history">History</string>
     <string name="exercise_detail_empty">You haven\'t done this exercise yet</string>
+    <string name="exercise_record_cardio_longest">Longest workout</string>
+    <string name="exercise_record_cardio_farthest">Longest distance</string>
+    <string name="exercise_record_cardio_best_speed">Best average speed</string>
+    <string name="exercise_detail_cardio_total">Total: %1$s</string>
     <string name="exercise_detail_last">Last: %s</string>
     <string name="exercise_detail_top">Top %s</string>
     <string name="exercise_record_heaviest">Heaviest set</string>

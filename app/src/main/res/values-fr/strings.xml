@@ -685,6 +685,7 @@
     <string name="cardio_stop_save">STOP &amp; ENREG.</string>
     <string name="cardio_target_label">OBJECTIF</string>
     <string name="cardio_dist_value">%1$s km</string>
+    <string name="cardio_speed_value">%1$s km/h</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Libre</string>
     <string name="cardio_cat_label">Cardio</string>
@@ -1357,7 +1358,7 @@
     <string name="import_history_intro">Importez vos anciens entraînements dans Trainable depuis un fichier CSV. Utilisez le même fichier que l\'app exporte avec EXPORTER CSV : si votre ancienne app exporte autre chose, adaptez-le aux colonnes ci-dessous. Vous verrez tout ce qui va être importé avant que quoi que ce soit ne soit enregistré.</string>
     <string name="import_history_columns_title">Colonnes lues</string>
     <string name="import_history_columns_required">Obligatoires : Date, Exercice et au moins une parmi Poids, Répétitions, Durée ou Distance.</string>
-    <string name="import_history_columns_optional">Utiles : ID Séance (distingue deux entraînements du même jour), Programme, Catégorie, Type (strength, time_and_weight, time_and_reps, cardio), Série, Note, Durée Séance (minutes).</string>
+    <string name="import_history_columns_optional">Utiles : ID Séance (distingue deux entraînements du même jour), Programme, Catégorie, Type (strength, time_and_weight, time_and_reps, cardio), Série, Note, Durée Séance (minutes), Supersérie (le numéro de la supersérie dans la séance).</string>
     <string name="import_history_rules_title">Comment fonctionne l\'import</string>
     <string name="import_history_rule_exercises">Les exercices absents de l\'app sont créés avec le nom et la catégorie du fichier.</string>
     <string name="import_history_rule_routines">Chaque entraînement va dans la routine du même nom ; si elle n\'existe pas, elle est créée. Les entraînements sans routine deviennent des entraînements rapides.</string>
@@ -1384,6 +1385,7 @@
     <string name="import_history_col_parts">Mini-séries</string>
     <string name="import_history_col_type">Type</string>
     <string name="import_history_col_session_duration">Durée de la séance</string>
+    <string name="import_history_col_superset">Supersérie</string>
     <string name="import_history_issue_line">Ligne %1$d</string>
     <string name="import_history_issue_missing_date">Date manquante</string>
     <string name="import_history_issue_invalid_date">Date non reconnue : %1$s</string>
@@ -1458,6 +1460,10 @@
     <plurals name="import_history_sets_count">
         <item quantity="one">%d série</item>
         <item quantity="other">%d séries</item>
+    </plurals>
+    <plurals name="import_history_supersets_count">
+        <item quantity="one">%d supersérie</item>
+        <item quantity="other">%d superséries</item>
     </plurals>
     <plurals name="import_history_exercises_count">
         <item quantity="one">%d exercice</item>
@@ -1587,6 +1593,10 @@
     <string name="exercise_detail_progress">Progression (1RM estimé)</string>
     <string name="exercise_detail_history">Historique</string>
     <string name="exercise_detail_empty">Vous n\'avez pas encore fait cet exercice</string>
+    <string name="exercise_record_cardio_longest">Séance la plus longue</string>
+    <string name="exercise_record_cardio_farthest">Plus grande distance</string>
+    <string name="exercise_record_cardio_best_speed">Meilleure vitesse moyenne</string>
+    <string name="exercise_detail_cardio_total">Total : %1$s</string>
     <string name="exercise_detail_last">Dernière : %s</string>
     <string name="exercise_detail_top">Max %s</string>
     <string name="exercise_record_heaviest">Série la plus lourde</string>

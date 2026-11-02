@@ -98,6 +98,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
+import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
@@ -335,6 +336,8 @@ fun RoutineDetailScreen(
 
     var selectedExerciseId by remember { mutableStateOf<Int?>(null) }
     var selectedExerciseType by remember { mutableStateOf("strength") }
+    // The type each exercise was last added with: adding it again opens the selector on it
+    val rememberedTypes by viewModel.exerciseTypes.collectAsState()
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var setsText by remember { mutableStateOf("3") }
     // Reps goal of a Time & Reps exercise
@@ -1708,6 +1711,8 @@ fun RoutineDetailScreen(
             categories = uiState.categories,
             onExerciseSelected = { exercise ->
                 selectedExerciseId = exercise.id
+                // Adding opens on the type this exercise was last added with; editing keeps the type being edited
+                if (editingExerciseId == null) selectedExerciseType = ExerciseTypeMemory.typeFor(rememberedTypes, exercise.id)
                 showExercisePicker = false
                 showExerciseSheet = true
             },

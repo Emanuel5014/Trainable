@@ -17,6 +17,7 @@ import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
+import com.emanuel5014.trainable.data.local.relation.CardioSetWithSession
 import com.emanuel5014.trainable.data.local.relation.ExerciseSetWithSession
 import com.emanuel5014.trainable.data.local.relation.PlanWithDetails
 import com.emanuel5014.trainable.data.local.relation.SessionWithDetails
@@ -359,6 +360,21 @@ interface WorkoutDao {
         ORDER BY ws.timestamp DESC, ws.id DESC, sl.numero_serie ASC
     """)
     fun getSetHistoryForExercise(exerciseId: Int): Flow<List<ExerciseSetWithSession>>
+
+    /**
+     * Every completed cardio set of the activity in a finished workout, newest workout first and in the order done within
+     * it. Cardio is linked to its exercise by name ([activity] is the name the exercise is stored with), not by id.
+     * Reads only: the exercise detail screen builds the history of a cardio exercise from this.
+     */
+    @Query("""
+        SELECT cl.*, ws.timestamp AS session_timestamp, ws.note_sessione AS session_note, wp.nome AS plan_name
+        FROM cardio_logs cl
+        INNER JOIN workout_sessions ws ON cl.session_id = ws.id
+        INNER JOIN workout_plans wp ON ws.plan_id = wp.id
+        WHERE LOWER(cl.categoria) = LOWER(:activity) AND ws.is_finished = 1 AND cl.is_completed = 1
+        ORDER BY ws.timestamp DESC, ws.id DESC, cl.ordine_esercizio ASC, cl.numero_serie ASC, cl.id ASC
+    """)
+    fun getCardioHistoryForActivity(activity: String): Flow<List<CardioSetWithSession>>
 
     /**
      * Weight (kg) of the first working set of the exercise in its most recent finished workout, in any routine.

@@ -12,6 +12,8 @@ enum class CsvColumn(
     SESSION_DURATION, WEEK, RPE, WARMUP, PARTS, PAUSES, ASSISTED, PARTIALS,
     /** The workout journal: how the workout went (1..5), its tags, its note (the name of a workout is the plan cell). */
     RATING, TAGS, JOURNAL_NOTE,
+    /** The group of a superset inside the workout (see [SupersetCsv]). */
+    SUPERSET,
     EXTRA(imported = false), PERCENT(imported = false), TARGET_REPS(imported = false), TECHNIQUES(imported = false),
     PERFORMED_TECHNIQUE(imported = false), PROGRAM_CHANGED(imported = false), PROGRAM_ORIGINAL(imported = false)
 }
@@ -72,6 +74,7 @@ object HistoryCsvColumns {
             "workout note", "workout notes", "session note", "nota allenamento", "nota sesion", "note seance",
             "sitzungsnotiz", "nota sessao"
         ),
+        CsvColumn.SUPERSET to listOf("superset", "super set", "super serie", "superserie", "supersatz"),
         CsvColumn.WEEK to listOf("week", "settimana", "semana", "semaine", "woche"),
         CsvColumn.RPE to listOf("rpe"),
         CsvColumn.EXTRA to listOf("extra", "bonus"),

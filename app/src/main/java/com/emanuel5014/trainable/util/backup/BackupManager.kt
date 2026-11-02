@@ -9,6 +9,7 @@ import com.emanuel5014.trainable.data.local.RetiredPresetsMarker
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
+import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.rpe.RpePreference
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.ExerciseMediaStorage
@@ -266,6 +267,7 @@ class BackupManager @Inject constructor(
                 json.put("rest_timer_enabled", prefs[UserPreferencesRepository.REST_TIMER_ENABLED] ?: true)
                 prefs[UserPreferencesRepository.LAST_WARMUP_SECONDS]?.let { json.put("last_warmup_seconds", it) }
                 prefs[UserPreferencesRepository.LAST_ADDED_EXERCISE_REST_SECONDS]?.let { json.put("last_added_exercise_rest_seconds", it) }
+                prefs[UserPreferencesRepository.EXERCISE_TYPES]?.let { json.put("exercise_types", it) }
                 json.put("timer_show_time_buttons", prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] ?: true)
                 json.put("timer_show_skip_button", prefs[UserPreferencesRepository.TIMER_SHOW_SKIP_BUTTON] ?: true)
                 json.put("starting_weight_enabled", prefs[UserPreferencesRepository.STARTING_WEIGHT_ENABLED] ?: false)
@@ -452,6 +454,11 @@ class BackupManager @Inject constructor(
                                                 prefs[UserPreferencesRepository.LAST_WARMUP_SECONDS] = jsonObject.getInt("last_warmup_seconds")
                                             if (jsonObject.has("last_added_exercise_rest_seconds"))
                                                 prefs[UserPreferencesRepository.LAST_ADDED_EXERCISE_REST_SECONDS] = jsonObject.getInt("last_added_exercise_rest_seconds")
+                                            if (jsonObject.has("exercise_types")) {
+                                                // Read and written back, so a damaged value comes in as what could be read of it
+                                                val types = ExerciseTypeMemory.decode(jsonObject.optString("exercise_types"))
+                                                prefs[UserPreferencesRepository.EXERCISE_TYPES] = ExerciseTypeMemory.encode(types)
+                                            }
                                             if (jsonObject.has("timer_show_time_buttons"))
                                                 prefs[UserPreferencesRepository.TIMER_SHOW_TIME_BUTTONS] = jsonObject.getBoolean("timer_show_time_buttons")
                                             if (jsonObject.has("timer_show_skip_button"))

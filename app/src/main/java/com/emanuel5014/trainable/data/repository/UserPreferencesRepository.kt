@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.PlateCalculator
@@ -124,6 +125,8 @@ class UserPreferencesRepository @Inject constructor(
     val LAST_WARMUP_SECONDS = intPreferencesKey("last_warmup_seconds")
     /** The last rest chosen when adding or swapping an exercise in a workout, in seconds: that slider opens on it. */
     val LAST_ADDED_EXERCISE_REST_SECONDS = intPreferencesKey("last_added_exercise_rest_seconds")
+    /** The tracking type each exercise was last added with (see [ExerciseTypeMemory]): adding it again opens the selector on it. */
+    val EXERCISE_TYPES = stringPreferencesKey("exercise_types")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** Old RPE setting (0 = advanced exercises only, 1 = every exercise, 2 = never): only [RpePreferenceMigration] and old backups read it. */
@@ -509,6 +512,19 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setLastAddedExerciseRestSeconds(seconds: Int) {
         dataStore.edit { preferences ->
             preferences[LAST_ADDED_EXERCISE_REST_SECONDS] = RestSeconds.snap(seconds, RestSeconds.EXERCISE_STEPS)
+        }
+    }
+
+    /** The type each exercise was last added with; the ones not listed are plain weight × reps. */
+    val exerciseTypes: Flow<Map<Int, String>> = dataStore.data
+        .map { preferences -> ExerciseTypeMemory.decode(preferences[EXERCISE_TYPES]) }
+
+    /** Remembers [type] for [exerciseId]; read and written in one edit, so two quick saves lose neither. */
+    suspend fun rememberExerciseType(exerciseId: Int, type: String) {
+        dataStore.edit { preferences ->
+            val current = ExerciseTypeMemory.decode(preferences[EXERCISE_TYPES])
+            val next = ExerciseTypeMemory.remember(current, exerciseId, type)
+            if (next != current) preferences[EXERCISE_TYPES] = ExerciseTypeMemory.encode(next)
         }
     }
 
