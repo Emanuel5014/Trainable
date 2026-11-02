@@ -1003,11 +1003,10 @@ class WorkoutViewModel @Inject constructor(
             } else {
                 planDetail?.serieTarget ?: loggedSets.size.coerceAtLeast(3)
             }
-            val repsList = if (previousSets.isEmpty()) {
-                parseReps(planDetail?.repsTarget ?: "8", targetSets)
-            } else {
-                previousSets.map { it.repsEffettive }
-            }
+            val lastReps = previousSets.map { it.repsEffettive }
+            // The plan's per-set list is that of the plan exercise: a swapped-in one only has its own last workout to go on
+            val repsList = if (isSwapped && lastReps.isNotEmpty()) lastReps
+            else LegacyReps.startingReps(planDetail?.repsTarget ?: "8", targetSets, lastReps)
             val defaultPrevWeight = if (isTimeAndReps) 0f else previousSets.firstOrNull()?.pesoSollevato ?: previousSets.lastOrNull()?.pesoSollevato
                 ?: if (planDetail != null && !isSwapped && !isCardio) workoutRepository.startingWeightFor(planDetail, exercise.id) else 0f
             // The range the exercise was started with is on its rows: that is all a swapped-in or added exercise has to
@@ -1056,7 +1055,7 @@ class WorkoutViewModel @Inject constructor(
                     WorkoutSetState(
                         setNumber = num,
                         weight = if (isTimeAndReps) 0f else carriedWeight.takeIf { carriesWeight } ?: prevSet?.pesoSollevato ?: defaultPrevWeight,
-                        reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
+                        reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
                         previousNote = prevSet?.note,
                         previousReps = prevSet?.repsEffettive,
                         previousWeight = prevSet?.pesoSollevato,
@@ -1342,11 +1341,7 @@ class WorkoutViewModel @Inject constructor(
             val prevPerfStr = previousPerformanceText(previousSets, setKind)
 
             val targetSets = detail.planExercise.serieTarget
-            val repsList = if (previousSets.isEmpty()) {
-                parseReps(detail.planExercise.repsTarget, targetSets)
-            } else {
-                previousSets.map { it.repsEffettive }
-            }
+            val repsList = LegacyReps.startingReps(detail.planExercise.repsTarget, targetSets, previousSets.map { it.repsEffettive })
             // The first workouts of a routine have nothing to copy: start from the starting weight (if turned on)
             val defaultWeight = if (isTimeAndReps) 0f else previousSets.firstOrNull()?.pesoSollevato ?: previousSets.lastOrNull()?.pesoSollevato
                 ?: workoutRepository.startingWeightFor(detail.planExercise, detail.exercise.id)
@@ -1369,7 +1364,7 @@ class WorkoutViewModel @Inject constructor(
                 WorkoutSetState(
                     setNumber = num,
                     weight = if (isTimeAndReps) 0f else prevSet?.pesoSollevato ?: defaultWeight,
-                    reps = prevSet?.repsEffettive ?: repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
+                    reps = repsList.getOrElse(num - 1) { repsList.lastOrNull() ?: 8 },
                     previousNote = prevSet?.note,
                     previousReps = prevSet?.repsEffettive,
                     previousWeight = prevSet?.pesoSollevato,
