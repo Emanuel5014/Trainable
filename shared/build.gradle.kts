@@ -31,6 +31,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.room.runtime)
+            api(libs.datastore.preferences.core)
+            // @Immutable on the settings models the Compose UI reads
+            implementation(libs.compose.runtime.annotation)
             api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
         }
@@ -49,8 +52,9 @@ dependencies {
     listOf("kspAndroid", "kspIosArm64", "kspIosSimulatorArm64").forEach { add(it, libs.room.compiler) }
 }
 
-// Local check of the migrations on real backups (a test that is not in git):
-// ./gradlew :shared:iosSimulatorArm64Test -PmigrationFixtures=<folder of .db files>
+// Local checks on real data (tests that are not in git):
+// ./gradlew :shared:iosSimulatorArm64Test -PmigrationFixtures=<folder of .db files> -PsettingsFixture=<settings.preferences_pb>
 tasks.withType<KotlinNativeSimulatorTest>().configureEach {
     providers.gradleProperty("migrationFixtures").orNull?.let { environment("SIMCTL_CHILD_MIGRATION_FIXTURES", it) }
+    providers.gradleProperty("settingsFixture").orNull?.let { environment("SIMCTL_CHILD_SETTINGS_FIXTURE", it) }
 }

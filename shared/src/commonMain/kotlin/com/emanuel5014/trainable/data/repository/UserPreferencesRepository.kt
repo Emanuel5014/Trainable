@@ -1,6 +1,5 @@
 package com.emanuel5014.trainable.data.repository
 
-import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -8,8 +7,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import dagger.hilt.android.qualifiers.ApplicationContext
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
@@ -21,19 +18,11 @@ import com.emanuel5014.trainable.util.RestSeconds
 import com.emanuel5014.trainable.util.TimerAdjustment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "settings",
-    produceMigrations = { listOf(RpePreferenceMigration()) }
-)
-
-@Singleton
-class UserPreferencesRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+/** The app's settings, stored in the "settings" preferences file that each platform opens. */
+class UserPreferencesRepository(
+    private val dataStore: DataStore<Preferences>
 ) {
-    private val dataStore = context.dataStore
 
     companion object {
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
