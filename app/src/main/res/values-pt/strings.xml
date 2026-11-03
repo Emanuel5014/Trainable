@@ -18,6 +18,8 @@
     <string name="liquid_glass_desc">Vidro ao estilo do iOS nos controles que flutuam sobre o conteúdo</string>
     <string name="glass_intensity">Intensidade do vidro</string>
     <string name="glass_intensity_desc">De uma superfície quase opaca a vidro transparente</string>
+    <string name="glass_blur">Desfoque do fundo</string>
+    <string name="glass_blur_desc">Quanto fica desfocado o que está atrás do vidro, de claro a fosco</string>
     <string name="glass_parts">Onde usar</string>
     <string name="glass_part_nav_bar">Barra de navegação</string>
     <string name="glass_part_nav_bar_desc">A barra flutuante curva o que rola por baixo</string>

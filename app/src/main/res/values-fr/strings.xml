@@ -18,6 +18,8 @@
     <string name="liquid_glass_desc">Verre façon iOS sur les commandes qui flottent au-dessus du contenu</string>
     <string name="glass_intensity">Intensité du verre</string>
     <string name="glass_intensity_desc">D\'une surface presque opaque à un verre transparent</string>
+    <string name="glass_blur">Flou de l\'arrière-plan</string>
+    <string name="glass_blur_desc">À quel point ce qui est derrière le verre est flou, de clair à dépoli</string>
     <string name="glass_parts">Où l\'utiliser</string>
     <string name="glass_part_nav_bar">Barre de navigation</string>
     <string name="glass_part_nav_bar_desc">La barre flottante courbe ce qui défile dessous</string>

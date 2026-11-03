@@ -63,7 +63,7 @@ fun Modifier.overlayGlassBlur(): Modifier {
     val glass = LocalGlassSettings.current
     val on = glass.isOn(GlassPart.Overlays)
     val view = LocalView.current
-    val radiusPx = with(LocalDensity.current) { lerp(16f, 40f, glass.intensity).dp.toPx() }
+    val radiusPx = with(LocalDensity.current) { lerp(16f, 40f, glass.intensity).dp.toPx() * glass.blurScale }
     var overlayOpen by remember { mutableStateOf(false) }
     // 0 with nothing in front, 1 with a sheet or dialog open; read in draw only, so the app does not recompose
     val amount = remember { Animatable(0f) }

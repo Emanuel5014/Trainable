@@ -19,6 +19,8 @@
     <string name="liquid_glass_desc">Glass in the style of iOS on the controls that float over the content</string>
     <string name="glass_intensity">Glass intensity</string>
     <string name="glass_intensity_desc">From a nearly solid surface to clear glass</string>
+    <string name="glass_blur">Background blur</string>
+    <string name="glass_blur_desc">How blurred what is behind the glass looks, from clear to frosted</string>
     <string name="glass_parts">Where to use it</string>
     <string name="glass_part_nav_bar">Navigation bar</string>
     <string name="glass_part_nav_bar_desc">The floating bar bends what scrolls beneath it</string>

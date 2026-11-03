@@ -455,6 +455,7 @@ fun PersonalizationSettingsScreen(
                 floatingNavBar = navBarStyle == NavBarStyle.Floating,
                 onEnabledChange = viewModel::setLiquidGlassEnabled,
                 onIntensityChange = viewModel::setGlassIntensity,
+                onBlurChange = viewModel::setGlassBlur,
                 onPartChange = viewModel::setGlassPart
             )
         }
@@ -468,6 +469,7 @@ private fun LiquidGlassCard(
     floatingNavBar: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     onIntensityChange: (Float) -> Unit,
+    onBlurChange: (Float) -> Unit,
     onPartChange: (GlassPart, Boolean) -> Unit
 ) {
     GymCard(containerColor = SurfaceContainerHigh) {
@@ -484,34 +486,18 @@ private fun LiquidGlassCard(
             if (settings.enabled) {
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
-                // Saved on release only, so dragging does not write to disk every frame
-                var draft by remember(settings.intensity) { mutableFloatStateOf(settings.intensity) }
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.glass_intensity), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
-                            Text(stringResource(R.string.glass_intensity_desc), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-                        }
-                        Text(
-                            "${(draft * 100).roundToInt()}%",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Primary,
-                            fontWeight = FontWeight.Black,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                    Slider(
-                        value = draft,
-                        onValueChange = { draft = it },
-                        onValueChangeFinished = { onIntensityChange(draft) },
-                        colors = SliderDefaults.colors(
-                            thumbColor = Primary,
-                            activeTrackColor = Primary,
-                            inactiveTrackColor = SurfaceContainerHighest
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                GlassLevelSlider(
+                    title = stringResource(R.string.glass_intensity),
+                    description = stringResource(R.string.glass_intensity_desc),
+                    value = settings.intensity,
+                    onValueChange = onIntensityChange
+                )
+                GlassLevelSlider(
+                    title = stringResource(R.string.glass_blur),
+                    description = stringResource(R.string.glass_blur_desc),
+                    value = settings.blur,
+                    onValueChange = onBlurChange
+                )
 
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
@@ -595,6 +581,38 @@ private fun LiquidGlassCard(
                 )
             }
         }
+    }
+}
+
+/** One 0-100 % level of the glass, saved on release only so dragging does not write to disk every frame. */
+@Composable
+private fun GlassLevelSlider(title: String, description: String, value: Float, onValueChange: (Float) -> Unit) {
+    var draft by remember(value) { mutableFloatStateOf(value) }
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                Text(description, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+            }
+            Text(
+                "${(draft * 100).roundToInt()}%",
+                style = MaterialTheme.typography.titleMedium,
+                color = Primary,
+                fontWeight = FontWeight.Black,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+        Slider(
+            value = draft,
+            onValueChange = { draft = it },
+            onValueChangeFinished = { onValueChange(draft) },
+            colors = SliderDefaults.colors(
+                thumbColor = Primary,
+                activeTrackColor = Primary,
+                inactiveTrackColor = SurfaceContainerHighest
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

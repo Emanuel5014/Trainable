@@ -41,11 +41,17 @@ data class GlassSettings(
     val enabled: Boolean = false,
     /** 0 is a nearly solid surface with a faint lens, 1 the clearest, most bending glass. */
     val intensity: Float = DEFAULT_INTENSITY,
+    /** How blurred what is behind the glass looks: 0 clear glass, 1 frosted. 0.5 is the blur each part was designed with. */
+    val blur: Float = DEFAULT_BLUR,
     val parts: Set<GlassPart> = GlassPart.entries.toSet()
 ) {
     fun isOn(part: GlassPart): Boolean = enabled && part in parts
 
+    /** Multiplies each part's own blur: none at 0, as designed at 0.5, twice at 1. */
+    val blurScale: Float get() = blur * 2f
+
     companion object {
         const val DEFAULT_INTENSITY = 0.6f
+        const val DEFAULT_BLUR = 0.5f
     }
 }

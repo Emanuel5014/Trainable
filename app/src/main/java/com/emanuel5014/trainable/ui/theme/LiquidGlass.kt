@@ -151,6 +151,7 @@ fun Modifier.actionGlassSource(source: LayerBackdrop?): Modifier =
 fun Modifier.actionGlass(source: Backdrop?, tint: Color, cornerRadius: Dp? = null): Modifier {
     if (source == null) return this
     val amount = LocalGlassSettings.current.intensity
+    val blurScale = LocalGlassSettings.current.blurScale
     // The label colours are the button's own (on-primary, on-container), picked against its solid tint: the veil
     // stays dense enough that the glass never drifts far from it, whatever slides underneath
     val veil = tint.copy(alpha = if (GlassCanBlur) lerp(0.97f, 0.86f, amount) else 0.97f)
@@ -163,7 +164,7 @@ fun Modifier.actionGlass(source: Backdrop?, tint: Color, cornerRadius: Dp? = nul
             shape = { if (cornerRadius == null) Capsule() else RoundedRectangle(cornerRadius) },
             effects = {
                 vibrancy()
-                blur(lerp(2f, 6f, amount).dp.toPx())
+                blur(lerp(2f, 6f, amount).dp.toPx() * blurScale)
                 lens(lerp(6f, 16f, amount).dp.toPx(), lerp(8f, 26f, amount).dp.toPx())
             },
             shadow = { Shadow(radius = 16.dp, color = Color.Black.copy(alpha = 0.18f)) },
@@ -215,6 +216,7 @@ fun rememberPanelGlassSource(): LayerBackdrop? {
 fun Modifier.panelGlass(source: Backdrop?, shape: Shape, tint: Color): Modifier {
     if (source == null) return this
     val amount = LocalGlassSettings.current.intensity
+    val blurScale = LocalGlassSettings.current.blurScale
     val body = tint.copy(alpha = if (GlassCanBlur) lerp(0.96f, 0.7f, amount) else 0.97f)
     val background = MaterialTheme.colorScheme.surface
     return drawBackdrop(
@@ -222,7 +224,7 @@ fun Modifier.panelGlass(source: Backdrop?, shape: Shape, tint: Color): Modifier 
         shape = { shape },
         effects = {
             vibrancy()
-            blur(lerp(12f, 24f, amount).dp.toPx())
+            blur(lerp(12f, 24f, amount).dp.toPx() * blurScale)
         },
         highlight = { Highlight.Default.copy(alpha = 0.8f) },
         shadow = { Shadow(radius = 24.dp, color = Color.Black.copy(alpha = 0.25f)) },

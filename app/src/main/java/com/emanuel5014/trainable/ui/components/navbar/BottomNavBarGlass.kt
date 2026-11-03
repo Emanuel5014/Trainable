@@ -51,6 +51,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.navigation.MainTabs
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
@@ -116,6 +117,7 @@ fun BottomNavBarGlass(
     val anyPressed = interactionSources.map { it.collectIsPressedAsState() }.any { it.value }
 
     val amount = intensity.coerceIn(0f, 1f)
+    val blurScale = LocalGlassSettings.current.blurScale
     val containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
         alpha = if (canBlur) lerp(0.85f, 0.2f, amount) else lerp(0.96f, 0.85f, amount)
     )
@@ -189,7 +191,7 @@ fun BottomNavBarGlass(
                     shape = { Capsule() },
                     effects = {
                         vibrancy()
-                        blur(8.dp.toPx())
+                        blur(8.dp.toPx() * blurScale)
                         lens(lensHeight.toPx(), lensAmount.toPx())
                     },
                     layerBlock = {
@@ -236,7 +238,7 @@ fun BottomNavBarGlass(
                     shape = { Capsule() },
                     effects = {
                         vibrancy()
-                        blur(8.dp.toPx())
+                        blur(8.dp.toPx() * blurScale)
                         lens(lensHeight.toPx() * press.value, lensAmount.toPx() * press.value)
                     },
                     highlight = { Highlight.Default.copy(alpha = press.value) },

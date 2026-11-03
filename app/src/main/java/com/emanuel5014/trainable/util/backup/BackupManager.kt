@@ -237,6 +237,7 @@ class BackupManager @Inject constructor(
                 prefs[UserPreferencesRepository.NAV_BAR_STYLE]?.let { json.put("nav_bar_style", it) }
                 prefs[UserPreferencesRepository.LIQUID_GLASS_ENABLED]?.let { json.put("liquid_glass_enabled", it) }
                 prefs[UserPreferencesRepository.GLASS_INTENSITY]?.let { json.put("glass_intensity", it.toDouble()) }
+                prefs[UserPreferencesRepository.GLASS_BLUR]?.let { json.put("glass_blur", it.toDouble()) }
                 GlassPart.entries.forEach { part ->
                     val key = UserPreferencesRepository.glassPartKey(part)
                     prefs[key]?.let { json.put(key.name, it) }
@@ -405,6 +406,9 @@ class BackupManager @Inject constructor(
                                             if (jsonObject.has("glass_intensity"))
                                                 prefs[UserPreferencesRepository.GLASS_INTENSITY] =
                                                     jsonObject.getDouble("glass_intensity").toFloat().coerceIn(0f, 1f)
+                                            if (jsonObject.has("glass_blur"))
+                                                prefs[UserPreferencesRepository.GLASS_BLUR] =
+                                                    jsonObject.getDouble("glass_blur").toFloat().coerceIn(0f, 1f)
                                             if (jsonObject.has("theme_mode"))
                                                 prefs[UserPreferencesRepository.THEME_MODE] = jsonObject.getInt("theme_mode")
                                             if (jsonObject.has("timer_notifications_enabled"))
