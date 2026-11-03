@@ -131,7 +131,8 @@ fun BottomNavBarGlass(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "glassPress"
     )
-    val tabScale = { lerp(1f, 1.2f, press.value) }
+    val stretch = LocalGlassSettings.current.stretch
+    val tabScale = { if (stretch) lerp(1f, 1.2f, press.value) else 1f }
 
     val tabsBackdrop = rememberLayerBackdrop()
 
@@ -195,7 +196,7 @@ fun BottomNavBarGlass(
                         lens(lensHeight.toPx(), lensAmount.toPx())
                     },
                     layerBlock = {
-                        val scale = lerp(1f, 1f + 16.dp.toPx() / size.width, press.value)
+                        val scale = if (stretch) lerp(1f, 1f + 16.dp.toPx() / size.width, press.value) else 1f
                         scaleX = scale
                         scaleY = scale
                     },

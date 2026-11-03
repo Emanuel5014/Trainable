@@ -102,7 +102,7 @@ fun Modifier.surfaceGlass(part: GlassPart): Modifier {
             effects = { vibrancy() },
             highlight = { Highlight.Default.copy(alpha = lerp(0.6f, 1f, amount)) },
             shadow = { Shadow(radius = 10.dp, color = Color.Black.copy(alpha = if (dark) 0.25f else 0.08f)) },
-            layerBlock = { followTouch(touch) },
+            layerBlock = if (glass.stretch) {{ followTouch(touch) }} else null,
             onDrawSurface = { drawRect(body) }
         )
         .then(touch.light)
@@ -152,6 +152,7 @@ fun Modifier.actionGlass(source: Backdrop?, tint: Color, cornerRadius: Dp? = nul
     if (source == null) return this
     val amount = LocalGlassSettings.current.intensity
     val blurScale = LocalGlassSettings.current.blurScale
+    val stretch = LocalGlassSettings.current.stretch
     // The label colours are the button's own (on-primary, on-container), picked against its solid tint: the veil
     // stays dense enough that the glass never drifts far from it, whatever slides underneath
     val veil = tint.copy(alpha = if (GlassCanBlur) lerp(0.97f, 0.86f, amount) else 0.97f)
@@ -168,7 +169,7 @@ fun Modifier.actionGlass(source: Backdrop?, tint: Color, cornerRadius: Dp? = nul
                 lens(lerp(6f, 16f, amount).dp.toPx(), lerp(8f, 26f, amount).dp.toPx())
             },
             shadow = { Shadow(radius = 16.dp, color = Color.Black.copy(alpha = 0.18f)) },
-            layerBlock = { followTouch(touch) },
+            layerBlock = if (stretch) {{ followTouch(touch) }} else null,
             // A button that sticks out of the recorded list would otherwise show a hole there
             onDrawBehind = { drawRect(background) },
             onDrawSurface = {
@@ -225,6 +226,8 @@ fun Modifier.panelGlass(source: Backdrop?, shape: Shape, tint: Color): Modifier 
         effects = {
             vibrancy()
             blur(lerp(12f, 24f, amount).dp.toPx() * blurScale)
+            // The rim bends the sets sliding under it, like the bar's lens; the middle stays flat and readable
+            lens(lerp(10f, 24f, amount).dp.toPx(), lerp(16f, 40f, amount).dp.toPx())
         },
         highlight = { Highlight.Default.copy(alpha = 0.8f) },
         shadow = { Shadow(radius = 24.dp, color = Color.Black.copy(alpha = 0.25f)) },

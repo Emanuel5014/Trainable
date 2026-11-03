@@ -20,6 +20,8 @@
     <string name="glass_intensity_desc">De una superficie casi opaca a cristal transparente</string>
     <string name="glass_blur">Desenfoque del fondo</string>
     <string name="glass_blur_desc">Cuánto se desenfoca lo que hay detrás del cristal, de claro a esmerilado</string>
+    <string name="glass_stretch">Estirar al tocar</string>
+    <string name="glass_stretch_desc">El cristal se hincha y se inclina siguiendo el dedo al tocarlo</string>
     <string name="glass_parts">Dónde usarlo</string>
     <string name="glass_part_nav_bar">Barra de navegación</string>
     <string name="glass_part_nav_bar_desc">La barra flotante curva lo que se desplaza debajo</string>

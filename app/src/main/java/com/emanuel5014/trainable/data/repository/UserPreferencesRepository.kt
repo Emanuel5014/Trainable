@@ -51,6 +51,7 @@ class UserPreferencesRepository @Inject constructor(
         val LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
         val GLASS_INTENSITY = floatPreferencesKey("glass_intensity")
         val GLASS_BLUR = floatPreferencesKey("glass_blur")
+        val GLASS_STRETCH = booleanPreferencesKey("glass_stretch")
         val GLASS_NAV_BAR = booleanPreferencesKey("glass_nav_bar")
         val GLASS_HEADER_BUTTONS = booleanPreferencesKey("glass_header_buttons")
         val GLASS_ACTION_BUTTONS = booleanPreferencesKey("glass_action_buttons")
@@ -299,6 +300,7 @@ class UserPreferencesRepository @Inject constructor(
                 enabled = preferences[LIQUID_GLASS_ENABLED] ?: false,
                 intensity = (preferences[GLASS_INTENSITY] ?: GlassSettings.DEFAULT_INTENSITY).coerceIn(0f, 1f),
                 blur = (preferences[GLASS_BLUR] ?: GlassSettings.DEFAULT_BLUR).coerceIn(0f, 1f),
+                stretch = preferences[GLASS_STRETCH] ?: true,
                 parts = GlassPart.entries.filter { preferences[glassPartKey(it)] ?: true }.toSet()
             )
         }
@@ -792,6 +794,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setLiquidGlassEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[LIQUID_GLASS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setGlassStretch(on: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[GLASS_STRETCH] = on
         }
     }
 

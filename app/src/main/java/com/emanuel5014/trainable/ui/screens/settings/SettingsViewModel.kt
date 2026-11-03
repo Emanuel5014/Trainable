@@ -926,6 +926,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setGlassStretch(on: Boolean) {
+        viewModelScope.launch {
+            userPrefsRepository.setGlassStretch(on)
+        }
+    }
+
     fun setGlassBlur(blur: Float) {
         viewModelScope.launch {
             userPrefsRepository.setGlassBlur(blur)

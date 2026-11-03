@@ -43,6 +43,8 @@ data class GlassSettings(
     val intensity: Float = DEFAULT_INTENSITY,
     /** How blurred what is behind the glass looks: 0 clear glass, 1 frosted. 0.5 is the blur each part was designed with. */
     val blur: Float = DEFAULT_BLUR,
+    /** Whether touched glass swells and leans after the finger; off keeps every piece at its own size. */
+    val stretch: Boolean = true,
     val parts: Set<GlassPart> = GlassPart.entries.toSet()
 ) {
     fun isOn(part: GlassPart): Boolean = enabled && part in parts

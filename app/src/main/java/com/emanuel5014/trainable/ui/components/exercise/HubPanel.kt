@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.kyant.shapes.RoundedRectangle
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.lerp
 import com.emanuel5014.trainable.R
@@ -80,7 +81,7 @@ private val PANEL_SHAPE = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
  * the device's own corner radius; inset by this much it looks the same on every phone. The screen's own
  * padding already keeps the hub above the system bars.
  */
-private val GLASS_PANEL_SHAPE = RoundedCornerShape(32.dp)
+private val GLASS_PANEL_SHAPE = RoundedRectangle(32.dp)
 private val GLASS_PANEL_INSET = 8.dp
 
 /**

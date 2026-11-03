@@ -20,6 +20,8 @@
     <string name="glass_intensity_desc">Von einer fast deckenden Fläche bis zu klarem Glas</string>
     <string name="glass_blur">Hintergrundunschärfe</string>
     <string name="glass_blur_desc">Wie unscharf das hinter dem Glas wirkt, von klar bis milchig</string>
+    <string name="glass_stretch">Dehnen bei Berührung</string>
+    <string name="glass_stretch_desc">Das Glas schwillt an und neigt sich mit dem Finger, wenn du es berührst</string>
     <string name="glass_parts">Wo verwenden</string>
     <string name="glass_part_nav_bar">Navigationsleiste</string>
     <string name="glass_part_nav_bar_desc">Die schwebende Leiste bricht, was darunter scrollt</string>

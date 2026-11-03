@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.OpenInFull
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Tune
@@ -456,6 +457,7 @@ fun PersonalizationSettingsScreen(
                 onEnabledChange = viewModel::setLiquidGlassEnabled,
                 onIntensityChange = viewModel::setGlassIntensity,
                 onBlurChange = viewModel::setGlassBlur,
+                onStretchChange = viewModel::setGlassStretch,
                 onPartChange = viewModel::setGlassPart
             )
         }
@@ -470,6 +472,7 @@ private fun LiquidGlassCard(
     onEnabledChange: (Boolean) -> Unit,
     onIntensityChange: (Float) -> Unit,
     onBlurChange: (Float) -> Unit,
+    onStretchChange: (Boolean) -> Unit,
     onPartChange: (GlassPart, Boolean) -> Unit
 ) {
     GymCard(containerColor = SurfaceContainerHigh) {
@@ -497,6 +500,13 @@ private fun LiquidGlassCard(
                     description = stringResource(R.string.glass_blur_desc),
                     value = settings.blur,
                     onValueChange = onBlurChange
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.OpenInFull,
+                    title = stringResource(R.string.glass_stretch),
+                    description = stringResource(R.string.glass_stretch_desc),
+                    checked = settings.stretch,
+                    onCheckedChange = onStretchChange
                 )
 
                 HorizontalDivider(color = Surface.copy(alpha = 0.5f))
