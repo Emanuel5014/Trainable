@@ -9,7 +9,6 @@
     <string name="nav_routines">Routines</string>
     <string name="nav_history">History</string>
     <string name="nav_analytics">Analytics</string>
-    <string name="nav_settings">Settings</string>
     <string name="nav_bar_style">Navigation bar</string>
     <string name="nav_bar_style_classic">Classic</string>
     <string name="nav_bar_style_classic_desc">Standard Material 3 bottom navigation</string>
@@ -111,14 +110,11 @@
     <string name="start_workout">START WORKOUT</string>
     <string name="start_workout_detail">START</string>
     <string name="no_active_plan">No active plan</string>
-    <string name="select_routine">Select a routine to start</string>
     <string name="welcome_back">Welcome back</string>
-    <string name="today_workout">TODAY\'S WORKOUT</string>
     <string name="no_workout_today">No workout scheduled for today</string>
     <string name="resume_workout">RESUME WORKOUT</string>
     <string name="days_this_week">days this week</string>
     <string name="workout_in_progress">Workout in progress</string>
-    <string name="started">Started: %s</string>
     <string name="goal_met">Goal met</string>
     <string name="workouts_this_week" formatted="false">%d / %d workouts</string>
     <string name="workout_remaining" formatted="false">%d workout remaining</string>
@@ -129,7 +125,6 @@
     <string name="no_active_routines_message">No active routines. Go to Routines to create one.</string>
     <string name="create_first_routine">Create your first routine</string>
     <string name="no_exercises_today">No exercises for today</string>
-    <string name="suggested_plan">SUGGESTED PLAN</string>
     <string name="existing_workout_message">An unfinished workout for "%1$s" already exists. Resume it?</string>
 
     <!-- Routines -->
@@ -326,7 +321,6 @@
     <string name="finish_workout_message_incomplete">Are you sure you want to finish this workout? Exercises and sets you haven\'t completed will not be saved.</string>
     <string name="finish_confirm">Finish</string>
     <string name="quick_workout">QUICK WORKOUT</string>
-    <string name="quick_workout_name_hint">Workout Name (optional)</string>
     <string name="rename_workout">Rename Workout</string>
     <string name="no_exercises_in_session">No exercises tracked in this session.</string>
     <string name="no_exercises_in_session_detail">No exercises tracked in this session.</string>
@@ -683,19 +677,8 @@
     <string name="camera_permission_denied">Camera permission is required to take photos</string>
 
     <!-- Gym Membership -->
-    <string name="gym_membership">Gym Membership</string>
-    <string name="valid_thru">Valid Thru</string>
-    <string name="expired">Expired</string>
-    <string name="expires_in_days">Expires in %d days</string>
     <string name="set_expiry_date">Set Expiry Date</string>
     <string name="tap_to_set">Tap to set</string>
-    <string name="quick_renewal">Quick Renewal</string>
-    <string name="month_1">1 Month</string>
-    <string name="months_3">3 Months</string>
-    <string name="months_6">6 Months</string>
-    <string name="year_1">1 Year</string>
-    <string name="choose_custom_date">CHOOSE CUSTOM DATE</string>
-    <string name="remove_membership">REMOVE MEMBERSHIP</string>
 
     <!-- Cardio -->
     <string name="distance">Distance</string>

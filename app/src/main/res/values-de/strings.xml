@@ -8,7 +8,6 @@
     <string name="nav_routines">Routinen</string>
     <string name="nav_history">Verlauf</string>
     <string name="nav_analytics">Statistiken</string>
-    <string name="nav_settings">Einstellungen</string>
     <string name="nav_bar_style">Navigationsleiste</string>
     <string name="nav_bar_style_classic">Klassisch</string>
     <string name="nav_bar_style_classic_desc">Standard Material 3 untere Navigationsleiste</string>
@@ -110,14 +109,11 @@
     <string name="start_workout">TRAINING STARTEN</string>
     <string name="start_workout_detail">STARTEN</string>
     <string name="no_active_plan">Kein aktiver Plan</string>
-    <string name="select_routine">Wähle eine Routine zum Starten</string>
     <string name="welcome_back">Willkommen zurück</string>
-    <string name="today_workout">HEUTIGES TRAINING</string>
     <string name="no_workout_today">Kein Training für heute geplant</string>
     <string name="resume_workout">TRAINING FORTSETZEN</string>
     <string name="days_this_week">Tage diese Woche</string>
     <string name="workout_in_progress">Training läuft</string>
-    <string name="started">Gestartet: %s</string>
     <string name="goal_met">Ziel erreicht</string>
     <string name="workouts_this_week" formatted="false">%d / %d Trainings</string>
     <string name="workout_remaining" formatted="false">%d Training übrig</string>
@@ -128,7 +124,6 @@
     <string name="no_active_routines_message">Keine aktiven Routinen. Gehe zu Routinen, um eine zu erstellen.</string>
     <string name="create_first_routine">Erstelle deine erste Routine</string>
     <string name="no_exercises_today">Keine Übungen für heute</string>
-    <string name="suggested_plan">VORGESCHLAGENER PLAN</string>
     <string name="existing_workout_message">Ein unerledigtes Training für "%1$s" ist bereits vorhanden. Fortsetzen?</string>
 
     <!-- Routines -->
@@ -325,7 +320,6 @@
     <string name="finish_workout_message_incomplete">Bist du sicher, dass du dieses Training beenden möchtest? Nicht abgeschlossene Übungen und Sätze werden nicht gespeichert.</string>
     <string name="finish_confirm">Beenden</string>
     <string name="quick_workout">SCHNELLES TRAINING</string>
-    <string name="quick_workout_name_hint">Trainingsname (optional)</string>
     <string name="rename_workout">Training umbenennen</string>
     <string name="no_exercises_in_session">Keine Übungen in dieser Sitzung aufgezeichnet.</string>
     <string name="no_exercises_in_session_detail">Keine Übungen in dieser Sitzung aufgezeichnet.</string>
@@ -682,19 +676,8 @@
     <string name="camera_permission_denied">Kameraberechtigung ist erforderlich, um Fotos zu machen</string>
 
     <!-- Gym Membership -->
-    <string name="gym_membership">Fitnessstudio Mitgliedschaft</string>
-    <string name="valid_thru">Gültig bis</string>
-    <string name="expired">Abgelaufen</string>
-    <string name="expires_in_days">Läuft in %d Tagen ab</string>
     <string name="set_expiry_date">Ablaufdatum festlegen</string>
     <string name="tap_to_set">Tippe zum Festlegen</string>
-    <string name="quick_renewal">Schnelle Verlängerung</string>
-    <string name="month_1">1 Monat</string>
-    <string name="months_3">3 Monate</string>
-    <string name="months_6">6 Monate</string>
-    <string name="year_1">1 Jahr</string>
-    <string name="choose_custom_date">BENUTZERDEFINIERTES DATUM WÄHLEN</string>
-    <string name="remove_membership">MITGLIEDSCHAFT ENTFERNEN</string>
 
     <!-- Cardio -->
     <string name="distance">Strecke</string>

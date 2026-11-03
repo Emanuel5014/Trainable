@@ -8,7 +8,6 @@
     <string name="nav_routines">Schede</string>
     <string name="nav_history">Storico</string>
     <string name="nav_analytics">Statistiche</string>
-    <string name="nav_settings">Impostazioni</string>
     <string name="nav_bar_style">Barra di navigazione</string>
     <string name="nav_bar_style_classic">Classica</string>
     <string name="nav_bar_style_classic_desc">Barra di navigazione standard Material 3</string>
@@ -110,14 +109,11 @@
     <string name="start_workout">INIZIA ALLENAMENTO</string>
     <string name="start_workout_detail">INIZIA</string>
     <string name="no_active_plan">Nessuna scheda attiva</string>
-    <string name="select_routine">Seleziona una scheda per iniziare</string>
     <string name="welcome_back">Bentornato</string>
-    <string name="today_workout">ALLENAMENTO DI OGGI</string>
     <string name="no_workout_today">Nessun allenamento previsto per oggi</string>
     <string name="resume_workout">RIPRENDI ALLENAMENTO</string>
     <string name="days_this_week">giorni questa settimana</string>
     <string name="workout_in_progress">Allenamento in corso</string>
-    <string name="started">Iniziato: %s</string>
     <string name="goal_met">Obiettivo raggiunto</string>
     <string name="workouts_this_week" formatted="false">%d / %d allenamenti</string>
     <string name="workout_remaining" formatted="false">%d allenamento rimanente</string>
@@ -128,7 +124,6 @@
     <string name="no_active_routines_message">Nessuna scheda attiva. Vai su Schede per crearne una.</string>
     <string name="create_first_routine">Crea la tua prima scheda</string>
     <string name="no_exercises_today">Nessun esercizio per oggi</string>
-    <string name="suggested_plan">SCHEDA CONSIGLIATA</string>
     <string name="existing_workout_message">Un workout per "%1$s" è già in corso. Riprendere?</string>
 
     <!-- Routines -->
@@ -325,7 +320,6 @@
     <string name="finish_workout_message_incomplete">Sei sicuro di voler terminare questo allenamento? Gli esercizi e le serie non completati non verranno salvati.</string>
     <string name="finish_confirm">Termina</string>
     <string name="quick_workout">ALLENAMENTO VELOCE</string>
-    <string name="quick_workout_name_hint">Nome Allenamento (opzionale)</string>
     <string name="rename_workout">Rinomina Allenamento</string>
     <string name="no_exercises_in_session">Nessun esercizio registrato in questa sessione.</string>
     <string name="no_exercises_in_session_detail">Nessun esercizio registrato in questa sessione.</string>
@@ -682,19 +676,8 @@
     <string name="camera_permission_denied">Il permesso della fotocamera è necessario per scattare foto</string>
 
     <!-- Gym Membership -->
-    <string name="gym_membership">Abbonamento Palestra</string>
-    <string name="valid_thru">Scade il</string>
-    <string name="expired">Scaduto</string>
-    <string name="expires_in_days">Scade in %d giorni</string>
     <string name="set_expiry_date">Imposta Scadenza</string>
     <string name="tap_to_set">Tocca per impostare</string>
-    <string name="quick_renewal">Rinnovo rapido</string>
-    <string name="month_1">1 Mese</string>
-    <string name="months_3">3 Mesi</string>
-    <string name="months_6">6 Mesi</string>
-    <string name="year_1">1 Anno</string>
-    <string name="choose_custom_date">SCEGLI DATA PERSONALIZZATA</string>
-    <string name="remove_membership">RIMUOVI ABBONAMENTO</string>
 
     <!-- Cardio -->
     <string name="distance">Distanza</string>

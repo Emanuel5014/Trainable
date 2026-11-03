@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cancel">Cancelar</string>
+    <string name="choose_custom_date">ESCOLHER DATA PERSONALIZADA</string>
+    <string name="delete">Excluir</string>
+    <string name="delete_session">Excluir Sessão?</string>
+    <string name="delete_session_message">Isso excluirá permanentemente esta sessão de treino.</string>
+    <string name="existing_workout_message">Já existe um treino inacabado para "%1$s". Retomar?</string>
+    <string name="expired">Vencida</string>
+    <string name="expires_in_days">Vence em %1$d dias</string>
+    <string name="goal_met">Meta alcançada</string>
+    <string name="gym_membership">Assinatura da Academia</string>
+    <string name="month_1">1 Mês</string>
+    <string name="months_3">3 Meses</string>
+    <string name="months_6">6 Meses</string>
+    <string name="nav_settings">Configurações</string>
+    <string name="no_active_routines_message">Nenhuma rotina ativa. Vá para Rotinas para criar uma.</string>
+    <string name="quick_renewal">Renovação Rápida</string>
+    <string name="quick_workout">TREINO RÁPIDO</string>
+    <string name="quick_workout_name_hint">Nome do Treino (opcional)</string>
+    <string name="remove_membership">REMOVER ASSINATURA</string>
+    <string name="resume_workout">RETOMAR TREINO</string>
+    <string name="save">Salvar</string>
+    <string name="select_routine">Selecione uma rotina para começar</string>
+    <string name="selected">Selecionado</string>
+    <string name="start">COMEÇAR</string>
+    <string name="started">Iniciado: %1$s</string>
+    <string name="suggested_plan">PLANO SUGERIDO</string>
+    <string name="tap_to_set">Toque para definir</string>
+    <string name="today_workout">TREINO DE HOJE</string>
+    <string name="valid_thru">Válida até</string>
+    <string name="week_short">S%1$d</string>
+    <string name="weekly_goal">META SEMANAL</string>
+    <string name="workout_remaining">%1$d treino restante</string>
+    <string name="workouts_remaining">%1$d treinos restantes</string>
+    <string name="year_1">1 Ano</string>
+</resources>

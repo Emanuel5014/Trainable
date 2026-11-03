@@ -69,33 +69,6 @@ fun techniqueLabel(context: android.content.Context, technique: Technique): Stri
     is Technique.Custom -> technique.text
 }
 
-/** Small rounded pill, the shared visual unit for prescriptions (same family as the WARM UP chip). */
-@Composable
-fun PrescriptionPill(
-    text: String,
-    modifier: Modifier = Modifier,
-    containerColor: Color = SurfaceContainerHigh,
-    contentColor: Color = OnSurfaceVariant,
-    emphasized: Boolean = false
-) {
-    Surface(
-        modifier = modifier,
-        color = containerColor,
-        contentColor = contentColor,
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (emphasized) FontWeight.Black else FontWeight.ExtraBold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            // Long ones (a custom technique as done) wrap instead of losing their end
-            maxLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-    }
-}
-
 /** Compact overview of all blocks: one pill per block plus technique pills. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

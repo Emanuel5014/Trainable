@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cancel">Annulla</string>
+    <string name="choose_custom_date">SCEGLI DATA PERSONALIZZATA</string>
+    <string name="delete">Elimina</string>
+    <string name="delete_session">Elimina Sessione?</string>
+    <string name="delete_session_message">Questo eliminerà permanentemente questa sessione di allenamento.</string>
+    <string name="existing_workout_message">Un workout per "%1$s" è già in corso. Riprendere?</string>
+    <string name="expired">Scaduto</string>
+    <string name="expires_in_days">Scade in %1$d giorni</string>
+    <string name="goal_met">Obiettivo raggiunto</string>
+    <string name="gym_membership">Abbonamento Palestra</string>
+    <string name="month_1">1 Mese</string>
+    <string name="months_3">3 Mesi</string>
+    <string name="months_6">6 Mesi</string>
+    <string name="nav_settings">Impostazioni</string>
+    <string name="no_active_routines_message">Nessuna scheda attiva. Vai su Schede per crearne una.</string>
+    <string name="quick_renewal">Rinnovo rapido</string>
+    <string name="quick_workout">ALLENAMENTO VELOCE</string>
+    <string name="quick_workout_name_hint">Nome Allenamento (opzionale)</string>
+    <string name="remove_membership">RIMUOVI ABBONAMENTO</string>
+    <string name="resume_workout">RIPRENDI ALLENAMENTO</string>
+    <string name="save">Salva</string>
+    <string name="select_routine">Seleziona una scheda per iniziare</string>
+    <string name="selected">selezionate</string>
+    <string name="start">INIZIA</string>
+    <string name="started">Iniziato: %1$s</string>
+    <string name="suggested_plan">SCHEDA CONSIGLIATA</string>
+    <string name="tap_to_set">Tocca per impostare</string>
+    <string name="today_workout">ALLENAMENTO DI OGGI</string>
+    <string name="valid_thru">Scade il</string>
+    <string name="week_short">W%1$d</string>
+    <string name="weekly_goal">OBIETTIVO SETTIMANALE</string>
+    <string name="workout_remaining">%1$d allenamento rimanente</string>
+    <string name="workouts_remaining">%1$d allenamenti rimanenti</string>
+    <string name="year_1">1 Anno</string>
+</resources>
