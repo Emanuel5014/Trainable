@@ -29,7 +29,10 @@ enum class GlassPart {
     SearchBars,
 
     /** The sliders: their thumb turns into a drop of glass while it is held. */
-    Sliders
+    Sliders,
+
+    /** Previous / next exercise in the workout's bottom panel, as capsules of glass. */
+    WorkoutNav
 }
 
 /** The user's Liquid Glass choices from Personalization. Off by default: the app then looks as it always did. */

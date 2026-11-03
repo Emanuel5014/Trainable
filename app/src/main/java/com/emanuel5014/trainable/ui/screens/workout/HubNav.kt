@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.model.GlassPart
-import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.theme.surfaceGlass
 import androidx.compose.ui.graphics.Color
 import com.emanuel5014.trainable.data.ExerciseTranslations
@@ -60,11 +60,11 @@ internal fun HubNav(
 ) {
     // On the strip the exercise buttons are a little lower
     val navHeight = hubNavHeight(expansion())
-    // On the glass hub the quiet buttons are capsules of glass too, like the toolbar buttons of iOS
-    val glass = LocalPanelGlassSource.current != null
+    // The quiet buttons as capsules of glass, like the toolbar buttons of iOS
+    val glass = LocalGlassSettings.current.isOn(GlassPart.WorkoutNav)
     val quietShape = if (glass) CircleShape else RoundedCornerShape(16.dp)
     val quietColor = if (glass) Color.Transparent else SurfaceContainerHigh
-    val quietGlass = if (glass) Modifier.surfaceGlass(GlassPart.WorkoutPanel) else Modifier
+    val quietGlass = if (glass) Modifier.surfaceGlass(GlassPart.WorkoutNav) else Modifier
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)

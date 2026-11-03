@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tab
 import androidx.compose.material.icons.rounded.ToggleOn
@@ -549,6 +550,13 @@ private fun LiquidGlassCard(
                     description = stringResource(R.string.glass_part_workout_panel_desc),
                     checked = GlassPart.WorkoutPanel in settings.parts,
                     onCheckedChange = { onPartChange(GlassPart.WorkoutPanel, it) }
+                )
+                GlassSwitchRow(
+                    icon = Icons.Rounded.SwapHoriz,
+                    title = stringResource(R.string.glass_part_workout_nav),
+                    description = stringResource(R.string.glass_part_workout_nav_desc),
+                    checked = GlassPart.WorkoutNav in settings.parts,
+                    onCheckedChange = { onPartChange(GlassPart.WorkoutNav, it) }
                 )
                 GlassSwitchRow(
                     icon = Icons.Rounded.Layers,

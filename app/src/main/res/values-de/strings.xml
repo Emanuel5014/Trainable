@@ -38,6 +38,8 @@
     <string name="glass_part_search_bars_desc">Die Suche in den Übungslisten und -auswahlen</string>
     <string name="glass_part_sliders">Schieberegler</string>
     <string name="glass_part_sliders_desc">Der Regler wird beim Ziehen zu einem Glastropfen</string>
+    <string name="glass_part_workout_nav">Workout-Navigation</string>
+    <string name="glass_part_workout_nav_desc">Vorherige und nächste Übung im Workout-Panel</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive Toolbar, mit der Hauptaktion jedes Tabs daneben</string>
 

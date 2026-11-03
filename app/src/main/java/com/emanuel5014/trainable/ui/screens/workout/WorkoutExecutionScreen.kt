@@ -1,6 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
 import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.ui.theme.surfaceGlass
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.data.model.GlassPart
@@ -1169,12 +1170,12 @@ internal fun RowScope.HubPreviousButton(
 ) {
     val label = HubMotion.window(expansion(), 0.25f, 0.6f)
     val fullPadding = if (ResponsiveSize.isCompact) 16.dp else 24.dp
-    val glass = LocalPanelGlassSource.current != null
+    val glass = LocalGlassSettings.current.isOn(GlassPart.WorkoutNav)
     GymButton(
         onClick = onClick,
         modifier = Modifier
             .weight(lerp(0.2f, 1f, label))
-            .then(if (glass) Modifier.surfaceGlass(GlassPart.WorkoutPanel) else Modifier),
+            .then(if (glass) Modifier.surfaceGlass(GlassPart.WorkoutNav) else Modifier),
         containerColor = if (glass) Color.Transparent else SurfaceContainerHigh,
         contentColor = OnSurface,
         shape = if (glass) CircleShape else Shapes.large,

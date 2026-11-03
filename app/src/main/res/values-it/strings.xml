@@ -38,6 +38,8 @@
     <string name="glass_part_search_bars_desc">La ricerca negli esercizi e nei selettori di esercizi</string>
     <string name="glass_part_sliders">Cursori</string>
     <string name="glass_part_sliders_desc">Il cursore diventa una goccia di vetro mentre lo trascini</string>
+    <string name="glass_part_workout_nav">Navigazione del workout</string>
+    <string name="glass_part_workout_nav_desc">Esercizio precedente e successivo nel pannello del workout</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Toolbar Material 3 Expressive, con l\'azione principale di ogni scheda accanto</string>
 

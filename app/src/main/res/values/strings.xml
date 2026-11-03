@@ -39,6 +39,8 @@
     <string name="glass_part_search_bars_desc">The search of the exercise lists and pickers</string>
     <string name="glass_part_sliders">Sliders</string>
     <string name="glass_part_sliders_desc">The thumb turns into a drop of glass while you drag it</string>
+    <string name="glass_part_workout_nav">Workout navigation</string>
+    <string name="glass_part_workout_nav_desc">Previous and next exercise in the workout panel</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 

@@ -38,6 +38,8 @@
     <string name="glass_part_search_bars_desc">A pesquisa das listas e seletores de exercícios</string>
     <string name="glass_part_sliders">Controles deslizantes</string>
     <string name="glass_part_sliders_desc">O controle vira uma gota de vidro enquanto você o arrasta</string>
+    <string name="glass_part_workout_nav">Navegação do treino</string>
+    <string name="glass_part_workout_nav_desc">Exercício anterior e seguinte no painel do treino</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de ferramentas Material 3 Expressive, com a ação principal de cada aba ao lado</string>
 
