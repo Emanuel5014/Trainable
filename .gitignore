@@ -35,3 +35,6 @@ docs/
 .codegraph/
 AGENTS.md
 opencode.jsonc
+# Xcode (iOS app)
+iosApp/**/xcuserdata/
+iosApp/build/
