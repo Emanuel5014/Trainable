@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.emanuel5014.trainable.data.model.GlassPart
@@ -86,7 +87,11 @@ fun Slider(
         colors = colors,
         interactionSource = interactionSource,
         steps = steps,
-        thumb = { GlassSliderThumb(interactionSource, enabled, trackBackdrop) },
+        thumb = {
+            // A white thumb vanishes on a light track (the monochrome themes): there it takes the accent's ink
+            val rest = if (colors.activeTrackColor.luminance() > 0.6f) MaterialTheme.colorScheme.onPrimary else Color.White
+            GlassSliderThumb(interactionSource, enabled, trackBackdrop, rest)
+        },
         track = { sliderState ->
             // Recorded for the thumb to bend; the thumb itself is not part of it
             Box(modifier = Modifier.layerBackdrop(trackBackdrop), propagateMinConstraints = true) {
@@ -101,7 +106,8 @@ fun Slider(
 private fun GlassSliderThumb(
     interactionSource: InteractionSource,
     enabled: Boolean,
-    trackBackdrop: Backdrop
+    trackBackdrop: Backdrop,
+    rest: Color
 ) {
     val pressed by interactionSource.collectIsPressedAsState()
     val dragged by interactionSource.collectIsDraggedAsState()
@@ -143,7 +149,7 @@ private fun GlassSliderThumb(
                     scaleX = s
                     scaleY = s
                 },
-                onDrawSurface = { drawRect(Color.White.copy(alpha = 1f - press.value)) }
+                onDrawSurface = { drawRect(rest.copy(alpha = 1f - press.value)) }
             )
             .size(ThumbWidth, ThumbHeight)
     )

@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import com.emanuel5014.trainable.ui.theme.OnPrimary
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -83,6 +85,8 @@ fun GlassToggle(
 
     val trackOff = MaterialTheme.colorScheme.surfaceContainerHighest
     val trackOn = Primary
+    // A white thumb vanishes on a light accent (the monochrome themes): there it takes the accent's own ink
+    val thumbOn = if (trackOn.luminance() > 0.6f) OnPrimary else Color.White
     val trackBackdrop = rememberLayerBackdrop()
     val around = rememberCanvasBackdrop { drawRect(background) }
     val thumbBackdrop = rememberCombinedBackdrop(
@@ -177,7 +181,7 @@ fun GlassToggle(
                         scaleX = s
                         scaleY = s
                     },
-                    onDrawSurface = { drawRect(Color.White.copy(alpha = 1f - press.value)) }
+                    onDrawSurface = { drawRect(lerp(Color.White, thumbOn, position.value).copy(alpha = 1f - press.value)) }
                 )
                 .size(ThumbWidth, ThumbHeight)
         )
