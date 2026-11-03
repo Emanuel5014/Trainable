@@ -37,6 +37,8 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvRow
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvRowOrder
 import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
 import com.emanuel5014.trainable.domain.csvimport.SupersetCsv
@@ -863,7 +865,10 @@ class WorkoutRepository @Inject constructor(
             // The number of each superset of this workout, repeated on the rows of its exercises
             val supersetNumbers = SupersetCsv.numbering(session.sets.map { it.setLog })
 
-            session.sets.forEach { setWithExercise ->
+            // In the order the history shows the workout, not the order its rows were saved in
+            HistoryCsvRowOrder.of(session.sets, session.cardio).forEach { row -> when (row) {
+            is HistoryCsvRow.Strength -> {
+                val setWithExercise = row.set
                 val setLog = setWithExercise.setLog
                 val exercise = setWithExercise.exercise
                 // Whether the prescription of the exercise was changed in this workout (and whether the routine was updated
@@ -914,7 +919,8 @@ class WorkoutRepository @Inject constructor(
                 sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells$supersetCell")
             }
 
-            session.cardio.forEach { cardio ->
+            is HistoryCsvRow.Cardio -> {
+                val cardio = row.log
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
@@ -927,6 +933,7 @@ class WorkoutRepository @Inject constructor(
                 val note = escapeCsv(cardio.note ?: "")
                 sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells${if (supersetColumn) "," else ""}")
             }
+            } }
         }
 
         return sb.toString()
