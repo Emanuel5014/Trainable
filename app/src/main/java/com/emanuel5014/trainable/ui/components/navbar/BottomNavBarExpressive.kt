@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.kyant.backdrop.backdrops.LayerBackdrop
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -361,6 +368,7 @@ private fun NavBarFab(
         label = "fabRotation"
     )
 
+    val glass = rememberNavBarActionGlass()
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = { PlainTooltip { Text(action.label) } },
@@ -374,9 +382,11 @@ private fun NavBarFab(
                 .graphicsLayer {
                     scaleX = pressScale
                     scaleY = pressScale
-                },
+                }
+                .actionGlass(glass, MaterialTheme.colorScheme.primaryContainer, cornerRadius = corner.coerceAtLeast(0.dp)),
             shape = RoundedCornerShape(corner.coerceAtLeast(0.dp)),
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = actionGlassContainer(glass, MaterialTheme.colorScheme.primaryContainer),
+            elevation = actionGlassElevation(glass),
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             interactionSource = interactionSource
         ) {
@@ -416,6 +426,7 @@ private fun BoxScope.FabMenu(
         exit = fadeOut(motion.fastEffectsSpec()) +
             scaleOut(motion.fastSpatialSpec(), targetScale = 0.6f, transformOrigin = TransformOrigin(1f, 1f))
     ) {
+        val glass = rememberNavBarActionGlass()
         Column(
             modifier = Modifier.padding(bottom = FabSize + FabGap),
             horizontalAlignment = Alignment.End,
@@ -424,9 +435,11 @@ private fun BoxScope.FabMenu(
             items.forEach { item ->
                 ExtendedFloatingActionButton(
                     onClick = { onItemClick(item) },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    containerColor = actionGlassContainer(glass, MaterialTheme.colorScheme.primaryContainer),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    shape = ShapeFull
+                    shape = ShapeFull,
+                    elevation = actionGlassElevation(glass),
+                    modifier = Modifier.actionGlass(glass, MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Icon(imageVector = item.icon, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -436,3 +449,8 @@ private fun BoxScope.FabMenu(
         }
     }
 }
+
+/** The navbar sits outside the screens, so its action glass bends the app-wide copy of them. */
+@Composable
+private fun rememberNavBarActionGlass(): LayerBackdrop? =
+    if (LocalGlassSettings.current.isOn(GlassPart.ActionButtons)) LocalAppGlassBackdrop.current else null

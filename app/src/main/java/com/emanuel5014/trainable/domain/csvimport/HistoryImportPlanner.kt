@@ -76,7 +76,9 @@ data class PlannedEntry(
     val exercise: ResolvedExercise,
     val kind: RowKind,
     val order: Int,
-    val sets: List<PlannedSet>
+    val sets: List<PlannedSet>,
+    /** The number (from 1) of the superset of the workout this exercise is in; null when it is on its own. */
+    val superset: Int? = null
 )
 
 data class PlannedWorkout(
@@ -102,6 +104,7 @@ data class PlannedWorkout(
 ) {
     val isDuplicate: Boolean get() = duplicateOf != null
     val setCount: Int get() = entries.sumOf { it.sets.size }
+    val supersetCount: Int get() = entries.mapNotNull { it.superset }.distinct().size
     val volumeKg: Float
         get() = entries.filter { it.kind == RowKind.STRENGTH }.sumOf { entry ->
             entry.sets.filter { !it.warmup }.sumOf { (it.weightKg * it.reps).toDouble() }
@@ -114,7 +117,9 @@ data class TemplateExercise(
     val kind: RowKind,
     val sets: Int,
     val repsTarget: String,
-    val durationSeconds: Int?
+    val durationSeconds: Int?,
+    /** The number (from 1) of the superset of the routine this exercise is in; null when it is on its own. */
+    val superset: Int? = null
 )
 
 enum class RoutineStatus { EXISTING, NEW, DECLINED }
@@ -201,7 +206,7 @@ object HistoryImportPlanner {
         valid.forEach { groups.getOrPut(Triple(it.row.date, it.row.sessionId, HistoryCsvColumns.fold(it.row.plan))) { mutableListOf() }.add(it) }
 
         val draft = groups.entries.mapIndexed { index, (key, rows) ->
-            Draft(index, key.first, key.second, rows.first().row.plan, rows, buildEntries(rows))
+            Draft(index, key.first, key.second, rows.first().row.plan, rows, buildEntries(rows, issues))
         }.sortedWith(compareBy<Draft>({ it.date }, { it.time ?: LocalTime.NOON }, { it.sessionNumber ?: Long.MAX_VALUE }, { it.index }))
 
         // Several workouts of one day keep their order: noon, then a minute apart unless the file gives a time
@@ -365,7 +370,7 @@ object HistoryImportPlanner {
      * entry while its set numbers keep growing (supersets alternate their rows), and a new one - a treadmill warm-up
      * and cool-down - when they start over.
      */
-    private fun buildEntries(rows: List<ValidRow>): List<PlannedEntry> {
+    private fun buildEntries(rows: List<ValidRow>, issues: MutableList<ImportIssue>): List<PlannedEntry> {
         val instances = mutableListOf<Instance>()
         val byKey = mutableMapOf<String, MutableList<Instance>>()
         var lastKey: String? = null
@@ -385,15 +390,51 @@ object HistoryImportPlanner {
             if (given != null) target.highestGiven = maxOf(target.highestGiven, given)
             lastKey = key
         }
-        return instances.map { instance ->
+        val supersets = supersetsOf(instances, issues)
+        return instances.mapIndexed { index, instance ->
             val ordered = if (instance.rows.all { it.row.set != null }) instance.rows.sortedBy { it.row.set } else instance.rows
             PlannedEntry(
                 exercise = instance.exercise,
                 kind = instance.kind,
                 order = instance.order,
-                sets = ordered.mapIndexed { i, valid -> valid.set.copy(number = i + 1) }
+                sets = ordered.mapIndexed { i, valid -> valid.set.copy(number = i + 1) },
+                superset = supersets[index]
             )
         }
+    }
+
+    /**
+     * The superset (numbered from 1) each exercise of a workout is in, by its place in [instances]. Exercises with the
+     * same label are one superset, wherever they are; a plain yes joins the exercises around it that have one, up to the
+     * first exercise with none (or another label). Cardio is never in one. A superset left with a single exercise is
+     * dropped with a warning: nothing else in the file could say what it was meant to go with.
+     */
+    private fun supersetsOf(instances: List<Instance>, issues: MutableList<ImportIssue>): Map<Int, Int> {
+        val groups = LinkedHashMap<String, MutableList<Int>>()
+        var run = 0
+        instances.forEachIndexed { index, instance ->
+            val mark = if (instance.kind == RowKind.CARDIO) null else instance.rows.firstNotNullOfOrNull { it.row.superset }
+            when {
+                mark == null -> run++
+                mark.label == null -> groups.getOrPut("run:$run") { mutableListOf() }.add(index)
+                else -> {
+                    run++
+                    groups.getOrPut("label:${mark.label}") { mutableListOf() }.add(index)
+                }
+            }
+        }
+        val numbers = mutableMapOf<Int, Int>()
+        var next = 1
+        groups.values.forEach { members ->
+            if (members.size >= 2) {
+                members.forEach { numbers[it] = next }
+                next++
+            } else {
+                val first = instances[members.single()].rows.first { it.row.superset != null }.row
+                issues.add(ImportIssue(first.line, IssueSeverity.WARNING, IssueCode.IGNORED_VALUE, CsvColumn.SUPERSET, first.superset?.label ?: "true"))
+            }
+        }
+        return numbers
     }
 
     // --- Routines ---
@@ -463,7 +504,8 @@ object HistoryImportPlanner {
                 RowKind.TIME_AND_REPS -> reps.first().toString()
                 RowKind.STRENGTH -> if (reps.distinct().size == 1) reps.first().toString() else reps.joinToString("-")
             },
-            durationSeconds = if (entry.kind == RowKind.STRENGTH) null else working.first().durationSeconds
+            durationSeconds = if (entry.kind == RowKind.STRENGTH) null else working.first().durationSeconds,
+            superset = entry.superset
         )
     }
 

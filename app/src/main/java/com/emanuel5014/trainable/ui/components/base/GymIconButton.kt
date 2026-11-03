@@ -28,6 +28,9 @@ import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.headerGlass
+import com.emanuel5014.trainable.data.model.GlassPart
 import kotlinx.coroutines.flow.map
 
 @Composable
@@ -49,14 +52,19 @@ fun GymIconButton(
         context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
     }.collectAsState(initial = true)
 
-    val scale by animateFloatAsState(if (isPressed) 0.9f else 1f, label = "icon_button_scale")
+    // Only the neutral round button turns to glass; a coloured one (delete, accent) keeps its fill
+    val glass = containerColor == SurfaceContainerHigh && shape == CircleShape &&
+        LocalGlassSettings.current.isOn(GlassPart.HeaderButtons)
+    // Glass swells under the finger instead of shrinking
+    val scale by animateFloatAsState(if (isPressed && !glass) 0.9f else 1f, label = "icon_button_scale")
 
     Box(
         modifier = modifier
             .size(48.dp)
             .scale(scale)
+            .then(if (glass) Modifier.headerGlass() else Modifier)
             .clip(shape)
-            .background(containerColor)
+            .then(if (glass) Modifier else Modifier.background(containerColor))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

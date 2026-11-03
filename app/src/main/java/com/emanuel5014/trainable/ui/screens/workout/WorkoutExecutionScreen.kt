@@ -1,5 +1,13 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.surfaceGlass
+import com.emanuel5014.trainable.ui.theme.Shapes
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberPanelGlassSource
+import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -300,6 +308,7 @@ fun WorkoutExecutionScreen(
         },
         containerColor = Surface
     ) { paddingValues ->
+        val panelGlass = rememberPanelGlassSource()
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (state.totalExercises == 0) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -349,7 +358,8 @@ fun WorkoutExecutionScreen(
                         )
                     },
                     label = "exercise_transition",
-                    modifier = Modifier.fillMaxSize()
+                    // The bottom panel frosts this content
+                    modifier = Modifier.fillMaxSize().actionGlassSource(panelGlass)
                 ) { targetIndex ->
                     val targetExState = state.exercises.getOrNull(targetIndex)
                     if (targetExState != null) {
@@ -545,6 +555,7 @@ fun WorkoutExecutionScreen(
 
                 // DYNAMIC INTERACTION HUB
                 val currentExState = state.currentExercise
+                CompositionLocalProvider(LocalPanelGlassSource provides panelGlass) {
                 WorkoutHub(
                     state = state,
                     ui = ui,
@@ -561,6 +572,7 @@ fun WorkoutExecutionScreen(
                     prescriptionLabels = prescriptionLabels,
                     plateExercises = plateExercises
                 )
+                }
             }
 
             if (state.isFinishing) {
@@ -1158,11 +1170,15 @@ internal fun RowScope.HubPreviousButton(
 ) {
     val label = HubMotion.window(expansion(), 0.25f, 0.6f)
     val fullPadding = if (ResponsiveSize.isCompact) 16.dp else 24.dp
+    val glass = LocalGlassSettings.current.isOn(GlassPart.WorkoutNav)
     GymButton(
         onClick = onClick,
-        modifier = Modifier.weight(lerp(0.2f, 1f, label)),
-        containerColor = SurfaceContainerHigh,
+        modifier = Modifier
+            .weight(lerp(0.2f, 1f, label))
+            .then(if (glass) Modifier.surfaceGlass(GlassPart.WorkoutNav) else Modifier),
+        containerColor = if (glass) Color.Transparent else SurfaceContainerHigh,
         contentColor = OnSurface,
+        shape = if (glass) CircleShape else Shapes.large,
         height = height ?: if (ResponsiveSize.isCompact) 48 else 56,
         contentPadding = PaddingValues(horizontal = lerp(0.dp, fullPadding, label))
     ) {

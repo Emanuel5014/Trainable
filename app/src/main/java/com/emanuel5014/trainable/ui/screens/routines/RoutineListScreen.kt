@@ -1,5 +1,14 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.ui.theme.NoOverlayBlur
+import com.emanuel5014.trainable.ui.components.GlassSegmentedTabs
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
@@ -216,6 +225,7 @@ fun RoutineListScreen(
         }
     )
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
@@ -226,12 +236,14 @@ fun RoutineListScreen(
             if (showOwnFab && uiState.isSelectionMode) {
                 ExtendedFloatingActionButton(
                     onClick = { viewModel.shareSelectedPlans(context) },
-                    containerColor = Primary,
+                    containerColor = actionGlassContainer(actionGlass, Primary),
                     contentColor = OnPrimary,
                     shape = Shapes.large,
+                    elevation = actionGlassElevation(actionGlass),
                     modifier = Modifier
                         .padding(end = fabPadding)
                         .padding(bottom = 80.dp)
+                        .actionGlass(actionGlass, Primary)
                 ) {
                     Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -240,12 +252,14 @@ fun RoutineListScreen(
             } else if (showOwnFab) {
                 ExtendedFloatingActionButton(
                     onClick = { openCreateSheet() },
-                    containerColor = Primary,
+                    containerColor = actionGlassContainer(actionGlass, Primary),
                     contentColor = OnPrimary,
                     shape = Shapes.large,
+                    elevation = actionGlassElevation(actionGlass),
                     modifier = Modifier
                         .padding(end = fabPadding)
                         .padding(bottom = 80.dp)
+                        .actionGlass(actionGlass, Primary)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -257,6 +271,7 @@ fun RoutineListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .actionGlassSource(actionGlass)
                 .padding(paddingValues)
         ) {
             // Header Section
@@ -328,6 +343,38 @@ fun RoutineListScreen(
             )
 
             // M3 Expressive segmented tabs — pill guidata dal pager per un glide sincronizzato
+            if (LocalGlassSettings.current.isOn(GlassPart.Tabs)) {
+                GlassSegmentedTabs(
+                    titles = listOf(
+                        stringResource(R.string.active_routines_tab),
+                        stringResource(R.string.archived_routines_tab)
+                    ),
+                    selectedIndex = pagerState.currentPage,
+                    progress = { (pagerState.currentPage + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f) },
+                    onSelect = { index ->
+                        if (pagerState.currentPage != index) {
+                            coroutineScope.launch {
+                                if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                pagerState.animateScrollToPage(index)
+                            }
+                        }
+                    },
+                    labelSize = ResponsiveSize.responsiveFontSize(MaterialTheme.typography.labelLarge.fontSize),
+                    // Dragging the capsule pages the lists with it; letting go settles on the nearest tab
+                    onScrub = { position ->
+                        val pageSize = pagerState.layoutInfo.pageSize + pagerState.layoutInfo.pageSpacing
+                        val now = pagerState.currentPage + pagerState.currentPageOffsetFraction
+                        pagerState.dispatchRawDelta((position - now) * pageSize)
+                    },
+                    onScrubEnd = { index ->
+                        coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                    },
+                    onTick = { if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
+                    modifier = Modifier
+                        .padding(horizontal = ResponsiveSize.horizontalPadding)
+                        .padding(bottom = 8.dp)
+                )
+            } else {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -420,6 +467,7 @@ fun RoutineListScreen(
                         }
                     }
                 }
+            }
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
@@ -639,6 +687,8 @@ fun RoutineListScreen(
                 )
             }
         ) {
+            // This sheet has its own form and date pickers; the blur behind it was not worth the trouble
+            NoOverlayBlur()
             SheetFormLayout {
                 SheetFormBody(horizontalPadding = ResponsiveSize.horizontalPadding, spacing = 24.dp) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

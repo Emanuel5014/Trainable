@@ -72,7 +72,16 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
+import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
+import com.emanuel5014.trainable.domain.exercise.CardioPerformance
+import com.emanuel5014.trainable.domain.exercise.CardioRecords
+import com.emanuel5014.trainable.ui.components.LocalRpeSettings
+import com.emanuel5014.trainable.ui.components.cardioKmText
+import com.emanuel5014.trainable.ui.components.cardioSetValueText
+import com.emanuel5014.trainable.ui.components.rpeBadgeText
+import java.util.Locale
+import kotlin.math.roundToInt
 import com.emanuel5014.trainable.data.local.dao.MergePreview
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
@@ -439,7 +448,10 @@ internal fun ExerciseDetailContent(
         if (state.merges.asWinner.isNotEmpty() || state.merges.asLoser != null) {
             item(key = "merges") { MergeRows(state = state.merges, languageCode = state.languageCode, onUndo = onUndoMerge) }
         }
-        if (history.performances.isEmpty()) {
+        // A cardio exercise keeps its workouts apart from the sets of the others
+        val cardio = state.cardioHistory
+        val nothingDone = if (cardio != null) cardio.performances.isEmpty() else history.performances.isEmpty()
+        if (nothingDone) {
             item(key = "empty") {
                 Text(
                     text = stringResource(R.string.exercise_detail_empty),
@@ -447,6 +459,12 @@ internal fun ExerciseDetailContent(
                     color = OnSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
                 )
+            }
+        } else if (cardio != null) {
+            item(key = "records") { CardioRecordsCard(records = cardio.records) }
+            item(key = "history_title") { SectionTitle(stringResource(R.string.exercise_detail_history)) }
+            items(cardio.performances, key = { "cardio_${it.sessionId}" }) { performance ->
+                CardioPerformanceCard(performance = performance)
             }
         } else {
             item(key = "records") { RecordsCard(history = history, weightUnit = state.weightUnit) }
@@ -615,6 +633,112 @@ private fun PerformanceSetRow(set: SetLogEntity, weightUnit: String) {
     }
 }
 
+/** One workout of a cardio exercise: when and under what name, its average speed, and every set as the history writes it. */
+@Composable
+private fun CardioPerformanceCard(performance: CardioPerformance) {
+    val summary = performance.averageSpeedKmh?.let { stringResource(R.string.cardio_speed_value, speedText(it)) }
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = DateFormatter.format(performance.timestamp),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = OnSurface
+                )
+                Text(
+                    text = SessionTitle.of(sessionName(performance.sessionNote, performance.planName)).displayText(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Primary,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            summary?.let { PrescriptionPill(text = it, containerColor = Primary.copy(alpha = 0.12f), contentColor = Primary, emphasized = true) }
+        }
+        Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // The same activity twice in the workout (a warm-up and a cool-down) lists each run on its own
+            performance.runs.forEachIndexed { index, run ->
+                if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = Surface.copy(alpha = 0.5f))
+                run.forEach { set -> CardioSetRow(set = set) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardioSetRow(set: CardioLogEntity) {
+    val context = LocalContext.current
+    val rpeScale = LocalRpeSettings.current.scale
+    val rpe = set.rpe?.let { " · " + rpeBadgeText(context, it, rpeScale) }.orEmpty()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.set_number, set.numeroSerie),
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnSurfaceVariant
+            )
+            Text(
+                text = cardioSetValueText(set) + rpe,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = OnSurface
+            )
+        }
+        if (!set.note.isNullOrBlank()) {
+            Row(modifier = Modifier.padding(top = 2.dp, start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.Notes,
+                    contentDescription = null,
+                    tint = OnSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(12.dp)
+                )
+                Text(
+                    text = set.note,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariant,
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardioRecordsCard(records: CardioRecords) {
+    GymCard(containerColor = SurfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        SectionTitle(stringResource(R.string.exercise_detail_records))
+        records.longestSession?.let {
+            RecordRow(stringResource(R.string.exercise_record_cardio_longest), durationText(it.value.roundToInt()), it.timestamp)
+        }
+        records.farthestSession?.let {
+            RecordRow(stringResource(R.string.exercise_record_cardio_farthest), stringResource(R.string.cardio_dist_value, cardioKmText(it.value)), it.timestamp)
+        }
+        records.bestSpeed?.let {
+            RecordRow(stringResource(R.string.exercise_record_cardio_best_speed), stringResource(R.string.cardio_speed_value, speedText(it.value)), it.timestamp)
+        }
+        val sessions = pluralStringResource(R.plurals.exercise_detail_sessions, records.sessionCount, records.sessionCount)
+        val sets = pluralStringResource(R.plurals.exercise_detail_sets, records.setCount, records.setCount)
+        val last = records.lastTimestamp?.let { stringResource(R.string.exercise_detail_last, DateFormatter.format(it)) }
+        Text(
+            text = listOfNotNull("$sessions · $sets", last).joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
+            color = OnSurfaceVariant,
+            modifier = Modifier.padding(top = 12.dp)
+        )
+        val total = durationText(records.totalSeconds.toInt()) +
+            if (records.totalKm > 0f) " · " + stringResource(R.string.cardio_dist_value, cardioKmText(records.totalKm)) else ""
+        Text(
+            text = stringResource(R.string.exercise_detail_cardio_total, total),
+            style = MaterialTheme.typography.bodySmall,
+            color = OnSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
 @Composable
 private fun RecordsCard(history: ExerciseHistory, weightUnit: String) {
     val records = history.records
@@ -686,6 +810,21 @@ private fun RecordRow(label: String, value: String, timestamp: Long) {
 
 /** Past this many sessions the value badges of the chart overlap, so it is drawn without them. */
 private const val MAX_LABELLED_POINTS = 8
+
+/** Km/h with one decimal. */
+private fun speedText(kmh: Float): String = String.format(Locale.getDefault(), "%.1f", kmh)
+
+/** "1h 05m", "32m 10s", "45s". */
+private fun durationText(totalSeconds: Int): String {
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
+    return when {
+        h > 0 -> String.format(Locale.getDefault(), "%dh %02dm", h, m)
+        m > 0 -> if (s > 0) String.format(Locale.getDefault(), "%dm %02ds", m, s) else "${m}m"
+        else -> "${s}s"
+    }
+}
 
 private fun weightText(kg: Float, weightUnit: String): String =
     WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(kg, weightUnit), weightUnit)

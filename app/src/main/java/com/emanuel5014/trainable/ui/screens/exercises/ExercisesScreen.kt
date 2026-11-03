@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.exercises
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -219,6 +224,7 @@ fun ExercisesScreen(
         )
     }
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         containerColor = Surface,
         topBar = {
@@ -267,14 +273,16 @@ fun ExercisesScreen(
                         fontWeight = FontWeight.ExtraBold
                     )
                 },
-                containerColor = Primary,
+                containerColor = actionGlassContainer(actionGlass, Primary),
                 contentColor = OnPrimary,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = actionGlassElevation(actionGlass),
+                modifier = Modifier.actionGlass(actionGlass, Primary, cornerRadius = 20.dp)
             )
         }
     ) { paddingValues ->
         // On a wide screen the list keeps a readable width, centred
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.TopCenter) {
+        Box(modifier = Modifier.fillMaxSize().actionGlassSource(actionGlass).padding(paddingValues), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
             state = listState,
             modifier = Modifier

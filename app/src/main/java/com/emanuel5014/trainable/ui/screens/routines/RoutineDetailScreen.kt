@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -98,6 +103,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
+import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
@@ -127,7 +133,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
+import com.emanuel5014.trainable.ui.components.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -208,6 +214,8 @@ import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
+import com.emanuel5014.trainable.ui.theme.headerGlassOn
+import com.emanuel5014.trainable.ui.theme.headerGroupGlass
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.OutlineVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -335,6 +343,8 @@ fun RoutineDetailScreen(
 
     var selectedExerciseId by remember { mutableStateOf<Int?>(null) }
     var selectedExerciseType by remember { mutableStateOf("strength") }
+    // The type each exercise was last added with: adding it again opens the selector on it
+    val rememberedTypes by viewModel.exerciseTypes.collectAsState()
     var timeTargetSecondsText by remember { mutableStateOf("45") }
     var setsText by remember { mutableStateOf("3") }
     // Reps goal of a Time & Reps exercise
@@ -652,6 +662,7 @@ fun RoutineDetailScreen(
     // The Start button shrinks to its icon once the list is scrolled away from the top
     val startFabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -666,9 +677,11 @@ fun RoutineDetailScreen(
             ) {
                 FloatingActionButton(
                     onClick = { openAddSheet() },
-                    containerColor = SecondaryContainer,
+                    containerColor = actionGlassContainer(actionGlass, SecondaryContainer),
                     contentColor = OnSecondaryContainer,
-                    shape = RoundedCornerShape(18.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = actionGlassElevation(actionGlass),
+                    modifier = Modifier.actionGlass(actionGlass, SecondaryContainer, cornerRadius = 18.dp)
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_exercise))
                 }
@@ -689,9 +702,11 @@ fun RoutineDetailScreen(
                         expanded = startFabExpanded,
                         icon = { Icon(Icons.Rounded.PlayArrow, contentDescription = null) },
                         text = { Text(stringResource(R.string.start), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold) },
-                        containerColor = Primary,
+                        containerColor = actionGlassContainer(actionGlass, Primary),
                         contentColor = OnPrimary,
-                        shape = RoundedCornerShape(20.dp)
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = actionGlassElevation(actionGlass),
+                        modifier = Modifier.actionGlass(actionGlass, Primary, cornerRadius = 20.dp)
                     )
                 }
             }
@@ -708,6 +723,7 @@ fun RoutineDetailScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .actionGlassSource(actionGlass)
                     .padding(paddingValues),
                 contentPadding = PaddingValues(bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -726,6 +742,25 @@ fun RoutineDetailScreen(
                             )
                         },
                         actions = {
+                            if (headerGlassOn()) {
+                                // One capsule of glass for the pair, as iOS groups its toolbar buttons
+                                Row(modifier = Modifier.headerGroupGlass()) {
+                                    GymIconButton(
+                                        icon = Icons.Rounded.RestartAlt,
+                                        onClick = { showResetConfirmDialog = true },
+                                        containerColor = Color.Transparent,
+                                        contentColor = Error,
+                                        description = "Reset Routine Content"
+                                    )
+                                    GymIconButton(
+                                        icon = Icons.Rounded.Edit,
+                                        onClick = { openRoutineEditSheet() },
+                                        containerColor = Color.Transparent,
+                                        contentColor = OnSurface,
+                                        description = "Edit Routine"
+                                    )
+                                }
+                            } else {
                             // Connected pair, like the day and week pickers
                             Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                                 GymIconButton(
@@ -744,6 +779,7 @@ fun RoutineDetailScreen(
                                     description = "Edit Routine",
                                     shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 24.dp, bottomEnd = 24.dp)
                                 )
+                            }
                             }
                         },
                         titleInRow = true,
@@ -1708,6 +1744,8 @@ fun RoutineDetailScreen(
             categories = uiState.categories,
             onExerciseSelected = { exercise ->
                 selectedExerciseId = exercise.id
+                // Adding opens on the type this exercise was last added with; editing keeps the type being edited
+                if (editingExerciseId == null) selectedExerciseType = ExerciseTypeMemory.typeFor(rememberedTypes, exercise.id)
                 showExercisePicker = false
                 showExerciseSheet = true
             },

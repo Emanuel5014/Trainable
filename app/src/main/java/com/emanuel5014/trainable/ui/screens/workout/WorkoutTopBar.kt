@@ -40,6 +40,9 @@ import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
+import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
+import com.emanuel5014.trainable.ui.theme.headerGlassOn
+import com.emanuel5014.trainable.ui.theme.headerGroupGlass
 
 /** The top bar of the workout: close, plan name, progress, warm-up timer and cancel. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -95,6 +98,35 @@ internal fun WorkoutTopBar(
         actions = {
             // Timer and cancel are one connected pair, like reset and edit on the routine screen
             val showWarmupTimer = state.totalExercises > 0 && state.warmupTimerEnabled
+            if (headerGlassOn()) {
+                // On glass the pair is one capsule; a lone cancel button is a glass circle of its own
+                val cancel: @Composable (Color) -> Unit = { container ->
+                    GymIconButton(
+                        icon = Icons.Rounded.Delete,
+                        onClick = { ui.showCancelDialog = true },
+                        containerColor = container,
+                        contentColor = Error,
+                        description = stringResource(R.string.cancel_workout)
+                    )
+                }
+                if (showWarmupTimer) {
+                    Row(modifier = Modifier.headerGroupGlass()) {
+                        GymIconButton(
+                            icon = Icons.Rounded.Timer,
+                            onClick = {
+                                ui.warmupTimerDuration = state.lastWarmupSeconds
+                                ui.showWarmupTimerDialog = true
+                            },
+                            containerColor = Color.Transparent,
+                            contentColor = if (state.warmupTimerRemaining > 0) Primary else OnSurface,
+                            description = stringResource(R.string.warmup_timer)
+                        )
+                        cancel(Color.Transparent)
+                    }
+                } else {
+                    cancel(SurfaceContainerHigh)
+                }
+            } else {
             Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                 if (showWarmupTimer) {
                     GymIconButton(
@@ -121,6 +153,7 @@ internal fun WorkoutTopBar(
                         RoundedCornerShape(16.dp)
                     }
                 )
+            }
             }
             Spacer(modifier = Modifier.width(8.dp))
         },

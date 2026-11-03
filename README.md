@@ -1,293 +1,179 @@
 <div align="center">
-  <img src="ICON/icon.png" alt="Trainable Logo" width="120">
 
-  # Trainable
-  <sub>Logo by br1_production</sub>
+<img src="ICON/icon.png" alt="Trainable logo" width="112">
+
+# Trainable
+
+**A native Android workout tracker for lifters.**
+Plan your routines, log every set and follow your progress. Your data stays on your phone.
+
+[![Release](https://img.shields.io/github/v/release/Emanuel5014/Trainable?label=release)](https://github.com/Emanuel5014/Trainable/releases/latest)
+[![Android](https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&logoColor=white)](#installation)
+[![License](https://img.shields.io/github/license/Emanuel5014/Trainable)](LICENSE)
+[![Website](https://img.shields.io/badge/website-trainableapp.vercel.app-3B55D0)](https://trainableapp.vercel.app)
+
+[Download](https://github.com/Emanuel5014/Trainable/releases/latest/download/Trainable.apk) &nbsp;|&nbsp;
+[Features](#features) &nbsp;|&nbsp;
+[Installation](#installation) &nbsp;|&nbsp;
+[Build from source](#build-from-source) &nbsp;|&nbsp;
+[Releases](https://github.com/Emanuel5014/Trainable/releases)
+
 </div>
 
-[![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/)
-[![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org/)
-[![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-orange.svg)](https://developer.android.com/jetpack/compose)
-[![Design](https://img.shields.io/badge/Design-Material%203%20Expressive-purple.svg)](https://m3.material.io/)
-[![Latest Release](https://img.shields.io/github/v/release/Emanuel5014/Trainable?logo=github)](https://github.com/Emanuel5014/Trainable/releases/latest)
-[![Stars](https://img.shields.io/github/stars/Emanuel5014/Trainable?style=flat&logo=github&color=gold)](https://github.com/Emanuel5014/Trainable/stargazers)
-[![Support](https://img.shields.io/badge/Support-Ko--fi-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/emanuel5014)
-[![Website](https://img.shields.io/badge/Website-trainableapp.vercel.app-8B5CF6?logo=vercel&logoColor=white)](https://trainableapp.vercel.app)
+<br>
 
-<div align="center">
-  <br>
-  <a href="https://github.com/Emanuel5014/Trainable/releases/latest/download/Trainable.apk">
-    <img src="https://img.shields.io/badge/Download-Latest%20APK-00C853?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" height="40">
-  </a>
-</div>
+<p align="center">
+  <img src="SCREENS/dashboard.png" width="195" alt="Dashboard">
+  <img src="SCREENS/routines.png" width="195" alt="Routines">
+  <img src="SCREENS/routine_detail.png" width="195" alt="Routine detail">
+  <img src="SCREENS/workout.png" width="195" alt="Workout in progress">
+</p>
+<p align="center">
+  <img src="SCREENS/history.png" width="195" alt="Workout history">
+  <img src="SCREENS/analytics.png" width="195" alt="Analytics">
+  <img src="SCREENS/program.png" width="195" alt="Weekly %1RM program">
+  <img src="SCREENS/exercise.png" width="195" alt="Exercise records">
+</p>
+<p align="center">
+  <sub>Dashboard, routines, routine detail and a workout in progress. History, analytics, a weekly %1RM program and exercise records.</sub>
+</p>
 
+## Overview
 
-**Trainable** is a premium, native Android workout tracker designed for lifters. It features a monolithic design aligned with Google's **Material 3 Expressive** guidelines, with both **Dark** and **Light Mode** support, offering a seamless experience optimized for Pixel devices.
+Trainable is a workout tracker built with Jetpack Compose and Material 3 Expressive. It handles a plain push, pull and legs split as well as week-by-week %1RM programs, and it works without an account or an internet connection.
 
-Available in **6 languages**: English, Italian, Portuguese, German, French, Spanish.
+- **Local first.** Everything lives in a Room database on the device. Backups go to a file or to your own Nextcloud.
+- **Simple by default.** Percentage-based programming, techniques and RPE targets sit behind one switch (Settings, Workout, Advanced programming) that is off until you need it.
+- **Scan a paper plan.** Photograph a gym sheet and let an on-device model, or a provider you choose, turn it into a routine.
+- **Your language and units.** English, Italian, Portuguese, German, French and Spanish, in kilograms or pounds.
 
----
+## Features
 
-## 📱 Screenshots
+### Training
 
-<div align="center">
-  <img src="SCREENS/dashboard.png" width="130" alt="Dashboard" />
-  <img src="SCREENS/routines.png" width="130" alt="Routines" />
-  <img src="SCREENS/routine_detail.png" width="130" alt="Routine Detail" />
-  <img src="SCREENS/workout.png" width="130" alt="Workout Execution" />
-  <img src="SCREENS/history.png" width="130" alt="Session History" />
-  <img src="SCREENS/analytics.png" width="130" alt="Analytics" />
-</div>
+- **Dashboard.** The routine suggested for today, weekly goal progress, one-tap resume of an interrupted workout and a quick start without a plan.
+- **Routine builder.** More than 140 preset exercises with filters by category, muscle and equipment, plus your own exercises and categories, favorites, supersets, drag-and-drop ordering and scheduling by weekday with start and expiry dates.
+- **Flexible rep schemes.** Fixed sets, per-set lists such as `10-8-6`, rep ranges with double progression, optional starting weights, time-based sets and cardio.
+- **Workout screen.** Large touch targets with wheel pickers, a rest timer with notifications, a warm-up timer, per-set notes, swiping between exercises, adding or swapping exercises mid-workout, a plate calculator and optional RPE on three scales.
+- **Set detail.** Optional logging of rest-pause parts, assisted and partial reps and the technique actually performed.
+- **Own media.** Attach an image or GIF to any exercise and show it during the workout.
 
+### Advanced programming
 
-## ✨ Features
+Opt-in. With the switch off, the app behaves like a plain tracker and your programmed data is kept for when you turn it back on.
 
-### 📊 Intelligent Dashboard
-*   **Active Plan Hub**: Quick access to your current routine and next scheduled session.
-*   **Smart Recommendations**: Assign routines to specific weekdays for intelligent "Today's Workout" suggestions.
-*   **Resume Workout**: Smart hub to quickly resume interrupted sessions without data loss.
-*   **Unfinished Session Detection**: Smart alerts when starting a workout for a plan that already has an in-progress session, with one-tap resume.
-*   **Quick Start**: Start an empty workout directly from the dashboard without a plan.
+- **Prescriptions as blocks**, for example `70% 5 / 75% 3x5 / 70% 6`, with %1RM, RPE, fixed load or bodyweight intensity.
+- **Every rep mode.** Sets by reps, per-set lists, AMRAP and total-rep targets that add sets until the goal is reached.
+- **Techniques.** Pauses, chains, bands, tempo, deficit, EMOM and custom cues, shown as chips everywhere.
+- **Weekly programs.** Any number of weeks with a prescription per week, skipped weeks, copy from the previous week and automatic week advance after each session.
+- **1RM manager.** Per-exercise maxes with history and source (tested, manual, estimated), an Epley estimate from your logs and a load table rounded to your plate increment.
+- **Edit while training.** Change a prescription in the middle of a workout, for that workout only or for the whole routine.
 
-### 📋 Advanced Routine Builder
-*   **Exercise Library**: 130+ pre-populated exercises with categorized filters.
-*   **Drag & Drop Reordering**: Fluid, haptic-powered reordering of exercises within routines.
-*   **Custom Exercises**: Add and manage your own exercises with persistent categorization.
-*   **Custom Categories**: Create, rename, and delete your own exercise categories.
-*   **Editable Preset Exercises**: Toggle editing of built-in exercise names and categories.
-*   **Superset Support**: Group exercises into supersets within routines.
-*   **Auto-Adjust Sets**: Enter rep schemes like `10-8-6` and sets auto-update to match the number of segments.
-*   **Plan Scheduling**: Set Start and Expire dates when creating or editing routines.
-*   **Routine Sharing**: Export and import routines via `.trainableplan` file format.
-*   **Routine Photos**: Capture multiple photos in-app and include them in exports.
+### History and analytics
 
-### 🏋️ Powerlifting & %1RM Programming
-*   **Optional**: Everything below is behind **Settings › Workout › Advanced programming** (off by default). With it off the app looks and behaves like a plain tracker; your programmed data stays in the database and reappears when you switch it back on.
-*   **Advanced Prescriptions**: Describe an exercise as blocks — `70% 5 · 75% 3×5 · 70% 6` — with %1RM, RPE, fixed load or bodyweight (+ added load) intensity.
-*   **Every Rep Scheme**: Sets × reps, per-set lists (`3-4-2-1-5`), AMRAP (`3×MAX`) and total-reps blocks (`20 REP ALSAP`) that add sets automatically until the target is reached.
-*   **Techniques**: Pause (`STOP 2″`), chains, bands, feet up, competition, tempo (`D4F2S4` / `3-1-0`), deficit, EMOM and custom cues, shown as chips everywhere.
-*   **Weekly Programs**: Routines can span W1…Wn with a prescription per week, skipped weeks, "copy previous week", unwritten weeks that repeat the last one, and automatic week advance after each session. Works for full PL programs and for "hybrid" sheets where only the main lift is programmed.
-*   **Scan a Program Page**: With AI on, photograph the handwritten page of an exercise (`W1: 70% 6 75% 4x5 ISO 2″ …`) and the weeks, blocks and 1RM are filled in for review. The photo is straightened and cropped to the writing first so the small on-device model can read it.
-*   **1RM Manager**: Per-exercise 1RM with history, trend, source (tested/manual/estimated), Epley estimate from your logs and a 60–100% load table. Loads are rounded to your plate increment (kg/lb).
-*   **In-Session Tools**: Block headers, %·kg badges, AMRAP entry, extra top singles, RPE input (6–10 in half steps), per-block rest and a "New 1RM?" prompt when you beat your max.
+- **History.** Edit past workouts, filter, compare two sessions and share a workout as an image card. An optional journal adds a rating, a note and colored tags to each workout.
+- **Analytics.** Widgets you arrange yourself: workout calendar, body weight, volume by muscle group, total tonnage, 1RM progress and period comparison.
+- **Exercise records.** Per exercise: heaviest set, best estimated 1RM, best session volume and a progress chart.
+- **Reports.** Generate an HTML report of one or more routines with per-exercise history, maximums and, for programs, prescribed versus done by week.
 
-### 🤖 On-Device AI Routine Scanner
-*   **100% On-Device & Private**: Powered locally by Google's LiteRT-LM (Gemma 4 E2B / E4B) — zero cloud dependency, no API keys, and complete data privacy.
-*   **Intelligent Sheet Extraction**: Capture or pick a picture of a paper gym sheet and automatically extract exercise names, sets, rep schemes, rest times, cardio durations, and suggested categories.
-*   **Powerlifting Sheets**: Reads %1RM notation, techniques, multi-week programs, 1RM headers like `Stacco (230kg)` and "PROGRAMMAZIONE" placeholders on hybrid sheets.
-*   **Smart Catalog Matching**: Fuzzy-matches extracted exercises with 130+ built-in movements or user-defined custom exercises.
-*   **Interactive Review & Inspector**: Collapsible photo inspector with high-resolution pinch-to-zoom, pan, fullscreen mode, and per-exercise editing before importing into the plan.
-*   **Background Model Downloader**: Dedicated Foreground Service with WakeLock and real-time progress notifications with cancel control, allowing models to download uninterrupted even when switching apps or locking the phone.
-*   **Live Resource Analytics**: Real-time telemetry dashboard monitoring CPU usage (with active core count), JVM/Native/System RAM allocation, token generation speed (`tok/s`), battery level, temperature (°C), and thermal throttling state during scanning.
-*   **Hardware Compatibility Check**: Automatic device capability verification calibrated for devices with 6GB+ RAM and storage requirements.
+### AI sheet scanner
 
-### 💪 High-Performance Workout Execution
-*   **Expressive UI**: Massive, touch-friendly inputs designed for use during heavy sets.
-*   **Wheel Pickers**: Haptic-boosted weight and rep selection for precise control.
-*   **Smart Hub**: Dynamic navigation between exercises with "Finish" and "Next" logic.
-*   **Superset Flow**: Execute grouped superset exercises seamlessly.
-*   **Cardio Exercise Support**: Log cardio sessions (Run, Bike, Walk, or custom) with distance and duration tracking, including cardio timer state persistence.
-*   **Rest Timer**: Integrated countdown cards with enhanced notifications showing next-set details and planned reps.
-*   **Custom Vibration**: Configurable continuous vibration duration (0–30s) when the rest timer finishes while the device is locked.
-*   **Warmup Timer**: Configurable warmup timer in settings.
-*   **Session Notes**: Persistence of notes for every single set for granular tracking.
-*   **Swipe Navigation**: Swipe between exercises during workout execution.
-*   **Exercise Note Pre-fill**: Auto-fill exercise notes from session history.
-*   **On-the-fly Edits**: Add custom exercises mid-workout; tap plan title to view/edit plan details.
-*   **Inline Exercise Modifications**: Add or remove exercises mid-workout with inline controls.
-*   **Workout Timer**: Configurable workout duration timer with enable/disable toggle in Settings.
+- **On-device by default.** Google LiteRT-LM running Gemma 4 (E2B or E4B). No account, no API key, no data leaves the phone. Needs a device with roughly 6 GB of RAM.
+- **Or a provider you choose.** Claude, OpenAI, Gemini or any OpenAI-compatible server, such as Ollama or LM Studio on your own PC. Keys are stored encrypted with the Android Keystore and you confirm before a photo is sent to a public service.
+- **Reads real sheets.** Exercise names, sets, reps, rest, cardio, %1RM notation, techniques and multi-week programs, matched against the exercise catalog and shown for review before anything is imported.
 
+### Data and integrations
 
-### 📈 Deep Analytics
-*   **Vico Charts**: Professional-grade visualizations for total volume and strength trends.
-*   **1RM Tracking**: Algorithmic strength assessment using the Epley formula, with optional 1RM cards.
-*   **Volume by Muscle Group**: Track volume distributed across muscle groups.
-*   **Session Comparison**: Compare workouts across time periods or specific sessions.
-*   **Workout Calendar**: Visual calendar widget for workout frequency.
-*   **Consistency Tracking**: Visual heatmaps and progress cards.
-*   **Strength Index**: Algorithmic assessment of your structural balance and performance.
-*   **Body Weight**: Integrated weight logging and history tracking.
-*   **Body Weight History**: Dedicated module with date picker, delete functionality, collapsible UI, and configurable time range (1w/1m/6m/All).
-*   **Cardio Tracking**: Cardio counter in weekly goal overview.
-*   **Prescription-Aware History**: History, session edits, reports, CSV export, share cards and the web dashboard show the %1RM, techniques and RPE of every set.
-*   **Plans Reports**: Generate detailed HTML reports for workout plans with per-exercise history, max weight/volume, estimated 1RM, and swap tracking. Preview, save, or share reports.
+- **Backup and restore.** Local ZIP backups, scheduled automatic backups with WorkManager and optional Nextcloud sync.
+- **CSV.** Export your history, or import one from another app: a full preview, duplicate detection and a one-tap undo.
+- **Routine sharing.** Export and import routines as `.trainableplan` files, photos included.
+- **Local web dashboard.** Start a small Ktor server from Settings and browse your plans, history and analytics from any browser on the same Wi-Fi network.
+- **Widgets.** Quick start or resume, and weekly goal progress, on the home screen.
 
-### 🌍 Localization
-*   **6 Languages**: English, Italian, Portuguese, German, French, Spanish.
-*   **Dynamic Switching**: Change language directly from Settings.
+### Physical checks
 
-### 🏟️ Gym Membership
-*   **Expiration Tracking**: Monitor your gym subscription end date.
-*   **Smart Alerts**: Expiration notifications with "Renew" quick action buttons.
+A hidden section for body progress, opened by tapping the logo on the dashboard three times: measurements with notes, photos with a fullscreen viewer and a before and after slider, a built-in photo editor, biometric or PIN lock, optional AES-256-GCM encryption of the photos and auto-lock when the app goes to the background.
 
-### 🌐 Local WebServer
-*   **On-Device Dashboard**: Start a local HTTP server from Settings to view your training data (analytics, plans, session history) in any browser on the same Wi-Fi network.
-*   **REST API**: Built-in Ktor-powered API serving real-time data from the local Room database.
-*   **Foreground Service**: Persistent notification with server status, URL display, and one-tap stop.
-*   **Responsive Web UI**: Full-featured web pages with dark/light theme, i18n, and mobile-friendly layout.
+### Personalization
 
-### 📸 Social Sharing
-*   **Workout Share Cards**: Generate and share full-length workout summary images.
-*   **Live Preview**: Preview your share card before sharing.
-*   **Muscle Group Details**: Muscle group breakdown included in share cards.
-*   **Session Notes**: Workout notes included in shared summaries.
-*   **Planned Set/Rep Scheme**: Planned set and rep structure included in share cards.
+- Material You dynamic colors, a set of palettes or a custom color, light, dark or system theme.
+- Three navigation bar styles: floating, expressive and classic.
+- Gym membership card with expiry alerts, haptic feedback and swipe or long-press interaction styles.
 
-### 📱 Widgets
-*   **Quick Start/Resume Widget**: Home Screen and Lock Screen widget for instant workout start or resume.
-*   **Weekly Goal Widget**: Track weekly workout goal progress directly from your home screen.
+## Installation
 
-### 🔒 Physical Checks
-*   **Hidden Entry Point**: Tap the Trainable logo 3 times from the Dashboard to access Physical Checks.
-*   **Body Progression Tracking**: Log body measurements with weight, notes, and timestamp.
-*   **Photo Gallery**: Capture or import multiple photos per check with fullscreen pinch-to-zoom viewer.
-*   **Before/After Comparison**: Interactive slider overlay to compare any two check entries.
-*   **Biometric Lock**: Fingerprint or device PIN gate for quick access.
-*   **Password Encryption**: Optional AES-256-GCM password-based encryption for all check photos.
-*   **Forgot Password Reset**: Secure nuclear reset that deletes all check data if password is lost.
-*   **Auto-Lock**: Session auto-locks after inactivity or when app goes to background.
-*   **Unit Conversion**: Automatic kg/lb conversion for weight entries.
-*   **Swipe & Long-Press Actions**: Quick edit, delete, and manage checks via gestures.
-*   **Photo Editor**: Built-in crop, rotate, zoom, and pan tools with aspect ratio presets (Free, 1:1, 4:3, 16:9) before saving photos.
+1. Download [`Trainable.apk`](https://github.com/Emanuel5014/Trainable/releases/latest/download/Trainable.apk) from the latest release.
+2. Open it on your phone and allow installs from that source when asked.
+3. Later versions are announced inside the app, which can download and install the update.
 
-### ⚙️ Premium UX & Tools
-*   **Dynamic Color**: Full support for Android 12+ wallpaper-based color extraction.
-*   **Light Mode & Custom Themes**: Switch between Dark/Light mode, customize themes, and choose from an extensive color palette in Settings.
-*   **Google Sans Font**: Clean, modern typography throughout the app.
-*   **Horizontal Pager Navigation**: Fluid swipe-based transitions between main tabs.
-*   **Backup & Restore**: Secure ZIP-based local backup system with photo compression and expanded preference sync (Theme, Units, Language).
-*   **Auto-Backup**: Reliable WorkManager-based automated background backups with configurable frequency, max count, and image inclusion.
-*   **CSV History Import**: Bring a workout history in from a CSV with the same columns the app exports (any app language, `,` `;` or tab, UTF-8/UTF-16/Windows-1252). A full preview shows every routine, exercise and workout, what is skipped and why; missing exercises and routines are created, workouts already in the app are recognised, and the whole import can be undone. The export and import also carry an optional Session Duration column (minutes).
-*   **Tactile Feedback**: Enhanced haptic responses for all critical UI interactions.
-*   **Interaction Choice**: Configure Swipe or Long-press interaction style in Settings.
-*   **Auto-Updates**: Built-in automatic update support for future releases.
-*   **Unit System**: Choose between Metric (kg) and Imperial (lbs).
+| Requirement | Detail |
+| :--- | :--- |
+| Android | 9 (API 28) or newer. Wallpaper-based dynamic color needs Android 12 or newer. |
+| On-device AI | About 6 GB of RAM and at least 3 GB of free storage for the model. Remote providers work on any device. |
 
----
+## Build from source
 
-## 🏗️ Technical Architecture
+Requirements: a recent Android Studio, the Android SDK platform 37 and JDK 21 (Gradle finds an installed JDK or downloads one).
 
-Trainable follows **Clean Architecture** principles combined with **MVVM** for a robust and testable codebase:
+```bash
+git clone https://github.com/Emanuel5014/Trainable.git
+cd Trainable
+./gradlew :app:assembleDebug
+```
 
-*   **UI Layer**: 100% Jetpack Compose using the **Monolithic Design System** (no XML).
-*   **Presentation Layer**: Hilt-injected ViewModels managing `StateFlow` for reactive UI updates.
-*   **On-Device AI Engine**: Google LiteRT-LM runtime executing local quantized Gemma models (E2B / E4B) directly on-device with GPU/CPU acceleration.
-*   **Data Layer**: 
-    *   **Room Database**: Single Source of Truth (SSoT).
-    *   **DataStore**: For lightweight user preferences (Haptic settings, theme, AI configuration).
-    *   **WorkManager & Foreground Services**: Automated background backups, persistent web server, and resilient background model downloading with WakeLock.
-*   **Navigation**: Type-safe navigation with `@Serializable` routes.
+The APK is written to `app/build/outputs/apk/debug/`. The debug build uses the application ID `com.emanuel5014.trainable.debug`, so it installs next to the release version without touching its data.
 
+## Architecture
 
----
+Clean architecture with MVVM. Dependencies point inwards: the UI knows the view models, the view models know the domain and the repositories, and the domain knows nothing about Android.
 
-## 📁 Project Structure
+| Layer | Contents |
+| :--- | :--- |
+| UI | Jetpack Compose only, no XML layouts. Type-safe navigation with `@Serializable` routes. |
+| Presentation | Hilt-injected view models exposing `StateFlow`. |
+| Domain | Plain Kotlin logic: prescriptions, suggestions, RPE, EMOM, CSV import planning. |
+| Data | Room (single source of truth), DataStore, WorkManager, the Ktor web server and the on-device AI engine. |
 
 ```
 com/emanuel5014/trainable/
-├── data/
-│   ├── ai/                     # On-device AI (LocalLlmEngine, RoutineScanner, ModelFileManager, ModelDownloadService & Manager, AiResourceTracker, DeviceCapabilityChecker, RoutineScanParser, AiModels, ExerciseMatcher)
-│   ├── ExerciseTranslations.kt
-│   ├── local/
-│   │   ├── ExerciseData.kt
-│   │   ├── GymDatabase.kt
-│   │   ├── dao/                # Room DAOs (WorkoutDao, ExerciseDao, AnalyticsDao, UserDao, PhysicalCheckDao, WeightLogDao)
-│   │   ├── entity/             # Room entities (SetLogEntity, CardioLogEntity, CustomCategoryEntity, WorkoutPlanEntity, WorkoutSessionEntity, ExerciseEntity, PlanExerciseEntity, SessionExerciseSwapEntity, PhysicalCheckEntity, WeightLogEntity, UserEntity, WorkoutPlanImageEntity)
-│   │   └── relation/           # Relation classes (PlanWithDetails, SessionWithSets, SessionWithDetails, SessionWithPlanName)
-│   ├── remote/
-│   │   ├── GitHubModels.kt
-│   │   └── dto/                # DTOs for export/import (WorkoutPlanExportDto)
-│   ├── report/                 # HTML plan reports (ReportGenerator, HtmlReportFormatter, ReportModels)
-│   └── repository/             # Repositories (WorkoutRepository, AnalyticsRepository, ExerciseRepository, UserPreferencesRepository, UserRepository, PhysicalCheckRepository)
-├── di/                         # Hilt modules (DatabaseModule, NetworkModule)
-├── ui/
-│   ├── components/
-│   │   ├── analytics/          # Charts, stat cards, consistency, body comp, personal bests (AnalyticsCharts, StatCard, ConsistencyCard, BodyCompositionCard, PersonalBestsSection, StrengthIndexCard)
-│   │   ├── base/               # Design system primitives (GymCard, GymButton, GymIconButton, GymInputField, GymLoadingIndicator)
-│   │   ├── dialogs/            # Reusable dialogs (UpdateDialog, ImportConfirmationDialog)
-│   │   ├── exercise/           # Exercise cards, cardio input, picker, rest timer, set log input (ExerciseEntryCard, ExerciseGroupHeader, CardioInputForm, ExercisePickerBottomSheet, RestTimerSection, WeightRepsInput, SetLogRow, ExerciseNavigation, SwapExerciseBottomSheet)
-│   │   ├── navbar/             # Bottom navigation bar and items (BottomNavBar, BottomNavItems, BottomBarManager, BottomNavBar_flo)
-│   │   └── shared/             # Shared utilities (EmptyState, ImageEditor, ScreenHeader, SwipeableCard, WorkoutShareCard, RoutineImagePicker)
-│   ├── navigation/             # NavGraph, Routes
-│   ├── screens/
-│   │   ├── analytics/          # Analytics dashboard, drag-drop state, models (AnalyticsScreen, AnalyticsViewModel, AnalyticsModels, DragDropState)
-│   │   ├── compare/            # Session comparison (CompareSessionsScreen, CompareSessionsViewModel)
-│   │   ├── dashboard/          # Main dashboard (DashboardScreen, DashboardViewModel)
-│   │   ├── exercise/           # One exercise: history, edit, media, merge, hide (ExerciseDetailScreen, ExerciseDetailViewModel)
-│   │   ├── exercises/          # Exercises page in the settings: list with filters, media switches, categories, new exercise (ExercisesScreen, ExercisesViewModel, ExerciseListRow, CategoriesSheet, PersonalizationCard)
-│   │   ├── history/            # Session history, edit, filter bottom sheet (HistoryScreen, HistoryViewModel, EditWorkoutScreen, EditWorkoutViewModel, EditWorkoutDragDropState, HistoryFilterBottomSheet)
-│   │   ├── onboarding/         # Onboarding flow (OnboardingScreen, OnboardingViewModel)
-│   │   ├── physicalcheck/      # Physical checks (body progression, before/after slider, settings) (PhysicalCheckScreen, PhysicalCheckViewModel, PhysicalCheckCompareScreen, PhysicalCheckSettingsScreen, BeforeAfterSlider)
-│   │   ├── routines/           # Routine list, detail, builder, report, AI scan preview sheet (RoutineListScreen, RoutineDetailScreen, RoutineDetailViewModel, RoutinesViewModel, ReportScreen, ReportViewModel, AiScanPreviewSheet)
-│   │   ├── settings/           # App settings, workout settings, AI model manager (SettingsScreen, SettingsViewModel, WorkoutSettingsScreen, DonorsScreen)
-│   │   └── workout/            # Workout execution (WorkoutExecutionScreen, WorkoutViewModel)
-│   │   └── MainPagerScreen.kt
-│   ├── theme/                  # Color, Shape, Type, Spacing, Theme, ResponsiveSize, ThemeColorStore
-│   └── util/                   # DateFormatter
-├── util/
-│   ├── AppLocaleManager.kt
-│   ├── BiometricHelper.kt
-│   ├── ImageStorageUtils.kt
-│   ├── PhysicalCheckCryptoManager.kt
-│   ├── ShareUtils.kt
-│   ├── UpdateManager.kt
-│   ├── UriMigrationHelper.kt
-│   ├── WeightUnitConverter.kt
-│   ├── backup/                 # AutoBackupWorker, BackupManager
-│   └── notification/           # TimerNotificationHelper, TimerNotificationReceiver, GymMembershipWorker
-├── webserver/                  # Local HTTP server (Ktor), foreground service, server manager (LocalWebServer, LocalWebServerService, WebServerManager)
-├── widget/                     # Glance widgets (TrainableWidget, TrainableWidgetReceiver, WeeklyGoalWidget, WeeklyGoalWidgetReceiver)
-├── MainActivity.kt
-└── GymTrackingApp.kt
+├── data/        Room database (entities, DAOs), repositories, AI (on-device and remote), HTML reports
+├── domain/      Prescriptions, suggestions, RPE, EMOM, CSV import, exercise rules
+├── di/          Hilt modules
+├── ui/          Screens, components, navigation, theme
+├── util/        Backup, notifications, crypto, locale, sharing, updates
+├── webserver/   Local Ktor server and its foreground service
+└── widget/      Glance widgets
 ```
 
+## Tech stack
 
-## 🚀 Getting Started
+| Area | Library |
+| :--- | :--- |
+| Language | Kotlin 2.4 |
+| UI | Jetpack Compose (BOM 2026.09), Material 3 1.5, Haze |
+| Dependency injection | Hilt 2.60 |
+| Database | Room 2.8 with KSP |
+| Preferences | DataStore 1.2 |
+| Background work | WorkManager 2.12 and foreground services |
+| Navigation | Navigation Compose 2.9 |
+| Networking | OkHttp 5.5 and Ktor server 3.5 |
+| Serialization | kotlinx.serialization 1.11 |
+| On-device AI | LiteRT-LM 0.16 (Gemma 4) |
+| Images | Coil 2.7 |
+| Widgets | Glance 1.2 |
+| Charts | Custom Compose Canvas drawing |
+| Build | Gradle 9.6 and Android Gradle Plugin 9.4 |
 
-### Prerequisites
-*   Android Studio Ladybug or newer.
-*   Android SDK 28 or higher.
-*   JDK 21: Gradle finds an installed one or downloads it, no path to configure.
-*   A device/emulator running Android 12+ (for Dynamic Color support).
+## Contributing
 
-### Setup
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/Emanuel5014/Trainable.git
-    ```
-2.  Open the project in Android Studio.
-3.  Build and Run on your device.
+Bug reports and feature requests are welcome in the [issue tracker](https://github.com/Emanuel5014/Trainable/issues). For a code change, open an issue first so the approach can be discussed.
 
----
+## Support
 
-## 🛠️ Tech Stack
-*   **Language**: Kotlin (2.3.x)
-*   **UI**: Jetpack Compose (2026.x) with Material3 (1.5.x)
-*   **On-Device AI**: Google LiteRT-LM (Gemma 4 E2B / E4B)
-*   **Dependency Injection**: Dagger Hilt (2.59.x)
-*   **Database**: Room (2.8.x) with KSP
-*   **Charts**: Vico (2.1.x)
-*   **Serialization**: Kotlinx Serialization (1.11.x)
-*   **Navigation**: Navigation Compose (2.9.x)
-*   **Concurrency**: Kotlin Coroutines & Flow
-*   **Preferences**: DataStore Preferences (1.2.x)
-*   **Background Tasks**: WorkManager (2.11.x) & Foreground Services
-*   **Image Loading**: Coil (2.7.x)
-*   **Web Server**: Ktor (3.x)
-*   **Build**: Gradle (9.4.x) + AGP (9.2.x)
+If Trainable is useful to you, a star on GitHub helps other lifters find it. Development can also be supported on [Ko-fi](https://ko-fi.com/emanuel5014).
 
----
+## License
 
-## ❤️ Support the project
+Released under the [GNU General Public License v3.0](LICENSE).
 
-If you find this project useful, please consider giving it a ⭐ on GitHub or supporting development via Ko-fi!
-
-<div align="center">
-  <a href="https://ko-fi.com/emanuel5014" target="_blank">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee" height="40">
-  </a>
-</div>
-
----
-
-*Developed with ❤️ by Emanuel5014.*
+Logo by br1_production.

@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import com.emanuel5014.trainable.ui.components.cardioSetValueText
 import com.emanuel5014.trainable.data.local.entity.CardioExerciseLogs
 import com.emanuel5014.trainable.data.local.entity.groupedByExercise
@@ -206,6 +211,7 @@ fun EditWorkoutScreen(
         if (reorderState.isDragging) reorderState.driveWhileDragging()
     }
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -250,10 +256,11 @@ fun EditWorkoutScreen(
                     exerciseToSwap = null
                     showExercisePicker = true
                 },
-                containerColor = Primary,
+                containerColor = actionGlassContainer(actionGlass, Primary),
                 contentColor = OnPrimary,
                 shape = CircleShape,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
+                elevation = actionGlassElevation(actionGlass, FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)),
+                modifier = Modifier.actionGlass(actionGlass, Primary)
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(28.dp))
             }
@@ -330,6 +337,7 @@ fun EditWorkoutScreen(
                         state = listState,
                         userScrollEnabled = !reorderState.isDragging,
                         modifier = Modifier
+                            .actionGlassSource(actionGlass)
                             .fillMaxSize()
                             .reorderGestures(reorderState),
                         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),

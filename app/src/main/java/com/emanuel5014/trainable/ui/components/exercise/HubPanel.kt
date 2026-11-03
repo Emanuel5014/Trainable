@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.ui.theme.LocalPanelGlassSource
+import com.emanuel5014.trainable.ui.theme.panelGlass
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
@@ -58,6 +61,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.kyant.shapes.RoundedRectangle
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.lerp
 import com.emanuel5014.trainable.R
@@ -70,6 +74,15 @@ import kotlin.math.roundToInt
 
 private val GRABBER_HEIGHT = 32.dp
 private val PANEL_SHAPE = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+
+/**
+ * As glass the hub floats like an iOS 26 sheet: inset from the screen sides and from the bottom, rounded on
+ * every corner. Flush against the edges its lit rim would run off the screen, and where it ends depends on
+ * the device's own corner radius; inset by this much it looks the same on every phone. The screen's own
+ * padding already keeps the hub above the system bars.
+ */
+private val GLASS_PANEL_SHAPE = RoundedRectangle(32.dp)
+private val GLASS_PANEL_INSET = 8.dp
 
 /**
  * Where the bottom hub of the workout screen is: [expansion] is 1 when it is open and 0 when it is a thin strip,
@@ -205,6 +218,8 @@ fun HubPanel(
         exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
         modifier = modifier
     ) {
+        val glass = LocalPanelGlassSource.current
+        val shape = if (glass == null) PANEL_SHAPE else GLASS_PANEL_SHAPE
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -212,13 +227,18 @@ fun HubPanel(
                 .onSizeChanged {
                     sheet.onMeasured(it.height)
                     onHeightChanged(it.height)
-                },
-            color = SurfaceContainerLow,
-            shape = PANEL_SHAPE,
-            tonalElevation = 8.dp,
-            shadowElevation = 16.dp
+                }
+                .then(
+                    if (glass == null) Modifier
+                    else Modifier.padding(horizontal = GLASS_PANEL_INSET).padding(bottom = GLASS_PANEL_INSET)
+                )
+                .panelGlass(glass, shape, SurfaceContainerLow),
+            color = if (glass == null) SurfaceContainerLow else Color.Transparent,
+            shape = shape,
+            tonalElevation = if (glass == null) 8.dp else 0.dp,
+            shadowElevation = if (glass == null) 16.dp else 0.dp
         ) {
-            Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
+            Column(modifier = Modifier.fillMaxWidth().then(if (glass == null) Modifier.navigationBarsPadding() else Modifier)) {
                 HubGrabber(sheet = sheet, hapticEnabled = hapticEnabled)
                 // The open hub takes the room it needs; only when that is more than the screen has does its content scroll under the pill
                 Column(
@@ -226,7 +246,7 @@ fun HubPanel(
                         .fillMaxWidth()
                         .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = horizontalPadding)
+                        .padding(horizontal = if (glass == null) horizontalPadding else (horizontalPadding - GLASS_PANEL_INSET).coerceAtLeast(8.dp))
                 ) {
                     content(expansion)
                     Spacer(modifier = Modifier.hubSpace(expansion, closed = 8.dp, open = 16.dp))

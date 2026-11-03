@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.ui.components.GlassToggle
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
+import com.emanuel5014.trainable.ui.components.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -132,6 +135,11 @@ internal fun SettingsSwitch(
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true
 ) {
+    if (LocalGlassSettings.current.isOn(GlassPart.Switches)) {
+        // Settings switches sit on the cards of the settings screens
+        GlassToggle(checked = checked, onCheckedChange = onCheckedChange, background = SurfaceContainerHigh, enabled = enabled)
+        return
+    }
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,

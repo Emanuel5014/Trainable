@@ -10,6 +10,7 @@ import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.exercise.CardioHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseHistory
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseForm
@@ -84,6 +85,8 @@ data class ExerciseDetailUiState(
     val notFound: Boolean = false,
     val exercise: ExerciseEntity? = null,
     val history: ExerciseHistory? = null,
+    /** The workouts of a cardio exercise, which are logged apart from the sets of the others; null for any other exercise. */
+    val cardioHistory: CardioHistory? = null,
     val weightUnit: String = "kg",
     val languageCode: String = "en",
     val merges: ExerciseMergeState = ExerciseMergeState(),
@@ -133,9 +136,15 @@ class ExerciseDetailViewModel @Inject constructor(
                             flowOf(ExerciseDetailUiState(exerciseId = id, loading = false, notFound = true))
                         } else {
                             val history = workoutRepository.getSetHistoryForExercise(id).map { ExerciseHistory.of(it) }.flowOn(Dispatchers.Default)
-                            combine(history, weightUnit, languageCode, mergeRepository.observeState(id), editablePresets) { history, unit, language, merges, editable ->
+                            // Cardio is logged apart from the sets, under the name of the exercise
+                            val cardioHistory: Flow<CardioHistory?> =
+                                if (ExerciseMerges.isCardio(exercise)) {
+                                    workoutRepository.getCardioHistoryForActivity(exercise.nome).map { CardioHistory.of(it) }.flowOn(Dispatchers.Default)
+                                } else flowOf(null)
+                            val histories = combine(history, cardioHistory) { sets, cardio -> sets to cardio }
+                            combine(histories, weightUnit, languageCode, mergeRepository.observeState(id), editablePresets) { (history, cardio), unit, language, merges, editable ->
                                 ExerciseDetailUiState(
-                                    exerciseId = id, loading = false, exercise = exercise, history = history,
+                                    exerciseId = id, loading = false, exercise = exercise, history = history, cardioHistory = cardio,
                                     weightUnit = unit, languageCode = language,
                                     merges = merges, actions = ExerciseDetailActions.of(exercise, merges, editable)
                                 )

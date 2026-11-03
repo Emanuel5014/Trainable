@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.routines
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import android.annotation.SuppressLint
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -67,6 +72,7 @@ fun ReportScreen(
         }
     }
 
+    val actionGlass = rememberActionGlassSource()
     Scaffold(
         containerColor = Surface,
         floatingActionButton = {
@@ -78,9 +84,11 @@ fun ReportScreen(
                             val safeName = planName.replace(Regex("[^a-zA-Z0-9_-]"), "_")
                             saveLauncher.launch("trainable_${safeName}_${System.currentTimeMillis()}.html")
                         },
-                        containerColor = SurfaceContainerHigh,
+                        containerColor = actionGlassContainer(actionGlass, SurfaceContainerHigh),
                         contentColor = Primary,
-                        shape = Shapes.large
+                        shape = Shapes.large,
+                        elevation = actionGlassElevation(actionGlass),
+                        modifier = Modifier.actionGlass(actionGlass, SurfaceContainerHigh)
                     ) {
                         Icon(Icons.Rounded.Download, contentDescription = stringResource(R.string.save))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -91,9 +99,11 @@ fun ReportScreen(
 
                     ExtendedFloatingActionButton(
                         onClick = { viewModel.shareReport() },
-                        containerColor = Primary,
+                        containerColor = actionGlassContainer(actionGlass, Primary),
                         contentColor = OnPrimary,
-                        shape = Shapes.large
+                        shape = Shapes.large,
+                        elevation = actionGlassElevation(actionGlass),
+                        modifier = Modifier.actionGlass(actionGlass, Primary)
                     ) {
                         Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -106,6 +116,7 @@ fun ReportScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .actionGlassSource(actionGlass)
                 .padding(paddingValues)
         ) {
             ScreenHeader(

@@ -14,6 +14,36 @@
     <string name="nav_bar_style_classic_desc">Barra de navegação inferior Material 3 padrão</string>
     <string name="nav_bar_style_floating">Flutuante</string>
     <string name="nav_bar_style_floating_desc">Barra desfocada que flutua sobre o conteúdo</string>
+    <string name="liquid_glass">Liquid Glass</string>
+    <string name="liquid_glass_desc">Vidro ao estilo do iOS nos controles que flutuam sobre o conteúdo</string>
+    <string name="glass_intensity">Intensidade do vidro</string>
+    <string name="glass_intensity_desc">De uma superfície quase opaca a vidro transparente</string>
+    <string name="glass_blur">Desfoque do fundo</string>
+    <string name="glass_blur_desc">Quanto fica desfocado o que está atrás do vidro, de claro a fosco</string>
+    <string name="glass_stretch">Esticar ao tocar</string>
+    <string name="glass_stretch_desc">O vidro incha e se inclina seguindo o dedo quando você toca</string>
+    <string name="glass_parts">Onde usar</string>
+    <string name="glass_part_nav_bar">Barra de navegação</string>
+    <string name="glass_part_nav_bar_desc">A barra flutuante curva o que rola por baixo</string>
+    <string name="glass_part_nav_bar_needs_floating">Funciona com a barra de navegação Flutuante (Configurações)</string>
+    <string name="glass_part_header_buttons">Botões do cabeçalho</string>
+    <string name="glass_part_header_buttons_desc">Configurações, filtros e botões de voltar</string>
+    <string name="glass_part_action_buttons">Botões de ação</string>
+    <string name="glass_part_action_buttons_desc">Treino rápido, nova rotina e os outros botões flutuantes</string>
+    <string name="glass_part_workout_panel">Painel do treino</string>
+    <string name="glass_part_workout_panel_desc">O painel inferior do treino, fosco sobre as suas séries</string>
+    <string name="glass_part_overlays">Folhas e diálogos</string>
+    <string name="glass_part_overlays_desc">A tela atrás deles fica desfocada (Android 12+)</string>
+    <string name="glass_part_switches">Interruptores</string>
+    <string name="glass_part_switches_desc">O botão vira uma gota de vidro enquanto se move</string>
+    <string name="glass_part_tabs">Seletores de abas</string>
+    <string name="glass_part_tabs_desc">Rotinas ativas e arquivadas: uma gota de vidro desliza entre as abas</string>
+    <string name="glass_part_search_bars">Barras de pesquisa</string>
+    <string name="glass_part_search_bars_desc">A pesquisa das listas e seletores de exercícios</string>
+    <string name="glass_part_sliders">Controles deslizantes</string>
+    <string name="glass_part_sliders_desc">O controle vira uma gota de vidro enquanto você o arrasta</string>
+    <string name="glass_part_workout_nav">Navegação do treino</string>
+    <string name="glass_part_workout_nav_desc">Exercício anterior e seguinte no painel do treino</string>
     <string name="nav_bar_style_expressive">Expressive</string>
     <string name="nav_bar_style_expressive_desc">Barra de ferramentas Material 3 Expressive, com a ação principal de cada aba ao lado</string>
 
@@ -685,6 +715,7 @@
     <string name="cardio_stop_save">PARAR &amp; SALVAR</string>
     <string name="cardio_target_label">META</string>
     <string name="cardio_dist_value">%1$s km</string>
+    <string name="cardio_speed_value">%1$s km/h</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Livre</string>
     <string name="cardio_cat_label">Cardio</string>
@@ -1357,7 +1388,7 @@
     <string name="import_history_intro">Traga seus treinos anteriores para o Trainable a partir de um arquivo CSV. Use o mesmo arquivo que o app exporta com EXPORTAR CSV: se o seu app antigo exporta outra coisa, adapte-o às colunas abaixo. Você verá tudo o que será importado antes de salvar qualquer coisa.</string>
     <string name="import_history_columns_title">Colunas lidas</string>
     <string name="import_history_columns_required">Obrigatórias: Data, Exercício e pelo menos uma entre Peso, Repetições, Duração ou Distância.</string>
-    <string name="import_history_columns_optional">Úteis: ID Sessão (distingue dois treinos do mesmo dia), Plano, Categoria, Tipo (strength, time_and_weight, time_and_reps, cardio), Série, Nota, Duração Sessão (minutos).</string>
+    <string name="import_history_columns_optional">Úteis: ID Sessão (distingue dois treinos do mesmo dia), Plano, Categoria, Tipo (strength, time_and_weight, time_and_reps, cardio), Série, Nota, Duração Sessão (minutos), Supersérie (o número da supersérie no treino).</string>
     <string name="import_history_rules_title">Como funciona a importação</string>
     <string name="import_history_rule_exercises">Os exercícios que não estão no app são criados com o nome e a categoria do arquivo.</string>
     <string name="import_history_rule_routines">Cada treino vai para a rotina com o mesmo nome; se ela não existir, é criada. Treinos sem rotina viram treinos rápidos.</string>
@@ -1384,6 +1415,7 @@
     <string name="import_history_col_parts">Mini-séries</string>
     <string name="import_history_col_type">Tipo</string>
     <string name="import_history_col_session_duration">Duração da sessão</string>
+    <string name="import_history_col_superset">Supersérie</string>
     <string name="import_history_issue_line">Linha %1$d</string>
     <string name="import_history_issue_missing_date">Sem data</string>
     <string name="import_history_issue_invalid_date">Data não reconhecida: %1$s</string>
@@ -1458,6 +1490,10 @@
     <plurals name="import_history_sets_count">
         <item quantity="one">%d série</item>
         <item quantity="other">%d séries</item>
+    </plurals>
+    <plurals name="import_history_supersets_count">
+        <item quantity="one">%d supersérie</item>
+        <item quantity="other">%d superséries</item>
     </plurals>
     <plurals name="import_history_exercises_count">
         <item quantity="one">%d exercício</item>
@@ -1587,6 +1623,10 @@
     <string name="exercise_detail_progress">Progresso (1RM estimado)</string>
     <string name="exercise_detail_history">Histórico</string>
     <string name="exercise_detail_empty">Você ainda não fez este exercício</string>
+    <string name="exercise_record_cardio_longest">Treino mais longo</string>
+    <string name="exercise_record_cardio_farthest">Maior distância</string>
+    <string name="exercise_record_cardio_best_speed">Melhor velocidade média</string>
+    <string name="exercise_detail_cardio_total">Total: %1$s</string>
     <string name="exercise_detail_last">Última: %s</string>
     <string name="exercise_detail_top">Máx. %s</string>
     <string name="exercise_record_heaviest">Série mais pesada</string>

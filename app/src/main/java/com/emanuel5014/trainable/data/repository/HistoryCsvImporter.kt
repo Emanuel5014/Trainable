@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -185,7 +186,11 @@ class HistoryCsvImporter @Inject constructor(
             ).toInt()
             routineIds[routine.key] = planId
             planIds.add(planId)
-            routine.template.distinctBy { exerciseOf(it.exercise).id }.forEachIndexed { index, item ->
+            val template = routine.template.distinctBy { exerciseOf(it.exercise).id }
+            // A superset stays one only while two of its exercises are left after the same exercise is taken once
+            val supersetIds = template.mapNotNull { it.superset }.groupingBy { it }.eachCount()
+                .filterValues { it >= 2 }.keys.associateWith { UUID.randomUUID().toString() }
+            template.forEachIndexed { index, item ->
                 val isCardio = item.kind == RowKind.CARDIO
                 workoutDao.insertPlanExercise(
                     PlanExerciseEntity(
@@ -195,6 +200,7 @@ class HistoryCsvImporter @Inject constructor(
                         repsTarget = item.repsTarget,
                         recuperoTarget = if (isCardio) 0 else DEFAULT_REST_SECONDS,
                         ordine = index,
+                        supersetId = item.superset?.let { supersetIds[it] },
                         exerciseType = when (item.kind) {
                             RowKind.STRENGTH -> "strength"
                             RowKind.TIME_AND_WEIGHT -> TIME_AND_WEIGHT
@@ -266,6 +272,8 @@ class HistoryCsvImporter @Inject constructor(
 
         val setRows = mutableListOf<SetLogEntity>()
         val cardioRows = mutableListOf<CardioLogEntity>()
+        // One id per superset of the workout, shared by its exercises like the ones a live workout writes
+        val supersetIds = workout.entries.mapNotNull { it.superset }.distinct().associateWith { UUID.randomUUID().toString() }
         workout.entries.forEach { entry ->
             val exercise = exerciseOf(entry.exercise)
             entry.sets.forEach { set ->
@@ -296,6 +304,7 @@ class HistoryCsvImporter @Inject constructor(
                             isWarmup = set.warmup,
                             note = set.note,
                             ordineEsercizio = entry.order,
+                            supersetId = entry.superset?.let { supersetIds[it] },
                             durataSecondi = set.durationSeconds,
                             exerciseType = if (entry.kind == RowKind.TIME_AND_REPS) TIME_AND_REPS else null,
                             repParts = SetPerformance.encodeParts(set.parts),

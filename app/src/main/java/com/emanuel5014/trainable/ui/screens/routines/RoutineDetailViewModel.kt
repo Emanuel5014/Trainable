@@ -141,6 +141,13 @@ class RoutineDetailViewModel @Inject constructor(
         initialValue = false
     )
 
+    /** The type each exercise was last added with: adding it again opens the selector on it. */
+    val exerciseTypes = userPreferencesRepository.exerciseTypes.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyMap()
+    )
+
     val loadRoundingIncrement = userPreferencesRepository.loadRoundingIncrement.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -600,6 +607,7 @@ class RoutineDetailViewModel @Inject constructor(
                     weightPreset = weightPreset
                 )
             )
+            userPreferencesRepository.rememberExerciseType(exerciseId, exerciseType)
         }
     }
 
@@ -738,6 +746,10 @@ class RoutineDetailViewModel @Inject constructor(
                 )
             )
             if (clearAdvanced) workoutRepository.savePlanExerciseBlocks(original.id, emptyMap())
+            // Only a change of type or of exercise is a choice: saving another edit must not undo what was chosen before
+            if (exerciseType != original.exerciseType || exerciseId != original.exerciseId) {
+                userPreferencesRepository.rememberExerciseType(exerciseId, exerciseType)
+            }
         }
     }
 

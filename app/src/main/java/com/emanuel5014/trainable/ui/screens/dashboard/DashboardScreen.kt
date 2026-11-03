@@ -1,5 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.dashboard
 
+import com.emanuel5014.trainable.ui.theme.actionGlass
+import com.emanuel5014.trainable.ui.theme.actionGlassContainer
+import com.emanuel5014.trainable.ui.theme.actionGlassElevation
+import com.emanuel5014.trainable.ui.theme.actionGlassSource
+import com.emanuel5014.trainable.ui.theme.rememberActionGlassSource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
@@ -501,14 +506,16 @@ fun DashboardScreen(
                 GymLoadingIndicator()
             }
         } else {
+            val actionGlass = rememberActionGlassSource()
             Scaffold(
                 containerColor = Surface,
                 floatingActionButton = {
                     if (showOwnFab) ExtendedFloatingActionButton(
                         onClick = { showQuickWorkoutDialog = true },
-                        containerColor = Primary,
+                        containerColor = actionGlassContainer(actionGlass, Primary),
                         contentColor = OnPrimary,
                         shape = Shapes.large,
+                        elevation = actionGlassElevation(actionGlass),
                         modifier = Modifier
                             .padding(
                                 end = if (uiState.floatingNavBar) {
@@ -516,6 +523,7 @@ fun DashboardScreen(
                                 } else 0.dp
                             )
                             .padding(bottom = 80.dp)
+                            .actionGlass(actionGlass, Primary)
                     ) {
 
                         Icon(
@@ -533,6 +541,7 @@ fun DashboardScreen(
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
+                        .actionGlassSource(actionGlass)
                         .padding(paddingValues),
                     contentPadding = PaddingValues(ResponsiveSize.cardPadding),
                     verticalArrangement = Arrangement.spacedBy(if (ResponsiveSize.isCompact) Spacing.large else Spacing.doubleLarge)

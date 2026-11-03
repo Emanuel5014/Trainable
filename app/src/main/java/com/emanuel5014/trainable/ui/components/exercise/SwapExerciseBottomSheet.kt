@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.ui.components
 
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
+import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.exercise.TraitFilter
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import androidx.compose.animation.AnimatedVisibility
@@ -141,6 +142,9 @@ fun SwapExerciseBottomSheet(
     // The rest last confirmed here; read while the lifter browses the list, so the slider of step 2 opens on it
     val restMemory: RememberedRestViewModel = hiltViewModel()
     val rememberedRest by restMemory.lastRestSeconds.collectAsState()
+    // The type each exercise was last added with: step 2 opens the selector on it
+    val typeMemory: RememberedExerciseTypesViewModel = hiltViewModel()
+    val rememberedTypes by typeMemory.types.collectAsState()
 
     val allLabel = stringResource(R.string.all_categories)
     val favoritesLabel = stringResource(R.string.filter_favorites)
@@ -308,9 +312,11 @@ fun SwapExerciseBottomSheet(
                             initialRepsMax = currentRepsMax,
                             initialBlocks = initialBlocks,
                             advancedEnabled = onAdvancedExerciseSelected != null && LocalAdvancedProgramming.current,
+                            initialType = ExerciseTypeMemory.typeFor(rememberedTypes, ex.id),
                             initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
                                 rest?.let { restMemory.remember(it) }
+                                typeMemory.remember(ex.id, exerciseType)
                                 onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
                                 onDismiss()
                             },
@@ -366,6 +372,8 @@ private fun SwapExerciseConfigSheet(
     initialRepsMax: Int?,
     initialBlocks: List<PrescriptionBlock>,
     advancedEnabled: Boolean,
+    /** The type the selector opens on: the one this exercise was last added with. A swap that keeps a prescription opens on advanced. */
+    initialType: String,
     /** The rest the slider opens on: the one confirmed last time. */
     initialRestSeconds: Int,
     onConfirm: (Int, RepsTarget, Int?, String, Int?) -> Unit,
@@ -375,7 +383,7 @@ private fun SwapExerciseConfigSheet(
     isAdding: Boolean = false
 ) {
     var selectedExerciseType by remember {
-        mutableStateOf(if (advancedEnabled && initialBlocks.isNotEmpty()) "advanced" else "strength")
+        mutableStateOf(if (advancedEnabled && initialBlocks.isNotEmpty()) "advanced" else initialType)
     }
     var setsText by remember { mutableStateOf(initialSets) }
     // What the exercise had before ("45s" of a timed one is no reps: start from the usual 8)
@@ -617,7 +625,7 @@ private fun SwapCardioConfigDialog(
                     )
                 }
 
-                androidx.compose.material3.Slider(
+                com.emanuel5014.trainable.ui.components.Slider(
                     value = closestIndex.toFloat(),
                     onValueChange = { rawValue ->
                         val index = kotlin.math.round(rawValue).toInt()
@@ -710,7 +718,7 @@ fun RestSlider(
             )
         }
         
-        androidx.compose.material3.Slider(
+        com.emanuel5014.trainable.ui.components.Slider(
             value = currentIndex.toFloat(),
             onValueChange = { rawValue ->
                 val index = kotlin.math.round(rawValue).toInt()

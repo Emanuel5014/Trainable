@@ -10,7 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.emanuel5014.trainable.data.model.GlassPart
+import com.emanuel5014.trainable.data.model.GlassSettings
 import com.emanuel5014.trainable.data.model.NavBarStyle
+import com.emanuel5014.trainable.domain.exercise.ExerciseTypeMemory
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.util.PlateCalculator
@@ -45,6 +48,33 @@ class UserPreferencesRepository @Inject constructor(
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val FLOATING_NAV_BAR = booleanPreferencesKey("floating_nav_bar")
         val NAV_BAR_STYLE = intPreferencesKey("nav_bar_style")
+        val LIQUID_GLASS_ENABLED = booleanPreferencesKey("liquid_glass_enabled")
+        val GLASS_INTENSITY = floatPreferencesKey("glass_intensity")
+        val GLASS_BLUR = floatPreferencesKey("glass_blur")
+        val GLASS_STRETCH = booleanPreferencesKey("glass_stretch")
+        val GLASS_NAV_BAR = booleanPreferencesKey("glass_nav_bar")
+        val GLASS_HEADER_BUTTONS = booleanPreferencesKey("glass_header_buttons")
+        val GLASS_ACTION_BUTTONS = booleanPreferencesKey("glass_action_buttons")
+        val GLASS_WORKOUT_PANEL = booleanPreferencesKey("glass_workout_panel")
+        val GLASS_OVERLAYS = booleanPreferencesKey("glass_overlays")
+        val GLASS_SWITCHES = booleanPreferencesKey("glass_switches")
+        val GLASS_TABS = booleanPreferencesKey("glass_tabs")
+        val GLASS_SEARCH_BARS = booleanPreferencesKey("glass_search_bars")
+        val GLASS_SLIDERS = booleanPreferencesKey("glass_sliders")
+        val GLASS_WORKOUT_NAV = booleanPreferencesKey("glass_workout_nav")
+
+        fun glassPartKey(part: GlassPart) = when (part) {
+            GlassPart.NavBar -> GLASS_NAV_BAR
+            GlassPart.HeaderButtons -> GLASS_HEADER_BUTTONS
+            GlassPart.ActionButtons -> GLASS_ACTION_BUTTONS
+            GlassPart.WorkoutPanel -> GLASS_WORKOUT_PANEL
+            GlassPart.Overlays -> GLASS_OVERLAYS
+            GlassPart.Switches -> GLASS_SWITCHES
+            GlassPart.Tabs -> GLASS_TABS
+            GlassPart.SearchBars -> GLASS_SEARCH_BARS
+            GlassPart.Sliders -> GLASS_SLIDERS
+            GlassPart.WorkoutNav -> GLASS_WORKOUT_NAV
+        }
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DYNAMIC_COLOR_SEED = intPreferencesKey("dynamic_color_seed")
         val THEME_PALETTE = intPreferencesKey("theme_palette")
@@ -124,6 +154,8 @@ class UserPreferencesRepository @Inject constructor(
     val LAST_WARMUP_SECONDS = intPreferencesKey("last_warmup_seconds")
     /** The last rest chosen when adding or swapping an exercise in a workout, in seconds: that slider opens on it. */
     val LAST_ADDED_EXERCISE_REST_SECONDS = intPreferencesKey("last_added_exercise_rest_seconds")
+    /** The tracking type each exercise was last added with (see [ExerciseTypeMemory]): adding it again opens the selector on it. */
+    val EXERCISE_TYPES = stringPreferencesKey("exercise_types")
     val LOAD_ROUNDING_KG = floatPreferencesKey("load_rounding_kg")
     val LOAD_ROUNDING_LB = floatPreferencesKey("load_rounding_lb")
     /** Old RPE setting (0 = advanced exercises only, 1 = every exercise, 2 = never): only [RpePreferenceMigration] and old backups read it. */
@@ -260,6 +292,18 @@ class UserPreferencesRepository @Inject constructor(
         }
 
     val floatingNavBar: Flow<Boolean> = navBarStyle.map { it == NavBarStyle.Floating }
+
+    /** Liquid Glass from Personalization: off by default, every part on once the user turns it on. */
+    val glassSettings: Flow<GlassSettings> = dataStore.data
+        .map { preferences ->
+            GlassSettings(
+                enabled = preferences[LIQUID_GLASS_ENABLED] ?: false,
+                intensity = (preferences[GLASS_INTENSITY] ?: GlassSettings.DEFAULT_INTENSITY).coerceIn(0f, 1f),
+                blur = (preferences[GLASS_BLUR] ?: GlassSettings.DEFAULT_BLUR).coerceIn(0f, 1f),
+                stretch = preferences[GLASS_STRETCH] ?: true,
+                parts = GlassPart.entries.filter { preferences[glassPartKey(it)] ?: true }.toSet()
+            )
+        }
 
     val dynamicColor: Flow<Boolean> = dataStore.data
         .map { preferences ->
@@ -512,6 +556,19 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    /** The type each exercise was last added with; the ones not listed are plain weight × reps. */
+    val exerciseTypes: Flow<Map<Int, String>> = dataStore.data
+        .map { preferences -> ExerciseTypeMemory.decode(preferences[EXERCISE_TYPES]) }
+
+    /** Remembers [type] for [exerciseId]; read and written in one edit, so two quick saves lose neither. */
+    suspend fun rememberExerciseType(exerciseId: Int, type: String) {
+        dataStore.edit { preferences ->
+            val current = ExerciseTypeMemory.decode(preferences[EXERCISE_TYPES])
+            val next = ExerciseTypeMemory.remember(current, exerciseId, type)
+            if (next != current) preferences[EXERCISE_TYPES] = ExerciseTypeMemory.encode(next)
+        }
+    }
+
     val timerShowTimeButtons: Flow<Boolean> = dataStore.data
         .map { preferences -> preferences[TIMER_SHOW_TIME_BUTTONS] ?: true }
 
@@ -731,6 +788,36 @@ class UserPreferencesRepository @Inject constructor(
             preferences[NAV_BAR_STYLE] = style.id
             // Kept in sync for versions and backups that only know the floating/classic switch
             preferences[FLOATING_NAV_BAR] = style == NavBarStyle.Floating
+        }
+    }
+
+    suspend fun setLiquidGlassEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[LIQUID_GLASS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setGlassStretch(on: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[GLASS_STRETCH] = on
+        }
+    }
+
+    suspend fun setGlassBlur(blur: Float) {
+        dataStore.edit { preferences ->
+            preferences[GLASS_BLUR] = blur.coerceIn(0f, 1f)
+        }
+    }
+
+    suspend fun setGlassIntensity(intensity: Float) {
+        dataStore.edit { preferences ->
+            preferences[GLASS_INTENSITY] = intensity.coerceIn(0f, 1f)
+        }
+    }
+
+    suspend fun setGlassPart(part: GlassPart, on: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[glassPartKey(part)] = on
         }
     }
 

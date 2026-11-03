@@ -66,16 +66,33 @@ object HistoryCsvHeaders {
         else -> "Rating,Tags,Workout Note"
     }
 
+    /** The group of a superset inside the workout; written on every row of the exercise, only when the history has a superset. */
+    fun superset(languageCode: String): String = when (languageCode) {
+        "it" -> "Super Serie"
+        "es" -> "Superserie"
+        "fr", "pt" -> "Supersérie"
+        "de" -> "Supersatz"
+        else -> "Superset"
+    }
+
     /**
-     * The header line the export writes; with [journal] the three journal columns close it, and with [rpeColumn] (and
-     * advanced programming off) an RPE column follows the note.
+     * The header line the export writes; with [journal] the three journal columns follow, then the [supersetColumn]
+     * closes it, and with [rpeColumn] (and advanced programming off) an RPE column follows the note.
      */
-    fun full(languageCode: String, weightUnit: String, advanced: Boolean, journal: Boolean = false, rpeColumn: Boolean = false): String =
+    fun full(
+        languageCode: String,
+        weightUnit: String,
+        advanced: Boolean,
+        journal: Boolean = false,
+        rpeColumn: Boolean = false,
+        supersetColumn: Boolean = false
+    ): String =
         (when {
             advanced -> basic(languageCode, weightUnit) + "," + prescription(languageCode)
             rpeColumn -> basic(languageCode, weightUnit) + "," + rpe(languageCode)
             else -> basic(languageCode, weightUnit)
         }) +
             "," + performance(languageCode) + "," + programEdit(languageCode) + "," + sessionDuration(languageCode) +
-            (if (journal) "," + journal(languageCode) else "")
+            (if (journal) "," + journal(languageCode) else "") +
+            (if (supersetColumn) "," + superset(languageCode) else "")
 }
