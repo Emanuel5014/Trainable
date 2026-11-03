@@ -8,6 +8,7 @@ import com.emanuel5014.trainable.domain.prescription.PlannedSet
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.RepMode
+import com.emanuel5014.trainable.util.sortedByKeys
 
 /** Changes needed to bring the rows of a session exercise in line with a new prescription. */
 data class SetSyncResult(
@@ -99,7 +100,7 @@ object PrescriptionSetSync {
             regular.filter { it.blockIndex == null }.let { keptWithoutBlock += it }
             deleted += regular.filter { it.blockIndex != null && it.blockIndex !in validBlocks }
 
-            plannedByBlock.toSortedMap().forEach { (blockIndex, plannedInBlock) ->
+            plannedByBlock.sortedByKeys().forEach { (blockIndex, plannedInBlock) ->
                 val rows = regular.filter { it.blockIndex == blockIndex }
                 if (plannedInBlock.first().repMode == RepMode.TOTAL) {
                     // ALSAP blocks own however many follow-up rows the athlete needed

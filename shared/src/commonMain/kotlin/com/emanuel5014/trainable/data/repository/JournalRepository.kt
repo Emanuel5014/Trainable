@@ -1,7 +1,5 @@
 package com.emanuel5014.trainable.data.repository
 
-import androidx.room.withTransaction
-import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.JournalDao
 import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
 import com.emanuel5014.trainable.data.local.entity.SessionTagRefEntity
@@ -10,16 +8,10 @@ import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.journal.TagName
 import com.emanuel5014.trainable.domain.journal.TagPalette
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** Runs several database calls as one: all of them happen or none does. Behind an interface so tests need no database. */
 interface TransactionRunner {
     suspend fun <R> run(block: suspend () -> R): R
-}
-
-class RoomTransactionRunner @Inject constructor(private val database: GymDatabase) : TransactionRunner {
-    override suspend fun <R> run(block: suspend () -> R): R = database.withTransaction { block() }
 }
 
 /** The tag a name stands for, and whether asking for it made a new one. */
@@ -36,8 +28,7 @@ sealed interface RenameResult {
 }
 
 /** The workout journal: the rating, note and tags of a workout, and the tags themselves. */
-@Singleton
-class JournalRepository @Inject constructor(
+class JournalRepository(
     private val dao: JournalDao,
     private val transactions: TransactionRunner
 ) {

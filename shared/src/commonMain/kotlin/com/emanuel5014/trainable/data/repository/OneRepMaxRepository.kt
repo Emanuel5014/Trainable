@@ -6,11 +6,9 @@ import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.data.local.relation.OneRepMaxWithExercise
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlin.time.Clock
 
-@Singleton
-class OneRepMaxRepository @Inject constructor(
+class OneRepMaxRepository(
     private val oneRepMaxDao: OneRepMaxDao
 ) {
     fun current(exerciseId: Int): Flow<OneRepMaxEntity?> = oneRepMaxDao.getCurrent(exerciseId)
@@ -26,7 +24,7 @@ class OneRepMaxRepository @Inject constructor(
     fun allWithExercise(): Flow<List<OneRepMaxWithExercise>> = oneRepMaxDao.getAllWithExercise()
 
     /** exerciseId → best Epley e1RM from logs since [sinceTimestamp] (default: last 12 weeks). */
-    fun estimatedByExercise(sinceTimestamp: Long = System.currentTimeMillis() - TWELVE_WEEKS_MS): Flow<Map<Int, Float>> =
+    fun estimatedByExercise(sinceTimestamp: Long = Clock.System.now().toEpochMilliseconds() - TWELVE_WEEKS_MS): Flow<Map<Int, Float>> =
         oneRepMaxDao.getEstimatedOneRepMaxes(sinceTimestamp).map { rows: List<EstimatedOneRepMaxRow> ->
             rows.associate { it.exerciseId to it.e1rm }
         }
@@ -34,7 +32,7 @@ class OneRepMaxRepository @Inject constructor(
     suspend fun add(
         exerciseId: Int,
         weightKg: Float,
-        date: Long = System.currentTimeMillis(),
+        date: Long = Clock.System.now().toEpochMilliseconds(),
         source: String = OneRepMaxEntity.SOURCE_MANUAL,
         note: String? = null
     ): Long = oneRepMaxDao.insert(OneRepMaxEntity(exerciseId = exerciseId, weightKg = weightKg, date = date, source = source, note = note))

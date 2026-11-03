@@ -10,12 +10,8 @@ import com.emanuel5014.trainable.data.local.dao.PersonalBestRow
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.local.entity.WeightLogEntity
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class AnalyticsRepository @Inject constructor(
+class AnalyticsRepository(
     private val analyticsDao: AnalyticsDao,
     private val weightLogDao: WeightLogDao
 ) {
@@ -35,7 +31,7 @@ class AnalyticsRepository @Inject constructor(
         analyticsDao.getConsistency(planId, startDate)
 
     fun getStrengthIndex(startDate: Long): Flow<Float?> {
-        val previousStartDate = startDate - TimeUnit.DAYS.toMillis(30)
+        val previousStartDate = startDate - 30L * 24 * 60 * 60 * 1000
         return analyticsDao.getStrengthIndex(startDate, previousStartDate)
     }
 
