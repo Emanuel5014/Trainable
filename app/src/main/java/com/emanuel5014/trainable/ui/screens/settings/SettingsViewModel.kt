@@ -15,7 +15,7 @@ import com.emanuel5014.trainable.data.ai.LocalLlmEngine
 import com.emanuel5014.trainable.data.ai.ModelDownloadManager
 import com.emanuel5014.trainable.data.ai.ModelFileManager
 import com.emanuel5014.trainable.data.ai.ModelImportError
-import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.local.GymDatabaseInstance
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.data.remote.GitHubRelease
 import com.emanuel5014.trainable.data.model.GlassPart
@@ -864,7 +864,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _backupStatus.value = "Resetting app..."
             try {
-                GymDatabase.resetDatabase(context)
+                GymDatabaseInstance.resetDatabase(context)
                 userPrefsRepository.clearAllPreferences()
                 // Clear analytics widgets preferences
                 context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE).edit().clear().commit()

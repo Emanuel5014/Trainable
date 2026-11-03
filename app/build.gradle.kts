@@ -100,7 +100,6 @@ dependencies {
     implementation(project(":shared"))
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
 
     // Hilt
     implementation(libs.hilt.android)

@@ -32,6 +32,7 @@ fragment = "1.9.1"
 ktor = "3.5.2"
 graphics-shapes = "1.1.0"
 kotlinx-datetime = "0.8.0"
+sqlite = "2.6.2"
 
 
 [libraries]
@@ -83,6 +84,7 @@ ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
 androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphics-shapes" }
 
+sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
 room-common = { group = "androidx.room", name = "room-common", version.ref = "room" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }

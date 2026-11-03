@@ -2,6 +2,7 @@ package com.emanuel5014.trainable.di
 
 import android.content.Context
 import com.emanuel5014.trainable.data.local.GymDatabase
+import com.emanuel5014.trainable.data.local.GymDatabaseInstance
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
@@ -27,7 +28,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): GymDatabase {
-        return GymDatabase.getDatabase(context)
+        return GymDatabaseInstance.getDatabase(context)
     }
 
     @Provides
