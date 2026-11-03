@@ -4,14 +4,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-object DateFormatter {
+actual object DateFormatter {
     private val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     
-    fun format(timestamp: Long): String {
+    actual fun format(timestamp: Long): String {
         return formatter.format(Date(timestamp))
     }
 
-    fun formatShort(timestamp: Long): String {
+    actual fun formatShort(timestamp: Long): String {
         return SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(timestamp))
     }
 }

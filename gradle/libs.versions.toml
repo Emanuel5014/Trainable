@@ -34,6 +34,11 @@ graphics-shapes = "1.1.0"
 kotlinx-datetime = "0.8.0"
 sqlite = "2.6.2"
 compose-runtime-annotation = "1.12.1"
+# Compose Multiplatform for the UI shared with iOS: 1.12.2 is built on Jetpack Compose 1.12.1, its Material 3
+# 1.12.0-alpha03 on androidx material3 1.5.0-alpha22 (Android keeps the app's own newer versions)
+compose-multiplatform = "1.12.2"
+compose-multiplatform-material3 = "1.12.0-alpha03"
+compose-multiplatform-icons = "1.7.3"
 
 
 [libraries]
@@ -88,6 +93,12 @@ androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shape
 sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
 datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "datastore" }
 compose-runtime-annotation = { group = "androidx.compose.runtime", name = "runtime-annotation", version.ref = "compose-runtime-annotation" }
+jb-compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
+jb-compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-multiplatform" }
+jb-compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
+jb-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform-material3" }
+jb-compose-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-multiplatform-icons" }
+jb-compose-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
 room-common = { group = "androidx.room", name = "room-common", version.ref = "room" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
@@ -100,3 +111,4 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }

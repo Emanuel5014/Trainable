@@ -41,9 +41,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tanh
 
-/** The user's Liquid Glass choices, provided once at the root of the app. */
-val LocalGlassSettings = staticCompositionLocalOf { GlassSettings() }
-
 /**
  * The app-wide copy of the screens, recorded behind the navigation (see MainActivity). Only what is
  * drawn outside the screens may bend it, such as the expressive navbar's action button; null when nothing uses it.

@@ -10,8 +10,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -187,16 +185,7 @@ object ResponsiveSize {
  * Observes width + height + fontScale + density so ANY display change recomposes.
  */
 @Composable
-fun rememberResponsiveSize() {
-    val config = LocalConfiguration.current
-    val density = LocalDensity.current
-    ResponsiveSize.update(
-        widthDp = config.screenWidthDp,
-        heightDp = config.screenHeightDp,
-        fontScale = density.fontScale,
-        densityDpi = config.densityDpi
-    )
-}
+expect fun rememberResponsiveSize()
 
 /**
  * Constrains wide layouts to [ResponsiveSize.maxContentWidth] and centers them.

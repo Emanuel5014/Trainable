@@ -86,6 +86,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
+import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
+import com.emanuel5014.trainable.ui.theme.AndroidPlatformGlass
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
@@ -297,7 +300,9 @@ class MainActivity : FragmentActivity() {
                   LocalRpeSettings provides rpeSettings,
                   LocalExerciseMediaEnabled provides exerciseMediaEnabled,
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
-                  LocalGlassSettings provides glassSettings
+                  LocalGlassSettings provides glassSettings,
+                  LocalPlatformGlass provides AndroidPlatformGlass,
+                  LocalHapticsSetting provides userPreferencesRepository.hapticEnabled
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }

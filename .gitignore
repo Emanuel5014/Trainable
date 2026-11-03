@@ -15,6 +15,7 @@ local.properties
 /app/src/test
 /app/src/androidTest
 /shared/build
+/sharedUi/build
 /shared/src/commonTest
 /shared/src/iosTest
 gradle-app.setting

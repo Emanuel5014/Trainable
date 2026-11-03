@@ -21,17 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
-import com.emanuel5014.trainable.ui.theme.headerGlass
+import com.emanuel5014.trainable.ui.glass.headerGlass
 import com.emanuel5014.trainable.data.model.GlassPart
-import kotlinx.coroutines.flow.map
 
 @Composable
 fun GymIconButton(
@@ -43,14 +39,11 @@ fun GymIconButton(
     description: String? = null,
     shape: Shape = CircleShape
 ) {
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
 
     // Only the neutral round button turns to glass; a coloured one (delete, accent) keeps its fill
     val glass = containerColor == SurfaceContainerHigh && shape == CircleShape &&

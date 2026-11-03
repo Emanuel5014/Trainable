@@ -98,6 +98,7 @@ dependencies {
 
     // Room
     implementation(project(":shared"))
+    implementation(project(":sharedUi"))
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
 

@@ -102,15 +102,12 @@ private val TabSize = 48.dp
 private val LabelGap = 8.dp
 
 /** Medium FAB: deliberately taller than the 64dp toolbar so the main action stands out. */
-private val FabSize = 80.dp
+private val FabSize = ExpressiveNavFabSize
 private val FabGap = 8.dp
 private val ScreenEdge = 12.dp
 
 /** Lift above the system navigation area. */
-private val BottomLift = 16.dp
-
-/** Height the bar takes above the navigation area, including its lift. */
-internal val ExpressiveNavBarHeight = FabSize + BottomLift
+private val BottomLift = ExpressiveNavBottomLift
 
 /**
  * Material 3 Expressive navigation: a floating toolbar with the four tabs, where the selected one

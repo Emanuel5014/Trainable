@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "Gym Tracking"
 include(":app")
 include(":shared")
+include(":sharedUi")

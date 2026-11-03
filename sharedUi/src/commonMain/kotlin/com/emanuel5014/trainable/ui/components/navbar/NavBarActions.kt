@@ -18,6 +18,13 @@ import com.emanuel5014.trainable.data.model.NavBarStyle
 /** Style of the bottom navigation in use, so screens know whether the bar carries their main action. */
 val LocalNavBarStyle = compositionLocalOf { NavBarStyle.Floating }
 
+/** The expressive navbar's round action button, and how far the bar floats above the bottom edge. */
+val ExpressiveNavFabSize = 80.dp
+val ExpressiveNavBottomLift = 16.dp
+
+/** Height the bar takes above the navigation area, including its lift. */
+val ExpressiveNavBarHeight = ExpressiveNavFabSize + ExpressiveNavBottomLift
+
 /** Free space the main tabs keep below their content so the last item can scroll clear of the navbar. */
 @Composable
 fun navBarBottomClearance(): Dp =
