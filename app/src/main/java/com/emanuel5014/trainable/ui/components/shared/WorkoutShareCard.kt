@@ -441,7 +441,7 @@ fun WorkoutShareCard(
 
                                         if (!set.note.isNullOrBlank()) {
                                             Text(
-                                                text = set.note,
+                                                text = set.note.orEmpty(),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = textSecondary,
                                                 fontStyle = FontStyle.Italic,
@@ -506,7 +506,7 @@ fun WorkoutShareCard(
 
                                         if (!set.note.isNullOrBlank()) {
                                             Text(
-                                                text = set.note,
+                                                text = set.note.orEmpty(),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = textSecondary,
                                                 fontStyle = FontStyle.Italic,
@@ -553,7 +553,7 @@ fun WorkoutShareCard(
                                     )
                                 }
                                 if (!set.note.isNullOrBlank()) {
-                                    Text(text = set.note, style = MaterialTheme.typography.bodySmall, color = textSecondary, modifier = Modifier.padding(start = 46.dp))
+                                    Text(text = set.note.orEmpty(), style = MaterialTheme.typography.bodySmall, color = textSecondary, modifier = Modifier.padding(start = 46.dp))
                                 }
                             } else Row(
                                 modifier = Modifier.fillMaxWidth(),

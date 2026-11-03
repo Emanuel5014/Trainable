@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.time.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import javax.inject.Inject
 
 /** Why a file could not be turned into a preview. */
@@ -203,7 +204,7 @@ class HistoryImportViewModel @Inject constructor(
                 warmup = localeManager.getString(R.string.import_history_template_note_warmup),
                 easy = localeManager.getString(R.string.import_history_template_note_easy)
             )
-            val text = HistoryCsvTemplate.build(language, unit, LocalDate.now(), notes)
+            val text = HistoryCsvTemplate.build(language, unit, LocalDate.now().toKotlinLocalDate(), notes)
             val error = withContext(Dispatchers.IO) {
                 try {
                     context.contentResolver.openOutputStream(uri)?.use { output ->

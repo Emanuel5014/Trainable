@@ -1059,7 +1059,7 @@ fun PhysicalCheckCard(
                         ) {
                             Text(
                                 text = WeightUnitConverter.formatWithUnit(
-                                    WeightUnitConverter.convertDisplay(check.peso, weightUnit),
+                                    WeightUnitConverter.convertDisplay(check.peso!!, weightUnit),
                                     weightUnit
                                 ),
                                 fontSize = 12.sp,
@@ -1075,7 +1075,7 @@ fun PhysicalCheckCard(
             if (!check.note.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = check.note,
+                    text = check.note.orEmpty(),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

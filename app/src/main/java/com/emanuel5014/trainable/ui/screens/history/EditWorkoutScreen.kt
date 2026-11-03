@@ -1075,7 +1075,7 @@ fun EditSetRow(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = set.note,
+                        text = set.note.orEmpty(),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnSurfaceVariant,
                         fontStyle = FontStyle.Italic
@@ -1250,7 +1250,7 @@ private fun CardioSetEditRow(set: CardioLogEntity, number: Int, onClick: () -> U
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(12.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = set.note, style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontStyle = FontStyle.Italic)
+                    Text(text = set.note.orEmpty(), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant, fontStyle = FontStyle.Italic)
                 }
             }
         }

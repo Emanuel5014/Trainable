@@ -1273,7 +1273,7 @@ private fun HistoryExerciseGroup(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = set.note,
+                            text = set.note.orEmpty(),
                             style = MaterialTheme.typography.labelSmall,
                             color = OnSurfaceVariant,
                             fontStyle = FontStyle.Italic
@@ -1378,7 +1378,7 @@ fun SessionHistoryCard(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = formatDuration(session.durationMs),
+                                    text = formatDuration(session.durationMs!!),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = OnSurfaceVariant,
                                     fontWeight = FontWeight.Bold

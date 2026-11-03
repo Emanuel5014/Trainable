@@ -1264,7 +1264,7 @@ private fun RoutineCard(
                     
                     if (!plan.giorniSettimana.isNullOrBlank()) {
                         val scheduledDays = remember(plan.giorniSettimana) {
-                            plan.giorniSettimana.split(",").mapNotNull { 
+                            plan.giorniSettimana.orEmpty().split(",").mapNotNull { 
                                 it.toIntOrNull()?.let { value -> DayOfWeek.of(value) }
                             }
                         }

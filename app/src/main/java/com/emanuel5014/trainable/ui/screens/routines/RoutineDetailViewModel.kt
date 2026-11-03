@@ -494,7 +494,7 @@ class RoutineDetailViewModel @Inject constructor(
                     if (details != null) {
                         // Auto-migrate old single image if multiple images list is empty
                         if (details.images.isEmpty() && details.plan.imageUri != null) {
-                            val oldUri = details.plan.imageUri
+                            val oldUri = details.plan.imageUri!!
                             addPlanImage(oldUri)
                             // Clear the old URI to avoid re-migration
                             workoutRepository.updatePlan(details.plan.copy(imageUri = null))

@@ -112,6 +112,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlinx.datetime.toJavaLocalDate
 import java.util.Locale
 
 private val PICKER_TYPES = arrayOf(
@@ -543,7 +544,7 @@ private fun SummaryCard(preview: HistoryImportState.Preview, appUnit: String, da
             val last = plan.lastDate
             if (first != null && last != null) {
                 Text(
-                    "${first.format(dateFormat)} – ${last.format(dateFormat)}",
+                    "${first.toJavaLocalDate().format(dateFormat)} – ${last.toJavaLocalDate().format(dateFormat)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
@@ -715,8 +716,8 @@ private fun LazyListScope.routinesSection(
 
 @Composable
 private fun RoutineRow(routine: PlannedRoutine, dateFormat: DateTimeFormatter, onCreateChange: (Boolean) -> Unit) {
-    val range = if (routine.firstDate == routine.lastDate) routine.firstDate.format(dateFormat)
-    else "${routine.firstDate.format(dateFormat)} – ${routine.lastDate.format(dateFormat)}"
+    val range = if (routine.firstDate == routine.lastDate) routine.firstDate.toJavaLocalDate().format(dateFormat)
+    else "${routine.firstDate.toJavaLocalDate().format(dateFormat)} – ${routine.lastDate.toJavaLocalDate().format(dateFormat)}"
     val workouts = pluralStringResource(R.plurals.import_history_workouts_count, routine.workouts, routine.workouts)
     val detail = when (routine.status) {
         RoutineStatus.NEW ->
@@ -796,7 +797,7 @@ private fun WorkoutRow(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    workout.date.format(dateFormat),
+                    workout.date.toJavaLocalDate().format(dateFormat),
                     style = MaterialTheme.typography.bodyLarge,
                     color = OnSurface.copy(alpha = alpha),
                     fontWeight = FontWeight.Bold

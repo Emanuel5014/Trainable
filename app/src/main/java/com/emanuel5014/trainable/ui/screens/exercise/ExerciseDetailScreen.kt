@@ -622,7 +622,7 @@ private fun PerformanceSetRow(set: SetLogEntity, weightUnit: String) {
                     modifier = Modifier.size(12.dp)
                 )
                 Text(
-                    text = set.note,
+                    text = set.note.orEmpty(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
                     fontStyle = FontStyle.Italic,
@@ -695,7 +695,7 @@ private fun CardioSetRow(set: CardioLogEntity) {
                     modifier = Modifier.size(12.dp)
                 )
                 Text(
-                    text = set.note,
+                    text = set.note.orEmpty(),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
                     fontStyle = FontStyle.Italic,

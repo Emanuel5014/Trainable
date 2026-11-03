@@ -26,6 +26,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
+import kotlinx.datetime.toKotlinLocalDate
 import java.util.Locale
 import javax.inject.Inject
 
@@ -139,7 +140,7 @@ class DashboardViewModel @Inject constructor(
         val numWorkoutsThisWeek = allSessions.count { it.timestamp >= weekStart }
 
         // Which routine to offer: see WorkoutSuggester (the sequence of routines, the days only shape the card)
-        val (todayPlan, suggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, day)
+        val (todayPlan, suggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, day.toKotlinLocalDate())
 
         DashboardUiState(
             username = user?.username ?: "Athlete",

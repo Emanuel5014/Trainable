@@ -14,6 +14,8 @@ local.properties
 /app/build
 /app/src/test
 /app/src/androidTest
+/shared/build
+/shared/src/commonTest
 gradle-app.setting
 .idea/modules.xml
 .idea/workspace.xml

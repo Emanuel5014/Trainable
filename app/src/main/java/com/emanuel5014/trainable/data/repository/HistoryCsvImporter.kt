@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
+import kotlinx.datetime.toKotlinLocalDate
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -96,7 +97,7 @@ class HistoryCsvImporter @Inject constructor(
                     KnownSession(
                         id = details.session.id,
                         planId = details.session.planId,
-                        date = Instant.ofEpochMilli(details.session.timestamp).atZone(zone).toLocalDate(),
+                        date = Instant.ofEpochMilli(details.session.timestamp).atZone(zone).toLocalDate().toKotlinLocalDate(),
                         sets = details.sets.map {
                             SetSignature(
                                 key = HistoryImportPlanner.exerciseKey(it.setLog.exerciseId),

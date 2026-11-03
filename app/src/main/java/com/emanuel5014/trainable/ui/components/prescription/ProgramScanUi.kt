@@ -527,7 +527,7 @@ private fun ScannedBlockRow(
     val intensity = PrescriptionFormatter.intensity(block, labels)
     val volume = PrescriptionFormatter.volume(block, labels)
     val load = if (block.intensityType == IntensityType.PERCENT && block.intensityValue != null && oneRepMaxKg != null) {
-        formatWeight(LoadCalculator.weightForPercent(oneRepMaxKg, block.intensityValue, weightUnit, roundingIncrement), weightUnit)
+        formatWeight(LoadCalculator.weightForPercent(oneRepMaxKg, block.intensityValue!!, weightUnit, roundingIncrement), weightUnit)
     } else null
 
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

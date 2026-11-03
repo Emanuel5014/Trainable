@@ -63,6 +63,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -97,7 +98,7 @@ class TrainableWidget : GlanceAppWidget() {
             }
 
             // Same choice as the dashboard: the sequence of routines, the days only shape the card
-            val (todayPlan, finalSuggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, LocalDate.now())
+            val (todayPlan, finalSuggestedPlan) = WorkoutSuggester.suggest(plans, allSessions, LocalDate.now().toKotlinLocalDate())
 
             GlanceTheme(colors = colors) {
                 WidgetContent(

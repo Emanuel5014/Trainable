@@ -97,6 +97,7 @@ dependencies {
     implementation(libs.androidx.glance.material3)
 
     // Room
+    implementation(project(":shared"))
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)

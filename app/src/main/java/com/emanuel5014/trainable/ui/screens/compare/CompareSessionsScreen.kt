@@ -606,8 +606,8 @@ private fun setValueText(set: ComparedSet, kind: ExerciseKind, weightUnit: Strin
     val load = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(set.weightKg, weightUnit), weightUnit)
     return when {
         kind == ExerciseKind.TIME_AND_REPS && set.durationSeconds != null ->
-            formatDuration(set.durationSeconds) + " · " + stringResource(R.string.compare_reps_value, set.reps)
-        set.durationSeconds != null -> formatDuration(set.durationSeconds) + if (set.weightKg > 0f) " · $load" else ""
+            formatDuration(set.durationSeconds!!) + " · " + stringResource(R.string.compare_reps_value, set.reps)
+        set.durationSeconds != null -> formatDuration(set.durationSeconds!!) + if (set.weightKg > 0f) " · $load" else ""
         kind == ExerciseKind.BODYWEIGHT || set.weightKg <= 0f -> stringResource(R.string.compare_reps_value, set.reps)
         else -> "$load × ${set.reps}"
     }
