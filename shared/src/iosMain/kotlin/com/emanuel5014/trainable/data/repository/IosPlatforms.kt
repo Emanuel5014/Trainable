@@ -73,3 +73,23 @@ class IosTransactionRunner(private val database: com.emanuel5014.trainable.data.
     override suspend fun <R> run(block: suspend () -> R): R =
         database.useWriterConnection { transactor -> transactor.immediateTransaction { block() } }
 }
+
+/** A [KeyValueStore] in the user defaults, its keys prefixed with [name] like the Android file they mirror. */
+class UserDefaultsStore(private val name: String) : KeyValueStore {
+    private val defaults = platform.Foundation.NSUserDefaults.standardUserDefaults
+    private fun key(key: String) = "$name.$key"
+
+    override fun getBoolean(key: String, default: Boolean): Boolean =
+        if (defaults.objectForKey(key(key)) == null) default else defaults.boolForKey(key(key))
+
+    override fun putBoolean(key: String, value: Boolean) = defaults.setBool(value, key(key))
+
+    override fun getString(key: String, default: String?): String? = defaults.stringForKey(key(key)) ?: default
+
+    override fun putString(key: String, value: String) = defaults.setObject(value, key(key))
+
+    override fun getStringSet(key: String, default: Set<String>?): Set<String>? =
+        defaults.stringArrayForKey(key(key))?.map { it as String }?.toSet() ?: default
+
+    override fun putStringSet(key: String, value: Set<String>) = defaults.setObject(value.toList(), key(key))
+}

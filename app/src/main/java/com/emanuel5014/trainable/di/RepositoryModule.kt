@@ -3,6 +3,7 @@ package com.emanuel5014.trainable.di
 import android.content.Context
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
+import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
 import com.emanuel5014.trainable.data.local.dao.JournalDao
 import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
@@ -10,6 +11,8 @@ import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
+import com.emanuel5014.trainable.data.repository.KeyValueStore
 import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.PlanRepository
@@ -56,6 +59,20 @@ object RepositoryModule {
     @Singleton
     fun provideExerciseRepository(exerciseDao: ExerciseDao, @ApplicationContext context: Context): ExerciseRepository =
         ExerciseRepository(exerciseDao, AndroidExerciseMediaFiles(context))
+
+    /** The analytics choices, in the "analytics_prefs" file they always lived in. */
+    @Provides
+    @Singleton
+    fun provideAnalyticsPrefs(@ApplicationContext context: Context): KeyValueStore =
+        SharedPreferencesStore(context, "analytics_prefs")
+
+    @Provides
+    @Singleton
+    fun provideExerciseMergeRepository(
+        mergeDao: ExerciseMergeDao,
+        exerciseDao: ExerciseDao,
+        analyticsPrefs: KeyValueStore
+    ): ExerciseMergeRepository = ExerciseMergeRepository(mergeDao, exerciseDao, analyticsPrefs)
 
     @Provides
     @Singleton

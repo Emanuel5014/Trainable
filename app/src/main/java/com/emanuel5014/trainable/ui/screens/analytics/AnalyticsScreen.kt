@@ -143,7 +143,7 @@ fun AnalyticsScreen(
     onNavigateToOneRepMaxes: () -> Unit = {},
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.state.uiState.collectAsState()
     val bottomClearance = navBarBottomClearance()
     var showExercisePicker by remember { mutableStateOf(false) }
     var showChartPicker by remember { mutableStateOf(false) }
@@ -166,7 +166,7 @@ fun AnalyticsScreen(
         lazyListState = lazyListState,
         keys = { uiState.widgets.map { it.id } },
         hapticEnabled = hapticEnabled,
-        onCommit = { newOrder -> viewModel.reorderWidgets(newOrder.filterIsInstance<String>()) }
+        onCommit = { newOrder -> viewModel.state.reorderWidgets(newOrder.filterIsInstance<String>()) }
     )
 
     val hasBodyWeightWidget = uiState.widgets.any { it is AnalyticsWidget.BodyWeight }
@@ -273,11 +273,11 @@ fun AnalyticsScreen(
                             hasProgressCardsWidget = hasProgressCardsWidget,
                             onExpandedChange = { fabMenuExpanded = it },
                             onAddBodyWeight = {
-                                viewModel.addBodyWeightChart()
+                                viewModel.state.addBodyWeightChart()
                                 fabMenuExpanded = false
                             },
                             onAddCalendar = {
-                                viewModel.addCalendarChart()
+                                viewModel.state.addCalendarChart()
                                 fabMenuExpanded = false
                             },
                             onAddVolume = {
@@ -293,11 +293,11 @@ fun AnalyticsScreen(
                                 fabMenuExpanded = false
                             },
                             onAddTimePeriodComparison = {
-                                viewModel.addTimePeriodComparison(AnalyticsTimeRange.OneMonth)
+                                viewModel.state.addTimePeriodComparison(AnalyticsTimeRange.OneMonth)
                                 fabMenuExpanded = false
                             },
                             onAddProgressCards = {
-                                viewModel.toggleProgressCards()
+                                viewModel.state.toggleProgressCards()
                                 fabMenuExpanded = false
                             },
                             modifier = Modifier.padding(end = ResponsiveSize.cardPadding, top = Spacing.small)
@@ -327,7 +327,7 @@ fun AnalyticsScreen(
                                     selectedExercises = uiState.personalBests.filter { it.exerciseId in uiState.selectedExerciseIds },
                                     weightUnit = weightUnit,
                                     onEditClick = { showExercisePicker = true },
-                                    onRemove = { viewModel.toggleProgressCards() }
+                                    onRemove = { viewModel.state.toggleProgressCards() }
                                 )
                             }
                         }
@@ -355,10 +355,10 @@ fun AnalyticsScreen(
                                         timeRange = widget.timeRange,
                                         bodyWeightInput = uiState.bodyWeightInput,
                                         weightUnit = weightUnit,
-                                        onBodyWeightInputChanged = viewModel::onBodyWeightInputChanged,
-                                        onSubmitWeight = viewModel::submitWeight,
-                                        onRemove = { viewModel.removeWidget(widget.id) },
-                                        onDeleteWeight = viewModel::deleteWeightLog,
+                                        onBodyWeightInputChanged = viewModel.state::onBodyWeightInputChanged,
+                                        onSubmitWeight = viewModel.state::submitWeight,
+                                        onRemove = { viewModel.state.removeWidget(widget.id) },
+                                        onDeleteWeight = viewModel.state::deleteWeightLog,
                                         onEdit = { showBodyWeightSettings = true }
                                     )
                                 }
@@ -368,7 +368,7 @@ fun AnalyticsScreen(
                                         isDragging = isDragging,
                                         isRecentlyMoved = isRecentlyDropped,
                                         workoutDates = widget.workoutDates,
-                                        onRemove = { viewModel.removeWidget(widget.id) }
+                                        onRemove = { viewModel.state.removeWidget(widget.id) }
                                     )
                                 }
                                 is AnalyticsWidget.Exercise -> {
@@ -380,7 +380,7 @@ fun AnalyticsScreen(
                                         timeRange = widget.timeRange,
                                         history = widget.history,
                                         weightUnit = weightUnit,
-                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onRemove = { viewModel.state.removeWidget(widget.id) },
                                         onEdit = { showExerciseSettings = widget.id }
                                     )
                                 }
@@ -393,7 +393,7 @@ fun AnalyticsScreen(
                                         timeRange = widget.timeRange,
                                         history = widget.history,
                                         weightUnit = weightUnit,
-                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onRemove = { viewModel.state.removeWidget(widget.id) },
                                         onEdit = { showVolumeSettings = widget.id }
                                     )
                                 }
@@ -406,7 +406,7 @@ fun AnalyticsScreen(
                                         timeRange = widget.timeRange,
                                         startDate = widget.startDate,
                                         weightUnit = weightUnit,
-                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onRemove = { viewModel.state.removeWidget(widget.id) },
                                         onEdit = { showCategoryVolumeSettings = true }
                                     )
                                 }
@@ -425,7 +425,7 @@ fun AnalyticsScreen(
                                         period2Exercises = widget.period2Exercises,
                                         weightUnit = weightUnit,
                                         summaryParts = widget.summaryParts,
-                                        onRemove = { viewModel.removeWidget(widget.id) },
+                                        onRemove = { viewModel.state.removeWidget(widget.id) },
                                         onEdit = { showTimePeriodComparisonSettings = true }
                                     )
                                 }
@@ -455,8 +455,8 @@ fun AnalyticsScreen(
                 allExercises = uiState.personalBests,
                 selectedIds = uiState.selectedExerciseIds,
                 onDismiss = { showExercisePicker = false },
-                onToggleSelection = viewModel::toggleExerciseSelection,
-                onClearAll = viewModel::clearExerciseSelection
+                onToggleSelection = viewModel.state::toggleExerciseSelection,
+                onClearAll = viewModel.state::clearExerciseSelection
             )
         }
 
@@ -471,11 +471,11 @@ fun AnalyticsScreen(
                 onDismiss = { showChartPicker = false },
                 onToggleSelection = { id ->
                     if (id !in existingExerciseIds) {
-                        viewModel.addExerciseChart(id)
+                        viewModel.state.addExerciseChart(id)
                     }
                 },
                 onClearAll = {
-                    viewModel.removeAllExerciseCharts()
+                    viewModel.state.removeAllExerciseCharts()
                 }
             )
         }
@@ -490,7 +490,7 @@ fun AnalyticsScreen(
                     currentTimeRange = widget.timeRange,
                     onDismiss = { showVolumeSettings = null },
                     onConfirm = { planId, timeRange ->
-                        viewModel.updateVolumeChart(widgetId, planId, timeRange)
+                        viewModel.state.updateVolumeChart(widgetId, planId, timeRange)
                         showVolumeSettings = null
                     }
                 )
@@ -506,7 +506,7 @@ fun AnalyticsScreen(
                 currentTimeRange = AnalyticsTimeRange.OneMonth,
                 onDismiss = { showAddVolumeDialog = false },
                 onConfirm = { selectedPlanId, selectedTimeRange ->
-                    viewModel.addVolumeChart(selectedPlanId, selectedTimeRange)
+                    viewModel.state.addVolumeChart(selectedPlanId, selectedTimeRange)
                     showAddVolumeDialog = false
                 }
             )
@@ -517,7 +517,7 @@ fun AnalyticsScreen(
                 currentTimeRange = AnalyticsTimeRange.OneWeek,
                 onDismiss = { showAddCategoryVolumeDialog = false },
                 onConfirm = { timeRange ->
-                    viewModel.addCategoryVolumeChart(timeRange)
+                    viewModel.state.addCategoryVolumeChart(timeRange)
                     showAddCategoryVolumeDialog = false
                 }
             )
@@ -529,7 +529,7 @@ fun AnalyticsScreen(
                 currentTimeRange = currentWidget?.timeRange ?: AnalyticsTimeRange.OneWeek,
                 onDismiss = { showCategoryVolumeSettings = false },
                 onConfirm = { timeRange ->
-                    viewModel.updateCategoryVolumeChart(timeRange)
+                    viewModel.state.updateCategoryVolumeChart(timeRange)
                     showCategoryVolumeSettings = false
                 }
             )
@@ -541,7 +541,7 @@ fun AnalyticsScreen(
                 currentTimeRange = currentWidget?.timeRange ?: AnalyticsTimeRange.OneMonth,
                 onDismiss = { showTimePeriodComparisonSettings = false },
                 onConfirm = { range ->
-                    viewModel.updateTimePeriodComparison(range)
+                    viewModel.state.updateTimePeriodComparison(range)
                     showTimePeriodComparisonSettings = false
                 }
             )
@@ -553,7 +553,7 @@ fun AnalyticsScreen(
                 currentTimeRange = currentWidget?.timeRange ?: AnalyticsTimeRange.OneMonth,
                 onDismiss = { showBodyWeightSettings = false },
                 onConfirm = { range ->
-                    viewModel.updateBodyWeightChart(range)
+                    viewModel.state.updateBodyWeightChart(range)
                     showBodyWeightSettings = false
                 }
             )
@@ -568,7 +568,7 @@ fun AnalyticsScreen(
                     currentTimeRange = widget.timeRange,
                     onDismiss = { showExerciseSettings = null },
                     onConfirm = { range ->
-                        viewModel.updateExerciseChart(widgetId, range)
+                        viewModel.state.updateExerciseChart(widgetId, range)
                         showExerciseSettings = null
                     }
                 )

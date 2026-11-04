@@ -5,6 +5,7 @@ import android.net.Uri
 import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.repository.ExerciseMediaFiles
 import com.emanuel5014.trainable.data.repository.ExerciseMediaImport
+import com.emanuel5014.trainable.data.repository.KeyValueStore
 import com.emanuel5014.trainable.data.repository.WorkoutPlatform
 import com.emanuel5014.trainable.domain.prescription.Technique
 import com.emanuel5014.trainable.ui.components.techniqueLabel
@@ -44,4 +45,16 @@ class AndroidWorkoutPlatform(private val context: Context) : WorkoutPlatform {
 
     override val noTechniqueLabel: String
         get() = context.getString(R.string.performed_technique_none)
+}
+
+/** A [KeyValueStore] over a SharedPreferences file of the app, written in the background as before (apply). */
+class SharedPreferencesStore(context: Context, name: String) : KeyValueStore {
+    private val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+
+    override fun getBoolean(key: String, default: Boolean): Boolean = prefs.getBoolean(key, default)
+    override fun putBoolean(key: String, value: Boolean) = prefs.edit().putBoolean(key, value).apply()
+    override fun getString(key: String, default: String?): String? = prefs.getString(key, default)
+    override fun putString(key: String, value: String) = prefs.edit().putString(key, value).apply()
+    override fun getStringSet(key: String, default: Set<String>?): Set<String>? = prefs.getStringSet(key, default)
+    override fun putStringSet(key: String, value: Set<String>) = prefs.edit().putStringSet(key, value).apply()
 }

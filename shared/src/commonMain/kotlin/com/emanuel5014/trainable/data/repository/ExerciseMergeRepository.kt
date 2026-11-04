@@ -1,6 +1,5 @@
 package com.emanuel5014.trainable.data.repository
 
-import android.content.Context
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.ExerciseMergeDao
 import com.emanuel5014.trainable.data.local.dao.MergeOutcome
@@ -9,26 +8,25 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.ExerciseMergeEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseMergeState
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** Merging an exercise into another and undoing it: the database work is in [ExerciseMergeDao], this adds what lives outside it. */
-@Singleton
-class ExerciseMergeRepository @Inject constructor(
+class ExerciseMergeRepository(
     private val mergeDao: ExerciseMergeDao,
     private val exerciseDao: ExerciseDao,
-    @ApplicationContext private val context: Context
+    /** The analytics choices ("analytics_prefs" on Android), where the picked exercises are remembered. */
+    private val analyticsPrefs: KeyValueStore
 ) {
     /** What merging [loserId] into [winnerId] would move. */
     suspend fun preview(loserId: Int, winnerId: Int): MergePreview = mergeDao.preview(loserId, winnerId)
 
     suspend fun merge(winnerId: Int, loserId: Int): MergeOutcome {
-        val outcome = mergeDao.merge(winnerId, loserId, System.currentTimeMillis())
+        val outcome = mergeDao.merge(winnerId, loserId, Clock.System.now().toEpochMilliseconds())
         if (outcome is MergeOutcome.Merged) keepAnalyticsSelection(loserId = loserId, winnerId = winnerId)
         return outcome
     }
@@ -58,12 +56,11 @@ class ExerciseMergeRepository @Inject constructor(
      * loser stays in the set, so undoing the merge needs nothing here.
      */
     private suspend fun keepAnalyticsSelection(loserId: Int, winnerId: Int) = withContext(Dispatchers.IO) {
-        val prefs = context.getSharedPreferences("analytics_prefs", Context.MODE_PRIVATE)
-        val saved = prefs.getStringSet("selected_exercise_ids", null) ?: return@withContext
+        val saved = analyticsPrefs.getStringSet("selected_exercise_ids", null) ?: return@withContext
         val selected = saved.mapNotNull { it.toIntOrNull() }.toSet()
         val updated = ExerciseMerges.selectionAfterMerge(selected, loserId, winnerId)
         if (updated != selected) {
-            prefs.edit().putStringSet("selected_exercise_ids", updated.map { it.toString() }.toSet()).apply()
+            analyticsPrefs.putStringSet("selected_exercise_ids", updated.map { it.toString() }.toSet())
         }
     }
 }
