@@ -23,6 +23,7 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
+import com.emanuel5014.trainable.data.repository.PlanRepository
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.createSettingsDataStore
@@ -33,6 +34,7 @@ import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardData
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
+import com.emanuel5014.trainable.ui.screens.routines.RoutinesState
 import com.emanuel5014.trainable.ui.theme.MonochromeDarkColorScheme
 import com.emanuel5014.trainable.ui.theme.MonochromeLightColorScheme
 import com.emanuel5014.trainable.ui.theme.MonolithicDarkColorScheme
@@ -74,6 +76,10 @@ private fun TrainableIosApp() {
             scope = scope
         )
     }
+    val routines = remember {
+        val db = IosAppGraph.database
+        RoutinesState(PlanRepository(db.workoutDao(), db.userDao(), db.oneRepMaxDao()), preferences, scope)
+    }
     val uiState by state.uiState.collectAsState()
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
@@ -98,7 +104,7 @@ private fun TrainableIosApp() {
             LocalAdvancedProgramming provides advancedProgramming,
             LocalNavBarStyle provides style
         ) {
-            IosNavGraph(dashboard = state, dashboardUi = uiState, navBarStyle = style, isDark = isDark)
+            IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, navBarStyle = style, isDark = isDark)
         }
     }
 }

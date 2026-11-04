@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -42,11 +43,15 @@ import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
+import com.emanuel5014.trainable.ui.navigation.Report
+import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardContent
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardUiState
+import com.emanuel5014.trainable.ui.screens.routines.RoutineListContent
+import com.emanuel5014.trainable.ui.screens.routines.RoutinesState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
@@ -59,6 +64,7 @@ import dev.chrisbanes.haze.rememberHazeState
 internal fun IosNavGraph(
     dashboard: DashboardState,
     dashboardUi: DashboardUiState,
+    routines: RoutinesState,
     navBarStyle: NavBarStyle,
     isDark: Boolean
 ) {
@@ -78,11 +84,13 @@ internal fun IosNavGraph(
             popExitTransition = { fadeOut() + slideOutHorizontally { it } }
         ) {
             composable<MainTabs> {
-                IosMainTabs(navController, pagerState, dashboard, dashboardUi)
+                IosMainTabs(navController, pagerState, dashboard, dashboardUi, routines)
             }
             composable<Settings> { NotOnIosYet("Settings", onBack = { navController.popBackStack() }) }
             composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
             composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
+            composable<RoutineDetail> { NotOnIosYet("Routine", onBack = { navController.popBackStack() }) }
+            composable<Report> { NotOnIosYet("Report", onBack = { navController.popBackStack() }) }
         }
 
         AnimatedVisibility(
@@ -100,13 +108,14 @@ internal fun IosNavGraph(
     }
 }
 
-/** The four tabs, as MainPagerScreen on Android; the Dashboard is the only one shared so far. */
+/** The four tabs, as MainPagerScreen on Android; Dashboard and Routines are shared so far. */
 @Composable
 private fun IosMainTabs(
     navController: NavHostController,
     pagerState: PagerState,
     dashboard: DashboardState,
-    dashboardUi: DashboardUiState
+    dashboardUi: DashboardUiState,
+    routines: RoutinesState
 ) {
     val titles = localizedNavItems().map { it.title }
     HorizontalPager(
@@ -128,6 +137,16 @@ private fun IosMainTabs(
                     navController.navigate(WorkoutExecution(quickStart = true, workoutName = name))
                 },
                 onNavigateToPhysicalChecks = { navController.navigate(PhysicalCheck) }
+            )
+            1 -> RoutineListContent(
+                state = routines,
+                // The exercise categories in the phone's language until the app's own choice reaches iOS
+                languageCode = Locale.current.language,
+                // Sharing a routine file is not on iOS yet
+                sharePlans = { _, _, _, _ -> },
+                isVisible = pagerState.currentPage == 1,
+                onNavigateToDetail = { planId -> navController.navigate(RoutineDetail(planId)) },
+                onGenerateReport = { planIds -> navController.navigate(Report(planIds.joinToString(","))) }
             )
             else -> NotOnIosYet(titles[page], onBack = null)
         }

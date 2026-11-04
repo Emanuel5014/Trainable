@@ -48,7 +48,6 @@
     <string name="delete">Elimina</string>
     <string name="edit">Modifica</string>
     <string name="add">Aggiungi</string>
-    <string name="create">Crea</string>
     <string name="close">Chiudi</string>
     <string name="confirm">Conferma</string>
     <string name="back">Indietro</string>
@@ -124,23 +123,14 @@
 
     <!-- Routines -->
     <string name="routines">Schede</string>
-    <string name="your_routines">LE TUE SCHEDE</string>
-    <string name="archived_routines">ARCHIVIATE</string>
     <string name="archived_routines_header">Archiviate</string>
-    <string name="active_routines_tab">Attive</string>
     <string name="active_routines">Attive</string>
-    <string name="archived_routines_tab">Archiviate</string>
-    <string name="create_routine">CREA SCHEDA</string>
     <string name="edit_routine">MODIFICA SCHEDA</string>
     <string name="add_photo">AGGIUNGI FOTO</string>
     <string name="change_photo">CAMBIA FOTO</string>
     <string name="remove_photo">RIMUOVI FOTO</string>
-    <string name="new_routine">Nuova Scheda</string>
     <string name="update_plan">Aggiorna Scheda</string>
-    <string name="no_routines">Nessuna scheda ancora</string>
-    <string name="tap_to_create">Tocca il pulsante + per creare la tua prima scheda di allenamento.</string>
     <string name="no_archived">Nessuna scheda archiviata</string>
-    <string name="archived_appear_here">Le schede archiviate appariranno qui.</string>
     <string name="swipe_for_archived">Scorri in basso per archiviate</string>
     <string name="swipe_for_active">Scorri in basso per attive</string>
     <string name="routine_name">Nome Scheda</string>
@@ -151,16 +141,9 @@
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
     <string name="reset_routine_content">Resettare Contenuto?</string>
     <string name="reset_routine_content_message">Questo rimuoverà permanentemente tutte le immagini e gli esercizi da questa scheda. La scheda verrà mantenuta. Questa azione non può essere annullata.</string>
-    <string name="archive_routine">Archivia Scheda?</string>
-    <string name="archive_routine_message">Questa scheda verrà spostata nella sezione archiviata.</string>
-    <string name="unarchive_routine">Ripristina Scheda?</string>
-    <string name="unarchive_routine_message">Questa scheda verrà ripristinata nelle schede attive.</string>
-    <string name="archive">Archivia</string>
-    <string name="unarchive">Ripristina</string>
     <string name="start_date">DATA INIZIO:</string>
     <string name="end_date">DATA SCADENZA:</string>
     <string name="expires">Scade il:</string>
-    <string name="created_on">Creata il:</string>
     <string name="expiration_date">Data Scadenza</string>
     <string name="swap_exercise">CAMBIA ESERCIZIO</string>
     <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>
@@ -1221,11 +1204,6 @@
     <!-- v2.3.0 powerlifting END -->
     <!-- share options + imported maximums -->
     <string name="source_imported">Importato</string>
-    <string name="share_options_title">Condividi schede</string>
-    <string name="share_option_photos">Includi le foto</string>
-    <string name="share_option_photos_desc">Allega al file le foto delle schede</string>
-    <string name="share_option_maximums">Includi i miei massimali</string>
-    <string name="share_option_maximums_desc" formatted="false">Permette alle serie in %1RM di diventare kg sull\'altro dispositivo. Vengono usati solo dove chi riceve non ha ancora un massimale.</string>
     <string name="import_includes_maximums">Include i massimali di %1$d esercizi</string>
     <!-- compare sessions v2 -->
     <string name="compare_summary">Riepilogo</string>

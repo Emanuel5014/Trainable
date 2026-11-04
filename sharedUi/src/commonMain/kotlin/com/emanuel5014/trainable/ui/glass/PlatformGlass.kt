@@ -7,6 +7,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 
 /**
@@ -25,6 +26,27 @@ interface PlatformGlass {
     /** The glass of the navbar's action button, which sits outside the screens and bends a copy of all of them. */
     @Composable
     fun rememberNavBarActionSource(): GlassSource? = null
+
+    /** Whether this platform draws [SegmentedTabs]; without it the screens draw their classic tabs. */
+    val hasSegmentedTabs: Boolean get() = false
+
+    /** Glass tabs whose capsule follows [progress] (0 = first tab) and can be dragged ([onScrub], [onScrubEnd]). */
+    @Composable
+    fun SegmentedTabs(
+        titles: List<String>,
+        selectedIndex: Int,
+        progress: () -> Float,
+        onSelect: (Int) -> Unit,
+        modifier: Modifier,
+        labelSize: TextUnit,
+        onScrub: ((position: Float) -> Unit)?,
+        onScrubEnd: ((index: Int) -> Unit)?,
+        onTick: () -> Unit
+    ) {}
+
+    /** Put inside a sheet or dialog that should open without the blur behind it. */
+    @Composable
+    fun NoOverlayBlur() {}
 }
 
 /** Content recorded for the floating buttons above it; only the platform drawing the glass knows what is inside. */

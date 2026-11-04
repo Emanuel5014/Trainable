@@ -73,6 +73,9 @@ class WorkoutRepository @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) {
+    /** The routine-list operations, shared with the iOS app. */
+    private val planRepository = PlanRepository(workoutDao, userDao, oneRepMaxDao)
+
     fun getAllPlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getAllPlans()
 
     fun getActivePlans(): Flow<List<WorkoutPlanEntity>> = workoutDao.getActivePlans()
@@ -177,16 +180,7 @@ class WorkoutRepository @Inject constructor(
     }
     
     /** What a share of [planIds] could carry beyond the plain routine, so the user can be asked about it. */
-    data class ExportOptions(val hasImages: Boolean, val hasMaximums: Boolean)
-
-    suspend fun exportOptionsFor(planIds: List<Int>): ExportOptions {
-        val plans = workoutDao.getPlansWithDetails(planIds)
-        val hasImages = plans.any { it.plan.imageUri != null || it.images.isNotEmpty() }
-        val hasMaximums = plans.any { plan ->
-            plan.exercises.any { it.isAdvanced && oneRepMaxDao.getCurrentOnce(it.exercise.id) != null }
-        }
-        return ExportOptions(hasImages = hasImages, hasMaximums = hasMaximums)
-    }
+    suspend fun exportOptionsFor(planIds: List<Int>): PlanRepository.ExportOptions = planRepository.exportOptionsFor(planIds)
 
     /**
      * @param includeMaximums also writes the sender's current 1RM of every advanced exercise, so %1RM
@@ -460,33 +454,7 @@ class WorkoutRepository @Inject constructor(
         return imported
     }
 
-    suspend fun deletePlan(plan: WorkoutPlanEntity) {
-        val user = userDao.getUser().first()
-        if (user != null) {
-            val allPlans = workoutDao.getAllPlans().first()
-            val customPlan = allPlans.find { it.nome == "Custom Workout" && it.note == "SYSTEM_PLAN" }
-                ?: allPlans.find { it.nome == "Custom Workout" && it.note == null && !it.isActive } // Legacy
-                ?: run {
-                    val newId = workoutDao.insertPlan(
-                        WorkoutPlanEntity(
-                            userId = user.id,
-                            nome = "Custom Workout",
-                            note = "SYSTEM_PLAN",
-                            dataInizio = System.currentTimeMillis(),
-                            isActive = false
-                        )
-                    )
-                    workoutDao.getAllPlans().first().find { it.id == newId.toInt() }!!
-                }
-
-            if (customPlan.note == null) {
-                workoutDao.updatePlan(customPlan.copy(note = "SYSTEM_PLAN"))
-            }
-
-            workoutDao.reassignSessions(plan.id, customPlan.id, plan.nome)
-        }
-        workoutDao.deletePlan(plan)
-    }
+    suspend fun deletePlan(plan: WorkoutPlanEntity) = planRepository.deletePlan(plan)
     
     private fun triggerWidgetUpdate() {
         try {

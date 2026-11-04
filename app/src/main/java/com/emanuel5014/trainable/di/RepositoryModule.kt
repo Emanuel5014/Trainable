@@ -4,10 +4,12 @@ import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
 import com.emanuel5014.trainable.data.local.dao.JournalDao
 import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
+import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.data.repository.PlanRepository
 import com.emanuel5014.trainable.data.repository.TransactionRunner
 import com.emanuel5014.trainable.data.repository.UserRepository
 import dagger.Module
@@ -30,6 +32,11 @@ object RepositoryModule {
     @Singleton
     fun provideJournalRepository(dao: JournalDao, transactions: TransactionRunner): JournalRepository =
         JournalRepository(dao, transactions)
+
+    @Provides
+    @Singleton
+    fun providePlanRepository(workoutDao: WorkoutDao, userDao: UserDao, oneRepMaxDao: OneRepMaxDao): PlanRepository =
+        PlanRepository(workoutDao, userDao, oneRepMaxDao)
 
     @Provides
     @Singleton

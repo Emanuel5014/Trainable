@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -97,8 +94,10 @@ fun SheetFormFooter(
 }
 
 /** True while the on-screen keyboard is showing; lets a sheet drop secondary content to make room. */
-@OptIn(ExperimentalLayoutApi::class)
 val isKeyboardVisible: Boolean
-    @Composable get() = WindowInsets.isImeVisible
+    @Composable get() = imeVisible()
+
+@Composable
+internal expect fun imeVisible(): Boolean
 
 private val LocalSheetFormScroll = compositionLocalOf<ScrollState?> { null }

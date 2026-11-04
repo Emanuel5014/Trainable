@@ -29,7 +29,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ResponsiveSize
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
-import com.emanuel5014.trainable.ui.theme.headerGlass
+import com.emanuel5014.trainable.ui.glass.headerGlass
 import com.emanuel5014.trainable.data.model.GlassPart
 
 @Composable

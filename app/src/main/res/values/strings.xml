@@ -49,7 +49,6 @@
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
     <string name="add">Add</string>
-    <string name="create">Create</string>
     <string name="close">Close</string>
     <string name="confirm">Confirm</string>
     <string name="back">Back</string>
@@ -125,23 +124,14 @@
 
     <!-- Routines -->
     <string name="routines">Routines</string>
-    <string name="your_routines">YOUR ROUTINES</string>
-    <string name="archived_routines">ARCHIVED</string>
     <string name="archived_routines_header">Archived</string>
-    <string name="active_routines_tab">Active</string>
     <string name="active_routines">Active</string>
-    <string name="archived_routines_tab">Archived</string>
-    <string name="create_routine">CREATE ROUTINE</string>
     <string name="edit_routine">EDIT ROUTINE</string>
     <string name="add_photo">ADD PHOTO</string>
     <string name="change_photo">CHANGE PHOTO</string>
     <string name="remove_photo">REMOVE PHOTO</string>
-    <string name="new_routine">New Plan</string>
     <string name="update_plan">Update Plan</string>
-    <string name="no_routines">No routines yet</string>
-    <string name="tap_to_create">Tap the + button to create your first workout plan.</string>
     <string name="no_archived">No archived routines</string>
-    <string name="archived_appear_here">Archived routines will appear here.</string>
     <string name="swipe_for_archived">Swipe down for archived</string>
     <string name="swipe_for_active">Swipe down for active</string>
     <string name="routine_name">Routine Name</string>
@@ -152,16 +142,9 @@
     <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
     <string name="reset_routine_content">Reset Content?</string>
     <string name="reset_routine_content_message">This will permanently remove all images and exercises from this routine. The routine itself will be kept. This action cannot be undone.</string>
-    <string name="archive_routine">Archive Routine?</string>
-    <string name="archive_routine_message">This routine will be moved to the archived section.</string>
-    <string name="unarchive_routine">Restore Routine?</string>
-    <string name="unarchive_routine_message">This routine will be restored to your active routines.</string>
-    <string name="archive">Archive</string>
-    <string name="unarchive">Restore</string>
     <string name="start_date">START DATE:</string>
     <string name="end_date">EXPIRATION DATE:</string>
     <string name="expires">Expires:</string>
-    <string name="created_on">Created on:</string>
     <string name="expiration_date">Expiration Date</string>
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
@@ -1222,11 +1205,6 @@
     <!-- v2.3.0 powerlifting END -->
     <!-- share options + imported maximums -->
     <string name="source_imported">Imported</string>
-    <string name="share_options_title">Share routines</string>
-    <string name="share_option_photos">Include photos</string>
-    <string name="share_option_photos_desc">Attach the photos of the routines to the file</string>
-    <string name="share_option_maximums">Include my maximums</string>
-    <string name="share_option_maximums_desc" formatted="false">Lets %1RM sets turn into kg on the other device. They only fill in where the receiver has no maximum yet.</string>
     <string name="import_includes_maximums">Includes the maximums of %1$d exercises</string>
     <!-- compare sessions v2 -->
     <string name="compare_summary">Summary</string>
