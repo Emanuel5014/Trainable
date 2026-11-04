@@ -674,4 +674,16 @@
     <string name="vibration_seconds">%1$d segundos</string>
     <string name="warmup_timer">Temporizador de Aquecimento</string>
     <string name="warmup_timer_settings_desc">Mostrar botão do temporizador de aquecimento durante o treino</string>
+
+    <!-- About and donors -->
+    <string name="about">SOBRE</string>
+    <string name="buy_me_a_coffee">Me pague um café</string>
+    <string name="donor_supporter_badge">Apoiador</string>
+    <string name="donors_desc">Um agradecimento especial a quem apoia o projeto</string>
+    <string name="donors_hall_of_fame">Galeria de Apoiadores</string>
+    <string name="donors_hero_subtitle">O Trainable é um projeto gratuito e de código aberto. Um enorme obrigado a todos que apoiam o seu desenvolvimento!</string>
+    <string name="donors_hero_title">Muito Obrigado</string>
+    <string name="donors_support_button">Me pague um café no Ko-fi</string>
+    <string name="donors_title">Apoiadores e Doadores</string>
+    <string name="star_on_github">Estrela no GitHub</string>
 </resources>

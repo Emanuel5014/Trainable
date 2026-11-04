@@ -10,6 +10,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,6 +27,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.unit.sp
+import platform.Foundation.NSBundle
+import com.emanuel5014.trainable.ui.screens.settings.AboutSettingsSection
+import com.emanuel5014.trainable.ui.screens.settings.DonorsContent
+import com.emanuel5014.trainable.ui.navigation.Donors
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
@@ -103,6 +117,15 @@ internal fun IosNavGraph(
     isDark: Boolean
 ) {
     val navController = rememberNavController()
+    val uriHandler = LocalUriHandler.current
+    // The app font has no emoji glyph on iOS; keep the original text accessible and draw its heart inline.
+    val authorHeart = remember {
+        InlineTextContent(Placeholder(12.sp, 12.sp, PlaceholderVerticalAlign.TextCenter)) {
+            Icon(Icons.Rounded.Favorite, contentDescription = null, tint = Color(0xFFE53935),
+                modifier = Modifier.fillMaxSize())
+        }
+    }
+    val versionName = remember { NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "" }
     val pagerState = rememberPagerState(pageCount = { 4 })
     val hazeState = rememberHazeState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -137,7 +160,18 @@ internal fun IosNavGraph(
                     onNavigateToExercises = { navController.navigate(Exercises) },
                     onNavigateToAiSettings = { navController.navigate(AiSettings) },
                     onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
-                    onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) }
+                    onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
+                    aboutSection = {
+                        AboutSettingsSection(
+                            versionName = versionName,
+                            authorHeart = authorHeart,
+                            onOpenSource = { uriHandler.openUri("https://github.com/Emanuel5014/Trainable") },
+                            onSupport = { uriHandler.openUri("https://ko-fi.com/emanuel5014") },
+                            onNavigateToDonors = { navController.navigate(Donors) },
+                            onAuthorEasterEgg = { uriHandler.openUri("https://www.youtube.com/watch?v=5jc_R9_im9w") }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 )
             }
             composable<WorkoutSettings> {
@@ -151,6 +185,12 @@ internal fun IosNavGraph(
                 val scope = rememberCoroutineScope()
                 val state = remember { JournalTagsState(IosAppGraph.journal, scope) }
                 JournalTagsContent(onNavigateBack = { navController.popBackStack() }, state = state)
+            }
+            composable<Donors> {
+                DonorsContent(
+                    onNavigateBack = { navController.popBackStack() },
+                    onSupport = { uriHandler.openUri("https://ko-fi.com/emanuel5014") }
+                )
             }
             composable<Exercises> { NotOnIosYet("Exercises", onBack = { navController.popBackStack() }) }
             composable<AiSettings> { NotOnIosYet("AI", onBack = { navController.popBackStack() }) }

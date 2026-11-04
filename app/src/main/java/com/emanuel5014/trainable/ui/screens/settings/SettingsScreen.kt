@@ -85,10 +85,10 @@ import com.emanuel5014.trainable.data.remote.nextcloud.NextcloudConnectionResult
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -175,7 +175,6 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var showResetDialog by remember { mutableStateOf(false) }
-    var easterEggClicks by remember { mutableIntStateOf(0) }
     var showBackupSetupDialog by remember { mutableStateOf(false) }
     var showIncludeImagesDialog by remember { mutableStateOf(false) }
     var includeImagesChoice by remember { mutableStateOf(false) }
@@ -1778,142 +1777,41 @@ fun SettingsScreen(
                 }
             }
 
-            SettingsSection(title = stringResource(R.string.about)) {
-                GymCard(containerColor = SurfaceContainerHigh) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "Trainable v${BuildConfig.VERSION_NAME}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = OnSurface,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                                Text(
-                                    text = "Made with ❤️ by Emanuel5014",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = OnSurfaceVariant,
-                                    modifier = Modifier.clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) {
-                                        easterEggClicks++
-                                        if (easterEggClicks >= 3) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=5jc_R9_im9w"))
-                                            context.startActivity(intent)
-                                            easterEggClicks = 0
-                                        }
-                                    }
-                                )
-                            }
-                            GymButton(
-                                onClick = { viewModel.checkForUpdates() },
-                                containerColor = Primary.copy(alpha = 0.1f),
-                                contentColor = Primary,
-                                height = 48,
-                                contentPadding = PaddingValues(horizontal = 24.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.check_for_updates),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            color = Surface.copy(alpha = 0.5f)
+        },
+        aboutSection = {
+            AboutSettingsSection(
+                versionName = BuildConfig.VERSION_NAME,
+                onOpenSource = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
+                    context.startActivity(intent)
+                },
+                onSupport = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
+                    context.startActivity(intent)
+                },
+                onNavigateToDonors = onNavigateToDonors,
+                onAuthorEasterEgg = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=5jc_R9_im9w"))
+                    context.startActivity(intent)
+                },
+                githubIcon = painterResource(R.drawable.ic_github),
+                kofiIcon = painterResource(R.drawable.ic_kofi),
+                updateAction = {
+                    GymButton(
+                        onClick = { viewModel.checkForUpdates() },
+                        containerColor = Primary.copy(alpha = 0.1f),
+                        contentColor = Primary,
+                        height = 48,
+                        contentPadding = PaddingValues(horizontal = 24.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.check_for_updates),
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.labelLarge
                         )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            GymButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Emanuel5014/Trainable"))
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier.weight(1f),
-                                containerColor = Surface.copy(alpha = 0.5f),
-                                contentColor = OnSurface
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_github),
-                                    contentDescription = null,
-                                    tint = OnSurface,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.star_on_github), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
-                            }
-
-                            GymButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/emanuel5014"))
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier.weight(1f),
-                                containerColor = Surface.copy(alpha = 0.5f),
-                                contentColor = OnSurface
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_kofi),
-                                    contentDescription = null,
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.buy_me_a_coffee), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            color = Surface.copy(alpha = 0.5f)
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { onNavigateToDonors() }
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Icon(
-                                    imageVector = Icons.Rounded.VolunteerActivism,
-                                    contentDescription = null,
-                                    tint = Primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        stringResource(R.string.donors_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = OnSurface,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                    Text(
-                                        stringResource(R.string.donors_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = OnSurfaceVariant
-                                    )
-                                }
-                            }
-                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = OnSurfaceVariant)
-                        }
                     }
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
         }

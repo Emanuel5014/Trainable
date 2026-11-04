@@ -160,6 +160,7 @@ fun SettingsContent(
     onNavigateToNotificationSettings: () -> Unit,
     languageUi: @Composable () -> Unit = {},
     platformSections: @Composable () -> Unit = {},
+    aboutSection: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     scrollState: androidx.compose.foundation.ScrollState = rememberScrollState()
 ) {
@@ -622,6 +623,7 @@ fun SettingsContent(
             }
 
             platformSections()
+            aboutSection()
         }
     }
 }
