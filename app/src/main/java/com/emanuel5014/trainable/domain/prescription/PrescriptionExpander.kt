@@ -59,16 +59,12 @@ object LegacyReps {
         }
     }
 
-    /** True when [repsTarget] spells out the reps of each set ("12-10-8-6"), not one number for all of them. */
-    fun isPerSet(repsTarget: String): Boolean =
-        repsTarget.split("-").mapNotNull { it.trim().toIntOrNull() }.size > 1
-
     /**
-     * The reps each set of a routine exercise starts at when the workout opens. A per-set list in the routine is that
-     * set's prescription and wins over [lastWorkout]; a single number (or the bottom of a range, which the progression
-     * reads against last time's reps) starts from the last workout, and the routine's number only stands in while
-     * there is none.
+     * The reps each set of a routine exercise starts at when the workout opens. The routine's reps ("15" or
+     * "12-10-8-6") are the prescription and win over [lastWorkout]. Only where the reps are what progresses from one
+     * workout to the next ([repsProgress]: a rep range, read by the double progression, or a time & reps interval) does
+     * the workout start from last time's, and the routine stands in while there is no last time.
      */
-    fun startingReps(repsTarget: String, targetSets: Int, lastWorkout: List<Int>): List<Int> =
-        if (lastWorkout.isEmpty() || isPerSet(repsTarget)) parse(repsTarget, targetSets) else lastWorkout
+    fun startingReps(repsTarget: String, targetSets: Int, lastWorkout: List<Int>, repsProgress: Boolean = false): List<Int> =
+        if (repsProgress && lastWorkout.isNotEmpty()) lastWorkout else parse(repsTarget, targetSets)
 }

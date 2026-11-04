@@ -52,6 +52,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_plans WHERE id = :planId")
     fun getPlanWithDetails(planId: Int): Flow<PlanWithDetails?>
 
+    @Query("SELECT * FROM workout_plans WHERE id = :planId")
+    suspend fun getPlanOnce(planId: Int): WorkoutPlanEntity?
+
     @Transaction
     @Query("SELECT * FROM workout_plans WHERE id IN (:planIds)")
     suspend fun getPlansWithDetails(planIds: List<Int>): List<PlanWithDetails>
@@ -247,8 +250,8 @@ interface WorkoutDao {
     """)
     fun getUnfinishedSessionsWithPlanName(): Flow<List<SessionWithPlanName>>
 
-    @Query("SELECT * FROM workout_sessions WHERE plan_id = :planId AND is_finished = 1 ORDER BY timestamp DESC LIMIT 1")
-    fun getLastFinishedSessionForPlan(planId: Int): Flow<WorkoutSessionEntity?>
+    @Query("SELECT * FROM workout_sessions WHERE plan_id = :planId AND is_finished = 1 AND timestamp >= :since ORDER BY timestamp DESC LIMIT 1")
+    fun getLastFinishedSessionForPlan(planId: Int, since: Long): Flow<WorkoutSessionEntity?>
 
     @Query("UPDATE workout_sessions SET is_finished = 1 WHERE id = :sessionId")
     suspend fun setSessionFinished(sessionId: Int)
@@ -405,13 +408,14 @@ interface WorkoutDao {
             WHERE ws2.plan_id = :planId
             AND sl2.exercise_id = :exerciseId
             AND ws2.is_finished = 1
+            AND ws2.timestamp >= :since
             ORDER BY ws2.timestamp DESC, ws2.id DESC
             LIMIT 1
         )
         ORDER BY sl.numero_serie ASC
         LIMIT :limitSets
     """)
-    fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>>
+    fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int, since: Long): Flow<List<SetLogEntity>>
 
     @Update
     suspend fun updateSession(session: WorkoutSessionEntity)
