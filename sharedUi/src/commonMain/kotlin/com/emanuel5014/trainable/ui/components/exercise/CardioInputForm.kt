@@ -1,5 +1,19 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.activity_name
+import com.emanuel5014.trainable.sharedui.resources.activity_name_placeholder
+import com.emanuel5014.trainable.sharedui.resources.add_cardio
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.cardio_bike
+import com.emanuel5014.trainable.sharedui.resources.cardio_other
+import com.emanuel5014.trainable.sharedui.resources.cardio_run
+import com.emanuel5014.trainable.sharedui.resources.cardio_walk
+import com.emanuel5014.trainable.sharedui.resources.category
+import com.emanuel5014.trainable.sharedui.resources.distance
+import com.emanuel5014.trainable.sharedui.resources.duration
+import com.emanuel5014.trainable.sharedui.resources.routine_notes
+import com.emanuel5014.trainable.sharedui.resources.save
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,12 +57,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -73,9 +86,9 @@ fun CardioInputForm(
     onNoteChange: (String) -> Unit = {}
 ) {
     val categories = if (showCategory) listOf(
-        CardioCategory(stringResource(R.string.cardio_run), Icons.AutoMirrored.Rounded.DirectionsRun),
-        CardioCategory(stringResource(R.string.cardio_bike), Icons.AutoMirrored.Rounded.DirectionsBike),
-        CardioCategory(stringResource(R.string.cardio_walk), Icons.AutoMirrored.Rounded.DirectionsWalk),
+        CardioCategory(stringResource(Res.string.cardio_run), Icons.AutoMirrored.Rounded.DirectionsRun),
+        CardioCategory(stringResource(Res.string.cardio_bike), Icons.AutoMirrored.Rounded.DirectionsBike),
+        CardioCategory(stringResource(Res.string.cardio_walk), Icons.AutoMirrored.Rounded.DirectionsWalk),
     ) else emptyList()
 
     Column(
@@ -86,7 +99,7 @@ fun CardioInputForm(
         if (showCategory) {
             Column {
                 Text(
-                    text = stringResource(R.string.category).uppercase(),
+                    text = stringResource(Res.string.category).uppercase(),
                     style = MaterialTheme.typography.labelMedium,
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold,
@@ -128,7 +141,7 @@ fun CardioInputForm(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = if (isCustom) categoria else stringResource(R.string.cardio_other),
+                                    text = if (isCustom) categoria else stringResource(Res.string.cardio_other),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (isCustom) Primary else OnSurface,
                                     fontWeight = if (isCustom) FontWeight.ExtraBold else FontWeight.SemiBold
@@ -142,8 +155,8 @@ fun CardioInputForm(
                     GymInputField(
                         value = categoria,
                         onValueChange = onCategoriaChange,
-                        label = stringResource(R.string.activity_name),
-                        placeholder = stringResource(R.string.activity_name_placeholder)
+                        label = stringResource(Res.string.activity_name),
+                        placeholder = stringResource(Res.string.activity_name_placeholder)
                     )
                 }
             }
@@ -152,7 +165,7 @@ fun CardioInputForm(
         // Distance Input
         Column {
             Text(
-                text = (stringResource(R.string.distance) + " (KM)").uppercase(),
+                text = (stringResource(Res.string.distance) + " (KM)").uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
                 fontWeight = FontWeight.ExtraBold,
@@ -203,7 +216,7 @@ fun CardioInputForm(
         // Duration Input
         Column {
             Text(
-                text = (stringResource(R.string.duration) + " (HH:MM:SS)").uppercase(),
+                text = (stringResource(Res.string.duration) + " (HH:MM:SS)").uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OnSurfaceVariant,
                 fontWeight = FontWeight.ExtraBold,
@@ -240,7 +253,7 @@ fun CardioInputForm(
             GymInputField(
                 value = note,
                 onValueChange = onNoteChange,
-                label = stringResource(R.string.routine_notes),
+                label = stringResource(Res.string.routine_notes),
                 singleLine = false
             )
         }
@@ -358,7 +371,7 @@ fun AddCardioDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                stringResource(R.string.add_cardio),
+                stringResource(Res.string.add_cardio),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Black
             ) 
@@ -393,7 +406,7 @@ CardioInputForm(
                 },
                 enabled = isValid
             ) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -402,7 +415,7 @@ CardioInputForm(
                 containerColor = Color.Transparent,
                 contentColor = OnSurfaceVariant
             ) {
-                Text(stringResource(R.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercase())
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,

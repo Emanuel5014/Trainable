@@ -1,5 +1,13 @@
 package com.emanuel5014.trainable.ui.components.journal
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.journal_not_rated
+import com.emanuel5014.trainable.sharedui.resources.journal_rating_1
+import com.emanuel5014.trainable.sharedui.resources.journal_rating_2
+import com.emanuel5014.trainable.sharedui.resources.journal_rating_3
+import com.emanuel5014.trainable.sharedui.resources.journal_rating_4
+import com.emanuel5014.trainable.sharedui.resources.journal_rating_5
+import com.emanuel5014.trainable.sharedui.resources.journal_rating_cd
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -42,7 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -50,7 +58,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.journal.JournalRating
 import com.emanuel5014.trainable.ui.components.motion.rememberAnimatedShape
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -63,18 +70,18 @@ private const val STAGGER_MS = 30L
 @Composable
 fun ratingLabel(rating: Int): String = stringResource(
     when (rating) {
-        1 -> R.string.journal_rating_1
-        2 -> R.string.journal_rating_2
-        3 -> R.string.journal_rating_3
-        4 -> R.string.journal_rating_4
-        else -> R.string.journal_rating_5
+        1 -> Res.string.journal_rating_1
+        2 -> Res.string.journal_rating_2
+        3 -> Res.string.journal_rating_3
+        4 -> Res.string.journal_rating_4
+        else -> Res.string.journal_rating_5
     }
 )
 
 /** "★ 4": a rating as small as a chip, for lists. */
 @Composable
 fun RatingPill(rating: Int, modifier: Modifier = Modifier) {
-    val description = stringResource(R.string.journal_rating_cd, rating)
+    val description = stringResource(Res.string.journal_rating_cd, rating)
     Row(
         modifier = modifier
             .clip(CircleShape)
@@ -108,7 +115,7 @@ fun RatingStars(
     readOnly: Boolean = false
 ) {
     if (readOnly) {
-        val description = rating?.let { stringResource(R.string.journal_rating_cd, it) }
+        val description = rating?.let { stringResource(Res.string.journal_rating_cd, it) }
         Row(
             modifier = modifier.clearAndSetSemantics { description?.let { contentDescription = it } },
             horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -155,7 +162,7 @@ fun RatingStars(
             label = "ratingLabel"
         ) { shown ->
             Text(
-                text = if (shown != null) ratingLabel(shown) else stringResource(R.string.journal_not_rated),
+                text = if (shown != null) ratingLabel(shown) else stringResource(Res.string.journal_not_rated),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = if (shown != null) Primary else OnSurfaceVariant
@@ -199,7 +206,7 @@ private fun StarButton(
         }
     }
 
-    val description = stringResource(R.string.journal_rating_cd, star)
+    val description = stringResource(Res.string.journal_rating_cd, star)
     Box(
         modifier = Modifier
             .size(48.dp)

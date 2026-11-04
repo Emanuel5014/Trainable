@@ -38,3 +38,10 @@ data class HistoryFilters(
         const val END_OF_DAY_MS = 86_399_999L
     }
 }
+
+/**
+ * Value of [HistoryFilters.planId] that keeps the workouts without a routine of their own: cardio,
+ * custom and quick workouts, and those of routines that were deleted. Plan ids start at 1, so it never
+ * collides with a real one.
+ */
+const val NO_ROUTINE_PLAN_ID = -1

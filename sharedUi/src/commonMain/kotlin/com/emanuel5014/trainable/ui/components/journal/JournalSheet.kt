@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components.journal
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.journal_row_title
+import com.emanuel5014.trainable.sharedui.resources.save
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.BottomSheetDefaults
@@ -15,11 +18,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.SheetFormBody
@@ -35,11 +36,11 @@ fun JournalSheet(
     initial: SessionJournal,
     onSave: (SessionJournal) -> Unit,
     onDismiss: () -> Unit,
-    hapticEnabled: Boolean,
-    viewModel: JournalViewModel = hiltViewModel()
+    hapticEnabled: Boolean
 ) {
-    val tags by viewModel.tags.collectAsState()
-    val ratingEnabled by viewModel.ratingEnabled.collectAsState()
+    val data = LocalJournalData.current()
+    val tags = data.tags
+    val ratingEnabled = data.ratingEnabled
     var journal by rememberSaveable(stateSaver = SessionJournalSaver) { mutableStateOf(initial) }
 
     ModalBottomSheet(
@@ -51,7 +52,7 @@ fun JournalSheet(
         SheetFormLayout(modifier = Modifier.imePadding()) {
             SheetFormBody(horizontalPadding = 24.dp, spacing = 20.dp) {
                 Text(
-                    text = stringResource(R.string.journal_row_title),
+                    text = stringResource(Res.string.journal_row_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = OnSurface
@@ -61,13 +62,13 @@ fun JournalSheet(
                     onJournalChange = { journal = it },
                     tags = tags,
                     ratingEnabled = ratingEnabled,
-                    onCreateTag = viewModel::createTag,
+                    onCreateTag = data::createTag,
                     hapticEnabled = hapticEnabled
                 )
             }
             SheetFormFooter(horizontalPadding = 24.dp) {
                 GymButton(onClick = { onSave(journal.cleaned()) }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }

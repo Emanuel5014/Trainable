@@ -63,7 +63,6 @@
     <string name="yes">JA</string>
     <string name="no">NEIN</string>
     <string name="selected">Ausgewählt</string>
-    <string name="clear_all">Alle Löschen</string>
     <string name="all">Alle</string>
     <string name="total">Gesamt</string>
     <string name="share">Teilen</string>
@@ -87,8 +86,6 @@
     <string name="this_week">Diese Woche</string>
     <string name="current_week">Aktuelle Woche</string>
     <string name="this_month">Dieser Monat</string>
-    <string name="last_month">Letzter Monat</string>
-    <string name="date_range">Datumsbereich</string>
     <string name="select_date_range">Datumsbereich wählen</string>
     <string name="kg">kg</string>
     <string name="kg_short">kg</string>
@@ -115,16 +112,12 @@
     <string name="workouts_remaining" formatted="false">%d Trainings übrig</string>
     <string name="ready_to_train">Bereit fürs Training?</string>
     <string name="lets_go">Los geht\'s!</string>
-    <string name="no_active_routines">Keine aktiven Routinen</string>
     <string name="no_active_routines_message">Keine aktiven Routinen. Gehe zu Routinen, um eine zu erstellen.</string>
     <string name="create_first_routine">Erstelle deine erste Routine</string>
     <string name="no_exercises_today">Keine Übungen für heute</string>
     <string name="existing_workout_message">Ein unerledigtes Training für "%1$s" ist bereits vorhanden. Fortsetzen?</string>
 
     <!-- Routines -->
-    <string name="routines">Routinen</string>
-    <string name="archived_routines_header">Archiviert</string>
-    <string name="active_routines">Aktiv</string>
     <string name="add_photo">FOTO HINZUFÜGEN</string>
     <string name="change_photo">FOTO ÄNDERN</string>
     <string name="remove_photo">FOTO ENTFERNEN</string>
@@ -285,9 +278,7 @@
     <string name="no_exercises_in_session_detail">Keine Übungen in dieser Sitzung aufgezeichnet.</string>
     <string name="add_cardio">Cardio hinzufügen</string>
     <string name="add_workout">Training hinzufügen</string>
-    <string name="add_empty_workout">Leeres Training hinzufügen</string>
     <string name="custom_workout">Benutzerdefiniertes Training</string>
-    <string name="select_plan_to_add">Wähle einen Plan zum Verlauf hinzuzufügen</string>
     <string name="workout_logs">TRAININGSPROTOKOLL</string>
     <string name="total_workouts">Trainings gesamt</string>
 
@@ -303,7 +294,6 @@
     <string name="edit_session_message">Bearbeite diese Trainingssitzung, um Übungen, Sätze und Gewichte zu ändern.</string>
     <string name="session_details">Sitzungsdetails</string>
     <string name="total_volume">Gesamtvolumen</string>
-    <string name="duration">Dauer</string>
     <string name="edit_date">Datum bearbeiten</string>
     <string name="best_performance">Beste Leistung</string>
 
@@ -598,17 +588,12 @@
     <string name="onboarding_backup_title">Schütze\ndeine Daten.</string>
 
     <!-- Filters & Search -->
-    <string name="filters">Filter</string>
     <string name="clear_filters">Filter löschen</string>
     <string name="apply_filters">Filter anwenden</string>
     <string name="no_results_filters">Keine Ergebnisse mit diesen Filtern</string>
     <string name="try_adjust_filters">Versuche, deine Auswahl anzupassen oder alle Filter zu löschen.</string>
-    <string name="search_routines">Routinen suchen…</string>
     <string name="routine_archived_badge">Archiviert</string>
-    <string name="clear_date">Datum löschen</string>
-    <string name="clear_routine_filter">Routinenfilter entfernen</string>
     <string name="no_routine">Ohne Routine</string>
-    <string name="routine_group_other">Sonstige</string>
 
     <!-- Sharing -->
     <string name="sharing_options">TEILEN OPTIONEN</string>
@@ -640,13 +625,6 @@
     <string name="tap_to_set">Tippe zum Festlegen</string>
 
     <!-- Cardio -->
-    <string name="distance">Strecke</string>
-    <string name="cardio_run">Laufen</string>
-    <string name="cardio_bike">Fahrrad</string>
-    <string name="cardio_walk">Gehen</string>
-    <string name="cardio_other">Andere</string>
-    <string name="activity_name">Aktivitätsname</string>
-    <string name="activity_name_placeholder">z.B. Schwimmen, Wandern...</string>
     <string name="cardio_badge">CARDIO</string>
     <string name="cardio_enter_distance">Strecke eingeben</string>
     <string name="cardio_distance_label">Zurückgelegte Strecke (km)</string>
@@ -1202,13 +1180,6 @@
     <string name="progression_dismiss">Aktuelles Gewicht behalten</string>
 
     <!-- Add workout sheet: routines grouped by active / archived -->
-    <plurals name="add_workout_exercise_count">
-        <item quantity="one">%d Übung</item>
-        <item quantity="other">%d Übungen</item>
-    </plurals>
-    <string name="add_workout_last_done">Zuletzt: %1$s</string>
-    <string name="show_archived_routines">Archivierte Routinen anzeigen</string>
-    <string name="hide_archived_routines">Archivierte Routinen ausblenden</string>
     <!-- Changing the program during a workout -->
     <string name="edit_program">Programm bearbeiten</string>
     <string name="program_edit_subtitle">Ändere, was dieses Training verlangt. Bereits gemachte Sätze bleiben, wie sie sind.</string>
@@ -1409,29 +1380,11 @@
     <string name="journal_manage_tags">Tags verwalten</string>
     <string name="journal_manage_tags_desc">Benenne um, färbe um, führe zusammen oder lösche deine Tags</string>
     <string name="journal_how_did_it_go">Wie lief es?</string>
-    <string name="journal_rating_1">Hart</string>
-    <string name="journal_rating_2">Naja</string>
-    <string name="journal_rating_3">Okay</string>
-    <string name="journal_rating_4">Gut</string>
-    <string name="journal_rating_5">Super</string>
-    <string name="journal_rating_cd">%1$d von 5 Sternen</string>
-    <string name="journal_not_rated">Nicht bewertet</string>
     <string name="journal_tags">Tags</string>
     <string name="journal_new_tag">Neues Tag</string>
     <string name="journal_tag_name">Name des Tags</string>
-    <string name="journal_add_note">Notiz hinzufügen…</string>
-    <string name="journal_note">Trainingsnotiz</string>
     <string name="journal_row_title">Tagebuch</string>
     <string name="journal_row_empty">Bewertung, Tags und Notiz hinzufügen</string>
-    <string name="journal_edit">Tagebuch bearbeiten</string>
-    <string name="journal_match_any">Mindestens eins</string>
-    <string name="journal_match_all">Alle</string>
-    <string name="journal_filter_rating">Bewertung</string>
-    <string name="journal_bucket_low">1–2 ★</string>
-    <string name="journal_bucket_mid">3 ★</string>
-    <string name="journal_bucket_high">4–5 ★</string>
-    <string name="journal_filter_with_note">Mit Notiz</string>
-    <string name="journal_filter_remove_cd">Filter %1$s entfernen</string>
     <string name="journal_tags_empty">Noch keine Tags. Damit markierst du ein Training: eine Verletzung, einen Ort, einen Trainingspartner.</string>
     <string name="journal_tag_rename">Umbenennen</string>
     <string name="journal_tag_rename_title">Tag umbenennen</string>

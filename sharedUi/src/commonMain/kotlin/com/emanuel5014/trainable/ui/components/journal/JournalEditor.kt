@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components.journal
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.journal_add_note
+import com.emanuel5014.trainable.sharedui.resources.journal_new_tag
+import com.emanuel5014.trainable.sharedui.resources.journal_note
+import com.emanuel5014.trainable.sharedui.resources.journal_tag_name
+import com.emanuel5014.trainable.sharedui.resources.journal_tags
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -44,12 +51,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.relation.TagWithUsage
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.journal.TagName
@@ -105,7 +111,7 @@ fun JournalEditor(
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = stringResource(R.string.journal_tags),
+                text = stringResource(Res.string.journal_tags),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = OnSurfaceVariant
@@ -151,7 +157,7 @@ private fun NewTagChip(onCreate: (String) -> Unit) {
     if (!adding) {
         AssistChip(
             onClick = { adding = true },
-            label = { Text(stringResource(R.string.journal_new_tag)) },
+            label = { Text(stringResource(Res.string.journal_new_tag)) },
             leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(18.dp)) }
         )
         return
@@ -186,7 +192,7 @@ private fun NewTagChip(onCreate: (String) -> Unit) {
                 Box(contentAlignment = Alignment.CenterStart) {
                     if (text.isEmpty()) {
                         Text(
-                            text = stringResource(R.string.journal_tag_name),
+                            text = stringResource(Res.string.journal_tag_name),
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant
                         )
@@ -196,7 +202,7 @@ private fun NewTagChip(onCreate: (String) -> Unit) {
             }
         )
         IconButton(onClick = { text = ""; adding = false }, modifier = Modifier.size(36.dp)) {
-            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel), tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
+            Icon(Icons.Rounded.Close, contentDescription = stringResource(Res.string.cancel), tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -223,7 +229,7 @@ private fun NoteSection(note: String, onNoteChange: (String) -> Unit) {
                 ) {
                     Icon(Icons.Rounded.EditNote, contentDescription = null, tint = Primary)
                     Text(
-                        text = stringResource(R.string.journal_add_note),
+                        text = stringResource(Res.string.journal_add_note),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OnSurfaceVariant
                     )
@@ -233,7 +239,7 @@ private fun NoteSection(note: String, onNoteChange: (String) -> Unit) {
             OutlinedTextField(
                 value = note,
                 onValueChange = onNoteChange,
-                label = { Text(stringResource(R.string.journal_note)) },
+                label = { Text(stringResource(Res.string.journal_note)) },
                 minLines = 3,
                 maxLines = 8,
                 shape = Shapes.medium,

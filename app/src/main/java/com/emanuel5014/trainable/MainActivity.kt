@@ -96,6 +96,8 @@ import com.emanuel5014.trainable.ui.components.AndroidExercisePlatformUi
 import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
 import com.emanuel5014.trainable.ui.components.AndroidPrescriptionEnvironment
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionEnvironment
+import com.emanuel5014.trainable.ui.components.journal.AndroidJournalData
+import com.emanuel5014.trainable.ui.components.journal.LocalJournalData
 import com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
 import com.emanuel5014.trainable.ui.components.AndroidRoutineImagePicker
@@ -319,6 +321,7 @@ class MainActivity : FragmentActivity() {
                   LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } },
                   LocalExercisePlatformUi provides AndroidExercisePlatformUi,
                   LocalPrescriptionEnvironment provides AndroidPrescriptionEnvironment,
+                  LocalJournalData provides AndroidJournalData,
                   LocalRoutineImagePicker provides AndroidRoutineImagePicker,
                   LocalShowMessage provides LocalContext.current.let { context ->
                       remember(context) { { text: String -> Toast.makeText(context, text, Toast.LENGTH_SHORT).show() } }

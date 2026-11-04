@@ -1,8 +1,11 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add
+import com.emanuel5014.trainable.sharedui.resources.add_cardio
+import com.emanuel5014.trainable.sharedui.resources.custom_workout
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import com.emanuel5014.trainable.R
+import org.jetbrains.compose.resources.stringResource
 
 /** What a workout is called in the history: the plans the app creates for itself have a translated name. */
 sealed interface SessionTitle {
@@ -23,8 +26,8 @@ sealed interface SessionTitle {
 
 @Composable
 fun SessionTitle.displayText(): String = when (this) {
-    SessionTitle.Cardio -> stringResource(R.string.add_cardio).replace(stringResource(R.string.add) + " ", "")
-    SessionTitle.CustomWorkout -> stringResource(R.string.custom_workout)
+    SessionTitle.Cardio -> stringResource(Res.string.add_cardio).replace(stringResource(Res.string.add) + " ", "")
+    SessionTitle.CustomWorkout -> stringResource(Res.string.custom_workout)
     is SessionTitle.Named -> name
 }
 

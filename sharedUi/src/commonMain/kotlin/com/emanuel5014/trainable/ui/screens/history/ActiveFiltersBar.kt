@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_high
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_low
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_mid
+import com.emanuel5014.trainable.sharedui.resources.journal_filter_remove_cd
+import com.emanuel5014.trainable.sharedui.resources.journal_filter_with_note
+import com.emanuel5014.trainable.sharedui.resources.journal_not_rated
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -15,10 +22,9 @@ import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.relation.TagWithUsage
 import com.emanuel5014.trainable.domain.journal.RatingBucket
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -45,12 +51,12 @@ fun ActiveFiltersBar(
     if (!filters.isActive(journalEnabled)) return
 
     val bucketLabels = mapOf(
-        RatingBucket.LOW to stringResource(R.string.journal_bucket_low),
-        RatingBucket.MID to stringResource(R.string.journal_bucket_mid),
-        RatingBucket.HIGH to stringResource(R.string.journal_bucket_high),
-        RatingBucket.UNRATED to stringResource(R.string.journal_not_rated)
+        RatingBucket.LOW to stringResource(Res.string.journal_bucket_low),
+        RatingBucket.MID to stringResource(Res.string.journal_bucket_mid),
+        RatingBucket.HIGH to stringResource(Res.string.journal_bucket_high),
+        RatingBucket.UNRATED to stringResource(Res.string.journal_not_rated)
     )
-    val withNoteLabel = stringResource(R.string.journal_filter_with_note)
+    val withNoteLabel = stringResource(Res.string.journal_filter_with_note)
 
     val active = buildList {
         if (filters.planId != null && planName != null) {
@@ -93,7 +99,7 @@ fun ActiveFiltersBar(
                 trailingIcon = {
                     Icon(
                         Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.journal_filter_remove_cd, filter.label),
+                        contentDescription = stringResource(Res.string.journal_filter_remove_cd, filter.label),
                         modifier = Modifier.size(InputChipDefaults.IconSize)
                     )
                 },

@@ -1,5 +1,20 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.active_routines
+import com.emanuel5014.trainable.sharedui.resources.add_empty_workout
+import com.emanuel5014.trainable.sharedui.resources.add_workout
+import com.emanuel5014.trainable.sharedui.resources.add_workout_last_done
+import com.emanuel5014.trainable.sharedui.resources.archived_routines_header
+import com.emanuel5014.trainable.sharedui.resources.custom_workout
+import com.emanuel5014.trainable.sharedui.resources.hide_archived_routines
+import com.emanuel5014.trainable.sharedui.resources.no_active_routines
+import com.emanuel5014.trainable.sharedui.resources.no_active_routines_message
+import com.emanuel5014.trainable.sharedui.resources.no_results_filters
+import com.emanuel5014.trainable.sharedui.resources.search_routines
+import com.emanuel5014.trainable.sharedui.resources.select_plan_to_add
+import com.emanuel5014.trainable.sharedui.resources.show_archived_routines
+import com.emanuel5014.trainable.sharedui.resources.add_workout_exercise_count
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -45,17 +60,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.ui.components.GymInputField
@@ -67,7 +78,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerLow
 import com.emanuel5014.trainable.ui.util.DateFormatter
-import com.emanuel5014.trainable.util.UriMigrationHelper
+import com.emanuel5014.trainable.ui.components.LocalPlanImage
 
 /**
  * The "add workout" sheet of the history: an empty workout on top, then the routines the way they are meant to be
@@ -124,13 +135,13 @@ fun AddWorkoutSheetContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.add_workout),
+                    text = stringResource(Res.string.add_workout),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Black,
                     color = OnSurface
                 )
                 Text(
-                    text = stringResource(R.string.select_plan_to_add),
+                    text = stringResource(Res.string.select_plan_to_add),
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
@@ -150,7 +161,7 @@ fun AddWorkoutSheetContent(
                     GymInputField(
                         value = query,
                         onValueChange = { query = it },
-                        label = stringResource(R.string.search_routines),
+                        label = stringResource(Res.string.search_routines),
                         leadingIcon = {
                             Icon(Icons.Rounded.Search, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(20.dp))
                         },
@@ -175,19 +186,19 @@ fun AddWorkoutSheetContent(
 
         when {
             routineCount == 0 -> item(key = "none") {
-                EmptyMessage(stringResource(R.string.no_active_routines_message))
+                EmptyMessage(stringResource(Res.string.no_active_routines_message))
             }
             groups.isEmpty -> item(key = "no-results") {
-                EmptyMessage(stringResource(R.string.no_results_filters))
+                EmptyMessage(stringResource(Res.string.no_results_filters))
             }
             else -> {
                 if (groups.active.isNotEmpty() || activeQuery.isEmpty()) {
                     item(key = "active-header") {
-                        SectionHeader(label = stringResource(R.string.active_routines), count = groups.active.size)
+                        SectionHeader(label = stringResource(Res.string.active_routines), count = groups.active.size)
                     }
                     if (groups.active.isEmpty()) {
                         item(key = "active-empty") {
-                            EmptyMessage(stringResource(R.string.no_active_routines))
+                            EmptyMessage(stringResource(Res.string.no_active_routines))
                         }
                     }
                     items(groups.active, key = { "active-${it.plan.id}" }) { item ->
@@ -197,7 +208,7 @@ fun AddWorkoutSheetContent(
                 if (groups.archived.isNotEmpty()) {
                     item(key = "archived-header") {
                         SectionHeader(
-                            label = stringResource(R.string.archived_routines_header),
+                            label = stringResource(Res.string.archived_routines_header),
                             count = groups.archived.size,
                             icon = Icons.Rounded.Archive,
                             // While a search is on, the section is open and there is nothing to toggle
@@ -240,13 +251,13 @@ private fun EmptyWorkoutRow(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.add_empty_workout),
+                    text = stringResource(Res.string.add_empty_workout),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = Primary
                 )
                 Text(
-                    text = stringResource(R.string.custom_workout),
+                    text = stringResource(Res.string.custom_workout),
                     style = MaterialTheme.typography.bodySmall,
                     color = OnSurfaceVariant
                 )
@@ -268,7 +279,7 @@ private fun SectionHeader(
     onToggle: () -> Unit = {}
 ) {
     val chevron by animateFloatAsState(targetValue = if (expanded == true) 180f else 0f, label = "archive_chevron")
-    val toggleLabel = stringResource(if (expanded == true) R.string.hide_archived_routines else R.string.show_archived_routines)
+    val toggleLabel = stringResource(if (expanded == true) Res.string.hide_archived_routines else Res.string.show_archived_routines)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -334,15 +345,10 @@ private fun PlanRow(item: AddWorkoutPlan, archived: Boolean, onClick: () -> Unit
                     .background(if (archived) SurfaceContainerHighest else Primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (plan.imageUri != null) {
-                    val context = LocalContext.current
-                    val model = remember(plan.imageUri) { UriMigrationHelper.fixPath(plan.imageUri, context) ?: plan.imageUri }
-                    AsyncImage(
-                        model = model,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                val planImage = LocalPlanImage.current
+                val imageUri = plan.imageUri
+                if (imageUri != null && planImage != null) {
+                    planImage(imageUri, Modifier.fillMaxSize())
                 } else {
                     Icon(
                         if (archived) Icons.Rounded.Archive else Icons.AutoMirrored.Rounded.Notes,
@@ -376,7 +382,7 @@ private fun PlanRow(item: AddWorkoutPlan, archived: Boolean, onClick: () -> Unit
                 }
                 item.lastDone?.let { lastDone ->
                     Text(
-                        text = stringResource(R.string.add_workout_last_done, DateFormatter.formatShort(lastDone)),
+                        text = stringResource(Res.string.add_workout_last_done, DateFormatter.formatShort(lastDone)),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (archived) OnSurfaceVariant else Primary,
                         fontWeight = FontWeight.Bold
@@ -398,7 +404,7 @@ private fun PlanRow(item: AddWorkoutPlan, archived: Boolean, onClick: () -> Unit
 private fun planDetails(item: AddWorkoutPlan): String {
     val count = item.summary?.exerciseCount ?: return ""
     val parts = buildList {
-        add(pluralStringResource(R.plurals.add_workout_exercise_count, count, count))
+        add(pluralStringResource(Res.plurals.add_workout_exercise_count, count, count))
         if (item.muscleLabels.isNotEmpty()) add(item.muscleLabels.joinToString(", "))
     }
     return parts.joinToString(" · ")

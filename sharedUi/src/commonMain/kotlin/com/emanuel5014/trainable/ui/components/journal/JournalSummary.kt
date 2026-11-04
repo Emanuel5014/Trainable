@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components.journal
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.journal_edit
+import com.emanuel5014.trainable.sharedui.resources.journal_row_empty
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,11 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -114,7 +116,7 @@ fun JournalDetail(
         Column(modifier = Modifier.weight(1f).padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (!journalHasContent(rating, tags, note)) {
                 Text(
-                    text = stringResource(R.string.journal_row_empty),
+                    text = stringResource(Res.string.journal_row_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
@@ -146,7 +148,7 @@ fun JournalDetail(
         IconButton(onClick = onEdit) {
             Icon(
                 imageVector = Icons.Rounded.Edit,
-                contentDescription = stringResource(R.string.journal_edit),
+                contentDescription = stringResource(Res.string.journal_edit),
                 tint = Primary,
                 modifier = Modifier.size(20.dp)
             )

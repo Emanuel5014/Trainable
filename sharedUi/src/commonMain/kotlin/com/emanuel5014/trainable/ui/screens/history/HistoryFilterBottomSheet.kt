@@ -1,5 +1,34 @@
 package com.emanuel5014.trainable.ui.screens.history
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.active_routines
+import com.emanuel5014.trainable.sharedui.resources.all
+import com.emanuel5014.trainable.sharedui.resources.archived_routines_header
+import com.emanuel5014.trainable.sharedui.resources.clear_all
+import com.emanuel5014.trainable.sharedui.resources.clear_date
+import com.emanuel5014.trainable.sharedui.resources.clear_routine_filter
+import com.emanuel5014.trainable.sharedui.resources.date_range
+import com.emanuel5014.trainable.sharedui.resources.done
+import com.emanuel5014.trainable.sharedui.resources.filters
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_high
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_low
+import com.emanuel5014.trainable.sharedui.resources.journal_bucket_mid
+import com.emanuel5014.trainable.sharedui.resources.journal_filter_rating
+import com.emanuel5014.trainable.sharedui.resources.journal_filter_with_note
+import com.emanuel5014.trainable.sharedui.resources.journal_match_all
+import com.emanuel5014.trainable.sharedui.resources.journal_match_any
+import com.emanuel5014.trainable.sharedui.resources.journal_not_rated
+import com.emanuel5014.trainable.sharedui.resources.journal_note
+import com.emanuel5014.trainable.sharedui.resources.journal_tags
+import com.emanuel5014.trainable.sharedui.resources.last_month
+import com.emanuel5014.trainable.sharedui.resources.no_archived
+import com.emanuel5014.trainable.sharedui.resources.no_results_filters
+import com.emanuel5014.trainable.sharedui.resources.no_routine
+import com.emanuel5014.trainable.sharedui.resources.routine_group_other
+import com.emanuel5014.trainable.sharedui.resources.routines
+import com.emanuel5014.trainable.sharedui.resources.search_routines
+import com.emanuel5014.trainable.sharedui.resources.select_date_range
+import com.emanuel5014.trainable.sharedui.resources.this_month
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +82,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -61,7 +90,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.isArchived
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -76,9 +104,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.util.DateFormatter
 import kotlinx.coroutines.launch
-import java.text.DateFormatSymbols
-import java.util.Calendar
-import java.util.Locale
 
 /** Which routines the picker lists: every one, only the active ones or only the archived ones. */
 private enum class RoutineStatus { All, Active, Archived }
@@ -118,14 +143,11 @@ fun HistoryFilterBottomSheet(
     val surfaceContainerHighColor = SurfaceContainerHigh
     val surfaceContainerHighestColor = SurfaceContainerHighest
 
-    val calendar = remember { Calendar.getInstance() }
-    val currentMonth = remember<Int>(calendar) { calendar.get(Calendar.MONTH) }
-    val currentYear = remember<Int>(calendar) { calendar.get(Calendar.YEAR) }
+    val today = remember { MonthCalendar.currentMonthAndYear() }
+    val currentMonth = today.first
+    val currentYear = today.second
 
-    val monthNames = remember<List<String>> {
-        val symbols = DateFormatSymbols.getInstance(Locale.getDefault())
-        symbols.shortMonths.filter { it.isNotEmpty() }
-    }
+    val monthNames = remember<List<String>> { MonthCalendar.shortMonthNames() }
 
     var routineSearchQuery by remember { mutableStateOf("") }
     var routineStatus by remember { mutableStateOf(RoutineStatus.All) }
@@ -145,47 +167,17 @@ fun HistoryFilterBottomSheet(
     }
 
     // Workouts that belong to no routine (cardio, custom, quick, deleted routines) have no plan to pick
-    val noRoutineLabel = stringResource(R.string.no_routine)
+    val noRoutineLabel = stringResource(Res.string.no_routine)
     val noRoutineSelected = selectedPlanId == NO_ROUTINE_PLAN_ID
     val showNoRoutine = (hasUnassignedSessions || noRoutineSelected) &&
         routineStatus == RoutineStatus.All &&
         noRoutineLabel.contains(query, ignoreCase = true)
 
-    fun getMonthRange(monthIndex: Int, year: Int = currentYear): Pair<Long, Long> {
-        val cal = Calendar.getInstance()
-        cal.set(Calendar.YEAR, year)
-        cal.set(Calendar.MONTH, monthIndex)
-        cal.set(Calendar.DAY_OF_MONTH, 1)
-        cal.set(Calendar.HOUR_OF_DAY, 0)
-        cal.set(Calendar.MINUTE, 0)
-        cal.set(Calendar.SECOND, 0)
-        cal.set(Calendar.MILLISECOND, 0)
-        val start = cal.timeInMillis
-
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-        cal.set(Calendar.HOUR_OF_DAY, 23)
-        cal.set(Calendar.MINUTE, 59)
-        cal.set(Calendar.SECOND, 59)
-        cal.set(Calendar.MILLISECOND, 999)
-        val end = cal.timeInMillis
-        return start to end
-    }
+    fun getMonthRange(monthIndex: Int, year: Int = currentYear): Pair<Long, Long> = MonthCalendar.monthRange(monthIndex, year)
 
     fun isMonthSelected(monthIndex: Int): Boolean {
         if (startDate == null || endDate == null) return false
-        val cal = Calendar.getInstance()
-        cal.timeInMillis = startDate
-        val sMonth = cal.get(Calendar.MONTH)
-        val sYear = cal.get(Calendar.YEAR)
-        val sDay = cal.get(Calendar.DAY_OF_MONTH)
-
-        cal.timeInMillis = endDate
-        val eMonth = cal.get(Calendar.MONTH)
-        val eYear = cal.get(Calendar.YEAR)
-        val eDay = cal.get(Calendar.DAY_OF_MONTH)
-
-        return sMonth == monthIndex && sYear == currentYear && sDay == 1 &&
-               eMonth == monthIndex && eYear == currentYear && eDay == cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        return MonthCalendar.isWholeMonth(startDate, endDate, monthIndex, currentYear)
     }
 
     ModalBottomSheet(
@@ -224,7 +216,7 @@ fun HistoryFilterBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.filters).uppercase(),
+                            text = stringResource(Res.string.filters).uppercase(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             color = onSurfaceColor,
@@ -233,7 +225,7 @@ fun HistoryFilterBottomSheet(
 
                         if (selectedPlanId != null || startDate != null || (journalEnabled && journalFilters.isActive)) {
                             Text(
-                                text = stringResource(R.string.clear_all),
+                                text = stringResource(Res.string.clear_all),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = errorColor,
                                 fontWeight = FontWeight.ExtraBold,
@@ -255,7 +247,7 @@ fun HistoryFilterBottomSheet(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.routines),
+                                    text = stringResource(Res.string.routines),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = primaryColor,
                                     fontWeight = FontWeight.ExtraBold,
@@ -289,9 +281,9 @@ fun HistoryFilterBottomSheet(
                                         val selected = routineStatus == status
                                         val label = stringResource(
                                             when (status) {
-                                                RoutineStatus.All -> R.string.all
-                                                RoutineStatus.Active -> R.string.active_routines
-                                                RoutineStatus.Archived -> R.string.archived_routines_header
+                                                RoutineStatus.All -> Res.string.all
+                                                RoutineStatus.Active -> Res.string.active_routines
+                                                RoutineStatus.Archived -> Res.string.archived_routines_header
                                             }
                                         )
                                         SegmentedButton(
@@ -335,7 +327,7 @@ fun HistoryFilterBottomSheet(
                                     GymInputField(
                                         value = routineSearchQuery,
                                         onValueChange = { routineSearchQuery = it },
-                                        label = stringResource(R.string.search_routines),
+                                        label = stringResource(Res.string.search_routines),
                                         leadingIcon = {
                                             Icon(Icons.Rounded.Search, contentDescription = null, tint = onSurfaceVariantColor, modifier = Modifier.size(20.dp))
                                         },
@@ -360,8 +352,8 @@ fun HistoryFilterBottomSheet(
                             if (visibleActive.isEmpty() && visibleArchived.isEmpty() && !showNoRoutine) {
                                 Text(
                                     text = stringResource(
-                                        if (query.isEmpty() && routineStatus == RoutineStatus.Archived) R.string.no_archived
-                                        else R.string.no_results_filters
+                                        if (query.isEmpty() && routineStatus == RoutineStatus.Archived) Res.string.no_archived
+                                        else Res.string.no_results_filters
                                     ),
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -376,7 +368,7 @@ fun HistoryFilterBottomSheet(
                                 ).count { it } > 1
                                 if (visibleActive.isNotEmpty()) {
                                     RoutineChipGroup(
-                                        label = if (showGroupLabels) stringResource(R.string.active_routines) else null,
+                                        label = if (showGroupLabels) stringResource(Res.string.active_routines) else null,
                                         archived = false,
                                         plans = visibleActive,
                                         selectedPlanId = selectedPlanId,
@@ -385,7 +377,7 @@ fun HistoryFilterBottomSheet(
                                 }
                                 if (visibleArchived.isNotEmpty()) {
                                     RoutineChipGroup(
-                                        label = if (showGroupLabels) stringResource(R.string.archived_routines_header) else null,
+                                        label = if (showGroupLabels) stringResource(Res.string.archived_routines_header) else null,
                                         archived = true,
                                         plans = visibleArchived,
                                         selectedPlanId = selectedPlanId,
@@ -393,7 +385,7 @@ fun HistoryFilterBottomSheet(
                                     )
                                 }
                                 if (showNoRoutine) {
-                                    ChipGroup(label = if (showGroupLabels) stringResource(R.string.routine_group_other) else null) {
+                                    ChipGroup(label = if (showGroupLabels) stringResource(Res.string.routine_group_other) else null) {
                                         FilterOptionChip(
                                             label = noRoutineLabel,
                                             selected = noRoutineSelected,
@@ -411,7 +403,7 @@ fun HistoryFilterBottomSheet(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
-                            text = stringResource(R.string.date_range),
+                            text = stringResource(Res.string.date_range),
                             style = MaterialTheme.typography.labelMedium,
                             color = primaryColor,
                             fontWeight = FontWeight.ExtraBold,
@@ -425,7 +417,7 @@ fun HistoryFilterBottomSheet(
                         ) {
                             item {
                                 FilterOptionChip(
-                                    label = stringResource(R.string.all),
+                                    label = stringResource(Res.string.all),
                                     selected = startDate == null,
                                     onClick = { onDateRangeSelected(null, null) }
                                 )
@@ -434,7 +426,7 @@ fun HistoryFilterBottomSheet(
                             item {
                                 val range = getMonthRange(currentMonth)
                                 FilterOptionChip(
-                                    label = stringResource(R.string.this_month),
+                                    label = stringResource(Res.string.this_month),
                                     selected = startDate == range.first && endDate == range.second,
                                     onClick = { onDateRangeSelected(range.first, range.second) }
                                 )
@@ -445,7 +437,7 @@ fun HistoryFilterBottomSheet(
                                 val lastMonthYear = if (currentMonth == 0) currentYear - 1 else currentYear
                                 val range = getMonthRange(lastMonthIndex, lastMonthYear)
                                 FilterOptionChip(
-                                    label = stringResource(R.string.last_month),
+                                    label = stringResource(Res.string.last_month),
                                     selected = startDate == range.first && endDate == range.second,
                                     onClick = { onDateRangeSelected(range.first, range.second) }
                                 )
@@ -495,7 +487,7 @@ fun HistoryFilterBottomSheet(
                                     text = if (startDate != null && endDate != null) {
                                         "${DateFormatter.formatShort(startDate)} - ${DateFormatter.formatShort(endDate)}"
                                     } else {
-                                        stringResource(R.string.select_date_range)
+                                        stringResource(Res.string.select_date_range)
                                     },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = onSurfaceColor
@@ -506,12 +498,12 @@ fun HistoryFilterBottomSheet(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
-                                        .clickable(onClickLabel = stringResource(R.string.clear_date)) { onClearDate() },
+                                        .clickable(onClickLabel = stringResource(Res.string.clear_date)) { onClearDate() },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         Icons.Rounded.Close,
-                                        contentDescription = stringResource(R.string.clear_date),
+                                        contentDescription = stringResource(Res.string.clear_date),
                                         tint = onSurfaceVariantColor,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -526,7 +518,7 @@ fun HistoryFilterBottomSheet(
                     if (availableTags.isNotEmpty()) {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                ChipGroup(label = stringResource(R.string.journal_tags)) {
+                                ChipGroup(label = stringResource(Res.string.journal_tags)) {
                                     availableTags.forEach { tag ->
                                         key(tag.id) {
                                             TagChip(
@@ -547,7 +539,7 @@ fun HistoryFilterBottomSheet(
                                 // Several tags: a workout needs at least one of them, or all
                                 if (journalFilters.tagIds.size > 1) {
                                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                        listOf(false to R.string.journal_match_any, true to R.string.journal_match_all)
+                                        listOf(false to Res.string.journal_match_any, true to Res.string.journal_match_all)
                                             .forEachIndexed { index, (matchAll, label) ->
                                                 SegmentedButton(
                                                     selected = journalFilters.matchAllTags == matchAll,
@@ -572,16 +564,16 @@ fun HistoryFilterBottomSheet(
                     }
                     if (ratingEnabled) {
                         item {
-                            ChipGroup(label = stringResource(R.string.journal_filter_rating)) {
+                            ChipGroup(label = stringResource(Res.string.journal_filter_rating)) {
                                 RatingBucket.entries.forEach { bucket ->
                                     val selected = bucket in journalFilters.ratingBuckets
                                     FilterOptionChip(
                                         label = stringResource(
                                             when (bucket) {
-                                                RatingBucket.LOW -> R.string.journal_bucket_low
-                                                RatingBucket.MID -> R.string.journal_bucket_mid
-                                                RatingBucket.HIGH -> R.string.journal_bucket_high
-                                                RatingBucket.UNRATED -> R.string.journal_not_rated
+                                                RatingBucket.LOW -> Res.string.journal_bucket_low
+                                                RatingBucket.MID -> Res.string.journal_bucket_mid
+                                                RatingBucket.HIGH -> Res.string.journal_bucket_high
+                                                RatingBucket.UNRATED -> Res.string.journal_not_rated
                                             }
                                         ),
                                         selected = selected,
@@ -597,9 +589,9 @@ fun HistoryFilterBottomSheet(
                         }
                     }
                     item {
-                        ChipGroup(label = stringResource(R.string.journal_note)) {
+                        ChipGroup(label = stringResource(Res.string.journal_note)) {
                             FilterOptionChip(
-                                label = stringResource(R.string.journal_filter_with_note),
+                                label = stringResource(Res.string.journal_filter_with_note),
                                 selected = journalFilters.onlyWithNote,
                                 onClick = { onJournalFiltersChanged(journalFilters.copy(onlyWithNote = !journalFilters.onlyWithNote)) }
                             )
@@ -621,7 +613,7 @@ fun HistoryFilterBottomSheet(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(R.string.done).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.done).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -705,7 +697,7 @@ private fun SelectedRoutinePill(
             .heightIn(min = 32.dp)
             .clip(CircleShape)
             .background(Primary.copy(alpha = 0.12f))
-            .clickable(onClickLabel = stringResource(R.string.clear_routine_filter), onClick = onClear)
+            .clickable(onClickLabel = stringResource(Res.string.clear_routine_filter), onClick = onClear)
             .padding(start = 12.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
