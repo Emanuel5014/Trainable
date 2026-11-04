@@ -431,4 +431,8 @@
     <string name="technique_edit">Technique</string>
     <string name="technique_not_done">Not done</string>
     <string name="seconds_label">Seconds</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_1w">1W</string>
+    <string name="analytics_time_range_6m">6M</string>
+    <string name="analytics_time_range_all">ALL</string>
 </resources>

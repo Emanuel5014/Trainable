@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components.analytics
 
+import com.emanuel5014.trainable.platform.formatLocalDecimals
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -203,7 +205,7 @@ private fun PersonalBestCard(
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = String.format(java.util.Locale.getDefault(), "%.1f", best.maxWeightKg),
+                        text = formatLocalDecimals(best.maxWeightKg.toDouble(), 1),
                         style = if (isLarge) MaterialTheme.typography.displayLarge else MaterialTheme.typography.displaySmall,
                         color = OnSurface,
                         fontWeight = FontWeight.ExtraBold

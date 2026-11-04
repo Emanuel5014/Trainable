@@ -12,3 +12,9 @@ actual fun formatShortTime(timestampMillis: Long): String {
     formatter.timeStyle = NSDateFormatterShortStyle
     return formatter.stringFromDate(NSDate.dateWithTimeIntervalSince1970(timestampMillis / 1000.0))
 }
+
+actual fun formatDayMonth(timestampMillis: Long): String {
+    val formatter = NSDateFormatter()
+    formatter.dateFormat = "dd MMM"
+    return formatter.stringFromDate(NSDate.dateWithTimeIntervalSince1970(timestampMillis / 1000.0))
+}

@@ -344,9 +344,6 @@
     <string name="avg_volume">Tonnellaggio Medio</string>
     <string name="analytics_category_volume">VOLUME PER GRUPPO MUSCOLARE</string>
     <string name="analytics_category_volume_widget">VOLUME PER GRUPPO MUSCOLARE</string>
-    <string name="analytics_time_range_1w">1S</string>
-    <string name="analytics_time_range_1m">1M</string>
-    <string name="analytics_time_range_6m">6M</string>
     <string name="analytics_time_range_all">TUTTO</string>
 
     <!-- Confronto -->
@@ -1482,4 +1479,7 @@
     <string name="equipment_bodyweight">Corpo libero</string>
     <string name="equipment_landmine">Landmine</string>
     <string name="equipment_other">Altro</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_1w">1S</string>
+    <string name="analytics_time_range_6m">6M</string>
 </resources>

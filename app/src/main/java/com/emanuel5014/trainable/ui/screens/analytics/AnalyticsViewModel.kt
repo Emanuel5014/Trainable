@@ -755,9 +755,9 @@ class AnalyticsViewModel @Inject constructor(
                         period1Name = when (period1Range) {
                             AnalyticsTimeRange.OneWeek -> context.getString(R.string.this_week)
                             AnalyticsTimeRange.OneMonth -> context.getString(R.string.this_month)
-                            else -> context.getString(period1Range.labelResId)
+                            else -> context.getString(period1Range.labelRes())
                         },
-                        period2Name = "${context.getString(R.string.previous_exercise)} (${context.getString(period2Range.labelResId)})",
+                        period2Name = "${context.getString(R.string.previous_exercise)} (${context.getString(period2Range.labelRes())})",
                         period1DateRange = p1RangeLabel,
                         period2DateRange = p2RangeLabel,
                         period1Metrics = p1,

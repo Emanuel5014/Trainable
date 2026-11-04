@@ -25,3 +25,6 @@ internal expect class ConcurrentStringMap() {
     val size: Int
     fun clear()
 }
+
+/** [value] with [decimals] digits after the separator of the phone's language ("82,5" in Italian), as the app shows it. */
+fun formatLocalDecimals(value: Double, decimals: Int): String = formatDecimals(value, decimals, deviceLocale = true)

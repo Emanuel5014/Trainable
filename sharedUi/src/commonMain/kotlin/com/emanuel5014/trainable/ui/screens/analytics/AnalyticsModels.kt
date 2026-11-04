@@ -1,18 +1,23 @@
 package com.emanuel5014.trainable.ui.screens.analytics
 
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.analytics_time_range_1m
+import com.emanuel5014.trainable.sharedui.resources.analytics_time_range_1w
+import com.emanuel5014.trainable.sharedui.resources.analytics_time_range_6m
+import com.emanuel5014.trainable.sharedui.resources.analytics_time_range_all
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.dao.CategoryVolumeRow
-import java.util.concurrent.TimeUnit
+import kotlin.time.Clock
+import org.jetbrains.compose.resources.StringResource
 
-enum class AnalyticsTimeRange(val labelResId: Int, private val durationDays: Long?) {
-    OneWeek(R.string.analytics_time_range_1w, 7),
-    OneMonth(R.string.analytics_time_range_1m, 30),
-    SixMonths(R.string.analytics_time_range_6m, 180),
-    All(R.string.analytics_time_range_all, null);
+enum class AnalyticsTimeRange(val labelResId: StringResource, private val durationDays: Long?) {
+    OneWeek(Res.string.analytics_time_range_1w, 7),
+    OneMonth(Res.string.analytics_time_range_1m, 30),
+    SixMonths(Res.string.analytics_time_range_6m, 180),
+    All(Res.string.analytics_time_range_all, null);
 
-    fun startDate(now: Long = System.currentTimeMillis()): Long {
-        return durationDays?.let { now - TimeUnit.DAYS.toMillis(it) } ?: 0L
+    fun startDate(now: Long = Clock.System.now().toEpochMilliseconds()): Long {
+        return durationDays?.let { now - it * MILLIS_PER_DAY } ?: 0L
     }
 }
 
@@ -120,3 +125,5 @@ data class AnalyticsUiState(
     val error: String? = null,
     val showProgressCards: Boolean = false
 )
+
+private const val MILLIS_PER_DAY = 24L * 60 * 60 * 1000

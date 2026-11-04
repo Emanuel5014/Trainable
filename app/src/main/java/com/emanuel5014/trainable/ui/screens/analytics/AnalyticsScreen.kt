@@ -892,7 +892,7 @@ fun BodyWeightChartSection(
                         fontWeight = FontWeight.ExtraBold
                     )
                     Text(
-                        text = stringResource(timeRange.labelResId),
+                        text = stringResource(timeRange.labelRes()),
                         style = MaterialTheme.typography.labelSmall,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -1172,7 +1172,7 @@ fun ExerciseChartSection(
                             color = Primary
                         )
                         Text(
-                            text = "${stringResource(R.string.analytics_estimated_1rm_short)} • ${stringResource(timeRange.labelResId)}",
+                            text = "${stringResource(R.string.analytics_estimated_1rm_short)} • ${stringResource(timeRange.labelRes())}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -1618,7 +1618,7 @@ fun VolumeChartSection(
                             color = Primary
                         )
                         Text(
-                            text = stringResource(timeRange.labelResId),
+                            text = stringResource(timeRange.labelRes()),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -1753,7 +1753,7 @@ fun VolumeSettingsBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(range.labelResId),
+                            text = stringResource(range.labelRes()),
                             color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -1834,7 +1834,7 @@ fun CategoryVolumeSettingsBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(range.labelResId),
+                            text = stringResource(range.labelRes()),
                             color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -1915,7 +1915,7 @@ fun BodyWeightSettingsBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(range.labelResId),
+                            text = stringResource(range.labelRes()),
                             color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -1997,7 +1997,7 @@ fun ExerciseSettingsBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(range.labelResId),
+                            text = stringResource(range.labelRes()),
                             color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -2958,7 +2958,7 @@ fun TimePeriodComparisonSettingsBottomSheet(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(range.labelResId),
+                            text = stringResource(range.labelRes()),
                             color = if (selectedTimeRange == range) OnPrimary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )

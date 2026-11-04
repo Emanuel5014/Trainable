@@ -83,7 +83,7 @@ class LazyListReorderState internal constructor(
     private val hapticEnabled: () -> Boolean,
     private val onCommit: (List<Any>) -> Unit
 ) {
-    internal class Metrics(
+    class Metrics(
         val hitTolerance: Float,
         val minEdgeZone: Float,
         val maxEdgeZone: Float,
@@ -141,7 +141,7 @@ class LazyListReorderState internal constructor(
         return result
     }
 
-    internal fun onDragStart(pointerY: Float) {
+    fun onDragStart(pointerY: Float) {
         if (isDragging) return
         val order = keys()
         if (order.isEmpty()) return
@@ -192,14 +192,14 @@ class LazyListReorderState internal constructor(
         tick(HapticFeedbackType.LongPress)
     }
 
-    internal fun onDrag(pointerY: Float) {
+    fun onDrag(pointerY: Float) {
         if (!isDragging) return
         fingerY = pointerY - lazyListState.layoutInfo.beforeContentPadding
         if (!armed && abs(fingerY - startFingerY) > metrics.armDistance) armed = true
         evaluateSwap()
     }
 
-    internal fun onDragEnd() {
+    fun onDragEnd() {
         if (!isDragging) return
         val info = lazyListState.layoutInfo
         val bounds = layoutBounds(info)
@@ -243,7 +243,7 @@ class LazyListReorderState internal constructor(
      * stopped halfway through a multi-item move) and scrolls the list when the finger is near an
      * edge.
      */
-    internal suspend fun driveWhileDragging() {
+    suspend fun driveWhileDragging() {
         var previous = withFrameNanos()
         var scrollingForMs = 0f
         while (true) {
@@ -266,7 +266,7 @@ class LazyListReorderState internal constructor(
     }
 
     /** Translation, in px, to draw [key] at. Read from a `graphicsLayer` block: draw phase only. */
-    internal fun translationOf(key: Any): Float {
+    fun translationOf(key: Any): Float {
         if (block.isEmpty()) return 0f
         return when {
             key in draggedKeys -> {
@@ -286,13 +286,13 @@ class LazyListReorderState internal constructor(
      * Scale to draw [key] at while held: the shrink that makes a tall card manageable, or
      * [base] (a slight lift) for a card that is small enough as it is.
      */
-    internal fun heldScale(base: Float): Float = if (blockScale < 1f) blockScale else base
+    fun heldScale(base: Float): Float = if (blockScale < 1f) blockScale else base
 
     /**
      * Where, as a fraction of [key]'s own height, the finger holds the block. Scaling around it
      * keeps the held point under the finger however much the card is shrunk.
      */
-    internal fun pivotFractionY(key: Any): Float {
+    fun pivotFractionY(key: Any): Float {
         if (block.isEmpty()) return 0.5f
         val info = lazyListState.layoutInfo
         val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0.5f

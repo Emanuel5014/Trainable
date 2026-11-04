@@ -1,5 +1,8 @@
 package com.emanuel5014.trainable.ui.components.analytics
 
+import com.emanuel5014.trainable.platform.formatLocalDecimals
+import com.emanuel5014.trainable.ui.util.formatDayMonth
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,15 +23,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun AnalyticsLineChart(
@@ -136,19 +135,13 @@ fun AnalyticsLineChart(
                 drawCircle(color = lineColor, radius = 6f, center = Offset(x, y))
                 if (!showValueLabels) return@forEachIndexed
 
-                val text = String.format("%.1f", point.value)
-                val textPaint = android.graphics.Paint().apply {
-                    color = android.graphics.Color.WHITE
-                    textSize = 32f
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    isAntiAlias = true
-                    isFakeBoldText = true
-                }
-                val textWidth = textPaint.measureText(text)
+                val text = formatLocalDecimals(point.value.toDouble(), 1)
+                val textPaint = ChartLabelPaint()
+                val textWidth = textPaint.measure(text)
                 val badgeHPadding = 14f
                 val badgeVPadding = 8f
                 val badgeWidth = textWidth + badgeHPadding * 2
-                val badgeTotalHeight = (textPaint.descent() - textPaint.ascent()) + badgeVPadding * 2
+                val badgeTotalHeight = (textPaint.descent - textPaint.ascent) + badgeVPadding * 2
                 val gapFromPoint = 8f
                 val badgeLeft = (x - badgeWidth / 2f).coerceIn(
                     0f,
@@ -161,10 +154,10 @@ fun AnalyticsLineChart(
                 val textBaselineY: Float
                 if (placeBelow) {
                     badgeTop = y + 6f + gapFromPoint
-                    textBaselineY = badgeTop + badgeVPadding - textPaint.ascent()
+                    textBaselineY = badgeTop + badgeVPadding - textPaint.ascent
                 } else {
                     badgeTop = y - 6f - gapFromPoint - badgeTotalHeight
-                    textBaselineY = badgeTop + badgeVPadding - textPaint.ascent()
+                    textBaselineY = badgeTop + badgeVPadding - textPaint.ascent
                 }
 
                 drawRoundRect(
@@ -180,12 +173,7 @@ fun AnalyticsLineChart(
                     cornerRadius = CornerRadius(12f, 12f)
                 )
 
-                drawContext.canvas.nativeCanvas.drawText(
-                    text,
-                    textCenterX,
-                    textBaselineY,
-                    textPaint
-                )
+                textPaint.draw(drawContext.canvas, text, textCenterX, textBaselineY)
             }
         }
 
@@ -217,6 +205,5 @@ private fun rememberLabelIndices(size: Int): List<Int> {
 }
 
 private fun formatChartLabel(timestamp: Long): String {
-    val formatter = SimpleDateFormat("dd MMM", Locale.getDefault())
-    return formatter.format(Date(timestamp))
+    return formatDayMonth(timestamp)
 }

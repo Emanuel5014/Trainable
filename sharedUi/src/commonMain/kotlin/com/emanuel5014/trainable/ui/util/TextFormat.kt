@@ -8,3 +8,6 @@ fun fillPlaceholders(template: String, vararg args: Any): String =
 
 /** The time of day of [timestampMillis] in the phone's short format ("14:05", "2:05 PM"). */
 expect fun formatShortTime(timestampMillis: Long): String
+
+/** Day and short month of [timestampMillis] in the phone's language ("05 ott"). */
+expect fun formatDayMonth(timestampMillis: Long): String

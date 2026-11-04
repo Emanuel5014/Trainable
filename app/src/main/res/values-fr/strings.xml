@@ -344,9 +344,6 @@
     <string name="avg_volume">Tonnage Moyen</string>
     <string name="analytics_category_volume">VOLUME PAR GROUPE MUSCULAIRE</string>
     <string name="analytics_category_volume_widget">VOLUME PAR GROUPE MUSCULAIRE</string>
-    <string name="analytics_time_range_1w">1S</string>
-    <string name="analytics_time_range_1m">1M</string>
-    <string name="analytics_time_range_6m">6M</string>
     <string name="analytics_time_range_all">TOUT</string>
 
     <!-- Comparaison -->
@@ -1482,4 +1479,7 @@
     <string name="equipment_bodyweight">Poids du corps</string>
     <string name="equipment_landmine">Landmine</string>
     <string name="equipment_other">Autre</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_1w">1S</string>
+    <string name="analytics_time_range_6m">6M</string>
 </resources>

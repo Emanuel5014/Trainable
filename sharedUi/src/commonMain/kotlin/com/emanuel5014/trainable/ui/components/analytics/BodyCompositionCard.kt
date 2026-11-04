@@ -11,7 +11,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsChartPoint

@@ -344,9 +344,6 @@
     <string name="avg_volume">Durchschnittstonnage</string>
     <string name="analytics_category_volume">VOLUMEN NACH MUSKELGRUPPE</string>
     <string name="analytics_category_volume_widget">VOLUMEN NACH MUSKELGRUPPE</string>
-    <string name="analytics_time_range_1w">1W</string>
-    <string name="analytics_time_range_1m">1M</string>
-    <string name="analytics_time_range_6m">6M</string>
     <string name="analytics_time_range_all">ALLE</string>
 
     <!-- Vergleich -->
@@ -1482,4 +1479,7 @@
     <string name="equipment_bodyweight">Körpergewicht</string>
     <string name="equipment_landmine">Landmine</string>
     <string name="equipment_other">Sonstiges</string>
+    <string name="analytics_time_range_1m">1M</string>
+    <string name="analytics_time_range_1w">1W</string>
+    <string name="analytics_time_range_6m">6M</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.components.analytics
 
+import com.emanuel5014.trainable.platform.formatLocalDecimals
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,6 +58,6 @@ fun StrengthIndexCard(strengthIndex: StrengthIndexUiModel) {
 }
 
 private fun formatSignedPercent(value: Float): String {
-    val formatted = String.format(java.util.Locale.getDefault(), "%.1f", kotlin.math.abs(value))
+    val formatted = formatLocalDecimals(kotlin.math.abs(value).toDouble(), 1)
     return if (value >= 0f) "+$formatted%" else "-$formatted%"
 }
