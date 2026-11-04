@@ -27,6 +27,9 @@ import com.emanuel5014.trainable.data.repository.PlanRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.IosExerciseMediaFiles
 import com.emanuel5014.trainable.data.repository.IosWorkoutPlatform
+import com.emanuel5014.trainable.data.repository.IosTransactionRunner
+import com.emanuel5014.trainable.data.repository.JournalRepository
+import com.emanuel5014.trainable.ui.screens.history.HistoryState
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
@@ -77,6 +80,7 @@ internal object IosAppGraph {
         )
     }
     val exercises by lazy { ExerciseRepository(database.exerciseDao(), IosExerciseMediaFiles()) }
+    val journal by lazy { JournalRepository(database.journalDao(), IosTransactionRunner(database)) }
 
     fun routineDetail(planId: Int, scope: CoroutineScope) =
         RoutineDetailState(planId, workouts, exercises, preferences, oneRepMaxes, scope)
@@ -142,6 +146,9 @@ private fun TrainableIosApp() {
         val db = IosAppGraph.database
         RoutinesState(PlanRepository(db.workoutDao(), db.userDao(), db.oneRepMaxDao()), preferences, scope)
     }
+    val history = remember {
+        HistoryState(IosAppGraph.workouts, IosAppGraph.exercises, preferences, IosAppGraph.journal, scope)
+    }
     val uiState by state.uiState.collectAsState()
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
@@ -172,7 +179,7 @@ private fun TrainableIosApp() {
             LocalPrescriptionText provides rememberIosPrescriptionText(),
             LocalPrescriptionEnvironment provides IosPrescriptionEnvironment
         ) {
-            IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, navBarStyle = style, isDark = isDark)
+            IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, navBarStyle = style, isDark = isDark)
         }
     }
 }

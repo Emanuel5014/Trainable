@@ -1,6 +1,46 @@
 package com.emanuel5014.trainable.ui.components
 
-import com.emanuel5014.trainable.ui.components.HubChip
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.apply
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.change_percent_button
+import com.emanuel5014.trainable.sharedui.resources.close
+import com.emanuel5014.trainable.sharedui.resources.load_apply_all
+import com.emanuel5014.trainable.sharedui.resources.load_apply_all_desc
+import com.emanuel5014.trainable.sharedui.resources.load_apply_block
+import com.emanuel5014.trainable.sharedui.resources.load_apply_block_desc
+import com.emanuel5014.trainable.sharedui.resources.load_apply_to
+import com.emanuel5014.trainable.sharedui.resources.load_done_stay
+import com.emanuel5014.trainable.sharedui.resources.load_new_percent
+import com.emanuel5014.trainable.sharedui.resources.load_one_rep_max_missing
+import com.emanuel5014.trainable.sharedui.resources.load_preview_line
+import com.emanuel5014.trainable.sharedui.resources.load_save_where
+import com.emanuel5014.trainable.sharedui.resources.load_sheet_subtitle
+import com.emanuel5014.trainable.sharedui.resources.load_sheet_title
+import com.emanuel5014.trainable.sharedui.resources.load_weight_result
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_value
+import com.emanuel5014.trainable.sharedui.resources.program_edit_after
+import com.emanuel5014.trainable.sharedui.resources.program_edit_block_added
+import com.emanuel5014.trainable.sharedui.resources.program_edit_block_removed
+import com.emanuel5014.trainable.sharedui.resources.program_edit_full_program
+import com.emanuel5014.trainable.sharedui.resources.program_edit_history_title
+import com.emanuel5014.trainable.sharedui.resources.program_edit_kind_load
+import com.emanuel5014.trainable.sharedui.resources.program_edit_kind_program
+import com.emanuel5014.trainable.sharedui.resources.program_edit_pill_plan
+import com.emanuel5014.trainable.sharedui.resources.program_edit_pill_workout
+import com.emanuel5014.trainable.sharedui.resources.program_edit_plan_updated
+import com.emanuel5014.trainable.sharedui.resources.program_edit_plan_week
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_message
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_plan
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_plan_all
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_plan_week
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_title
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_workout
+import com.emanuel5014.trainable.sharedui.resources.program_edit_scope_workout_desc
+import com.emanuel5014.trainable.sharedui.resources.scope_short_plan
+import com.emanuel5014.trainable.sharedui.resources.scope_short_workout
+import com.emanuel5014.trainable.ui.util.fillPlaceholders
+import com.emanuel5014.trainable.ui.util.formatShortTime
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,11 +75,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.domain.prescription.BlockChange
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
@@ -59,15 +97,13 @@ import com.emanuel5014.trainable.ui.theme.Spacing
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
-import java.text.DateFormat
-import java.util.Date
 
 /** The pill an exercise wears once its prescription was changed during the workout. */
 @Composable
 fun ProgramEditPill(edit: SessionPrescriptionEditEntity, modifier: Modifier = Modifier) {
     val updatedPlan = edit.editScope == ProgramEditScope.PLAN
     PrescriptionPill(
-        text = stringResource(if (updatedPlan) R.string.program_edit_pill_plan else R.string.program_edit_pill_workout),
+        text = stringResource(if (updatedPlan) Res.string.program_edit_pill_plan else Res.string.program_edit_pill_workout),
         modifier = modifier,
         containerColor = Tertiary.copy(alpha = 0.15f),
         contentColor = Tertiary
@@ -80,7 +116,7 @@ fun LoadPercentChip(percentText: String, onClick: () -> Unit, modifier: Modifier
     HubChip(onClick = onClick, containerColor = Primary.copy(alpha = 0.12f), modifier = modifier) {
         Icon(Icons.Rounded.Tune, contentDescription = null, tint = Primary, modifier = Modifier.size(18.dp))
         Text(
-            text = stringResource(R.string.change_percent_button, percentText),
+            text = stringResource(Res.string.change_percent_button, percentText),
             style = MaterialTheme.typography.labelLarge,
             color = Primary,
             fontWeight = FontWeight.ExtraBold,
@@ -102,7 +138,7 @@ fun ProgramEditScopeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.program_edit_scope_title), fontWeight = FontWeight.ExtraBold) },
+        title = { Text(stringResource(Res.string.program_edit_scope_title), fontWeight = FontWeight.ExtraBold) },
         text = {
             // Scrolls when a small screen or large text leaves less room than the two options need
             Column(
@@ -110,20 +146,20 @@ fun ProgramEditScopeDialog(
                 verticalArrangement = Arrangement.spacedBy(Spacing.small)
             ) {
                 Text(
-                    text = stringResource(R.string.program_edit_scope_message, exerciseName),
+                    text = stringResource(Res.string.program_edit_scope_message, exerciseName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = OnSurfaceVariant
                 )
                 ScopeOption(
-                    title = stringResource(R.string.program_edit_scope_plan),
-                    description = if (week != null) stringResource(R.string.program_edit_scope_plan_week, week)
-                    else stringResource(R.string.program_edit_scope_plan_all),
+                    title = stringResource(Res.string.program_edit_scope_plan),
+                    description = if (week != null) stringResource(Res.string.program_edit_scope_plan_week, week)
+                    else stringResource(Res.string.program_edit_scope_plan_all),
                     highlighted = true,
                     onClick = { onChoose(ProgramEditScope.PLAN) }
                 )
                 ScopeOption(
-                    title = stringResource(R.string.program_edit_scope_workout),
-                    description = stringResource(R.string.program_edit_scope_workout_desc),
+                    title = stringResource(Res.string.program_edit_scope_workout),
+                    description = stringResource(Res.string.program_edit_scope_workout_desc),
                     highlighted = false,
                     onClick = { onChoose(ProgramEditScope.WORKOUT) }
                 )
@@ -132,7 +168,7 @@ fun ProgramEditScopeDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold, color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold, color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainerHigh,
@@ -159,26 +195,6 @@ private fun ScopeOption(title: String, description: String, highlighted: Boolean
                 color = if (highlighted) Primary else OnSurface
             )
             Text(text = description, style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
-        }
-    }
-}
-
-/** What a set of blocks says as one line, in the user's units and language ("70% 1×6 · 75% 4×5 Pause 2″"). */
-fun programSummary(context: android.content.Context, weightUnit: String, blocks: List<PrescriptionBlock>): String =
-    if (blocks.isEmpty()) "-" else PrescriptionFormatter.summary(blocks, prescriptionLabels(context, weightUnit))
-
-/**
- * What an edit changed, one line per block: "Block 2: 75% 3×3 Pause 1″ → 72.5% 3×3 Pause 1″", or the block that was
- * added or taken out. Empty when only something the blocks do not show (a note, a rest) changed.
- */
-fun programChangeLines(context: android.content.Context, weightUnit: String, before: List<PrescriptionBlock>, after: List<PrescriptionBlock>): List<String> {
-    val labels = prescriptionLabels(context, weightUnit)
-    fun text(block: PrescriptionBlock) = PrescriptionFormatter.summary(listOf(block), labels)
-    return ProgramDiff.changes(before, after).map { change ->
-        when (change.kind) {
-            BlockChange.Kind.CHANGED -> context.getString(R.string.load_preview_line, change.blockNumber, text(change.before!!), text(change.after!!))
-            BlockChange.Kind.ADDED -> context.getString(R.string.program_edit_block_added, change.blockNumber, text(change.after!!))
-            BlockChange.Kind.REMOVED -> context.getString(R.string.program_edit_block_removed, change.blockNumber, text(change.before!!))
         }
     }
 }
@@ -227,7 +243,7 @@ fun LoadPercentSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                     Text(
-                        text = stringResource(R.string.load_sheet_title).uppercase(),
+                        text = stringResource(Res.string.load_sheet_title).uppercase(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -241,7 +257,7 @@ fun LoadPercentSheet(
                         fontWeight = FontWeight.Black
                     )
                     Text(
-                        text = stringResource(R.string.load_sheet_subtitle),
+                        text = stringResource(Res.string.load_sheet_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -253,7 +269,7 @@ fun LoadPercentSheet(
                         value = target,
                         step = LoadShift.STEP_PERCENT,
                         range = LoadShift.MIN_PERCENT..LoadShift.MAX_PERCENT,
-                        label = stringResource(R.string.load_new_percent),
+                        label = stringResource(Res.string.load_new_percent),
                         suffix = "%",
                         onValueChange = { target = it },
                         onTick = {
@@ -263,11 +279,11 @@ fun LoadPercentSheet(
                     Text(
                         text = if (oneRepMaxKg != null && oneRepMaxKg > 0f) {
                             stringResource(
-                                R.string.load_weight_result,
+                                Res.string.load_weight_result,
                                 labels.weight(LoadCalculator.weightForPercent(oneRepMaxKg, LoadShift.clamp(target), weightUnit, roundingIncrement)),
-                                stringResource(R.string.one_rep_max_value, labels.weight(oneRepMaxKg))
+                                stringResource(Res.string.one_rep_max_value, labels.weight(oneRepMaxKg))
                             )
-                        } else stringResource(R.string.load_one_rep_max_missing),
+                        } else stringResource(Res.string.load_one_rep_max_missing),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = if (oneRepMaxKg != null && oneRepMaxKg > 0f) Primary else Error,
@@ -300,18 +316,18 @@ fun LoadPercentSheet(
 
                 if (blocksToDo.size > 1) {
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                        SectionTitle(stringResource(R.string.load_apply_to))
+                        SectionTitle(stringResource(Res.string.load_apply_to))
                         ChoiceRow(
                             selected = !shiftAll,
-                            title = stringResource(R.string.load_apply_block),
-                            description = stringResource(R.string.load_apply_block_desc, focusBlock + 1, setsToDoByBlock[focusBlock] ?: 0),
+                            title = stringResource(Res.string.load_apply_block),
+                            description = stringResource(Res.string.load_apply_block_desc, focusBlock + 1, setsToDoByBlock[focusBlock] ?: 0),
                             onClick = { shiftAll = false }
                         )
                         ChoiceRow(
                             selected = shiftAll,
-                            title = stringResource(R.string.load_apply_all),
+                            title = stringResource(Res.string.load_apply_all),
                             description = stringResource(
-                                R.string.load_apply_all_desc,
+                                Res.string.load_apply_all_desc,
                                 (if (delta >= 0) "+" else "−") + PrescriptionFormatter.number(kotlin.math.abs(delta))
                             ),
                             onClick = { shiftAll = true }
@@ -332,7 +348,7 @@ fun LoadPercentSheet(
                                 }.orEmpty()
                                 Text(
                                     text = stringResource(
-                                        R.string.load_preview_line, index + 1,
+                                        Res.string.load_preview_line, index + 1,
                                         PrescriptionFormatter.number(from) + "%", PrescriptionFormatter.number(to) + "%"
                                     ) + weights,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -341,7 +357,7 @@ fun LoadPercentSheet(
                                 )
                             }
                             Text(
-                                text = stringResource(R.string.load_done_stay),
+                                text = stringResource(Res.string.load_done_stay),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = OnSurfaceVariant
                             )
@@ -351,18 +367,18 @@ fun LoadPercentSheet(
 
                 if (canUpdatePlan) {
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-                        SectionTitle(stringResource(R.string.load_save_where))
+                        SectionTitle(stringResource(Res.string.load_save_where))
                         ConnectedToggleRow(
-                            options = listOf(stringResource(R.string.scope_short_workout), stringResource(R.string.scope_short_plan)),
+                            options = listOf(stringResource(Res.string.scope_short_workout), stringResource(Res.string.scope_short_plan)),
                             selectedIndex = if (toPlan) 1 else 0,
                             onSelect = { toPlan = it == 1 },
                             stackWhenTextIsLarge = true
                         )
                         Text(
                             text = if (toPlan) {
-                                if (programWeek != null) stringResource(R.string.program_edit_scope_plan_week, programWeek)
-                                else stringResource(R.string.program_edit_scope_plan_all)
-                            } else stringResource(R.string.program_edit_scope_workout_desc),
+                                if (programWeek != null) stringResource(Res.string.program_edit_scope_plan_week, programWeek)
+                                else stringResource(Res.string.program_edit_scope_plan_all)
+                            } else stringResource(Res.string.program_edit_scope_workout_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
@@ -377,7 +393,7 @@ fun LoadPercentSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -386,7 +402,7 @@ fun LoadPercentSheet(
                         enabled = delta != 0f,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(R.string.apply).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.apply).uppercase(), fontWeight = FontWeight.Black)
                     }
                 }
             }
@@ -442,13 +458,25 @@ fun ProgramEditHistoryDialog(
     weightUnit: String,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
-    val time = remember { DateFormat.getTimeInstance(DateFormat.SHORT) }
+    val labels = rememberPrescriptionLabels(weightUnit)
+    val changedLine = stringResource(Res.string.load_preview_line)
+    val addedLine = stringResource(Res.string.program_edit_block_added)
+    val removedLine = stringResource(Res.string.program_edit_block_removed)
+    fun summary(blocks: List<PrescriptionBlock>) = if (blocks.isEmpty()) "-" else PrescriptionFormatter.summary(blocks, labels)
+    fun text(block: PrescriptionBlock) = PrescriptionFormatter.summary(listOf(block), labels)
+    // As programChangeLines in the app (also used by the report and the web page), from the shared strings
+    fun changeLines(before: List<PrescriptionBlock>, after: List<PrescriptionBlock>) = ProgramDiff.changes(before, after).map { change ->
+        when (change.kind) {
+            BlockChange.Kind.CHANGED -> fillPlaceholders(changedLine, change.blockNumber, text(change.before!!), text(change.after!!))
+            BlockChange.Kind.ADDED -> fillPlaceholders(addedLine, change.blockNumber, text(change.after!!))
+            BlockChange.Kind.REMOVED -> fillPlaceholders(removedLine, change.blockNumber, text(change.before!!))
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text(stringResource(R.string.program_edit_history_title), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.program_edit_history_title), fontWeight = FontWeight.ExtraBold)
                 Text(exerciseName, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
             }
         },
@@ -463,35 +491,35 @@ fun ProgramEditHistoryDialog(
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                                 PrescriptionPill(
                                     text = stringResource(
-                                        if (edit.editKind == ProgramEditKind.LOAD) R.string.program_edit_kind_load else R.string.program_edit_kind_program
+                                        if (edit.editKind == ProgramEditKind.LOAD) Res.string.program_edit_kind_load else Res.string.program_edit_kind_program
                                     ),
                                     containerColor = Primary.copy(alpha = 0.12f),
                                     contentColor = Primary
                                 )
                                 PrescriptionPill(
                                     text = if (edit.editScope == ProgramEditScope.PLAN) {
-                                        edit.programWeek?.let { stringResource(R.string.program_edit_plan_week, it) }
-                                            ?: stringResource(R.string.program_edit_plan_updated)
-                                    } else stringResource(R.string.program_edit_scope_workout),
+                                        edit.programWeek?.let { stringResource(Res.string.program_edit_plan_week, it) }
+                                            ?: stringResource(Res.string.program_edit_plan_updated)
+                                    } else stringResource(Res.string.program_edit_scope_workout),
                                     containerColor = Tertiary.copy(alpha = 0.15f),
                                     contentColor = Tertiary
                                 )
                             }
                             Text(
-                                text = time.format(Date(edit.createdAt)),
+                                text = formatShortTime(edit.createdAt),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = OnSurfaceVariant
                             )
-                            val lines = programChangeLines(context, weightUnit, edit.before, edit.after)
+                            val lines = changeLines(edit.before, edit.after)
                             if (lines.isEmpty()) {
-                                EditLine(stringResource(R.string.program_edit_after), programSummary(context, weightUnit, edit.after))
+                                EditLine(stringResource(Res.string.program_edit_after), summary(edit.after))
                             } else {
                                 lines.forEach { line ->
                                     Text(line, style = MaterialTheme.typography.bodyMedium, color = OnSurface, fontWeight = FontWeight.Bold)
                                 }
                                 // The whole program is worth showing once its shape changed, not for a moved percentage
                                 if (edit.before.size != edit.after.size) {
-                                    EditLine(stringResource(R.string.program_edit_full_program), programSummary(context, weightUnit, edit.after))
+                                    EditLine(stringResource(Res.string.program_edit_full_program), summary(edit.after))
                                 }
                             }
                         }
@@ -501,7 +529,7 @@ fun ProgramEditHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                Text(stringResource(Res.string.close).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
             }
         },
         containerColor = SurfaceContainerHigh,

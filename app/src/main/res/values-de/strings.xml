@@ -275,7 +275,6 @@
     <string name="quick_workout">SCHNELLES TRAINING</string>
     <string name="rename_workout">Training umbenennen</string>
     <string name="no_exercises_in_session">Keine Übungen in dieser Sitzung aufgezeichnet.</string>
-    <string name="no_exercises_in_session_detail">Keine Übungen in dieser Sitzung aufgezeichnet.</string>
     <string name="add_cardio">Cardio hinzufügen</string>
     <string name="add_workout">Training hinzufügen</string>
     <string name="custom_workout">Benutzerdefiniertes Training</string>
@@ -283,15 +282,10 @@
     <string name="total_workouts">Trainings gesamt</string>
 
     <!-- History -->
-    <string name="history_title">VERLAUF</string>
     <string name="no_history">Kein Trainingsverlauf</string>
-    <string name="no_history_yet">Noch kein Verlauf</string>
     <string name="no_history_description">Deine abgeschlossenen Trainingseinheiten erscheinen hier.</string>
-    <string name="no_history_description_screen">Schließe dein erstes Training ab, um es hier zu sehen.</string>
     <string name="delete_session">Sitzung löschen?</string>
     <string name="delete_session_message">Dies löscht dauerhaft diese Trainingssitzung.</string>
-    <string name="edit_session">Sitzung bearbeiten?</string>
-    <string name="edit_session_message">Bearbeite diese Trainingssitzung, um Übungen, Sätze und Gewichte zu ändern.</string>
     <string name="session_details">Sitzungsdetails</string>
     <string name="total_volume">Gesamtvolumen</string>
     <string name="edit_date">Datum bearbeiten</string>
@@ -588,11 +582,7 @@
     <string name="onboarding_backup_title">Schütze\ndeine Daten.</string>
 
     <!-- Filters & Search -->
-    <string name="clear_filters">Filter löschen</string>
-    <string name="apply_filters">Filter anwenden</string>
     <string name="no_results_filters">Keine Ergebnisse mit diesen Filtern</string>
-    <string name="try_adjust_filters">Versuche, deine Auswahl anzupassen oder alle Filter zu löschen.</string>
-    <string name="routine_archived_badge">Archiviert</string>
     <string name="no_routine">Ohne Routine</string>
 
     <!-- Sharing -->
@@ -881,42 +871,22 @@
     <string name="time_and_reps_badge">ZEIT &amp; WDH.</string>
     <string name="time_reps_value">%1$ds · %2$d Wdh.</string>
     <string name="reps_done_label">Geschaffte Wdh.</string>
-    <string name="reps_decrease">Eine Wdh. weniger</string>
-    <string name="reps_increase">Eine Wdh. mehr</string>
     <string name="cardio_add_set">Satz hinzufügen</string>
     <string name="cardio_set_note">Satznotiz</string>
     <string name="cardio_remove_set">Satz löschen</string>
     <string name="cardio_sets_total">%1$d Sätze</string>
     <string name="seconds_label">Sekunden</string>
-    <string name="mini_set_offer">Satz beenden · noch %1$d Wdh.</string>
-    <string name="mini_set_offer_free">Minisatz hinzufügen</string>
-    <string name="mini_set_pause">Minisatz-Pause · Satz %1$d</string>
-    <string name="mini_set_title">Minisatz · Satz %1$d</string>
-    <string name="mini_set_so_far">Bisher %1$s</string>
-    <string name="mini_set_log">MINISATZ SPEICHERN</string>
-    <string name="mini_set_end">SATZ BEENDEN</string>
     <string name="mini_set_add">Minisatz hinzufügen</string>
     <string name="mini_set_notification">Minisatz</string>
     <string name="assisted_reps_label">Mit Hilfe</string>
     <string name="partial_reps_label">Teilwdh.</string>
     <string name="performed_technique_badge">Ausgeführt: %1$s</string>
     <string name="performed_technique_title">Ausgeführte Technik</string>
-    <string name="performed_technique_hint">Ändere, was du nicht wie geplant geschafft hast: die Vorgabe bleibt.</string>
-    <string name="performed_apply_following">Auch die nächsten Sätze dieses Blocks</string>
-    <string name="performed_restore">Wie vorgegeben</string>
-    <string name="technique_not_done">Nicht ausgeführt</string>
     <string name="performed_technique_none">Ohne Technik</string>
-    <string name="technique_edit">Technik</string>
-    <string name="mini_set_parts_label">Minisätze (z. B. 2+1+1)</string>
-    <string name="set_extras_more">Mit Hilfe, Teilwdh.</string>
-    <string name="set_extras_more_technique">Mit Hilfe, Teilwdh., Technik</string>
-    <string name="parts_error">Ganze Zahlen mit + getrennt, z. B. 2+1+1</string>
     <plurals name="parts_pause_badge">
         <item quantity="one">%1$s · Pause %2$s</item>
         <item quantity="other">%1$s · Pausen %2$s</item>
     </plurals>
-    <string name="pause_field_label">Pause %1$d (s)</string>
-    <string name="pause_field_hint">%1$d → %2$d Wdh.</string>
     <plurals name="assisted_reps_badge">
         <item quantity="one">+%d mit Hilfe</item>
         <item quantity="other">+%d mit Hilfe</item>
@@ -1183,42 +1153,12 @@
     <!-- Changing the program during a workout -->
     <string name="edit_program">Programm bearbeiten</string>
     <string name="program_edit_subtitle">Ändere, was dieses Training verlangt. Bereits gemachte Sätze bleiben, wie sie sind.</string>
-    <string name="program_edit_scope_title">Wo soll die Änderung gespeichert werden?</string>
-    <string name="program_edit_scope_message">Du hast die Programmierung von %1$s geändert.</string>
-    <string name="program_edit_scope_plan">Routine aktualisieren</string>
-    <string name="program_edit_scope_plan_week">Ersetzt Woche %1$d der Routine: die nächsten Trainings folgen ihr.</string>
-    <string name="program_edit_scope_plan_all">Ersetzt die Vorgabe dieser Übung in der Routine: die nächsten Trainings folgen ihr.</string>
-    <string name="program_edit_scope_workout">Nur dieses Training</string>
-    <string name="program_edit_scope_workout_desc">Die Routine bleibt, wie sie ist. Die Änderung wird als Abweichung markiert und erscheint im Bericht.</string>
-    <string name="program_edit_pill_workout">Abweichung</string>
-    <string name="program_edit_pill_plan">Routine aktualisiert</string>
     <string name="load_sheet_title">Lastprozent</string>
-    <string name="load_sheet_subtitle">Erhöhe oder senke die Last der noch offenen Sätze.</string>
-    <string name="load_new_percent">Neuer Prozentsatz</string>
-    <string name="load_weight_result">= %1$s · %2$s</string>
-    <string name="load_one_rep_max_missing">Lege das 1RM fest, um das Gewicht zu sehen.</string>
-    <string name="load_apply_to">Anwenden auf</string>
-    <string name="load_apply_block">Dieser Block</string>
-    <string name="load_apply_block_desc">Block %1$d · %2$d offen</string>
-    <string name="load_apply_all">Alle offenen Sätze</string>
-    <string name="load_apply_all_desc">Verschiebt jeden offenen Block um %1$s Punkte</string>
     <string name="load_preview_line">Block %1$d: %2$s → %3$s</string>
-    <string name="load_done_stay">Bereits gemachte Sätze behalten ihre Last.</string>
-    <string name="load_save_where">Änderung speichern in</string>
-    <string name="scope_short_workout">Dieses Training</string>
-    <string name="scope_short_plan">Auch die Routine</string>
-    <string name="change_percent_button">Prozentsatz ändern · %1$s</string>
-    <string name="program_edit_history_title">Programmierung geändert</string>
     <string name="program_edit_before">Vorher</string>
-    <string name="program_edit_after">Nachher</string>
-    <string name="program_edit_kind_load">Last</string>
-    <string name="program_edit_kind_program">Programm</string>
-    <string name="program_edit_plan_week">Routine aktualisiert (Woche %1$d)</string>
-    <string name="program_edit_plan_updated">Routine aktualisiert</string>
     <string name="program_edit_original">Ursprüngliche Programmierung</string>
     <string name="program_edit_block_added">+ Block %1$d: %2$s</string>
     <string name="program_edit_block_removed">− Block %1$d: %2$s</string>
-    <string name="program_edit_full_program">Programm jetzt</string>
 
     <!-- Import workout history from a CSV file -->
     <string name="import_csv">CSV IMPORTIEREN</string>

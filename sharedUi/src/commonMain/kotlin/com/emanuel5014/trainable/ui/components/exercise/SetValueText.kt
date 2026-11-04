@@ -1,9 +1,11 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
+import com.emanuel5014.trainable.sharedui.resources.time_reps_value
 import com.emanuel5014.trainable.data.local.entity.CardioLogEntity
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import com.emanuel5014.trainable.R
+import org.jetbrains.compose.resources.stringResource
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.kind
@@ -22,7 +24,7 @@ fun setValueText(
     weightUnit: String,
     repsText: String? = null
 ): String {
-    if (kind == SetLogKind.TIME_AND_REPS) return stringResource(R.string.time_reps_value, seconds ?: 0, reps)
+    if (kind == SetLogKind.TIME_AND_REPS) return stringResource(Res.string.time_reps_value, seconds ?: 0, reps)
     val load = WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(weightKg, weightUnit), weightUnit)
     val value = if (seconds != null) "${seconds}s" else repsText ?: "$reps"
     return "$load × $value"
@@ -37,8 +39,9 @@ fun cardioSetValueText(set: CardioLogEntity): String {
     val h = set.durataSecondi / 3600
     val m = (set.durataSecondi % 3600) / 60
     val s = set.durataSecondi % 60
-    val time = if (h > 0) String.format("%d:%02d:%02d", h, m, s) else String.format("%02d:%02d", m, s)
-    return if (set.distanza > 0f) time + " · " + stringResource(R.string.cardio_dist_value, cardioKmText(set.distanza)) else time
+    fun twoDigits(value: Int) = value.toString().padStart(2, '0')
+    val time = if (h > 0) "$h:${twoDigits(m)}:${twoDigits(s)}" else "${twoDigits(m)}:${twoDigits(s)}"
+    return if (set.distanza > 0f) time + " · " + stringResource(Res.string.cardio_dist_value, cardioKmText(set.distanza)) else time
 }
 
 @Composable

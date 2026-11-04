@@ -1,5 +1,28 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.assisted_reps_label
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.mini_set_end
+import com.emanuel5014.trainable.sharedui.resources.mini_set_log
+import com.emanuel5014.trainable.sharedui.resources.mini_set_offer
+import com.emanuel5014.trainable.sharedui.resources.mini_set_offer_free
+import com.emanuel5014.trainable.sharedui.resources.mini_set_pause
+import com.emanuel5014.trainable.sharedui.resources.mini_set_so_far
+import com.emanuel5014.trainable.sharedui.resources.mini_set_title
+import com.emanuel5014.trainable.sharedui.resources.partial_reps_label
+import com.emanuel5014.trainable.sharedui.resources.performed_apply_following
+import com.emanuel5014.trainable.sharedui.resources.performed_restore
+import com.emanuel5014.trainable.sharedui.resources.performed_technique_hint
+import com.emanuel5014.trainable.sharedui.resources.performed_technique_title
+import com.emanuel5014.trainable.sharedui.resources.reps_decrease
+import com.emanuel5014.trainable.sharedui.resources.reps_increase
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.sharedui.resources.seconds_label
+import com.emanuel5014.trainable.sharedui.resources.set_extras_more
+import com.emanuel5014.trainable.sharedui.resources.set_extras_more_technique
+import com.emanuel5014.trainable.sharedui.resources.technique_edit
+import com.emanuel5014.trainable.sharedui.resources.technique_not_done
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
@@ -47,16 +70,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.Technique
 import com.emanuel5014.trainable.ui.components.GymButton
-import com.emanuel5014.trainable.ui.components.techniqueLabel
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -70,11 +91,11 @@ import com.emanuel5014.trainable.ui.theme.Tertiary
  * pause of a mini-set. Left alone, the rest simply goes on.
  */
 @Composable
-internal fun MiniSetOfferButton(missing: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun MiniSetOfferButton(missing: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     HubChip(onClick = onClick, containerColor = Tertiary.copy(alpha = 0.15f), modifier = modifier) {
         Icon(Icons.Rounded.Replay, contentDescription = null, tint = Tertiary, modifier = Modifier.size(18.dp))
         Text(
-            text = if (missing > 0) stringResource(R.string.mini_set_offer, missing) else stringResource(R.string.mini_set_offer_free),
+            text = if (missing > 0) stringResource(Res.string.mini_set_offer, missing) else stringResource(Res.string.mini_set_offer_free),
             color = Tertiary,
             fontWeight = FontWeight.ExtraBold,
             style = MaterialTheme.typography.labelLarge
@@ -84,9 +105,9 @@ internal fun MiniSetOfferButton(missing: Int, onClick: () -> Unit, modifier: Mod
 
 /** What the rest card says while it is the pause of a mini-set. */
 @Composable
-internal fun MiniSetPauseLabel(setNumber: Int, modifier: Modifier = Modifier) {
+fun MiniSetPauseLabel(setNumber: Int, modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(R.string.mini_set_pause, setNumber).uppercase(),
+        text = stringResource(Res.string.mini_set_pause, setNumber).uppercase(),
         style = MaterialTheme.typography.labelMedium,
         color = Tertiary,
         fontWeight = FontWeight.ExtraBold,
@@ -99,7 +120,7 @@ internal fun MiniSetPauseLabel(setNumber: Int, modifier: Modifier = Modifier) {
  * set has so far, and the way out to the normal rest.
  */
 @Composable
-internal fun MiniSetEntry(
+fun MiniSetEntry(
     setNumber: Int,
     soFar: String,
     initialReps: Int,
@@ -110,20 +131,20 @@ internal fun MiniSetEntry(
     var reps by remember(setNumber, soFar) { mutableStateOf(initialReps.coerceAtLeast(1)) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = stringResource(R.string.mini_set_title, setNumber),
+            text = stringResource(Res.string.mini_set_title, setNumber),
             style = MaterialTheme.typography.labelLarge,
             color = Tertiary,
             fontWeight = FontWeight.ExtraBold
         )
-        Text(text = stringResource(R.string.mini_set_so_far, soFar), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
+        Text(text = stringResource(Res.string.mini_set_so_far, soFar), style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
         CountStepper(value = reps, onValueChange = { reps = it }, min = 1, max = 99, hapticEnabled = hapticEnabled, big = true)
         GymButton(onClick = { onLog(reps) }, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.mini_set_log), fontWeight = FontWeight.ExtraBold, maxLines = 1)
+            Text(stringResource(Res.string.mini_set_log), fontWeight = FontWeight.ExtraBold, maxLines = 1)
         }
         TextButton(onClick = onEnd) {
-            Text(stringResource(R.string.mini_set_end), fontWeight = FontWeight.ExtraBold, color = OnSurfaceVariant)
+            Text(stringResource(Res.string.mini_set_end), fontWeight = FontWeight.ExtraBold, color = OnSurfaceVariant)
         }
     }
 }
@@ -133,7 +154,7 @@ internal fun MiniSetEntry(
  * for assisted and partial reps. The value rolls when it changes.
  */
 @Composable
-internal fun CountStepper(
+fun CountStepper(
     value: Int,
     onValueChange: (Int) -> Unit,
     min: Int,
@@ -163,7 +184,7 @@ internal fun CountStepper(
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = SurfaceContainerHighest, contentColor = OnSurface),
                 modifier = Modifier.size(width = if (big) 56.dp else 44.dp, height = height)
             ) {
-                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.reps_decrease), modifier = Modifier.size(if (big) 24.dp else 18.dp))
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(Res.string.reps_decrease), modifier = Modifier.size(if (big) 24.dp else 18.dp))
             }
             Box(
                 modifier = Modifier
@@ -187,7 +208,7 @@ internal fun CountStepper(
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (big) Primary else SurfaceContainerHighest, contentColor = if (big) OnPrimary else OnSurface),
                 modifier = Modifier.size(width = if (big) 56.dp else 44.dp, height = height)
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.reps_increase), modifier = Modifier.size(if (big) 24.dp else 18.dp))
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(Res.string.reps_increase), modifier = Modifier.size(if (big) 24.dp else 18.dp))
             }
         }
     }
@@ -198,7 +219,7 @@ internal fun CountStepper(
  * technique, the way to say it was done another way.
  */
 @Composable
-internal fun SetExtrasRow(
+fun SetExtrasRow(
     assisted: Int,
     partial: Int,
     onAssistedChange: (Int) -> Unit,
@@ -215,7 +236,7 @@ internal fun SetExtrasRow(
             Icon(Icons.Rounded.Add, contentDescription = null, tint = OnSurfaceVariant, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = stringResource(if (onEditTechnique != null) R.string.set_extras_more_technique else R.string.set_extras_more),
+                text = stringResource(if (onEditTechnique != null) Res.string.set_extras_more_technique else Res.string.set_extras_more),
                 color = OnSurfaceVariant,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -224,15 +245,15 @@ internal fun SetExtrasRow(
     }
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            CountStepper(assisted, onAssistedChange, 0, 99, hapticEnabled, label = stringResource(R.string.assisted_reps_label))
-            CountStepper(partial, onPartialChange, 0, 99, hapticEnabled, label = stringResource(R.string.partial_reps_label))
+            CountStepper(assisted, onAssistedChange, 0, 99, hapticEnabled, label = stringResource(Res.string.assisted_reps_label))
+            CountStepper(partial, onPartialChange, 0, 99, hapticEnabled, label = stringResource(Res.string.partial_reps_label))
         }
         if (onEditTechnique != null) {
             TextButton(onClick = onEditTechnique, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Icon(Icons.Rounded.Tune, contentDescription = null, tint = if (techniqueChanged) Tertiary else OnSurfaceVariant, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = stringResource(R.string.performed_technique_title),
+                    text = stringResource(Res.string.performed_technique_title),
                     color = if (techniqueChanged) Tertiary else OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -247,7 +268,7 @@ internal fun SetExtrasRow(
  * Salita 3"). Saving what the prescription says goes back to it.
  */
 @Composable
-internal fun PerformedTechniqueDialog(
+fun PerformedTechniqueDialog(
     planned: List<Technique>,
     performed: List<Technique>?,
     onDismiss: () -> Unit,
@@ -255,7 +276,7 @@ internal fun PerformedTechniqueDialog(
     /** Off for a set of a past workout: there is no set still to do to carry it to. */
     showApplyToFollowing: Boolean = true
 ) {
-    val context = LocalContext.current
+    val prescriptionText = LocalPrescriptionText.current
     val start = performed ?: planned
     // One row per planned technique, with what was done instead (null: left out)
     val rows = remember {
@@ -268,13 +289,13 @@ internal fun PerformedTechniqueDialog(
     AlertDialog(
         modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.performed_technique_title)) },
+        title = { Text(stringResource(Res.string.performed_technique_title)) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(stringResource(R.string.performed_technique_hint), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
+                Text(stringResource(Res.string.performed_technique_hint), style = MaterialTheme.typography.bodySmall, color = OnSurfaceVariant)
                 planned.forEachIndexed { index, plannedTechnique ->
                     val done = rows[index]
                     Surface(shape = RoundedCornerShape(16.dp), color = SurfaceContainerHighest) {
@@ -286,7 +307,7 @@ internal fun PerformedTechniqueDialog(
                                     colors = CheckboxDefaults.colors(checkedColor = Primary)
                                 )
                                 Text(
-                                    text = techniqueLabel(context, plannedTechnique),
+                                    text = prescriptionText.technique(plannedTechnique),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = if (done != null) OnSurface else OnSurfaceVariant
@@ -299,12 +320,12 @@ internal fun PerformedTechniqueDialog(
                                     min = 1,
                                     max = 30,
                                     hapticEnabled = true,
-                                    label = stringResource(R.string.seconds_label)
+                                    label = stringResource(Res.string.seconds_label)
                                 )
                                 is Technique.Tempo -> OutlinedTextField(
                                     value = done.pattern,
                                     onValueChange = { text -> rows[index] = Technique.Tempo(text.filter { it.isDigit() || it == '-' || it == 'X' || it == 'x' }.take(11)) },
-                                    label = { Text(stringResource(R.string.technique_edit)) },
+                                    label = { Text(stringResource(Res.string.technique_edit)) },
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
                                     shape = RoundedCornerShape(12.dp),
@@ -313,7 +334,7 @@ internal fun PerformedTechniqueDialog(
                                 is Technique.Custom -> OutlinedTextField(
                                     value = done.text,
                                     onValueChange = { rows[index] = Technique.Custom(it.take(60)) },
-                                    label = { Text(stringResource(R.string.technique_edit)) },
+                                    label = { Text(stringResource(Res.string.technique_edit)) },
                                     singleLine = true,
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier.fillMaxWidth()
@@ -321,7 +342,7 @@ internal fun PerformedTechniqueDialog(
                                 else -> Unit
                             }
                             if (done == null) {
-                                Text(stringResource(R.string.technique_not_done), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
+                                Text(stringResource(Res.string.technique_not_done), style = MaterialTheme.typography.labelSmall, color = OnSurfaceVariant)
                             }
                         }
                     }
@@ -329,7 +350,7 @@ internal fun PerformedTechniqueDialog(
                 if (showApplyToFollowing) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = applyToFollowing, onCheckedChange = { applyToFollowing = it }, colors = CheckboxDefaults.colors(checkedColor = Primary))
-                        Text(stringResource(R.string.performed_apply_following), style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(Res.string.performed_apply_following), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -337,7 +358,7 @@ internal fun PerformedTechniqueDialog(
         confirmButton = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = { onSave(null, applyToFollowing) }) {
-                    Text(stringResource(R.string.performed_restore), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.performed_restore), color = OnSurfaceVariant)
                 }
                 TextButton(onClick = {
                     // Empty texts are not a technique: as if left out
@@ -350,12 +371,12 @@ internal fun PerformedTechniqueDialog(
                     }
                     onSave(done.takeIf { it != planned }, applyToFollowing)
                 }) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant) }
         },
         containerColor = SurfaceContainerHigh,
         titleContentColor = OnSurface,

@@ -2,6 +2,8 @@ package com.emanuel5014.trainable.data.repository
 
 import com.emanuel5014.trainable.domain.prescription.Technique
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSData
 import platform.Foundation.NSDataBase64DecodingIgnoreUnknownCharacters
@@ -64,4 +66,10 @@ class IosExerciseMediaFiles : ExerciseMediaFiles {
         if (fileName == null || fileName.contains('/')) return
         NSFileManager.defaultManager.removeItemAtPath(documentsFolder("exercise_media") + "/" + fileName, error = null)
     }
+}
+
+/** One write transaction of the iOS database, as Room's withTransaction is on Android. */
+class IosTransactionRunner(private val database: com.emanuel5014.trainable.data.local.GymDatabase) : TransactionRunner {
+    override suspend fun <R> run(block: suspend () -> R): R =
+        database.useWriterConnection { transactor -> transactor.immediateTransaction { block() } }
 }

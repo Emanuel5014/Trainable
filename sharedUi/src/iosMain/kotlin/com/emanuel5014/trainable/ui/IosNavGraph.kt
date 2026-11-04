@@ -49,6 +49,11 @@ import com.emanuel5014.trainable.ui.components.localizedNavItems
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
 import com.emanuel5014.trainable.ui.navigation.Report
+import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
+import com.emanuel5014.trainable.ui.navigation.CompareSessions
+import com.emanuel5014.trainable.ui.screens.history.HistoryContent
+import com.emanuel5014.trainable.ui.screens.history.HistoryState
+import com.emanuel5014.trainable.ui.screens.history.NoHistoryShare
 import com.emanuel5014.trainable.ui.navigation.RoutineDetail
 import com.emanuel5014.trainable.ui.navigation.Settings
 import com.emanuel5014.trainable.ui.navigation.WorkoutExecution
@@ -70,6 +75,7 @@ internal fun IosNavGraph(
     dashboard: DashboardState,
     dashboardUi: DashboardUiState,
     routines: RoutinesState,
+    history: HistoryState,
     navBarStyle: NavBarStyle,
     isDark: Boolean
 ) {
@@ -89,7 +95,7 @@ internal fun IosNavGraph(
             popExitTransition = { fadeOut() + slideOutHorizontally { it } }
         ) {
             composable<MainTabs> {
-                IosMainTabs(navController, pagerState, dashboard, dashboardUi, routines)
+                IosMainTabs(navController, pagerState, dashboard, dashboardUi, routines, history)
             }
             composable<Settings> { NotOnIosYet("Settings", onBack = { navController.popBackStack() }) }
             composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
@@ -109,6 +115,8 @@ internal fun IosNavGraph(
                 )
             }
             composable<Report> { NotOnIosYet("Report", onBack = { navController.popBackStack() }) }
+            composable<EditWorkoutSession> { NotOnIosYet("Edit workout", onBack = { navController.popBackStack() }) }
+            composable<CompareSessions> { NotOnIosYet("Compare", onBack = { navController.popBackStack() }) }
         }
 
         AnimatedVisibility(
@@ -126,14 +134,15 @@ internal fun IosNavGraph(
     }
 }
 
-/** The four tabs, as MainPagerScreen on Android; Dashboard and Routines are shared so far. */
+/** The four tabs, as MainPagerScreen on Android; Dashboard, Routines and History are shared so far. */
 @Composable
 private fun IosMainTabs(
     navController: NavHostController,
     pagerState: PagerState,
     dashboard: DashboardState,
     dashboardUi: DashboardUiState,
-    routines: RoutinesState
+    routines: RoutinesState,
+    history: HistoryState
 ) {
     val titles = localizedNavItems().map { it.title }
     HorizontalPager(
@@ -165,6 +174,15 @@ private fun IosMainTabs(
                 isVisible = pagerState.currentPage == 1,
                 onNavigateToDetail = { planId -> navController.navigate(RoutineDetail(planId)) },
                 onGenerateReport = { planIds -> navController.navigate(Report(planIds.joinToString(","))) }
+            )
+            2 -> HistoryContent(
+                state = history,
+                languageCode = Locale.current.language,
+                // Sharing a workout as an image is not on iOS yet
+                share = NoHistoryShare,
+                onEditSession = { sessionId -> navController.navigate(EditWorkoutSession(sessionId)) },
+                onCompareSessions = { first, second -> navController.navigate(CompareSessions(first, second)) },
+                isVisible = pagerState.currentPage == 2
             )
             else -> NotOnIosYet(titles[page], onBack = null)
         }
