@@ -26,6 +26,7 @@ import com.emanuel5014.trainable.data.local.entity.SessionPrescriptionEditEntity
 import com.emanuel5014.trainable.data.local.entity.forExercise
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
+import com.emanuel5014.trainable.data.local.entity.isSystemPlan
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanImageEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.CardioSetWithSession
@@ -37,6 +38,8 @@ import com.emanuel5014.trainable.data.local.relation.SessionWithSets
 import com.emanuel5014.trainable.data.remote.dto.PlanExerciseExportDto
 import com.emanuel5014.trainable.data.remote.dto.TrainablePlanParser
 import com.emanuel5014.trainable.domain.csvimport.HistoryCsvHeaders
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvRow
+import com.emanuel5014.trainable.domain.csvimport.HistoryCsvRowOrder
 import com.emanuel5014.trainable.domain.csvimport.JournalCsv
 import com.emanuel5014.trainable.domain.csvimport.SessionDuration
 import com.emanuel5014.trainable.domain.csvimport.SupersetCsv
@@ -48,6 +51,7 @@ import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
 import com.emanuel5014.trainable.domain.prescription.RepRange
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
+import com.emanuel5014.trainable.domain.prescription.RoutineHistory
 import com.emanuel5014.trainable.domain.prescription.StartingWeight
 import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
@@ -654,7 +658,7 @@ class WorkoutRepository @Inject constructor(
         val planDetails = workoutDao.getPlanWithDetails(planId).first() ?: return -1
         
         // Find last session for this plan to autocomplete values
-        val lastSession = workoutDao.getLastFinishedSessionForPlan(planId).first()
+        val lastSession = workoutDao.getLastFinishedSessionForPlan(planId, historySince(planId)).first()
         val lastSessionSets = lastSession?.let { workoutDao.getSessionWithSets(it.id).first()?.sets }
         
         val advanced = userPreferencesRepository.advancedProgrammingEnabled.first()
@@ -720,6 +724,8 @@ class WorkoutRepository @Inject constructor(
             } else emptyList()
             // Timed exercises keep their kind: the hold or interval of the routine (a hold copies last time's)
             val kind = SetLogKind.ofExerciseType(planEx.exerciseType)
+            // The routine's reps win over last time's, unless the reps are what progresses (see LegacyReps.startingReps)
+            val repsProgress = kind != SetLogKind.STRENGTH || planEx.repsRange != null
             val planSeconds = planEx.durataTargetSecondi ?: 45
             for (i in 1..numSets) {
                 val prevSet = prevSets?.getOrNull(i - 1)
@@ -733,7 +739,11 @@ class WorkoutRepository @Inject constructor(
                         sessionId = sessionId.toInt(),
                         exerciseId = exerciseId,
                         pesoSollevato = if (kind == SetLogKind.TIME_AND_REPS) 0f else prevSet?.pesoSollevato ?: startWeight,
-                        repsEffettive = if (kind == SetLogKind.TIME_AND_WEIGHT) 0 else prevSet?.repsEffettive ?: plannedReps.getOrNull(i - 1) ?: 10,
+                        repsEffettive = when {
+                            kind == SetLogKind.TIME_AND_WEIGHT -> 0
+                            repsProgress -> prevSet?.repsEffettive ?: plannedReps.getOrNull(i - 1) ?: 10
+                            else -> plannedReps.getOrNull(i - 1) ?: prevSet?.repsEffettive ?: 10
+                        },
                         numeroSerie = i,
                         ordineEsercizio = planEx.ordine,
                         supersetId = planEx.supersetId,
@@ -777,8 +787,12 @@ class WorkoutRepository @Inject constructor(
         return StartingWeight.resolve(enabled = true, presetKg = preset, lastUsedKg = lastUsed)
     }
 
-    fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): Flow<List<SetLogEntity>> = 
-        workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
+    /** The sets of the exercise in the routine's last finished workout since its start date (see [RoutineHistory]). */
+    suspend fun getLastSessionSetsForExercise(planId: Int, exerciseId: Int, limitSets: Int): List<SetLogEntity> =
+        workoutDao.getLastSessionSetsForExercise(planId, exerciseId, limitSets, historySince(planId)).first()
+
+    private suspend fun historySince(planId: Int): Long =
+        workoutDao.getPlanOnce(planId)?.let { RoutineHistory.since(it.dataInizio, it.isSystemPlan) } ?: 0L
 
     suspend fun deleteSession(sessionId: Int) {
         workoutDao.deleteSession(sessionId)
@@ -863,7 +877,10 @@ class WorkoutRepository @Inject constructor(
             // The number of each superset of this workout, repeated on the rows of its exercises
             val supersetNumbers = SupersetCsv.numbering(session.sets.map { it.setLog })
 
-            session.sets.forEach { setWithExercise ->
+            // In the order the history shows the workout, not the order its rows were saved in
+            HistoryCsvRowOrder.of(session.sets, session.cardio).forEach { row -> when (row) {
+            is HistoryCsvRow.Strength -> {
+                val setWithExercise = row.set
                 val setLog = setWithExercise.setLog
                 val exercise = setWithExercise.exercise
                 // Whether the prescription of the exercise was changed in this workout (and whether the routine was updated
@@ -914,7 +931,8 @@ class WorkoutRepository @Inject constructor(
                 sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$category,$type,${setLog.numeroSerie},$weight,$reps,$duration,,$note$prescriptionColumns$performanceColumns$programEditColumns,$sessionMinutes$journalCells$supersetCell")
             }
 
-            session.cardio.forEach { cardio ->
+            is HistoryCsvRow.Cardio -> {
+                val cardio = row.log
                 val exerciseName = escapeCsv(ExerciseTranslations.translate(cardio.categoria, languageCode))
                 val cardioCategory = escapeCsv(ExerciseTranslations.translateCategory("Cardio", languageCode))
                 val week = session.session.programWeek?.toString() ?: ""
@@ -927,6 +945,7 @@ class WorkoutRepository @Inject constructor(
                 val note = escapeCsv(cardio.note ?: "")
                 sb.appendLine("$date,${session.session.id},$planName,$exerciseName,$cardioCategory,cardio,${cardio.numeroSerie},,,${cardio.durataSecondi},${cardio.distanza},$note$prescriptionColumns,,,0,0,,,,$sessionMinutes$journalCells${if (supersetColumn) "," else ""}")
             }
+            } }
         }
 
         return sb.toString()

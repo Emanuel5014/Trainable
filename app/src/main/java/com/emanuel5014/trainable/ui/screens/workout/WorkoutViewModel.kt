@@ -826,7 +826,7 @@ class WorkoutViewModel @Inject constructor(
 
     private suspend fun getPreviousSetsForExercise(planId: Int?, exerciseId: Int, limitSets: Int = 3): List<SetLogEntity> {
         if (planId != null && planId != 0 && planId != -1) {
-            return workoutRepository.getLastSessionSetsForExercise(planId, exerciseId, limitSets).firstOrNull() ?: emptyList()
+            return workoutRepository.getLastSessionSetsForExercise(planId, exerciseId, limitSets)
         }
         return emptyList()
     }
@@ -1003,10 +1003,6 @@ class WorkoutViewModel @Inject constructor(
             } else {
                 planDetail?.serieTarget ?: loggedSets.size.coerceAtLeast(3)
             }
-            val lastReps = previousSets.map { it.repsEffettive }
-            // The plan's per-set list is that of the plan exercise: a swapped-in one only has its own last workout to go on
-            val repsList = if (isSwapped && lastReps.isNotEmpty()) lastReps
-            else LegacyReps.startingReps(planDetail?.repsTarget ?: "8", targetSets, lastReps)
             val defaultPrevWeight = if (isTimeAndReps) 0f else previousSets.firstOrNull()?.pesoSollevato ?: previousSets.lastOrNull()?.pesoSollevato
                 ?: if (planDetail != null && !isSwapped && !isCardio) workoutRepository.startingWeightFor(planDetail, exercise.id) else 0f
             // The range the exercise was started with is on its rows: that is all a swapped-in or added exercise has to
@@ -1017,6 +1013,14 @@ class WorkoutViewModel @Inject constructor(
             val progression = if (repsRange != null) {
                 progressionFor(targetSets, repsRange, getPreviousSetsForExercise(planId, exercise.id, ALL_SETS), resumeUnit, resumeIncrement)
             } else null
+            // The routine's reps win over last time's. An added or swapped-in exercise has no routine reps of its own,
+            // and a range or a timed kind progresses by the reps: those start from the last workout.
+            val repsList = LegacyReps.startingReps(
+                planDetail?.repsTarget ?: "8",
+                targetSets,
+                previousSets.map { it.repsEffettive },
+                repsProgress = planDetail == null || isSwapped || setKind != SetLogKind.STRENGTH || repsRange != null
+            )
 
             // While a workout runs, a weight typed on one set is copied to the following unlogged sets
             // (quick / custom exercises, or ones with no history). Those copies only live in memory, so
@@ -1341,7 +1345,12 @@ class WorkoutViewModel @Inject constructor(
             val prevPerfStr = previousPerformanceText(previousSets, setKind)
 
             val targetSets = detail.planExercise.serieTarget
-            val repsList = LegacyReps.startingReps(detail.planExercise.repsTarget, targetSets, previousSets.map { it.repsEffettive })
+            val repsList = LegacyReps.startingReps(
+                detail.planExercise.repsTarget,
+                targetSets,
+                previousSets.map { it.repsEffettive },
+                repsProgress = setKind != SetLogKind.STRENGTH || repsRange != null
+            )
             // The first workouts of a routine have nothing to copy: start from the starting weight (if turned on)
             val defaultWeight = if (isTimeAndReps) 0f else previousSets.firstOrNull()?.pesoSollevato ?: previousSets.lastOrNull()?.pesoSollevato
                 ?: workoutRepository.startingWeightFor(detail.planExercise, detail.exercise.id)
