@@ -94,7 +94,7 @@ class ExercisesViewModel @Inject constructor(
 
     fun attach(exerciseId: Int, uri: Uri) {
         viewModelScope.launch {
-            exerciseRepository.attachExerciseMedia(exerciseId, uri).toMessage()?.let { _messages.emit(it) }
+            exerciseRepository.attachExerciseMedia(exerciseId, uri.toString()).toMessage()?.let { _messages.emit(it) }
         }
     }
 

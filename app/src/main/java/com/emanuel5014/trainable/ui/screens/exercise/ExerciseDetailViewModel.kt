@@ -227,7 +227,7 @@ class ExerciseDetailViewModel @Inject constructor(
     /** Stores the image or GIF the user picked as the media of [exerciseId], replacing the one it had. */
     fun attachMedia(exerciseId: Int, uri: Uri) {
         viewModelScope.launch {
-            exerciseRepository.attachExerciseMedia(exerciseId, uri).toMessage()?.let { _mediaMessages.emit(it) }
+            exerciseRepository.attachExerciseMedia(exerciseId, uri.toString()).toMessage()?.let { _mediaMessages.emit(it) }
         }
     }
 

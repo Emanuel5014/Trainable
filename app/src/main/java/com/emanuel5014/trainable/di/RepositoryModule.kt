@@ -1,20 +1,26 @@
 package com.emanuel5014.trainable.di
 
+import android.content.Context
 import com.emanuel5014.trainable.data.local.dao.AnalyticsDao
+import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.JournalDao
 import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
 import com.emanuel5014.trainable.data.local.dao.WeightLogDao
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
+import com.emanuel5014.trainable.data.repository.ExerciseRepository
 import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.PlanRepository
 import com.emanuel5014.trainable.data.repository.TransactionRunner
+import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
+import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -32,6 +38,24 @@ object RepositoryModule {
     @Singleton
     fun provideJournalRepository(dao: JournalDao, transactions: TransactionRunner): JournalRepository =
         JournalRepository(dao, transactions)
+
+    @Provides
+    @Singleton
+    fun provideWorkoutRepository(
+        workoutDao: WorkoutDao,
+        userDao: UserDao,
+        exerciseDao: ExerciseDao,
+        oneRepMaxDao: OneRepMaxDao,
+        userPreferencesRepository: UserPreferencesRepository,
+        @ApplicationContext context: Context
+    ): WorkoutRepository = WorkoutRepository(
+        workoutDao, userDao, exerciseDao, oneRepMaxDao, userPreferencesRepository, AndroidWorkoutPlatform(context)
+    )
+
+    @Provides
+    @Singleton
+    fun provideExerciseRepository(exerciseDao: ExerciseDao, @ApplicationContext context: Context): ExerciseRepository =
+        ExerciseRepository(exerciseDao, AndroidExerciseMediaFiles(context))
 
     @Provides
     @Singleton

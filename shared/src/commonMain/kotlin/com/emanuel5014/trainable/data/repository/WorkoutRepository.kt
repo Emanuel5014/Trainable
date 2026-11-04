@@ -7,7 +7,6 @@ import com.emanuel5014.trainable.data.local.entity.SetLogKind
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_REPS
 import com.emanuel5014.trainable.data.local.entity.TIME_AND_WEIGHT
 import com.emanuel5014.trainable.data.local.entity.kind
-import android.content.Context
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.OneRepMaxDao
@@ -55,23 +54,25 @@ import com.emanuel5014.trainable.domain.prescription.RoutineHistory
 import com.emanuel5014.trainable.domain.prescription.StartingWeight
 import com.emanuel5014.trainable.domain.prescription.WeekSetCodec
 import com.emanuel5014.trainable.data.remote.dto.WorkoutPlanExportDto
-import com.emanuel5014.trainable.util.ImageStorageUtils
-import com.emanuel5014.trainable.util.UriMigrationHelper
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.emanuel5014.trainable.util.sortedByKeys
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import com.emanuel5014.trainable.domain.exercise.ExerciseMerges
 import kotlinx.coroutines.flow.first
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class WorkoutRepository @Inject constructor(
+@OptIn(ExperimentalUuidApi::class)
+class WorkoutRepository(
     private val workoutDao: WorkoutDao,
     private val userDao: UserDao,
     private val exerciseDao: ExerciseDao,
     private val oneRepMaxDao: OneRepMaxDao,
     private val userPreferencesRepository: UserPreferencesRepository,
-    @ApplicationContext private val context: Context
+    private val platform: WorkoutPlatform
 ) {
     /** The routine-list operations, shared with the iOS app. */
     private val planRepository = PlanRepository(workoutDao, userDao, oneRepMaxDao)
@@ -111,7 +112,7 @@ class WorkoutRepository @Inject constructor(
      * plain exercise. Legacy `serieTarget`/`repsTarget` are kept in sync by the caller.
      */
     suspend fun savePlanExerciseBlocks(planExerciseId: Int, blocksByWeek: Map<Int, List<PrescriptionBlock>>) {
-        val entities = blocksByWeek.toSortedMap().flatMap { (week, blocks) ->
+        val entities = blocksByWeek.sortedByKeys().flatMap { (week, blocks) ->
             blocks.mapIndexed { index, block -> PlanExerciseBlockEntity.fromDomain(block, planExerciseId, week, index) }
         }
         workoutDao.replaceAllBlocks(planExerciseId, entities)
@@ -208,8 +209,7 @@ class WorkoutRepository @Inject constructor(
                         // Collect all unique URIs to encode
                         val uris = (listOfNotNull(planWithDetails.plan.imageUri) + planWithDetails.images.map { it.imageUri }).distinct()
                         uris.forEach { uri ->
-                            val fixedUri = UriMigrationHelper.fixPath(uri, context) ?: uri
-                            ImageStorageUtils.encodeImageToBase64(context, fixedUri)?.let { add(it) }
+                            platform.encodeImage(uri)?.let { add(it) }
                         }
                     }
                 } else emptyList(),
@@ -284,13 +284,13 @@ class WorkoutRepository @Inject constructor(
                 val supersetRemap = mutableMapOf<String, String>()
                 fun remapSuperset(raw: String?): String? {
                     if (raw == null) return null
-                    return supersetRemap.getOrPut(raw) { java.util.UUID.randomUUID().toString() }
+                    return supersetRemap.getOrPut(raw) { Uuid.random().toString() }
                 }
 
                 val newPlan = WorkoutPlanEntity(
                     userId = user.id,
                     nome = dto.nome,
-                    dataInizio = dto.dataInizio ?: System.currentTimeMillis(),
+                    dataInizio = dto.dataInizio ?: Clock.System.now().toEpochMilliseconds(),
                     dataFine = dto.dataFine,
                     note = dto.note,
                     isActive = true,
@@ -311,7 +311,7 @@ class WorkoutRepository @Inject constructor(
                 // 1. From encoded blobs (restored to fresh local files)
                 if (dto.imageBlobs.isNotEmpty()) {
                     dto.imageBlobs.forEachIndexed { index, blob ->
-                        ImageStorageUtils.saveBase64Image(context, blob)?.let { newUri ->
+                        platform.saveImage(blob)?.let { newUri ->
                             imagesToInsert.add(WorkoutPlanImageEntity(planId = planId, imageUri = newUri, ordine = index))
                         }
                     }
@@ -420,7 +420,7 @@ class WorkoutRepository @Inject constructor(
                             OneRepMaxEntity(
                                 exerciseId = entity.exerciseId,
                                 weightKg = sharedMaximumKg,
-                                date = System.currentTimeMillis(),
+                                date = Clock.System.now().toEpochMilliseconds(),
                                 source = OneRepMaxEntity.SOURCE_IMPORTED
                             )
                         )
@@ -456,14 +456,7 @@ class WorkoutRepository @Inject constructor(
 
     suspend fun deletePlan(plan: WorkoutPlanEntity) = planRepository.deletePlan(plan)
     
-    private fun triggerWidgetUpdate() {
-        try {
-            com.emanuel5014.trainable.widget.TrainableWidget.update(context)
-            com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(context)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+    private fun triggerWidgetUpdate() = platform.onWorkoutsChanged()
 
     suspend fun startSession(planId: Int, timestamp: Long, isFinished: Boolean = false, note: String? = null): Long {
         val sessionId = workoutDao.insertSession(WorkoutSessionEntity(planId = planId, timestamp = timestamp, isFinished = isFinished, noteSessione = note))
@@ -482,7 +475,7 @@ class WorkoutRepository @Inject constructor(
                         userId = user.id,
                         nome = "Quick Workout",
                         note = "SYSTEM_PLAN",
-                        dataInizio = System.currentTimeMillis(),
+                        dataInizio = Clock.System.now().toEpochMilliseconds(),
                         isActive = false
                     )
                 )
@@ -491,7 +484,7 @@ class WorkoutRepository @Inject constructor(
         
         return startSession(
             planId = quickWorkoutPlan.id,
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             note = name
         )
     }
@@ -558,7 +551,7 @@ class WorkoutRepository @Inject constructor(
                 userId = user.id,
                 nome = "Cardio",
                 note = "SYSTEM_PLAN",
-                dataInizio = System.currentTimeMillis(),
+                dataInizio = Clock.System.now().toEpochMilliseconds(),
                 isActive = false, // Not a regular training plan
                 ordine = (plans.maxOfOrNull { it.ordine } ?: -1) + 1
             )
@@ -601,7 +594,7 @@ class WorkoutRepository @Inject constructor(
                         userId = user.id,
                         nome = "Custom Workout",
                         note = "SYSTEM_PLAN",
-                        dataInizio = System.currentTimeMillis(),
+                        dataInizio = Clock.System.now().toEpochMilliseconds(),
                         isActive = false
                     )
                 )
@@ -834,7 +827,7 @@ class WorkoutRepository @Inject constructor(
         }
 
         sessions.forEach { session ->
-            val date = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(session.session.timestamp))
+            val date = Instant.fromEpochMilliseconds(session.session.timestamp).toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
             val planName = escapeCsv(session.plan.nome)
             // How long the whole workout took, repeated on each of its rows (empty when it was never recorded)
             val sessionMinutes = SessionDuration.format(session.session.durationMs)
@@ -878,7 +871,7 @@ class WorkoutRepository @Inject constructor(
                 }
                 val techniques = escapeCsv(
                     com.emanuel5014.trainable.domain.prescription.TechniqueCodec.decode(setLog.techniques)
-                        .joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
+                        .joinToString(" | ") { platform.techniqueLabel(it) }
                 )
                 val rpe = setLog.rpe?.let { com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter.number(it) } ?: ""
                 val extra = if (setLog.isExtra) "1" else "0"
@@ -891,8 +884,8 @@ class WorkoutRepository @Inject constructor(
                 }
                 // How the set really went: its parts and pauses, help, partials, the technique as done
                 val performed = setLog.performed?.let { list ->
-                    if (list.isEmpty()) context.getString(com.emanuel5014.trainable.R.string.performed_technique_none)
-                    else list.joinToString(" | ") { com.emanuel5014.trainable.ui.components.techniqueLabel(context, it) }
+                    if (list.isEmpty()) platform.noTechniqueLabel
+                    else list.joinToString(" | ") { platform.techniqueLabel(it) }
                 }.orEmpty()
                 val performanceColumns = ",${setLog.parts.joinToString("+")},${setLog.pauses.joinToString("/")},${setLog.assistedReps},${setLog.partialReps},${escapeCsv(performed)}"
                 val supersetCell = if (supersetColumn) "," + SupersetCsv.cell(setLog.supersetId?.let { supersetNumbers[it] }) else ""

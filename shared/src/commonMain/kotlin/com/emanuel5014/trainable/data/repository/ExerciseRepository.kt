@@ -7,22 +7,16 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExerciseNames
 import com.emanuel5014.trainable.domain.exercise.ExerciseTraits
 import com.emanuel5014.trainable.domain.exercise.StoredTraits
-import android.content.Context
-import android.net.Uri
-import com.emanuel5014.trainable.util.ExerciseMediaStorage
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ExerciseRepository @Inject constructor(
+class ExerciseRepository(
     private val exerciseDao: ExerciseDao,
-    @ApplicationContext private val context: Context
+    private val mediaFiles: ExerciseMediaFiles
 ) {
     fun getAllExercises(): Flow<List<ExerciseEntity>> = exerciseDao.getAllExercises()
     
@@ -112,7 +106,7 @@ class ExerciseRepository @Inject constructor(
     suspend fun deleteExercise(exercise: ExerciseEntity) {
         val mediaFile = exerciseDao.getExerciseMedia(exercise.id)
         if (exerciseDao.removeFromLibrary(exercise.id)) {
-            withContext(Dispatchers.IO) { ExerciseMediaStorage.delete(context, mediaFile) }
+            withContext(Dispatchers.IO) { mediaFiles.delete(mediaFile) }
         }
     }
 
@@ -126,13 +120,13 @@ class ExerciseRepository @Inject constructor(
     }
 
     /** Stores the picked image/GIF as the media of [exerciseId], replacing (and deleting) any previous one. */
-    suspend fun attachExerciseMedia(exerciseId: Int, uri: Uri): ExerciseMediaStorage.ImportResult =
+    suspend fun attachExerciseMedia(exerciseId: Int, source: String): ExerciseMediaImport =
         withContext(Dispatchers.IO) {
-            val result = ExerciseMediaStorage.import(context, uri, exerciseId)
-            if (result is ExerciseMediaStorage.ImportResult.Saved) {
+            val result = mediaFiles.import(source, exerciseId)
+            if (result is ExerciseMediaImport.Saved) {
                 val previous = exerciseDao.getExerciseMedia(exerciseId)
                 exerciseDao.updateExerciseMedia(exerciseId, result.fileName)
-                ExerciseMediaStorage.delete(context, previous)
+                mediaFiles.delete(previous)
             }
             result
         }
@@ -141,13 +135,13 @@ class ExerciseRepository @Inject constructor(
     suspend fun removeAllExerciseMedia() = withContext(Dispatchers.IO) {
         val files = exerciseDao.getAllExerciseMedia()
         exerciseDao.clearAllExerciseMedia()
-        files.forEach { ExerciseMediaStorage.delete(context, it) }
+        files.forEach { mediaFiles.delete(it) }
     }
 
     suspend fun removeExerciseMedia(exerciseId: Int) = withContext(Dispatchers.IO) {
         val previous = exerciseDao.getExerciseMedia(exerciseId)
         exerciseDao.updateExerciseMedia(exerciseId, null)
-        ExerciseMediaStorage.delete(context, previous)
+        mediaFiles.delete(previous)
     }
 
     /** Turns the plate calculator on or off for [exerciseId]; [barKg] is the bar weight in storage units (kg). */

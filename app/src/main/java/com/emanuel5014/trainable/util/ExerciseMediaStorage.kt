@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import androidx.annotation.StringRes
 import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.data.repository.ExerciseMediaImport
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.max
@@ -32,12 +33,6 @@ object ExerciseMediaStorage {
     /** Still images are scaled to this on their longest side before being stored. */
     private const val MAX_STILL_DIMENSION = 1280
 
-    sealed interface ImportResult {
-        data class Saved(val fileName: String) : ImportResult
-        data object TooLarge : ImportResult
-        data object Unsupported : ImportResult
-    }
-
     fun dir(context: Context): File = File(context.filesDir, DIR_NAME).apply { if (!exists()) mkdirs() }
 
     /** The stored file for [fileName], or null when it is missing or tries to escape the media folder. */
@@ -52,7 +47,7 @@ object ExerciseMediaStorage {
     }
 
     /** Copies the picked [uri] into the media folder. Blocking: call from a background dispatcher. */
-    fun import(context: Context, uri: Uri, exerciseId: Int): ImportResult {
+    fun import(context: Context, uri: Uri, exerciseId: Int): ExerciseMediaImport {
         val directory = dir(context)
         val staging = File(directory, "staging_${exerciseId}_${System.nanoTime()}")
         try {
@@ -64,13 +59,13 @@ object ExerciseMediaStorage {
                         val read = input.read(buffer)
                         if (read < 0) break
                         total += read
-                        if (total > MAX_BYTES) return ImportResult.TooLarge
+                        if (total > MAX_BYTES) return ExerciseMediaImport.TooLarge
                         output.write(buffer, 0, read)
                     }
                 }
                 true
             } ?: false
-            if (!copied) return ImportResult.Unsupported
+            if (!copied) return ExerciseMediaImport.Unsupported
 
             var mimeType: String? = null
             val decoded = ImageDecoder.decodeDrawable(ImageDecoder.createSource(staging)) { decoder, info, _ ->
@@ -82,20 +77,20 @@ object ExerciseMediaStorage {
             return if (decoded is AnimatedImageDrawable) {
                 val extension = if (mimeType == "image/webp") "webp" else "gif"
                 val target = File(directory, "ex${exerciseId}_$stamp.$extension")
-                if (!staging.renameTo(target)) return ImportResult.Unsupported
-                ImportResult.Saved(target.name)
+                if (!staging.renameTo(target)) return ExerciseMediaImport.Unsupported
+                ExerciseMediaImport.Saved(target.name)
             } else {
-                val bitmap = (decoded as? BitmapDrawable)?.bitmap ?: return ImportResult.Unsupported
+                val bitmap = (decoded as? BitmapDrawable)?.bitmap ?: return ExerciseMediaImport.Unsupported
                 val keepsAlpha = bitmap.hasAlpha()
                 val target = File(directory, "ex${exerciseId}_$stamp.${if (keepsAlpha) "png" else "jpg"}")
                 FileOutputStream(target).use { output ->
                     if (keepsAlpha) bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
                     else bitmap.compress(Bitmap.CompressFormat.JPEG, 88, output)
                 }
-                ImportResult.Saved(target.name)
+                ExerciseMediaImport.Saved(target.name)
             }
         } catch (e: Exception) {
-            return ImportResult.Unsupported
+            return ExerciseMediaImport.Unsupported
         } finally {
             staging.delete()
         }
@@ -132,9 +127,9 @@ object ExerciseMediaStorage {
 data class ExerciseMediaMessage(@StringRes val resId: Int, val arg: Int? = null)
 
 /** What to tell the user about this import, or null when it worked. */
-fun ExerciseMediaStorage.ImportResult.toMessage(): ExerciseMediaMessage? = when (this) {
-    is ExerciseMediaStorage.ImportResult.Saved -> null
-    ExerciseMediaStorage.ImportResult.TooLarge ->
+fun ExerciseMediaImport.toMessage(): ExerciseMediaMessage? = when (this) {
+    is ExerciseMediaImport.Saved -> null
+    ExerciseMediaImport.TooLarge ->
         ExerciseMediaMessage(R.string.exercise_media_too_large, ExerciseMediaStorage.MAX_BYTES_LABEL_MB)
-    ExerciseMediaStorage.ImportResult.Unsupported -> ExerciseMediaMessage(R.string.exercise_media_unsupported)
+    ExerciseMediaImport.Unsupported -> ExerciseMediaMessage(R.string.exercise_media_unsupported)
 }
