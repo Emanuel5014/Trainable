@@ -1,5 +1,13 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add_custom_exercise
+import com.emanuel5014.trainable.sharedui.resources.all_categories
+import com.emanuel5014.trainable.sharedui.resources.choose_from_library
+import com.emanuel5014.trainable.sharedui.resources.filter_custom
+import com.emanuel5014.trainable.sharedui.resources.filter_favorites
+import com.emanuel5014.trainable.sharedui.resources.new_exercise
+import com.emanuel5014.trainable.sharedui.resources.select_exercise
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,16 +38,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.ExercisePickerFilter
 import com.emanuel5014.trainable.domain.exercise.TraitFilter
-import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
@@ -64,6 +70,7 @@ fun ExercisePickerBottomSheet(
     /** Replaces the line under the title, e.g. to say what the choice is for. */
     hint: String? = null
 ) {
+    val platformUi = LocalExercisePlatformUi.current
     rememberResponsiveSize()
 
     var searchQuery by remember { mutableStateOf("") }
@@ -83,9 +90,9 @@ fun ExercisePickerBottomSheet(
 
     val showThumbnails = rememberShowExerciseThumbnails(exercises)
 
-    val allLabel = stringResource(R.string.all_categories)
-    val favoritesLabel = stringResource(R.string.filter_favorites)
-    val customLabel = stringResource(R.string.filter_custom)
+    val allLabel = stringResource(Res.string.all_categories)
+    val favoritesLabel = stringResource(Res.string.filter_favorites)
+    val customLabel = stringResource(Res.string.filter_custom)
     // A category can combine with the favorites or the custom ones, so each button is on by itself
     val filterOptions = buildList {
         add(
@@ -135,7 +142,7 @@ fun ExercisePickerBottomSheet(
             AnimatedVisibility(visible = !imeVisible) {
                 Column {
                 Text(
-                    text = stringResource(R.string.select_exercise).uppercase(),
+                    text = stringResource(Res.string.select_exercise).uppercase(),
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = ResponsiveSize.labelLargeSize
                     ),
@@ -144,7 +151,7 @@ fun ExercisePickerBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(Spacing.xtraSmall))
                 Text(
-                    text = stringResource(R.string.choose_from_library),
+                    text = stringResource(Res.string.choose_from_library),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = ResponsiveSize.headlineMediumSize
                     ),
@@ -204,7 +211,7 @@ fun ExercisePickerBottomSheet(
                         },
                         showThumbnail = showThumbnails,
                         onThumbnailClick = { exerciseMediaToView = exercise },
-                        onInfoClick = if (pickOnly) null else { { detailExerciseId = exercise.id } }
+                        onInfoClick = if (pickOnly || !platformUi.hasExerciseDetail) null else { { detailExerciseId = exercise.id } }
                     )
                 }
             }
@@ -221,7 +228,7 @@ fun ExercisePickerBottomSheet(
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(Spacing.medium))
-                        Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -230,9 +237,9 @@ fun ExercisePickerBottomSheet(
 
     if (showAddCustomDialog) {
         ExerciseFormDialog(
-            title = stringResource(R.string.new_exercise),
+            title = stringResource(Res.string.new_exercise),
             categories = categories,
-            existingExercises = rememberNamesInUse(),
+            existingExercises = platformUi.namesInUse(),
             languageCode = languageCode,
             showDescription = false,
             onConfirm = { form ->
@@ -246,7 +253,7 @@ fun ExercisePickerBottomSheet(
         )
     }
 
-    ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
-    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
+    platformUi.MediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
+    detailExerciseId?.let { platformUi.ExerciseDetail(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
 }

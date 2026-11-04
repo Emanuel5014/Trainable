@@ -92,6 +92,8 @@ import com.emanuel5014.trainable.ui.components.AndroidPlanImage
 import com.emanuel5014.trainable.ui.components.LocalPlanImage
 import com.emanuel5014.trainable.ui.components.AndroidPrescriptionText
 import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
+import com.emanuel5014.trainable.ui.components.AndroidExercisePlatformUi
+import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.ui.theme.AndroidPlatformGlass
 
@@ -309,7 +311,8 @@ class MainActivity : FragmentActivity() {
                   LocalPlatformGlass provides AndroidPlatformGlass,
                   LocalHapticsSetting provides userPreferencesRepository.hapticEnabled,
                   LocalPlanImage provides AndroidPlanImage,
-                  LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } }
+                  LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } },
+                  LocalExercisePlatformUi provides AndroidExercisePlatformUi
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }

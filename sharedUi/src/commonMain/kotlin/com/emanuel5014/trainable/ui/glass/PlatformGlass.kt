@@ -9,6 +9,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import com.emanuel5014.trainable.data.model.GlassPart
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 
@@ -45,6 +46,13 @@ interface PlatformGlass {
         onScrubEnd: ((index: Int) -> Unit)?,
         onTick: () -> Unit
     ) {}
+
+    /** Whether this platform draws [surface]; without it the controls that would wear it keep their classic look. */
+    val hasSurfaceGlass: Boolean get() = false
+
+    /** The neutral glass of a control that scrolls with its screen (search bar, tab track), or [modifier] unchanged. */
+    @Composable
+    fun surface(modifier: Modifier, part: GlassPart): Modifier = modifier
 
     /** Whether this platform draws [GlassSlider]; without it sliders keep the Material thumb. */
     val hasGlassSlider: Boolean get() = false
@@ -90,6 +98,9 @@ val LocalPlatformGlass = staticCompositionLocalOf<PlatformGlass> { ClassicGlass 
 
 @Composable
 fun Modifier.headerGlass(): Modifier = LocalPlatformGlass.current.header(this)
+
+@Composable
+fun Modifier.surfaceGlass(part: GlassPart): Modifier = LocalPlatformGlass.current.surface(this, part)
 
 @Composable
 fun rememberActionGlassSource(): GlassSource? = LocalPlatformGlass.current.rememberActionSource()

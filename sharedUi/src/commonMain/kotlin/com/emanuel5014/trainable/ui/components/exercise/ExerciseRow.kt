@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.current_badge
+import com.emanuel5014.trainable.sharedui.resources.custom
+import com.emanuel5014.trainable.sharedui.resources.exercise_picked_badge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.ui.theme.OnPrimary
@@ -88,7 +91,7 @@ fun ExerciseRow(
                     overflow = TextOverflow.Ellipsis
                 )
                 // Lighter than the row, or the pill would be a bare label
-                if (isCustom) PrescriptionPill(text = stringResource(R.string.custom), containerColor = SurfaceContainerHighest)
+                if (isCustom) PrescriptionPill(text = stringResource(Res.string.custom), containerColor = SurfaceContainerHighest)
                 if (isHidden) DeletedExercisePill(containerColor = SurfaceContainerHighest)
                 badges()
             }
@@ -103,7 +106,7 @@ fun ExerciseRow(
  * coming back from the next step; [isCurrent] the one being replaced.
  */
 @Composable
-internal fun ExercisePickRow(
+fun ExercisePickRow(
     exercise: ExerciseEntity,
     languageCode: String,
     onClick: () -> Unit,
@@ -120,7 +123,7 @@ internal fun ExercisePickRow(
         onClick = onClick,
         modifier = modifier,
         thumbnail = if (showThumbnail) {
-            { ExerciseListThumbnail(fileName = exercise.mediaPath, onClick = onThumbnailClick) }
+            { LocalExercisePlatformUi.current.ListThumbnail(exercise.mediaPath, onThumbnailClick, null) }
         } else null,
         isCustom = exercise.id >= ExerciseEntity.FIRST_CUSTOM_ID,
         isFavorite = exercise.isFavorite,
@@ -128,12 +131,12 @@ internal fun ExercisePickRow(
         badges = {
             when {
                 isSelected -> PrescriptionPill(
-                    text = stringResource(R.string.exercise_picked_badge).uppercase(),
+                    text = stringResource(Res.string.exercise_picked_badge).uppercase(),
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     emphasized = true
                 )
-                isCurrent -> PrescriptionPill(text = stringResource(R.string.current_badge).uppercase(), containerColor = Surface)
+                isCurrent -> PrescriptionPill(text = stringResource(Res.string.current_badge).uppercase(), containerColor = Surface)
             }
         },
         trailing = onInfoClick?.let { { ExerciseInfoButton(onClick = it) } }

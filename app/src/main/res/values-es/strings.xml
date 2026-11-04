@@ -186,13 +186,9 @@
     <string name="tap_to_change_exercise">Toca para cambiar ejercicio</string>
     <string name="search_exercises">Buscar ejercicios</string>
     <string name="all_categories">Todos</string>
-    <string name="no_exercises_found">No se encontraron ejercicios</string>
-    <string name="exercise_picked_badge">Seleccionado</string>
-    <string name="choose_from_library">Elige de la biblioteca</string>
     <string name="filter_custom">Personalizados</string>
     <string name="new_exercise">Nuevo Ejercicio</string>
     <string name="add_custom_exercise">Añadir Ejercicio Personalizado</string>
-    <string name="exercise_name">Nombre del Ejercicio</string>
     <string name="category">Categoría</string>
     <string name="superset">SUPERSERIE</string>
     <string name="link_with_next">VINCULAR CON SIGUIENTE (SUPERSERIE)</string>
@@ -1599,16 +1595,11 @@
     <string name="exercises_title">Ejercicios</string>
     <string name="exercises_manage_desc">Crea ejercicios, añade multimedia y gestiona las categorías</string>
     <string name="exercise_action_edit">Editar</string>
-    <string name="exercise_description">Descripción</string>
-    <string name="exercise_name_taken">Ya existe un ejercicio con este nombre</string>
     <string name="exercise_msg_saved">Guardado</string>
     <string name="workout_progress_description">Ejercicio %1$d de %2$d, %3$d completados</string>
     <string name="exercise_tools_group">Herramientas del ejercicio</string>
     <!-- Favorite exercises -->
     <string name="filter_favorites">Favoritos</string>
-    <string name="exercise_favorite_add">Añadir a favoritos</string>
-    <string name="exercise_favorite_remove">Quitar de favoritos</string>
-    <string name="exercise_favorite_marker">Favorito</string>
     <!-- Muscles and equipment of an exercise -->
     <string name="muscle_upper_chest">Pecho superior</string>
     <string name="muscle_middle_chest">Pecho medio</string>
@@ -1639,12 +1630,4 @@
     <string name="equipment_bodyweight">Peso corporal</string>
     <string name="equipment_landmine">Landmine</string>
     <string name="equipment_other">Otro</string>
-    <string name="exercise_traits_muscles">Músculos</string>
-    <string name="exercise_traits_equipment">Equipamiento</string>
-    <string name="exercise_traits_not_set">Sin definir</string>
-    <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
-    <string name="exercise_filters_title">Filtros</string>
-    <string name="exercise_filters_reset">Restablecer</string>
-    <string name="exercise_filters_results">Resultados: %1$d</string>
-    <string name="exercise_filters_active_count">%1$d activos</string>
 </resources>

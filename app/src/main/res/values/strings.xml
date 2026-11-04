@@ -187,13 +187,9 @@
     <string name="tap_to_change_exercise">Tap to change exercise</string>
     <string name="search_exercises">Search exercises</string>
     <string name="all_categories">All</string>
-    <string name="no_exercises_found">No exercises found</string>
-    <string name="exercise_picked_badge">Selected</string>
-    <string name="choose_from_library">Choose from library</string>
     <string name="filter_custom">Custom</string>
     <string name="new_exercise">New Exercise</string>
     <string name="add_custom_exercise">Add Custom Exercise</string>
-    <string name="exercise_name">Exercise Name</string>
     <string name="category">Category</string>
     <string name="superset">SUPERSET</string>
     <string name="link_with_next">LINK WITH NEXT (SUPERSET)</string>
@@ -1597,16 +1593,11 @@
     <string name="exercises_title">Exercises</string>
     <string name="exercises_manage_desc">Create exercises, add media and manage categories</string>
     <string name="exercise_action_edit">Edit</string>
-    <string name="exercise_description">Description</string>
-    <string name="exercise_name_taken">An exercise with this name already exists</string>
     <string name="exercise_msg_saved">Saved</string>
     <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>
     <string name="exercise_tools_group">Exercise tools</string>
     <!-- Favorite exercises -->
     <string name="filter_favorites">Favorites</string>
-    <string name="exercise_favorite_add">Add to favorites</string>
-    <string name="exercise_favorite_remove">Remove from favorites</string>
-    <string name="exercise_favorite_marker">Favorite</string>
     <!-- Muscles and equipment of an exercise -->
     <string name="muscle_upper_chest">Upper chest</string>
     <string name="muscle_middle_chest">Middle chest</string>
@@ -1637,12 +1628,4 @@
     <string name="equipment_bodyweight">Bodyweight</string>
     <string name="equipment_landmine">Landmine</string>
     <string name="equipment_other">Other</string>
-    <string name="exercise_traits_muscles">Muscles</string>
-    <string name="exercise_traits_equipment">Equipment</string>
-    <string name="exercise_traits_not_set">Not set</string>
-    <string name="exercise_traits_muscles_count">%1$d/%2$d</string>
-    <string name="exercise_filters_title">Filters</string>
-    <string name="exercise_filters_reset">Reset</string>
-    <string name="exercise_filters_results">Results: %1$d</string>
-    <string name="exercise_filters_active_count">%1$d active</string>
 </resources>

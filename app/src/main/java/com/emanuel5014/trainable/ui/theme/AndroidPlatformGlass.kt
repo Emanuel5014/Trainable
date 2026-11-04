@@ -50,6 +50,11 @@ object AndroidPlatformGlass : PlatformGlass {
     @Composable
     override fun NoOverlayBlur() = com.emanuel5014.trainable.ui.theme.NoOverlayBlur()
 
+    override val hasSurfaceGlass: Boolean get() = true
+
+    @Composable
+    override fun surface(modifier: Modifier, part: GlassPart): Modifier = modifier.surfaceGlass(part)
+
     override val hasGlassSlider: Boolean get() = true
 
     @Composable

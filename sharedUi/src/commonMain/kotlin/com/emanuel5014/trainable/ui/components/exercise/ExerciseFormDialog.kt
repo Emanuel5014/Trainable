@@ -1,5 +1,17 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.category
+import com.emanuel5014.trainable.sharedui.resources.exercise_description
+import com.emanuel5014.trainable.sharedui.resources.exercise_name
+import com.emanuel5014.trainable.sharedui.resources.exercise_name_taken
+import com.emanuel5014.trainable.sharedui.resources.exercise_traits_equipment
+import com.emanuel5014.trainable.sharedui.resources.exercise_traits_muscles
+import com.emanuel5014.trainable.sharedui.resources.exercise_traits_muscles_count
+import com.emanuel5014.trainable.sharedui.resources.exercise_traits_not_set
+import com.emanuel5014.trainable.sharedui.resources.save
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -31,9 +43,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.domain.exercise.Equipment
@@ -91,13 +102,13 @@ fun ExerciseFormDialog(
                 GymInputField(
                     value = name,
                     onValueChange = { name = it },
-                    label = stringResource(R.string.exercise_name),
-                    supportingText = if (taken) stringResource(R.string.exercise_name_taken) else null,
+                    label = stringResource(Res.string.exercise_name),
+                    supportingText = if (taken) stringResource(Res.string.exercise_name_taken) else null,
                     isError = taken,
                     modifier = Modifier.fillMaxWidth()
                 )
                 FormDropdown(
-                    label = stringResource(R.string.category),
+                    label = stringResource(Res.string.category),
                     value = ExerciseTranslations.translateCategory(category, languageCode)
                 ) { close ->
                     categories.forEach { option ->
@@ -112,11 +123,11 @@ fun ExerciseFormDialog(
                 }
                 if (showTraits) {
                     FormDropdown(
-                        label = stringResource(R.string.exercise_traits_equipment),
-                        value = stringResource(equipment?.labelRes() ?: R.string.exercise_traits_not_set)
+                        label = stringResource(Res.string.exercise_traits_equipment),
+                        value = stringResource(equipment?.labelText() ?: Res.string.exercise_traits_not_set)
                     ) { close ->
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.exercise_traits_not_set)) },
+                            text = { Text(stringResource(Res.string.exercise_traits_not_set)) },
                             onClick = {
                                 equipment = null
                                 close()
@@ -124,7 +135,7 @@ fun ExerciseFormDialog(
                         )
                         Equipment.entries.forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(stringResource(option.labelRes())) },
+                                text = { Text(stringResource(option.labelText())) },
                                 onClick = {
                                     equipment = option
                                     close()
@@ -141,7 +152,7 @@ fun ExerciseFormDialog(
                     GymInputField(
                         value = description,
                         onValueChange = { description = it },
-                        label = stringResource(R.string.exercise_description),
+                        label = stringResource(Res.string.exercise_description),
                         singleLine = false,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -166,14 +177,14 @@ fun ExerciseFormDialog(
                 enabled = canConfirm
             ) {
                 Text(
-                    text = stringResource(if (editingId != null) R.string.save else R.string.add).uppercase(),
+                    text = stringResource(if (editingId != null) Res.string.save else Res.string.add).uppercase(),
                     fontWeight = FontWeight.ExtraBold
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         },
         containerColor = SurfaceContainerHigh,
@@ -235,12 +246,12 @@ private fun MusclePicker(selected: Set<Muscle>, onToggle: (Muscle) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(R.string.exercise_traits_muscles),
+                text = stringResource(Res.string.exercise_traits_muscles),
                 style = MaterialTheme.typography.labelLarge,
                 color = OnSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.exercise_traits_muscles_count, selected.size, ExerciseTraits.MAX_MUSCLES),
+                text = stringResource(Res.string.exercise_traits_muscles_count, selected.size, ExerciseTraits.MAX_MUSCLES),
                 style = MaterialTheme.typography.labelLarge,
                 color = OnSurfaceVariant
             )
@@ -255,7 +266,7 @@ private fun MusclePicker(selected: Set<Muscle>, onToggle: (Muscle) -> Unit) {
                     selected = isSelected,
                     onClick = { onToggle(muscle) },
                     enabled = isSelected || selected.size < ExerciseTraits.MAX_MUSCLES,
-                    label = { Text(stringResource(muscle.labelRes())) }
+                    label = { Text(stringResource(muscle.labelText())) }
                 )
             }
         }

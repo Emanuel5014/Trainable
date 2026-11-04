@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.exercise_filters_active_count
+import com.emanuel5014.trainable.sharedui.resources.exercise_filters_reset
+import com.emanuel5014.trainable.sharedui.resources.exercise_filters_results
+import com.emanuel5014.trainable.sharedui.resources.exercise_filters_title
+import com.emanuel5014.trainable.sharedui.resources.exercise_traits_equipment
+import com.emanuel5014.trainable.sharedui.resources.exercise_traits_muscles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,9 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.exercise.Equipment
 import com.emanuel5014.trainable.domain.exercise.Muscle
 import com.emanuel5014.trainable.domain.exercise.TraitFilter
@@ -72,9 +78,9 @@ fun ExerciseSearchWithTraitFilter(
 /** The filter button: a badge counts the choices that are on, and shows nothing while none is. */
 @Composable
 fun ExerciseTraitFilterButton(filter: TraitFilter, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val title = stringResource(R.string.exercise_filters_title)
+    val title = stringResource(Res.string.exercise_filters_title)
     val description =
-        if (filter.isActive) "$title, ${stringResource(R.string.exercise_filters_active_count, filter.activeCount)}" else title
+        if (filter.isActive) "$title, ${stringResource(Res.string.exercise_filters_active_count, filter.activeCount)}" else title
     IconButton(onClick = onClick, modifier = modifier) {
         BadgedBox(badge = { if (filter.isActive) Badge { Text(filter.activeCount.toString()) } }) {
             Icon(
@@ -117,17 +123,17 @@ fun ExerciseTraitFilterSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(R.string.exercise_filters_title),
+                    text = stringResource(Res.string.exercise_filters_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
                 TextButton(onClick = { onFilterChange(TraitFilter.NONE) }, enabled = filter.isActive) {
-                    Text(stringResource(R.string.exercise_filters_reset).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.exercise_filters_reset).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
             Text(
-                text = stringResource(R.string.exercise_traits_muscles),
+                text = stringResource(Res.string.exercise_traits_muscles),
                 style = MaterialTheme.typography.labelLarge,
                 color = OnSurfaceVariant
             )
@@ -139,12 +145,12 @@ fun ExerciseTraitFilterSheet(
                     FilterChip(
                         selected = muscle in filter.muscles,
                         onClick = { onFilterChange(filter.toggle(muscle)) },
-                        label = { Text(stringResource(muscle.labelRes())) }
+                        label = { Text(stringResource(muscle.labelText())) }
                     )
                 }
             }
             Text(
-                text = stringResource(R.string.exercise_traits_equipment),
+                text = stringResource(Res.string.exercise_traits_equipment),
                 style = MaterialTheme.typography.labelLarge,
                 color = OnSurfaceVariant
             )
@@ -156,12 +162,12 @@ fun ExerciseTraitFilterSheet(
                     FilterChip(
                         selected = equipment in filter.equipment,
                         onClick = { onFilterChange(filter.toggle(equipment)) },
-                        label = { Text(stringResource(equipment.labelRes())) }
+                        label = { Text(stringResource(equipment.labelText())) }
                     )
                 }
             }
             Text(
-                text = stringResource(R.string.exercise_filters_results, resultCount),
+                text = stringResource(Res.string.exercise_filters_results, resultCount),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
                 color = Primary

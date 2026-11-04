@@ -97,11 +97,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * Whether "Show in Workouts" is switched on on the exercises page of the settings. Provided once at the app root, like
- * [LocalAdvancedProgramming], so lists outside the workout screen (the exercise picker) follow the same switch.
- */
-val LocalExerciseMediaEnabled = staticCompositionLocalOf { false }
 
 /**
  * Side of the square exercise thumbnail shown next to the exercise name. It grows with the screen width,
@@ -273,17 +268,6 @@ fun ExerciseMediaSlot(
             )
         }
     }
-}
-
-/**
- * Whether a list where an exercise is picked draws the thumbnails of the exercises' media: it follows the "Show in
- * Workouts" switch and waits until at least one of the offered exercises has media, so the list is unchanged for
- * everyone else. From then on every row gets a tile ([ExerciseListThumbnail]), which keeps the names aligned.
- */
-@Composable
-fun rememberShowExerciseThumbnails(exercises: List<ExerciseEntity>, excludedIds: Set<Int> = emptySet()): Boolean {
-    val enabled = LocalExerciseMediaEnabled.current
-    return enabled && remember(exercises, excludedIds) { exercises.any { it.mediaPath != null && it.id !in excludedIds } }
 }
 
 /**

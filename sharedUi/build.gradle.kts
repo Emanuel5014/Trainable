@@ -53,4 +53,6 @@ kotlin {
 
 compose.resources {
     packageOfResClass = "com.emanuel5014.trainable.sharedui.resources"
+    // Public so the app's own tests can read the shared strings
+    publicResClass = true
 }
