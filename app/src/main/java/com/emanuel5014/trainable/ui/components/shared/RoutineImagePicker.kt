@@ -501,3 +501,11 @@ private fun ZoomableImage(
         )
     }
 }
+
+/** The routine photos of the shared routine screen (LocalRoutineImagePicker). */
+val AndroidRoutineImagePicker: @Composable (
+    images: List<WorkoutPlanImageEntity>,
+    onImageAdd: (String) -> Unit,
+    onImageRemove: (WorkoutPlanImageEntity) -> Unit,
+    modifier: Modifier
+) -> Unit = { images, onImageAdd, onImageRemove, modifier -> RoutineImagePicker(images, onImageAdd, onImageRemove, modifier) }

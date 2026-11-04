@@ -125,22 +125,17 @@
     <string name="routines">Schede</string>
     <string name="archived_routines_header">Archiviate</string>
     <string name="active_routines">Attive</string>
-    <string name="edit_routine">MODIFICA SCHEDA</string>
     <string name="add_photo">AGGIUNGI FOTO</string>
     <string name="change_photo">CAMBIA FOTO</string>
     <string name="remove_photo">RIMUOVI FOTO</string>
-    <string name="update_plan">Aggiorna Scheda</string>
     <string name="no_archived">Nessuna scheda archiviata</string>
     <string name="swipe_for_archived">Scorri in basso per archiviate</string>
     <string name="swipe_for_active">Scorri in basso per attive</string>
     <string name="routine_name">Nome Scheda</string>
-    <string name="routine_details">Dettagli</string>
     <string name="routine_notes">Note (opzionale)</string>
     <string name="schedule_days">GIORNI PROGRAMMATI</string>
     <string name="delete_routine">Elimina Scheda?</string>
     <string name="delete_routine_message">Questo eliminerà permanentemente questa scheda e tutti i suoi esercizi.</string>
-    <string name="reset_routine_content">Resettare Contenuto?</string>
-    <string name="reset_routine_content_message">Questo rimuoverà permanentemente tutte le immagini e gli esercizi da questa scheda. La scheda verrà mantenuta. Questa azione non può essere annullata.</string>
     <string name="start_date">DATA INIZIO:</string>
     <string name="end_date">DATA SCADENZA:</string>
     <string name="expires">Scade il:</string>
@@ -148,7 +143,6 @@
     <string name="swap_exercise">CAMBIA ESERCIZIO</string>
     <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>
     <string name="training_plans">PIANI ALLENAMENTO</string>
-    <string name="no_exercises_in_routine">Nessun esercizio in questa scheda</string>
     <string name="tap_plus_to_add">Tocca il pulsante + per aggiungere esercizi e iniziare a creare il tuo allenamento.</string>
     <string name="swipe_actions">Azioni Rapide Swipe</string>
     <string name="swipe_actions_desc">Abilita lo swipe per modificare/eliminare elementi e navigare tra gli esercizi</string>
@@ -174,10 +168,8 @@
     <string name="exercises_completed">esercizi completati</string>
     <string name="add_exercise">AGGIUNGI ESERCIZIO</string>
     <string name="add_exercise_to_workout">AGGIUNGI ESERCIZIO</string>
-    <string name="edit_exercise">MODIFICA ESERCIZIO</string>
     <string name="edit_exercise_title">Modifica Esercizio</string>
     <string name="exercise_details">Dettagli Esercizio</string>
-    <string name="update_exercise">Aggiorna Esercizio</string>
     <string name="sets">Serie</string>
     <string name="reps">Ripetizioni</string>
     <string name="weight_kg">Peso</string>
@@ -191,8 +183,6 @@
     <string name="add_custom_exercise">Aggiungi Esercizio Personalizzato</string>
     <string name="category">Categoria</string>
     <string name="superset">SUPER SERIE</string>
-    <string name="link_with_next">COLLEGA AL SUCCESSIVO (SUPER SET)</string>
-    <string name="unlink_superset">SCOLLEGA SUPER SERIE</string>
     <string name="set_number">Serie %d</string>
     <string name="add_set">AGGIUNGI SERIE</string>
     <string name="remove_set">RIMUOVI SERIE</string>
@@ -887,10 +877,6 @@
     <string name="onboarding_ai_toggle_desc">Usa un modello locale per estrarre serie, ripetizioni ed esercizi dalle foto.</string>
     <string name="onboarding_ai_unsupported_desc">Il tuo dispositivo non soddisfa i requisiti minimi (almeno 6 GB di RAM) per eseguire l\'IA locale. Potrai comunque creare e gestire le schede manualmente.</string>
     <string name="onboarding_ai_download_note">Puoi scaricare il modello ora oppure in qualsiasi momento dalle Impostazioni.</string>
-    <string name="ai_scan_empty_state_title">Costruisci la tua scheda</string>
-    <string name="ai_scan_empty_state_desc">Scansiona una foto della tua scheda cartacea per importare gli esercizi in automatico, oppure aggiungili manualmente.</string>
-    <string name="ai_scan_empty_state_scan_button">Scansiona scheda con IA</string>
-    <string name="ai_scan_empty_state_add_manual">Aggiungi a mano</string>
     <string name="ai_scan_confirm_dialog_title">Aggiungere gli esercizi?</string>
     <string name="ai_scan_confirm_dialog_desc">Vuoi confermare e aggiungere i %1$d esercizi rilevati alla tua scheda?</string>
     <string name="ai_scan_confirm_dialog_confirm">Conferma e aggiungi</string>
@@ -986,18 +972,9 @@
     <string name="week_short">W%1$d</string>
     <string name="week_n">Settimana %1$d</string>
     <string name="week_of">Settimana %1$d di %2$d</string>
-    <string name="weekly_program">Programmazione settimanale</string>
-    <string name="weekly_program_desc">Serie, carichi e tecniche possono cambiare ogni settimana</string>
-    <string name="weeks_count">Numero di settimane</string>
-    <string name="program_current_week">Settimana corrente</string>
-    <string name="auto_advance_week">Avanza automaticamente</string>
-    <string name="auto_advance_week_desc">Passa alla settimana successiva quando completi questa routine</string>
-    <string name="copy_previous_week">Copia W%1$d</string>
-    <string name="skip_this_week">Salta in questa settimana</string>
     <string name="not_in_week">Non in W%1$d</string>
     <string name="week_repeats">Da definire · ripete W%1$d</string>
     <string name="current_badge">ATTUALE</string>
-    <string name="set_as_current_week">Imposta come attuale</string>
     <string name="remove_week">Rimuovi ultima settimana</string>
     <string name="program_completed">Programmazione completata. Ottimo lavoro!</string>
     <string name="restart_program">Ricomincia</string>
@@ -1124,9 +1101,6 @@
     <string name="ai_program_review_pick_week">Scegli la settimana da importare. Potrai modificarla dopo.</string>
     <string name="ai_program_save_one_rep_max">Salva massimale %1$s</string>
     <string name="ai_program_import">Importa</string>
-    <string name="delete_week">Elimina settimana</string>
-    <string name="delete_week_title">Eliminare W%1$d?</string>
-    <string name="delete_week_message">La settimana viene rimossa da tutti gli esercizi della routine e quelle successive scalano di una posizione. Gli allenamenti già svolti non cambiano.</string>
     <string name="prescription">Prescrizione</string>
     <string name="edit_prescription">Modifica prescrizione</string>
     <string name="add_prescription">Aggiungi prescrizione</string>
@@ -1135,7 +1109,6 @@
     <string name="prescription_remove_sets_title">Rimuovere serie?</string>
     <string name="prescription_remove_sets_message">%1$d serie registrate non rientrano nella nuova prescrizione e verranno rimosse.</string>
     <string name="keep_prescription_on_swap">Il nuovo esercizio mantiene la prescrizione del precedente.</string>
-    <string name="delete_week_message_local">La settimana viene rimossa da questo esercizio e quelle successive scalano di una posizione.</string>
     <string name="advanced_programming">Programmazione avanzata</string>
     <string name="advanced_programming_desc" formatted="false">Serie in %1RM, tecniche come fermi e catene, programmi a settimane, massimali e RPE target</string>
     <string name="ai_program_review_summary">%1$d settimane · %2$d blocchi</string>
@@ -1499,19 +1472,6 @@
     <string name="rpe_level_hard_desc">Impegnativo · Sforzo alto</string>
     <string name="rpe_level_maximum">Massimo</string>
     <string name="rpe_level_maximum_desc">Vicino al limite · Cedimento o sforzo massimo</string>
-    <string name="routine_exercises_section">Esercizi</string>
-    <plurals name="routine_exercises_count">
-        <item quantity="one">%d esercizio</item>
-        <item quantity="many">%d esercizi</item>
-        <item quantity="other">%d esercizi</item>
-    </plurals>
-    <plurals name="routine_sets_count">
-        <item quantity="one">%d serie</item>
-        <item quantity="many">%d serie</item>
-        <item quantity="other">%d serie</item>
-    </plurals>
-    <string name="routine_header_expand">Mostra dettagli</string>
-    <string name="routine_header_collapse">Nascondi dettagli</string>
     <!-- Exercise detail -->
     <string name="exercise_detail_open">Dettagli esercizio</string>
     <string name="exercise_detail_records">Record</string>

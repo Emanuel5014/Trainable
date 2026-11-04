@@ -230,4 +230,69 @@
     <string name="new_exercise">Neue Übung</string>
     <string name="search_exercises">Übungen suchen</string>
     <string name="select_exercise">Übung auswählen</string>
+    <string name="ai_scan_empty_state_add_manual">Manuell hinzufügen</string>
+    <string name="ai_scan_empty_state_desc">Scanne ein Foto deines Papiertrainingsplans, um Übungen automatisch zu importieren, oder füge sie manuell hinzu.</string>
+    <string name="ai_scan_empty_state_scan_button">Plan mit KI scannen</string>
+    <string name="ai_scan_empty_state_title">Erstelle deinen Plan</string>
+    <string name="auto_advance_week">Automatisch weiter</string>
+    <string name="auto_advance_week_desc">Wechselt zur nächsten Woche, wenn du diese Routine abschließt</string>
+    <string name="copy_previous_week">W%1$d kopieren</string>
+    <string name="delete_week">Woche löschen</string>
+    <string name="delete_week_message">Die Woche wird aus allen Übungen dieser Routine entfernt, die folgenden Wochen rücken auf. Vergangene Einheiten bleiben unverändert.</string>
+    <string name="delete_week_message_local">Die Woche wird aus dieser Übung entfernt, die folgenden Wochen rücken auf.</string>
+    <string name="delete_week_title">W%1$d löschen?</string>
+    <string name="edit_exercise">ÜBUNG BEARBEITEN</string>
+    <string name="edit_routine">ROUTINE BEARBEITEN</string>
+    <string name="link_with_next">MIT NÄCHSTEM VERKNÜPFEN (SUPERSATZ)</string>
+    <string name="no_exercises_in_routine">Keine Übungen in dieser Routine</string>
+    <string name="program_current_week">Aktuelle Woche</string>
+    <string name="reset_routine_content">Inhalt zurücksetzen?</string>
+    <string name="reset_routine_content_message">Dies entfernt dauerhaft alle Bilder und Übungen aus dieser Routine. Die Routine selbst bleibt erhalten. Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="routine_details">Details</string>
+    <string name="routine_exercises_section">Übungen</string>
+    <string name="routine_header_collapse">Details ausblenden</string>
+    <string name="routine_header_expand">Details anzeigen</string>
+    <string name="set_as_current_week">Als aktuell setzen</string>
+    <string name="skip_this_week">In dieser Woche auslassen</string>
+    <string name="unlink_superset">SUPERSATZ TRENNEN</string>
+    <string name="update_exercise">Übung aktualisieren</string>
+    <string name="update_plan">Plan aktualisieren</string>
+    <string name="weekly_program">Wochenprogramm</string>
+    <string name="weekly_program_desc">Sätze, Lasten und Techniken können sich jede Woche ändern</string>
+    <string name="weeks_count">Anzahl der Wochen</string>
+    <string name="add_exercise">ÜBUNG HINZUFÜGEN</string>
+    <string name="advanced_needs_block">Füge mindestens einen Block hinzu</string>
+    <string name="cardio_duration_slider">Dauer (Min)</string>
+    <string name="exercise_details">Übungsdetails</string>
+    <string name="rest_seconds">Pause (Sekunden)</string>
+    <string name="superset">SUPERSATZ</string>
+    <string name="tap_plus_to_add">Tippe auf die + Taste, um Übungen hinzuzufügen und dein Training zu gestalten.</string>
+    <string name="week_of">Woche %1$d von %2$d</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%1$d Übung</item>
+        <item quantity="other">%1$d Übungen</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%1$d Satz</item>
+        <item quantity="other">%1$d Sätze</item>
+    </plurals>
+    <string name="bodyweight_short">KG</string>
+    <string name="extra_badge">EXTRA</string>
+    <string name="max_label">MAX</string>
+    <string name="performed_technique_badge">Ausgeführt: %1$s</string>
+    <string name="performed_technique_none">Ohne Technik</string>
+    <string name="rpe_short">RPE %1$s</string>
+    <string name="total_reps_label">%1$d Wdh. gesamt</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%1$d mit Hilfe</item>
+        <item quantity="other">+%1$d mit Hilfe</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%1$d Teilwdh.</item>
+        <item quantity="other">+%1$d Teilwdh.</item>
+    </plurals>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · Pause %2$s</item>
+        <item quantity="other">%1$s · Pausen %2$s</item>
+    </plurals>
 </resources>

@@ -96,13 +96,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainer
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import kotlinx.coroutines.flow.map
 
-/** What the user accepted from a program scan. */
-data class ProgramScanApplication(
-    /** Week number → blocks. In single-week mode there is only week 1. */
-    val weeks: Map<Int, List<PrescriptionBlock>>,
-    val oneRepMaxKg: Float?
-)
-
 /**
  * "Scan the program page" button: camera / gallery → on-device model → reviewable result.
  * Renders nothing unless AI is enabled in settings and the model is downloaded.

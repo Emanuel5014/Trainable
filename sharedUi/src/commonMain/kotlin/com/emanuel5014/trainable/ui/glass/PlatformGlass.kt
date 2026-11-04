@@ -9,6 +9,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.emanuel5014.trainable.data.model.GlassPart
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -101,6 +104,17 @@ fun Modifier.headerGlass(): Modifier = LocalPlatformGlass.current.header(this)
 
 @Composable
 fun Modifier.surfaceGlass(part: GlassPart): Modifier = LocalPlatformGlass.current.surface(this, part)
+
+/** Whether header buttons wear glass: the user has the part on and the platform draws it. */
+@Composable
+fun headerGlassOn(): Boolean = LocalGlassSettings.current.isOn(GlassPart.HeaderButtons) && LocalPlatformGlass.current.hasSurfaceGlass
+
+/**
+ * The container of header buttons that belong together: one capsule of glass around them, as iOS 26 groups its
+ * toolbar buttons, instead of one glass circle each. Put the buttons inside with no fill of their own.
+ */
+@Composable
+fun Modifier.headerGroupGlass(): Modifier = surfaceGlass(GlassPart.HeaderButtons).clip(CircleShape)
 
 @Composable
 fun rememberActionGlassSource(): GlassSource? = LocalPlatformGlass.current.rememberActionSource()

@@ -126,22 +126,17 @@
     <string name="routines">Routines</string>
     <string name="archived_routines_header">Archived</string>
     <string name="active_routines">Active</string>
-    <string name="edit_routine">EDIT ROUTINE</string>
     <string name="add_photo">ADD PHOTO</string>
     <string name="change_photo">CHANGE PHOTO</string>
     <string name="remove_photo">REMOVE PHOTO</string>
-    <string name="update_plan">Update Plan</string>
     <string name="no_archived">No archived routines</string>
     <string name="swipe_for_archived">Swipe down for archived</string>
     <string name="swipe_for_active">Swipe down for active</string>
     <string name="routine_name">Routine Name</string>
-    <string name="routine_details">Details</string>
     <string name="routine_notes">Notes (optional)</string>
     <string name="schedule_days">SCHEDULE DAYS</string>
     <string name="delete_routine">Delete Routine?</string>
     <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
-    <string name="reset_routine_content">Reset Content?</string>
-    <string name="reset_routine_content_message">This will permanently remove all images and exercises from this routine. The routine itself will be kept. This action cannot be undone.</string>
     <string name="start_date">START DATE:</string>
     <string name="end_date">EXPIRATION DATE:</string>
     <string name="expires">Expires:</string>
@@ -149,7 +144,6 @@
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
     <string name="training_plans">TRAINING PLANS</string>
-    <string name="no_exercises_in_routine">No exercises in this routine</string>
     <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
@@ -175,10 +169,8 @@
     <string name="exercises_completed">exercises completed</string>
     <string name="add_exercise">ADD EXERCISE</string>
     <string name="add_exercise_to_workout">ADD EXERCISE</string>
-    <string name="edit_exercise">EDIT EXERCISE</string>
     <string name="edit_exercise_title">Edit Exercise</string>
     <string name="exercise_details">Exercise Details</string>
-    <string name="update_exercise">Update Exercise</string>
     <string name="sets">Sets</string>
     <string name="reps">Reps</string>
     <string name="weight_kg">Weight</string>
@@ -192,8 +184,6 @@
     <string name="add_custom_exercise">Add Custom Exercise</string>
     <string name="category">Category</string>
     <string name="superset">SUPERSET</string>
-    <string name="link_with_next">LINK WITH NEXT (SUPERSET)</string>
-    <string name="unlink_superset">UNLINK SUPERSET</string>
     <string name="set_number">Set %d</string>
     <string name="add_set">ADD SET</string>
     <string name="remove_set">REMOVE SET</string>
@@ -888,10 +878,6 @@
     <string name="onboarding_ai_toggle_desc">Uses a local model to parse sets, reps, and exercises from photos.</string>
     <string name="onboarding_ai_unsupported_desc">Your device does not meet the hardware requirements (at least 6 GB RAM) for local AI execution. You can still create and manage routines manually.</string>
     <string name="onboarding_ai_download_note">You can download the model now or anytime later in Settings.</string>
-    <string name="ai_scan_empty_state_title">Build your routine</string>
-    <string name="ai_scan_empty_state_desc">Scan a photo of your paper training sheet to import exercises automatically, or add them manually.</string>
-    <string name="ai_scan_empty_state_scan_button">Scan sheet with AI</string>
-    <string name="ai_scan_empty_state_add_manual">Add manually</string>
     <string name="ai_scan_confirm_dialog_title">Add scanned exercises?</string>
     <string name="ai_scan_confirm_dialog_desc">Are you sure you want to add the %1$d scanned exercises to your routine?</string>
     <string name="ai_scan_confirm_dialog_confirm">Confirm &amp; Add</string>
@@ -987,18 +973,9 @@
     <string name="week_short">W%1$d</string>
     <string name="week_n">Week %1$d</string>
     <string name="week_of">Week %1$d of %2$d</string>
-    <string name="weekly_program">Weekly program</string>
-    <string name="weekly_program_desc">Sets, loads and techniques can change week by week</string>
-    <string name="weeks_count">Number of weeks</string>
-    <string name="program_current_week">Current week</string>
-    <string name="auto_advance_week">Advance automatically</string>
-    <string name="auto_advance_week_desc">Moves to the next week when you finish this routine</string>
-    <string name="copy_previous_week">Copy W%1$d</string>
-    <string name="skip_this_week">Skip in this week</string>
     <string name="not_in_week">Not in W%1$d</string>
     <string name="week_repeats">Not written yet · repeats W%1$d</string>
     <string name="current_badge">CURRENT</string>
-    <string name="set_as_current_week">Set as current</string>
     <string name="remove_week">Remove last week</string>
     <string name="program_completed">Program completed. Nice work!</string>
     <string name="restart_program">Restart</string>
@@ -1125,9 +1102,6 @@
     <string name="ai_program_review_pick_week">Pick the week to import. You can edit it afterwards.</string>
     <string name="ai_program_save_one_rep_max">Save 1RM %1$s</string>
     <string name="ai_program_import">Import</string>
-    <string name="delete_week">Delete week</string>
-    <string name="delete_week_title">Delete W%1$d?</string>
-    <string name="delete_week_message">The week is removed from every exercise of this routine and the following weeks move up by one. Past sessions are not affected.</string>
     <string name="prescription">Prescription</string>
     <string name="edit_prescription">Edit prescription</string>
     <string name="add_prescription">Add prescription</string>
@@ -1136,7 +1110,6 @@
     <string name="prescription_remove_sets_title">Remove sets?</string>
     <string name="prescription_remove_sets_message">%1$d logged sets don\'t fit the new prescription and will be removed.</string>
     <string name="keep_prescription_on_swap">The new exercise keeps the prescription of the old one.</string>
-    <string name="delete_week_message_local">The week is removed from this exercise and the following weeks move up by one.</string>
     <string name="advanced_programming">Advanced programming</string>
     <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE targets</string>
     <string name="ai_program_review_summary">%1$d weeks · %2$d blocks</string>
@@ -1499,17 +1472,6 @@
     <string name="rpe_level_hard_desc">Challenging · High effort</string>
     <string name="rpe_level_maximum">Maximum</string>
     <string name="rpe_level_maximum_desc">Near your limit · Failure or maximal effort</string>
-    <string name="routine_exercises_section">Exercises</string>
-    <plurals name="routine_exercises_count">
-        <item quantity="one">%d exercise</item>
-        <item quantity="other">%d exercises</item>
-    </plurals>
-    <plurals name="routine_sets_count">
-        <item quantity="one">%d set</item>
-        <item quantity="other">%d sets</item>
-    </plurals>
-    <string name="routine_header_expand">Show details</string>
-    <string name="routine_header_collapse">Hide details</string>
     <!-- Exercise detail -->
     <string name="exercise_detail_open">Exercise details</string>
     <string name="exercise_detail_records">Records</string>

@@ -230,4 +230,71 @@
     <string name="new_exercise">Novo Exercício</string>
     <string name="search_exercises">Pesquisar exercícios</string>
     <string name="select_exercise">Selecionar Exercício</string>
+    <string name="ai_scan_empty_state_add_manual">Adicionar manualmente</string>
+    <string name="ai_scan_empty_state_desc">Digitaliza uma foto da tua folha de treino em papel para importar exercícios automaticamente, ou adiciona-os manualmente.</string>
+    <string name="ai_scan_empty_state_scan_button">Digitalizar folha com IA</string>
+    <string name="ai_scan_empty_state_title">Constrói o teu plano</string>
+    <string name="auto_advance_week">Avançar automaticamente</string>
+    <string name="auto_advance_week_desc">Passa para a semana seguinte ao concluir esta rotina</string>
+    <string name="copy_previous_week">Copiar S%1$d</string>
+    <string name="delete_week">Excluir semana</string>
+    <string name="delete_week_message">A semana é removida de todos os exercícios desta rotina e as seguintes sobem uma posição. Sessões passadas não mudam.</string>
+    <string name="delete_week_message_local">A semana é removida deste exercício e as seguintes sobem uma posição.</string>
+    <string name="delete_week_title">Excluir S%1$d?</string>
+    <string name="edit_exercise">EDITAR EXERCÍCIO</string>
+    <string name="edit_routine">EDITAR ROTINA</string>
+    <string name="link_with_next">VINCULAR COM PRÓXIMO (SUPERSÉRIE)</string>
+    <string name="no_exercises_in_routine">Nenhum exercício nesta rotina</string>
+    <string name="program_current_week">Semana atual</string>
+    <string name="reset_routine_content">Redefinir Conteúdo?</string>
+    <string name="reset_routine_content_message">Isso removerá permanentemente todas as imagens e exercícios desta rotina. A rotina será mantida. Esta ação não pode ser desfeita.</string>
+    <string name="routine_details">Detalhes</string>
+    <string name="routine_exercises_section">Exercícios</string>
+    <string name="routine_header_collapse">Ocultar detalhes</string>
+    <string name="routine_header_expand">Mostrar detalhes</string>
+    <string name="set_as_current_week">Definir como atual</string>
+    <string name="skip_this_week">Pular nesta semana</string>
+    <string name="unlink_superset">DESVINCULAR SUPERSÉRIE</string>
+    <string name="update_exercise">Atualizar Exercício</string>
+    <string name="update_plan">Atualizar Plano</string>
+    <string name="weekly_program">Programação semanal</string>
+    <string name="weekly_program_desc">Séries, cargas e técnicas podem mudar a cada semana</string>
+    <string name="weeks_count">Número de semanas</string>
+    <string name="add_exercise">ADICIONAR EXERCÍCIO</string>
+    <string name="advanced_needs_block">Adicione pelo menos um bloco</string>
+    <string name="cardio_duration_slider">Duração (min)</string>
+    <string name="exercise_details">Detalhes do Exercício</string>
+    <string name="rest_seconds">Descanso (Segundos)</string>
+    <string name="superset">SUPERSÉRIE</string>
+    <string name="tap_plus_to_add">Toque no botão + para adicionar exercícios e começar a montar seu treino.</string>
+    <string name="week_of">Semana %1$d de %2$d</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%1$d exercício</item>
+        <item quantity="many">%1$d exercícios</item>
+        <item quantity="other">%1$d exercícios</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%1$d série</item>
+        <item quantity="many">%1$d séries</item>
+        <item quantity="other">%1$d séries</item>
+    </plurals>
+    <string name="bodyweight_short">PC</string>
+    <string name="extra_badge">EXTRA</string>
+    <string name="max_label">MÁX</string>
+    <string name="performed_technique_badge">Feita: %1$s</string>
+    <string name="performed_technique_none">Sem técnica</string>
+    <string name="rpe_short">RPE %1$s</string>
+    <string name="total_reps_label">%1$d reps no total</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%1$d assistida</item>
+        <item quantity="other">+%1$d assistidas</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%1$d parcial</item>
+        <item quantity="other">+%1$d parciais</item>
+    </plurals>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pausa %2$s</item>
+        <item quantity="other">%1$s · pausas %2$s</item>
+    </plurals>
 </resources>

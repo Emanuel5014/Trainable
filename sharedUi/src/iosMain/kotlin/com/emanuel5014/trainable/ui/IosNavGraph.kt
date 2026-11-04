@@ -34,6 +34,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import com.emanuel5014.trainable.ui.screens.routines.NoRoutineScan
+import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailContent
 import com.emanuel5014.trainable.data.model.NavBarStyle
 import com.emanuel5014.trainable.ui.components.BottomBarManager
 import com.emanuel5014.trainable.ui.components.BottomNavBar
@@ -89,7 +94,20 @@ internal fun IosNavGraph(
             composable<Settings> { NotOnIosYet("Settings", onBack = { navController.popBackStack() }) }
             composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
             composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
-            composable<RoutineDetail> { NotOnIosYet("Routine", onBack = { navController.popBackStack() }) }
+            composable<RoutineDetail> { entry ->
+                val planId = entry.toRoute<RoutineDetail>().planId
+                val scope = rememberCoroutineScope()
+                val detail = remember(planId) { IosAppGraph.routineDetail(planId, scope) }
+                RoutineDetailContent(
+                    state = detail,
+                    // The exercise categories in the phone's language until the app's own choice reaches iOS
+                    languageCode = Locale.current.language,
+                    // Scanning a routine sheet with AI is not on iOS yet
+                    scan = NoRoutineScan,
+                    onNavigateBack = { navController.popBackStack() },
+                    onStartWorkout = { id, sessionId -> navController.navigate(WorkoutExecution(planId = id, sessionId = sessionId)) }
+                )
+            }
             composable<Report> { NotOnIosYet("Report", onBack = { navController.popBackStack() }) }
         }
 

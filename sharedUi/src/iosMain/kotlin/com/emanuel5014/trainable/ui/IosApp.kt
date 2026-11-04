@@ -24,6 +24,23 @@ import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.PlanRepository
+import com.emanuel5014.trainable.data.repository.ExerciseRepository
+import com.emanuel5014.trainable.data.repository.IosExerciseMediaFiles
+import com.emanuel5014.trainable.data.repository.IosWorkoutPlatform
+import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
+import com.emanuel5014.trainable.data.repository.WorkoutRepository
+import com.emanuel5014.trainable.domain.prescription.LoadCalculator
+import com.emanuel5014.trainable.domain.rpe.RpeScale
+import com.emanuel5014.trainable.domain.rpe.RpeSettings
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionEnvironment
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
+import com.emanuel5014.trainable.ui.components.LocalRpeSettings
+import com.emanuel5014.trainable.ui.components.PrescriptionEnvironment
+import com.emanuel5014.trainable.ui.components.ProgramScanApplication
+import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.createSettingsDataStore
@@ -48,10 +65,55 @@ import platform.UIKit.UIViewController
 /** The iOS app's root, shown by the Xcode project: the app's navigation on the device's own data. */
 fun MainViewController(): UIViewController = ComposeUIViewController { TrainableIosApp() }
 
-/** One database and one settings file for the whole process. */
-private object IosAppGraph {
+/** One database and one settings file for the whole process, and the repositories over them. */
+internal object IosAppGraph {
     val database by lazy { GymDatabaseInstance.getDatabase() }
     val preferences by lazy { UserPreferencesRepository(createSettingsDataStore()) }
+    val oneRepMaxes by lazy { OneRepMaxRepository(database.oneRepMaxDao()) }
+    val workouts by lazy {
+        WorkoutRepository(
+            database.workoutDao(), database.userDao(), database.exerciseDao(), database.oneRepMaxDao(), preferences,
+            IosWorkoutPlatform()
+        )
+    }
+    val exercises by lazy { ExerciseRepository(database.exerciseDao(), IosExerciseMediaFiles()) }
+
+    fun routineDetail(planId: Int, scope: CoroutineScope) =
+        RoutineDetailState(planId, workouts, exercises, preferences, oneRepMaxes, scope)
+}
+
+/** The advanced editor's environment on iOS: units, rounding and 1RMs of the device; no AI yet. */
+private val IosPrescriptionEnvironment: @Composable () -> PrescriptionEnvironment = {
+    val preferences = IosAppGraph.preferences
+    val maxes = IosAppGraph.oneRepMaxes
+    val scope = rememberCoroutineScope()
+    val weightUnit by preferences.weightUnit.collectAsState(initial = "kg")
+    val rounding by preferences.loadRoundingIncrement.collectAsState(initial = LoadCalculator.DEFAULT_INCREMENT_KG)
+    val current by remember { maxes.currentByExercise().map { all -> all.mapValues { it.value.weightKg } } }
+        .collectAsState(initial = emptyMap())
+    val estimated by remember { maxes.estimatedByExercise() }.collectAsState(initial = emptyMap())
+    object : PrescriptionEnvironment {
+        override val weightUnit: String get() = weightUnit
+        override val roundingIncrement: Float get() = rounding
+        override val oneRepMaxes: Map<Int, Float> get() = current
+        override val estimatedOneRepMaxes: Map<Int, Float> get() = estimated
+        override val aiAvailable: Boolean get() = false
+
+        override fun saveOneRepMax(exerciseId: Int, weightKg: Float, source: String) {
+            scope.launch { maxes.add(exerciseId = exerciseId, weightKg = weightKg, source = source) }
+        }
+
+        @Composable
+        override fun AiProgramScanButton(
+            exerciseName: String?,
+            singleWeek: Boolean,
+            currentOneRepMaxKg: Float?,
+            weightUnit: String,
+            onApply: (ProgramScanApplication) -> Unit,
+            modifier: Modifier,
+            scanKey: String?
+        ) {}
+    }
 }
 
 @Composable
@@ -84,6 +146,9 @@ private fun TrainableIosApp() {
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
     val navBarStyle by preferences.navBarStyle.collectAsState(initial = null)
+    val rpeEnabled by preferences.rpeEnabled.collectAsState(initial = false)
+    val rpeScale by preferences.rpeScale.collectAsState(initial = RpeScale.BASIC)
+    val rpeSettings = remember(rpeEnabled, rpeScale) { RpeSettings(rpeEnabled, rpeScale) }
     // Same choice as the Android app: dark unless the user picked light or the system's
     val isDark = when (themeMode) {
         null -> true
@@ -102,7 +167,10 @@ private fun TrainableIosApp() {
         CompositionLocalProvider(
             LocalHapticsSetting provides preferences.hapticEnabled,
             LocalAdvancedProgramming provides advancedProgramming,
-            LocalNavBarStyle provides style
+            LocalNavBarStyle provides style,
+            LocalRpeSettings provides rpeSettings,
+            LocalPrescriptionText provides rememberIosPrescriptionText(),
+            LocalPrescriptionEnvironment provides IosPrescriptionEnvironment
         ) {
             IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, navBarStyle = style, isDark = isDark)
         }

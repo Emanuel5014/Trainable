@@ -230,4 +230,71 @@
     <string name="new_exercise">Nouvel Exercice</string>
     <string name="search_exercises">Rechercher des exercices</string>
     <string name="select_exercise">Sélectionner un Exercice</string>
+    <string name="ai_scan_empty_state_add_manual">Ajouter manuellement</string>
+    <string name="ai_scan_empty_state_desc">Scanne une photo de ta feuille d'entraînement papier pour importer les exercices automatiquement, ou ajoute-les manuellement.</string>
+    <string name="ai_scan_empty_state_scan_button">Scanner la feuille avec l'IA</string>
+    <string name="ai_scan_empty_state_title">Construis ta séance</string>
+    <string name="auto_advance_week">Avancer automatiquement</string>
+    <string name="auto_advance_week_desc">Passe à la semaine suivante quand tu termines cette routine</string>
+    <string name="copy_previous_week">Copier S%1$d</string>
+    <string name="delete_week">Supprimer la semaine</string>
+    <string name="delete_week_message">La semaine est retirée de tous les exercices de cette routine et les suivantes remontent d'un rang. Les séances passées ne changent pas.</string>
+    <string name="delete_week_message_local">La semaine est retirée de cet exercice et les suivantes remontent d'un rang.</string>
+    <string name="delete_week_title">Supprimer S%1$d ?</string>
+    <string name="edit_exercise">MODIFIER L'EXERCICE</string>
+    <string name="edit_routine">MODIFIER LA ROUTINE</string>
+    <string name="link_with_next">LIER À LA SUIVANTE (SUPERSÉRIE)</string>
+    <string name="no_exercises_in_routine">Aucun exercice dans cette routine</string>
+    <string name="program_current_week">Semaine en cours</string>
+    <string name="reset_routine_content">Réinitialiser le Contenu ?</string>
+    <string name="reset_routine_content_message">Cela supprimera définitivement toutes les images et tous les exercices de cette routine. La routine elle-même sera conservée. Cette action est irréversible.</string>
+    <string name="routine_details">Détails</string>
+    <string name="routine_exercises_section">Exercices</string>
+    <string name="routine_header_collapse">Masquer les détails</string>
+    <string name="routine_header_expand">Afficher les détails</string>
+    <string name="set_as_current_week">Définir comme actuelle</string>
+    <string name="skip_this_week">Sauter cette semaine</string>
+    <string name="unlink_superset">DÉLIER LA SUPERSÉRIE</string>
+    <string name="update_exercise">Mettre à Jour l'Exercice</string>
+    <string name="update_plan">Mettre à Jour le Plan</string>
+    <string name="weekly_program">Programme hebdomadaire</string>
+    <string name="weekly_program_desc">Séries, charges et techniques peuvent changer chaque semaine</string>
+    <string name="weeks_count">Nombre de semaines</string>
+    <string name="add_exercise">AJOUTER UN EXERCICE</string>
+    <string name="advanced_needs_block">Ajoute au moins un bloc</string>
+    <string name="cardio_duration_slider">Durée (min)</string>
+    <string name="exercise_details">Détails de l'Exercice</string>
+    <string name="rest_seconds">Repos (Secondes)</string>
+    <string name="superset">SUPERSÉRIE</string>
+    <string name="tap_plus_to_add">Tape sur le bouton + pour ajouter des exercices et construire ton entraînement.</string>
+    <string name="week_of">Semaine %1$d sur %2$d</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%1$d exercice</item>
+        <item quantity="many">%1$d exercices</item>
+        <item quantity="other">%1$d exercices</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%1$d série</item>
+        <item quantity="many">%1$d séries</item>
+        <item quantity="other">%1$d séries</item>
+    </plurals>
+    <string name="bodyweight_short">PDC</string>
+    <string name="extra_badge">EXTRA</string>
+    <string name="max_label">MAX</string>
+    <string name="performed_technique_badge">Faite : %1$s</string>
+    <string name="performed_technique_none">Sans technique</string>
+    <string name="rpe_short">RPE %1$s</string>
+    <string name="total_reps_label">%1$d reps au total</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%1$d aidée</item>
+        <item quantity="other">+%1$d aidées</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%1$d partielle</item>
+        <item quantity="other">+%1$d partielles</item>
+    </plurals>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pause %2$s</item>
+        <item quantity="other">%1$s · pauses %2$s</item>
+    </plurals>
 </resources>

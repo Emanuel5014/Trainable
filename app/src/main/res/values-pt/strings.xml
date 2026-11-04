@@ -125,22 +125,17 @@
     <string name="routines">Rotinas</string>
     <string name="archived_routines_header">Arquivadas</string>
     <string name="active_routines">Ativas</string>
-    <string name="edit_routine">EDITAR ROTINA</string>
     <string name="add_photo">ADICIONAR FOTO</string>
     <string name="change_photo">ALTERAR FOTO</string>
     <string name="remove_photo">REMOVER FOTO</string>
-    <string name="update_plan">Atualizar Plano</string>
     <string name="no_archived">Nenhuma rotina arquivada</string>
     <string name="swipe_for_archived">Deslize para baixo para arquivadas</string>
     <string name="swipe_for_active">Deslize para baixo para ativas</string>
     <string name="routine_name">Nome da Rotina</string>
-    <string name="routine_details">Detalhes</string>
     <string name="routine_notes">Notas (opcional)</string>
     <string name="schedule_days">DIAS PROGRAMADOS</string>
     <string name="delete_routine">Excluir Rotina?</string>
     <string name="delete_routine_message">Isso excluirá permanentemente esta rotina e todos os seus exercícios.</string>
-    <string name="reset_routine_content">Redefinir Conteúdo?</string>
-    <string name="reset_routine_content_message">Isso removerá permanentemente todas as imagens e exercícios desta rotina. A rotina será mantida. Esta ação não pode ser desfeita.</string>
     <string name="start_date">DATA DE INÍCIO:</string>
     <string name="end_date">DATA DE VENCIMENTO:</string>
     <string name="expires">Vence em:</string>
@@ -148,7 +143,6 @@
     <string name="swap_exercise">TROCAR EXERCÍCIO</string>
     <string name="swap_exercise_message">Substitua este exercício apenas para esta sessão</string>
     <string name="training_plans">PLANOS DE TREINO</string>
-    <string name="no_exercises_in_routine">Nenhum exercício nesta rotina</string>
     <string name="tap_plus_to_add">Toque no botão + para adicionar exercícios e começar a montar seu treino.</string>
     <string name="swipe_actions">Ações de Deslize</string>
     <string name="swipe_actions_desc">Ativar deslize para editar/arquivar/excluir itens e navegar entre exercícios</string>
@@ -174,10 +168,8 @@
     <string name="exercises_completed">exercícios concluídos</string>
     <string name="add_exercise">ADICIONAR EXERCÍCIO</string>
     <string name="add_exercise_to_workout">ADICIONAR EXERCÍCIO</string>
-    <string name="edit_exercise">EDITAR EXERCÍCIO</string>
     <string name="edit_exercise_title">Editar Exercício</string>
     <string name="exercise_details">Detalhes do Exercício</string>
-    <string name="update_exercise">Atualizar Exercício</string>
     <string name="sets">Séries</string>
     <string name="reps">Repetições</string>
     <string name="weight_kg">Peso</string>
@@ -191,8 +183,6 @@
     <string name="add_custom_exercise">Adicionar Exercício Personalizado</string>
     <string name="category">Categoria</string>
     <string name="superset">SUPERSÉRIE</string>
-    <string name="link_with_next">VINCULAR COM PRÓXIMO (SUPERSÉRIE)</string>
-    <string name="unlink_superset">DESVINCULAR SUPERSÉRIE</string>
     <string name="set_number">Série %d</string>
     <string name="add_set">ADICIONAR SÉRIE</string>
     <string name="remove_set">REMOVER SÉRIE</string>
@@ -887,10 +877,6 @@
     <string name="onboarding_ai_toggle_desc">Usa um modelo local para extrair séries, repetições e exercícios de fotos.</string>
     <string name="onboarding_ai_unsupported_desc">O seu dispositivo não cumpre os requisitos mínimos (pelo menos 6 GB de RAM) para IA local. Pode criar e gerir rotinas manualmente.</string>
     <string name="onboarding_ai_download_note">Pode transferir o modelo agora ou mais tarde nas Definições.</string>
-    <string name="ai_scan_empty_state_title">Constrói o teu plano</string>
-    <string name="ai_scan_empty_state_desc">Digitaliza uma foto da tua folha de treino em papel para importar exercícios automaticamente, ou adiciona-os manualmente.</string>
-    <string name="ai_scan_empty_state_scan_button">Digitalizar folha com IA</string>
-    <string name="ai_scan_empty_state_add_manual">Adicionar manualmente</string>
     <string name="ai_scan_confirm_dialog_title">Adicionar exercícios digitalizados?</string>
     <string name="ai_scan_confirm_dialog_desc">Quer adicionar os %1$d exercícios detetados ao teu plano?</string>
     <string name="ai_scan_confirm_dialog_confirm">Confirmar e adicionar</string>
@@ -986,18 +972,9 @@
     <string name="week_short">S%1$d</string>
     <string name="week_n">Semana %1$d</string>
     <string name="week_of">Semana %1$d de %2$d</string>
-    <string name="weekly_program">Programação semanal</string>
-    <string name="weekly_program_desc">Séries, cargas e técnicas podem mudar a cada semana</string>
-    <string name="weeks_count">Número de semanas</string>
-    <string name="program_current_week">Semana atual</string>
-    <string name="auto_advance_week">Avançar automaticamente</string>
-    <string name="auto_advance_week_desc">Passa para a semana seguinte ao concluir esta rotina</string>
-    <string name="copy_previous_week">Copiar S%1$d</string>
-    <string name="skip_this_week">Pular nesta semana</string>
     <string name="not_in_week">Não na S%1$d</string>
     <string name="week_repeats">A definir · repete S%1$d</string>
     <string name="current_badge">ATUAL</string>
-    <string name="set_as_current_week">Definir como atual</string>
     <string name="remove_week">Remover a última semana</string>
     <string name="program_completed">Programa concluído. Ótimo trabalho!</string>
     <string name="restart_program">Reiniciar</string>
@@ -1124,9 +1101,6 @@
     <string name="ai_program_review_pick_week">Escolha a semana a importar. Você poderá editá-la depois.</string>
     <string name="ai_program_save_one_rep_max">Salvar 1RM %1$s</string>
     <string name="ai_program_import">Importar</string>
-    <string name="delete_week">Excluir semana</string>
-    <string name="delete_week_title">Excluir S%1$d?</string>
-    <string name="delete_week_message">A semana é removida de todos os exercícios desta rotina e as seguintes sobem uma posição. Sessões passadas não mudam.</string>
     <string name="prescription">Prescrição</string>
     <string name="edit_prescription">Editar prescrição</string>
     <string name="add_prescription">Adicionar prescrição</string>
@@ -1135,7 +1109,6 @@
     <string name="prescription_remove_sets_title">Remover séries?</string>
     <string name="prescription_remove_sets_message">%1$d séries registradas não cabem na nova prescrição e serão removidas.</string>
     <string name="keep_prescription_on_swap">O novo exercício mantém a prescrição do anterior.</string>
-    <string name="delete_week_message_local">A semana é removida deste exercício e as seguintes sobem uma posição.</string>
     <string name="advanced_programming">Programação avançada</string>
     <string name="advanced_programming_desc" formatted="false">Séries em %1RM, técnicas como pausas e correntes, programas semanais, 1RM e RPE alvo</string>
     <string name="ai_program_review_summary">%1$d semanas · %2$d blocos</string>
@@ -1499,19 +1472,6 @@
     <string name="rpe_level_hard_desc">Exigente · Esforço alto</string>
     <string name="rpe_level_maximum">Máximo</string>
     <string name="rpe_level_maximum_desc">Perto do seu limite · Falha ou esforço máximo</string>
-    <string name="routine_exercises_section">Exercícios</string>
-    <plurals name="routine_exercises_count">
-        <item quantity="one">%d exercício</item>
-        <item quantity="many">%d exercícios</item>
-        <item quantity="other">%d exercícios</item>
-    </plurals>
-    <plurals name="routine_sets_count">
-        <item quantity="one">%d série</item>
-        <item quantity="many">%d séries</item>
-        <item quantity="other">%d séries</item>
-    </plurals>
-    <string name="routine_header_expand">Mostrar detalhes</string>
-    <string name="routine_header_collapse">Ocultar detalhes</string>
     <!-- Exercise detail -->
     <string name="exercise_detail_open">Detalhes do exercício</string>
     <string name="exercise_detail_records">Recordes</string>

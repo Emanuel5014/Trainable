@@ -1,5 +1,17 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.copy_previous_week
+import com.emanuel5014.trainable.sharedui.resources.delete
+import com.emanuel5014.trainable.sharedui.resources.delete_week
+import com.emanuel5014.trainable.sharedui.resources.delete_week_message
+import com.emanuel5014.trainable.sharedui.resources.delete_week_message_local
+import com.emanuel5014.trainable.sharedui.resources.delete_week_title
+import com.emanuel5014.trainable.sharedui.resources.edit_one_rep_max
+import com.emanuel5014.trainable.sharedui.resources.not_in_week
+import com.emanuel5014.trainable.sharedui.resources.skip_this_week
+import com.emanuel5014.trainable.sharedui.resources.week_repeats
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,15 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionResolver
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
@@ -45,7 +52,6 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import kotlinx.coroutines.flow.map
 
 /** Week handling for periodized programs; pass null to [AdvancedPrescriptionEditor] for a single-week context (a session). */
 data class WeekEditing(
@@ -88,17 +94,14 @@ fun AdvancedPrescriptionEditor(
     /** See [AiProgramScanButton]: needed when several editors are on screen at once. */
     aiScanKey: String? = null
 ) {
-    val environment: PrescriptionEnvironmentViewModel = hiltViewModel()
-    val weightUnit by environment.weightUnit.collectAsState()
-    val roundingIncrement by environment.roundingIncrement.collectAsState()
-    val storedMaxes by environment.oneRepMaxes.collectAsState()
-    val storedEstimates by environment.estimatedOneRepMaxes.collectAsState()
-    val aiAvailable by environment.aiAvailable.collectAsState()
+    val environment = LocalPrescriptionEnvironment.current()
+    val weightUnit = environment.weightUnit
+    val roundingIncrement = environment.roundingIncrement
+    val storedMaxes = environment.oneRepMaxes
+    val storedEstimates = environment.estimatedOneRepMaxes
+    val aiAvailable = environment.aiAvailable
 
-    val context = LocalContext.current
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
 
     val binding = oneRepMax ?: OneRepMaxBinding(
         kg = exerciseId?.let { storedMaxes[it] },
@@ -162,7 +165,7 @@ fun AdvancedPrescriptionEditor(
                             }
                         }) {
                             Text(
-                                text = stringResource(R.string.copy_previous_week, selectedWeek - 1).uppercase(),
+                                text = stringResource(Res.string.copy_previous_week, selectedWeek - 1).uppercase(),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Primary
@@ -179,7 +182,7 @@ fun AdvancedPrescriptionEditor(
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                text = stringResource(R.string.delete_week).uppercase(),
+                                text = stringResource(Res.string.delete_week).uppercase(),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Error
@@ -190,7 +193,7 @@ fun AdvancedPrescriptionEditor(
                 if (excluded != null) {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Text(
-                            text = stringResource(R.string.skip_this_week),
+                            text = stringResource(Res.string.skip_this_week),
                             style = MaterialTheme.typography.bodyMedium,
                             color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold,
@@ -209,13 +212,13 @@ fun AdvancedPrescriptionEditor(
         }
 
         if (isWeekExcluded) {
-            PrescriptionPill(text = stringResource(R.string.not_in_week, week))
+            PrescriptionPill(text = stringResource(Res.string.not_in_week, week))
         } else {
             if (weeks != null && weekBlocks.isEmpty()) {
                 val fallback = PrescriptionResolver.resolve(blocksByWeek, emptySet(), week)
                 if (fallback is ResolvedPrescription.Blocks && fallback.isFallback) {
                     Text(
-                        text = stringResource(R.string.week_repeats, fallback.sourceWeek),
+                        text = stringResource(Res.string.week_repeats, fallback.sourceWeek),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -231,7 +234,7 @@ fun AdvancedPrescriptionEditor(
                     hapticEnabled = hapticEnabled,
                     footerActions = if (showAiButton && aiAvailable) {
                         {
-                            AiProgramScanButton(
+                            environment.AiProgramScanButton(
                                 exerciseName = exerciseName,
                                 singleWeek = weeks == null,
                                 currentOneRepMaxKg = binding.kg,
@@ -259,7 +262,7 @@ fun AdvancedPrescriptionEditor(
 
     if (showOneRepMaxDialog) {
         OneRepMaxDialog(
-            title = stringResource(R.string.edit_one_rep_max),
+            title = stringResource(Res.string.edit_one_rep_max),
             initialKg = binding.kg,
             weightUnit = weightUnit,
             onDismiss = { showOneRepMaxDialog = false },
@@ -273,10 +276,10 @@ fun AdvancedPrescriptionEditor(
     weekToDelete?.let { target ->
         AlertDialog(
             onDismissRequest = { weekToDelete = null },
-            title = { Text(stringResource(R.string.delete_week_title, target), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+            title = { Text(stringResource(Res.string.delete_week_title, target), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
             text = {
                 Text(
-                    stringResource(if ((weeks?.persistedWeeksCount ?: 0) < target) R.string.delete_week_message_local else R.string.delete_week_message),
+                    stringResource(if ((weeks?.persistedWeeksCount ?: 0) < target) Res.string.delete_week_message_local else Res.string.delete_week_message),
                     color = OnSurfaceVariant
                 )
             },
@@ -290,7 +293,7 @@ fun AdvancedPrescriptionEditor(
                     contentColor = Error,
                     height = 48
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -300,7 +303,7 @@ fun AdvancedPrescriptionEditor(
                     contentColor = OnSurfaceVariant,
                     height = 48
                 ) {
-                    Text(stringResource(R.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercase())
                 }
             },
             containerColor = SurfaceContainerHigh,

@@ -230,4 +230,69 @@
     <string name="new_exercise">New Exercise</string>
     <string name="search_exercises">Search exercises</string>
     <string name="select_exercise">Select Exercise</string>
+    <string name="ai_scan_empty_state_add_manual">Add manually</string>
+    <string name="ai_scan_empty_state_desc">Scan a photo of your paper training sheet to import exercises automatically, or add them manually.</string>
+    <string name="ai_scan_empty_state_scan_button">Scan sheet with AI</string>
+    <string name="ai_scan_empty_state_title">Build your routine</string>
+    <string name="auto_advance_week">Advance automatically</string>
+    <string name="auto_advance_week_desc">Moves to the next week when you finish this routine</string>
+    <string name="copy_previous_week">Copy W%1$d</string>
+    <string name="delete_week">Delete week</string>
+    <string name="delete_week_message">The week is removed from every exercise of this routine and the following weeks move up by one. Past sessions are not affected.</string>
+    <string name="delete_week_message_local">The week is removed from this exercise and the following weeks move up by one.</string>
+    <string name="delete_week_title">Delete W%1$d?</string>
+    <string name="edit_exercise">EDIT EXERCISE</string>
+    <string name="edit_routine">EDIT ROUTINE</string>
+    <string name="link_with_next">LINK WITH NEXT (SUPERSET)</string>
+    <string name="no_exercises_in_routine">No exercises in this routine</string>
+    <string name="program_current_week">Current week</string>
+    <string name="reset_routine_content">Reset Content?</string>
+    <string name="reset_routine_content_message">This will permanently remove all images and exercises from this routine. The routine itself will be kept. This action cannot be undone.</string>
+    <string name="routine_details">Details</string>
+    <string name="routine_exercises_section">Exercises</string>
+    <string name="routine_header_collapse">Hide details</string>
+    <string name="routine_header_expand">Show details</string>
+    <string name="set_as_current_week">Set as current</string>
+    <string name="skip_this_week">Skip in this week</string>
+    <string name="unlink_superset">UNLINK SUPERSET</string>
+    <string name="update_exercise">Update Exercise</string>
+    <string name="update_plan">Update Plan</string>
+    <string name="weekly_program">Weekly program</string>
+    <string name="weekly_program_desc">Sets, loads and techniques can change week by week</string>
+    <string name="weeks_count">Number of weeks</string>
+    <string name="add_exercise">ADD EXERCISE</string>
+    <string name="advanced_needs_block">Add at least one block</string>
+    <string name="cardio_duration_slider">Duration (min)</string>
+    <string name="exercise_details">Exercise Details</string>
+    <string name="rest_seconds">Rest (Seconds)</string>
+    <string name="superset">SUPERSET</string>
+    <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
+    <string name="week_of">Week %1$d of %2$d</string>
+    <plurals name="routine_exercises_count">
+        <item quantity="one">%1$d exercise</item>
+        <item quantity="other">%1$d exercises</item>
+    </plurals>
+    <plurals name="routine_sets_count">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
+    <string name="bodyweight_short">BW</string>
+    <string name="extra_badge">EXTRA</string>
+    <string name="max_label">MAX</string>
+    <string name="performed_technique_badge">Done: %1$s</string>
+    <string name="performed_technique_none">No technique</string>
+    <string name="rpe_short">RPE %1$s</string>
+    <string name="total_reps_label">%1$d reps total</string>
+    <plurals name="assisted_reps_badge">
+        <item quantity="one">+%1$d assisted</item>
+        <item quantity="other">+%1$d assisted</item>
+    </plurals>
+    <plurals name="partial_reps_badge">
+        <item quantity="one">+%1$d partial</item>
+        <item quantity="other">+%1$d partials</item>
+    </plurals>
+    <plurals name="parts_pause_badge">
+        <item quantity="one">%1$s · pause %2$s</item>
+        <item quantity="other">%1$s · pauses %2$s</item>
+    </plurals>
 </resources>
