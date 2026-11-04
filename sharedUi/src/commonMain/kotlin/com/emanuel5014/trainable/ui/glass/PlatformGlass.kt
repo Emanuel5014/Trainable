@@ -74,6 +74,12 @@ interface PlatformGlass {
         interactionSource: MutableInteractionSource
     ) {}
 
+    /** The existing settings-switch glass, controlled by GlassPart.Switches. */
+    val hasGlassToggle: Boolean get() = false
+
+    @Composable
+    fun GlassToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit, background: Color, enabled: Boolean) {}
+
     /** Put inside a sheet or dialog that should open without the blur behind it. */
     @Composable
     fun NoOverlayBlur() {}

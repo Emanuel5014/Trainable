@@ -57,6 +57,12 @@ object AndroidPlatformGlass : PlatformGlass {
 
     override val hasGlassSlider: Boolean get() = true
 
+    override val hasGlassToggle: Boolean get() = true
+
+    @Composable
+    override fun GlassToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit, background: Color, enabled: Boolean) =
+        com.emanuel5014.trainable.ui.components.GlassToggle(checked = checked, onCheckedChange = onCheckedChange, background = background, enabled = enabled)
+
     @Composable
     override fun GlassSlider(
         value: Float,

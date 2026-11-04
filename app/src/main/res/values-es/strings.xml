@@ -4,11 +4,6 @@
     <!-- App -->
 
     <!-- Navigation -->
-    <string name="nav_bar_style">Barra de navegación</string>
-    <string name="nav_bar_style_classic">Clásica</string>
-    <string name="nav_bar_style_classic_desc">Barra de navegación inferior Material 3</string>
-    <string name="nav_bar_style_floating">Flotante</string>
-    <string name="nav_bar_style_floating_desc">Barra difuminada que flota sobre el contenido</string>
     <string name="liquid_glass">Liquid Glass</string>
     <string name="liquid_glass_desc">Cristal al estilo de iOS en los controles que flotan sobre el contenido</string>
     <string name="glass_intensity">Intensidad del cristal</string>
@@ -39,8 +34,6 @@
     <string name="glass_part_sliders_desc">El control se convierte en una gota de cristal mientras lo arrastras</string>
     <string name="glass_part_workout_nav">Navegación del entrenamiento</string>
     <string name="glass_part_workout_nav_desc">Ejercicio anterior y siguiente en el panel del entrenamiento</string>
-    <string name="nav_bar_style_expressive">Expressive</string>
-    <string name="nav_bar_style_expressive_desc">Barra de herramientas Material 3 Expressive, con la acción principal de cada pestaña al lado</string>
 
     <!-- Common Actions -->
     <string name="save">Guardar</string>
@@ -80,7 +73,6 @@
     <string name="start">INICIAR</string>
 
     <!-- General -->
-    <string name="today">hoy</string>
     <string name="daily">Diario</string>
     <string name="weekly">Semanal</string>
     <string name="this_week">Esta Semana</string>
@@ -211,20 +203,10 @@
     <string name="warmup_timer_description">Configure un temporizador para calentamiento, estiramientos u otros</string>
     <string name="warmup_timer_notifications_desc">Mostrar temporizador de calentamiento en notificaciones</string>
     <string name="warmup_timer_settings_desc">Mostrar botón de temporizador de calentamiento durante el entrenamiento</string>
-    <string name="workout_timer">Temporizador de entrenamiento</string>
-    <string name="workout_timer_desc">Seguimiento de la duración total del entrenamiento</string>
     <string name="auto_stop_cardio_at_target">Parada automática de cardio en el objetivo</string>
     <string name="auto_stop_cardio_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo objetivo</string>
     <string name="auto_stop_time_weight_at_target">Parada automática de series temporizadas en el objetivo</string>
     <string name="auto_stop_time_weight_at_target_desc">Pausar el temporizador automáticamente al alcanzar el tiempo de la serie</string>
-    <string name="keep_screen_on_cardio_timer">Mantener la pantalla encendida (cardio)</string>
-    <string name="keep_screen_on_cardio_timer_desc">Evita que la pantalla se apague mientras el temporizador de cardio está en marcha</string>
-    <string name="keep_screen_on_set_timer">Mantener la pantalla encendida (series temporizadas)</string>
-    <string name="keep_screen_on_set_timer_desc">Evita que la pantalla se apague mientras el temporizador de la serie está en marcha</string>
-    <string name="rest_timer_setting">Temporizador de descanso</string>
-    <string name="rest_timer_setting_desc">Inicia una cuenta atrás después de cada serie. Si lo desactivas, pasas de una serie a otra sin esperas</string>
-    <string name="inline_exercise_modifications">Modificaciones en línea</string>
-    <string name="inline_exercise_modifications_desc">Añadir series y ejercicios durante entrenamientos normales</string>
     <string name="exercise_media_desc">Muestra tu propia imagen o GIF de cada ejercicio durante el entrenamiento</string>
     <string name="exercise_media_large">Vista previa grande</string>
     <string name="exercise_media_large_desc">Rellena el espacio libre bajo las series con una imagen grande cuando hay sitio</string>
@@ -245,14 +227,6 @@
     <string name="exercise_media_unsupported">No se pudo abrir el archivo. Elige una imagen o un GIF.</string>
     <string name="exercise_media_play_pause">Reproducir o pausar</string>
     <string name="workout_settings">Entrenamiento</string>
-    <string name="workout_section_session">DURANTE EL ENTRENAMIENTO</string>
-    <string name="workout_section_timers">TEMPORIZADORES Y CARDIO</string>
-    <string name="workout_section_programming">RUTINAS Y EJERCICIOS</string>
-    <string name="workout_section_after">DESPUÉS DEL ENTRENAMIENTO</string>
-    <string name="workout_settings_desc">Temporizador, paradas automáticas y opciones de ejercicios</string>
-    <string name="ai_settings_desc">Escaneo sin conexión y modelo</string>
-    <string name="personalization_desc">Tema, colores y apariencia</string>
-    <string name="notifications_settings_desc">Alertas de temporizador, calentamiento y membresía</string>
     <string name="personalization_title">Personalización</string>
     <string name="notifications_title">Notificaciones</string>
     <string name="workout_duration">Duración del entrenamiento</string>
@@ -328,17 +302,10 @@
     <string name="error">Error</string>
 
     <!-- Settings -->
-    <string name="settings_title">AJUSTES</string>
-    <string name="profile">PERFIL</string>
-    <string name="preferences">PREFERENCIAS</string>
     <string name="personalization">PERSONALIZACIÓN</string>
     <string name="data_backup">DATOS Y COPIA</string>
     <string name="account">Cuenta</string>
-    <string name="member_since">Miembro desde %s</string>
-    <string name="username">Nombre de usuario</string>
-    <string name="edit_username">Editar Nombre de Usuario</string>
     <string name="weekly_goal">OBJETIVO SEMANAL</string>
-    <string name="target_workouts">Entrenos objetivo por semana</string>
     <string name="tactile_feedback">Respuesta Háptica</string>
     <string name="tactile_feedback_desc">Vibración en interacciones</string>
     <string name="vibration_on_interactions">Vibración en interacciones</string>
@@ -373,9 +340,6 @@
     <string name="pick_theme_color">Elige tu propio color de tema</string>
     <string name="style">Estilo</string>
     <string name="apply">Aplicar</string>
-    <string name="hue">Tono</string>
-    <string name="saturation">Saturación</string>
-    <string name="brightness">Brillo</string>
     <string name="system_default">Predeterminado del sistema</string>
     <string name="notifications">NOTIFICACIONES</string>
     <string name="timer_notifications">Notificaciones de Temporizador</string>
@@ -402,8 +366,6 @@
     <string name="web_server_inactive">Servidor inactivo</string>
     <string name="web_server_open_browser">Abrir en el navegador:</string>
     <string name="web_server_instructions">Conecta tu PC a la misma red Wi-Fi y abre la dirección de arriba.</string>
-    <string name="weight_unit">Unidad de Peso</string>
-    <string name="weight_unit_desc">Elige entre Kilogramos y Libras</string>
     <string name="language">Idioma</string>
     <string name="language_system_default">Predeterminado del Sistema</string>
     <string name="current_language">Actual: %s</string>
@@ -928,22 +890,8 @@
     <string name="scan_programmed_hint">La prescripción está en una hoja de programación aparte: elige Avanzado para añadir aquí los bloques, o escanea la página de la programación tras importar.</string>
     <string name="scan_use_simple">Usar series × reps simples</string>
     <string name="scan_one_rep_max_found">1RM en la hoja: %1$s · se guardará</string>
-    <string name="one_rep_maxes">1RM</string>
-    <string name="one_rep_maxes_subtitle">TUS MÁXIMOS</string>
     <string name="one_rep_maxes_empty_title">Añade tu primer 1RM</string>
-    <string name="one_rep_maxes_empty_desc" formatted="false">Tus máximos convierten las prescripciones %1RM en cargas reales.</string>
-    <string name="add_one_rep_max">Añadir 1RM</string>
-    <string name="source_manual">Manual</string>
-    <string name="source_tested">Probado</string>
-    <string name="source_estimated">Estimado</string>
-    <string name="percent_table">Tabla de porcentajes</string>
-    <string name="one_rep_max_history">Historial</string>
-    <string name="estimated_one_rep_max_short">e1RM %1$s</string>
-    <string name="one_rep_max_delete_entry">Eliminar registro</string>
-    <string name="load_rounding">Redondeo de cargas</string>
-    <string name="load_rounding_desc" formatted="false">Las cargas %1RM se redondean al disco más cercano</string>
     <string name="one_rep_maxes_card_desc">%1$d ejercicios registrados</string>
-    <string name="one_rep_max_current">1RM actual</string>
     <string name="ai_program_scan_button">Escanear</string>
     <string name="ai_program_scan_title">Escanea la página de la programación</string>
     <string name="ai_program_scan_desc">Haz una foto o elige una: la IA rellena los bloques y podrás revisarlos y editarlos.</string>
@@ -1030,7 +978,6 @@
     <string name="scan_draft_discard_desc">Se perderán los ejercicios escaneados y tendrás que volver a escanear la hoja.</string>
     <!-- v2.3.0 powerlifting END -->
     <!-- share options + imported maximums -->
-    <string name="source_imported">Importado</string>
     <string name="import_includes_maximums">Incluye los 1RM de %1$d ejercicios</string>
     <!-- compare sessions v2 -->
     <string name="compare_summary">Resumen</string>
@@ -1060,9 +1007,6 @@
     <string name="onboarding_nextcloud_desc">Opcional: conecta tu propio Nextcloud para guardar una copia de tus datos fuera de este teléfono o restaurarla en uno nuevo.</string>
     <string name="nextcloud_connect">Conectar</string>
     <string name="plate_calculator">Calculadora de discos</string>
-    <string name="plate_calculator_desc">Muestra qué discos poner en cada lado de la barra. Se activa por ejercicio desde el editor de peso durante un entrenamiento.</string>
-    <string name="plate_calculator_plates">Discos disponibles</string>
-    <string name="plate_calculator_plates_desc">Los discos que tiene tu gimnasio. Se usan para calcular la carga.</string>
     <string name="plate_calculator_use">Usar calculadora de discos</string>
     <string name="plate_chip_per_side">%1$s por lado · barra %2$s</string>
     <string name="plate_chip_per_side_plain">%1$s por lado</string>
@@ -1086,10 +1030,6 @@
     <string name="plate_remove">Quitar disco</string>
     <string name="plate_apply">Establecer %1$s</string>
     <string name="plate_turn_off">Desactivar para este ejercicio</string>
-    <string name="timer_buttons">Botones del temporizador</string>
-    <string name="timer_buttons_desc">Elige cuáles de los botones + y − muestran el temporizador de descanso y el de calentamiento, en la app y en la notificación, y cuánto mueven la cuenta atrás.</string>
-    <string name="timer_add_time">Añadir tiempo</string>
-    <string name="timer_subtract_time">Quitar tiempo</string>
     <string name="warmup_label">Calentamiento</string>
     <string name="cardio_mark_completed">Marcar como completado</string>
     <string name="cardio_complete_logs_time">Registra el tiempo previsto: %1$s</string>
@@ -1097,10 +1037,6 @@
     <string name="optional_suffix">(opcional)</string>
 
     <!-- Starting weight, rep ranges and double progression -->
-    <string name="starting_weight">Peso inicial</string>
-    <string name="starting_weight_desc">Dale a cada ejercicio de una rutina un peso del que partir. Mientras la rutina no tenga un entrenamiento del que copiar, las series empiezan ahí, o en el último peso que usaste para ese ejercicio.</string>
-    <string name="set_performance_setting">Detalles de las series</string>
-    <string name="set_performance_setting_desc">Mini-series tras una pausa corta, reps asistidas y parciales y la técnica con la que hiciste de verdad la serie. Si está apagado, las series solo tienen su nota.</string>
     <string name="reps_goal">Objetivo: %1$s</string>
     <string name="progression_hit_max">%1$d reps en cada serie la última vez</string>
     <string name="progression_try_weight">Prueba %1$s</string>
@@ -1268,49 +1204,16 @@
     </plurals>
 
     <!-- Workout journal -->
-    <string name="journal_title">Diario de entrenamiento</string>
-    <string name="journal_desc">Valora cada entrenamiento y añade etiquetas y una nota. También aparecen en las exportaciones, los informes y el visor web.</string>
-    <string name="journal_prompt_finish">Preguntar al finalizar</string>
-    <string name="journal_prompt_finish_desc">Muestra el diario cuando finalizas un entrenamiento</string>
-    <string name="journal_rating_setting">Valoración con estrellas</string>
-    <string name="journal_rating_setting_desc">Valora cada entrenamiento de 1 a 5 estrellas</string>
-    <string name="journal_manage_tags">Gestionar etiquetas</string>
-    <string name="journal_manage_tags_desc">Renombra, cambia el color, une o elimina tus etiquetas</string>
     <string name="journal_how_did_it_go">¿Cómo fue?</string>
-    <string name="journal_tags">Etiquetas</string>
-    <string name="journal_new_tag">Nueva etiqueta</string>
-    <string name="journal_tag_name">Nombre de la etiqueta</string>
     <string name="journal_row_title">Diario</string>
     <string name="journal_row_empty">Añade valoración, etiquetas y una nota</string>
-    <string name="journal_tags_empty">Aún no hay etiquetas. Sirven para marcar un entrenamiento: una lesión, un lugar, un compañero.</string>
-    <string name="journal_tag_rename">Renombrar</string>
-    <string name="journal_tag_rename_title">Renombrar etiqueta</string>
-    <string name="journal_tag_color">Color</string>
-    <string name="journal_tag_merge">Unir con…</string>
-    <string name="journal_merge_action">Unir</string>
-    <string name="journal_tag_delete_title">¿Eliminar etiqueta?</string>
-    <string name="journal_tag_delete_message">La etiqueta se quita de los entrenamientos que la usan (%1$d). Los entrenamientos se conservan.</string>
-    <string name="journal_tag_merge_title">¿Unir etiqueta?</string>
-    <string name="journal_tag_merge_message">“%1$s” se une con “%2$s”: sus entrenamientos tendrán “%2$s”.</string>
-    <string name="journal_tag_exists">Ya existe una etiqueta con este nombre: ¿unir con “%1$s”?</string>
     <plurals name="journal_tag_uses">
         <item quantity="one">Usada en %1$d entrenamiento</item>
         <item quantity="other">Usada en %1$d entrenamientos</item>
     </plurals>
 
     <!-- RPE: a switch, three scales and the five levels of the simplified one -->
-    <string name="rpe_setting">Esfuerzo percibido (RPE)</string>
-    <string name="rpe_setting_desc">Valora lo duro que fue cada serie</string>
     <string name="rpe_prompt">¿Qué tan duro fue?</string>
-    <string name="rpe_scale_basic">Simplificada</string>
-    <string name="rpe_scale_basic_desc">5 niveles con nombre e icono</string>
-    <string name="rpe_scale_basic_example">Calentamiento · Fácil · Moderado · Difícil · Máximo</string>
-    <string name="rpe_scale_standard">Estándar</string>
-    <string name="rpe_scale_standard_desc">RPE de 1 a 10, números enteros</string>
-    <string name="rpe_scale_standard_example">1 · 2 · 3 … 10</string>
-    <string name="rpe_scale_advanced">Avanzada</string>
-    <string name="rpe_scale_advanced_desc">RPE de 6 a 10, en pasos de 0,5</string>
-    <string name="rpe_scale_advanced_example">6 · 6,5 · 7 … 10</string>
     <string name="rpe_level_warmup">Calentamiento</string>
     <string name="rpe_level_warmup_desc">Esfuerzo muy ligero · Preparándote</string>
     <string name="rpe_level_easy">Fácil</string>
@@ -1402,7 +1305,6 @@
     </plurals>
     <!-- Exercises page -->
     <string name="exercises_title">Ejercicios</string>
-    <string name="exercises_manage_desc">Crea ejercicios, añade multimedia y gestiona las categorías</string>
     <string name="exercise_action_edit">Editar</string>
     <string name="exercise_msg_saved">Guardado</string>
     <string name="workout_progress_description">Ejercicio %1$d de %2$d, %3$d completados</string>

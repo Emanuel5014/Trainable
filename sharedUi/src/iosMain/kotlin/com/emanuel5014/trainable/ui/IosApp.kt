@@ -77,6 +77,7 @@ fun MainViewController(): UIViewController = ComposeUIViewController { Trainable
 internal object IosAppGraph {
     val database by lazy { GymDatabaseInstance.getDatabase() }
     val preferences by lazy { UserPreferencesRepository(createSettingsDataStore()) }
+    val users by lazy { UserRepository(database.userDao(), database.weightLogDao()) }
     val oneRepMaxes by lazy { OneRepMaxRepository(database.oneRepMaxDao()) }
     val workouts by lazy {
         WorkoutRepository(

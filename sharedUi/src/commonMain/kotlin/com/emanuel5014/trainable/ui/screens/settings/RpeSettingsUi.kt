@@ -1,5 +1,16 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_advanced
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_advanced_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_advanced_example
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_basic
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_basic_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_basic_example
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_standard
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_standard_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_scale_standard_example
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +35,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -36,27 +45,27 @@ import com.emanuel5014.trainable.ui.theme.Primary
 
 /** The three ways RPE can be asked, as cards to pick from: icon, name, what it is and the values it offers. */
 @Composable
-internal fun RpeScaleOptions(selected: RpeScale, onSelect: (RpeScale) -> Unit) {
+fun RpeScaleOptions(selected: RpeScale, onSelect: (RpeScale) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         RpeScale.entries.forEach { scale ->
             val (icon, title, description, example) = when (scale) {
                 RpeScale.BASIC -> RpeScaleTexts(
                     Icons.Rounded.Spa,
-                    stringResource(R.string.rpe_scale_basic),
-                    stringResource(R.string.rpe_scale_basic_desc),
-                    stringResource(R.string.rpe_scale_basic_example)
+                    stringResource(Res.string.rpe_scale_basic),
+                    stringResource(Res.string.rpe_scale_basic_desc),
+                    stringResource(Res.string.rpe_scale_basic_example)
                 )
                 RpeScale.STANDARD -> RpeScaleTexts(
                     Icons.Rounded.Speed,
-                    stringResource(R.string.rpe_scale_standard),
-                    stringResource(R.string.rpe_scale_standard_desc),
-                    stringResource(R.string.rpe_scale_standard_example)
+                    stringResource(Res.string.rpe_scale_standard),
+                    stringResource(Res.string.rpe_scale_standard_desc),
+                    stringResource(Res.string.rpe_scale_standard_example)
                 )
                 RpeScale.ADVANCED -> RpeScaleTexts(
                     Icons.Rounded.Tune,
-                    stringResource(R.string.rpe_scale_advanced),
-                    stringResource(R.string.rpe_scale_advanced_desc),
-                    stringResource(R.string.rpe_scale_advanced_example)
+                    stringResource(Res.string.rpe_scale_advanced),
+                    stringResource(Res.string.rpe_scale_advanced_desc),
+                    stringResource(Res.string.rpe_scale_advanced_example)
                 )
             }
             RpeScaleCard(

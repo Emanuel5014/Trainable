@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components.journal
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.apply
+import com.emanuel5014.trainable.sharedui.resources.brightness
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.custom_color
+import com.emanuel5014.trainable.sharedui.resources.saturation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,10 +35,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.screens.settings.HueSlider
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -67,7 +72,7 @@ fun TagColorPickerDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceContainerHigh,
         title = {
-            Text(stringResource(R.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+            Text(stringResource(Res.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
         },
         text = {
             Column(
@@ -83,7 +88,7 @@ fun TagColorPickerDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "#%06X".format(argb and 0xFFFFFF),
+                        text = "#" + (argb and 0xFFFFFF).toString(16).uppercase().padStart(6, '0'),
                         color = onColor,
                         fontWeight = FontWeight.Bold
                     )
@@ -92,7 +97,7 @@ fun TagColorPickerDialog(
                 HueSlider(hue = hue, onHueChange = { hue = it }, currentColor = color)
 
                 ColorChannelSlider(
-                    label = stringResource(R.string.saturation),
+                    label = stringResource(Res.string.saturation),
                     value = saturation,
                     valueRange = MIN_SATURATION..1f,
                     onValueChange = { saturation = it },
@@ -102,7 +107,7 @@ fun TagColorPickerDialog(
                 )
 
                 ColorChannelSlider(
-                    label = stringResource(R.string.brightness),
+                    label = stringResource(Res.string.brightness),
                     value = brightness,
                     valueRange = MIN_BRIGHTNESS..1f,
                     onValueChange = { brightness = it },
@@ -114,12 +119,12 @@ fun TagColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onApply(argb) }) {
-                Text(stringResource(R.string.apply).uppercase(), color = Primary)
+                Text(stringResource(Res.string.apply).uppercase(), color = Primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         }
     )

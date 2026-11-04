@@ -5,11 +5,6 @@
     <string name="app_name">Trainable</string>
 
     <!-- Navigation -->
-    <string name="nav_bar_style">Navigation bar</string>
-    <string name="nav_bar_style_classic">Classic</string>
-    <string name="nav_bar_style_classic_desc">Standard Material 3 bottom navigation</string>
-    <string name="nav_bar_style_floating">Floating</string>
-    <string name="nav_bar_style_floating_desc">Blurred bar floating above the content</string>
     <string name="liquid_glass">Liquid Glass</string>
     <string name="liquid_glass_desc">Glass in the style of iOS on the controls that float over the content</string>
     <string name="glass_intensity">Glass intensity</string>
@@ -40,8 +35,6 @@
     <string name="glass_part_sliders_desc">The thumb turns into a drop of glass while you drag it</string>
     <string name="glass_part_workout_nav">Workout navigation</string>
     <string name="glass_part_workout_nav_desc">Previous and next exercise in the workout panel</string>
-    <string name="nav_bar_style_expressive">Expressive</string>
-    <string name="nav_bar_style_expressive_desc">Material 3 Expressive toolbar, with the main action of each tab next to it</string>
 
     <!-- Common Actions -->
     <string name="save">Save</string>
@@ -81,7 +74,6 @@
     <string name="start">START</string>
 
     <!-- General -->
-    <string name="today">today</string>
     <string name="daily">Daily</string>
     <string name="weekly">Weekly</string>
     <string name="this_week">This Week</string>
@@ -212,20 +204,10 @@
     <string name="warmup_timer_description">Set a timer for warmup, stretching, or anything else</string>
     <string name="warmup_timer_notifications_desc">Show warmup timer in system notifications</string>
     <string name="warmup_timer_settings_desc">Show warmup timer button during workout</string>
-    <string name="workout_timer">Workout Timer</string>
-    <string name="workout_timer_desc">Track total workout duration</string>
     <string name="auto_stop_cardio_at_target">Auto-stop cardio at target</string>
     <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
     <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
     <string name="auto_stop_time_weight_at_target_desc">Pause the timer automatically when the set time target is reached</string>
-    <string name="keep_screen_on_cardio_timer">Keep screen on during cardio</string>
-    <string name="keep_screen_on_cardio_timer_desc">Prevent the screen from turning off while the cardio timer is running</string>
-    <string name="keep_screen_on_set_timer">Keep screen on during timed sets</string>
-    <string name="keep_screen_on_set_timer_desc">Prevent the screen from turning off while the set timer is running</string>
-    <string name="rest_timer_setting">Rest timer</string>
-    <string name="rest_timer_setting_desc">Start a countdown after each set. Turn it off to move through the workout without waiting</string>
-    <string name="inline_exercise_modifications">Inline Modifications</string>
-    <string name="inline_exercise_modifications_desc">Add sets and exercises during normal workouts</string>
     <string name="exercise_media_desc">Show your own image or GIF of each exercise during workouts</string>
     <string name="exercise_media_large">Large Preview</string>
     <string name="exercise_media_large_desc">Fill the free space under the sets with a big image when there is room</string>
@@ -246,14 +228,6 @@
     <string name="exercise_media_unsupported">Couldn\'t open that file. Choose an image or GIF.</string>
     <string name="exercise_media_play_pause">Play or pause</string>
     <string name="workout_settings">Workout</string>
-    <string name="workout_section_session">DURING THE WORKOUT</string>
-    <string name="workout_section_timers">TIMERS &amp; CARDIO</string>
-    <string name="workout_section_programming">ROUTINES &amp; EXERCISES</string>
-    <string name="workout_section_after">AFTER THE WORKOUT</string>
-    <string name="workout_settings_desc">Timer, auto-stop and exercise options</string>
-    <string name="ai_settings_desc">Offline sheet scan and model</string>
-    <string name="personalization_desc">Theme, colors and appearance</string>
-    <string name="notifications_settings_desc">Timer, warmup and membership alerts</string>
     <string name="personalization_title">Personalization</string>
     <string name="notifications_title">Notifications</string>
     <string name="workout_duration">Workout Duration</string>
@@ -329,17 +303,10 @@
     <string name="error">Error</string>
 
     <!-- Settings -->
-    <string name="settings_title">SETTINGS</string>
-    <string name="profile">PROFILE</string>
-    <string name="preferences">PREFERENCES</string>
     <string name="personalization">PERSONALIZATION</string>
     <string name="data_backup">DATA &amp; BACKUP</string>
     <string name="account">Account</string>
-    <string name="member_since">Member since %s</string>
-    <string name="username">Username</string>
-    <string name="edit_username">Edit Username</string>
     <string name="weekly_goal">WEEKLY GOAL</string>
-    <string name="target_workouts">Target workouts per week</string>
     <string name="tactile_feedback">Tactile Feedback</string>
     <string name="tactile_feedback_desc">Vibration on interactions</string>
     <string name="vibration_on_interactions">Vibration on interactions</string>
@@ -374,9 +341,6 @@
     <string name="pick_theme_color">Pick your own theme color</string>
     <string name="style">Style</string>
     <string name="apply">Apply</string>
-    <string name="hue">Hue</string>
-    <string name="saturation">Saturation</string>
-    <string name="brightness">Brightness</string>
     <string name="system_default">System Default</string>
     <string name="notifications">NOTIFICATIONS</string>
     <string name="timer_notifications">Timer Notifications</string>
@@ -403,8 +367,6 @@
     <string name="web_server_inactive">Server inactive</string>
     <string name="web_server_open_browser">Open in browser:</string>
     <string name="web_server_instructions">Connect your PC to the same Wi-Fi network and open the address above.</string>
-    <string name="weight_unit">Weight Unit</string>
-    <string name="weight_unit_desc">Choose between Kilograms and Pounds</string>
     <string name="language">Language</string>
     <string name="language_system_default">System Default</string>
     <string name="current_language">Current: %s</string>
@@ -929,22 +891,8 @@
     <string name="scan_programmed_hint">The prescription is on a separate program sheet: choose Advanced to add its blocks here, or scan the program page after importing.</string>
     <string name="scan_use_simple">Use plain sets × reps</string>
     <string name="scan_one_rep_max_found">1RM on the sheet: %1$s · it will be saved</string>
-    <string name="one_rep_maxes">1RMs</string>
-    <string name="one_rep_maxes_subtitle">YOUR MAXES</string>
     <string name="one_rep_maxes_empty_title">Add your first 1RM</string>
-    <string name="one_rep_maxes_empty_desc" formatted="false">Your maxes turn %1RM prescriptions into real loads.</string>
-    <string name="add_one_rep_max">Add 1RM</string>
-    <string name="source_manual">Manual</string>
-    <string name="source_tested">Tested</string>
-    <string name="source_estimated">Estimated</string>
-    <string name="percent_table">Percentage table</string>
-    <string name="one_rep_max_history">History</string>
-    <string name="estimated_one_rep_max_short">e1RM %1$s</string>
-    <string name="one_rep_max_delete_entry">Delete entry</string>
-    <string name="load_rounding">Load rounding</string>
-    <string name="load_rounding_desc" formatted="false">%1RM loads are rounded to the nearest plate increment</string>
     <string name="one_rep_maxes_card_desc">%1$d lifts tracked</string>
-    <string name="one_rep_max_current">Current 1RM</string>
     <string name="ai_program_scan_button">Scan</string>
     <string name="ai_program_scan_title">Scan the program page</string>
     <string name="ai_program_scan_desc">Take a photo or pick one: the AI fills in the blocks and you can review and edit them.</string>
@@ -1031,7 +979,6 @@
     <string name="scan_draft_discard_desc">The scanned exercises will be lost and you\'ll have to scan the sheet again.</string>
     <!-- v2.3.0 powerlifting END -->
     <!-- share options + imported maximums -->
-    <string name="source_imported">Imported</string>
     <string name="import_includes_maximums">Includes the maximums of %1$d exercises</string>
     <!-- compare sessions v2 -->
     <string name="compare_summary">Summary</string>
@@ -1061,9 +1008,6 @@
     <string name="onboarding_nextcloud_desc">Optional: connect your own Nextcloud to keep a copy of your data off this phone, or to restore it on a new one.</string>
     <string name="nextcloud_connect">Connect</string>
     <string name="plate_calculator">Plate calculator</string>
-    <string name="plate_calculator_desc">Shows which plates go on each side of the bar. Turn it on for an exercise from the weight editor during a workout.</string>
-    <string name="plate_calculator_plates">Available plates</string>
-    <string name="plate_calculator_plates_desc">The plates your gym has. They are used to work out the load.</string>
     <string name="plate_calculator_use">Use plate calculator</string>
     <string name="plate_chip_per_side">%1$s per side · bar %2$s</string>
     <string name="plate_chip_per_side_plain">%1$s per side</string>
@@ -1087,10 +1031,6 @@
     <string name="plate_remove">Remove plate</string>
     <string name="plate_apply">Set %1$s</string>
     <string name="plate_turn_off">Turn off for this exercise</string>
-    <string name="timer_buttons">Timer buttons</string>
-    <string name="timer_buttons_desc">Choose which of the + and − buttons the rest and warmup timers show, in the app and in the notification, and how much they move the countdown.</string>
-    <string name="timer_add_time">Add time</string>
-    <string name="timer_subtract_time">Remove time</string>
     <string name="warmup_label">Warmup</string>
     <string name="cardio_mark_completed">Mark as completed</string>
     <string name="cardio_complete_logs_time">Logs the planned time: %1$s</string>
@@ -1098,10 +1038,6 @@
     <string name="optional_suffix">(optional)</string>
 
     <!-- Starting weight, rep ranges and double progression -->
-    <string name="starting_weight">Starting weight</string>
-    <string name="starting_weight_desc">Give each exercise of a routine a weight to start from. Until the routine has a workout to copy from, its sets start there, or at the last weight you used for that exercise.</string>
-    <string name="set_performance_setting">Set details</string>
-    <string name="set_performance_setting_desc">Mini-sets after a short pause, assisted and partial reps and the technique a set was really done with. Off, sets keep only their note.</string>
     <string name="reps_goal">Goal: %1$s</string>
     <string name="progression_hit_max">%1$d reps on every set last time</string>
     <string name="progression_try_weight">Try %1$s</string>
@@ -1269,49 +1205,16 @@
     </plurals>
 
     <!-- Workout journal -->
-    <string name="journal_title">Workout journal</string>
-    <string name="journal_desc">Rate each workout and add tags and a note. They also appear in exports, reports and the web viewer.</string>
-    <string name="journal_prompt_finish">Ask when finishing</string>
-    <string name="journal_prompt_finish_desc">Show the journal when you finish a workout</string>
-    <string name="journal_rating_setting">Star rating</string>
-    <string name="journal_rating_setting_desc">Rate each workout from 1 to 5 stars</string>
-    <string name="journal_manage_tags">Manage tags</string>
-    <string name="journal_manage_tags_desc">Rename, recolor, merge or delete your tags</string>
     <string name="journal_how_did_it_go">How did it go?</string>
-    <string name="journal_tags">Tags</string>
-    <string name="journal_new_tag">New tag</string>
-    <string name="journal_tag_name">Tag name</string>
     <string name="journal_row_title">Journal</string>
     <string name="journal_row_empty">Add rating, tags and a note</string>
-    <string name="journal_tags_empty">No tags yet. Use them to mark a workout: an injury, a place, a training partner.</string>
-    <string name="journal_tag_rename">Rename</string>
-    <string name="journal_tag_rename_title">Rename tag</string>
-    <string name="journal_tag_color">Color</string>
-    <string name="journal_tag_merge">Merge into…</string>
-    <string name="journal_merge_action">Merge</string>
-    <string name="journal_tag_delete_title">Delete tag?</string>
-    <string name="journal_tag_delete_message">The tag is removed from the workouts that use it (%1$d). The workouts stay.</string>
-    <string name="journal_tag_merge_title">Merge tag?</string>
-    <string name="journal_tag_merge_message">“%1$s” is merged into “%2$s”: its workouts get “%2$s”.</string>
-    <string name="journal_tag_exists">A tag with this name exists: merge into “%1$s”?</string>
     <plurals name="journal_tag_uses">
         <item quantity="one">Used in %1$d workout</item>
         <item quantity="other">Used in %1$d workouts</item>
     </plurals>
 
     <!-- RPE: a switch, three scales and the five levels of the simplified one -->
-    <string name="rpe_setting">Perceived effort (RPE)</string>
-    <string name="rpe_setting_desc">Rate how hard each set felt</string>
     <string name="rpe_prompt">How hard did it feel?</string>
-    <string name="rpe_scale_basic">Simplified</string>
-    <string name="rpe_scale_basic_desc">5 levels with clear names and icons</string>
-    <string name="rpe_scale_basic_example">Warm-up · Easy · Moderate · Hard · Maximum</string>
-    <string name="rpe_scale_standard">Standard</string>
-    <string name="rpe_scale_standard_desc">RPE from 1 to 10, whole numbers</string>
-    <string name="rpe_scale_standard_example">1 · 2 · 3 … 10</string>
-    <string name="rpe_scale_advanced">Advanced</string>
-    <string name="rpe_scale_advanced_desc">RPE from 6 to 10, in steps of 0.5</string>
-    <string name="rpe_scale_advanced_example">6 · 6.5 · 7 … 10</string>
     <string name="rpe_level_warmup">Warm-up</string>
     <string name="rpe_level_warmup_desc">Very light effort · Getting ready</string>
     <string name="rpe_level_easy">Easy</string>
@@ -1403,7 +1306,6 @@
     </plurals>
     <!-- Exercises page -->
     <string name="exercises_title">Exercises</string>
-    <string name="exercises_manage_desc">Create exercises, add media and manage categories</string>
     <string name="exercise_action_edit">Edit</string>
     <string name="exercise_msg_saved">Saved</string>
     <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>

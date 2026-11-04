@@ -52,6 +52,20 @@ import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
 import com.emanuel5014.trainable.ui.navigation.Report
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
 import com.emanuel5014.trainable.ui.navigation.CompareSessions
+import com.emanuel5014.trainable.ui.screens.settings.SettingsContent
+import com.emanuel5014.trainable.ui.screens.settings.SettingsState
+import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsContent
+import com.emanuel5014.trainable.ui.screens.settings.JournalTagsContent
+import com.emanuel5014.trainable.ui.screens.settings.JournalTagsState
+import com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxContent
+import com.emanuel5014.trainable.ui.screens.onerepmax.OneRepMaxState
+import com.emanuel5014.trainable.ui.navigation.WorkoutSettings
+import com.emanuel5014.trainable.ui.navigation.JournalTags
+import com.emanuel5014.trainable.ui.navigation.Exercises
+import com.emanuel5014.trainable.ui.navigation.AiSettings
+import com.emanuel5014.trainable.ui.navigation.PersonalizationSettings
+import com.emanuel5014.trainable.ui.navigation.NotificationSettings
+import kotlinx.coroutines.flow.flowOf
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsContent
 import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsState
 import com.emanuel5014.trainable.ui.navigation.OneRepMaxes
@@ -102,8 +116,42 @@ internal fun IosNavGraph(
             composable<MainTabs> {
                 IosMainTabs(navController, pagerState, dashboard, dashboardUi, routines, history, analytics)
             }
-            composable<OneRepMaxes> { NotOnIosYet("1RM", onBack = { navController.popBackStack() }) }
-            composable<Settings> { NotOnIosYet("Settings", onBack = { navController.popBackStack() }) }
+            composable<OneRepMaxes> {
+                val scope = rememberCoroutineScope()
+                val language = Locale.current.language
+                val state = remember(language) { OneRepMaxState(IosAppGraph.oneRepMaxes, IosAppGraph.exercises,
+                    IosAppGraph.preferences, flowOf(language), scope) }
+                OneRepMaxContent(onNavigateBack = { navController.popBackStack() }, controller = state)
+            }
+            composable<Settings> {
+                val scope = rememberCoroutineScope()
+                val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
+                SettingsContent(
+                    state = state,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToWorkoutSettings = { navController.navigate(WorkoutSettings) },
+                    onNavigateToExercises = { navController.navigate(Exercises) },
+                    onNavigateToAiSettings = { navController.navigate(AiSettings) },
+                    onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
+                    onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) }
+                )
+            }
+            composable<WorkoutSettings> {
+                val scope = rememberCoroutineScope()
+                val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
+                WorkoutSettingsContent(onNavigateBack = { navController.popBackStack() },
+                    onNavigateToOneRepMaxes = { navController.navigate(OneRepMaxes) },
+                    onNavigateToJournalTags = { navController.navigate(JournalTags) }, state = state)
+            }
+            composable<JournalTags> {
+                val scope = rememberCoroutineScope()
+                val state = remember { JournalTagsState(IosAppGraph.journal, scope) }
+                JournalTagsContent(onNavigateBack = { navController.popBackStack() }, state = state)
+            }
+            composable<Exercises> { NotOnIosYet("Exercises", onBack = { navController.popBackStack() }) }
+            composable<AiSettings> { NotOnIosYet("AI", onBack = { navController.popBackStack() }) }
+            composable<PersonalizationSettings> { NotOnIosYet("Personalization", onBack = { navController.popBackStack() }) }
+            composable<NotificationSettings> { NotOnIosYet("Notifications", onBack = { navController.popBackStack() }) }
             composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
             composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
             composable<RoutineDetail> { entry ->
