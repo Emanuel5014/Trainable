@@ -48,6 +48,12 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
         }
+        iosMain.dependencies {
+            implementation(libs.materialkolor.utilities)
+        }
+        iosTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
 }
 

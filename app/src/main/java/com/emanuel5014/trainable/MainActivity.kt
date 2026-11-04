@@ -101,6 +101,8 @@ import com.emanuel5014.trainable.ui.components.journal.LocalJournalData
 import com.emanuel5014.trainable.ui.components.LocalRoutineImagePicker
 import com.emanuel5014.trainable.ui.components.LocalShowMessage
 import com.emanuel5014.trainable.ui.components.AndroidRoutineImagePicker
+import com.emanuel5014.trainable.ui.screens.settings.LocalPaletteColors
+import com.emanuel5014.trainable.ui.screens.settings.AndroidPaletteColors
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.ui.theme.AndroidPlatformGlass
 
@@ -316,6 +318,7 @@ class MainActivity : FragmentActivity() {
                   LocalNavBarStyle provides (navBarStyle ?: NavBarStyle.Floating),
                   LocalGlassSettings provides glassSettings,
                   LocalPlatformGlass provides AndroidPlatformGlass,
+                  LocalPaletteColors provides AndroidPaletteColors,
                   LocalHapticsSetting provides userPreferencesRepository.hapticEnabled,
                   LocalPlanImage provides AndroidPlanImage,
                   LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } },

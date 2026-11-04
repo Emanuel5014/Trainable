@@ -52,6 +52,10 @@ import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
 import com.emanuel5014.trainable.ui.navigation.Report
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
 import com.emanuel5014.trainable.ui.navigation.CompareSessions
+import com.emanuel5014.trainable.ui.screens.settings.PersonalizationSettingsContent
+import com.emanuel5014.trainable.ui.screens.settings.NotificationSettingsContent
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.wallpaper_colors_unavailable
 import com.emanuel5014.trainable.ui.screens.settings.SettingsContent
 import com.emanuel5014.trainable.ui.screens.settings.SettingsState
 import com.emanuel5014.trainable.ui.screens.settings.WorkoutSettingsContent
@@ -150,8 +154,19 @@ internal fun IosNavGraph(
             }
             composable<Exercises> { NotOnIosYet("Exercises", onBack = { navController.popBackStack() }) }
             composable<AiSettings> { NotOnIosYet("AI", onBack = { navController.popBackStack() }) }
-            composable<PersonalizationSettings> { NotOnIosYet("Personalization", onBack = { navController.popBackStack() }) }
-            composable<NotificationSettings> { NotOnIosYet("Notifications", onBack = { navController.popBackStack() }) }
+            composable<PersonalizationSettings> {
+                val scope = rememberCoroutineScope()
+                val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
+                PersonalizationSettingsContent(onNavigateBack = { navController.popBackStack() }, state = state,
+                    dynamicColorUnsupportedText = Res.string.wallpaper_colors_unavailable)
+            }
+            composable<NotificationSettings> {
+                val scope = rememberCoroutineScope()
+                val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
+                NotificationSettingsContent(onNavigateBack = { navController.popBackStack() }, state = state,
+                    onTimerNotificationsChange = {}, onMembershipNotificationsChange = {},
+                    onMembershipDaysBeforeChange = {}, deliveryAvailable = false)
+            }
             composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
             composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
             composable<RoutineDetail> { entry ->

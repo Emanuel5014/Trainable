@@ -1,8 +1,16 @@
 package com.emanuel5014.trainable.ui.screens.settings
 
-import com.emanuel5014.trainable.data.model.GlassPart
-import com.emanuel5014.trainable.ui.components.GlassToggle
-import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.style_tonal_spot
+import com.emanuel5014.trainable.sharedui.resources.style_vibrant
+import com.emanuel5014.trainable.sharedui.resources.style_expressive
+import com.emanuel5014.trainable.sharedui.resources.style_neutral
+import com.emanuel5014.trainable.sharedui.resources.style_fruit_salad
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.apply
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.custom_color
+import com.emanuel5014.trainable.sharedui.resources.style
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,29 +45,30 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.fromHSV
-import com.emanuel5014.trainable.ui.theme.getSeedPreviewColors
 import com.emanuel5014.trainable.ui.theme.toHSV
 
 @Composable
-internal fun PalettePreviewCircle(
+fun PalettePreviewCircle(
     colors: List<Color>,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    label: String? = null
 ) {
     Box(
         modifier = Modifier
@@ -67,6 +76,10 @@ internal fun PalettePreviewCircle(
             .clip(CircleShape)
             .background(if (isSelected) Primary.copy(alpha = 0.2f) else Color.Transparent)
             .clickable { onClick() }
+            .semantics {
+                if (label != null) contentDescription = label
+                selected = isSelected
+            }
             .padding(4.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -130,12 +143,13 @@ internal fun PalettePreviewCircle(
 }
 
 @Composable
-internal fun CustomColorPickerDialog(
+fun CustomColorPickerDialog(
     initialColor: Color?,
     initialStyle: Int,
     onDismiss: () -> Unit,
     onApply: (colorSeed: Int, style: Int) -> Unit
 ) {
+    val paletteColors = LocalPaletteColors.current
     val defaultHue = initialColor?.toHSV()?.get(0) ?: 220f
     var hue by remember { mutableFloatStateOf(defaultHue) }
     var selectedStyle by remember { mutableIntStateOf(initialStyle) }
@@ -147,7 +161,7 @@ internal fun CustomColorPickerDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceContainerHigh,
         title = {
-            Text(stringResource(R.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
+            Text(stringResource(Res.string.custom_color), fontWeight = FontWeight.ExtraBold, color = OnSurface)
         },
         text = {
             Column(
@@ -176,16 +190,22 @@ internal fun CustomColorPickerDialog(
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.style), style = MaterialTheme.typography.titleMedium, color = OnSurface, fontWeight = FontWeight.ExtraBold)
                     Row(
                         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        val styleNames = listOf(
+                            stringResource(Res.string.style_tonal_spot), stringResource(Res.string.style_vibrant),
+                            stringResource(Res.string.style_expressive), stringResource(Res.string.style_neutral),
+                            stringResource(Res.string.style_fruit_salad)
+                        )
                         (0..4).forEach { styleIndex ->
                             PalettePreviewCircle(
-                                colors = getSeedPreviewColors(seedArgb, styleIndex),
+                                colors = paletteColors.seed(seedArgb, styleIndex),
                                 isSelected = selectedStyle == styleIndex,
-                                onClick = { selectedStyle = styleIndex }
+                                onClick = { selectedStyle = styleIndex },
+                                label = styleNames[styleIndex]
                             )
                         }
                     }
@@ -194,12 +214,12 @@ internal fun CustomColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onApply(seedArgb, selectedStyle) }) {
-                Text(stringResource(R.string.apply).uppercase(), color = Primary)
+                Text(stringResource(Res.string.apply).uppercase(), color = Primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         }
     )

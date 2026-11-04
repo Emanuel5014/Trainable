@@ -54,16 +54,13 @@ import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.createSettingsDataStore
 import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.google_sans_flex
+import com.emanuel5014.trainable.ui.screens.settings.LocalPaletteColors
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardData
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
 import com.emanuel5014.trainable.ui.screens.routines.RoutinesState
-import com.emanuel5014.trainable.ui.theme.MonochromeDarkColorScheme
-import com.emanuel5014.trainable.ui.theme.MonochromeLightColorScheme
-import com.emanuel5014.trainable.ui.theme.MonolithicDarkColorScheme
-import com.emanuel5014.trainable.ui.theme.MonolithicLightColorScheme
 import com.emanuel5014.trainable.ui.theme.Shapes
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 import kotlinx.coroutines.flow.Flow
@@ -165,6 +162,8 @@ private fun TrainableIosApp() {
             IosAppGraph.analyticsPreferences, analyticsText, flowOf(language), scope)
     }
     val uiState by state.uiState.collectAsState()
+    val seedColor by preferences.dynamicColorSeed.collectAsState(initial = null)
+    val themeStyle by preferences.themeStyle.collectAsState(initial = 0)
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
     val navBarStyle by preferences.navBarStyle.collectAsState(initial = null)
@@ -179,7 +178,7 @@ private fun TrainableIosApp() {
         else -> isSystemInDarkTheme()
     }
 
-    IosTheme(paletteIndex = uiState.themePalette, darkTheme = isDark) {
+    IosTheme(paletteIndex = uiState.themePalette, seedColor = seedColor, themeStyle = themeStyle, darkTheme = isDark) {
         // As on Android, nothing until the navbar style is read, so the bar never swaps once drawn
         val style = navBarStyle
         if (style == null) {
@@ -187,6 +186,7 @@ private fun TrainableIosApp() {
             return@IosTheme
         }
         CompositionLocalProvider(
+            LocalPaletteColors provides IosPaletteColors,
             LocalHapticsSetting provides preferences.hapticEnabled,
             LocalAdvancedProgramming provides advancedProgramming,
             LocalNavBarStyle provides style,
@@ -199,16 +199,12 @@ private fun TrainableIosApp() {
     }
 }
 
-/**
- * The theme of the Android app on iOS. The palettes built from a seed colour need the Android colour library, so on
- * iOS every palette but Monochrome shows as Monolithic for now; there is no dynamic colour (wallpaper) on iOS.
- */
+/** The selected fixed/custom palette on iOS; wallpaper colors remain an Android capability. */
 @Composable
-private fun IosTheme(paletteIndex: Int, darkTheme: Boolean, content: @Composable () -> Unit) {
+private fun IosTheme(paletteIndex: Int, seedColor: Int?, themeStyle: Int, darkTheme: Boolean, content: @Composable () -> Unit) {
     rememberResponsiveSize()
-    val colorScheme = when {
-        paletteIndex == 8 -> if (darkTheme) MonochromeDarkColorScheme else MonochromeLightColorScheme
-        else -> if (darkTheme) MonolithicDarkColorScheme else MonolithicLightColorScheme
+    val colorScheme = remember(paletteIndex, seedColor, themeStyle, darkTheme) {
+        IosPaletteColors.colorScheme(paletteIndex, seedColor, themeStyle, darkTheme)
     }
     MaterialTheme(colorScheme = colorScheme, typography = appTypography(), shapes = Shapes, content = content)
 }

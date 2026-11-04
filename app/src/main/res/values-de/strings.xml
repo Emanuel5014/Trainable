@@ -4,36 +4,6 @@
     <!-- App -->
 
     <!-- Navigation -->
-    <string name="liquid_glass">Liquid Glass</string>
-    <string name="liquid_glass_desc">Glas im Stil von iOS auf den Bedienelementen, die über dem Inhalt schweben</string>
-    <string name="glass_intensity">Glasintensität</string>
-    <string name="glass_intensity_desc">Von einer fast deckenden Fläche bis zu klarem Glas</string>
-    <string name="glass_blur">Hintergrundunschärfe</string>
-    <string name="glass_blur_desc">Wie unscharf das hinter dem Glas wirkt, von klar bis milchig</string>
-    <string name="glass_stretch">Dehnen bei Berührung</string>
-    <string name="glass_stretch_desc">Das Glas schwillt an und neigt sich mit dem Finger, wenn du es berührst</string>
-    <string name="glass_parts">Wo verwenden</string>
-    <string name="glass_part_nav_bar">Navigationsleiste</string>
-    <string name="glass_part_nav_bar_desc">Die schwebende Leiste bricht, was darunter scrollt</string>
-    <string name="glass_part_nav_bar_needs_floating">Funktioniert mit der schwebenden Navigationsleiste (Einstellungen)</string>
-    <string name="glass_part_header_buttons">Kopfzeilen-Buttons</string>
-    <string name="glass_part_header_buttons_desc">Einstellungen, Filter und Zurück-Buttons</string>
-    <string name="glass_part_action_buttons">Aktionsbuttons</string>
-    <string name="glass_part_action_buttons_desc">Schnelles Training, neuer Plan und die anderen schwebenden Buttons</string>
-    <string name="glass_part_workout_panel">Trainingsbereich</string>
-    <string name="glass_part_workout_panel_desc">Der untere Bereich im Training, mattiert über deinen Sätzen</string>
-    <string name="glass_part_overlays">Blätter und Dialoge</string>
-    <string name="glass_part_overlays_desc">Der Bildschirm dahinter wird unscharf (Android 12+)</string>
-    <string name="glass_part_switches">Schalter</string>
-    <string name="glass_part_switches_desc">Der Knopf wird beim Bewegen zu einem Glastropfen</string>
-    <string name="glass_part_tabs">Tab-Auswahl</string>
-    <string name="glass_part_tabs_desc">Aktive und archivierte Pläne: ein Glastropfen gleitet zwischen den Tabs</string>
-    <string name="glass_part_search_bars">Suchleisten</string>
-    <string name="glass_part_search_bars_desc">Die Suche in den Übungslisten und -auswahlen</string>
-    <string name="glass_part_sliders">Schieberegler</string>
-    <string name="glass_part_sliders_desc">Der Regler wird beim Ziehen zu einem Glastropfen</string>
-    <string name="glass_part_workout_nav">Workout-Navigation</string>
-    <string name="glass_part_workout_nav_desc">Vorherige und nächste Übung im Workout-Panel</string>
 
     <!-- Common Actions -->
     <string name="save">Speichern</string>
@@ -202,7 +172,6 @@
     <string name="warmup_timer_finished">Aufwärmen beendet!</string>
     <string name="warmup_timer_description">Timer für Aufwärmen, Dehnen oder Sonstiges einstellen</string>
     <string name="warmup_timer_notifications_desc">Aufwärmtimer in Systembenachrichtigungen anzeigen</string>
-    <string name="warmup_timer_settings_desc">Aufwärmtimer-Button während des Trainings anzeigen</string>
     <string name="auto_stop_cardio_at_target">Cardio am Ziel automatisch stoppen</string>
     <string name="auto_stop_cardio_at_target_desc">Timer beim Erreichen des Zeitziels automatisch pausieren</string>
     <string name="auto_stop_time_weight_at_target">Zeitsätze am Ziel automatisch stoppen</string>
@@ -227,8 +196,6 @@
     <string name="exercise_media_unsupported">Die Datei konnte nicht geöffnet werden. Wähle ein Bild oder GIF.</string>
     <string name="exercise_media_play_pause">Wiedergabe oder Pause</string>
     <string name="workout_settings">Training</string>
-    <string name="personalization_title">Personalisierung</string>
-    <string name="notifications_title">Mitteilungen</string>
     <string name="workout_duration">Trainingsdauer</string>
     <string name="add_duration">Dauer hinzufügen</string>
     <string name="hours">Stunden</string>
@@ -311,7 +278,6 @@
     <string name="vibration_on_interactions">Vibration bei Interaktionen</string>
     <string name="dynamic_color">Dynamische Farbe</string>
     <string name="dynamic_color_desc">Material You Farben vom Hintergrundbild verwenden</string>
-    <string name="dynamic_color_not_supported">Nicht unterstützt (Android 12+ erforderlich)</string>
     <string name="app_palette">App Palette</string>
     <string name="app_palette_desc">Wähle ein benutzerdefiniertes Farbschema für die App</string>
     <string name="theme_mode">Thema</string>
@@ -322,36 +288,16 @@
     <string name="theme_mode_dark_short">D</string>
 
     <!-- Personalization - Palettes & Styles -->
-    <string name="style_tonal_spot">Tonal Spot</string>
-    <string name="style_vibrant">Lebhaft</string>
-    <string name="style_expressive">Ausdrucksstark</string>
-    <string name="style_neutral">Neutral</string>
-    <string name="style_fruit_salad">Fruit Salad</string>
-    <string name="palette_default">Standard</string>
-    <string name="palette_blue">Blau</string>
-    <string name="palette_green">Grün</string>
-    <string name="palette_red">Rot</string>
-    <string name="palette_purple">Lila</string>
-    <string name="palette_orange">Orange</string>
-    <string name="palette_pink">Pink</string>
-    <string name="palette_teal">Blaugrün</string>
-    <string name="palette_monochrome">Monochrom</string>
-    <string name="custom_color">Benutzerdefinierte Farbe</string>
-    <string name="pick_theme_color">Wähle deine eigene Themenfarbe</string>
-    <string name="style">Stil</string>
     <string name="apply">Übernehmen</string>
-    <string name="system_default">Systemstandard</string>
     <string name="notifications">MITTEILUNGEN</string>
     <string name="timer_notifications">Timer-Benachrichtigungen</string>
     <string name="timer_notifications_desc">Pausentimer und EMOM-Runden in Systembenachrichtigungen anzeigen</string>
     <string name="lockscreen_vibration">Sperrbildschirm-Vibration</string>
-    <string name="lockscreen_vibration_desc">Kontinuierliche Vibration für das Ende der Pause bei gesperrtem Bildschirm</string>
     <string name="vibration_default">Standard</string>
     <string name="vibration_seconds">%d Sekunden</string>
     <string name="gym_membership_notifications">Mitgliedschaftserinnerungen</string>
     <string name="gym_membership_notifications_desc">Benachrichtigen, bevor die Mitgliedschaft abläuft</string>
     <string name="notify_days_before">Vorlaufzeit</string>
-    <string name="notify_days_before_desc">Tage vor Ablauf für die Erinnerung</string>
     <string name="gym_membership_expiring">Mitgliedschaft läuft ab</string>
     <string name="gym_membership_expiring_desc">Deine Fitnessstudio-Mitgliedschaft läuft in %d Tagen ab. Vergiss nicht zu verlängern!</string>
     <string name="web_server_notification_channel_name">Webserver</string>
