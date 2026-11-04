@@ -191,11 +191,6 @@
     <string name="choose_from_library">Aus der Bibliothek wählen</string>
     <string name="filter_custom">Benutzerdefiniert</string>
     <string name="new_exercise">Neue Übung</string>
-    <string name="exercise_deleted_badge">Gelöscht</string>
-    <string name="deleted_exercise_title">Übung gelöscht</string>
-    <string name="deleted_exercise_message">\"%1$s\" wurde aus deiner Übungsliste gelöscht, ist aber noch in deinen Plänen und Trainings. Wieder zur Liste hinzufügen?</string>
-    <string name="deleted_exercises_message">Diese Übungen wurden aus deiner Übungsliste gelöscht, sind aber noch in deinen Plänen und Trainings: %1$s. Wieder zur Liste hinzufügen?</string>
-    <string name="deleted_exercise_restore">Wieder hinzufügen</string>
     <string name="add_custom_exercise">Benutzerdefinierte Übung hinzufügen</string>
     <string name="exercise_name">Übungsname</string>
     <string name="category">Kategorie</string>
@@ -681,7 +676,6 @@
     <string name="cardio_min_format">%1$d Min</string>
     <string name="cardio_free_form">Frei</string>
     <string name="cardio_cat_label">Cardio</string>
-    <string name="cardio_cat_with_name">Cardio (%1$s)</string>
     <string name="cardio_duration_label">Zieldauer (Min)</string>
     <string name="cardio_duration_slider">Dauer (Min)</string>
     <string name="cardio_custom_duration">Benutzerdefiniert (Min)</string>
@@ -705,7 +699,6 @@
     <!-- Errors -->
     <string name="error_unknown">Unbekannter Fehler</string>
     <string name="routine_not_found">Routine nicht gefunden</string>
-    <string name="reps_hint">z.B. 8 oder 8-6-4-2</string>
 
     <!-- Notifications -->
     <string name="notification_next_set">Nächste: %1$s - Satz %2$d: %3$s × %4$d</string>
@@ -908,10 +901,7 @@
     <string name="ai_scan_confirm_dialog_review">Überprüfen</string>
 
     <!-- Exercise Types -->
-    <string name="exercise_type_strength">Gewicht &amp; Wdh.</string>
     <string name="exercise_type_time_and_weight">Zeit &amp; Gewicht</string>
-    <string name="exercise_type_strength_hint">Sätze und Wiederholungen mit Gewicht</string>
-    <string name="exercise_type_time_and_weight_hint">Zeitbasierte Sätze, mit oder ohne Gewicht</string>
     <string name="target_time">Zielzeit</string>
     <string name="target_seconds">Ziel (Sekunden)</string>
     <string name="seconds_short">Sek.</string>
@@ -928,11 +918,8 @@
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Erweitert</string>
     <string name="exercise_type_time_and_reps">Zeit &amp; Wdh.</string>
-    <string name="exercise_type_time_and_reps_hint">Wiederholungen in einem Zeitintervall, ohne Gewicht</string>
     <string name="time_and_reps_badge">ZEIT &amp; WDH.</string>
     <string name="time_reps_value">%1$ds · %2$d Wdh.</string>
-    <string name="reps_goal_label">Ziel-Wdh.</string>
-    <string name="reps_goal_error">Gib eine ganze Zahl von 1 bis 999 ein</string>
     <string name="reps_done_label">Geschaffte Wdh.</string>
     <string name="reps_decrease">Eine Wdh. weniger</string>
     <string name="reps_increase">Eine Wdh. mehr</string>
@@ -979,56 +966,26 @@
         <item quantity="other">+%d Teilwdh.</item>
     </plurals>
     <string name="notification_next_set_text">Nächste: %1$s - Satz %2$d: %3$s</string>
-    <string name="advanced_prescription_hint" formatted="false">%1RM-Blöcke, RPE und Techniken</string>
-    <string name="one_rep_max">1RM</string>
     <string name="one_rep_max_value">1RM %1$s</string>
-    <string name="set_one_rep_max">1RM festlegen</string>
     <string name="edit_one_rep_max">1RM bearbeiten</string>
-    <string name="one_rep_max_estimated">Aus deinen Logs geschätzt: %1$s</string>
-    <string name="use_estimate">Übernehmen</string>
     <string name="one_rep_max_missing">Lege ein 1RM fest, um die Lasten zu berechnen</string>
     <string name="block_n">BLOCK %1$d</string>
-    <string name="add_block">Block hinzufügen</string>
-    <string name="duplicate">Duplizieren</string>
-    <string name="move_up">Nach oben</string>
-    <string name="move_down">Nach unten</string>
-    <string name="intensity">Intensität</string>
-    <string name="intensity_percent" formatted="false">%1RM</string>
-    <string name="intensity_rpe">RPE</string>
-    <string name="intensity_weight">Last</string>
-    <string name="intensity_bodyweight">KG</string>
-    <string name="intensity_none">Frei</string>
     <string name="bodyweight_short">KG</string>
-    <string name="added_load">Zusatzlast</string>
-    <string name="volume">Volumen</string>
-    <string name="rep_mode_fixed">Sätze × Wdh.</string>
-    <string name="rep_mode_amrap">Max. Wdh.</string>
-    <string name="rep_mode_total">Gesamt-Wdh.</string>
     <string name="total_reps_label">%1$d Wdh. gesamt</string>
     <string name="max_label">MAX</string>
-    <string name="techniques">Techniken</string>
-    <string name="technique_pause">Pause</string>
     <string name="technique_pause_seconds">Pause %1$d″</string>
     <string name="technique_chains">Ketten</string>
     <string name="technique_bands">Bänder</string>
     <string name="technique_feet_up">Füße hoch</string>
     <string name="technique_competition">Wettkampf</string>
-    <string name="technique_tempo">Tempo</string>
     <string name="technique_tempo_value">Tempo %1$s</string>
     <string name="technique_deficit">Defizit</string>
     <string name="technique_emom">EMOM</string>
-    <string name="technique_custom">Eigene</string>
-    <string name="custom_technique_hint">z. B. Pin Press</string>
-    <string name="tempo_hint">Ab-Pause-Auf, z. B. 4-2-4</string>
-    <string name="block_rest">Satzpause des Blocks</string>
-    <string name="same_as_exercise">Wie die Übung</string>
-    <string name="block_note">Blocknotiz</string>
     <string name="notation_input_label">Schreib es wie in dein Heft</string>
     <string name="notation_input_hint" formatted="false">70% 5  75% 3x5 PAUSE 2\"  80% 20 REP ALSAP</string>
     <string name="notation_recognised">Erkannt: %1$s</string>
     <string name="notation_nothing">Noch nichts erkannt</string>
     <string name="notation_replace_blocks">Blöcke ersetzen</string>
-    <string name="rest_label">Pause: %1$ds</string>
     <string name="advanced_needs_block">Füge mindestens einen Block hinzu</string>
     <string name="week_short">W%1$d</string>
     <string name="week_n">Woche %1$d</string>
@@ -1039,7 +996,6 @@
     <string name="program_current_week">Aktuelle Woche</string>
     <string name="auto_advance_week">Automatisch weiter</string>
     <string name="auto_advance_week_desc">Wechselt zur nächsten Woche, wenn du diese Routine abschließt</string>
-    <string name="add_week">Woche hinzufügen</string>
     <string name="copy_previous_week">W%1$d kopieren</string>
     <string name="skip_this_week">In dieser Woche auslassen</string>
     <string name="not_in_week">Nicht in W%1$d</string>
@@ -1053,7 +1009,6 @@
     <string name="extra_badge">EXTRA</string>
     <string name="add_extra_set">Extra-Satz</string>
     <string name="rpe_short">RPE %1$s</string>
-    <string name="rpe_optional">RPE (optional)</string>
     <string name="total_reps_progress">%1$d/%2$d Wdh.</string>
     <string name="amrap_enter_reps">Gib deine Wiederholungen ein</string>
     <string name="new_one_rep_max_title">Neues 1RM?</string>
@@ -1106,7 +1061,6 @@
     <string name="percent_table">Prozenttabelle</string>
     <string name="one_rep_max_history">Verlauf</string>
     <string name="estimated_one_rep_max_short">e1RM %1$s</string>
-    <string name="one_rep_max_weight">Gewicht</string>
     <string name="one_rep_max_delete_entry">Eintrag löschen</string>
     <string name="load_rounding">Lastrundung</string>
     <string name="load_rounding_desc" formatted="false">%1RM-Lasten werden auf die nächste Scheibenstufe gerundet</string>
@@ -1186,7 +1140,6 @@
     <string name="prescription_remove_sets_message">%1$d geloggte Sätze passen nicht zur neuen Vorgabe und werden entfernt.</string>
     <string name="keep_prescription_on_swap">Die neue Übung übernimmt die Vorgabe der alten.</string>
     <string name="delete_week_message_local">Die Woche wird aus dieser Übung entfernt, die folgenden Wochen rücken auf.</string>
-    <string name="add_block_short">Block</string>
     <string name="advanced_programming">Erweiterte Programmierung</string>
     <string name="advanced_programming_desc" formatted="false">%1RM-Sätze, Techniken wie Pausen und Ketten, Wochenprogramme, 1RM-Verwaltung und Ziel-RPE</string>
     <string name="ai_program_review_summary">%1$d Wochen · %2$d Blöcke</string>
@@ -1274,17 +1227,6 @@
     <string name="starting_weight_desc">Gib jeder Übung einer Routine ein Gewicht zum Starten. Solange die Routine noch kein Training zum Übernehmen hat, beginnen die Sätze dort oder beim zuletzt genutzten Gewicht dieser Übung.</string>
     <string name="set_performance_setting">Satzdetails</string>
     <string name="set_performance_setting_desc">Mini-Sätze nach einer kurzen Pause, unterstützte und Teilwiederholungen und die Technik, mit der der Satz wirklich gemacht wurde. Aus haben Sätze nur ihre Notiz.</string>
-    <string name="starting_weight_field">Startgewicht (%1$s)</string>
-    <string name="starting_weight_hint">Optional · gilt bis zum ersten erfassten Training</string>
-    <string name="reps_mode_fixed">Fest</string>
-    <string name="reps_mode_range">Bereich</string>
-    <string name="reps_mode_per_set">Pro Satz</string>
-    <string name="reps_min">Min</string>
-    <string name="reps_max">Max</string>
-    <string name="reps_range_hint">Behalte das Gewicht, bis du in jedem Satz das Maximum schaffst, dann steigere es</string>
-    <string name="reps_range_error">Das Maximum muss höher als das Minimum sein</string>
-    <string name="reps_number_error">Gib eine ganze Zahl von 1 bis 100 ein</string>
-    <string name="reps_list_error">Zahlen mit Bindestrichen trennen, z. B. 8-6-4-2</string>
     <string name="reps_goal">Ziel: %1$s</string>
     <string name="progression_hit_max">%1$d Wdh. in jedem Satz beim letzten Mal</string>
     <string name="progression_try_weight">Probiere %1$s</string>

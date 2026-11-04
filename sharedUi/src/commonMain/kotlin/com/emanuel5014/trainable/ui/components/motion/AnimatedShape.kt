@@ -5,13 +5,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.toPath
 
 @Composable
 fun rememberAnimatedShape(
@@ -25,7 +24,7 @@ fun rememberAnimatedShape(
                 layoutDirection: LayoutDirection,
                 density: Density
             ): Outline {
-                val path = morph.toPath(progress).asComposePath()
+                val path = morph.toComposePath(progress)
                 val matrix = Matrix()
                 matrix.scale(size.width, size.height)
                 path.transform(matrix)
@@ -35,3 +34,6 @@ fun rememberAnimatedShape(
         }
     }
 }
+
+/** The outline of [this] at [progress] (0 = start shape, 1 = end shape), in the shape's own 0..1 space. */
+internal expect fun Morph.toComposePath(progress: Float): Path

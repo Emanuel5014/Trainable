@@ -123,7 +123,7 @@ fun GlowProgressOverlay(
                 val centerY = height / 2f
 
                 // Orb 1: Primary color orbital glow
-                val rad1 = Math.toRadians(angle1.toDouble())
+                val rad1 = angle1.toDouble() * DegreesToRadians
                 val offset1 = Offset(
                     x = centerX + (cos(rad1) * width * 0.30f).toFloat(),
                     y = centerY + (sin(rad1) * height * 0.22f).toFloat()
@@ -144,7 +144,7 @@ fun GlowProgressOverlay(
                 )
 
                 // Orb 2: Tertiary / Accent color orbital glow (counter-rotation)
-                val rad2 = Math.toRadians(angle2.toDouble())
+                val rad2 = angle2.toDouble() * DegreesToRadians
                 val offset2 = Offset(
                     x = centerX + (cos(rad2) * width * 0.34f).toFloat(),
                     y = centerY + (sin(rad2) * height * 0.25f).toFloat()
@@ -216,3 +216,6 @@ fun GlowProgressOverlay(
         }
     }
 }
+
+/** As java.lang.Math.toRadians multiplies. */
+private const val DegreesToRadians = kotlin.math.PI / 180.0

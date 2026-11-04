@@ -1,5 +1,12 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.deleted_exercise_message
+import com.emanuel5014.trainable.sharedui.resources.deleted_exercise_restore
+import com.emanuel5014.trainable.sharedui.resources.deleted_exercise_title
+import com.emanuel5014.trainable.sharedui.resources.deleted_exercises_message
+import com.emanuel5014.trainable.sharedui.resources.exercise_deleted_badge
+import com.emanuel5014.trainable.sharedui.resources.not_now
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -7,10 +14,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -20,7 +26,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 /** Marks an exercise the user deleted from the exercise list while a routine or a workout still has it. */
 @Composable
 fun DeletedExercisePill(modifier: Modifier = Modifier, containerColor: Color = SurfaceContainerHigh) {
-    PrescriptionPill(text = stringResource(R.string.exercise_deleted_badge), modifier = modifier, containerColor = containerColor)
+    PrescriptionPill(text = stringResource(Res.string.exercise_deleted_badge), modifier = modifier, containerColor = containerColor)
 }
 
 /**
@@ -33,15 +39,15 @@ fun RestoreExerciseDialog(
     onRestore: () -> Unit,
     onSkip: () -> Unit,
     onDismiss: () -> Unit,
-    skipLabel: String = stringResource(R.string.not_now)
+    skipLabel: String = stringResource(Res.string.not_now)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.deleted_exercise_title), fontWeight = FontWeight.ExtraBold) },
+        title = { Text(stringResource(Res.string.deleted_exercise_title), fontWeight = FontWeight.ExtraBold) },
         text = {
             Text(
-                if (exerciseNames.size == 1) stringResource(R.string.deleted_exercise_message, exerciseNames.first())
-                else stringResource(R.string.deleted_exercises_message, exerciseNames.joinToString(", "))
+                if (exerciseNames.size == 1) stringResource(Res.string.deleted_exercise_message, exerciseNames.first())
+                else stringResource(Res.string.deleted_exercises_message, exerciseNames.joinToString(", "))
             )
         },
         confirmButton = {
@@ -51,7 +57,7 @@ fun RestoreExerciseDialog(
                 contentColor = OnPrimary,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(R.string.deleted_exercise_restore).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.deleted_exercise_restore).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {

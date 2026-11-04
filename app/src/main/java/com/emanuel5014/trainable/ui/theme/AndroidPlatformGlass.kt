@@ -6,6 +6,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.SliderColors
+import com.emanuel5014.trainable.ui.components.LiquidGlassSlider
 import com.emanuel5014.trainable.ui.components.GlassSegmentedTabs
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.ui.glass.GlassSource
@@ -46,6 +49,21 @@ object AndroidPlatformGlass : PlatformGlass {
 
     @Composable
     override fun NoOverlayBlur() = com.emanuel5014.trainable.ui.theme.NoOverlayBlur()
+
+    override val hasGlassSlider: Boolean get() = true
+
+    @Composable
+    override fun GlassSlider(
+        value: Float,
+        onValueChange: (Float) -> Unit,
+        modifier: Modifier,
+        enabled: Boolean,
+        valueRange: ClosedFloatingPointRange<Float>,
+        steps: Int,
+        onValueChangeFinished: (() -> Unit)?,
+        colors: SliderColors,
+        interactionSource: MutableInteractionSource
+    ) = LiquidGlassSlider(value, onValueChange, modifier, enabled, valueRange, steps, onValueChangeFinished, colors, interactionSource)
 }
 
 private class BackdropGlassSource(private val backdrop: LayerBackdrop) : GlassSource {

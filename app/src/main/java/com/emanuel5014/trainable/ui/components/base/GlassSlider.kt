@@ -16,7 +16,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -26,8 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import com.emanuel5014.trainable.data.model.GlassPart
-import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberCanvasBackdrop
@@ -46,42 +43,23 @@ private val ThumbHeight = 24.dp
 private val TrackHeight = 6.dp
 
 /**
- * The Material 3 slider, with its thumb in Liquid Glass when the user has the sliders part on: a solid white
- * pill at rest that swells into a drop of glass, bending the track beneath, while it is held or dragged, as on
- * iOS 26. Same parameters as the Material slider, so it replaces it by import.
- *
- * A slider whose track is clear (colour pickers draw their own gradient under it) keeps the plain thumb.
+ * The slider of the shared screens (Slider.kt) with its thumb in Liquid Glass: a solid white pill at rest that swells
+ * into a drop of glass, bending the track beneath, while it is held or dragged, as on iOS 26.
  *
  * The drop follows the LiquidToggle example of Kyant0/AndroidLiquidGlass (Apache-2.0).
  */
 @Composable
-fun Slider(
+fun LiquidGlassSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
-    steps: Int = 0,
-    onValueChangeFinished: (() -> Unit)? = null,
-    colors: SliderColors = SliderDefaults.colors(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    modifier: Modifier,
+    enabled: Boolean,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChangeFinished: (() -> Unit)?,
+    colors: SliderColors,
+    interactionSource: MutableInteractionSource
 ) {
-    val glass = LocalGlassSettings.current.isOn(GlassPart.Sliders) && colors.activeTrackColor != Color.Transparent
-    if (!glass) {
-        androidx.compose.material3.Slider(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = modifier,
-            enabled = enabled,
-            valueRange = valueRange,
-            steps = steps,
-            onValueChangeFinished = onValueChangeFinished,
-            colors = colors,
-            interactionSource = interactionSource
-        )
-        return
-    }
-
     val trackBackdrop = rememberLayerBackdrop()
     androidx.compose.material3.Slider(
         value = value,

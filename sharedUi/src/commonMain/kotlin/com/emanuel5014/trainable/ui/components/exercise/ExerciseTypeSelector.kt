@@ -1,6 +1,15 @@
 package com.emanuel5014.trainable.ui.components
 
-import androidx.annotation.StringRes
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.advanced_prescription_hint
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_advanced
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_strength
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_strength_hint
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_time_and_reps
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_time_and_reps_hint
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_time_and_weight
+import com.emanuel5014.trainable.sharedui.resources.exercise_type_time_and_weight_hint
+import org.jetbrains.compose.resources.StringResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -37,12 +46,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -51,33 +59,33 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 
 private data class ExerciseTypeOption(
     val type: String,
-    @StringRes val label: Int,
-    @StringRes val hint: Int,
+    val label: StringResource,
+    val hint: StringResource,
     val icon: ImageVector
 )
 
 private val StrengthOption = ExerciseTypeOption(
     type = "strength",
-    label = R.string.exercise_type_strength,
-    hint = R.string.exercise_type_strength_hint,
+    label = Res.string.exercise_type_strength,
+    hint = Res.string.exercise_type_strength_hint,
     icon = Icons.Rounded.FitnessCenter
 )
 private val TimeAndWeightOption = ExerciseTypeOption(
     type = "time_and_weight",
-    label = R.string.exercise_type_time_and_weight,
-    hint = R.string.exercise_type_time_and_weight_hint,
+    label = Res.string.exercise_type_time_and_weight,
+    hint = Res.string.exercise_type_time_and_weight_hint,
     icon = Icons.Rounded.Timer
 )
 private val TimeAndRepsOption = ExerciseTypeOption(
     type = "time_and_reps",
-    label = R.string.exercise_type_time_and_reps,
-    hint = R.string.exercise_type_time_and_reps_hint,
+    label = Res.string.exercise_type_time_and_reps,
+    hint = Res.string.exercise_type_time_and_reps_hint,
     icon = Icons.Rounded.Timelapse
 )
 private val AdvancedOption = ExerciseTypeOption(
     type = "advanced",
-    label = R.string.exercise_type_advanced,
-    hint = R.string.advanced_prescription_hint,
+    label = Res.string.exercise_type_advanced,
+    hint = Res.string.advanced_prescription_hint,
     icon = Icons.Rounded.Percent
 )
 

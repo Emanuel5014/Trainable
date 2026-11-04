@@ -37,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -89,6 +90,8 @@ import javax.inject.Inject
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
 import com.emanuel5014.trainable.ui.components.AndroidPlanImage
 import com.emanuel5014.trainable.ui.components.LocalPlanImage
+import com.emanuel5014.trainable.ui.components.AndroidPrescriptionText
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
 import com.emanuel5014.trainable.ui.theme.AndroidPlatformGlass
 
@@ -305,7 +308,8 @@ class MainActivity : FragmentActivity() {
                   LocalGlassSettings provides glassSettings,
                   LocalPlatformGlass provides AndroidPlatformGlass,
                   LocalHapticsSetting provides userPreferencesRepository.hapticEnabled,
-                  LocalPlanImage provides AndroidPlanImage
+                  LocalPlanImage provides AndroidPlanImage,
+                  LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } }
               ) {
                 val hasCompletedOnboarding by userPreferencesRepository.hasCompletedOnboarding.collectAsState(initial = null)
                 val onboardingCompletedOverride = remember { mutableStateOf<Boolean?>(null) }

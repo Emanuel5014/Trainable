@@ -1,6 +1,8 @@
 package com.emanuel5014.trainable.ui.glass
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.SliderColors
 import androidx.compose.material3.FloatingActionButtonElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -42,6 +44,23 @@ interface PlatformGlass {
         onScrub: ((position: Float) -> Unit)?,
         onScrubEnd: ((index: Int) -> Unit)?,
         onTick: () -> Unit
+    ) {}
+
+    /** Whether this platform draws [GlassSlider]; without it sliders keep the Material thumb. */
+    val hasGlassSlider: Boolean get() = false
+
+    /** The Material slider with its thumb in glass; same parameters as the shared Slider. */
+    @Composable
+    fun GlassSlider(
+        value: Float,
+        onValueChange: (Float) -> Unit,
+        modifier: Modifier,
+        enabled: Boolean,
+        valueRange: ClosedFloatingPointRange<Float>,
+        steps: Int,
+        onValueChangeFinished: (() -> Unit)?,
+        colors: SliderColors,
+        interactionSource: MutableInteractionSource
     ) {}
 
     /** Put inside a sheet or dialog that should open without the blur behind it. */

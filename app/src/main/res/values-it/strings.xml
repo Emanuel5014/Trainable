@@ -191,11 +191,6 @@
     <string name="choose_from_library">Scegli dalla libreria</string>
     <string name="filter_custom">Personalizzati</string>
     <string name="new_exercise">Nuovo Esercizio</string>
-    <string name="exercise_deleted_badge">Eliminato</string>
-    <string name="deleted_exercise_title">Esercizio eliminato</string>
-    <string name="deleted_exercise_message">\"%1$s\" è stato eliminato dall\'elenco degli esercizi, ma è ancora nelle tue schede e nei tuoi allenamenti. Vuoi aggiungerlo di nuovo all\'elenco?</string>
-    <string name="deleted_exercises_message">Questi esercizi sono stati eliminati dall\'elenco degli esercizi, ma sono ancora nelle tue schede e nei tuoi allenamenti: %1$s. Vuoi aggiungerli di nuovo all\'elenco?</string>
-    <string name="deleted_exercise_restore">Reinserisci</string>
     <string name="add_custom_exercise">Aggiungi Esercizio Personalizzato</string>
     <string name="exercise_name">Nome Esercizio</string>
     <string name="category">Categoria</string>
@@ -681,7 +676,6 @@
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Libero</string>
     <string name="cardio_cat_label">Cardio</string>
-    <string name="cardio_cat_with_name">Cardio (%1$s)</string>
     <string name="cardio_duration_label">Durata Target (min)</string>
     <string name="cardio_duration_slider">Durata (min)</string>
     <string name="cardio_custom_duration">Personalizzato (min)</string>
@@ -705,7 +699,6 @@
     <!-- Errors -->
     <string name="error_unknown">Errore sconosciuto</string>
     <string name="routine_not_found">Scheda non trovata</string>
-    <string name="reps_hint">es. 8 o 8-6-4-2</string>
 
     <!-- Notifications -->
     <string name="notification_next_set">Prossima: %1$s - %2$dª serie: %3$s × %4$d</string>
@@ -908,10 +901,7 @@
     <string name="ai_scan_confirm_dialog_review">Ricontrolla</string>
 
     <!-- Exercise Types -->
-    <string name="exercise_type_strength">Peso &amp; Ripetizioni</string>
     <string name="exercise_type_time_and_weight">Tempo &amp; Peso</string>
-    <string name="exercise_type_strength_hint">Serie e ripetizioni con un carico</string>
-    <string name="exercise_type_time_and_weight_hint">Serie a tempo, con o senza peso</string>
     <string name="target_time">Tempo target</string>
     <string name="target_seconds">Target (secondi)</string>
     <string name="seconds_short">sec</string>
@@ -928,11 +918,8 @@
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Avanzata</string>
     <string name="exercise_type_time_and_reps">Tempo &amp; Ripetizioni</string>
-    <string name="exercise_type_time_and_reps_hint">Ripetizioni fatte in un intervallo a tempo, senza peso</string>
     <string name="time_and_reps_badge">TEMPO &amp; RIP.</string>
     <string name="time_reps_value">%1$ds · %2$d rip.</string>
-    <string name="reps_goal_label">Obiettivo ripetizioni</string>
-    <string name="reps_goal_error">Inserisci un numero intero da 1 a 999</string>
     <string name="reps_done_label">Ripetizioni fatte</string>
     <string name="reps_decrease">Una ripetizione in meno</string>
     <string name="reps_increase">Una ripetizione in più</string>
@@ -979,56 +966,26 @@
         <item quantity="other">+%d parziali</item>
     </plurals>
     <string name="notification_next_set_text">Prossima: %1$s - %2$dª serie: %3$s</string>
-    <string name="advanced_prescription_hint" formatted="false">Blocchi a %1RM, RPE e tecniche</string>
-    <string name="one_rep_max">Massimale</string>
     <string name="one_rep_max_value">Massimale %1$s</string>
-    <string name="set_one_rep_max">Imposta massimale</string>
     <string name="edit_one_rep_max">Modifica massimale</string>
-    <string name="one_rep_max_estimated">Stimato dai tuoi log: %1$s</string>
-    <string name="use_estimate">Usa</string>
     <string name="one_rep_max_missing">Imposta un massimale per calcolare i carichi</string>
     <string name="block_n">BLOCCO %1$d</string>
-    <string name="add_block">Aggiungi blocco</string>
-    <string name="duplicate">Duplica</string>
-    <string name="move_up">Sposta su</string>
-    <string name="move_down">Sposta giù</string>
-    <string name="intensity">Intensità</string>
-    <string name="intensity_percent" formatted="false">%1RM</string>
-    <string name="intensity_rpe">RPE</string>
-    <string name="intensity_weight">Carico</string>
-    <string name="intensity_bodyweight">Corpo</string>
-    <string name="intensity_none">Libero</string>
     <string name="bodyweight_short">BW</string>
-    <string name="added_load">Zavorra</string>
-    <string name="volume">Volume</string>
-    <string name="rep_mode_fixed">Serie × rep</string>
-    <string name="rep_mode_amrap">Max rep</string>
-    <string name="rep_mode_total">Rep totali</string>
     <string name="total_reps_label">%1$d rep totali</string>
     <string name="max_label">MAX</string>
-    <string name="techniques">Tecniche</string>
-    <string name="technique_pause">Fermo</string>
     <string name="technique_pause_seconds">Fermo %1$d″</string>
     <string name="technique_chains">Catene</string>
     <string name="technique_bands">Elastici</string>
     <string name="technique_feet_up">Piedi su</string>
     <string name="technique_competition">Gara</string>
-    <string name="technique_tempo">Tempo</string>
     <string name="technique_tempo_value">Tempo %1$s</string>
     <string name="technique_deficit">Deficit</string>
     <string name="technique_emom">EMOM</string>
-    <string name="technique_custom">Personalizzata</string>
-    <string name="custom_technique_hint">es. Pin press</string>
-    <string name="tempo_hint">Discesa-fermo-salita, es. 4-2-4</string>
-    <string name="block_rest">Recupero del blocco</string>
-    <string name="same_as_exercise">Come l\'esercizio</string>
-    <string name="block_note">Nota del blocco</string>
     <string name="notation_input_label">Scrivi come sul quaderno</string>
     <string name="notation_input_hint" formatted="false">70% 5  75% 3x5 STOP 2\"  80% 20 REP ALSAP</string>
     <string name="notation_recognised">Riconosciuto: %1$s</string>
     <string name="notation_nothing">Ancora niente di riconosciuto</string>
     <string name="notation_replace_blocks">Sostituisci blocchi</string>
-    <string name="rest_label">Rec: %1$ds</string>
     <string name="advanced_needs_block">Aggiungi almeno un blocco</string>
     <string name="week_short">W%1$d</string>
     <string name="week_n">Settimana %1$d</string>
@@ -1039,7 +996,6 @@
     <string name="program_current_week">Settimana corrente</string>
     <string name="auto_advance_week">Avanza automaticamente</string>
     <string name="auto_advance_week_desc">Passa alla settimana successiva quando completi questa routine</string>
-    <string name="add_week">Aggiungi settimana</string>
     <string name="copy_previous_week">Copia W%1$d</string>
     <string name="skip_this_week">Salta in questa settimana</string>
     <string name="not_in_week">Non in W%1$d</string>
@@ -1053,7 +1009,6 @@
     <string name="extra_badge">EXTRA</string>
     <string name="add_extra_set">Serie extra</string>
     <string name="rpe_short">RPE %1$s</string>
-    <string name="rpe_optional">RPE (facoltativo)</string>
     <string name="total_reps_progress">%1$d/%2$d rep</string>
     <string name="amrap_enter_reps">Inserisci le rep eseguite</string>
     <string name="new_one_rep_max_title">Nuovo massimale?</string>
@@ -1106,7 +1061,6 @@
     <string name="percent_table">Tabella percentuali</string>
     <string name="one_rep_max_history">Storico</string>
     <string name="estimated_one_rep_max_short">e1RM %1$s</string>
-    <string name="one_rep_max_weight">Peso</string>
     <string name="one_rep_max_delete_entry">Elimina valore</string>
     <string name="load_rounding">Arrotondamento carichi</string>
     <string name="load_rounding_desc" formatted="false">I carichi a %1RM vengono arrotondati al disco più vicino</string>
@@ -1186,7 +1140,6 @@
     <string name="prescription_remove_sets_message">%1$d serie registrate non rientrano nella nuova prescrizione e verranno rimosse.</string>
     <string name="keep_prescription_on_swap">Il nuovo esercizio mantiene la prescrizione del precedente.</string>
     <string name="delete_week_message_local">La settimana viene rimossa da questo esercizio e quelle successive scalano di una posizione.</string>
-    <string name="add_block_short">Blocco</string>
     <string name="advanced_programming">Programmazione avanzata</string>
     <string name="advanced_programming_desc" formatted="false">Serie in %1RM, tecniche come fermi e catene, programmi a settimane, massimali e RPE target</string>
     <string name="ai_program_review_summary">%1$d settimane · %2$d blocchi</string>
@@ -1274,17 +1227,6 @@
     <string name="starting_weight_desc">Dai a ogni esercizio di una scheda un peso da cui partire. Finché la scheda non ha un allenamento da cui copiare, le serie partono da lì, o dall\'ultimo peso che hai usato per quell\'esercizio.</string>
     <string name="set_performance_setting">Dettagli delle serie</string>
     <string name="set_performance_setting_desc">Mini-serie dopo una breve pausa, reps aiutate e parziali e la tecnica con cui hai fatto davvero la serie. Se è spento, le serie hanno solo la nota.</string>
-    <string name="starting_weight_field">Peso di partenza (%1$s)</string>
-    <string name="starting_weight_hint">Facoltativo · usato fino al primo allenamento registrato</string>
-    <string name="reps_mode_fixed">Fisso</string>
-    <string name="reps_mode_range">Intervallo</string>
-    <string name="reps_mode_per_set">Per serie</string>
-    <string name="reps_min">Min</string>
-    <string name="reps_max">Max</string>
-    <string name="reps_range_hint">Mantieni il peso finché non raggiungi il massimo su ogni serie, poi sali</string>
-    <string name="reps_range_error">Il massimo deve essere maggiore del minimo</string>
-    <string name="reps_number_error">Inserisci un numero intero da 1 a 100</string>
-    <string name="reps_list_error">Usa numeri separati da trattini, come 8-6-4-2</string>
     <string name="reps_goal">Obiettivo: %1$s</string>
     <string name="progression_hit_max">%1$d rip. su ogni serie l\'ultima volta</string>
     <string name="progression_try_weight">Prova %1$s</string>

@@ -1,5 +1,45 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add
+import com.emanuel5014.trainable.sharedui.resources.add_block
+import com.emanuel5014.trainable.sharedui.resources.add_block_short
+import com.emanuel5014.trainable.sharedui.resources.added_load
+import com.emanuel5014.trainable.sharedui.resources.block_note
+import com.emanuel5014.trainable.sharedui.resources.block_rest
+import com.emanuel5014.trainable.sharedui.resources.custom_technique_hint
+import com.emanuel5014.trainable.sharedui.resources.delete
+import com.emanuel5014.trainable.sharedui.resources.duplicate
+import com.emanuel5014.trainable.sharedui.resources.intensity
+import com.emanuel5014.trainable.sharedui.resources.intensity_bodyweight
+import com.emanuel5014.trainable.sharedui.resources.intensity_none
+import com.emanuel5014.trainable.sharedui.resources.intensity_percent
+import com.emanuel5014.trainable.sharedui.resources.intensity_rpe
+import com.emanuel5014.trainable.sharedui.resources.intensity_weight
+import com.emanuel5014.trainable.sharedui.resources.move_down
+import com.emanuel5014.trainable.sharedui.resources.move_up
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_missing
+import com.emanuel5014.trainable.sharedui.resources.rep_mode_amrap
+import com.emanuel5014.trainable.sharedui.resources.rep_mode_fixed
+import com.emanuel5014.trainable.sharedui.resources.rep_mode_total
+import com.emanuel5014.trainable.sharedui.resources.reps
+import com.emanuel5014.trainable.sharedui.resources.reps_hint
+import com.emanuel5014.trainable.sharedui.resources.same_as_exercise
+import com.emanuel5014.trainable.sharedui.resources.sets
+import com.emanuel5014.trainable.sharedui.resources.technique_bands
+import com.emanuel5014.trainable.sharedui.resources.technique_chains
+import com.emanuel5014.trainable.sharedui.resources.technique_competition
+import com.emanuel5014.trainable.sharedui.resources.technique_custom
+import com.emanuel5014.trainable.sharedui.resources.technique_deficit
+import com.emanuel5014.trainable.sharedui.resources.technique_emom
+import com.emanuel5014.trainable.sharedui.resources.technique_feet_up
+import com.emanuel5014.trainable.sharedui.resources.technique_pause
+import com.emanuel5014.trainable.sharedui.resources.technique_pause_seconds
+import com.emanuel5014.trainable.sharedui.resources.technique_tempo
+import com.emanuel5014.trainable.sharedui.resources.technique_tempo_value
+import com.emanuel5014.trainable.sharedui.resources.techniques
+import com.emanuel5014.trainable.sharedui.resources.tempo_hint
+import com.emanuel5014.trainable.sharedui.resources.volume
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -57,16 +97,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.LoadCalculator
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -188,7 +226,7 @@ fun PrescriptionBlocksEditor(
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(if (footerActions != null) R.string.add_block_short else R.string.add_block).uppercase(),
+                    text = stringResource(if (footerActions != null) Res.string.add_block_short else Res.string.add_block).uppercase(),
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1
                 )
@@ -218,7 +256,7 @@ private fun PrescriptionBlockCard(
     onDuplicate: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val context = LocalContext.current
+    val prescriptionText = LocalPrescriptionText.current
     val haptic = LocalHapticFeedback.current
     val chevronRotation by animateFloatAsState(if (expanded) 180f else 0f, label = "block_chevron")
     val load = blockLoadLabel(block, labels, oneRepMaxKg, weightUnit, roundingIncrement)
@@ -258,7 +296,7 @@ private fun PrescriptionBlockCard(
                     )
                     if (block.techniques.isNotEmpty()) {
                         Text(
-                            text = block.techniques.joinToString(" · ") { techniqueLabel(context, it) },
+                            text = block.techniques.joinToString(" · ") { prescriptionText.technique(it) },
                             style = MaterialTheme.typography.labelSmall,
                             color = Tertiary,
                             fontWeight = FontWeight.ExtraBold,
@@ -284,13 +322,13 @@ private fun PrescriptionBlockCard(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // Intensity
-                    SectionLabel(stringResource(R.string.intensity))
+                    SectionLabel(stringResource(Res.string.intensity))
                     val intensityOptions = listOf(
-                        IntensityType.PERCENT to R.string.intensity_percent,
-                        IntensityType.RPE to R.string.intensity_rpe,
-                        IntensityType.WEIGHT to R.string.intensity_weight,
-                        IntensityType.BODYWEIGHT to R.string.intensity_bodyweight,
-                        IntensityType.NONE to R.string.intensity_none
+                        IntensityType.PERCENT to Res.string.intensity_percent,
+                        IntensityType.RPE to Res.string.intensity_rpe,
+                        IntensityType.WEIGHT to Res.string.intensity_weight,
+                        IntensityType.BODYWEIGHT to Res.string.intensity_bodyweight,
+                        IntensityType.NONE to Res.string.intensity_none
                     )
                     ConnectedToggleRow(
                         options = intensityOptions.map { stringResource(it.second) },
@@ -315,7 +353,7 @@ private fun PrescriptionBlockCard(
                                 value = block.intensityValue ?: 70f,
                                 step = 2.5f,
                                 range = 5f..120f,
-                                label = stringResource(R.string.intensity_percent),
+                                label = stringResource(Res.string.intensity_percent),
                                 suffix = "%",
                                 onValueChange = { onChange(block.copy(intensityValue = it)) },
                                 onTick = tick,
@@ -323,7 +361,7 @@ private fun PrescriptionBlockCard(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                text = load?.let { "= $it" } ?: stringResource(R.string.one_rep_max_missing),
+                                text = load?.let { "= $it" } ?: stringResource(Res.string.one_rep_max_missing),
                                 style = if (load != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodySmall,
                                 color = if (load != null) Primary else OnSurfaceVariant,
                                 fontWeight = if (load != null) FontWeight.ExtraBold else FontWeight.Normal,
@@ -335,7 +373,7 @@ private fun PrescriptionBlockCard(
                             value = block.intensityValue ?: 8f,
                             step = 0.5f,
                             range = 5f..10f,
-                            label = stringResource(R.string.intensity_rpe),
+                            label = stringResource(Res.string.intensity_rpe),
                             onValueChange = { onChange(block.copy(intensityValue = it)) },
                             onTick = tick
                         )
@@ -344,8 +382,8 @@ private fun PrescriptionBlockCard(
                             step = roundingIncrement,
                             range = 0f..1000f,
                             label = if (block.intensityType == IntensityType.BODYWEIGHT) {
-                                "${stringResource(R.string.added_load)} ($weightUnit)"
-                            } else "${stringResource(R.string.intensity_weight)} ($weightUnit)",
+                                "${stringResource(Res.string.added_load)} ($weightUnit)"
+                            } else "${stringResource(Res.string.intensity_weight)} ($weightUnit)",
                             onValueChange = { onChange(block.copy(intensityValue = WeightUnitConverter.convertStorage(it, weightUnit))) },
                             onTick = tick
                         )
@@ -353,11 +391,11 @@ private fun PrescriptionBlockCard(
                     }
 
                     // Volume
-                    SectionLabel(stringResource(R.string.volume))
+                    SectionLabel(stringResource(Res.string.volume))
                     val modeOptions = listOf(
-                        RepMode.FIXED to R.string.rep_mode_fixed,
-                        RepMode.AMRAP to R.string.rep_mode_amrap,
-                        RepMode.TOTAL to R.string.rep_mode_total
+                        RepMode.FIXED to Res.string.rep_mode_fixed,
+                        RepMode.AMRAP to Res.string.rep_mode_amrap,
+                        RepMode.TOTAL to Res.string.rep_mode_total
                     )
                     ConnectedToggleRow(
                         options = modeOptions.map { stringResource(it.second) },
@@ -378,7 +416,7 @@ private fun PrescriptionBlockCard(
                         RepMode.FIXED -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             IntTextField(
                                 value = block.sets,
-                                label = stringResource(R.string.sets),
+                                label = stringResource(Res.string.sets),
                                 onValueChange = { onChange(block.copy(sets = it.coerceIn(1, 30))) },
                                 modifier = Modifier.weight(1f)
                             )
@@ -391,26 +429,26 @@ private fun PrescriptionBlockCard(
                                     val list = cleaned.split("-").mapNotNull { it.trim().toIntOrNull() }
                                     onChange(block.copy(reps = cleaned, sets = if (list.size > 1) list.size else block.sets))
                                 },
-                                label = stringResource(R.string.reps),
-                                supportingText = stringResource(R.string.reps_hint),
+                                label = stringResource(Res.string.reps),
+                                supportingText = stringResource(Res.string.reps_hint),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                                 modifier = Modifier.weight(1f)
                             )
                         }
                         RepMode.AMRAP -> IntTextField(
                             value = block.sets,
-                            label = stringResource(R.string.sets),
+                            label = stringResource(Res.string.sets),
                             onValueChange = { onChange(block.copy(sets = it.coerceIn(1, 30))) }
                         )
                         RepMode.TOTAL -> IntTextField(
                             value = block.totalReps ?: 20,
-                            label = stringResource(R.string.rep_mode_total),
+                            label = stringResource(Res.string.rep_mode_total),
                             onValueChange = { onChange(block.copy(totalReps = it.coerceIn(1, 300))) }
                         )
                     }
 
                     // Techniques
-                    SectionLabel(stringResource(R.string.techniques))
+                    SectionLabel(stringResource(Res.string.techniques))
                     TechniquesPicker(
                         techniques = block.techniques,
                         onChange = { tick(); onChange(block.copy(techniques = it)) },
@@ -418,13 +456,13 @@ private fun PrescriptionBlockCard(
                     )
 
                     // Rest override
-                    SectionLabel(stringResource(R.string.block_rest))
+                    SectionLabel(stringResource(Res.string.block_rest))
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         SelectableChip(
-                            label = stringResource(R.string.same_as_exercise),
+                            label = stringResource(Res.string.same_as_exercise),
                             selected = block.restSeconds == null,
                             onClick = { tick(); onChange(block.copy(restSeconds = null)) }
                         )
@@ -444,7 +482,7 @@ private fun PrescriptionBlockCard(
                             noteText = it
                             onChange(block.copy(note = it.ifBlank { null }))
                         },
-                        label = stringResource(R.string.block_note),
+                        label = stringResource(Res.string.block_note),
                         singleLine = false,
                         leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Notes, contentDescription = null) }
                     )
@@ -455,16 +493,16 @@ private fun PrescriptionBlockCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onMoveUp, enabled = !isFirst) {
-                            Icon(Icons.Rounded.ArrowUpward, contentDescription = stringResource(R.string.move_up))
+                            Icon(Icons.Rounded.ArrowUpward, contentDescription = stringResource(Res.string.move_up))
                         }
                         IconButton(onClick = onMoveDown, enabled = !isLast) {
-                            Icon(Icons.Rounded.ArrowDownward, contentDescription = stringResource(R.string.move_down))
+                            Icon(Icons.Rounded.ArrowDownward, contentDescription = stringResource(Res.string.move_down))
                         }
                         IconButton(onClick = onDuplicate) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.duplicate))
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(Res.string.duplicate))
                         }
                         IconButton(onClick = onDelete) {
-                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = Error)
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.delete), tint = Error)
                         }
                     }
                 }
@@ -492,23 +530,23 @@ private fun TechniquesPicker(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             SelectableChip(
-                label = pause?.let { stringResource(R.string.technique_pause_seconds, it.seconds) } ?: stringResource(R.string.technique_pause),
+                label = pause?.let { stringResource(Res.string.technique_pause_seconds, it.seconds) } ?: stringResource(Res.string.technique_pause),
                 selected = pause != null,
                 onClick = { toggle(Technique.Pause(2), pause != null) }
             )
             listOf(
-                Technique.Chains to R.string.technique_chains,
-                Technique.Bands to R.string.technique_bands,
-                Technique.FeetUp to R.string.technique_feet_up,
-                Technique.Competition to R.string.technique_competition,
-                Technique.Deficit to R.string.technique_deficit,
-                Technique.Emom to R.string.technique_emom
+                Technique.Chains to Res.string.technique_chains,
+                Technique.Bands to Res.string.technique_bands,
+                Technique.FeetUp to Res.string.technique_feet_up,
+                Technique.Competition to Res.string.technique_competition,
+                Technique.Deficit to Res.string.technique_deficit,
+                Technique.Emom to Res.string.technique_emom
             ).forEach { (technique, label) ->
                 val present = technique in techniques
                 SelectableChip(label = stringResource(label), selected = present, onClick = { toggle(technique, present) })
             }
             SelectableChip(
-                label = tempo?.let { stringResource(R.string.technique_tempo_value, it.pattern) } ?: stringResource(R.string.technique_tempo),
+                label = tempo?.let { stringResource(Res.string.technique_tempo_value, it.pattern) } ?: stringResource(Res.string.technique_tempo),
                 selected = tempo != null,
                 onClick = { toggle(Technique.Tempo("3-1-1"), tempo != null) }
             )
@@ -526,7 +564,7 @@ private fun TechniquesPicker(
                 )
             }
             SelectableChip(
-                label = "+ " + stringResource(R.string.technique_custom),
+                label = "+ " + stringResource(Res.string.technique_custom),
                 selected = showCustomField,
                 onClick = { showCustomField = !showCustomField }
             )
@@ -537,7 +575,7 @@ private fun TechniquesPicker(
                 value = pause.seconds.toFloat(),
                 step = 1f,
                 range = 1f..10f,
-                label = stringResource(R.string.technique_pause),
+                label = stringResource(Res.string.technique_pause),
                 suffix = "″",
                 onValueChange = { seconds ->
                     onChange(techniques.map { if (it is Technique.Pause) Technique.Pause(seconds.toInt()) else it })
@@ -555,8 +593,8 @@ private fun TechniquesPicker(
                         onChange(techniques.map { if (it is Technique.Tempo) Technique.Tempo(tempoText) else it })
                     }
                 },
-                label = stringResource(R.string.technique_tempo),
-                supportingText = stringResource(R.string.tempo_hint),
+                label = stringResource(Res.string.technique_tempo),
+                supportingText = stringResource(Res.string.tempo_hint),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
         }
@@ -566,8 +604,8 @@ private fun TechniquesPicker(
                 GymInputField(
                     value = customText,
                     onValueChange = { customText = it },
-                    label = stringResource(R.string.technique_custom),
-                    placeholder = stringResource(R.string.custom_technique_hint),
+                    label = stringResource(Res.string.technique_custom),
+                    placeholder = stringResource(Res.string.custom_technique_hint),
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(8.dp))
@@ -582,7 +620,7 @@ private fun TechniquesPicker(
                     },
                     colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = Primary, contentColor = OnPrimary)
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
+                    Icon(Icons.Rounded.Add, contentDescription = stringResource(Res.string.add))
                 }
             }
         }

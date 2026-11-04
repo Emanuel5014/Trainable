@@ -1,5 +1,20 @@
 package com.emanuel5014.trainable.ui.components.exercise
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.reps
+import com.emanuel5014.trainable.sharedui.resources.reps_hint
+import com.emanuel5014.trainable.sharedui.resources.reps_list_error
+import com.emanuel5014.trainable.sharedui.resources.reps_max
+import com.emanuel5014.trainable.sharedui.resources.reps_min
+import com.emanuel5014.trainable.sharedui.resources.reps_mode_fixed
+import com.emanuel5014.trainable.sharedui.resources.reps_mode_per_set
+import com.emanuel5014.trainable.sharedui.resources.reps_mode_range
+import com.emanuel5014.trainable.sharedui.resources.reps_number_error
+import com.emanuel5014.trainable.sharedui.resources.reps_range_error
+import com.emanuel5014.trainable.sharedui.resources.reps_range_hint
+import com.emanuel5014.trainable.sharedui.resources.sets
+import com.emanuel5014.trainable.sharedui.resources.starting_weight_field
+import com.emanuel5014.trainable.sharedui.resources.starting_weight_hint
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,10 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.RepsDraft
 import com.emanuel5014.trainable.domain.prescription.RepsError
 import com.emanuel5014.trainable.domain.prescription.RepsMode
@@ -43,9 +57,9 @@ fun RepsEditor(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ConnectedToggleRow(
             options = listOf(
-                stringResource(R.string.reps_mode_fixed),
-                stringResource(R.string.reps_mode_range),
-                stringResource(R.string.reps_mode_per_set)
+                stringResource(Res.string.reps_mode_fixed),
+                stringResource(Res.string.reps_mode_range),
+                stringResource(Res.string.reps_mode_per_set)
             ),
             selectedIndex = modes.indexOf(draft.mode),
             onSelect = { onDraftChange(draft.withMode(modes[it])) },
@@ -59,8 +73,8 @@ fun RepsEditor(
         ) { (message, mode) ->
             val hint = when (mode) {
                 RepsMode.FIXED -> null
-                RepsMode.RANGE -> stringResource(R.string.reps_range_hint)
-                RepsMode.PER_SET -> stringResource(R.string.reps_hint)
+                RepsMode.RANGE -> stringResource(Res.string.reps_range_hint)
+                RepsMode.PER_SET -> stringResource(Res.string.reps_hint)
             }
             val text = message ?: hint
             if (text != null) {
@@ -80,7 +94,7 @@ fun RepsEditor(
             GymInputField(
                 value = setsText,
                 onValueChange = onSetsChange,
-                label = stringResource(R.string.sets),
+                label = stringResource(Res.string.sets),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f)
             )
@@ -88,7 +102,7 @@ fun RepsEditor(
                 RepsMode.FIXED -> GymInputField(
                     value = draft.fixed,
                     onValueChange = { onDraftChange(draft.withFixed(it)) },
-                    label = stringResource(R.string.reps),
+                    label = stringResource(Res.string.reps),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = error != null,
                     modifier = Modifier.weight(1f)
@@ -97,7 +111,7 @@ fun RepsEditor(
                     GymInputField(
                         value = draft.min,
                         onValueChange = { onDraftChange(draft.withMin(it)) },
-                        label = stringResource(R.string.reps_min),
+                        label = stringResource(Res.string.reps_min),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         isError = error != null,
                         modifier = Modifier.weight(1f)
@@ -105,7 +119,7 @@ fun RepsEditor(
                     GymInputField(
                         value = draft.max,
                         onValueChange = { onDraftChange(draft.withMax(it)) },
-                        label = stringResource(R.string.reps_max),
+                        label = stringResource(Res.string.reps_max),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         isError = error != null,
                         modifier = Modifier.weight(1f)
@@ -120,7 +134,7 @@ fun RepsEditor(
                         // setsText: fast typing can arrive before that value was refreshed and the sets would stay behind.
                         updated.perSetCount?.let { count -> onSetsChange(count.toString()) }
                     },
-                    label = stringResource(R.string.reps),
+                    label = stringResource(Res.string.reps),
                     isError = error != null,
                     modifier = Modifier.weight(2f)
                 )
@@ -132,9 +146,9 @@ fun RepsEditor(
 
 @Composable
 private fun repsErrorText(error: RepsError): String = when (error) {
-    RepsError.NOT_A_NUMBER -> stringResource(R.string.reps_number_error)
-    RepsError.MAX_NOT_ABOVE_MIN -> stringResource(R.string.reps_range_error)
-    RepsError.BAD_LIST -> stringResource(R.string.reps_list_error)
+    RepsError.NOT_A_NUMBER -> stringResource(Res.string.reps_number_error)
+    RepsError.MAX_NOT_ABOVE_MIN -> stringResource(Res.string.reps_range_error)
+    RepsError.BAD_LIST -> stringResource(Res.string.reps_list_error)
 }
 
 /**
@@ -152,8 +166,8 @@ fun StartingWeightField(
     GymInputField(
         value = text,
         onValueChange = { onTextChange(it.filter { c -> c.isDigit() || c == '.' || c == ',' }.take(MAX_LENGTH)) },
-        label = stringResource(R.string.starting_weight_field, weightUnit),
-        supportingText = stringResource(R.string.starting_weight_hint),
+        label = stringResource(Res.string.starting_weight_field, weightUnit),
+        supportingText = stringResource(Res.string.starting_weight_hint),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         isError = invalid,
         modifier = modifier.fillMaxWidth()

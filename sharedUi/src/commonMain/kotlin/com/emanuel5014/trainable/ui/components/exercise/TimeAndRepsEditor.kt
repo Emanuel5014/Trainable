@@ -1,5 +1,9 @@
 package com.emanuel5014.trainable.ui.components.exercise
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.reps_goal_error
+import com.emanuel5014.trainable.sharedui.resources.reps_goal_label
+import com.emanuel5014.trainable.sharedui.resources.sets
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,10 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.TimeAndReps
 import com.emanuel5014.trainable.ui.components.GymInputField
 import com.emanuel5014.trainable.ui.components.TargetSecondsSlider
@@ -41,7 +44,7 @@ fun TimeAndRepsEditor(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         AnimatedVisibility(visible = invalid) {
             Text(
-                text = stringResource(R.string.reps_goal_error),
+                text = stringResource(Res.string.reps_goal_error),
                 style = MaterialTheme.typography.bodySmall,
                 color = Error,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -54,14 +57,14 @@ fun TimeAndRepsEditor(
             GymInputField(
                 value = setsText,
                 onValueChange = onSetsChange,
-                label = stringResource(R.string.sets),
+                label = stringResource(Res.string.sets),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f)
             )
             GymInputField(
                 value = repsGoalText,
                 onValueChange = { onRepsGoalChange(it.filter { c -> c.isDigit() }.take(3)) },
-                label = stringResource(R.string.reps_goal_label),
+                label = stringResource(Res.string.reps_goal_label),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = invalid,
                 modifier = Modifier.weight(1f)

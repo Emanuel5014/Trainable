@@ -1,7 +1,19 @@
 package com.emanuel5014.trainable.ui.components
 
-import android.content.Context
-import androidx.annotation.StringRes
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_maximum_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_hard_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_moderate_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_easy_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_warmup_desc
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_maximum
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_hard
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_moderate
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_easy
+import com.emanuel5014.trainable.sharedui.resources.rpe_level_warmup
+import com.emanuel5014.trainable.sharedui.resources.rpe_optional
+import com.emanuel5014.trainable.sharedui.resources.rpe_prompt
+import org.jetbrains.compose.resources.StringResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
@@ -53,7 +65,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.contentDescription
@@ -61,7 +73,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.rpe.RpeLevel
 import com.emanuel5014.trainable.domain.rpe.RpeScale
@@ -83,27 +94,21 @@ fun editableRpeScale(hasValue: Boolean): RpeScale? {
     return if (settings.enabled || hasValue) settings.scale else null
 }
 
-/** An RPE as a badge in the app: the level name on the simplified scale ("Hard"), "RPE 8" on the others. */
-fun rpeBadgeText(context: Context, value: Float, scale: RpeScale): String =
-    if (scale == RpeScale.BASIC) context.getString(RpeLevel.of(value).nameRes())
-    else context.getString(R.string.rpe_short, PrescriptionFormatter.number(value))
-
-@StringRes
-fun RpeLevel.nameRes(): Int = when (this) {
-    RpeLevel.WARM_UP -> R.string.rpe_level_warmup
-    RpeLevel.EASY -> R.string.rpe_level_easy
-    RpeLevel.MODERATE -> R.string.rpe_level_moderate
-    RpeLevel.HARD -> R.string.rpe_level_hard
-    RpeLevel.MAXIMUM -> R.string.rpe_level_maximum
+/** The level's name ("Hard"), from the shared strings. */
+fun RpeLevel.nameText(): StringResource = when (this) {
+    RpeLevel.WARM_UP -> Res.string.rpe_level_warmup
+    RpeLevel.EASY -> Res.string.rpe_level_easy
+    RpeLevel.MODERATE -> Res.string.rpe_level_moderate
+    RpeLevel.HARD -> Res.string.rpe_level_hard
+    RpeLevel.MAXIMUM -> Res.string.rpe_level_maximum
 }
 
-@StringRes
-fun RpeLevel.descriptionRes(): Int = when (this) {
-    RpeLevel.WARM_UP -> R.string.rpe_level_warmup_desc
-    RpeLevel.EASY -> R.string.rpe_level_easy_desc
-    RpeLevel.MODERATE -> R.string.rpe_level_moderate_desc
-    RpeLevel.HARD -> R.string.rpe_level_hard_desc
-    RpeLevel.MAXIMUM -> R.string.rpe_level_maximum_desc
+fun RpeLevel.descriptionText(): StringResource = when (this) {
+    RpeLevel.WARM_UP -> Res.string.rpe_level_warmup_desc
+    RpeLevel.EASY -> Res.string.rpe_level_easy_desc
+    RpeLevel.MODERATE -> Res.string.rpe_level_moderate_desc
+    RpeLevel.HARD -> Res.string.rpe_level_hard_desc
+    RpeLevel.MAXIMUM -> Res.string.rpe_level_maximum_desc
 }
 
 fun RpeLevel.icon(): ImageVector = when (this) {
@@ -140,7 +145,7 @@ fun RpeSelector(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = stringResource(R.string.rpe_optional).uppercase(),
+            text = stringResource(Res.string.rpe_optional).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = OnSurfaceVariant,
             fontWeight = FontWeight.Black
@@ -260,7 +265,7 @@ private fun LevelTiles(value: Float?, onValueChange: (Float?) -> Unit, hapticEna
                 index = index,
                 count = RpeLevel.entries.size,
                 height = 52.dp,
-                description = stringResource(level.nameRes()) + " " + level.range,
+                description = stringResource(level.nameText()) + " " + level.range,
                 hapticEnabled = hapticEnabled,
                 onClick = { onValueChange(if (level == picked) null else level.value) }
             ) {
@@ -279,20 +284,20 @@ private fun LevelTiles(value: Float?, onValueChange: (Float?) -> Unit, hapticEna
         if (level != null) {
             Column {
                 Text(
-                    text = level.range + " · " + stringResource(level.nameRes()),
+                    text = level.range + " · " + stringResource(level.nameText()),
                     style = MaterialTheme.typography.titleSmall,
                     color = OnSurface,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(level.descriptionRes()),
+                    text = stringResource(level.descriptionText()),
                     style = MaterialTheme.typography.bodySmall,
                     color = OnSurfaceVariant
                 )
             }
         } else {
             Text(
-                text = stringResource(R.string.rpe_prompt),
+                text = stringResource(Res.string.rpe_prompt),
                 style = MaterialTheme.typography.bodySmall,
                 color = OnSurfaceVariant
             )

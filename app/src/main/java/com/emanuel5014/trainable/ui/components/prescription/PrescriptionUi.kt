@@ -3,48 +3,14 @@ package com.emanuel5014.trainable.ui.components
 import com.emanuel5014.trainable.data.local.entity.parts
 import com.emanuel5014.trainable.data.local.entity.pauses
 import com.emanuel5014.trainable.data.local.entity.performed
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.emanuel5014.trainable.R
-import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.domain.prescription.Technique
-import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
-import com.emanuel5014.trainable.ui.theme.Primary
-import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import com.emanuel5014.trainable.ui.theme.Tertiary
-import com.emanuel5014.trainable.util.WeightUnitConverter
 import com.emanuel5014.trainable.data.local.entity.SetLogEntity
-import com.emanuel5014.trainable.data.local.entity.repsRange
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import com.emanuel5014.trainable.ui.theme.OnPrimary
+import com.emanuel5014.trainable.domain.rpe.RpeScale
 
-/** Localized labels for prescriptions; weights are shown in the user's [weightUnit]. */
-@Composable
-fun rememberPrescriptionLabels(weightUnit: String): PrescriptionLabels {
-    val context = LocalContext.current
-    return remember(weightUnit, context) { prescriptionLabels(context, weightUnit) }
-}
 
 fun prescriptionLabels(context: android.content.Context, weightUnit: String): PrescriptionLabels = PrescriptionLabels(
     max = context.getString(R.string.max_label),
@@ -53,9 +19,6 @@ fun prescriptionLabels(context: android.content.Context, weightUnit: String): Pr
     weight = { kg -> formatWeight(kg, weightUnit) },
     technique = { techniqueLabel(context, it) }
 )
-
-fun formatWeight(kg: Float, weightUnit: String): String =
-    WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(kg, weightUnit), weightUnit)
 
 fun techniqueLabel(context: android.content.Context, technique: Technique): String = when (technique) {
     is Technique.Pause -> context.getString(R.string.technique_pause_seconds, technique.seconds)
@@ -68,40 +31,6 @@ fun techniqueLabel(context: android.content.Context, technique: Technique): Stri
     Technique.Emom -> context.getString(R.string.technique_emom)
     is Technique.Custom -> technique.text
 }
-
-/** Compact overview of all blocks: one pill per block plus technique pills. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun PrescriptionBlocksSummary(
-    blocks: List<PrescriptionBlock>,
-    labels: PrescriptionLabels,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        blocks.forEach { block ->
-            PrescriptionPill(
-                text = PrescriptionFormatter.headline(block, labels),
-                containerColor = Primary.copy(alpha = 0.12f),
-                contentColor = Primary
-            )
-        }
-        blocks.flatMap { it.techniques }.distinct().forEach { technique ->
-            PrescriptionPill(
-                text = techniqueLabel(context, technique),
-                containerColor = Tertiary.copy(alpha = 0.15f),
-                contentColor = Tertiary
-            )
-        }
-    }
-}
-
-@Composable
-fun weekLabel(week: Int): String = stringResource(R.string.week_short, week)
 
 /** Prescription of a logged set as plain text for exports ("75% · MAX · Pause 2″ · 2+1+1"), without RPE. */
 fun setLogPrescriptionText(context: android.content.Context, set: SetLogEntity): String? =
@@ -158,43 +87,11 @@ fun setLogPrescriptionBadges(context: android.content.Context, set: SetLogEntity
     if (set.isExtra) add(context.getString(R.string.extra_badge))
 }
 
-/**
- * Pills row for a logged set: the rep range it was done against ("10–15", for any set that has one) and, with
- * advanced programming on, its prescription; the %1RM badge (if any) is highlighted.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun SetLogBadges(set: SetLogEntity, modifier: Modifier = Modifier) {
-    val advanced = LocalAdvancedProgramming.current
-    val context = LocalContext.current
-    val badges = remember(set, advanced) { if (advanced) setLogPrescriptionBadges(context, set) else emptyList() }
-    // How the set went shows whether advanced programming is on or not
-    val performance = remember(set) { setLogPerformanceBadges(context, set) }
-    val range = set.repsRange?.text
-    // The RPE of a set shows wherever it was recorded, with advanced programming on or off
-    val rpeScale = LocalRpeSettings.current.scale
-    val rpeText = set.rpe?.let { rpeBadgeText(context, it, rpeScale) }
-    if (badges.isEmpty() && range == null && performance.isEmpty() && rpeText == null) return
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        range?.let {
-            PrescriptionPill(text = it, containerColor = SurfaceContainerHigh, contentColor = OnSurfaceVariant)
-        }
-        badges.forEachIndexed { i, text ->
-            val highlight = i == 0 && set.targetPercent != null
-            PrescriptionPill(
-                text = text,
-                containerColor = if (highlight) Primary.copy(alpha = 0.12f) else SurfaceContainerHigh,
-                contentColor = if (highlight) Primary else OnSurfaceVariant,
-                emphasized = highlight
-            )
-        }
-        rpeText?.let { PrescriptionPill(text = it, containerColor = SurfaceContainerHigh, contentColor = OnSurfaceVariant) }
-        performance.forEach { text ->
-            PrescriptionPill(text = text, containerColor = Tertiary.copy(alpha = 0.15f), contentColor = Tertiary)
-        }
-    }
+/** The words of prescriptions and sets from the app's resources (the same functions as notifications and files). */
+class AndroidPrescriptionText(private val context: android.content.Context) : PrescriptionText {
+    override fun labels(weightUnit: String): PrescriptionLabels = prescriptionLabels(context, weightUnit)
+    override fun technique(technique: Technique): String = techniqueLabel(context, technique)
+    override fun setPrescriptionBadges(set: SetLogEntity): List<String> = setLogPrescriptionBadges(context, set)
+    override fun setPerformanceBadges(set: SetLogEntity): List<String> = setLogPerformanceBadges(context, set)
+    override fun rpeBadge(value: Float, scale: RpeScale): String = rpeBadgeText(context, value, scale)
 }

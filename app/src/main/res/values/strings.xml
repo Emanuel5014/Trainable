@@ -192,11 +192,6 @@
     <string name="choose_from_library">Choose from library</string>
     <string name="filter_custom">Custom</string>
     <string name="new_exercise">New Exercise</string>
-    <string name="exercise_deleted_badge">Deleted</string>
-    <string name="deleted_exercise_title">Exercise deleted</string>
-    <string name="deleted_exercise_message">\"%1$s\" was deleted from your exercise list, but it is still in your routines and workouts. Add it back to the list?</string>
-    <string name="deleted_exercises_message">These exercises were deleted from your exercise list, but are still in your routines and workouts: %1$s. Add them back to the list?</string>
-    <string name="deleted_exercise_restore">Add back</string>
     <string name="add_custom_exercise">Add Custom Exercise</string>
     <string name="exercise_name">Exercise Name</string>
     <string name="category">Category</string>
@@ -682,7 +677,6 @@
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Free-form</string>
     <string name="cardio_cat_label">Cardio</string>
-    <string name="cardio_cat_with_name">Cardio (%1$s)</string>
     <string name="cardio_duration_label">Target Duration (min)</string>
     <string name="cardio_duration_slider">Duration (min)</string>
     <string name="cardio_custom_duration">Custom (min)</string>
@@ -706,7 +700,6 @@
     <!-- Errors -->
     <string name="error_unknown">Unknown error</string>
     <string name="routine_not_found">Routine not found</string>
-    <string name="reps_hint">e.g. 8 or 8-6-4-2</string>
 
     <!-- Notifications -->
     <string name="notification_next_set">Next: %1$s - Set %2$d: %3$s × %4$d</string>
@@ -909,10 +902,7 @@
     <string name="ai_scan_confirm_dialog_review">Review</string>
 
     <!-- Exercise Types -->
-    <string name="exercise_type_strength">Weight &amp; Reps</string>
     <string name="exercise_type_time_and_weight">Time &amp; Weight</string>
-    <string name="exercise_type_strength_hint">Sets and reps with a load</string>
-    <string name="exercise_type_time_and_weight_hint">Timed sets, with or without weight</string>
     <string name="target_time">Target Time</string>
     <string name="target_seconds">Target (seconds)</string>
     <string name="seconds_short">sec</string>
@@ -929,11 +919,8 @@
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Advanced</string>
     <string name="exercise_type_time_and_reps">Time &amp; Reps</string>
-    <string name="exercise_type_time_and_reps_hint">Reps done in a timed interval, without weight</string>
     <string name="time_and_reps_badge">TIME &amp; REPS</string>
     <string name="time_reps_value">%1$ds · %2$d reps</string>
-    <string name="reps_goal_label">Reps goal</string>
-    <string name="reps_goal_error">Enter a whole number from 1 to 999</string>
     <string name="reps_done_label">Reps done</string>
     <string name="reps_decrease">One rep less</string>
     <string name="reps_increase">One rep more</string>
@@ -980,56 +967,26 @@
         <item quantity="other">+%d partials</item>
     </plurals>
     <string name="notification_next_set_text">Next: %1$s - Set %2$d: %3$s</string>
-    <string name="advanced_prescription_hint" formatted="false">%1RM blocks, RPE and techniques</string>
-    <string name="one_rep_max">1RM</string>
     <string name="one_rep_max_value">1RM %1$s</string>
-    <string name="set_one_rep_max">Set 1RM</string>
     <string name="edit_one_rep_max">Edit 1RM</string>
-    <string name="one_rep_max_estimated">Estimated from your logs: %1$s</string>
-    <string name="use_estimate">Use</string>
     <string name="one_rep_max_missing">Set a 1RM to calculate the loads</string>
     <string name="block_n">BLOCK %1$d</string>
-    <string name="add_block">Add block</string>
-    <string name="duplicate">Duplicate</string>
-    <string name="move_up">Move up</string>
-    <string name="move_down">Move down</string>
-    <string name="intensity">Intensity</string>
-    <string name="intensity_percent" formatted="false">%1RM</string>
-    <string name="intensity_rpe">RPE</string>
-    <string name="intensity_weight">Load</string>
-    <string name="intensity_bodyweight">BW</string>
-    <string name="intensity_none">Free</string>
     <string name="bodyweight_short">BW</string>
-    <string name="added_load">Added load</string>
-    <string name="volume">Volume</string>
-    <string name="rep_mode_fixed">Sets × reps</string>
-    <string name="rep_mode_amrap">Max reps</string>
-    <string name="rep_mode_total">Total reps</string>
     <string name="total_reps_label">%1$d reps total</string>
     <string name="max_label">MAX</string>
-    <string name="techniques">Techniques</string>
-    <string name="technique_pause">Pause</string>
     <string name="technique_pause_seconds">Pause %1$d″</string>
     <string name="technique_chains">Chains</string>
     <string name="technique_bands">Bands</string>
     <string name="technique_feet_up">Feet up</string>
     <string name="technique_competition">Competition</string>
-    <string name="technique_tempo">Tempo</string>
     <string name="technique_tempo_value">Tempo %1$s</string>
     <string name="technique_deficit">Deficit</string>
     <string name="technique_emom">EMOM</string>
-    <string name="technique_custom">Custom</string>
-    <string name="custom_technique_hint">e.g. Pin press</string>
-    <string name="tempo_hint">Down-pause-up, e.g. 4-2-4</string>
-    <string name="block_rest">Block rest</string>
-    <string name="same_as_exercise">Same as exercise</string>
-    <string name="block_note">Block note</string>
     <string name="notation_input_label">Write it like your notebook</string>
     <string name="notation_input_hint" formatted="false">70% 5  75% 3x5 STOP 2\"  80% 20 REP ALSAP</string>
     <string name="notation_recognised">Recognised: %1$s</string>
     <string name="notation_nothing">Nothing recognised yet</string>
     <string name="notation_replace_blocks">Replace blocks</string>
-    <string name="rest_label">Rest: %1$ds</string>
     <string name="advanced_needs_block">Add at least one block</string>
     <string name="week_short">W%1$d</string>
     <string name="week_n">Week %1$d</string>
@@ -1040,7 +997,6 @@
     <string name="program_current_week">Current week</string>
     <string name="auto_advance_week">Advance automatically</string>
     <string name="auto_advance_week_desc">Moves to the next week when you finish this routine</string>
-    <string name="add_week">Add week</string>
     <string name="copy_previous_week">Copy W%1$d</string>
     <string name="skip_this_week">Skip in this week</string>
     <string name="not_in_week">Not in W%1$d</string>
@@ -1054,7 +1010,6 @@
     <string name="extra_badge">EXTRA</string>
     <string name="add_extra_set">Extra set</string>
     <string name="rpe_short">RPE %1$s</string>
-    <string name="rpe_optional">RPE (optional)</string>
     <string name="total_reps_progress">%1$d/%2$d reps</string>
     <string name="amrap_enter_reps">Enter the reps you did</string>
     <string name="new_one_rep_max_title">New 1RM?</string>
@@ -1107,7 +1062,6 @@
     <string name="percent_table">Percentage table</string>
     <string name="one_rep_max_history">History</string>
     <string name="estimated_one_rep_max_short">e1RM %1$s</string>
-    <string name="one_rep_max_weight">Weight</string>
     <string name="one_rep_max_delete_entry">Delete entry</string>
     <string name="load_rounding">Load rounding</string>
     <string name="load_rounding_desc" formatted="false">%1RM loads are rounded to the nearest plate increment</string>
@@ -1187,7 +1141,6 @@
     <string name="prescription_remove_sets_message">%1$d logged sets don\'t fit the new prescription and will be removed.</string>
     <string name="keep_prescription_on_swap">The new exercise keeps the prescription of the old one.</string>
     <string name="delete_week_message_local">The week is removed from this exercise and the following weeks move up by one.</string>
-    <string name="add_block_short">Block</string>
     <string name="advanced_programming">Advanced programming</string>
     <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE targets</string>
     <string name="ai_program_review_summary">%1$d weeks · %2$d blocks</string>
@@ -1275,17 +1228,6 @@
     <string name="starting_weight_desc">Give each exercise of a routine a weight to start from. Until the routine has a workout to copy from, its sets start there, or at the last weight you used for that exercise.</string>
     <string name="set_performance_setting">Set details</string>
     <string name="set_performance_setting_desc">Mini-sets after a short pause, assisted and partial reps and the technique a set was really done with. Off, sets keep only their note.</string>
-    <string name="starting_weight_field">Starting weight (%1$s)</string>
-    <string name="starting_weight_hint">Optional · used until the first workout is logged</string>
-    <string name="reps_mode_fixed">Fixed</string>
-    <string name="reps_mode_range">Range</string>
-    <string name="reps_mode_per_set">Per set</string>
-    <string name="reps_min">Min</string>
-    <string name="reps_max">Max</string>
-    <string name="reps_range_hint">Keep the weight until you hit the max on every set, then go up</string>
-    <string name="reps_range_error">Max must be higher than min</string>
-    <string name="reps_number_error">Enter a whole number from 1 to 100</string>
-    <string name="reps_list_error">Use numbers separated by hyphens, like 8-6-4-2</string>
     <string name="reps_goal">Goal: %1$s</string>
     <string name="progression_hit_max">%1$d reps on every set last time</string>
     <string name="progression_try_weight">Try %1$s</string>

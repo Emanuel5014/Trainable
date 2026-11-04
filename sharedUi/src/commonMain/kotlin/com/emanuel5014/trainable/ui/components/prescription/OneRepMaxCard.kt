@@ -1,5 +1,16 @@
 package com.emanuel5014.trainable.ui.components
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.edit_one_rep_max
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_estimated
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_weight
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.sharedui.resources.set_one_rep_max
+import com.emanuel5014.trainable.sharedui.resources.source_manual
+import com.emanuel5014.trainable.sharedui.resources.source_tested
+import com.emanuel5014.trainable.sharedui.resources.use_estimate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,11 +44,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.OneRepMaxEntity
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -73,20 +83,20 @@ fun OneRepMaxCard(
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.one_rep_max).uppercase(),
+                    text = stringResource(Res.string.one_rep_max).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = Primary,
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = oneRepMaxKg?.let { formatWeight(it, weightUnit) } ?: stringResource(R.string.set_one_rep_max),
+                    text = oneRepMaxKg?.let { formatWeight(it, weightUnit) } ?: stringResource(Res.string.set_one_rep_max),
                     style = MaterialTheme.typography.titleLarge,
                     color = if (oneRepMaxKg != null) OnSurface else OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold
                 )
                 if (estimatedKg != null && estimatedKg > 0f) {
                     Text(
-                        text = stringResource(R.string.one_rep_max_estimated, formatWeight(estimatedKg, weightUnit)),
+                        text = stringResource(Res.string.one_rep_max_estimated, formatWeight(estimatedKg, weightUnit)),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -94,10 +104,10 @@ fun OneRepMaxCard(
             }
             if (oneRepMaxKg == null && estimatedKg != null && estimatedKg > 0f) {
                 TextButton(onClick = { onUseEstimate(estimatedKg) }) {
-                    Text(stringResource(R.string.use_estimate).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
+                    Text(stringResource(Res.string.use_estimate).uppercase(), fontWeight = FontWeight.ExtraBold, color = Primary)
                 }
             } else {
-                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit_one_rep_max), tint = Primary)
+                Icon(Icons.Rounded.Edit, contentDescription = stringResource(Res.string.edit_one_rep_max), tint = Primary)
             }
         }
     }
@@ -127,13 +137,13 @@ fun OneRepMaxDialog(
                 GymInputField(
                     value = text,
                     onValueChange = { text = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
-                    label = "${stringResource(R.string.one_rep_max_weight)} ($weightUnit)",
+                    label = "${stringResource(Res.string.one_rep_max_weight)} ($weightUnit)",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        OneRepMaxEntity.SOURCE_TESTED to R.string.source_tested,
-                        OneRepMaxEntity.SOURCE_MANUAL to R.string.source_manual
+                        OneRepMaxEntity.SOURCE_TESTED to Res.string.source_tested,
+                        OneRepMaxEntity.SOURCE_MANUAL to Res.string.source_manual
                     ).forEach { (value, label) ->
                         FilterChip(
                             selected = source == value,
@@ -156,7 +166,7 @@ fun OneRepMaxDialog(
                 contentColor = OnPrimary,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
@@ -166,7 +176,7 @@ fun OneRepMaxDialog(
                 contentColor = OnSurfaceVariant,
                 modifier = Modifier.height(48.dp)
             ) {
-                Text(stringResource(R.string.cancel).uppercase())
+                Text(stringResource(Res.string.cancel).uppercase())
             }
         },
         containerColor = SurfaceContainerHigh,
