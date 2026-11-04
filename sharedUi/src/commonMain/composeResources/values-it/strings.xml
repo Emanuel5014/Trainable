@@ -34,4 +34,8 @@
     <string name="workout_remaining">%1$d allenamento rimanente</string>
     <string name="workouts_remaining">%1$d allenamenti rimanenti</string>
     <string name="year_1">1 Anno</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_routines">Schede</string>
+    <string name="nav_history">Storico</string>
+    <string name="nav_analytics">Statistiche</string>
 </resources>

@@ -7,25 +7,29 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.nav_analytics
+import com.emanuel5014.trainable.sharedui.resources.nav_dashboard
+import com.emanuel5014.trainable.sharedui.resources.nav_history
+import com.emanuel5014.trainable.sharedui.resources.nav_routines
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun localizedNavItems(): List<LocalizedNavItem> = listOf(
     LocalizedNavItem(
-        stringResource(R.string.nav_dashboard),
+        stringResource(Res.string.nav_dashboard),
         Icons.Rounded.Home
     ),
     LocalizedNavItem(
-        stringResource(R.string.nav_routines),
+        stringResource(Res.string.nav_routines),
         Icons.AutoMirrored.Rounded.Notes
     ),
     LocalizedNavItem(
-        stringResource(R.string.nav_history),
+        stringResource(Res.string.nav_history),
         Icons.Rounded.History
     ),
     LocalizedNavItem(
-        stringResource(R.string.nav_analytics),
+        stringResource(Res.string.nav_analytics),
         Icons.Rounded.Insights
     )
 )

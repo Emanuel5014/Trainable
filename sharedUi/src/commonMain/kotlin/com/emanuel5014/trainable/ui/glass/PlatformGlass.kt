@@ -21,6 +21,10 @@ interface PlatformGlass {
     /** The recording the floating buttons of a screen bend; null while action glass is off. */
     @Composable
     fun rememberActionSource(): GlassSource?
+
+    /** The glass of the navbar's action button, which sits outside the screens and bends a copy of all of them. */
+    @Composable
+    fun rememberNavBarActionSource(): GlassSource? = null
 }
 
 /** Content recorded for the floating buttons above it; only the platform drawing the glass knows what is inside. */

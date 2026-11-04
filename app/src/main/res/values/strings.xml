@@ -5,10 +5,6 @@
     <string name="app_name">Trainable</string>
 
     <!-- Navigation -->
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_routines">Routines</string>
-    <string name="nav_history">History</string>
-    <string name="nav_analytics">Analytics</string>
     <string name="nav_bar_style">Navigation bar</string>
     <string name="nav_bar_style_classic">Classic</string>
     <string name="nav_bar_style_classic_desc">Standard Material 3 bottom navigation</string>

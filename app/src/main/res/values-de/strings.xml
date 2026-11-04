@@ -4,10 +4,6 @@
     <!-- App -->
 
     <!-- Navigation -->
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_routines">Routinen</string>
-    <string name="nav_history">Verlauf</string>
-    <string name="nav_analytics">Statistiken</string>
     <string name="nav_bar_style">Navigationsleiste</string>
     <string name="nav_bar_style_classic">Klassisch</string>
     <string name="nav_bar_style_classic_desc">Standard Material 3 untere Navigationsleiste</string>

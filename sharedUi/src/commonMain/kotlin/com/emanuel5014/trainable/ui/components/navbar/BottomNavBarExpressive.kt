@@ -1,13 +1,11 @@
 package com.emanuel5014.trainable.ui.components
 
-import com.emanuel5014.trainable.data.model.GlassPart
-import com.emanuel5014.trainable.ui.theme.LocalAppGlassBackdrop
-import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
-import com.emanuel5014.trainable.ui.theme.actionGlass
-import com.emanuel5014.trainable.ui.theme.actionGlassContainer
-import com.emanuel5014.trainable.ui.theme.actionGlassElevation
-import com.kyant.backdrop.backdrops.LayerBackdrop
-import androidx.activity.compose.BackHandler
+import com.emanuel5014.trainable.ui.glass.LocalPlatformGlass
+import com.emanuel5014.trainable.ui.glass.GlassSource
+import com.emanuel5014.trainable.ui.glass.actionGlass
+import com.emanuel5014.trainable.ui.glass.actionGlassContainer
+import com.emanuel5014.trainable.ui.glass.actionGlassElevation
+import com.emanuel5014.trainable.ui.util.PlatformBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -76,7 +74,6 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
@@ -86,15 +83,12 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.navigation.MainTabs
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.ShapeFull
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 private val ToolbarPadding = 8.dp
@@ -124,10 +118,7 @@ fun BottomNavBarExpressive(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val haptic = LocalHapticFeedback.current
-    val context = LocalContext.current
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { it[UserPreferencesRepository.HAPTIC_ENABLED] ?: true }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
 
     val isOnMainTabs = currentRoute?.contains("MainTabs") == true || currentRoute == null
@@ -144,7 +135,7 @@ fun BottomNavBarExpressive(
     var menuExpanded by remember { mutableStateOf(false) }
     LaunchedEffect(selectedIndex) { menuExpanded = false }
     val menuOpen = menuExpanded && action is NavBarAction.Menu
-    BackHandler(menuOpen) { menuExpanded = false }
+    PlatformBackHandler(menuOpen) { menuExpanded = false }
 
     val labelStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.ExtraBold)
     val textMeasurer = rememberTextMeasurer()
@@ -449,5 +440,4 @@ private fun BoxScope.FabMenu(
 
 /** The navbar sits outside the screens, so its action glass bends the app-wide copy of them. */
 @Composable
-private fun rememberNavBarActionGlass(): LayerBackdrop? =
-    if (LocalGlassSettings.current.isOn(GlassPart.ActionButtons)) LocalAppGlassBackdrop.current else null
+private fun rememberNavBarActionGlass(): GlassSource? = LocalPlatformGlass.current.rememberNavBarActionSource()

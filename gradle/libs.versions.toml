@@ -39,6 +39,8 @@ compose-runtime-annotation = "1.12.1"
 compose-multiplatform = "1.12.2"
 compose-multiplatform-material3 = "1.12.0-alpha03"
 compose-multiplatform-icons = "1.7.3"
+# 2.9.2 resolves to androidx navigation 2.9.7 on Android: the app keeps its own 2.9.8
+jb-navigation = "2.9.2"
 
 
 [libraries]
@@ -98,6 +100,7 @@ jb-compose-foundation = { group = "org.jetbrains.compose.foundation", name = "fo
 jb-compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
 jb-compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-multiplatform-material3" }
 jb-compose-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "compose-multiplatform-icons" }
+jb-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "jb-navigation" }
 jb-compose-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
 room-common = { group = "androidx.room", name = "room-common", version.ref = "room" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }

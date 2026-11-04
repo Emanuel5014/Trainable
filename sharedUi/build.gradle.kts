@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -40,6 +41,12 @@ kotlin {
             api(libs.jb.compose.material3)
             implementation(libs.jb.compose.icons.extended)
             implementation(libs.jb.compose.resources)
+            api(libs.jb.navigation.compose)
+            implementation(libs.haze)
+            implementation(libs.kotlinx.serialization.json)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
         }
     }
 }

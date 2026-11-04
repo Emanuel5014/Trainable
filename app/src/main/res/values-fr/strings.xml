@@ -4,10 +4,6 @@
     <!-- App -->
 
     <!-- Navigation -->
-    <string name="nav_dashboard">Tableau de Bord</string>
-    <string name="nav_routines">Routines</string>
-    <string name="nav_history">Historique</string>
-    <string name="nav_analytics">Statistiques</string>
     <string name="nav_bar_style">Barre de navigation</string>
     <string name="nav_bar_style_classic">Classique</string>
     <string name="nav_bar_style_classic_desc">Barre de navigation inférieure Material 3</string>

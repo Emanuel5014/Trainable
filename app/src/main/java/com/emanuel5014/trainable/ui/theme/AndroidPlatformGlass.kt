@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.ui.glass.GlassSource
 import com.emanuel5014.trainable.ui.glass.PlatformGlass
 import com.kyant.backdrop.backdrops.LayerBackdrop
@@ -18,6 +19,12 @@ object AndroidPlatformGlass : PlatformGlass {
     override fun rememberActionSource(): GlassSource? {
         val backdrop = rememberActionGlassSource() ?: return null
         return remember(backdrop) { BackdropGlassSource(backdrop) }
+    }
+
+    @Composable
+    override fun rememberNavBarActionSource(): GlassSource? {
+        val backdrop = if (LocalGlassSettings.current.isOn(GlassPart.ActionButtons)) LocalAppGlassBackdrop.current else null
+        return remember(backdrop) { backdrop?.let { BackdropGlassSource(it) } }
     }
 }
 

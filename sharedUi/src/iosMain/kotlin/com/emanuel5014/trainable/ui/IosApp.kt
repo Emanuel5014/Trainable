@@ -1,6 +1,9 @@
 package com.emanuel5014.trainable.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
@@ -9,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontVariation
@@ -26,7 +30,7 @@ import com.emanuel5014.trainable.sharedui.resources.Res
 import com.emanuel5014.trainable.sharedui.resources.google_sans_flex
 import com.emanuel5014.trainable.ui.components.LocalAdvancedProgramming
 import com.emanuel5014.trainable.ui.components.LocalHapticsSetting
-import com.emanuel5014.trainable.ui.screens.dashboard.DashboardContent
+import com.emanuel5014.trainable.ui.components.LocalNavBarStyle
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardData
 import com.emanuel5014.trainable.ui.screens.dashboard.DashboardState
 import com.emanuel5014.trainable.ui.theme.MonochromeDarkColorScheme
@@ -39,7 +43,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.Font
 import platform.UIKit.UIViewController
 
-/** The iOS app's root, shown by the Xcode project. For now it is the Dashboard on the device's own data. */
+/** The iOS app's root, shown by the Xcode project: the app's navigation on the device's own data. */
 fun MainViewController(): UIViewController = ComposeUIViewController { TrainableIosApp() }
 
 /** One database and one settings file for the whole process. */
@@ -73,6 +77,7 @@ private fun TrainableIosApp() {
     val uiState by state.uiState.collectAsState()
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
+    val navBarStyle by preferences.navBarStyle.collectAsState(initial = null)
     // Same choice as the Android app: dark unless the user picked light or the system's
     val isDark = when (themeMode) {
         null -> true
@@ -82,18 +87,18 @@ private fun TrainableIosApp() {
     }
 
     IosTheme(paletteIndex = uiState.themePalette, darkTheme = isDark) {
+        // As on Android, nothing until the navbar style is read, so the bar never swaps once drawn
+        val style = navBarStyle
+        if (style == null) {
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+            return@IosTheme
+        }
         CompositionLocalProvider(
             LocalHapticsSetting provides preferences.hapticEnabled,
-            LocalAdvancedProgramming provides advancedProgramming
+            LocalAdvancedProgramming provides advancedProgramming,
+            LocalNavBarStyle provides style
         ) {
-            DashboardContent(
-                uiState = uiState,
-                actions = state,
-                onNavigateToSettings = {},
-                onNavigateToWorkout = { _, _ -> },
-                onNavigateToQuickWorkout = {},
-                onNavigateToPhysicalChecks = {}
-            )
+            IosNavGraph(dashboard = state, dashboardUi = uiState, navBarStyle = style, isDark = isDark)
         }
     }
 }
