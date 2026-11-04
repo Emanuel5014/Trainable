@@ -438,41 +438,12 @@ fun OneRepMaxesEntryCard(
 ) {
     val state by viewModel.uiState.collectAsState()
     val languageCode by viewModel.languageCode.collectAsState()
-    Surface(
-        modifier = modifier.fillMaxWidth().clip(Shapes.medium).clickable(onClick = onClick),
-        shape = Shapes.medium,
-        color = Primary.copy(alpha = 0.08f)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.one_rep_maxes).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Primary,
-                    fontWeight = FontWeight.Black
-                )
-                Text(
-                    text = if (state.rows.isEmpty()) stringResource(R.string.one_rep_maxes_empty_title)
+    OneRepMaxesEntryContent(
+        subtitle = if (state.rows.isEmpty()) stringResource(R.string.one_rep_maxes_empty_title)
                     else state.rows.take(3).joinToString(" · ") {
                         "${ExerciseTranslations.translate(it.exerciseName, languageCode)} ${formatWeight(it.current.weightKg, state.weightUnit)}"
                     },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnSurface,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-            }
-            Icon(
-                androidx.compose.material.icons.Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null,
-                tint = OnSurfaceVariant
-            )
-        }
-    }
+        onClick = onClick,
+        modifier = modifier
+    )
 }

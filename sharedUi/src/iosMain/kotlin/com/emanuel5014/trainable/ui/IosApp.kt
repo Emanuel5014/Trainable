@@ -22,6 +22,11 @@ import com.emanuel5014.trainable.data.local.GymDatabaseInstance
 import com.emanuel5014.trainable.data.local.entity.WorkoutPlanEntity
 import com.emanuel5014.trainable.data.local.entity.WorkoutSessionEntity
 import com.emanuel5014.trainable.data.local.relation.SessionWithPlanName
+import com.emanuel5014.trainable.data.repository.UserDefaultsStore
+import com.emanuel5014.trainable.data.repository.ExerciseMergeRepository
+import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsState
+import kotlinx.coroutines.flow.flowOf
+import androidx.compose.ui.text.intl.Locale
 import com.emanuel5014.trainable.data.repository.AnalyticsRepository
 import com.emanuel5014.trainable.data.repository.PlanRepository
 import com.emanuel5014.trainable.data.repository.ExerciseRepository
@@ -80,6 +85,9 @@ internal object IosAppGraph {
         )
     }
     val exercises by lazy { ExerciseRepository(database.exerciseDao(), IosExerciseMediaFiles()) }
+    val analyticsPreferences by lazy { UserDefaultsStore("analytics_prefs") }
+    val merges by lazy { ExerciseMergeRepository(database.exerciseMergeDao(), database.exerciseDao(), analyticsPreferences) }
+    val analytics by lazy { AnalyticsRepository(database.analyticsDao(), database.weightLogDao()) }
     val journal by lazy { JournalRepository(database.journalDao(), IosTransactionRunner(database)) }
 
     fun routineDetail(planId: Int, scope: CoroutineScope) =
@@ -149,6 +157,12 @@ private fun TrainableIosApp() {
     val history = remember {
         HistoryState(IosAppGraph.workouts, IosAppGraph.exercises, preferences, IosAppGraph.journal, scope)
     }
+    val analyticsText = rememberIosAnalyticsText()
+    val language = Locale.current.language
+    val analytics = remember(analyticsText, language) {
+        AnalyticsState(IosAppGraph.analytics, IosAppGraph.workouts, preferences, IosAppGraph.merges,
+            IosAppGraph.analyticsPreferences, analyticsText, flowOf(language), scope)
+    }
     val uiState by state.uiState.collectAsState()
     val themeMode by preferences.themeMode.collectAsState(initial = null)
     val advancedProgramming by preferences.advancedProgrammingEnabled.collectAsState(initial = false)
@@ -179,7 +193,7 @@ private fun TrainableIosApp() {
             LocalPrescriptionText provides rememberIosPrescriptionText(),
             LocalPrescriptionEnvironment provides IosPrescriptionEnvironment
         ) {
-            IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, navBarStyle = style, isDark = isDark)
+            IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
         }
     }
 }

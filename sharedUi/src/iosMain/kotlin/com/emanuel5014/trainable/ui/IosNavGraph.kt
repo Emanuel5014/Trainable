@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,9 @@ import com.emanuel5014.trainable.ui.navigation.PhysicalCheck
 import com.emanuel5014.trainable.ui.navigation.Report
 import com.emanuel5014.trainable.ui.navigation.EditWorkoutSession
 import com.emanuel5014.trainable.ui.navigation.CompareSessions
+import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsContent
+import com.emanuel5014.trainable.ui.screens.analytics.AnalyticsState
+import com.emanuel5014.trainable.ui.navigation.OneRepMaxes
 import com.emanuel5014.trainable.ui.screens.history.HistoryContent
 import com.emanuel5014.trainable.ui.screens.history.HistoryState
 import com.emanuel5014.trainable.ui.screens.history.NoHistoryShare
@@ -76,6 +80,7 @@ internal fun IosNavGraph(
     dashboardUi: DashboardUiState,
     routines: RoutinesState,
     history: HistoryState,
+    analytics: AnalyticsState,
     navBarStyle: NavBarStyle,
     isDark: Boolean
 ) {
@@ -95,8 +100,9 @@ internal fun IosNavGraph(
             popExitTransition = { fadeOut() + slideOutHorizontally { it } }
         ) {
             composable<MainTabs> {
-                IosMainTabs(navController, pagerState, dashboard, dashboardUi, routines, history)
+                IosMainTabs(navController, pagerState, dashboard, dashboardUi, routines, history, analytics)
             }
+            composable<OneRepMaxes> { NotOnIosYet("1RM", onBack = { navController.popBackStack() }) }
             composable<Settings> { NotOnIosYet("Settings", onBack = { navController.popBackStack() }) }
             composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
             composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
@@ -134,7 +140,7 @@ internal fun IosNavGraph(
     }
 }
 
-/** The four tabs, as MainPagerScreen on Android; Dashboard, Routines and History are shared so far. */
+/** The same four shared tabs as MainPagerScreen on Android. */
 @Composable
 private fun IosMainTabs(
     navController: NavHostController,
@@ -142,9 +148,10 @@ private fun IosMainTabs(
     dashboard: DashboardState,
     dashboardUi: DashboardUiState,
     routines: RoutinesState,
-    history: HistoryState
+    history: HistoryState,
+    analytics: AnalyticsState
 ) {
-    val titles = localizedNavItems().map { it.title }
+    val hapticEnabled by IosAppGraph.preferences.hapticEnabled.collectAsState(initial = true)
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -184,7 +191,13 @@ private fun IosMainTabs(
                 onCompareSessions = { first, second -> navController.navigate(CompareSessions(first, second)) },
                 isVisible = pagerState.currentPage == 2
             )
-            else -> NotOnIosYet(titles[page], onBack = null)
+            3 -> AnalyticsContent(
+                state = analytics,
+                hapticEnabled = hapticEnabled,
+                oneRepMaxesEntry = { modifier ->
+                    IosOneRepMaxesEntry(modifier = modifier, onClick = { navController.navigate(OneRepMaxes) })
+                }
+            )
         }
     }
 }

@@ -136,7 +136,6 @@
     <string name="expiration_date">Expiration Date</string>
     <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swap_exercise_message">Replace this exercise for this session only</string>
-    <string name="training_plans">TRAINING PLANS</string>
     <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
@@ -170,7 +169,6 @@
     <string name="rest_seconds">Rest (Seconds)</string>
     <string name="select_exercise">Select Exercise</string>
     <string name="tap_to_change_exercise">Tap to change exercise</string>
-    <string name="search_exercises">Search exercises</string>
     <string name="all_categories">All</string>
     <string name="filter_custom">Custom</string>
     <string name="new_exercise">New Exercise</string>
@@ -279,7 +277,6 @@
     <string name="add_cardio">Add Cardio Workout</string>
     <string name="add_workout">Add Workout</string>
     <string name="custom_workout">Custom Workout</string>
-    <string name="workout_logs">WORKOUT LOGS</string>
     <string name="total_workouts">Total Workouts</string>
 
     <!-- History -->
@@ -293,43 +290,11 @@
     <string name="best_performance">Best Performance</string>
 
     <!-- Analytics -->
-    <string name="analytics_title">ANALYTICS</string>
-    <string name="analytics_subtitle">YOUR PROGRESS</string>
-    <string name="analytics_max_progress">MAX PROGRESS</string>
-    <string name="analytics_select_exercises_desc">Select exercises to track your personal bests</string>
-    <string name="analytics_choose_exercises">Choose Exercises</string>
-    <string name="analytics_add_1rm_graphic">1RM GRAPHIC</string>
-    <string name="analytics_estimated_1rm">ESTIMATED 1RM</string>
-    <string name="analytics_estimated_1rm_short">Est. 1RM</string>
-    <string name="analytics_selected_count">Selected: %d</string>
-    <string name="analytics_record_reps">Record: %d reps</string>
-    <string name="analytics_no_data_range">No data for selected range</string>
-    <string name="analytics_clear">Clear</string>
-    <string name="analytics_remove">Remove</string>
-    <string name="analytics_edit_selection">Edit Selection</string>
-    <string name="analytics_clear_search">Clear search</string>
     <string name="analytics_consistency_summary">%1$d/%2$d scheduled sessions completed.</string>
     <string name="analytics_consistency_no_sessions">No scheduled sessions yet.</string>
     <string name="analytics_strength_summary_positive">+%s%% vs previous 30 days</string>
     <string name="analytics_strength_summary_negative">-%s%% vs previous 30 days</string>
     <string name="analytics_strength_no_data">Not enough PR history yet.</string>
-    <string name="analytics_empty_hint">Tap + to add widgets and track your progress</string>
-    <string name="analytics_progress_cards">1RM PROGRESS</string>
-    <string name="analytics_body_weight">BODY WEIGHT</string>
-    <string name="analytics_body_weight_history">History</string>
-    <string name="analytics_select_date">Select date</string>
-    <string name="analytics_workout_calendar">WORKOUT CALENDAR</string>
-    <string name="analytics_workouts_this_month">%d workouts this month</string>
-    <string name="analytics_total_volume">TOTAL TONNAGE</string>
-    <string name="analytics_volume_settings">Tonnage Settings</string>
-    <string name="analytics_time_range">Time Range</string>
-    <string name="analytics_day_mon">Mon</string>
-    <string name="analytics_day_tue">Tue</string>
-    <string name="analytics_day_wed">Wed</string>
-    <string name="analytics_day_thu">Thu</string>
-    <string name="analytics_day_fri">Fri</string>
-    <string name="analytics_day_sat">Sat</string>
-    <string name="analytics_day_sun">Sun</string>
     <string name="analytics_no_weight_data">No weight data available</string>
     <string name="analytics_todays_weight">Today\'s weight</string>
     <string name="total_volume_label">Total Tonnage</string>
@@ -343,8 +308,6 @@
     <string name="structural_balance">Structural Balance</string>
     <string name="workouts_per_week">Workouts/Week</string>
     <string name="avg_volume">Avg Tonnage</string>
-    <string name="analytics_category_volume">VOLUME BY MUSCLE GROUP</string>
-    <string name="analytics_category_volume_widget">VOLUME BY MUSCLE GROUP</string>
     <string name="analytics_time_range_all">ALL</string>
 
     <!-- Comparison -->
@@ -354,16 +317,13 @@
     <string name="compare_session_b">SESSION B</string>
     <string name="compare_vs">VS</string>
     <string name="compare_volume">Tonnage</string>
-    <string name="compare_sets">Sets</string>
     <string name="compare_exercises">Exercises</string>
     <string name="compare_max_weight">Max Weight</string>
-    <string name="compare_avg_weight">Avg Weight</string>
     <string name="compare_cardio">Cardio</string>
     <string name="compare_no_cardio_session_a">No cardio in Session A</string>
     <string name="compare_no_cardio_session_b">No cardio in Session B</string>
     <string name="compare_exercises_detail">Exercises Detail</string>
     <string name="compare_not_performed">Not performed</string>
-    <string name="analytics_time_period_comparison">TIME PERIOD COMPARISON</string>
     <string name="analytics_time_period_comparison_desc">Compare your performance between two different time periods</string>
     <string name="analytics_training_days">Training Days</string>
     <string name="error">Error</string>
