@@ -4,20 +4,47 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.Modifier
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
+import com.emanuel5014.trainable.data.repository.ExerciseMediaImport
+import kotlinx.coroutines.flow.Flow
 
 /**
  * What the shared exercise lists open or show through the platform: the user's media of an exercise (decoded and
- * played by Android) and the exercise detail. Without a provider, as on iOS for now, there is no media and no detail.
+ * played by each platform) and the exercise detail. The Android and iOS roots supply their own native decoder and picker.
  */
 interface ExercisePlatformUi {
+    fun detailDialogProperties(): androidx.compose.ui.window.DialogProperties =
+        androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+
+    @Composable
+    fun rememberMediaPicker(onPicked: (Int, String) -> Unit): (Int) -> Unit = remember { {} }
+
+    @Composable
+    fun ImportMessages(messages: Flow<ExerciseMediaImport>) {}
+
+    @Composable
+    fun MediaSlot(fileName: String?, onOpen: () -> Unit, onAdd: () -> Unit, modifier: Modifier = Modifier,
+                  size: Dp, playing: Boolean) { SharedExerciseMediaSlot(fileName, onOpen, onAdd, modifier, size, playing) }
+
+    @Composable
+    fun MediaCard(fileName: String, onOpen: () -> Unit, modifier: Modifier = Modifier) { SharedExerciseMediaCard(fileName, onOpen, modifier) }
+
+    @Composable
+    fun MediaViewer(fileName: String, exerciseName: String, onDismiss: () -> Unit,
+                    onReplace: (() -> Unit)? = null, onRemove: (() -> Unit)? = null) { SharedExerciseMediaViewer(fileName, exerciseName, onDismiss, onReplace, onRemove) }
+
+    @Composable
+    fun MediaImage(fileName: String, modifier: Modifier = Modifier, crop: Boolean = true, playing: Boolean = true,
+                   maxPx: Int = 512, onLoaded: (Boolean, Float) -> Unit = { _, _ -> }) {}
+
     /** The tile with the exercise's media next to a name; [onClick] null makes it only a picture. */
     @Composable
-    fun ListThumbnail(fileName: String?, onClick: (() -> Unit)?, size: Dp?) {}
+    fun ListThumbnail(fileName: String?, onClick: (() -> Unit)?, size: Dp?) { SharedExerciseListThumbnail(fileName, onClick, size ?: androidx.compose.ui.unit.Dp(56f)) }
 
     /** The exercise's media full screen, while [exercise] is not null. */
     @Composable
-    fun MediaPeek(exercise: ExerciseEntity?, languageCode: String, onDismiss: () -> Unit) {}
+    fun MediaPeek(exercise: ExerciseEntity?, languageCode: String, onDismiss: () -> Unit) { SharedExerciseMediaPeek(exercise, languageCode, onDismiss) }
 
     /** Every exercise name in use, to warn about a duplicate in the exercise form; empty where not known yet. */
     @Composable

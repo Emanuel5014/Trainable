@@ -27,7 +27,6 @@
     <string name="yes">YES</string>
     <string name="no">NO</string>
     <string name="selected">Selected</string>
-    <string name="all">All</string>
     <string name="total">Total</string>
     <string name="share">Share</string>
     <string name="share_preview">Share Preview</string>
@@ -101,22 +100,7 @@
     <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
-    <string name="editable_preset_exercises">Editable Preset Exercises</string>
-    <string name="editable_preset_exercises_desc">Allow renaming the default exercises provided by the app</string>
-    <string name="reset_exercise_names">Reset Exercise Names</string>
-    <string name="reset_exercise_names_confirm">Reset Exercise Names?</string>
-    <string name="reset_exercise_names_message">This will restore all preset exercise names to their defaults. Your custom exercises will not be affected.</string>
-    <string name="custom_categories">Custom Categories</string>
-    <string name="custom_categories_desc">Add or remove custom categories for your exercises</string>
-    <string name="add_category">Add Category</string>
-    <string name="add_category_title">Add New Category</string>
     <string name="edit_category">Edit Category</string>
-    <string name="edit_category_title">Edit Category</string>
-    <string name="category_name">Category name</string>
-    <string name="category_name_empty">Category name cannot be empty</string>
-    <string name="category_already_exists">Category already exists</string>
-    <string name="delete_category_title">Delete Category?</string>
-    <string name="delete_category_message">Are you sure you want to delete \"%1$s\"? Exercises with this category will not be deleted.</string>
 
     <!-- Exercises -->
     <string name="exercise">Exercise</string>
@@ -177,25 +161,8 @@
     <string name="auto_stop_cardio_at_target_desc">Pause the timer automatically when the time target is reached</string>
     <string name="auto_stop_time_weight_at_target">Auto-stop timed sets at target</string>
     <string name="auto_stop_time_weight_at_target_desc">Pause the timer automatically when the set time target is reached</string>
-    <string name="exercise_media_desc">Show your own image or GIF of each exercise during workouts</string>
-    <string name="exercise_media_large">Large Preview</string>
-    <string name="exercise_media_large_desc">Fill the free space under the sets with a big image when there is room</string>
-    <string name="exercise_media_show">Show in Workouts</string>
-    <string name="exercise_media_filter_with">With media</string>
-    <string name="exercise_media_filter_without">Without media</string>
-    <string name="exercise_media_count">%1$d of %2$d exercises have media</string>
-    <string name="exercise_media_remove_all">Remove all</string>
-    <string name="exercise_media_remove_all_title">Remove all media?</string>
-    <string name="exercise_media_remove_all_message">All exercise images and GIFs will be deleted from this device.</string>
-    <string name="exercise_media_add">Add image or GIF</string>
-    <string name="exercise_media_open">Exercise image, tap to enlarge</string>
-    <string name="exercise_media_replace">Replace</string>
-    <string name="exercise_media_remove">Remove</string>
-    <string name="exercise_media_remove_title">Remove image?</string>
-    <string name="exercise_media_remove_message">The image or GIF of this exercise will be deleted from this device.</string>
     <string name="exercise_media_too_large">That file is too large. Choose one under %1$d MB.</string>
     <string name="exercise_media_unsupported">Couldn\'t open that file. Choose an image or GIF.</string>
-    <string name="exercise_media_play_pause">Play or pause</string>
     <string name="workout_settings">Workout</string>
     <string name="workout_duration">Workout Duration</string>
     <string name="add_duration">Add duration</string>
@@ -492,7 +459,6 @@
     <string name="cardio_stop_save">STOP &amp; SAVE</string>
     <string name="cardio_target_label">TARGET</string>
     <string name="cardio_dist_value">%1$s km</string>
-    <string name="cardio_speed_value">%1$s km/h</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Free-form</string>
     <string name="cardio_cat_label">Cardio</string>
@@ -929,7 +895,6 @@
     <string name="compare_swap_sessions">Swap sessions</string>
     <string name="compare_verdict">A ahead on %1$d · B ahead on %2$d</string>
     <string name="compare_reps_value">%1$d reps</string>
-    <string name="compare_warmup_set">Warm-up</string>
     <!-- onboarding: advanced training + Nextcloud -->
     <string name="onboarding_advanced_title">Train like\na powerlifter.</string>
     <string name="onboarding_advanced_percent_title" formatted="false">%1RM &amp; maximums</string>
@@ -1163,87 +1128,8 @@
     <string name="rpe_level_maximum_desc">Near your limit · Failure or maximal effort</string>
     <!-- Exercise detail -->
     <string name="exercise_detail_open">Exercise details</string>
-    <string name="exercise_detail_records">Records</string>
-    <string name="exercise_detail_progress">Progress (estimated 1RM)</string>
-    <string name="exercise_detail_history">History</string>
-    <string name="exercise_detail_empty">You haven\'t done this exercise yet</string>
-    <string name="exercise_record_cardio_longest">Longest workout</string>
-    <string name="exercise_record_cardio_farthest">Longest distance</string>
-    <string name="exercise_record_cardio_best_speed">Best average speed</string>
-    <string name="exercise_detail_cardio_total">Total: %1$s</string>
-    <string name="exercise_detail_last">Last: %s</string>
-    <string name="exercise_detail_top">Top %s</string>
-    <string name="exercise_record_heaviest">Heaviest set</string>
-    <string name="exercise_record_best_e1rm">Best estimated 1RM</string>
-    <string name="exercise_record_best_volume">Best session volume</string>
-    <string name="exercise_record_most_reps_set">Most reps in a set</string>
-    <string name="exercise_record_most_reps_session">Most reps in a session</string>
-    <string name="exercise_record_longest_hold">Longest hold</string>
-    <string name="exercise_record_most_reps_interval">Most reps in an interval</string>
-    <plurals name="exercise_detail_sessions">
-        <item quantity="one">%d session</item>
-        <item quantity="other">%d sessions</item>
-    </plurals>
-    <plurals name="exercise_detail_sets">
-        <item quantity="one">%d set</item>
-        <item quantity="other">%d sets</item>
-    </plurals>
     <!-- Merge and hide exercises -->
-    <string name="exercise_more_actions">More actions</string>
-    <string name="exercise_action_merge">Merge into…</string>
-    <string name="exercise_action_hide">Hide</string>
-    <string name="exercise_action_delete">Delete from library</string>
-    <string name="exercise_action_restore">Restore</string>
-    <string name="exercise_merge_pick_hint">Everything of %s moves to the exercise you choose</string>
-    <string name="exercise_merge_preview_title">Merge %1$s into %2$s?</string>
-    <string name="exercise_merge_nothing">Nothing to move: %s is only hidden</string>
-    <string name="exercise_merge_footer">%s will be hidden. You can undo the merge from either exercise.</string>
-    <string name="exercise_merge_confirm">Merge</string>
-    <string name="exercise_merge_undo">Undo merge</string>
-    <string name="exercise_merge_undo_blocked">To undo this merge, undo the later one first</string>
-    <string name="exercise_merged_in_row">Merged: %1$s, %2$s</string>
-    <string name="exercise_merged_into_row">Merged into %s</string>
-    <string name="exercise_manage_hide_title">Hide %s?</string>
-    <string name="exercise_manage_hide_message">Workouts and routines keep it. You can restore it from Settings › Exercises, filter Hidden.</string>
-    <string name="exercise_manage_delete_message">%s is not used anywhere and will be deleted for good.</string>
-    <string name="exercise_msg_merged">Merged into %s</string>
-    <string name="exercise_msg_undone">Merge undone</string>
-    <string name="exercise_msg_hidden">Hidden</string>
-    <string name="exercise_msg_deleted">Deleted</string>
-    <string name="exercise_msg_restored">Restored</string>
-    <string name="exercise_msg_cannot_merge">These exercises can\'t be merged</string>
-    <string name="exercise_msg_cannot_merge_cardio">Cardio exercises can\'t be merged</string>
-    <string name="exercise_media_filter_hidden">Hidden</string>
-    <plurals name="exercise_merge_n_sets">
-        <item quantity="one">%d set</item>
-        <item quantity="other">%d sets</item>
-    </plurals>
-    <plurals name="exercise_merge_n_workouts">
-        <item quantity="one">%d workout</item>
-        <item quantity="other">%d workouts</item>
-    </plurals>
-    <plurals name="exercise_merge_n_routines">
-        <item quantity="one">%d routine</item>
-        <item quantity="other">%d routines</item>
-    </plurals>
-    <plurals name="exercise_merge_n_maxes">
-        <item quantity="one">%d max</item>
-        <item quantity="other">%d maxes</item>
-    </plurals>
-    <plurals name="exercise_merge_n_others">
-        <item quantity="one">%d other record</item>
-        <item quantity="other">%d other records</item>
-    </plurals>
-    <string name="exercise_msg_cannot_merge_workout">Finish the workout in progress first</string>
-    <string name="exercise_msg_cannot_restore_name">Another exercise already has this name. Rename it first.</string>
-    <plurals name="exercise_merge_shared_warning">
-        <item quantity="one">%d workout has both exercises: when you edit it they appear as a single exercise.</item>
-        <item quantity="other">%d workouts have both exercises: when you edit them they appear as a single exercise.</item>
-    </plurals>
     <!-- Exercises page -->
-    <string name="exercises_title">Exercises</string>
-    <string name="exercise_action_edit">Edit</string>
-    <string name="exercise_msg_saved">Saved</string>
     <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>
     <string name="exercise_tools_group">Exercise tools</string>
     <!-- Favorite exercises -->

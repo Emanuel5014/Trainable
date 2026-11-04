@@ -1,10 +1,10 @@
 package com.emanuel5014.trainable.ui.screens.exercises
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.ui.components.ExerciseListThumbnail
-import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
 import com.emanuel5014.trainable.ui.components.ExerciseRow
 
 /**
@@ -15,7 +15,7 @@ import com.emanuel5014.trainable.ui.components.ExerciseRow
  * button, since the star is changed in the detail. The look is [ExerciseRow]'s, shared with the exercise pickers.
  */
 @Composable
-internal fun ExerciseListRow(
+fun ExerciseListRow(
     name: String,
     category: String,
     mediaFile: String?,
@@ -27,6 +27,7 @@ internal fun ExerciseListRow(
     mediaAction: Boolean = true,
     isFavorite: Boolean = false
 ) {
+    val mediaUi = com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi.current
     ExerciseRow(
         name = name,
         category = category,
@@ -35,7 +36,7 @@ internal fun ExerciseListRow(
         thumbnail = {
             // Still images only: a long list of GIFs would animate all at once
             if (mediaAction) {
-                ExerciseMediaSlot(
+                mediaUi.MediaSlot(
                     fileName = mediaFile,
                     onOpen = onThumbnailClick,
                     onAdd = onThumbnailClick,
@@ -43,7 +44,7 @@ internal fun ExerciseListRow(
                     playing = false
                 )
             } else {
-                ExerciseListThumbnail(fileName = mediaFile, onClick = null, size = 56.dp)
+                mediaUi.ListThumbnail(fileName = mediaFile, onClick = null, size = 56.dp)
             }
         },
         isCustom = isCustom,

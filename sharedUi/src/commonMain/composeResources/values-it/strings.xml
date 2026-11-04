@@ -686,4 +686,123 @@
     <string name="donors_support_button">Offrimi un caffè su Ko-fi</string>
     <string name="donors_title">Donatori e Sostenitori</string>
     <string name="star_on_github">Vota su GitHub</string>
+
+    <!-- Exercise library and detail -->
+    <string name="add_category">Aggiungi Categoria</string>
+    <string name="add_category_title">Aggiungi Nuova Categoria</string>
+    <string name="cardio_speed_value">%1$s km/h</string>
+    <string name="category_already_exists">La categoria esiste gia'</string>
+    <string name="category_name">Nome categoria</string>
+    <string name="category_name_empty">Il nome della categoria non puo' essere vuoto</string>
+    <string name="compare_reps_value">%1$d rip.</string>
+    <string name="compare_warmup_set">Riscaldamento</string>
+    <string name="custom_categories">Categorie Personalizzate</string>
+    <string name="custom_categories_desc">Aggiungi o rimuovi categorie personalizzate per i tuoi esercizi</string>
+    <string name="delete_category_message">Sei sicuro di voler eliminare "%1$s"? Gli esercizi con questa categoria non verranno eliminati.</string>
+    <string name="delete_category_title">Eliminare Categoria?</string>
+    <string name="edit_category_title">Modifica Categoria</string>
+    <string name="editable_preset_exercises">Esercizi Preimpostati Modificabili</string>
+    <string name="editable_preset_exercises_desc">Consenti di rinominare gli esercizi predefiniti forniti dall'app</string>
+    <string name="exercise_action_delete">Elimina dalla libreria</string>
+    <string name="exercise_action_edit">Modifica</string>
+    <string name="exercise_action_hide">Nascondi</string>
+    <string name="exercise_action_merge">Unisci in…</string>
+    <string name="exercise_action_restore">Ripristina</string>
+    <string name="exercise_detail_cardio_total">Totale: %1$s</string>
+    <string name="exercise_detail_empty">Non hai ancora fatto questo esercizio</string>
+    <string name="exercise_detail_history">Storico</string>
+    <string name="exercise_detail_last">Ultima: %1$s</string>
+    <string name="exercise_detail_progress">Progresso (1RM stimato)</string>
+    <string name="exercise_detail_records">Record</string>
+    <string name="exercise_detail_top">Max %1$s</string>
+    <string name="exercise_manage_delete_message">%1$s non è usato da nessuna parte e verrà eliminato definitivamente.</string>
+    <string name="exercise_manage_hide_message">Allenamenti e routine lo mantengono. Lo ripristini da Impostazioni › Esercizi, filtro Nascosti.</string>
+    <string name="exercise_manage_hide_title">Nascondere %1$s?</string>
+    <string name="exercise_media_add">Aggiungi immagine o GIF</string>
+    <string name="exercise_media_count">%1$d esercizi su %2$d hanno un media</string>
+    <string name="exercise_media_desc">Mostra durante l'allenamento una tua immagine o GIF di ogni esercizio</string>
+    <string name="exercise_media_filter_hidden">Nascosti</string>
+    <string name="exercise_media_filter_with">Con media</string>
+    <string name="exercise_media_filter_without">Senza media</string>
+    <string name="exercise_media_large">Anteprima Grande</string>
+    <string name="exercise_media_large_desc">Riempi lo spazio libero sotto le serie con un'immagine grande quando c'è posto</string>
+    <string name="exercise_media_remove_all">Rimuovi tutti</string>
+    <string name="exercise_media_remove_all_message">Tutte le immagini e le GIF degli esercizi verranno eliminate da questo dispositivo.</string>
+    <string name="exercise_media_remove_all_title">Rimuovere tutti i media?</string>
+    <string name="exercise_media_show">Mostra negli Allenamenti</string>
+    <string name="exercise_merge_confirm">Unisci</string>
+    <string name="exercise_merge_footer">%1$s verrà nascosto. Puoi annullare l'unione da uno dei due esercizi.</string>
+    <string name="exercise_merge_nothing">Niente da spostare: %1$s viene solo nascosto</string>
+    <string name="exercise_merge_pick_hint">Tutto ciò che riguarda %1$s passa all'esercizio che scegli</string>
+    <string name="exercise_merge_preview_title">Unire %1$s in %2$s?</string>
+    <string name="exercise_merge_undo">Annulla unione</string>
+    <string name="exercise_merge_undo_blocked">Per annullare questa unione, annulla prima quella successiva</string>
+    <string name="exercise_merged_in_row">Unito: %1$s, %2$s</string>
+    <string name="exercise_merged_into_row">Unito in %1$s</string>
+    <string name="exercise_more_actions">Altre azioni</string>
+    <string name="exercise_msg_cannot_merge">Questi esercizi non si possono unire</string>
+    <string name="exercise_msg_cannot_merge_cardio">Gli esercizi cardio non si possono unire</string>
+    <string name="exercise_msg_cannot_merge_workout">Termina prima l'allenamento in corso</string>
+    <string name="exercise_msg_cannot_restore_name">Un altro esercizio ha già questo nome. Rinominalo prima.</string>
+    <string name="exercise_msg_deleted">Eliminato</string>
+    <string name="exercise_msg_hidden">Nascosto</string>
+    <string name="exercise_msg_merged">Unito in %1$s</string>
+    <string name="exercise_msg_restored">Ripristinato</string>
+    <string name="exercise_msg_saved">Salvato</string>
+    <string name="exercise_msg_undone">Unione annullata</string>
+    <string name="exercise_record_best_e1rm">Miglior 1RM stimato</string>
+    <string name="exercise_record_best_volume">Miglior volume in una sessione</string>
+    <string name="exercise_record_cardio_best_speed">Miglior velocità media</string>
+    <string name="exercise_record_cardio_farthest">Distanza maggiore</string>
+    <string name="exercise_record_cardio_longest">Allenamento più lungo</string>
+    <string name="exercise_record_heaviest">Serie più pesante</string>
+    <string name="exercise_record_longest_hold">Tenuta più lunga</string>
+    <string name="exercise_record_most_reps_interval">Più ripetizioni in un intervallo</string>
+    <string name="exercise_record_most_reps_session">Più ripetizioni in una sessione</string>
+    <string name="exercise_record_most_reps_set">Più ripetizioni in una serie</string>
+    <string name="reset_exercise_names">Reimposta Nomi Esercizi</string>
+    <string name="reset_exercise_names_confirm">Reimpostare i Nomi degli Esercizi?</string>
+    <string name="reset_exercise_names_message">Questo ripristinerà i nomi di tutti gli esercizi preimpostati ai valori predefiniti. I tuoi esercizi personalizzati non saranno modificati.</string>
+    <plurals name="exercise_detail_sessions">
+        <item quantity="one">%1$d sessione</item>
+        <item quantity="other">%1$d sessioni</item>
+    </plurals>
+    <plurals name="exercise_detail_sets">
+        <item quantity="one">%1$d serie</item>
+        <item quantity="other">%1$d serie</item>
+    </plurals>
+    <plurals name="exercise_merge_n_maxes">
+        <item quantity="one">%1$d massimale</item>
+        <item quantity="other">%1$d massimali</item>
+    </plurals>
+    <plurals name="exercise_merge_n_others">
+        <item quantity="one">%1$d altro record</item>
+        <item quantity="other">%1$d altri record</item>
+    </plurals>
+    <plurals name="exercise_merge_n_routines">
+        <item quantity="one">%1$d routine</item>
+        <item quantity="other">%1$d routine</item>
+    </plurals>
+    <plurals name="exercise_merge_n_sets">
+        <item quantity="one">%1$d serie</item>
+        <item quantity="other">%1$d serie</item>
+    </plurals>
+    <plurals name="exercise_merge_n_workouts">
+        <item quantity="one">%1$d allenamento</item>
+        <item quantity="other">%1$d allenamenti</item>
+    </plurals>
+    <plurals name="exercise_merge_shared_warning">
+        <item quantity="one">In %1$d allenamento ci sono entrambi gli esercizi: quando lo modifichi compaiono come un solo esercizio.</item>
+        <item quantity="other">In %1$d allenamenti ci sono entrambi gli esercizi: quando li modifichi compaiono come un solo esercizio.</item>
+    </plurals>
+
+    <string name="exercise_media_open">Immagine dell'esercizio, tocca per ingrandire</string>
+    <string name="exercise_media_play_pause">Riproduci o metti in pausa</string>
+    <string name="exercise_media_remove">Rimuovi</string>
+    <string name="exercise_media_remove_message">L'immagine o la GIF di questo esercizio verrà eliminata da questo dispositivo.</string>
+    <string name="exercise_media_remove_title">Rimuovere l'immagine?</string>
+    <string name="exercise_media_replace">Sostituisci</string>
+
+    <string name="exercise_media_unsupported">Impossibile aprire il file. Scegli un'immagine o una GIF.</string>
+    <string name="exercise_media_too_large">File troppo grande. Scegline uno sotto i %1$d MB.</string>
 </resources>

@@ -210,6 +210,10 @@
 					"$(inherited)",
 					"-framework",
 					Shared,
+					"-framework",
+					PhotosUI,
+					"-framework",
+					ImageIO,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;
@@ -243,6 +247,10 @@
 					"$(inherited)",
 					"-framework",
 					Shared,
+					"-framework",
+					PhotosUI,
+					"-framework",
+					ImageIO,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;

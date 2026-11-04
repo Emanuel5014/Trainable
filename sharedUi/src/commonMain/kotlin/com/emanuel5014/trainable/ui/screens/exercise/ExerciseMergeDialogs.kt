@@ -1,5 +1,27 @@
 package com.emanuel5014.trainable.ui.screens.exercise
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.exercise_action_delete
+import com.emanuel5014.trainable.sharedui.resources.exercise_action_hide
+import com.emanuel5014.trainable.sharedui.resources.exercise_manage_delete_message
+import com.emanuel5014.trainable.sharedui.resources.exercise_manage_hide_message
+import com.emanuel5014.trainable.sharedui.resources.exercise_manage_hide_title
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_confirm
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_footer
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_n_maxes
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_n_others
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_n_routines
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_n_sets
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_n_workouts
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_nothing
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_preview_title
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_shared_warning
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_undo
+import com.emanuel5014.trainable.sharedui.resources.exercise_merge_undo_blocked
+import com.emanuel5014.trainable.sharedui.resources.exercise_merged_in_row
+import com.emanuel5014.trainable.sharedui.resources.exercise_merged_into_row
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,11 +34,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.dao.MergePreview
 import com.emanuel5014.trainable.data.local.dao.MergePreviewKind
@@ -45,7 +66,7 @@ fun MergePreviewDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(R.string.exercise_merge_preview_title, loserName, winnerName), fontWeight = FontWeight.ExtraBold)
+            Text(stringResource(Res.string.exercise_merge_preview_title, loserName, winnerName), fontWeight = FontWeight.ExtraBold)
         },
         text = {
             if (preview == null) {
@@ -55,13 +76,13 @@ fun MergePreviewDialog(
                     Text(mergePreviewText(preview, loserName))
                     if (preview.sharedWorkouts > 0) {
                         Text(
-                            text = pluralStringResource(R.plurals.exercise_merge_shared_warning, preview.sharedWorkouts, preview.sharedWorkouts),
+                            text = pluralStringResource(Res.plurals.exercise_merge_shared_warning, preview.sharedWorkouts, preview.sharedWorkouts),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurface
                         )
                     }
                     Text(
-                        text = stringResource(R.string.exercise_merge_footer, loserName),
+                        text = stringResource(Res.string.exercise_merge_footer, loserName),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -76,12 +97,12 @@ fun MergePreviewDialog(
                     contentColor = OnPrimary,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(R.string.exercise_merge_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.exercise_merge_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant) }
         },
         containerColor = SurfaceContainerHigh,
         titleContentColor = OnSurface,
@@ -91,14 +112,14 @@ fun MergePreviewDialog(
 
 @Composable
 private fun mergePreviewText(preview: MergePreview, loserName: String): String {
-    if (preview.isEmpty) return stringResource(R.string.exercise_merge_nothing, loserName)
+    if (preview.isEmpty) return stringResource(Res.string.exercise_merge_nothing, loserName)
     return preview.counts().map { (kind, count) ->
         val plural = when (kind) {
-            MergePreviewKind.SETS -> R.plurals.exercise_merge_n_sets
-            MergePreviewKind.WORKOUTS -> R.plurals.exercise_merge_n_workouts
-            MergePreviewKind.ROUTINES -> R.plurals.exercise_merge_n_routines
-            MergePreviewKind.MAXES -> R.plurals.exercise_merge_n_maxes
-            MergePreviewKind.OTHERS -> R.plurals.exercise_merge_n_others
+            MergePreviewKind.SETS -> Res.plurals.exercise_merge_n_sets
+            MergePreviewKind.WORKOUTS -> Res.plurals.exercise_merge_n_workouts
+            MergePreviewKind.ROUTINES -> Res.plurals.exercise_merge_n_routines
+            MergePreviewKind.MAXES -> Res.plurals.exercise_merge_n_maxes
+            MergePreviewKind.OTHERS -> Res.plurals.exercise_merge_n_others
         }
         pluralStringResource(plural, count, count)
     }.joinToString(", ")
@@ -118,15 +139,15 @@ fun RemoveExerciseDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            val title = if (willBeDeleted == true) stringResource(R.string.exercise_action_delete)
-            else stringResource(R.string.exercise_manage_hide_title, name)
+            val title = if (willBeDeleted == true) stringResource(Res.string.exercise_action_delete)
+            else stringResource(Res.string.exercise_manage_hide_title, name)
             Text(title, fontWeight = FontWeight.ExtraBold)
         },
         text = {
             when (willBeDeleted) {
                 null -> CircularProgressIndicator()
-                true -> Text(stringResource(R.string.exercise_manage_delete_message, name))
-                false -> Text(stringResource(R.string.exercise_manage_hide_message))
+                true -> Text(stringResource(Res.string.exercise_manage_delete_message, name))
+                false -> Text(stringResource(Res.string.exercise_manage_hide_message))
             }
         },
         confirmButton = {
@@ -137,13 +158,13 @@ fun RemoveExerciseDialog(
                     contentColor = OnPrimary,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    val label = if (willBeDeleted) R.string.exercise_action_delete else R.string.exercise_action_hide
+                    val label = if (willBeDeleted) Res.string.exercise_action_delete else Res.string.exercise_action_hide
                     Text(stringResource(label).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant) }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant) }
         },
         containerColor = SurfaceContainerHigh,
         titleContentColor = OnSurface,
@@ -164,14 +185,14 @@ fun MergeRows(
         state.asWinner.forEach { info ->
             val name = ExerciseTranslations.translate(info.otherName, languageCode)
             MergeRow(
-                text = stringResource(R.string.exercise_merged_in_row, name, DateFormatter.format(info.timestamp)),
+                text = stringResource(Res.string.exercise_merged_in_row, name, DateFormatter.format(info.timestamp)),
                 info = info,
                 onUndo = onUndo
             )
         }
         state.asLoser?.let { info ->
             val name = ExerciseTranslations.translate(info.otherName, languageCode)
-            MergeRow(text = stringResource(R.string.exercise_merged_into_row, name), info = info, onUndo = onUndo)
+            MergeRow(text = stringResource(Res.string.exercise_merged_into_row, name), info = info, onUndo = onUndo)
         }
     }
 }
@@ -183,12 +204,12 @@ private fun MergeRow(text: String, info: ExerciseMergeInfo, onUndo: (Int) -> Uni
         Text(text = text, style = MaterialTheme.typography.bodyMedium, color = OnSurfaceVariant)
         if (info.canUndo) {
             TextButton(onClick = { onUndo(info.mergeId) }, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(R.string.exercise_merge_undo).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.exercise_merge_undo).uppercase(), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         } else {
             // A later merge builds on this one: without the line the button would just be missing
             Text(
-                text = stringResource(R.string.exercise_merge_undo_blocked),
+                text = stringResource(Res.string.exercise_merge_undo_blocked),
                 style = MaterialTheme.typography.bodySmall,
                 color = OnSurfaceVariant.copy(alpha = 0.7f)
             )

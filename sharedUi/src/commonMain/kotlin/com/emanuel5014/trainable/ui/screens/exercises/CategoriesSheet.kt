@@ -1,6 +1,20 @@
 package com.emanuel5014.trainable.ui.screens.exercises
 
-import android.widget.Toast
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add_category
+import com.emanuel5014.trainable.sharedui.resources.add_category_title
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.category_already_exists
+import com.emanuel5014.trainable.sharedui.resources.category_name
+import com.emanuel5014.trainable.sharedui.resources.category_name_empty
+import com.emanuel5014.trainable.sharedui.resources.custom_categories
+import com.emanuel5014.trainable.sharedui.resources.custom_categories_desc
+import com.emanuel5014.trainable.sharedui.resources.delete
+import com.emanuel5014.trainable.sharedui.resources.delete_category_message
+import com.emanuel5014.trainable.sharedui.resources.delete_category_title
+import com.emanuel5014.trainable.sharedui.resources.edit_category_title
+import com.emanuel5014.trainable.sharedui.resources.save
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -36,12 +50,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.local.entity.CustomCategoryEntity
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymInputField
@@ -90,13 +102,13 @@ fun CategoriesSheet(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        stringResource(R.string.custom_categories),
+                        stringResource(Res.string.custom_categories),
                         style = MaterialTheme.typography.titleMedium,
                         color = OnSurface,
                         fontWeight = FontWeight.ExtraBold
                     )
                     Text(
-                        stringResource(R.string.custom_categories_desc),
+                        stringResource(Res.string.custom_categories_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -119,14 +131,14 @@ fun CategoriesSheet(
             GymButton(onClick = { showAdd = true }, modifier = Modifier.fillMaxWidth(), containerColor = SurfaceContainerHigh, contentColor = OnSurface) {
                 Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.add_category), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.add_category), fontWeight = FontWeight.ExtraBold)
             }
         }
     }
 
     if (showAdd) {
         CategoryNameDialog(
-            title = stringResource(R.string.add_category_title),
+            title = stringResource(Res.string.add_category_title),
             initialName = "",
             takenNames = existingNames,
             onConfirm = {
@@ -139,7 +151,7 @@ fun CategoriesSheet(
 
     toEdit?.let { category ->
         CategoryNameDialog(
-            title = stringResource(R.string.edit_category_title),
+            title = stringResource(Res.string.edit_category_title),
             initialName = category.name,
             // Keeping its own name is fine
             takenNames = existingNames - category.name,
@@ -156,19 +168,19 @@ fun CategoriesSheet(
             onDismissRequest = { toDelete = null },
             containerColor = SurfaceContainerHigh,
             shape = Shapes.extraLarge,
-            title = { Text(stringResource(R.string.delete_category_title), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-            text = { Text(stringResource(R.string.delete_category_message, category.name), color = OnSurfaceVariant) },
+            title = { Text(stringResource(Res.string.delete_category_title), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+            text = { Text(stringResource(Res.string.delete_category_message, category.name), color = OnSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = {
                     onDelete(category)
                     toDelete = null
                 }) {
-                    Text(stringResource(R.string.delete).uppercase(), color = Error)
+                    Text(stringResource(Res.string.delete).uppercase(), color = Error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { toDelete = null }) {
-                    Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                    Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
                 }
             }
         )
@@ -180,7 +192,7 @@ fun CategoriesSheet(
  * on the right) on a small screen or with a large font, where the two 48dp buttons would squeeze it to a few letters a line.
  */
 @Composable
-internal fun CategoryRow(name: String, onEdit: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
+fun CategoryRow(name: String, onEdit: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
@@ -201,10 +213,10 @@ internal fun CategoryRow(name: String, onEdit: () -> Unit, onDelete: () -> Unit,
         }
         val buttons = @Composable {
             IconButton(onClick = onEdit) {
-                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit_category_title), tint = Primary, modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.Edit, contentDescription = stringResource(Res.string.edit_category_title), tint = Primary, modifier = Modifier.size(20.dp))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = Error.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.delete), tint = Error.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
             }
         }
         if (stacked) {
@@ -238,9 +250,9 @@ private fun CategoryNameDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(initialName) }
-    val context = LocalContext.current
-    val alreadyExists = stringResource(R.string.category_already_exists)
-    val nameEmpty = stringResource(R.string.category_name_empty)
+    val showMessage = com.emanuel5014.trainable.ui.components.LocalShowMessage.current
+    val alreadyExists = stringResource(Res.string.category_already_exists)
+    val nameEmpty = stringResource(Res.string.category_name_empty)
 
     AlertDialog(
         modifier = Modifier.imePadding(),
@@ -252,7 +264,7 @@ private fun CategoryNameDialog(
             GymInputField(
                 value = name,
                 onValueChange = { name = it },
-                label = stringResource(R.string.category_name),
+                label = stringResource(Res.string.category_name),
                 modifier = Modifier.fillMaxWidth()
             )
         },
@@ -261,20 +273,20 @@ private fun CategoryNameDialog(
                 onClick = {
                     val trimmed = name.trim()
                     when {
-                        trimmed.isEmpty() -> Toast.makeText(context, nameEmpty, Toast.LENGTH_SHORT).show()
-                        trimmed in takenNames -> Toast.makeText(context, alreadyExists, Toast.LENGTH_SHORT).show()
+                        trimmed.isEmpty() -> showMessage(nameEmpty)
+                        trimmed in takenNames -> showMessage(alreadyExists)
                         else -> onConfirm(trimmed)
                     }
                 },
                 containerColor = Primary,
                 contentColor = OnPrimary
             ) {
-                Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.cancel).uppercase(), color = OnSurfaceVariant)
             }
         }
     )

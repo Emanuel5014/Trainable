@@ -192,7 +192,16 @@ internal fun IosNavGraph(
                     onSupport = { uriHandler.openUri("https://ko-fi.com/emanuel5014") }
                 )
             }
-            composable<Exercises> { NotOnIosYet("Exercises", onBack = { navController.popBackStack() }) }
+            composable<Exercises> {
+                val scope = rememberCoroutineScope()
+                val language = Locale.current.language
+                val controller = remember(language) {
+                    com.emanuel5014.trainable.ui.screens.exercises.ExercisesState(
+                        IosAppGraph.exercises, IosAppGraph.merges, IosAppGraph.preferences, flowOf(language), scope)
+                }
+                com.emanuel5014.trainable.ui.screens.exercises.ExercisesContent(
+                    onNavigateBack = { navController.popBackStack() }, controller = controller)
+            }
             composable<AiSettings> { NotOnIosYet("AI", onBack = { navController.popBackStack() }) }
             composable<PersonalizationSettings> {
                 val scope = rememberCoroutineScope()

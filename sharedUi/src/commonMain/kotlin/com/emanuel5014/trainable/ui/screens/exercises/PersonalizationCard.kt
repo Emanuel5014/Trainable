@@ -1,5 +1,16 @@
 package com.emanuel5014.trainable.ui.screens.exercises
 
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.custom_categories
+import com.emanuel5014.trainable.sharedui.resources.custom_categories_desc
+import com.emanuel5014.trainable.sharedui.resources.editable_preset_exercises
+import com.emanuel5014.trainable.sharedui.resources.editable_preset_exercises_desc
+import com.emanuel5014.trainable.sharedui.resources.reset
+import com.emanuel5014.trainable.sharedui.resources.reset_exercise_names
+import com.emanuel5014.trainable.sharedui.resources.reset_exercise_names_confirm
+import com.emanuel5014.trainable.sharedui.resources.reset_exercise_names_message
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,10 +33,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.GymCard
 import com.emanuel5014.trainable.ui.screens.settings.SettingsSwitch
@@ -42,7 +52,7 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
  * edited, the reset of their names (while the switch is on) and the way into the custom categories.
  */
 @Composable
-internal fun PersonalizationCard(
+fun PersonalizationCard(
     editablePresets: Boolean,
     onEditablePresetsChange: (Boolean) -> Unit,
     onResetNames: () -> Unit,
@@ -61,13 +71,13 @@ internal fun PersonalizationCard(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            stringResource(R.string.editable_preset_exercises),
+                            stringResource(Res.string.editable_preset_exercises),
                             style = MaterialTheme.typography.titleMedium,
                             color = OnSurface,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            stringResource(R.string.editable_preset_exercises_desc),
+                            stringResource(Res.string.editable_preset_exercises_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
@@ -87,7 +97,7 @@ internal fun PersonalizationCard(
                 ) {
                     Icon(Icons.Rounded.RestartAlt, contentDescription = null, tint = Primary)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(stringResource(R.string.reset_exercise_names), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.reset_exercise_names), fontWeight = FontWeight.ExtraBold)
                 }
             }
 
@@ -105,13 +115,13 @@ internal fun PersonalizationCard(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            stringResource(R.string.custom_categories),
+                            stringResource(Res.string.custom_categories),
                             style = MaterialTheme.typography.titleMedium,
                             color = OnSurface,
                             fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            stringResource(R.string.custom_categories_desc),
+                            stringResource(Res.string.custom_categories_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
@@ -125,21 +135,21 @@ internal fun PersonalizationCard(
 
 /** Asks before the names of the presets go back to the original ones. */
 @Composable
-internal fun ResetNamesDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+fun ResetNamesDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceContainerHigh,
         shape = Shapes.extraLarge,
-        title = { Text(stringResource(R.string.reset_exercise_names_confirm), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
-        text = { Text(stringResource(R.string.reset_exercise_names_message), color = OnSurfaceVariant) },
+        title = { Text(stringResource(Res.string.reset_exercise_names_confirm), fontWeight = FontWeight.ExtraBold, color = OnSurface) },
+        text = { Text(stringResource(Res.string.reset_exercise_names_message), color = OnSurfaceVariant) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.reset).uppercase(), color = Error)
+                Text(stringResource(Res.string.reset).uppercase(), color = Error)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel).uppercase(), color = Primary)
+                Text(stringResource(Res.string.cancel).uppercase(), color = Primary)
             }
         }
     )

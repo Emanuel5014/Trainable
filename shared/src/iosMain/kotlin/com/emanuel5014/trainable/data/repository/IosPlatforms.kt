@@ -56,18 +56,6 @@ class IosWorkoutPlatform : WorkoutPlatform {
     override val noTechniqueLabel: String get() = "-"
 }
 
-/** Exercise media in Documents/exercise_media. Picking one is not on iOS yet. */
-class IosExerciseMediaFiles : ExerciseMediaFiles {
-    override fun import(source: String, exerciseId: Int): ExerciseMediaImport = ExerciseMediaImport.Unsupported
-
-    @OptIn(ExperimentalForeignApi::class)
-    override fun delete(fileName: String?) {
-        // Only a bare name inside the media folder, as on Android
-        if (fileName == null || fileName.contains('/')) return
-        NSFileManager.defaultManager.removeItemAtPath(documentsFolder("exercise_media") + "/" + fileName, error = null)
-    }
-}
-
 /** One write transaction of the iOS database, as Room's withTransaction is on Android. */
 class IosTransactionRunner(private val database: com.emanuel5014.trainable.data.local.GymDatabase) : TransactionRunner {
     override suspend fun <R> run(block: suspend () -> R): R =
