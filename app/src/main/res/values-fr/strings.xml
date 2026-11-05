@@ -199,22 +199,16 @@
     <string name="analytics_time_range_all">TOUT</string>
 
     <!-- Comparaison -->
-    <string name="compare_sessions_title">Comparer les Sessions</string>
     <string name="compare_sessions">Sessions</string>
     <string name="compare_session_a">SESSION A</string>
     <string name="compare_session_b">SESSION B</string>
-    <string name="compare_vs">VS</string>
     <string name="compare_volume">Tonnage</string>
     <string name="compare_exercises">Exercices</string>
-    <string name="compare_max_weight">Poids Max</string>
     <string name="compare_cardio">Cardio</string>
     <string name="compare_no_cardio_session_a">Pas de cardio en Session A</string>
     <string name="compare_no_cardio_session_b">Pas de cardio en Session B</string>
-    <string name="compare_exercises_detail">Détail des Exercices</string>
-    <string name="compare_not_performed">Non réalisé</string>
     <string name="analytics_time_period_comparison_desc">Comparez vos performances entre deux périodes différentes</string>
     <string name="analytics_training_days">Jours d\'Entraînement</string>
-    <string name="error">Erreur</string>
 
     <!-- Settings -->
     <string name="personalization">PERSONNALISATION</string>
@@ -853,18 +847,6 @@
     <!-- share options + imported maximums -->
     <string name="import_includes_maximums">Inclut les 1RM de %1$d exercices</string>
     <!-- compare sessions v2 -->
-    <string name="compare_summary">Résumé</string>
-    <string name="compare_duration">Durée</string>
-    <string name="compare_working_sets">Séries de travail</string>
-    <string name="compare_total_reps">Répétitions totales</string>
-    <string name="compare_best_1rm" formatted="false">1RM estimé</string>
-    <string name="compare_avg_rpe">RPE moyen</string>
-    <string name="compare_time_under_tension">Temps sous tension</string>
-    <string name="compare_distance">Distance</string>
-    <string name="compare_pace">Allure</string>
-    <string name="compare_swap_sessions">Inverser les séances</string>
-    <string name="compare_verdict">A devant sur %1$d · B sur %2$d</string>
-    <string name="compare_reps_value">%1$d rép.</string>
     <!-- onboarding: advanced training + Nextcloud -->
     <string name="onboarding_advanced_title">Entraîne-toi comme\nun powerlifter.</string>
     <string name="onboarding_advanced_percent_title" formatted="false">%1RM et maximums</string>

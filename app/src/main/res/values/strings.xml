@@ -200,22 +200,16 @@
     <string name="analytics_time_range_all">ALL</string>
 
     <!-- Comparison -->
-    <string name="compare_sessions_title">Compare Sessions</string>
     <string name="compare_sessions">Sessions</string>
     <string name="compare_session_a">SESSION A</string>
     <string name="compare_session_b">SESSION B</string>
-    <string name="compare_vs">VS</string>
     <string name="compare_volume">Tonnage</string>
     <string name="compare_exercises">Exercises</string>
-    <string name="compare_max_weight">Max Weight</string>
     <string name="compare_cardio">Cardio</string>
     <string name="compare_no_cardio_session_a">No cardio in Session A</string>
     <string name="compare_no_cardio_session_b">No cardio in Session B</string>
-    <string name="compare_exercises_detail">Exercises Detail</string>
-    <string name="compare_not_performed">Not performed</string>
     <string name="analytics_time_period_comparison_desc">Compare your performance between two different time periods</string>
     <string name="analytics_training_days">Training Days</string>
-    <string name="error">Error</string>
 
     <!-- Settings -->
     <string name="personalization">PERSONALIZATION</string>
@@ -854,18 +848,6 @@
     <!-- share options + imported maximums -->
     <string name="import_includes_maximums">Includes the maximums of %1$d exercises</string>
     <!-- compare sessions v2 -->
-    <string name="compare_summary">Summary</string>
-    <string name="compare_duration">Duration</string>
-    <string name="compare_working_sets">Working sets</string>
-    <string name="compare_total_reps">Total reps</string>
-    <string name="compare_best_1rm" formatted="false">Est. 1RM</string>
-    <string name="compare_avg_rpe">Avg RPE</string>
-    <string name="compare_time_under_tension">Time under tension</string>
-    <string name="compare_distance">Distance</string>
-    <string name="compare_pace">Pace</string>
-    <string name="compare_swap_sessions">Swap sessions</string>
-    <string name="compare_verdict">A ahead on %1$d · B ahead on %2$d</string>
-    <string name="compare_reps_value">%1$d reps</string>
     <!-- onboarding: advanced training + Nextcloud -->
     <string name="onboarding_advanced_title">Train like\na powerlifter.</string>
     <string name="onboarding_advanced_percent_title" formatted="false">%1RM &amp; maximums</string>

@@ -970,4 +970,21 @@
     <string name="session_details">Session Details</string>
     <string name="share_exercises">Exercises</string>
     <string name="workout_duration">Workout Duration</string>
+    <string name="compare_avg_rpe">Avg RPE</string>
+    <string name="compare_best_1rm" formatted="false">Est. 1RM</string>
+    <string name="compare_cardio">Cardio</string>
+    <string name="compare_distance">Distance</string>
+    <string name="compare_duration">Duration</string>
+    <string name="compare_exercises">Exercises</string>
+    <string name="compare_max_weight">Max Weight</string>
+    <string name="compare_not_performed">Not performed</string>
+    <string name="compare_pace">Pace</string>
+    <string name="compare_sessions_title">Compare Sessions</string>
+    <string name="compare_summary">Summary</string>
+    <string name="compare_swap_sessions">Swap sessions</string>
+    <string name="compare_time_under_tension">Time under tension</string>
+    <string name="compare_total_reps">Total reps</string>
+    <string name="compare_verdict">A ahead on %1$d · B ahead on %2$d</string>
+    <string name="compare_working_sets">Working sets</string>
+    <string name="error">Error</string>
 </resources>

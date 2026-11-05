@@ -249,7 +249,17 @@ internal fun IosNavGraph(
                 com.emanuel5014.trainable.ui.screens.history.EditWorkoutContent(
                     onNavigateBack = { navController.popBackStack() }, model = model)
             }
-            composable<CompareSessions> { NotOnIosYet("Compare", onBack = { navController.popBackStack() }) }
+            composable<CompareSessions> { entry ->
+                val route = entry.toRoute<CompareSessions>()
+                val scope = rememberCoroutineScope()
+                val language = Locale.current.language
+                val model = remember {
+                    com.emanuel5014.trainable.ui.screens.compare.CompareSessionsModel(
+                        IosAppGraph.workouts, IosAppGraph.preferences, flowOf(language), scope)
+                }
+                com.emanuel5014.trainable.ui.screens.compare.CompareSessionsContent(
+                    route.sessionId1, route.sessionId2, { navController.popBackStack() }, model)
+            }
         }
 
         AnimatedVisibility(

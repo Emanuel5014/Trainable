@@ -973,4 +973,21 @@
     <string name="session_details">Dettagli Sessione</string>
     <string name="share_exercises">Esercizi</string>
     <string name="workout_duration">Durata Allenamento</string>
+    <string name="compare_avg_rpe">RPE medio</string>
+    <string name="compare_best_1rm" formatted="false">1RM stimato</string>
+    <string name="compare_cardio">Cardio</string>
+    <string name="compare_distance">Distanza</string>
+    <string name="compare_duration">Durata</string>
+    <string name="compare_exercises">Esercizi</string>
+    <string name="compare_max_weight">Peso Max</string>
+    <string name="compare_not_performed">Non eseguito</string>
+    <string name="compare_pace">Passo</string>
+    <string name="compare_sessions_title">Confronta Sessioni</string>
+    <string name="compare_summary">Riepilogo</string>
+    <string name="compare_swap_sessions">Inverti sessioni</string>
+    <string name="compare_time_under_tension">Tempo sotto tensione</string>
+    <string name="compare_total_reps">Ripetizioni totali</string>
+    <string name="compare_verdict">A in vantaggio su %1$d · B su %2$d</string>
+    <string name="compare_working_sets">Serie di lavoro</string>
+    <string name="error">Errore</string>
 </resources>
