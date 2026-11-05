@@ -1043,4 +1043,18 @@
     <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>
     <string name="log_set">LOG SET</string>
     <string name="previous_exercise_btn">Previous</string>
+    <string name="mini_set_notification">Mini-set</string>
+    <string name="emom_notification_finished_title">EMOM complete</string>
+    <string name="emom_notification_finished_text">%1$s · all rounds done</string>
+    <string name="emom_notification_title_paused">EMOM paused · Round %1$d/%2$d</string>
+    <string name="emom_notification_title_get_ready">EMOM · Get ready</string>
+    <string name="emom_notification_title_rest">Round %1$d/%2$d · Rest</string>
+    <string name="emom_notification_title_work">Round %1$d/%2$d · Go</string>
+    <string name="emom_notification_next">Next: %1$s · Set %2$d: %3$s</string>
+    <string name="emom_notification_set">%1$s · Set %2$d: %3$s</string>
+    <string name="emom_then">Then %1$s</string>
+    <string name="emom_action_resume">Resume</string>
+    <string name="emom_action_stop">Stop</string>
+    <string name="emom_action_done">Done</string>
+    <string name="emom_action_pause">Pause</string>
 </resources>

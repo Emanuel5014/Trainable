@@ -14,7 +14,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.net.Uri
-import com.emanuel5014.trainable.R
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 import com.emanuel5014.trainable.data.local.entity.PlanExerciseEntity
@@ -53,8 +52,6 @@ import com.emanuel5014.trainable.domain.prescription.RepsTarget
 import com.emanuel5014.trainable.domain.prescription.ResolvedPrescription
 import com.emanuel5014.trainable.domain.prescription.Technique
 import com.emanuel5014.trainable.domain.prescription.TechniqueCodec
-import com.emanuel5014.trainable.ui.components.prescriptionLabels
-import com.emanuel5014.trainable.ui.components.techniqueLabel
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
 import com.emanuel5014.trainable.ui.screens.history.sessionName
@@ -110,6 +107,8 @@ class WorkoutViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val workoutTimers: WorkoutTimers = AndroidWorkoutTimers(timerNotificationHelper)
+
+    private val workoutText: () -> WorkoutText = { AndroidWorkoutText(localeManager.localizedContext()) }
 
     private val _state = MutableStateFlow(WorkoutState())
     val state: StateFlow<WorkoutState> = _state.asStateFlow()
@@ -1046,7 +1045,7 @@ class WorkoutViewModel @Inject constructor(
         val sessionId = workoutRepository.startQuickWorkoutSession(name).toInt()
         val sessionWithSets = workoutRepository.getSessionWithSets(sessionId).firstOrNull()
         val planId = sessionWithSets?.session?.planId
-        val displayName = name ?: localeManager.getString(R.string.quick_workout)
+        val displayName = name ?: workoutText().quickWorkout
 
         _state.update {
             it.copy(
@@ -1264,17 +1263,17 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private fun prescriptionDetail(set: WorkoutSetState?): String? {
-        val p = set?.prescription ?: return if (set?.isExtra == true) localeManager.getString(R.string.extra_badge) else null
-        val context = localeManager.localizedContext()
-        val labels = prescriptionLabels(context, _state.value.weightUnit)
+        val p = set?.prescription ?: return if (set?.isExtra == true) workoutText().extra else null
+        val words = workoutText()
+        val labels = words.labels(_state.value.weightUnit)
         // The technique the set is being done with, when it was changed from the prescribed one
         val parts = listOfNotNull(PrescriptionFormatter.intensity(p.intensityType, p.intensityValue, labels)) +
-            (set.performedTechniques ?: p.techniques).map { techniqueLabel(context, it) }
+            (set.performedTechniques ?: p.techniques).map { words.technique(it) }
         return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
     }
 
     private fun repsLabelFor(set: WorkoutSetState?): String? = when {
-        set?.isAmrap == true -> localeManager.getString(R.string.max_label)
+        set?.isAmrap == true -> workoutText().max
         set?.repsRange != null -> set.repsRange!!.text
         else -> null
     }
@@ -2356,12 +2355,12 @@ class WorkoutViewModel @Inject constructor(
 
     /** A cardio set as the rest notification announces it: its targets ("5 min · 1.5 km"). */
     private fun cardioTargetText(exState: WorkoutExerciseState): String {
-        val context = localeManager.localizedContext()
+        val words = workoutText()
         val parts = listOfNotNull(
-            exState.cardioDurataTargetSeconds?.takeIf { it >= 60 }?.let { context.getString(R.string.cardio_min_format, it / 60) },
-            exState.cardioDistanzaTargetKm?.takeIf { it > 0f }?.let { context.getString(R.string.cardio_dist_value, it.toString()) }
+            exState.cardioDurataTargetSeconds?.takeIf { it >= 60 }?.let { words.cardioMinutes(it / 60) },
+            exState.cardioDistanzaTargetKm?.takeIf { it > 0f }?.let { words.cardioDistance(it.toString()) }
         )
-        return parts.joinToString(" · ").ifEmpty { context.getString(R.string.cardio_free_form) }
+        return parts.joinToString(" · ").ifEmpty { words.cardioFreeForm }
     }
 
     private fun startRestTimer(seconds: Int, info: NextSetInfo?) {
@@ -2378,7 +2377,7 @@ class WorkoutViewModel @Inject constructor(
     private fun timedSetText(exState: WorkoutExerciseState?, set: WorkoutSetState?): String? {
         if (exState == null || set == null || !exState.isTimed) return null
         val seconds = set.timeSeconds ?: exState.timeTargetSeconds ?: 45
-        if (exState.isTimeAndReps) return localeManager.localizedContext().getString(R.string.time_reps_value, seconds, set.reps)
+        if (exState.isTimeAndReps) return workoutText().timeReps(seconds, set.reps)
         val unit = _state.value.weightUnit
         return WeightUnitConverter.formatWithUnit(WeightUnitConverter.convertDisplay(set.weight, unit), unit) + " × ${seconds}s"
     }
@@ -2590,7 +2589,7 @@ class WorkoutViewModel @Inject constructor(
             weight = set.weight,
             reps = run.missing,
             weightUnit = _state.value.weightUnit,
-            text = localeManager.localizedContext().getString(R.string.mini_set_notification)
+            text = workoutText().miniSetNotification
         )
     }
 
@@ -4071,13 +4070,10 @@ class WorkoutViewModel @Inject constructor(
         resetSetTimer()
         _state.update { it.copy(emomRun = null) }
         if (completed && byClock && exercise != null && emomNotificationsAllowed()) {
-            val context = localeManager.localizedContext()
+            val words = workoutText()
             workoutTimers.showEmomFinished(
-                context.getString(R.string.emom_notification_finished_title),
-                context.getString(
-                    R.string.emom_notification_finished_text,
-                    ExerciseTranslations.translate(exercise.exercise.nome, _languageCode.value)
-                )
+                words.emomFinishedTitle,
+                words.emomFinished(ExerciseTranslations.translate(exercise.exercise.nome, _languageCode.value))
             )
         } else {
             workoutTimers.cancelEmom()
@@ -4111,9 +4107,9 @@ class WorkoutViewModel @Inject constructor(
         val phase = phaseOverride ?: snapshot.phase
         val paused = !state.setTimerRunning
 
-        val context = localeManager.localizedContext()
+        val words = workoutText()
         val unit = state.weightUnit
-        val maxLabel = context.getString(R.string.max_label)
+        val maxLabel = words.max
         val offset = EmomClock.focusOffset(snapshot.copy(phase = phase))
         val focus = exercise.sets.getOrNull(run.startSetIndex + offset)?.takeIf { offset < run.roundCount }
         val following = exercise.sets.getOrNull(run.startSetIndex + offset + 1)?.takeIf { offset + 1 < run.roundCount }
@@ -4121,32 +4117,32 @@ class WorkoutViewModel @Inject constructor(
         val round = (offset + 1).coerceIn(1, run.roundCount)
 
         val title = when {
-            paused -> context.getString(R.string.emom_notification_title_paused, round, run.roundCount)
-            phase == EmomPhase.LeadIn -> context.getString(R.string.emom_notification_title_get_ready)
-            phase == EmomPhase.Rest -> context.getString(R.string.emom_notification_title_rest, round, run.roundCount)
-            else -> context.getString(R.string.emom_notification_title_work, round, run.roundCount)
+            paused -> words.emomPaused(round, run.roundCount)
+            phase == EmomPhase.LeadIn -> words.emomGetReady
+            phase == EmomPhase.Rest -> words.emomRest(round, run.roundCount)
+            else -> words.emomWork(round, run.roundCount)
         }
         val text = when {
             focus == null -> name
             phase == EmomPhase.Rest ->
-                context.getString(R.string.emom_notification_next, name, focus.setNumber, focus.loadText(unit, maxLabel))
+                words.emomNext(name, focus.setNumber, focus.loadText(unit, maxLabel))
             else ->
-                context.getString(R.string.emom_notification_set, name, focus.setNumber, focus.loadText(unit, maxLabel))
+                words.emomSet(name, focus.setNumber, focus.loadText(unit, maxLabel))
         }
-        val detail = following?.let { context.getString(R.string.emom_then, it.loadText(unit, maxLabel)) }
+        val detail = following?.let { words.emomThen(it.loadText(unit, maxLabel)) }
 
-        fun button(action: EmomAction, label: Int) =
-            EmomNotificationAction(action, context.getString(label))
+        fun button(action: EmomAction, label: String) =
+            EmomNotificationAction(action, label)
         val actions = when {
             paused -> listOf(
-                button(EmomAction.RESUME, R.string.emom_action_resume),
-                button(EmomAction.STOP, R.string.emom_action_stop)
+                button(EmomAction.RESUME, words.emomResume),
+                button(EmomAction.STOP, words.emomStop)
             )
             phase == EmomPhase.Work -> listOf(
-                button(EmomAction.DONE, R.string.emom_action_done),
-                button(EmomAction.PAUSE, R.string.emom_action_pause)
+                button(EmomAction.DONE, words.emomDone),
+                button(EmomAction.PAUSE, words.emomPause)
             )
-            else -> listOf(button(EmomAction.PAUSE, R.string.emom_action_pause))
+            else -> listOf(button(EmomAction.PAUSE, words.emomPause))
         }
 
         val startedAt = state.setTimerStartedAt

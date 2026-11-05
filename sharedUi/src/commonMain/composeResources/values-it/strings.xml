@@ -1046,4 +1046,18 @@
     <string name="workout_progress_description">Esercizio %1$d di %2$d, %3$d completati</string>
     <string name="log_set">REGISTRA SERIE</string>
     <string name="previous_exercise_btn">Precedente</string>
+    <string name="mini_set_notification">Mini-serie</string>
+    <string name="emom_notification_finished_title">EMOM completato</string>
+    <string name="emom_notification_finished_text">%1$s · tutti i round fatti</string>
+    <string name="emom_notification_title_paused">EMOM in pausa · Round %1$d/%2$d</string>
+    <string name="emom_notification_title_get_ready">EMOM · Preparati</string>
+    <string name="emom_notification_title_rest">Round %1$d/%2$d · Recupero</string>
+    <string name="emom_notification_title_work">Round %1$d/%2$d · Via</string>
+    <string name="emom_notification_next">Prossima: %1$s · Serie %2$d: %3$s</string>
+    <string name="emom_notification_set">%1$s · Serie %2$d: %3$s</string>
+    <string name="emom_then">Poi %1$s</string>
+    <string name="emom_action_resume">Riprendi</string>
+    <string name="emom_action_stop">Stop</string>
+    <string name="emom_action_done">Fatto</string>
+    <string name="emom_action_pause">Pausa</string>
 </resources>
