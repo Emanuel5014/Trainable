@@ -39,6 +39,7 @@ import platform.Foundation.NSBundle
 import com.emanuel5014.trainable.ui.screens.settings.AboutSettingsSection
 import com.emanuel5014.trainable.ui.screens.settings.DonorsContent
 import com.emanuel5014.trainable.ui.navigation.Donors
+import com.emanuel5014.trainable.ui.navigation.ImportHistory
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
@@ -161,6 +162,7 @@ internal fun IosNavGraph(
                     onNavigateToAiSettings = { navController.navigate(AiSettings) },
                     onNavigateToPersonalizationSettings = { navController.navigate(PersonalizationSettings) },
                     onNavigateToNotificationSettings = { navController.navigate(NotificationSettings) },
+                    platformSections = { IosDataSection(onNavigateToImportHistory = { navController.navigate(ImportHistory) }) },
                     aboutSection = {
                         AboutSettingsSection(
                             versionName = versionName,
@@ -202,6 +204,7 @@ internal fun IosNavGraph(
                 com.emanuel5014.trainable.ui.screens.exercises.ExercisesContent(
                     onNavigateBack = { navController.popBackStack() }, controller = controller)
             }
+            composable<ImportHistory> { IosHistoryImportScreen(onNavigateBack = { navController.popBackStack() }) }
             composable<AiSettings> { NotOnIosYet("AI", onBack = { navController.popBackStack() }) }
             composable<PersonalizationSettings> {
                 val scope = rememberCoroutineScope()

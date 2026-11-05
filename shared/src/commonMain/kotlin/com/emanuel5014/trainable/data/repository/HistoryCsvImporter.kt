@@ -1,8 +1,5 @@
 package com.emanuel5014.trainable.data.repository
 
-import android.content.Context
-import androidx.room.withTransaction
-import com.emanuel5014.trainable.data.local.GymDatabase
 import com.emanuel5014.trainable.data.local.dao.ExerciseDao
 import com.emanuel5014.trainable.data.local.dao.UserDao
 import com.emanuel5014.trainable.data.local.dao.WorkoutDao
@@ -34,16 +31,15 @@ import com.emanuel5014.trainable.domain.csvimport.SetSignature
 import com.emanuel5014.trainable.domain.csvimport.SystemPlanKind
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.domain.prescription.SetPerformance
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.ZoneId
-import kotlinx.datetime.toKotlinLocalDate
-import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /** What an import added, and the ids to take it out again. */
 data class ImportResult(
@@ -68,17 +64,17 @@ data class ImportResult(
  * Applies an [ImportPlan] (the history of a CSV) to the database. Everything is written in one transaction, so an
  * import either lands whole or not at all, and [undo] takes exactly what it added out again.
  */
-@Singleton
-class HistoryCsvImporter @Inject constructor(
-    private val database: GymDatabase,
+@OptIn(ExperimentalUuidApi::class)
+class HistoryCsvImporter(
+    private val transactions: TransactionRunner,
     private val workoutDao: WorkoutDao,
     private val exerciseDao: ExerciseDao,
     private val userDao: UserDao,
     private val journalRepository: JournalRepository,
-    @ApplicationContext private val context: Context
+    private val platform: WorkoutPlatform
 ) {
     /** What the app holds now, to match a file against. */
-    suspend fun loadKnown(zone: ZoneId = ZoneId.systemDefault()): KnownData {
+    suspend fun loadKnown(zone: TimeZone = TimeZone.currentSystemDefault()): KnownData {
         // Also the exercises deleted from the exercise list: their workouts are still there, so a file that repeats them
         // is recognised as duplicates, and one with new workouts of such an exercise adds them to it
         // An exercise merged into another is matched under its old name but resolves to the one it was merged into
@@ -97,7 +93,7 @@ class HistoryCsvImporter @Inject constructor(
                     KnownSession(
                         id = details.session.id,
                         planId = details.session.planId,
-                        date = Instant.ofEpochMilli(details.session.timestamp).atZone(zone).toLocalDate().toKotlinLocalDate(),
+                        date = Instant.fromEpochMilliseconds(details.session.timestamp).toLocalDateTime(zone).date,
                         sets = details.sets.map {
                             SetSignature(
                                 key = HistoryImportPlanner.exerciseKey(it.setLog.exerciseId),
@@ -116,13 +112,13 @@ class HistoryCsvImporter @Inject constructor(
         }
     }
 
-    suspend fun apply(plan: ImportPlan, zone: ZoneId = ZoneId.systemDefault()): ImportResult {
-        val result = database.withTransaction { write(plan, zone) }
-        triggerWidgetUpdate()
+    suspend fun apply(plan: ImportPlan): ImportResult {
+        val result = transactions.run { write(plan) }
+        platform.onWorkoutsChanged()
         return result
     }
 
-    private suspend fun write(plan: ImportPlan, zone: ZoneId): ImportResult {
+    private suspend fun write(plan: ImportPlan): ImportResult {
         val user = userDao.getUser().first() ?: throw IllegalStateException("No user: finish the onboarding first")
         val workouts = plan.toImport
 
@@ -154,7 +150,7 @@ class HistoryCsvImporter @Inject constructor(
         val allPlans = workoutDao.getAllPlans().first()
         var nextOrder = (allPlans.maxOfOrNull { it.ordine } ?: -1) + 1
         val planIds = mutableListOf<Int>()
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
 
         // The app's own plans for workouts that belong to no routine, made when they are not there yet
         val systemPlanIds = mutableMapOf<SystemPlanKind, Int>()
@@ -190,7 +186,7 @@ class HistoryCsvImporter @Inject constructor(
             val template = routine.template.distinctBy { exerciseOf(it.exercise).id }
             // A superset stays one only while two of its exercises are left after the same exercise is taken once
             val supersetIds = template.mapNotNull { it.superset }.groupingBy { it }.eachCount()
-                .filterValues { it >= 2 }.keys.associateWith { UUID.randomUUID().toString() }
+                .filterValues { it >= 2 }.keys.associateWith { Uuid.random().toString() }
             template.forEachIndexed { index, item ->
                 val isCardio = item.kind == RowKind.CARDIO
                 workoutDao.insertPlanExercise(
@@ -274,7 +270,7 @@ class HistoryCsvImporter @Inject constructor(
         val setRows = mutableListOf<SetLogEntity>()
         val cardioRows = mutableListOf<CardioLogEntity>()
         // One id per superset of the workout, shared by its exercises like the ones a live workout writes
-        val supersetIds = workout.entries.mapNotNull { it.superset }.distinct().associateWith { UUID.randomUUID().toString() }
+        val supersetIds = workout.entries.mapNotNull { it.superset }.distinct().associateWith { Uuid.random().toString() }
         workout.entries.forEach { entry ->
             val exercise = exerciseOf(entry.exercise)
             entry.sets.forEach { set ->
@@ -324,7 +320,7 @@ class HistoryCsvImporter @Inject constructor(
 
     /** Takes out what [apply] added: its workouts, the routines and exercises it created, nothing else. */
     suspend fun undo(result: ImportResult) {
-        database.withTransaction {
+        transactions.run {
             result.sessionIds.chunked(CHUNK).forEach { workoutDao.deleteSessionsByIds(it) }
             // Tags the import made go with it, unless a workout that was not part of it uses them
             journalRepository.deleteTagsIfUnused(result.tagIds)
@@ -336,16 +332,7 @@ class HistoryCsvImporter @Inject constructor(
             result.revivedExerciseIds.forEach { exerciseDao.setExerciseDeleted(it, true) }
             result.categoryIds.chunked(CHUNK).forEach { exerciseDao.deleteCustomCategoriesByIds(it) }
         }
-        triggerWidgetUpdate()
-    }
-
-    private fun triggerWidgetUpdate() {
-        try {
-            com.emanuel5014.trainable.widget.TrainableWidget.update(context)
-            com.emanuel5014.trainable.widget.WeeklyGoalWidget.update(context)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        platform.onWorkoutsChanged()
     }
 
     private companion object {

@@ -214,6 +214,8 @@
 					PhotosUI,
 					"-framework",
 					ImageIO,
+					"-framework",
+					UniformTypeIdentifiers,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;
@@ -251,6 +253,8 @@
 					PhotosUI,
 					"-framework",
 					ImageIO,
+					"-framework",
+					UniformTypeIdentifiers,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.emanuel5014.trainable;
 				PRODUCT_NAME = Trainable;

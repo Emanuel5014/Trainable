@@ -17,6 +17,7 @@ import com.emanuel5014.trainable.data.repository.JournalRepository
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.PlanRepository
 import com.emanuel5014.trainable.data.repository.TransactionRunner
+import com.emanuel5014.trainable.data.repository.HistoryCsvImporter
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -53,6 +54,19 @@ object RepositoryModule {
         @ApplicationContext context: Context
     ): WorkoutRepository = WorkoutRepository(
         workoutDao, userDao, exerciseDao, oneRepMaxDao, userPreferencesRepository, AndroidWorkoutPlatform(context)
+    )
+
+    @Provides
+    @Singleton
+    fun provideHistoryCsvImporter(
+        transactions: TransactionRunner,
+        workoutDao: WorkoutDao,
+        exerciseDao: ExerciseDao,
+        userDao: UserDao,
+        journalRepository: JournalRepository,
+        @ApplicationContext context: Context
+    ): HistoryCsvImporter = HistoryCsvImporter(
+        transactions, workoutDao, exerciseDao, userDao, journalRepository, AndroidWorkoutPlatform(context)
     )
 
     @Provides

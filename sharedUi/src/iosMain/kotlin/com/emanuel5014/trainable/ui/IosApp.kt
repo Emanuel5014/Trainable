@@ -34,6 +34,7 @@ import com.emanuel5014.trainable.data.repository.IosExerciseMediaFiles
 import com.emanuel5014.trainable.data.repository.IosWorkoutPlatform
 import com.emanuel5014.trainable.data.repository.IosTransactionRunner
 import com.emanuel5014.trainable.data.repository.JournalRepository
+import com.emanuel5014.trainable.data.repository.HistoryCsvImporter
 import com.emanuel5014.trainable.ui.screens.history.HistoryState
 import com.emanuel5014.trainable.data.repository.OneRepMaxRepository
 import com.emanuel5014.trainable.data.repository.WorkoutRepository
@@ -87,6 +88,12 @@ internal object IosAppGraph {
     val merges by lazy { ExerciseMergeRepository(database.exerciseMergeDao(), database.exerciseDao(), analyticsPreferences) }
     val analytics by lazy { AnalyticsRepository(database.analyticsDao(), database.weightLogDao()) }
     val journal by lazy { JournalRepository(database.journalDao(), IosTransactionRunner(database)) }
+    val historyImporter by lazy {
+        HistoryCsvImporter(
+            IosTransactionRunner(database), database.workoutDao(), database.exerciseDao(), database.userDao(), journal,
+            IosWorkoutPlatform()
+        )
+    }
 
     fun routineDetail(planId: Int, scope: CoroutineScope) =
         RoutineDetailState(planId, workouts, exercises, preferences, oneRepMaxes, scope)
