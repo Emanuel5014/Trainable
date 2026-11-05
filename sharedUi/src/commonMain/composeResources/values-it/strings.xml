@@ -1195,4 +1195,9 @@
     <string name="backup_reopen_title">Backup pronto per il ripristino</string>
     <string name="backup_reopen_description">Chiudi Trainable dal selettore delle app, poi riaprila per completare il ripristino. Puoi annullare per mantenere i dati attuali.</string>
     <string name="retry">Riprova</string>
+    <string name="rest_timer">Timer Recupero</string>
+    <string name="rest_end">RIPOSO TERMINATO</string>
+    <string name="warmup_timer_finished">Timer riscaldamento finito!</string>
+    <string name="gym_membership_expiring">Abbonamento in Scadenza</string>
+    <string name="gym_membership_expiring_desc">Il tuo abbonamento in palestra scadrà tra %1$d giorni. Non dimenticare di rinnovarlo!</string>
 </resources>

@@ -1195,4 +1195,9 @@
     <string name="backup_reopen_title">Sauvegarde prête à restaurer</string>
     <string name="backup_reopen_description">Fermez Trainable depuis le sélecteur d’apps, puis rouvrez-la pour terminer la restauration. Vous pouvez annuler pour conserver vos données actuelles.</string>
     <string name="retry">Réessayer</string>
+    <string name="rest_timer">Minuteur de Repos</string>
+    <string name="rest_end">REPOS TERMINÉ</string>
+    <string name="warmup_timer_finished">Échauffement terminé !</string>
+    <string name="gym_membership_expiring">Abonnement qui Expire</string>
+    <string name="gym_membership_expiring_desc">Ton abonnement à la salle expirera dans %1$d jours. N'oublie pas de le renouveler !</string>
 </resources>

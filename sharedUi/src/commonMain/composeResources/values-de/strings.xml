@@ -1192,4 +1192,9 @@
     <string name="backup_reopen_title">Backup bereit zur Wiederherstellung</string>
     <string name="backup_reopen_description">Schließe Trainable im App-Umschalter und öffne die App erneut, um die Wiederherstellung abzuschließen. Du kannst abbrechen, um deine aktuellen Daten zu behalten.</string>
     <string name="retry">Wiederholen</string>
+    <string name="rest_timer">Pausentimer</string>
+    <string name="rest_end">PAUSE BEENDET</string>
+    <string name="warmup_timer_finished">Aufwärmen beendet!</string>
+    <string name="gym_membership_expiring">Mitgliedschaft läuft ab</string>
+    <string name="gym_membership_expiring_desc">Deine Fitnessstudio-Mitgliedschaft läuft in %1$d Tagen ab. Vergiss nicht zu verlängern!</string>
 </resources>

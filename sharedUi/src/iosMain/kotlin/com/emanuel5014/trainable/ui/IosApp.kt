@@ -145,6 +145,7 @@ private val IosPrescriptionEnvironment: @Composable () -> PrescriptionEnvironmen
 @Composable
 private fun TrainableIosApp() {
     val preferences = IosAppGraph.preferences
+    IosNotificationEffects(preferences)
     val scope = rememberCoroutineScope()
     val state = remember {
         val db = IosAppGraph.database

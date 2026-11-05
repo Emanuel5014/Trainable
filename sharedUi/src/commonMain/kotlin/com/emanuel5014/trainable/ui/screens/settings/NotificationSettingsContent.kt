@@ -80,7 +80,8 @@ fun NotificationSettingsContent(
     onTimerNotificationsChange: (Boolean) -> Unit,
     onMembershipNotificationsChange: (Boolean) -> Unit,
     onMembershipDaysBeforeChange: (Int) -> Unit,
-    deliveryAvailable: Boolean = true
+    deliveryAvailable: Boolean = true,
+    customVibrationAvailable: Boolean = true
 ) {
     val hapticEnabled by state.hapticEnabled.collectAsState()
     val timerNotificationsEnabled by state.timerNotificationsEnabled.collectAsState()
@@ -159,7 +160,7 @@ fun NotificationSettingsContent(
                         )
                     }
 
-                    if (timerNotificationsEnabled && deliveryAvailable) {
+                    if (timerNotificationsEnabled && deliveryAvailable && customVibrationAvailable) {
                         HorizontalDivider(color = Surface.copy(alpha = 0.5f))
 
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

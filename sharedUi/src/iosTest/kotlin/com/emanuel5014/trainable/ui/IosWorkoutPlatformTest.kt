@@ -33,8 +33,8 @@ class IosWorkoutPlatformTest {
         } finally { store.clear() }
     }
 
-    @Test fun inAppTimersDoNotClaimSystemNotificationDelivery() {
-        val timers = IosWorkoutTimers()
+    @Test fun localNotificationsDoNotClaimLiveActivitySupport() {
+        val timers = IosWorkoutTimers(IosNotificationScheduler(FakeNotificationDelivery().apply { canAuthorize = false; granted = false }))
         assertFalse(timers.hasNotificationPermission())
         assertFalse(timers.isLiveNotificationSupported())
         timers.cancelTimer()

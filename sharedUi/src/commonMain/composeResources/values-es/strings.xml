@@ -1195,4 +1195,9 @@
     <string name="backup_reopen_title">Copia lista para restaurar</string>
     <string name="backup_reopen_description">Cierra Trainable desde el selector de apps y vuelve a abrirla para completar la restauración. Puedes cancelar para conservar tus datos actuales.</string>
     <string name="retry">Reintentar</string>
+    <string name="rest_timer">Temporizador</string>
+    <string name="rest_end">DESCANSO TERMINADO</string>
+    <string name="warmup_timer_finished">¡Calentamiento terminado!</string>
+    <string name="gym_membership_expiring">Membresía por Vencer</string>
+    <string name="gym_membership_expiring_desc">Tu membresía del gym vencerá en %1$d días. ¡No olvides renovarla!</string>
 </resources>

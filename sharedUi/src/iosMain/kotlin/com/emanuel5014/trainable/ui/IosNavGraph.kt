@@ -217,9 +217,7 @@ internal fun IosNavGraph(
             composable<NotificationSettings> {
                 val scope = rememberCoroutineScope()
                 val state = remember { SettingsState(IosAppGraph.users, IosAppGraph.preferences, scope) }
-                NotificationSettingsContent(onNavigateBack = { navController.popBackStack() }, state = state,
-                    onTimerNotificationsChange = {}, onMembershipNotificationsChange = {},
-                    onMembershipDaysBeforeChange = {}, deliveryAvailable = false)
+                IosNotificationSettings(state, onNavigateBack = { navController.popBackStack() })
             }
             composable<WorkoutExecution> { entry ->
                 val route = entry.toRoute<WorkoutExecution>()
