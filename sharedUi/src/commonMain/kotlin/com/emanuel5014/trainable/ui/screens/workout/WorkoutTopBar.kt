@@ -30,10 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel_workout
+import com.emanuel5014.trainable.sharedui.resources.close_workout
+import com.emanuel5014.trainable.sharedui.resources.session_in_progress_title
+import com.emanuel5014.trainable.sharedui.resources.warmup_timer
 import com.emanuel5014.trainable.ui.components.GymIconButton
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -41,13 +45,13 @@ import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
-import com.emanuel5014.trainable.ui.theme.headerGlassOn
-import com.emanuel5014.trainable.ui.theme.headerGroupGlass
+import com.emanuel5014.trainable.ui.glass.headerGlassOn
+import com.emanuel5014.trainable.ui.glass.headerGroupGlass
 
 /** The top bar of the workout: close, plan name, progress, warm-up timer and cancel. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun WorkoutTopBar(
+fun WorkoutTopBar(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
     onClose: () -> Unit,
@@ -80,7 +84,7 @@ internal fun WorkoutTopBar(
                     )
                 }
                 Text(
-                    text = stringResource(R.string.session_in_progress_title), 
+                    text = stringResource(Res.string.session_in_progress_title), 
                     style = MaterialTheme.typography.labelSmall, 
                     color = OnSurfaceVariant,
                     fontWeight = FontWeight.ExtraBold
@@ -92,7 +96,7 @@ internal fun WorkoutTopBar(
                 icon = Icons.Rounded.Close,
                 onClick = onClose,
                 containerColor = Color.Transparent,
-                description = stringResource(R.string.close_workout)
+                description = stringResource(Res.string.close_workout)
             )
         },
         actions = {
@@ -106,7 +110,7 @@ internal fun WorkoutTopBar(
                         onClick = { ui.showCancelDialog = true },
                         containerColor = container,
                         contentColor = Error,
-                        description = stringResource(R.string.cancel_workout)
+                        description = stringResource(Res.string.cancel_workout)
                     )
                 }
                 if (showWarmupTimer) {
@@ -119,7 +123,7 @@ internal fun WorkoutTopBar(
                             },
                             containerColor = Color.Transparent,
                             contentColor = if (state.warmupTimerRemaining > 0) Primary else OnSurface,
-                            description = stringResource(R.string.warmup_timer)
+                            description = stringResource(Res.string.warmup_timer)
                         )
                         cancel(Color.Transparent)
                     }
@@ -137,7 +141,7 @@ internal fun WorkoutTopBar(
                         },
                         containerColor = SecondaryContainer,
                         contentColor = if (state.warmupTimerRemaining > 0) Primary else OnSecondaryContainer,
-                        description = stringResource(R.string.warmup_timer),
+                        description = stringResource(Res.string.warmup_timer),
                         shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp, topEnd = 8.dp, bottomEnd = 8.dp)
                     )
                 }
@@ -146,7 +150,7 @@ internal fun WorkoutTopBar(
                     onClick = { ui.showCancelDialog = true },
                     containerColor = SecondaryContainer,
                     contentColor = Error,
-                    description = stringResource(R.string.cancel_workout),
+                    description = stringResource(Res.string.cancel_workout),
                     shape = if (showWarmupTimer) {
                         RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 24.dp, bottomEnd = 24.dp)
                     } else {

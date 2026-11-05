@@ -37,3 +37,6 @@ fun rememberAnimatedShape(
 
 /** The outline of [this] at [progress] (0 = start shape, 1 = end shape), in the shape's own 0..1 space. */
 internal expect fun Morph.toComposePath(progress: Float): Path
+
+/** A polygon's outline as a Compose path, at its own size (graphics-shapes' toPath on Android). */
+internal expect fun androidx.graphics.shapes.RoundedPolygon.toComposePath(): Path

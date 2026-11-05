@@ -1024,4 +1024,26 @@
     <string name="progression_dismiss">Tieni il peso attuale</string>
     <string name="progression_hit_max">%1$d rip. su ogni serie l'ultima volta</string>
     <string name="progression_try_weight">Prova %1$s</string>
+    <string name="cancel_workout">Annulla Allenamento</string>
+    <string name="cardio_add_set">Aggiungi serie</string>
+    <string name="cardio_badge">CARDIO</string>
+    <string name="cardio_distance_label">Distanza percorsa (km)</string>
+    <string name="cardio_mark_completed">Segna come completato</string>
+    <string name="cardio_set_note">Nota della serie</string>
+    <string name="cardio_stop_save">STOP &amp; SALVA</string>
+    <string name="cardio_target_km_format">%1$s KM</string>
+    <string name="cardio_target_label">TARGET</string>
+    <string name="cardio_target_min_format">TARGET: %1$d MIN</string>
+    <string name="cardio_timer_paused">IN PAUSA</string>
+    <string name="cardio_timer_ready">PRONTO</string>
+    <string name="cardio_timer_running">IN CORSO</string>
+    <string name="close_workout">Chiudi Allenamento</string>
+    <string name="finish">Termina</string>
+    <string name="finish_workout">Termina</string>
+    <string name="next_exercise_btn">Successivo</string>
+    <string name="optional_suffix">(facoltativo)</string>
+    <string name="session_in_progress_title">SESSIONE IN CORSO</string>
+    <string name="workout_progress_description">Esercizio %1$d di %2$d, %3$d completati</string>
+    <string name="log_set">REGISTRA SERIE</string>
+    <string name="previous_exercise_btn">Precedente</string>
 </resources>

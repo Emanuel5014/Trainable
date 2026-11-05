@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
  * How much room the cardio screen gives each of its parts. The screen takes the roomiest density that still leaves the
  * circle its minimum size, so a short screen (or a big font) gets a denser look instead of parts on top of each other.
  */
-internal enum class CardioDensity(
+enum class CardioDensity(
     /** Space between the blocks of the screen. */
     val gap: Dp,
     /** The circle never gets smaller than this: a denser look is tried first. */
@@ -32,12 +32,12 @@ internal enum class CardioDensity(
 }
 
 /** What is shown to rate the set that was just done: the whole selector, a small prompt that opens the set, or nothing. */
-internal enum class CardioRpe { Row, Prompt, None }
+enum class CardioRpe { Row, Prompt, None }
 
-internal data class CardioFit(val density: CardioDensity, val rpe: CardioRpe)
+data class CardioFit(val density: CardioDensity, val rpe: CardioRpe)
 
 /** From the roomiest to the tightest. The last one is the fallback: if even it does not fit, the screen scrolls. */
-internal fun cardioFits(rpeAsked: Boolean): List<CardioFit> = if (rpeAsked) {
+fun cardioFits(rpeAsked: Boolean): List<CardioFit> = if (rpeAsked) {
     listOf(
         CardioFit(CardioDensity.Regular, CardioRpe.Row),
         CardioFit(CardioDensity.Regular, CardioRpe.Prompt),
@@ -64,7 +64,7 @@ private data class CardioSlot(val fit: Int, val part: Int)
  * Each fit is measured for real (nothing is estimated in dp), so wrapped names, big fonts and notes are accounted for.
  */
 @Composable
-internal fun CardioFitLayout(
+fun CardioFitLayout(
     fits: List<CardioFit>,
     viewportHeight: Dp,
     maxCircle: Dp,

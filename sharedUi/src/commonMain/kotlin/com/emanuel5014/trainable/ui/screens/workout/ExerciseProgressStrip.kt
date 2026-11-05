@@ -24,13 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.workout_progress_description
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
@@ -45,14 +46,14 @@ private val MIN_WAVY_SEGMENT_WIDTH = 20.dp
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun ExerciseProgressStrip(
+fun ExerciseProgressStrip(
     fractions: List<Float>,
     currentIndex: Int,
     completedCount: Int,
     modifier: Modifier = Modifier
 ) {
     if (fractions.isEmpty()) return
-    val description = stringResource(R.string.workout_progress_description, currentIndex + 1, fractions.size, completedCount)
+    val description = stringResource(Res.string.workout_progress_description, currentIndex + 1, fractions.size, completedCount)
     Row(
         modifier = modifier
             .fillMaxWidth()

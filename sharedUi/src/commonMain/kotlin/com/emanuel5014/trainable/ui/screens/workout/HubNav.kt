@@ -20,14 +20,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.finish
+import com.emanuel5014.trainable.sharedui.resources.finish_workout
+import com.emanuel5014.trainable.sharedui.resources.next_exercise_btn
 import com.emanuel5014.trainable.data.model.GlassPart
 import com.emanuel5014.trainable.ui.theme.LocalGlassSettings
-import com.emanuel5014.trainable.ui.theme.surfaceGlass
+import com.emanuel5014.trainable.ui.glass.surfaceGlass
 import androidx.compose.ui.graphics.Color
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -38,7 +41,7 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 
 /** How loud the way to the next exercise is: quiet while sets are left to do, the main action once the exercise is done. */
-internal enum class HubNavEmphasis { Tonal, Filled }
+enum class HubNavEmphasis { Tonal, Filled }
 
 /**
  * The way to the previous and next exercise (or to finishing the workout after the last one) in the bottom hub: the
@@ -46,7 +49,7 @@ internal enum class HubNavEmphasis { Tonal, Filled }
  * [previousName] and [nextName] are the exercises' own names, translated here.
  */
 @Composable
-internal fun HubNav(
+fun HubNav(
     emphasis: HubNavEmphasis,
     previousName: String?,
     nextName: String?,
@@ -106,7 +109,7 @@ internal fun HubNav(
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                contentDescription = stringResource(R.string.next_exercise_btn),
+                                contentDescription = stringResource(Res.string.next_exercise_btn),
                                 tint = OnSurface
                             )
                         }
@@ -129,7 +132,7 @@ internal fun HubNav(
                         Icon(Icons.Rounded.Check, contentDescription = null, tint = Primary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.finish).uppercase(),
+                            text = stringResource(Res.string.finish).uppercase(),
                             style = MaterialTheme.typography.labelLarge,
                             color = Primary,
                             fontWeight = FontWeight.ExtraBold,
@@ -144,7 +147,7 @@ internal fun HubNav(
                     Icon(Icons.Rounded.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.finish_workout).uppercase(),
+                        text = stringResource(Res.string.finish_workout).uppercase(),
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -157,7 +160,7 @@ internal fun HubNav(
 private fun NextLabel(name: String, labelColor: androidx.compose.ui.graphics.Color, nameColor: androidx.compose.ui.graphics.Color, modifier: Modifier) {
     Column(horizontalAlignment = Alignment.End, modifier = modifier) {
         Text(
-            text = stringResource(R.string.next_exercise_btn).uppercase(),
+            text = stringResource(Res.string.next_exercise_btn).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = labelColor,
             fontWeight = FontWeight.ExtraBold,

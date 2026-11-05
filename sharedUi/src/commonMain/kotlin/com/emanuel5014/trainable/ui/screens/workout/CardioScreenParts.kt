@@ -55,7 +55,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -67,8 +67,22 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.graphics.shapes.toPath
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.ui.components.motion.toComposePath
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cardio_badge
+import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
+import com.emanuel5014.trainable.sharedui.resources.cardio_mark_completed
+import com.emanuel5014.trainable.sharedui.resources.cardio_set_note
+import com.emanuel5014.trainable.sharedui.resources.cardio_stop_save
+import com.emanuel5014.trainable.sharedui.resources.cardio_target_km_format
+import com.emanuel5014.trainable.sharedui.resources.cardio_target_label
+import com.emanuel5014.trainable.sharedui.resources.cardio_target_min_format
+import com.emanuel5014.trainable.sharedui.resources.cardio_timer_paused
+import com.emanuel5014.trainable.sharedui.resources.cardio_timer_ready
+import com.emanuel5014.trainable.sharedui.resources.cardio_timer_running
+import com.emanuel5014.trainable.sharedui.resources.rpe_prompt
+import com.emanuel5014.trainable.sharedui.resources.set_number
+import com.emanuel5014.trainable.sharedui.resources.swap_exercise
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.components.GymButton
@@ -85,7 +99,7 @@ import com.emanuel5014.trainable.ui.theme.Tertiary
 
 /** The bar on top: the badge, the buttons for the note and for swapping, and on a short screen the exercise name too. */
 @Composable
-internal fun CardioHeader(
+fun CardioHeader(
     fit: CardioFit,
     name: String,
     noteFilled: Boolean,
@@ -104,14 +118,14 @@ internal fun CardioHeader(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.DirectionsRun,
-                    contentDescription = if (nameInBar) stringResource(R.string.cardio_badge) else null,
+                    contentDescription = if (nameInBar) stringResource(Res.string.cardio_badge) else null,
                     tint = Tertiary,
                     modifier = Modifier.size(if (nameInBar) 20.dp else 16.dp)
                 )
                 if (!nameInBar) {
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = stringResource(R.string.cardio_badge),
+                        text = stringResource(Res.string.cardio_badge),
                         style = MaterialTheme.typography.titleMedium,
                         color = Tertiary,
                         fontWeight = FontWeight.ExtraBold
@@ -141,14 +155,14 @@ internal fun CardioHeader(
         IconButton(onClick = onNote) {
             Icon(
                 imageVector = Icons.Rounded.EditNote,
-                contentDescription = stringResource(R.string.cardio_set_note),
+                contentDescription = stringResource(Res.string.cardio_set_note),
                 tint = if (noteFilled) Primary else OnSurfaceVariant
             )
         }
         IconButton(onClick = onSwap) {
             Icon(
                 imageVector = Icons.Rounded.SwapHoriz,
-                contentDescription = stringResource(R.string.swap_exercise),
+                contentDescription = stringResource(Res.string.swap_exercise),
                 tint = OnSurfaceVariant
             )
         }
@@ -157,7 +171,7 @@ internal fun CardioHeader(
 
 /** Under the bar: the name, the targets, the set chips, the set's note, and how hard the set just done felt. */
 @Composable
-internal fun CardioTopBlock(
+fun CardioTopBlock(
     fit: CardioFit,
     exerciseState: WorkoutExerciseState,
     name: String,
@@ -206,7 +220,7 @@ internal fun CardioTopBlock(
                 ) {
                     if (targetMin != null && targetMin > 0) {
                         Text(
-                            text = stringResource(R.string.cardio_target_min_format, targetMin),
+                            text = stringResource(Res.string.cardio_target_min_format, targetMin),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
@@ -217,7 +231,7 @@ internal fun CardioTopBlock(
                     }
                     if (targetKm != null && targetKm > 0) {
                         Text(
-                            text = stringResource(R.string.cardio_target_km_format, targetKm.toString()),
+                            text = stringResource(Res.string.cardio_target_km_format, targetKm.toString()),
                             style = MaterialTheme.typography.labelMedium,
                             color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
@@ -248,7 +262,7 @@ internal fun CardioTopBlock(
                     ) {
                         Icon(Icons.Rounded.Speed, contentDescription = null, tint = Primary, modifier = Modifier.size(16.dp))
                         Text(
-                            text = stringResource(R.string.set_number, justDone.setNumber) + " · " + stringResource(R.string.rpe_prompt),
+                            text = stringResource(Res.string.set_number, justDone.setNumber) + " · " + stringResource(Res.string.rpe_prompt),
                             style = MaterialTheme.typography.labelLarge,
                             color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
@@ -257,7 +271,7 @@ internal fun CardioTopBlock(
                 }
                 CardioRpe.Row -> Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = stringResource(R.string.set_number, justDone.setNumber),
+                        text = stringResource(Res.string.set_number, justDone.setNumber),
                         style = MaterialTheme.typography.labelMedium,
                         color = OnSurfaceVariant,
                         fontWeight = FontWeight.Bold
@@ -276,7 +290,7 @@ internal fun CardioTopBlock(
 }
 
 /** Where a finished cardio exercise stands against its targets (several sets add up, and each one has to reach them). */
-internal class CardioGoal(exerciseState: WorkoutExerciseState) {
+class CardioGoal(exerciseState: WorkoutExerciseState) {
     val elapsed = exerciseState.cardioTotalSeconds
     val totalKm = exerciseState.cardioTotalKm
     val durationMet = exerciseState.cardioDurataTargetSeconds?.let { target ->
@@ -297,7 +311,7 @@ internal class CardioGoal(exerciseState: WorkoutExerciseState) {
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun CardioCircle(
+fun CardioCircle(
     size: Dp,
     state: WorkoutState,
     exerciseState: WorkoutExerciseState,
@@ -347,7 +361,7 @@ internal fun CardioCircle(
         val cookieShape = remember {
             object : Shape {
                 override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-                    val path = MaterialShapes.Cookie6Sided.toPath().asComposePath()
+                    val path = MaterialShapes.Cookie6Sided.toComposePath()
                     val matrix = Matrix()
                     matrix.scale(size.width, size.height)
                     path.transform(matrix)
@@ -394,7 +408,7 @@ internal fun CardioCircle(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun CardioBottomBlock(
+fun CardioBottomBlock(
     fit: CardioFit,
     state: WorkoutState,
     exerciseState: WorkoutExerciseState,
@@ -420,9 +434,9 @@ internal fun CardioBottomBlock(
             if (density.showStatus) {
                 Text(
                     text = when {
-                        state.cardioTimerRunning -> stringResource(R.string.cardio_timer_running)
-                        state.cardioTimerPaused -> stringResource(R.string.cardio_timer_paused)
-                        else -> stringResource(R.string.cardio_timer_ready)
+                        state.cardioTimerRunning -> stringResource(Res.string.cardio_timer_running)
+                        state.cardioTimerPaused -> stringResource(Res.string.cardio_timer_paused)
+                        else -> stringResource(Res.string.cardio_timer_ready)
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = if (state.cardioTimerRunning) Primary else OnSurfaceVariant,
@@ -461,7 +475,7 @@ internal fun CardioBottomBlock(
                     append(cardioTimeText(goal.elapsed))
                     if (goal.totalKm > 0f) {
                         withStyle(SpanStyle(color = bulletColor)) { append("  •  ") }
-                        append(stringResource(R.string.cardio_dist_value, cardioKmText(goal.totalKm)))
+                        append(stringResource(Res.string.cardio_dist_value, cardioKmText(goal.totalKm)))
                     }
                 }
                 Text(
@@ -489,14 +503,14 @@ internal fun CardioBottomBlock(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = stringResource(R.string.cardio_target_label),
+                                    text = stringResource(Res.string.cardio_target_label),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = tint,
                                     fontWeight = FontWeight.ExtraBold,
                                     letterSpacing = 1.sp
                                 )
                                 Text(
-                                    text = String.format("%d:%02d", durationTarget / 60, durationTarget % 60),
+                                    text = "${durationTarget / 60}:${(durationTarget % 60).toString().padStart(2, '0')}",
                                     style = MaterialTheme.typography.titleLarge,
                                     color = tint,
                                     fontWeight = FontWeight.Black
@@ -520,7 +534,7 @@ internal fun CardioBottomBlock(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = stringResource(R.string.cardio_dist_value, distanceTarget.toString()),
+                                    text = stringResource(Res.string.cardio_dist_value, distanceTarget.toString()),
                                     style = MaterialTheme.typography.titleLarge,
                                     color = tint,
                                     fontWeight = FontWeight.Black
@@ -563,7 +577,7 @@ private fun CardioActions(
             ) {
                 Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.cardio_mark_completed), fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(Res.string.cardio_mark_completed), fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         AnimatedVisibility(visible = state.cardioTimerPaused, enter = fadeIn(), exit = fadeOut()) {
@@ -576,7 +590,7 @@ private fun CardioActions(
             ) {
                 Icon(Icons.Rounded.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.cardio_stop_save), fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(Res.string.cardio_stop_save), fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

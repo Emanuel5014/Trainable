@@ -1,5 +1,7 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.util.sortedByKeys
+
 import com.emanuel5014.trainable.domain.prescription.BlockAlignment
 import com.emanuel5014.trainable.domain.prescription.LoadShift
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
@@ -42,7 +44,7 @@ object ProgramEditing {
         val inBlocks = current.filter { !it.isExtra && it.prescription != null }
         val done = inBlocks.filter { it.isCompleted }
         val pending = inBlocks.filter { !it.isCompleted }
-        val freshByBlock = fresh.filter { it.prescription != null }.groupBy { it.prescription!!.blockIndex }.toSortedMap()
+        val freshByBlock = fresh.filter { it.prescription != null }.groupBy { it.prescription!!.blockIndex }.sortedByKeys()
 
         val kept = mutableListOf<WorkoutSetState>()
         // Done sets that no longer fit: their block was taken out or got fewer sets than were already done

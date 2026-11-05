@@ -35,13 +35,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.cardio_add_set
+import com.emanuel5014.trainable.sharedui.resources.cardio_dist_value
+import com.emanuel5014.trainable.sharedui.resources.cardio_distance_label
+import com.emanuel5014.trainable.sharedui.resources.cardio_remove_set
+import com.emanuel5014.trainable.sharedui.resources.minutes
+import com.emanuel5014.trainable.sharedui.resources.optional_suffix
+import com.emanuel5014.trainable.sharedui.resources.routine_notes
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.sharedui.resources.seconds_label
+import com.emanuel5014.trainable.sharedui.resources.set_number
 import com.emanuel5014.trainable.domain.rpe.RpeScale
 import com.emanuel5014.trainable.ui.components.RpeSelector
 import com.emanuel5014.trainable.ui.theme.Error
@@ -53,11 +64,11 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.TertiaryContainer
 
 /** "12:30", or "1:05:00" past the hour. */
-internal fun cardioTimeText(seconds: Int): String {
+fun cardioTimeText(seconds: Int): String {
     val h = seconds / 3600
     val m = (seconds % 3600) / 60
     val s = seconds % 60
-    return if (h > 0) String.format("%d:%02d:%02d", h, m, s) else String.format("%02d:%02d", m, s)
+    return if (h > 0) "$h:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}" else "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
 }
 
 /**
@@ -65,7 +76,7 @@ internal fun cardioTimeText(seconds: Int): String {
  * outlined, the ones still to do, and a "+" for one more. A tap opens the set (its note, and its values once done).
  */
 @Composable
-internal fun CardioSetsStrip(
+fun CardioSetsStrip(
     sets: List<CardioSetState>,
     activeIndex: Int,
     onSetClick: (Int) -> Unit,
@@ -104,9 +115,9 @@ internal fun CardioSetsStrip(
                         text = if (set.isCompleted) {
                             buildString {
                                 append("${set.setNumber} · ${cardioTimeText(set.elapsedSeconds)}")
-                                if (set.distanceKm > 0f) append(" · ").append(stringResource(R.string.cardio_dist_value, com.emanuel5014.trainable.ui.components.cardioKmText(set.distanceKm)))
+                                if (set.distanceKm > 0f) append(" · ").append(stringResource(Res.string.cardio_dist_value, com.emanuel5014.trainable.ui.components.cardioKmText(set.distanceKm)))
                             }
-                        } else stringResource(R.string.set_number, set.setNumber),
+                        } else stringResource(Res.string.set_number, set.setNumber),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (active) FontWeight.ExtraBold else FontWeight.Bold,
                         color = color
@@ -123,7 +134,7 @@ internal fun CardioSetsStrip(
         Surface(onClick = onAdd, shape = CircleShape, color = SurfaceContainerHigh) {
             Icon(
                 Icons.Rounded.Add,
-                contentDescription = stringResource(R.string.cardio_add_set),
+                contentDescription = stringResource(Res.string.cardio_add_set),
                 tint = Primary,
                 modifier = Modifier.padding(8.dp).size(20.dp)
             )
@@ -133,7 +144,7 @@ internal fun CardioSetsStrip(
 
 /** The note of a set under its chips; a tap edits it. */
 @Composable
-internal fun CardioSetNoteLine(note: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun CardioSetNoteLine(note: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(onClick = onClick, shape = RoundedCornerShape(12.dp), color = SurfaceContainerHigh.copy(alpha = 0.6f), modifier = modifier) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -158,7 +169,7 @@ internal fun CardioSetNoteLine(note: String, onClick: () -> Unit, modifier: Modi
  * for. [onDelete] is null when the set cannot go (the only one, or the one on the timer).
  */
 @Composable
-internal fun CardioSetDialog(
+fun CardioSetDialog(
     set: CardioSetState,
     rpeScale: RpeScale?,
     onDismiss: () -> Unit,
@@ -176,7 +187,7 @@ internal fun CardioSetDialog(
     AlertDialog(
         modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.set_number, set.setNumber)) },
+        title = { Text(stringResource(Res.string.set_number, set.setNumber)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (set.isCompleted) {
@@ -184,7 +195,7 @@ internal fun CardioSetDialog(
                         OutlinedTextField(
                             value = minutes,
                             onValueChange = { minutes = it.filter { c -> c.isDigit() }.take(3) },
-                            label = { Text(stringResource(R.string.minutes)) },
+                            label = { Text(stringResource(Res.string.minutes)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             shape = RoundedCornerShape(16.dp),
@@ -193,7 +204,7 @@ internal fun CardioSetDialog(
                         OutlinedTextField(
                             value = seconds,
                             onValueChange = { seconds = it.filter { c -> c.isDigit() }.take(2) },
-                            label = { Text(stringResource(R.string.seconds_label)) },
+                            label = { Text(stringResource(Res.string.seconds_label)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             shape = RoundedCornerShape(16.dp),
@@ -203,7 +214,7 @@ internal fun CardioSetDialog(
                     OutlinedTextField(
                         value = distance,
                         onValueChange = { distance = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
-                        label = { Text(stringResource(R.string.cardio_distance_label) + " " + stringResource(R.string.optional_suffix)) },
+                        label = { Text(stringResource(Res.string.cardio_distance_label) + " " + stringResource(Res.string.optional_suffix)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = RoundedCornerShape(16.dp),
@@ -216,7 +227,7 @@ internal fun CardioSetDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text(stringResource(R.string.routine_notes)) },
+                    label = { Text(stringResource(Res.string.routine_notes)) },
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -226,15 +237,15 @@ internal fun CardioSetDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (onDelete != null) {
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.cardio_remove_set), tint = Error)
+                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.cardio_remove_set), tint = Error)
                     }
                 }
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel).uppercase()) }
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel).uppercase()) }
                 TextButton(
                     enabled = valid,
                     onClick = { onSave(totalSeconds, distance.replace(',', '.').toFloatOrNull() ?: 0f, note, rpe) }
                 ) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = if (valid) Primary else OnSurface.copy(alpha = 0.4f))
+                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold, color = if (valid) Primary else OnSurface.copy(alpha = 0.4f))
                 }
             }
         },

@@ -1021,4 +1021,26 @@
     <string name="progression_dismiss">Keep the current weight</string>
     <string name="progression_hit_max">%1$d reps on every set last time</string>
     <string name="progression_try_weight">Try %1$s</string>
+    <string name="cancel_workout">Cancel Workout</string>
+    <string name="cardio_add_set">Add set</string>
+    <string name="cardio_badge">CARDIO</string>
+    <string name="cardio_distance_label">Distance traveled (km)</string>
+    <string name="cardio_mark_completed">Mark as completed</string>
+    <string name="cardio_set_note">Set note</string>
+    <string name="cardio_stop_save">STOP &amp; SAVE</string>
+    <string name="cardio_target_km_format">%1$s KM</string>
+    <string name="cardio_target_label">TARGET</string>
+    <string name="cardio_target_min_format">TARGET: %1$d MIN</string>
+    <string name="cardio_timer_paused">PAUSED</string>
+    <string name="cardio_timer_ready">READY</string>
+    <string name="cardio_timer_running">IN PROGRESS</string>
+    <string name="close_workout">Close Workout</string>
+    <string name="finish">Finish</string>
+    <string name="finish_workout">Finish</string>
+    <string name="next_exercise_btn">Next</string>
+    <string name="optional_suffix">(optional)</string>
+    <string name="session_in_progress_title">SESSION IN PROGRESS</string>
+    <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>
+    <string name="log_set">LOG SET</string>
+    <string name="previous_exercise_btn">Previous</string>
 </resources>

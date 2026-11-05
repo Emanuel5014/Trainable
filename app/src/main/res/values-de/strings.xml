@@ -84,7 +84,6 @@
     <string name="swipe_for_archived">Nach unten wischen für Archiviertes</string>
     <string name="swipe_for_active">Nach unten wischen für Aktives</string>
     <string name="routine_name">Routinenname</string>
-    <string name="routine_notes">Notizen (optional)</string>
     <string name="schedule_days">PLANMÄSSIGE TAGE</string>
     <string name="start_date">STARTDATUM:</string>
     <string name="end_date">ABLAUFDATUM:</string>
@@ -107,7 +106,6 @@
     <string name="tap_to_change_exercise">Tippe, um Übung zu wechseln</string>
     <string name="category">Kategorie</string>
     <string name="superset">SUPERSATZ</string>
-    <string name="set_number">Satz %d</string>
     <string name="add_set">SATZ HINZUFÜGEN</string>
     <string name="remove_set">SATZ ENTFERNEN</string>
     <string name="adjust_set_number">SATZ %d ANPASSEN</string>
@@ -124,14 +122,11 @@
     <string name="workout_execution">Trainingsdurchführung</string>
     <string name="workout_execution_title">Trainingsdurchführung</string>
     <string name="session_in_progress">SITZUNG LÄUFT</string>
-    <string name="session_in_progress_title">SITZUNG LÄUFT</string>
-    <string name="log_set">SATZ AUFZEICHNEN</string>
     <string name="active_set">AKTIVER SATZ</string>
     <string name="exercise_completed">ÜBUNG ABGESCHLOSSEN</string>
     <string name="exercise_completed_title">ÜBUNG ABGESCHLOSSEN</string>
     <string name="rest_end">PAUSE BEENDET</string>
     <string name="previous_exercise">Vorherige</string>
-    <string name="previous_exercise_btn">Vorherige</string>
     <string name="next_exercise">Nächste</string>
     <string name="next_exercise_btn">Nächste</string>
     <string name="next_exercise_wrk">Nächste Übung</string>
@@ -151,11 +146,8 @@
     <string name="exercise_media_unsupported">Die Datei konnte nicht geöffnet werden. Wähle ein Bild oder GIF.</string>
     <string name="workout_settings">Training</string>
     <string name="add_duration">Dauer hinzufügen</string>
-    <string name="minutes">Minuten</string>
-    <string name="close_workout">Training schließen</string>
 
     <!-- Workout Session -->
-    <string name="cancel_workout">Training abbrechen</string>
     <string name="cancel_workout_title">Training abbrechen?</string>
     <string name="cancel_workout_message">Dies löscht dauerhaft diese Trainingssitzung. Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="finish_workout">Beenden</string>
@@ -418,16 +410,8 @@
     <string name="tap_to_set">Tippe zum Festlegen</string>
 
     <!-- Cardio -->
-    <string name="cardio_badge">CARDIO</string>
     <string name="cardio_enter_distance">Strecke eingeben</string>
     <string name="cardio_distance_label">Zurückgelegte Strecke (km)</string>
-    <string name="cardio_target_min_format">ZIEL: %1$d MIN</string>
-    <string name="cardio_target_km_format">%1$s KM</string>
-    <string name="cardio_timer_running">LÄUFT</string>
-    <string name="cardio_timer_paused">PAUSIERT</string>
-    <string name="cardio_timer_ready">BEREIT</string>
-    <string name="cardio_stop_save">STOP &amp; SPEICH.</string>
-    <string name="cardio_target_label">ZIEL</string>
     <string name="cardio_dist_value">%1$s km</string>
     <string name="cardio_min_format">%1$d Min</string>
     <string name="cardio_free_form">Frei</string>
@@ -655,11 +639,7 @@
     <string name="exercise_type_time_and_reps">Zeit &amp; Wdh.</string>
     <string name="time_reps_value">%1$ds · %2$d Wdh.</string>
     <string name="reps_done_label">Geschaffte Wdh.</string>
-    <string name="cardio_add_set">Satz hinzufügen</string>
-    <string name="cardio_set_note">Satznotiz</string>
-    <string name="cardio_remove_set">Satz löschen</string>
     <string name="cardio_sets_total">%1$d Sätze</string>
-    <string name="seconds_label">Sekunden</string>
     <string name="mini_set_add">Minisatz hinzufügen</string>
     <string name="mini_set_notification">Minisatz</string>
     <string name="assisted_reps_label">Mit Hilfe</string>
@@ -886,7 +866,6 @@
     </plurals>
 
     <!-- RPE: a switch, three scales and the five levels of the simplified one -->
-    <string name="rpe_prompt">Wie hart war es?</string>
     <string name="rpe_level_warmup">Aufwärmen</string>
     <string name="rpe_level_warmup_desc">Sehr leichte Anstrengung · Du machst dich bereit</string>
     <string name="rpe_level_easy">Leicht</string>
@@ -901,7 +880,6 @@
     <string name="exercise_detail_open">Übungsdetails</string>
     <!-- Merge and hide exercises -->
     <!-- Exercises page -->
-    <string name="workout_progress_description">Übung %1$d von %2$d, %3$d abgeschlossen</string>
     <string name="exercise_tools_group">Übungswerkzeuge</string>
     <!-- Favorite exercises -->
     <!-- Muscles and equipment of an exercise -->
