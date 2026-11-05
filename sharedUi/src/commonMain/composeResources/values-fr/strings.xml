@@ -1179,4 +1179,20 @@
     <string name="physical_check_weight_label">Poids corporel (kg)</string>
     <string name="physical_check_camera_unavailable">Appareil photo indisponible sur cet appareil</string>
     <string name="physical_check_auth_reason">Authentifiez-vous pour accéder à vos check physiques</string>
+    <string name="export_database">EXPORTER LA BASE DE DONNÉES</string>
+    <string name="import_database">IMPORTER LA BASE DE DONNÉES</string>
+    <string name="export_failed">Échec de l'exportation</string>
+    <string name="import_successful">Importation réussie</string>
+    <string name="import_failed">Échec de l'importation</string>
+    <string name="importing_database">Importation en cours...</string>
+    <string name="export_ready">Exportation prête</string>
+    <string name="include_images">Inclure les Images ?</string>
+    <string name="include_images_description">Souhaites-tu inclure les photos des routines et les images des exercices dans ta sauvegarde ? Cela augmentera la taille du fichier.</string>
+    <string name="yes">OUI</string>
+    <string name="no">NON</string>
+    <string name="nextcloud_restore_confirm_title">Restaurer la base de données ?</string>
+    <string name="backup_restore_confirm_description">Les données actuelles seront remplacées lorsque vous fermerez puis rouvrirez Trainable. Continuer ?</string>
+    <string name="backup_reopen_title">Sauvegarde prête à restaurer</string>
+    <string name="backup_reopen_description">Fermez Trainable depuis le sélecteur d’apps, puis rouvrez-la pour terminer la restauration. Vous pouvez annuler pour conserver vos données actuelles.</string>
+    <string name="retry">Réessayer</string>
 </resources>

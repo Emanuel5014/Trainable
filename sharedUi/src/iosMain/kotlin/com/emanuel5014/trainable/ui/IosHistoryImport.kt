@@ -171,14 +171,12 @@ private fun NSData.toByteArray(): ByteArray {
     return bytes
 }
 
-/**
- * Settings' data section on iOS: only what works here yet, the CSV history import, laid out like its button in the
- * Android section (backup, Nextcloud and the exports are not on iOS yet).
- */
+/** Settings' data section: native backup export/restore and the shared CSV import entry. */
 @Composable
 internal fun IosDataSection(onNavigateToImportHistory: () -> Unit) {
     SettingsSection(title = stringResource(Res.string.data_backup)) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            IosBackupButtons()
             GymButton(
                 onClick = onNavigateToImportHistory,
                 modifier = Modifier.fillMaxWidth(),

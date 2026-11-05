@@ -33,6 +33,7 @@ kotlin {
             implementation(libs.compose.runtime.annotation)
             api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.okio)
         }
         iosMain.dependencies {
             // Android keeps the system SQLite (Room without a driver); iOS brings its own
@@ -54,4 +55,5 @@ dependencies {
 tasks.withType<KotlinNativeSimulatorTest>().configureEach {
     providers.gradleProperty("migrationFixtures").orNull?.let { environment("SIMCTL_CHILD_MIGRATION_FIXTURES", it) }
     providers.gradleProperty("settingsFixture").orNull?.let { environment("SIMCTL_CHILD_SETTINGS_FIXTURE", it) }
+    providers.gradleProperty("backupFixtures").orNull?.let { environment("SIMCTL_CHILD_BACKUP_FIXTURES", it) }
 }

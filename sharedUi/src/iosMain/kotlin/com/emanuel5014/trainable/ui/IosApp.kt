@@ -70,12 +70,13 @@ import org.jetbrains.compose.resources.Font
 import platform.UIKit.UIViewController
 
 /** The iOS app's root, shown by the Xcode project: the app's navigation on the device's own data. */
-fun MainViewController(): UIViewController = ComposeUIViewController { TrainableIosApp() }
+fun MainViewController(): UIViewController = ComposeUIViewController { IosBackupStartup { TrainableIosApp() } }
 
 /** One database and one settings file for the whole process, and the repositories over them. */
 internal object IosAppGraph {
     val database by lazy { GymDatabaseInstance.getDatabase() }
-    val preferences by lazy { UserPreferencesRepository(createSettingsDataStore()) }
+    val settingsStore by lazy { createSettingsDataStore() }
+    val preferences by lazy { UserPreferencesRepository(settingsStore) }
     val users by lazy { UserRepository(database.userDao(), database.weightLogDao()) }
     val oneRepMaxes by lazy { OneRepMaxRepository(database.oneRepMaxDao()) }
     val workouts by lazy {
@@ -215,6 +216,7 @@ private fun TrainableIosApp() {
             LocalPrescriptionEnvironment provides IosPrescriptionEnvironment
         ) {
             IosNavGraph(dashboard = state, dashboardUi = uiState, routines = routines, history = history, analytics = analytics, navBarStyle = style, isDark = isDark)
+            IosBackupDialogs()
         }
     }
 }

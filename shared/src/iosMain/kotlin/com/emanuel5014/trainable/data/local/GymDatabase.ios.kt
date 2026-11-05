@@ -21,6 +21,11 @@ object GymDatabaseInstance {
         .build()
         .also { instance = it }
 
+    fun closeDatabase() {
+        instance?.close()
+        instance = null
+    }
+
     @OptIn(ExperimentalForeignApi::class)
     fun databasePath(): String {
         val documents = NSFileManager.defaultManager.URLForDirectory(

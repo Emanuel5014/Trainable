@@ -45,6 +45,7 @@ jb-navigation = "2.9.2"
 
 
 [libraries]
+okio = { module = "com.squareup.okio:okio", version = "3.9.1" }
 androidx-glance = { group = "androidx.glance", name = "glance", version.ref = "glance" }
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
