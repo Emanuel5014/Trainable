@@ -89,36 +89,25 @@
     <string name="routine_name">Routine Name</string>
     <string name="routine_notes">Notes (optional)</string>
     <string name="schedule_days">SCHEDULE DAYS</string>
-    <string name="delete_routine">Delete Routine?</string>
-    <string name="delete_routine_message">This will permanently delete this routine and all its exercises.</string>
     <string name="start_date">START DATE:</string>
     <string name="end_date">EXPIRATION DATE:</string>
     <string name="expires">Expires:</string>
     <string name="expiration_date">Expiration Date</string>
     <string name="swap_exercise">SWAP EXERCISE</string>
-    <string name="swap_exercise_message">Replace this exercise for this session only</string>
-    <string name="tap_plus_to_add">Tap the + button to add exercises and start building your workout.</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
     <string name="edit_category">Edit Category</string>
 
     <!-- Exercises -->
-    <string name="exercise">Exercise</string>
     <string name="exercises_completed">exercises completed</string>
     <string name="add_exercise">ADD EXERCISE</string>
     <string name="add_exercise_to_workout">ADD EXERCISE</string>
-    <string name="edit_exercise_title">Edit Exercise</string>
-    <string name="exercise_details">Exercise Details</string>
     <string name="sets">Sets</string>
     <string name="reps">Reps</string>
     <string name="weight_kg">Weight</string>
     <string name="rest_seconds">Rest (Seconds)</string>
     <string name="select_exercise">Select Exercise</string>
     <string name="tap_to_change_exercise">Tap to change exercise</string>
-    <string name="all_categories">All</string>
-    <string name="filter_custom">Custom</string>
-    <string name="new_exercise">New Exercise</string>
-    <string name="add_custom_exercise">Add Custom Exercise</string>
     <string name="category">Category</string>
     <string name="superset">SUPERSET</string>
     <string name="set_number">Set %d</string>
@@ -164,9 +153,7 @@
     <string name="exercise_media_too_large">That file is too large. Choose one under %1$d MB.</string>
     <string name="exercise_media_unsupported">Couldn\'t open that file. Choose an image or GIF.</string>
     <string name="workout_settings">Workout</string>
-    <string name="workout_duration">Workout Duration</string>
     <string name="add_duration">Add duration</string>
-    <string name="hours">Hours</string>
     <string name="minutes">Minutes</string>
     <string name="close_workout">Close Workout</string>
 
@@ -182,19 +169,13 @@
     <string name="quick_workout">QUICK WORKOUT</string>
     <string name="rename_workout">Rename Workout</string>
     <string name="no_exercises_in_session">No exercises tracked in this session.</string>
-    <string name="add_cardio">Add Cardio Workout</string>
     <string name="add_workout">Add Workout</string>
-    <string name="custom_workout">Custom Workout</string>
     <string name="total_workouts">Total Workouts</string>
 
     <!-- History -->
     <string name="no_history">No workout history</string>
     <string name="no_history_description">Your completed workouts will appear here.</string>
-    <string name="delete_session">Delete Session?</string>
-    <string name="delete_session_message">This will permanently delete this workout session.</string>
-    <string name="session_details">Session Details</string>
     <string name="total_volume">Total Volume</string>
-    <string name="edit_date">Edit Date</string>
     <string name="best_performance">Best Performance</string>
 
     <!-- Analytics -->
@@ -461,7 +442,6 @@
     <string name="cardio_dist_value">%1$s km</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Free-form</string>
-    <string name="cardio_cat_label">Cardio</string>
     <string name="cardio_duration_label">Target Duration (min)</string>
     <string name="cardio_duration_slider">Duration (min)</string>
     <string name="cardio_custom_duration">Custom (min)</string>
@@ -677,7 +657,6 @@
     <string name="target_time">Target Time</string>
     <string name="target_seconds">Target (seconds)</string>
     <string name="seconds_short">sec</string>
-    <string name="time_and_weight_badge">TIME &amp; WEIGHT</string>
     <string name="skip_timer">Skip Timer</string>
     <string name="skip_timer_and_log">Skip timer &amp; Log</string>
     <string name="set_duration_label">Duration</string>
@@ -690,7 +669,6 @@
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Advanced</string>
     <string name="exercise_type_time_and_reps">Time &amp; Reps</string>
-    <string name="time_and_reps_badge">TIME &amp; REPS</string>
     <string name="time_reps_value">%1$ds · %2$d reps</string>
     <string name="reps_done_label">Reps done</string>
     <string name="cardio_add_set">Add set</string>
@@ -738,7 +716,6 @@
     <string name="notation_recognised">Recognised: %1$s</string>
     <string name="notation_nothing">Nothing recognised yet</string>
     <string name="notation_replace_blocks">Replace blocks</string>
-    <string name="advanced_needs_block">Add at least one block</string>
     <string name="week_short">W%1$d</string>
     <string name="week_n">Week %1$d</string>
     <string name="week_of">Week %1$d of %2$d</string>
@@ -857,14 +834,8 @@
     <string name="ai_program_review_pick_week">Pick the week to import. You can edit it afterwards.</string>
     <string name="ai_program_save_one_rep_max">Save 1RM %1$s</string>
     <string name="ai_program_import">Import</string>
-    <string name="prescription">Prescription</string>
     <string name="edit_prescription">Edit prescription</string>
     <string name="add_prescription">Add prescription</string>
-    <string name="remove_prescription">Remove prescription</string>
-    <string name="prescription_sheet_subtitle">Sets you already logged keep their weights and reps.</string>
-    <string name="prescription_remove_sets_title">Remove sets?</string>
-    <string name="prescription_remove_sets_message">%1$d logged sets don\'t fit the new prescription and will be removed.</string>
-    <string name="keep_prescription_on_swap">The new exercise keeps the prescription of the old one.</string>
     <string name="advanced_programming">Advanced programming</string>
     <string name="advanced_programming_desc" formatted="false">%1RM sets, techniques like pauses and chains, weekly programs, 1RM tracking and RPE targets</string>
     <string name="ai_program_review_summary">%1$d weeks · %2$d blocks</string>
@@ -964,8 +935,6 @@
 
     <!-- Workout journal -->
     <string name="journal_how_did_it_go">How did it go?</string>
-    <string name="journal_row_title">Journal</string>
-    <string name="journal_row_empty">Add rating, tags and a note</string>
     <plurals name="journal_tag_uses">
         <item quantity="one">Used in %1$d workout</item>
         <item quantity="other">Used in %1$d workouts</item>
@@ -990,7 +959,6 @@
     <string name="workout_progress_description">Exercise %1$d of %2$d, %3$d completed</string>
     <string name="exercise_tools_group">Exercise tools</string>
     <!-- Favorite exercises -->
-    <string name="filter_favorites">Favorites</string>
     <!-- Muscles and equipment of an exercise -->
     <string name="muscle_upper_chest">Upper chest</string>
     <string name="muscle_middle_chest">Middle chest</string>

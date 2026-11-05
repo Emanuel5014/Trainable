@@ -49,6 +49,7 @@ import com.emanuel5014.trainable.ui.components.ProgramScanApplication
 import com.emanuel5014.trainable.ui.screens.routines.RoutineDetailState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
 import com.emanuel5014.trainable.data.repository.UserRepository
@@ -195,6 +196,7 @@ private fun TrainableIosApp() {
         }
         CompositionLocalProvider(
             com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi provides IosExercisePlatformUi,
+            com.emanuel5014.trainable.ui.components.LocalExerciseAddMemory provides IosExerciseAddMemory,
             com.emanuel5014.trainable.ui.components.LocalExerciseMediaEnabled provides exerciseMediaEnabled,
             com.emanuel5014.trainable.ui.components.LocalShowMessage provides rememberIosShowMessage(),
             LocalPaletteColors provides IosPaletteColors,
@@ -251,6 +253,26 @@ private fun appTypography(): Typography {
                 labelMedium = labelMedium.copy(fontFamily = family, fontWeight = FontWeight.SemiBold),
                 labelSmall = labelSmall.copy(fontFamily = family, fontWeight = FontWeight.Medium),
             )
+        }
+    }
+}
+
+/** The remembered rest and types on iOS, in the same settings file as Android's. */
+private val IosExerciseAddMemory: @Composable () -> com.emanuel5014.trainable.ui.components.ExerciseAddMemory = {
+    val preferences = IosAppGraph.preferences
+    val scope = rememberCoroutineScope()
+    remember(scope) {
+        object : com.emanuel5014.trainable.ui.components.ExerciseAddMemory {
+            override val lastRestSeconds: kotlinx.coroutines.flow.StateFlow<Int?> = preferences.lastAddedExerciseRestSeconds
+                .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
+            override fun rememberRest(seconds: Int) {
+                scope.launch { preferences.setLastAddedExerciseRestSeconds(seconds) }
+            }
+            override val types: kotlinx.coroutines.flow.StateFlow<Map<Int, String>> = preferences.exerciseTypes
+                .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyMap())
+            override fun rememberType(exerciseId: Int, type: String) {
+                scope.launch { preferences.rememberExerciseType(exerciseId, type) }
+            }
         }
     }
 }

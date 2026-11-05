@@ -18,12 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.journal_row_empty
+import com.emanuel5014.trainable.sharedui.resources.journal_row_title
 import com.emanuel5014.trainable.data.local.entity.SessionTagEntity
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -58,14 +60,14 @@ fun JournalRow(
             Icon(Icons.Rounded.EditNote, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = stringResource(R.string.journal_row_title),
+                    text = stringResource(Res.string.journal_row_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
                 )
                 if (isEmpty) {
                     Text(
-                        text = stringResource(R.string.journal_row_empty),
+                        text = stringResource(Res.string.journal_row_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )

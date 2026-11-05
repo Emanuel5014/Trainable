@@ -954,4 +954,23 @@
     </plurals>
     <string name="import_history_template_saved">File di esempio salvato</string>
     <string name="import_history_template_error">Impossibile salvare il file: %1$s</string>
+    <string name="keep_prescription_on_swap">Il nuovo esercizio mantiene la prescrizione del precedente.</string>
+    <string name="prescription">Prescrizione</string>
+    <string name="prescription_sheet_subtitle">Le serie già registrate mantengono pesi e ripetizioni.</string>
+    <string name="remove_prescription">Rimuovi prescrizione</string>
+    <string name="swap_exercise">CAMBIA ESERCIZIO</string>
+    <string name="swap_exercise_message">Sostituisci questo esercizio solo per questa sessione</string>
+    <string name="block_header">BLOCCO %1$d · %2$s</string>
+    <string name="cardio_remove_set">Elimina serie</string>
+    <string name="edit_date">Modifica Data</string>
+    <string name="exercise">Esercizio</string>
+    <string name="hours">Ore</string>
+    <string name="minutes">Minuti</string>
+    <string name="no_exercises_in_session">Nessun esercizio registrato in questa sessione.</string>
+    <string name="prescription_remove_sets_message">%1$d serie registrate non rientrano nella nuova prescrizione e verranno rimosse.</string>
+    <string name="prescription_remove_sets_title">Rimuovere serie?</string>
+    <string name="rename_workout">Rinomina Allenamento</string>
+    <string name="session_details">Dettagli Sessione</string>
+    <string name="share_exercises">Esercizi</string>
+    <string name="workout_duration">Durata Allenamento</string>
 </resources>

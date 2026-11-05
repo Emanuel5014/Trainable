@@ -88,36 +88,25 @@
     <string name="routine_name">Nom de la Routine</string>
     <string name="routine_notes">Notes (optionnel)</string>
     <string name="schedule_days">JOURS PROGRAMMÉS</string>
-    <string name="delete_routine">Supprimer la Routine ?</string>
-    <string name="delete_routine_message">Cela supprimera définitivement cette routine et tous ses exercices.</string>
     <string name="start_date">DATE DE DÉBUT :</string>
     <string name="end_date">DATE D\'EXPIRATION :</string>
     <string name="expires">Expire le :</string>
     <string name="expiration_date">Date d\'Expiration</string>
     <string name="swap_exercise">CHANGER D\'EXERCICE</string>
-    <string name="swap_exercise_message">Remplace cet exercice uniquement pour cette session</string>
-    <string name="tap_plus_to_add">Tape sur le bouton + pour ajouter des exercices et construire ton entraînement.</string>
     <string name="swipe_actions">Actions Swipe</string>
     <string name="swipe_actions_desc">Active le balayage pour modifier/archiver/supprimer des éléments et naviguer entre les exercices</string>
     <string name="edit_category">Modifier Catégorie</string>
 
     <!-- Exercises -->
-    <string name="exercise">Exercice</string>
     <string name="exercises_completed">exercices terminés</string>
     <string name="add_exercise">AJOUTER UN EXERCICE</string>
     <string name="add_exercise_to_workout">AJOUTER UN EXERCICE</string>
-    <string name="edit_exercise_title">Modifier l\'Exercice</string>
-    <string name="exercise_details">Détails de l\'Exercice</string>
     <string name="sets">Séries</string>
     <string name="reps">Répétitions</string>
     <string name="weight_kg">Poids</string>
     <string name="rest_seconds">Repos (Secondes)</string>
     <string name="select_exercise">Sélectionner un Exercice</string>
     <string name="tap_to_change_exercise">Tape pour changer d\'exercice</string>
-    <string name="all_categories">Tous</string>
-    <string name="filter_custom">Personnalisés</string>
-    <string name="new_exercise">Nouvel Exercice</string>
-    <string name="add_custom_exercise">Ajouter un Exercice Personnalisé</string>
     <string name="category">Catégorie</string>
     <string name="superset">SUPERSÉRIE</string>
     <string name="set_number">Série %d</string>
@@ -163,9 +152,7 @@
     <string name="exercise_media_too_large">Ce fichier est trop volumineux. Choisis-en un de moins de %1$d Mo.</string>
     <string name="exercise_media_unsupported">Impossible d\'ouvrir ce fichier. Choisis une image ou un GIF.</string>
     <string name="workout_settings">Entraînement</string>
-    <string name="workout_duration">Durée de l\'entraînement</string>
     <string name="add_duration">Ajouter une durée</string>
-    <string name="hours">Heures</string>
     <string name="minutes">Minutes</string>
     <string name="close_workout">Fermer l\'Entraînement</string>
 
@@ -181,19 +168,13 @@
     <string name="quick_workout">ENTRAÎNEMENT RAPIDE</string>
     <string name="rename_workout">Renommer l\'Entraînement</string>
     <string name="no_exercises_in_session">Aucun exercice enregistré dans cette session.</string>
-    <string name="add_cardio">Ajouter du Cardio</string>
     <string name="add_workout">Ajouter un Entraînement</string>
-    <string name="custom_workout">Entraînement Personnalisé</string>
     <string name="total_workouts">Total des Entraînements</string>
 
     <!-- History -->
     <string name="no_history">Aucun historique d\'entraînement</string>
     <string name="no_history_description">Tes entraînements terminés apparaîtront ici.</string>
-    <string name="delete_session">Supprimer la Session ?</string>
-    <string name="delete_session_message">Cela supprimera définitivement cette session d\'entraînement.</string>
-    <string name="session_details">Détails de la Session</string>
     <string name="total_volume">Volume Total</string>
-    <string name="edit_date">Modifier la Date</string>
     <string name="best_performance">Meilleure Performance</string>
 
     <!-- Analytics -->
@@ -460,7 +441,6 @@
     <string name="cardio_dist_value">%1$s km</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Libre</string>
-    <string name="cardio_cat_label">Cardio</string>
     <string name="cardio_duration_label">Durée cible (min)</string>
     <string name="cardio_duration_slider">Durée (min)</string>
     <string name="cardio_custom_duration">Personnalisé (min)</string>
@@ -676,7 +656,6 @@
     <string name="target_time">Temps cible</string>
     <string name="target_seconds">Cible (secondes)</string>
     <string name="seconds_short">sec</string>
-    <string name="time_and_weight_badge">TEMPS &amp; POIDS</string>
     <string name="skip_timer">Passer le minuteur</string>
     <string name="skip_timer_and_log">Passer le minuteur &amp; Valider</string>
     <string name="set_duration_label">Durée</string>
@@ -689,7 +668,6 @@
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Avancé</string>
     <string name="exercise_type_time_and_reps">Temps &amp; Répétitions</string>
-    <string name="time_and_reps_badge">TEMPS &amp; RÉP.</string>
     <string name="time_reps_value">%1$ds · %2$d rép.</string>
     <string name="reps_done_label">Rép. faites</string>
     <string name="cardio_add_set">Ajouter une série</string>
@@ -737,7 +715,6 @@
     <string name="notation_recognised">Reconnu : %1$s</string>
     <string name="notation_nothing">Rien de reconnu pour l\'instant</string>
     <string name="notation_replace_blocks">Remplacer les blocs</string>
-    <string name="advanced_needs_block">Ajoute au moins un bloc</string>
     <string name="week_short">S%1$d</string>
     <string name="week_n">Semaine %1$d</string>
     <string name="week_of">Semaine %1$d sur %2$d</string>
@@ -856,14 +833,8 @@
     <string name="ai_program_review_pick_week">Choisis la semaine à importer. Tu pourras la modifier ensuite.</string>
     <string name="ai_program_save_one_rep_max">Enregistrer le 1RM %1$s</string>
     <string name="ai_program_import">Importer</string>
-    <string name="prescription">Prescription</string>
     <string name="edit_prescription">Modifier la prescription</string>
     <string name="add_prescription">Ajouter une prescription</string>
-    <string name="remove_prescription">Retirer la prescription</string>
-    <string name="prescription_sheet_subtitle">Les séries déjà enregistrées gardent leurs charges et répétitions.</string>
-    <string name="prescription_remove_sets_title">Supprimer des séries ?</string>
-    <string name="prescription_remove_sets_message">%1$d séries enregistrées ne correspondent pas à la nouvelle prescription et seront supprimées.</string>
-    <string name="keep_prescription_on_swap">Le nouvel exercice garde la prescription de l\'ancien.</string>
     <string name="advanced_programming">Programmation avancée</string>
     <string name="advanced_programming_desc" formatted="false">Séries en %1RM, techniques comme arrêts et chaînes, programmes hebdomadaires, 1RM et RPE cibles</string>
     <string name="ai_program_review_summary">%1$d semaines · %2$d blocs</string>
@@ -963,8 +934,6 @@
 
     <!-- Workout journal -->
     <string name="journal_how_did_it_go">Comment ça s\'est passé ?</string>
-    <string name="journal_row_title">Journal</string>
-    <string name="journal_row_empty">Ajoute une évaluation, des tags et une note</string>
     <plurals name="journal_tag_uses">
         <item quantity="one">Utilisé dans %1$d entraînement</item>
         <item quantity="other">Utilisé dans %1$d entraînements</item>
@@ -989,7 +958,6 @@
     <string name="workout_progress_description">Exercice %1$d sur %2$d, %3$d terminés</string>
     <string name="exercise_tools_group">Outils de l\'exercice</string>
     <!-- Favorite exercises -->
-    <string name="filter_favorites">Favoris</string>
     <!-- Muscles and equipment of an exercise -->
     <string name="muscle_upper_chest">Pectoraux supérieurs</string>
     <string name="muscle_middle_chest">Pectoraux moyens</string>

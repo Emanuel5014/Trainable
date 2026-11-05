@@ -323,6 +323,7 @@ class MainActivity : FragmentActivity() {
                   LocalPlanImage provides AndroidPlanImage,
                   LocalPrescriptionText provides LocalContext.current.let { remember(it) { AndroidPrescriptionText(it) } },
                   LocalExercisePlatformUi provides AndroidExercisePlatformUi,
+                  com.emanuel5014.trainable.ui.components.LocalExerciseAddMemory provides com.emanuel5014.trainable.ui.components.AndroidExerciseAddMemory,
                   LocalPrescriptionEnvironment provides AndroidPrescriptionEnvironment,
                   LocalJournalData provides AndroidJournalData,
                   LocalRoutineImagePicker provides AndroidRoutineImagePicker,

@@ -951,4 +951,23 @@
     </plurals>
     <string name="import_history_template_saved">Example file saved</string>
     <string name="import_history_template_error">Could not save the file: %1$s</string>
+    <string name="keep_prescription_on_swap">The new exercise keeps the prescription of the old one.</string>
+    <string name="prescription">Prescription</string>
+    <string name="prescription_sheet_subtitle">Sets you already logged keep their weights and reps.</string>
+    <string name="remove_prescription">Remove prescription</string>
+    <string name="swap_exercise">SWAP EXERCISE</string>
+    <string name="swap_exercise_message">Replace this exercise for this session only</string>
+    <string name="block_header">BLOCK %1$d · %2$s</string>
+    <string name="cardio_remove_set">Remove set</string>
+    <string name="edit_date">Edit Date</string>
+    <string name="exercise">Exercise</string>
+    <string name="hours">Hours</string>
+    <string name="minutes">Minutes</string>
+    <string name="no_exercises_in_session">No exercises tracked in this session.</string>
+    <string name="prescription_remove_sets_message">%1$d logged sets don't fit the new prescription and will be removed.</string>
+    <string name="prescription_remove_sets_title">Remove sets?</string>
+    <string name="rename_workout">Rename Workout</string>
+    <string name="session_details">Session Details</string>
+    <string name="share_exercises">Exercises</string>
+    <string name="workout_duration">Workout Duration</string>
 </resources>

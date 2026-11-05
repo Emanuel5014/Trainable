@@ -55,19 +55,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add_custom_exercise
+import com.emanuel5014.trainable.sharedui.resources.add_exercise
+import com.emanuel5014.trainable.sharedui.resources.advanced_needs_block
+import com.emanuel5014.trainable.sharedui.resources.all_categories
+import com.emanuel5014.trainable.sharedui.resources.back
+import com.emanuel5014.trainable.sharedui.resources.cardio_duration_slider
+import com.emanuel5014.trainable.sharedui.resources.confirm
+import com.emanuel5014.trainable.sharedui.resources.exercise_details
+import com.emanuel5014.trainable.sharedui.resources.filter_custom
+import com.emanuel5014.trainable.sharedui.resources.filter_favorites
+import com.emanuel5014.trainable.sharedui.resources.keep_prescription_on_swap
+import com.emanuel5014.trainable.sharedui.resources.new_exercise
+import com.emanuel5014.trainable.sharedui.resources.rest_seconds
+import com.emanuel5014.trainable.sharedui.resources.sets
+import com.emanuel5014.trainable.sharedui.resources.swap_exercise
+import com.emanuel5014.trainable.sharedui.resources.swap_exercise_message
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
-import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
-import com.emanuel5014.trainable.data.repository.UserPreferencesRepository
-import com.emanuel5014.trainable.data.repository.dataStore
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.OnSurfaceVariant
@@ -81,7 +93,6 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.ui.theme.rememberResponsiveSize
 import com.emanuel5014.trainable.util.RestSeconds
-import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,15 +151,14 @@ fun SwapExerciseBottomSheet(
     val showThumbnails = rememberShowExerciseThumbnails(availableExercises, excludedExerciseIds)
 
     // The rest last confirmed here; read while the lifter browses the list, so the slider of step 2 opens on it
-    val restMemory: RememberedRestViewModel = hiltViewModel()
-    val rememberedRest by restMemory.lastRestSeconds.collectAsState()
+    val memory = LocalExerciseAddMemory.current()
+    val rememberedRest by memory.lastRestSeconds.collectAsState()
     // The type each exercise was last added with: step 2 opens the selector on it
-    val typeMemory: RememberedExerciseTypesViewModel = hiltViewModel()
-    val rememberedTypes by typeMemory.types.collectAsState()
+    val rememberedTypes by memory.types.collectAsState()
 
-    val allLabel = stringResource(R.string.all_categories)
-    val favoritesLabel = stringResource(R.string.filter_favorites)
-    val customLabel = stringResource(R.string.filter_custom)
+    val allLabel = stringResource(Res.string.all_categories)
+    val favoritesLabel = stringResource(Res.string.filter_favorites)
+    val customLabel = stringResource(Res.string.filter_custom)
     // A category can combine with the favorites or the custom ones, so each button is on by itself
     val filterOptions = buildList {
         add(
@@ -201,7 +211,7 @@ fun SwapExerciseBottomSheet(
                         Column {
                             Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                                 Text(
-                                    text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
+                                    text = if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise),
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontSize = ResponsiveSize.labelLargeSize
                                 ),
@@ -209,7 +219,7 @@ fun SwapExerciseBottomSheet(
                                 fontWeight = FontWeight.ExtraBold
                             )
                             Text(
-                                text = if (isAdding) stringResource(R.string.exercise_details) else stringResource(R.string.swap_exercise_message),
+                                text = if (isAdding) stringResource(Res.string.exercise_details) else stringResource(Res.string.swap_exercise_message),
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontSize = ResponsiveSize.headlineMediumSize
                                 ),
@@ -278,7 +288,7 @@ fun SwapExerciseBottomSheet(
                             ) {
                                 Icon(Icons.Rounded.Add, contentDescription = null, tint = Primary)
                                 Spacer(modifier = Modifier.width(Spacing.medium))
-                                Text(stringResource(R.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
+                                Text(stringResource(Res.string.add_custom_exercise), fontWeight = FontWeight.ExtraBold)
                             }
                         }
                     }
@@ -294,7 +304,7 @@ fun SwapExerciseBottomSheet(
                         languageCode = languageCode,
                         initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                         onConfirm = { durationMinutes, rest, sets ->
-                            rest?.let { restMemory.remember(it) }
+                            rest?.let { memory.rememberRest(it) }
                             onCardioExerciseSelected(selectedExercise!!, durationMinutes, rest, sets)
                             onDismiss()
                         },
@@ -315,13 +325,13 @@ fun SwapExerciseBottomSheet(
                             initialType = ExerciseTypeMemory.typeFor(rememberedTypes, ex.id),
                             initialRestSeconds = rememberedRest ?: RestSeconds.DEFAULT,
                             onConfirm = { sets, reps, rest, exerciseType, durataTargetSec ->
-                                rest?.let { restMemory.remember(it) }
-                                typeMemory.remember(ex.id, exerciseType)
+                                rest?.let { memory.rememberRest(it) }
+                                memory.rememberType(ex.id, exerciseType)
                                 onExerciseSelected(ex, sets, reps, rest, exerciseType, durataTargetSec)
                                 onDismiss()
                             },
                             onConfirmAdvanced = { blocks, rest ->
-                                rest?.let { restMemory.remember(it) }
+                                rest?.let { memory.rememberRest(it) }
                                 onAdvancedExerciseSelected?.invoke(ex, blocks, rest)
                                 onDismiss()
                             },
@@ -335,14 +345,15 @@ fun SwapExerciseBottomSheet(
         }
     }
 
-    ExerciseMediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
-    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = { detailExerciseId = null }) }
+    val platformUi = LocalExercisePlatformUi.current
+    platformUi.MediaPeek(exerciseMediaToView, languageCode) { exerciseMediaToView = null }
+    detailExerciseId?.let { platformUi.ExerciseDetail(exerciseId = it, onDismiss = { detailExerciseId = null }) }
 
     if (showAddCustomDialog) {
         ExerciseFormDialog(
-            title = stringResource(R.string.new_exercise),
+            title = stringResource(Res.string.new_exercise),
             categories = allCategories,
-            existingExercises = rememberNamesInUse(),
+            existingExercises = platformUi.namesInUse(),
             languageCode = languageCode,
             showDescription = false,
             onConfirm = { form ->
@@ -394,12 +405,9 @@ private fun SwapExerciseConfigSheet(
     var advancedBlocks by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { preferences ->
-            preferences[UserPreferencesRepository.HAPTIC_ENABLED] ?: true
-        }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
+    val showMessage = LocalShowMessage.current
+    val advancedNeedsBlock = stringResource(Res.string.advanced_needs_block)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -412,7 +420,7 @@ private fun SwapExerciseConfigSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                     Text(
-                        text = (if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise)).uppercase(),
+                        text = (if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise)).uppercase(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -427,7 +435,7 @@ private fun SwapExerciseConfigSheet(
                     )
                     if (!isAdding && initialBlocks.isNotEmpty() && advancedEnabled) {
                         Text(
-                            text = stringResource(R.string.keep_prescription_on_swap),
+                            text = stringResource(Res.string.keep_prescription_on_swap),
                             style = MaterialTheme.typography.bodySmall,
                             color = OnSurfaceVariant
                         )
@@ -460,7 +468,7 @@ private fun SwapExerciseConfigSheet(
                         GymInputField(
                             value = setsText,
                             onValueChange = { setsText = it },
-                            label = stringResource(R.string.sets),
+                            label = stringResource(Res.string.sets),
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -511,7 +519,7 @@ private fun SwapExerciseConfigSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.back).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.back).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
@@ -520,7 +528,7 @@ private fun SwapExerciseConfigSheet(
                                 "advanced" -> {
                                     val blocks = advancedBlocks[1].orEmpty()
                                     if (blocks.isEmpty()) {
-                                        android.widget.Toast.makeText(context, context.getString(R.string.advanced_needs_block), android.widget.Toast.LENGTH_SHORT).show()
+                                        showMessage(advancedNeedsBlock)
                                         return@GymButton
                                     }
                                     onConfirmAdvanced(blocks, rest)
@@ -551,7 +559,7 @@ private fun SwapExerciseConfigSheet(
                             else -> true
                         }
                     ) {
-                        Text(stringResource(R.string.confirm).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.confirm).uppercase(), fontWeight = FontWeight.Black)
                     }
                 }
             }
@@ -575,12 +583,7 @@ private fun SwapCardioConfigDialog(
     var restText by remember { mutableStateOf(initialRestSeconds.toString()) }
 
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val hapticEnabled by remember(context) {
-        context.dataStore.data.map { preferences ->
-            preferences[UserPreferencesRepository.HAPTIC_ENABLED] ?: true
-        }
-    }.collectAsState(initial = true)
+    val hapticEnabled by LocalHapticsSetting.current.collectAsState(initial = true)
 
     val durationSteps = listOf(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
     val durationMinutes = durationText.toIntOrNull() ?: 20
@@ -593,7 +596,7 @@ private fun SwapCardioConfigDialog(
         containerColor = Surface,
         title = {
             Text(
-                text = if (isAdding) stringResource(R.string.add_exercise) else stringResource(R.string.swap_exercise),
+                text = if (isAdding) stringResource(Res.string.add_exercise) else stringResource(Res.string.swap_exercise),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -607,7 +610,7 @@ private fun SwapCardioConfigDialog(
                 )
 
                 Text(
-                    text = stringResource(R.string.cardio_duration_slider),
+                    text = stringResource(Res.string.cardio_duration_slider),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant
                 )
@@ -648,7 +651,7 @@ private fun SwapCardioConfigDialog(
                 GymInputField(
                     value = setsText,
                     onValueChange = { setsText = it.filter { c -> c.isDigit() }.take(2) },
-                    label = stringResource(R.string.sets),
+                    label = stringResource(Res.string.sets),
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -670,12 +673,12 @@ private fun SwapCardioConfigDialog(
                     onConfirm(duration, rest, (setsText.toIntOrNull() ?: 1).coerceIn(1, 20))
                 }
             ) {
-                Text(stringResource(R.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(Res.string.confirm), color = Primary, fontWeight = FontWeight.ExtraBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onBack) {
-                Text(stringResource(R.string.back), color = OnSurfaceVariant)
+                Text(stringResource(Res.string.back), color = OnSurfaceVariant)
             }
         }
     )
@@ -695,7 +698,7 @@ fun RestSlider(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(R.string.rest_seconds),
+            text = stringResource(Res.string.rest_seconds),
             style = MaterialTheme.typography.labelSmall,
             color = OnSurfaceVariant
         )

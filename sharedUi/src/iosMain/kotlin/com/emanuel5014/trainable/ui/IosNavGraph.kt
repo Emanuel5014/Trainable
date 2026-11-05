@@ -236,7 +236,19 @@ internal fun IosNavGraph(
                 )
             }
             composable<Report> { NotOnIosYet("Report", onBack = { navController.popBackStack() }) }
-            composable<EditWorkoutSession> { NotOnIosYet("Edit workout", onBack = { navController.popBackStack() }) }
+            composable<EditWorkoutSession> { entry ->
+                val sessionId = entry.toRoute<EditWorkoutSession>().sessionId
+                val scope = rememberCoroutineScope()
+                val language = Locale.current.language
+                val model = remember(sessionId) {
+                    com.emanuel5014.trainable.ui.screens.history.EditWorkoutModel(
+                        sessionId, IosAppGraph.workouts, IosAppGraph.exercises, IosAppGraph.preferences,
+                        IosAppGraph.oneRepMaxes, IosAppGraph.journal, flowOf(language), scope
+                    )
+                }
+                com.emanuel5014.trainable.ui.screens.history.EditWorkoutContent(
+                    onNavigateBack = { navController.popBackStack() }, model = model)
+            }
             composable<CompareSessions> { NotOnIosYet("Compare", onBack = { navController.popBackStack() }) }
         }
 

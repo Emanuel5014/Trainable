@@ -1,6 +1,5 @@
 package com.emanuel5014.trainable.ui.components
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,11 +24,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.advanced_needs_block
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.prescription
+import com.emanuel5014.trainable.sharedui.resources.prescription_sheet_subtitle
+import com.emanuel5014.trainable.sharedui.resources.remove_prescription
+import com.emanuel5014.trainable.sharedui.resources.save
 import com.emanuel5014.trainable.domain.prescription.PrescriptionBlock
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -57,7 +61,8 @@ fun ExercisePrescriptionSheet(
     /** Replaces the default line under the name, for a screen where the change means something else. */
     subtitle: String? = null
 ) {
-    val context = LocalContext.current
+    val showMessage = LocalShowMessage.current
+    val advancedNeedsBlock = stringResource(Res.string.advanced_needs_block)
     var blocksByWeek by remember { mutableStateOf(mapOf(1 to initialBlocks)) }
 
     ModalBottomSheet(
@@ -71,7 +76,7 @@ fun ExercisePrescriptionSheet(
             SheetFormBody(horizontalPadding = ResponsiveSize.cardPadding, spacing = Spacing.large) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xtraSmall)) {
                     Text(
-                        text = stringResource(R.string.prescription).uppercase(),
+                        text = stringResource(Res.string.prescription).uppercase(),
                         style = MaterialTheme.typography.labelMedium,
                         color = Primary,
                         fontWeight = FontWeight.ExtraBold
@@ -85,7 +90,7 @@ fun ExercisePrescriptionSheet(
                         fontWeight = FontWeight.Black
                     )
                     Text(
-                        text = subtitle ?: stringResource(R.string.prescription_sheet_subtitle),
+                        text = subtitle ?: stringResource(Res.string.prescription_sheet_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = OnSurfaceVariant
                     )
@@ -114,7 +119,7 @@ fun ExercisePrescriptionSheet(
                             shape = CircleShape,
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                         ) {
-                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.remove_prescription), modifier = Modifier.size(28.dp))
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(Res.string.remove_prescription), modifier = Modifier.size(28.dp))
                         }
                     }
                     GymButton(
@@ -123,20 +128,20 @@ fun ExercisePrescriptionSheet(
                         containerColor = SurfaceContainerHigh,
                         contentColor = OnSurfaceVariant
                     ) {
-                        Text(stringResource(R.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.cancel).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     GymButton(
                         onClick = {
                             val blocks = blocksByWeek[1].orEmpty()
                             if (blocks.isEmpty()) {
-                                Toast.makeText(context, context.getString(R.string.advanced_needs_block), Toast.LENGTH_SHORT).show()
+                                showMessage(advancedNeedsBlock)
                             } else {
                                 onSave(blocks)
                             }
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.Black)
+                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.Black)
                     }
                 }
             }
