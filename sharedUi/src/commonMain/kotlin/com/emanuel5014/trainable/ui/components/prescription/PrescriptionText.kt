@@ -35,6 +35,8 @@ interface PrescriptionText {
     fun setPrescriptionBadges(set: SetLogEntity): List<String>
     /** How a logged set really went: its parts and pauses, help, partials, the technique as done. */
     fun setPerformanceBadges(set: SetLogEntity): List<String>
+    /** How a set went while it is still being edited in the workout. */
+    fun performanceBadges(parts: List<Int>, pauses: List<Int>, assisted: Int, partial: Int, performed: List<Technique>?): List<String>
     /** An RPE as a badge: the level name on the simplified scale ("Hard"), "RPE 8" on the others. */
     fun rpeBadge(value: Float, scale: RpeScale): String
 }

@@ -219,7 +219,12 @@ internal fun IosNavGraph(
                     onTimerNotificationsChange = {}, onMembershipNotificationsChange = {},
                     onMembershipDaysBeforeChange = {}, deliveryAvailable = false)
             }
-            composable<WorkoutExecution> { NotOnIosYet("Workout", onBack = { navController.popBackStack() }) }
+            composable<WorkoutExecution> { entry ->
+                val route = entry.toRoute<WorkoutExecution>()
+                IosWorkoutScreen(entry, route.planId, route.sessionId, route.quickStart, route.workoutName,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToRoutine = { id -> navController.navigate(RoutineDetail(id)) })
+            }
             composable<PhysicalCheck> { NotOnIosYet("Physical check", onBack = { navController.popBackStack() }) }
             composable<RoutineDetail> { entry ->
                 val planId = entry.toRoute<RoutineDetail>().planId

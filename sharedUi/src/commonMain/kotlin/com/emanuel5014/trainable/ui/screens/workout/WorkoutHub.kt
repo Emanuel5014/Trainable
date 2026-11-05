@@ -9,8 +9,7 @@ import com.emanuel5014.trainable.ui.components.SetNumberBadge
 import com.emanuel5014.trainable.ui.components.motion.RollingText
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
 import com.emanuel5014.trainable.ui.components.HubSheetState
 import androidx.compose.animation.AnimatedContent
@@ -63,12 +62,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.active_set
+import com.emanuel5014.trainable.sharedui.resources.add_exercise
+import com.emanuel5014.trainable.sharedui.resources.adjust_set_number
+import com.emanuel5014.trainable.sharedui.resources.amrap_enter_reps
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.collapse
+import com.emanuel5014.trainable.sharedui.resources.done
+import com.emanuel5014.trainable.sharedui.resources.extra_badge
+import com.emanuel5014.trainable.sharedui.resources.max_label
+import com.emanuel5014.trainable.sharedui.resources.reps_goal
+import com.emanuel5014.trainable.sharedui.resources.warmup_label
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.PlateCalculatorEnableChip
 import com.emanuel5014.trainable.ui.components.PlateChip
@@ -87,13 +97,12 @@ import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SurfaceContainerHigh
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
-import com.emanuel5014.trainable.ui.components.techniqueLabel
 import androidx.compose.foundation.layout.BoxScope
 
 /** The bottom hub of the workout: the card of the active set, its editor, the rest card and the way to the next exercise. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun BoxScope.WorkoutHub(
+fun BoxScope.WorkoutHub(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
     viewModel: WorkoutModel,
@@ -109,7 +118,7 @@ internal fun BoxScope.WorkoutHub(
     prescriptionLabels: PrescriptionLabels,
     plateExercises: Map<Int, Float?>
 ) {
-    val context = LocalContext.current
+    val prescriptionText = LocalPrescriptionText.current
     val isCardioActive = currentExState?.isCardio == true
     val isEmomActive = currentExState != null && usesEmomClock(currentExState)
     // While the minute clock runs, its screen has everything the lifter needs.
@@ -189,7 +198,7 @@ internal fun BoxScope.WorkoutHub(
                             Column {
                                 HubSlot(expansion = expansion, from = 0.3f, to = 0.55f) {
                                     Text(
-                                        text = stringResource(R.string.warmup_label).uppercase(),
+                                        text = stringResource(Res.string.warmup_label).uppercase(),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = OnTertiary.copy(alpha = 0.7f),
                                         fontWeight = FontWeight.ExtraBold,
@@ -200,7 +209,7 @@ internal fun BoxScope.WorkoutHub(
                                 val wMinutes = state.warmupTimerRemaining / 60
                                 val wSeconds = state.warmupTimerRemaining % 60
                                 RollingText(
-                                    text = String.format("%d:%02d", wMinutes, wSeconds),
+                                    text = workoutTime(wMinutes, wSeconds),
                                     style = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.78f, 1f, e)),
                                     color = OnTertiary,
                                     fontWeight = FontWeight.ExtraBold
@@ -225,7 +234,7 @@ internal fun BoxScope.WorkoutHub(
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Close,
-                                    contentDescription = stringResource(R.string.cancel)
+                                    contentDescription = stringResource(Res.string.cancel)
                                 )
                             }
                         }
@@ -347,7 +356,7 @@ internal fun BoxScope.WorkoutHub(
                                         Icon(Icons.Rounded.KeyboardDoubleArrowRight, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = stringResource(R.string.add_exercise).uppercase(),
+                                            text = stringResource(Res.string.add_exercise).uppercase(),
                                             fontWeight = FontWeight.ExtraBold
                                         )
                                     }
@@ -396,7 +405,7 @@ internal fun BoxScope.WorkoutHub(
  * [afterExtras] under the extras row, [primaryAction] is the button at the bottom.
  */
 @Composable
-internal fun SetEditorPanel(
+fun SetEditorPanel(
     exercise: WorkoutExerciseState?,
     set: WorkoutSetState,
     setIndex: Int,
@@ -525,7 +534,7 @@ private fun SetPanel(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.collapse))
+                            Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(Res.string.collapse))
                         }
                     } else {
                         val e = expansion()
@@ -546,7 +555,7 @@ private fun SetPanel(
                                     viewModel.toggleSetComplete(state.currentExerciseIndex, activeSetIndex)
                                 }
                             },
-                            modifier = Modifier.width(if (LocalConfiguration.current.screenWidthDp < 400) 76.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
+                            modifier = Modifier.width(if (workoutWindowWidthDp() < 400) 76.dp else 120.dp).height(lerp(44.dp, 48.dp, e)),
                             compact = true
                         )
                     }
@@ -590,7 +599,7 @@ private fun SetPanel(
                                     Icon(Icons.Rounded.Check, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        stringResource(R.string.done).uppercase(),
+                                        stringResource(Res.string.done).uppercase(),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold
                                     )
@@ -612,7 +621,7 @@ private fun SetPanel(
                             aboveInputs = {
                                 if (editor.set.isAmrap) {
                                     Text(
-                                        text = stringResource(R.string.amrap_enter_reps),
+                                        text = stringResource(Res.string.amrap_enter_reps),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Primary,
                                         fontWeight = FontWeight.Bold
@@ -620,7 +629,7 @@ private fun SetPanel(
                                 }
                                 editor.set.repsRange?.let { range ->
                                     Text(
-                                        text = stringResource(R.string.reps_goal, range.text),
+                                        text = stringResource(Res.string.reps_goal, range.text),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Primary,
                                         fontWeight = FontWeight.Bold
@@ -688,7 +697,7 @@ private fun SetCard(
     showDetail: Boolean,
     trailing: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
+    val prescriptionText = LocalPrescriptionText.current
     // The card keeps its place all the way down to the strip: what goes around it leaves first
     val e = expansion()
     Row(
@@ -723,7 +732,7 @@ private fun SetCard(
         Column(modifier = Modifier.weight(1f)) {
             HubSlot(expansion = expansion, from = 0.3f, to = 0.6f) {
                 Text(
-                    text = if (isActiveSet) stringResource(R.string.active_set) else stringResource(R.string.adjust_set_number, set.setNumber),
+                    text = if (isActiveSet) stringResource(Res.string.active_set) else stringResource(Res.string.adjust_set_number, set.setNumber),
                     style = MaterialTheme.typography.labelSmall,
                     color = OnSurfaceVariant,
                     maxLines = 1,
@@ -736,7 +745,7 @@ private fun SetCard(
                 reps = set.reps,
                 seconds = if (exercise?.isTimed == true) set.timeSeconds ?: exercise.timeTargetSeconds ?: 45 else null,
                 weightUnit = state.weightUnit,
-                repsText = if (set.isAmrap) stringResource(R.string.max_label) else null
+                repsText = if (set.isAmrap) stringResource(Res.string.max_label) else null
             )
             val valueStyle = MaterialTheme.typography.titleLarge.hubScaled(lerp(0.82f, 1f, e))
             // The digits roll on a line of their own; a value that does not fit on one line (narrow phone, large text) wraps instead
@@ -758,9 +767,9 @@ private fun SetCard(
             val p = set.prescription
             val detail = listOfNotNull(
                 p?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) },
-                set.repsRange?.let { stringResource(R.string.reps_goal, it.text) }
-            ) + p?.techniques.orEmpty().map { techniqueLabel(context, it) } +
-                listOfNotNull(if (set.isExtra) stringResource(R.string.extra_badge) else null)
+                set.repsRange?.let { stringResource(Res.string.reps_goal, it.text) }
+            ) + p?.techniques.orEmpty().map { prescriptionText.technique(it) } +
+                listOfNotNull(if (set.isExtra) stringResource(Res.string.extra_badge) else null)
             if (showDetail && detail.isNotEmpty()) {
                 HubSlot(expansion = expansion, from = 0.25f, to = 0.5f) {
                     Text(

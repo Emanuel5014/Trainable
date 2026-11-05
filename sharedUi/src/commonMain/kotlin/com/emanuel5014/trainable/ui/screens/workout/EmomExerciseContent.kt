@@ -46,16 +46,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.adjust_set_number
+import com.emanuel5014.trainable.sharedui.resources.emom_done
+import com.emanuel5014.trainable.sharedui.resources.emom_hint_idle
+import com.emanuel5014.trainable.sharedui.resources.emom_hint_work
+import com.emanuel5014.trainable.sharedui.resources.emom_label_first
+import com.emanuel5014.trainable.sharedui.resources.emom_label_next
+import com.emanuel5014.trainable.sharedui.resources.emom_label_now
+import com.emanuel5014.trainable.sharedui.resources.emom_log_manually
+import com.emanuel5014.trainable.sharedui.resources.emom_round_progress
+import com.emanuel5014.trainable.sharedui.resources.emom_status_get_ready
+import com.emanuel5014.trainable.sharedui.resources.emom_status_go
+import com.emanuel5014.trainable.sharedui.resources.emom_status_paused
+import com.emanuel5014.trainable.sharedui.resources.emom_status_ready
+import com.emanuel5014.trainable.sharedui.resources.emom_status_rest
+import com.emanuel5014.trainable.sharedui.resources.emom_status_work
+import com.emanuel5014.trainable.sharedui.resources.emom_stop
+import com.emanuel5014.trainable.sharedui.resources.emom_then
+import com.emanuel5014.trainable.sharedui.resources.extra_badge
+import com.emanuel5014.trainable.sharedui.resources.max_label
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.sharedui.resources.swap_exercise
+import com.emanuel5014.trainable.sharedui.resources.technique_emom
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.domain.emom.EmomClock
 import com.emanuel5014.trainable.domain.emom.EmomPhase
@@ -65,7 +87,6 @@ import com.emanuel5014.trainable.domain.prescription.Technique
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.WeightRepsInput
 import com.emanuel5014.trainable.ui.components.rememberPrescriptionLabels
-import com.emanuel5014.trainable.ui.components.techniqueLabel
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -94,7 +115,7 @@ fun EmomExerciseContent(
     onLogManually: () -> Unit,
     bottomPadding: Dp
 ) {
-    val context = LocalContext.current
+    val prescriptionText = LocalPrescriptionText.current
     val haptic = LocalHapticFeedback.current
     val prescriptionLabels = rememberPrescriptionLabels(state.weightUnit)
 
@@ -156,7 +177,7 @@ fun EmomExerciseContent(
         } else {
             AlertDialog(
                 onDismissRequest = { editIndex = null },
-                title = { Text(stringResource(R.string.adjust_set_number, set.setNumber)) },
+                title = { Text(stringResource(Res.string.adjust_set_number, set.setNumber)) },
                 text = {
                     WeightRepsInput(
                         weight = set.weight,
@@ -168,7 +189,7 @@ fun EmomExerciseContent(
                 },
                 confirmButton = {
                     TextButton(onClick = { editIndex = null }) {
-                        Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 containerColor = SurfaceContainerHigh,
@@ -210,7 +231,7 @@ fun EmomExerciseContent(
                             Icon(Icons.Rounded.Timer, contentDescription = null, tint = Tertiary, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = stringResource(R.string.technique_emom),
+                                text = stringResource(Res.string.technique_emom),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Tertiary,
                                 fontWeight = FontWeight.ExtraBold
@@ -221,7 +242,7 @@ fun EmomExerciseContent(
                         Surface(color = Primary.copy(alpha = 0.12f), shape = CircleShape) {
                             Text(
                                 text = stringResource(
-                                    R.string.emom_round_progress,
+                                    Res.string.emom_round_progress,
                                     (focusIndex - startIndex + 1).coerceIn(1, roundCount),
                                     roundCount
                                 ),
@@ -238,7 +259,7 @@ fun EmomExerciseContent(
                     IconButton(onClick = onSwap) {
                         Icon(
                             imageVector = Icons.Rounded.SwapHoriz,
-                            contentDescription = stringResource(R.string.swap_exercise),
+                            contentDescription = stringResource(Res.string.swap_exercise),
                             tint = OnSurfaceVariant
                         )
                     }
@@ -258,15 +279,15 @@ fun EmomExerciseContent(
             )
 
             if (focusSet != null) {
-                val maxLabel = stringResource(R.string.max_label)
+                val maxLabel = stringResource(Res.string.max_label)
                 val prescription = focusSet.prescription
                 // A fixed weight is already in the load line; only %1RM and RPE add information.
                 val detail = listOfNotNull(
                     prescription
                         ?.takeIf { it.intensityType == IntensityType.PERCENT || it.intensityType == IntensityType.RPE }
                         ?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
-                ) +prescription?.techniques.orEmpty().filter { it != Technique.Emom }.map { techniqueLabel(context, it) } +
-                    listOfNotNull(if (focusSet.isExtra) stringResource(R.string.extra_badge) else null)
+                ) +prescription?.techniques.orEmpty().filter { it != Technique.Emom }.map { prescriptionText.technique(it) } +
+                    listOfNotNull(if (focusSet.isExtra) stringResource(Res.string.extra_badge) else null)
 
                 Surface(
                     color = SurfaceContainerHigh,
@@ -281,9 +302,9 @@ fun EmomExerciseContent(
                             Text(
                                 text = stringResource(
                                     when (snapshot.phase) {
-                                        EmomPhase.Work -> R.string.emom_label_now
-                                        EmomPhase.Rest -> R.string.emom_label_next
-                                        else -> R.string.emom_label_first
+                                        EmomPhase.Work -> Res.string.emom_label_now
+                                        EmomPhase.Rest -> Res.string.emom_label_next
+                                        else -> Res.string.emom_label_first
                                     },
                                     focusSet.setNumber
                                 ),
@@ -312,7 +333,7 @@ fun EmomExerciseContent(
                             }
                             if (thenSet != null) {
                                 Text(
-                                    text = stringResource(R.string.emom_then, thenSet.loadText(state.weightUnit, maxLabel)),
+                                    text = stringResource(Res.string.emom_then, thenSet.loadText(state.weightUnit, maxLabel)),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = OnSurfaceVariant,
                                     fontWeight = FontWeight.Bold,
@@ -324,7 +345,7 @@ fun EmomExerciseContent(
                         IconButton(onClick = { editIndex = focusIndex }) {
                             Icon(
                                 imageVector = Icons.Rounded.Edit,
-                                contentDescription = stringResource(R.string.adjust_set_number, focusSet.setNumber),
+                                contentDescription = stringResource(Res.string.adjust_set_number, focusSet.setNumber),
                                 tint = OnSurfaceVariant
                             )
                         }
@@ -364,7 +385,7 @@ fun EmomExerciseContent(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val left = snapshot.secondsLeft
                 Text(
-                    text = String.format("%d:%02d", left / 60, left % 60),
+                    text = workoutTime(left / 60, left % 60),
                     style = MaterialTheme.typography.displayLarge.copy(fontSize = clockFontSize),
                     fontWeight = FontWeight.Black,
                     color = clockColor,
@@ -376,12 +397,12 @@ fun EmomExerciseContent(
                 Text(
                     text = stringResource(
                         when {
-                            isPaused -> R.string.emom_status_paused
-                            snapshot.phase == EmomPhase.Idle -> R.string.emom_status_ready
-                            snapshot.phase == EmomPhase.LeadIn -> R.string.emom_status_get_ready
-                            snapshot.phase == EmomPhase.Rest -> R.string.emom_status_rest
-                            EmomClock.isGoFlash(elapsed) -> R.string.emom_status_go
-                            else -> R.string.emom_status_work
+                            isPaused -> Res.string.emom_status_paused
+                            snapshot.phase == EmomPhase.Idle -> Res.string.emom_status_ready
+                            snapshot.phase == EmomPhase.LeadIn -> Res.string.emom_status_get_ready
+                            snapshot.phase == EmomPhase.Rest -> Res.string.emom_status_rest
+                            EmomClock.isGoFlash(elapsed) -> Res.string.emom_status_go
+                            else -> Res.string.emom_status_work
                         }
                     ),
                     style = MaterialTheme.typography.labelLarge,
@@ -428,7 +449,7 @@ fun EmomExerciseContent(
                     ) {
                         Icon(Icons.Rounded.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.emom_stop), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.emom_stop), fontWeight = FontWeight.ExtraBold)
                     }
                     isRunning && snapshot.phase == EmomPhase.Work -> GymButton(
                         onClick = { viewModel.completeEmomRound() },
@@ -438,14 +459,14 @@ fun EmomExerciseContent(
                         Icon(Icons.Rounded.Check, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.emom_done),
+                            text = stringResource(Res.string.emom_done),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
                     run == null -> TextButton(onClick = onLogManually) {
                         Text(
-                            text = stringResource(R.string.emom_log_manually),
+                            text = stringResource(Res.string.emom_log_manually),
                             color = OnSurfaceVariant,
                             fontWeight = FontWeight.Bold
                         )
@@ -453,8 +474,8 @@ fun EmomExerciseContent(
                 }
                 if (roomForHint) {
                     val hint = when {
-                        isRunning && snapshot.phase == EmomPhase.Work -> stringResource(R.string.emom_hint_work)
-                        run == null -> stringResource(R.string.emom_hint_idle, EmomClock.LEAD_IN_SECONDS)
+                        isRunning && snapshot.phase == EmomPhase.Work -> stringResource(Res.string.emom_hint_work)
+                        run == null -> stringResource(Res.string.emom_hint_idle, EmomClock.LEAD_IN_SECONDS)
                         else -> null
                     }
                     hint?.let {

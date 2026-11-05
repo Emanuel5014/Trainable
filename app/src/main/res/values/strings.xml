@@ -15,13 +15,11 @@
     <string name="close">Close</string>
     <string name="confirm">Confirm</string>
     <string name="back">Back</string>
-    <string name="done">Done</string>
     <string name="finish">Finish</string>
     <string name="continue_text">Continue</string>
     <string name="reset">Reset</string>
     <string name="retry">Retry</string>
     <string name="dismiss">Dismiss</string>
-    <string name="collapse">Collapse</string>
     <string name="yes">YES</string>
     <string name="no">NO</string>
     <string name="selected">Selected</string>
@@ -38,7 +36,6 @@
     <string name="share_built_for_strength">BUILT FOR STRENGTH</string>
     <string name="share_footer_message">TRACK YOUR PROGRESS WITH TRAINABLE</string>
     <string name="later">Later</string>
-    <string name="start">START</string>
 
     <!-- General -->
     <string name="daily">Daily</string>
@@ -84,21 +81,17 @@
     <string name="no_archived">No archived routines</string>
     <string name="swipe_for_archived">Swipe down for archived</string>
     <string name="swipe_for_active">Swipe down for active</string>
-    <string name="routine_name">Routine Name</string>
     <string name="schedule_days">SCHEDULE DAYS</string>
     <string name="start_date">START DATE:</string>
     <string name="end_date">EXPIRATION DATE:</string>
     <string name="expires">Expires:</string>
     <string name="expiration_date">Expiration Date</string>
-    <string name="swap_exercise">SWAP EXERCISE</string>
     <string name="swipe_actions">Swipe Actions</string>
     <string name="swipe_actions_desc">Enable swipe to edit/archive/delete items and navigate between exercises</string>
     <string name="edit_category">Edit Category</string>
 
     <!-- Exercises -->
     <string name="exercises_completed">exercises completed</string>
-    <string name="add_exercise">ADD EXERCISE</string>
-    <string name="add_exercise_to_workout">ADD EXERCISE</string>
     <string name="sets">Sets</string>
     <string name="reps">Reps</string>
     <string name="weight_kg">Weight</string>
@@ -107,9 +100,6 @@
     <string name="tap_to_change_exercise">Tap to change exercise</string>
     <string name="category">Category</string>
     <string name="superset">SUPERSET</string>
-    <string name="add_set">ADD SET</string>
-    <string name="remove_set">REMOVE SET</string>
-    <string name="adjust_set_number">ADJUST SET %d</string>
 
     <!-- Categories -->
     <string name="category_chest">Chest</string>
@@ -123,18 +113,14 @@
     <string name="workout_execution">Workout Execution</string>
     <string name="workout_execution_title">Workout Execution</string>
     <string name="session_in_progress">SESSION IN PROGRESS</string>
-    <string name="active_set">ACTIVE SET</string>
     <string name="exercise_completed">EXERCISE COMPLETED</string>
     <string name="exercise_completed_title">EXERCISE COMPLETED</string>
     <string name="rest_end">REST TERMINATED</string>
     <string name="previous_exercise">Previous</string>
     <string name="next_exercise">Next</string>
-    <string name="next_exercise_btn">Next</string>
-    <string name="next_exercise_wrk">Next Exercise</string>
     <string name="skip_rest">Skip</string>
     <string name="add_time">+30s</string>
     <string name="rest_timer">Rest Timer</string>
-    <string name="rest_timer_remaining">%s remaining</string>
     <string name="warmup_timer">Warmup Timer</string>
     <string name="warmup_timer_finished">Warmup timer finished!</string>
     <string name="warmup_timer_description">Set a timer for warmup, stretching, or anything else</string>
@@ -149,16 +135,7 @@
     <string name="add_duration">Add duration</string>
 
     <!-- Workout Session -->
-    <string name="cancel_workout_title">Cancel Workout?</string>
-    <string name="cancel_workout_message">This will permanently delete this workout session. This action cannot be undone.</string>
-    <string name="finish_workout">Finish</string>
-    <string name="finish_workout_title">Finish Workout?</string>
-    <string name="finish_workout_message">Are you sure you want to finish this workout? All exercises have been completed.</string>
-    <string name="finish_workout_message_incomplete">Are you sure you want to finish this workout? Exercises and sets you haven\'t completed will not be saved.</string>
-    <string name="finish_confirm">Finish</string>
     <string name="quick_workout">QUICK WORKOUT</string>
-    <string name="rename_workout">Rename Workout</string>
-    <string name="no_exercises_in_session">No exercises tracked in this session.</string>
     <string name="add_workout">Add Workout</string>
     <string name="total_workouts">Total Workouts</string>
 
@@ -411,8 +388,6 @@
     <string name="tap_to_set">Tap to set</string>
 
     <!-- Cardio -->
-    <string name="cardio_enter_distance">Enter distance</string>
-    <string name="cardio_distance_label">Distance traveled (km)</string>
     <string name="cardio_dist_value">%1$s km</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Free-form</string>
@@ -529,8 +504,6 @@
     <string name="custom">Custom</string>
     <string name="custom_weight">Custom Weight</string>
     <string name="custom_reps">Custom Reps</string>
-    <string name="remove_set_confirm">Are you sure you want to remove this set?</string>
-    <string name="toggle_superset_with_next">Toggle superset with next exercise</string>
 
     <!-- AI Scan -->
     <string name="ai_section_title">AI</string>
@@ -633,13 +606,10 @@
     <string name="time_weight_ready">READY TO START</string>
     <string name="time_weight_running">TIMER RUNNING</string>
     <string name="time_weight_paused">TIMER PAUSED</string>
-    <string name="time_weight_finish_set">FINISH SET</string>
-    <string name="time_weight_reset_timer">Reset timer</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Advanced</string>
     <string name="exercise_type_time_and_reps">Time &amp; Reps</string>
     <string name="time_reps_value">%1$ds · %2$d reps</string>
-    <string name="reps_done_label">Reps done</string>
     <string name="cardio_sets_total">%1$d sets</string>
     <string name="mini_set_add">Add a mini-set</string>
     <string name="mini_set_notification">Mini-set</string>
@@ -661,9 +631,7 @@
         <item quantity="other">+%d partials</item>
     </plurals>
     <string name="notification_next_set_text">Next: %1$s - Set %2$d: %3$s</string>
-    <string name="one_rep_max_value">1RM %1$s</string>
     <string name="edit_one_rep_max">Edit 1RM</string>
-    <string name="one_rep_max_missing">Set a 1RM to calculate the loads</string>
     <string name="block_n">BLOCK %1$d</string>
     <string name="bodyweight_short">BW</string>
     <string name="total_reps_label">%1$d reps total</string>
@@ -681,7 +649,6 @@
     <string name="notation_recognised">Recognised: %1$s</string>
     <string name="notation_nothing">Nothing recognised yet</string>
     <string name="notation_replace_blocks">Replace blocks</string>
-    <string name="week_short">W%1$d</string>
     <string name="week_n">Week %1$d</string>
     <string name="week_of">Week %1$d of %2$d</string>
     <string name="not_in_week">Not in W%1$d</string>
@@ -690,35 +657,11 @@
     <string name="remove_week">Remove last week</string>
     <string name="program_completed">Program completed. Nice work!</string>
     <string name="restart_program">Restart</string>
-    <string name="block_header">BLOCK %1$d · %2$s</string>
     <string name="extra_badge">EXTRA</string>
-    <string name="add_extra_set">Extra set</string>
     <string name="rpe_short">RPE %1$s</string>
-    <string name="total_reps_progress">%1$d/%2$d reps</string>
-    <string name="amrap_enter_reps">Enter the reps you did</string>
-    <string name="new_one_rep_max_title">New 1RM?</string>
-    <string name="new_one_rep_max_message">%1$s × %2$d on %3$s beats your 1RM of %4$s. Save %5$s as your new 1RM?</string>
-    <string name="save_new_one_rep_max">Save 1RM</string>
-    <string name="not_now">Not now</string>
     <string name="notification_next_set_detail">Next: %1$s - Set %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · next set at the top of the minute</string>
-    <string name="emom_round_progress">ROUND %1$d/%2$d</string>
-    <string name="emom_status_ready">READY</string>
-    <string name="emom_status_get_ready">GET READY</string>
-    <string name="emom_status_go">GO!</string>
-    <string name="emom_status_work">WORK</string>
-    <string name="emom_status_rest">REST</string>
-    <string name="emom_status_paused">PAUSED</string>
-    <string name="emom_label_now">NOW · SET %1$d</string>
-    <string name="emom_label_next">NEXT · SET %1$d</string>
-    <string name="emom_label_first">FIRST · SET %1$d</string>
     <string name="emom_then">Then %1$s</string>
-    <string name="emom_done">DONE</string>
-    <string name="emom_stop">STOP EMOM</string>
-    <string name="emom_log_manually">Log the sets by hand</string>
-    <string name="emom_use_timer">EMOM TIMER</string>
-    <string name="emom_hint_work">Tap DONE when you finish, or the round is logged at the top of the minute.</string>
-    <string name="emom_hint_idle">%1$d-second countdown, then a new round every minute.</string>
     <string name="emom_notification_channel">EMOM timer</string>
     <string name="emom_notification_title_get_ready">EMOM · Get ready</string>
     <string name="emom_notification_title_work">Round %1$d/%2$d · Go</string>
@@ -832,20 +775,11 @@
     <string name="onboarding_nextcloud_title">Your cloud,\nyour backups.</string>
     <string name="onboarding_nextcloud_desc">Optional: connect your own Nextcloud to keep a copy of your data off this phone, or to restore it on a new one.</string>
     <string name="nextcloud_connect">Connect</string>
-    <string name="warmup_label">Warmup</string>
-    <string name="cardio_mark_completed">Mark as completed</string>
-    <string name="cardio_complete_logs_time">Logs the planned time: %1$s</string>
-    <string name="cardio_complete_duration">Duration (min)</string>
-    <string name="optional_suffix">(optional)</string>
 
     <!-- Starting weight, rep ranges and double progression -->
-    <string name="reps_goal">Goal: %1$s</string>
 
     <!-- Add workout sheet: routines grouped by active / archived -->
     <!-- Changing the program during a workout -->
-    <string name="edit_program">Edit program</string>
-    <string name="program_edit_subtitle">Change what this workout asks for. Sets already done stay as they are.</string>
-    <string name="load_sheet_title">Load percentage</string>
     <string name="load_preview_line">Block %1$d: %2$s → %3$s</string>
     <string name="program_edit_before">Before</string>
     <string name="program_edit_original">Original program</string>
@@ -860,7 +794,6 @@
     <string name="import_history_template_note_easy">easy pace</string>
 
     <!-- Workout journal -->
-    <string name="journal_how_did_it_go">How did it go?</string>
     <plurals name="journal_tag_uses">
         <item quantity="one">Used in %1$d workout</item>
         <item quantity="other">Used in %1$d workouts</item>
@@ -881,7 +814,6 @@
     <string name="exercise_detail_open">Exercise details</string>
     <!-- Merge and hide exercises -->
     <!-- Exercises page -->
-    <string name="exercise_tools_group">Exercise tools</string>
     <!-- Favorite exercises -->
     <!-- Muscles and equipment of an exercise -->
     <string name="muscle_upper_chest">Upper chest</string>

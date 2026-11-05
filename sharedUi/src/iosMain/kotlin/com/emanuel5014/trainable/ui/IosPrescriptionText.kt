@@ -131,16 +131,17 @@ private class IosPrescriptionText(private val t: Templates, private val language
         if (set.isExtra) add(t.extra)
     }
 
-    override fun setPerformanceBadges(set: SetLogEntity): List<String> = buildList {
-        val parts = set.parts
-        val pauses = set.pauses
+    override fun setPerformanceBadges(set: SetLogEntity): List<String> =
+        performanceBadges(set.parts, set.pauses, set.assistedReps, set.partialReps, set.performed)
+
+    override fun performanceBadges(parts: List<Int>, pauses: List<Int>, assisted: Int, partial: Int, performed: List<Technique>?): List<String> = buildList {
         if (parts.size > 1) {
             val text = parts.joinToString("+")
             add(if (pauses.isEmpty()) text else fill(plural(t.parts, pauses.size), text, pauses.joinToString(", ") { "$it″" }))
         }
-        if (set.assistedReps > 0) add(fill(plural(t.assisted, set.assistedReps), set.assistedReps))
-        if (set.partialReps > 0) add(fill(plural(t.partial, set.partialReps), set.partialReps))
-        set.performed?.let { list ->
+        if (assisted > 0) add(fill(plural(t.assisted, assisted), assisted))
+        if (partial > 0) add(fill(plural(t.partial, partial), partial))
+        performed?.let { list ->
             add(if (list.isEmpty()) t.performedNone else fill(t.performed, list.joinToString(" · ") { technique(it) }))
         }
     }

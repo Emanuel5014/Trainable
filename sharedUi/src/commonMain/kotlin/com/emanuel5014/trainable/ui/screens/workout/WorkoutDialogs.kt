@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
 import com.emanuel5014.trainable.ui.components.journal.FinishWorkoutSheet
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,13 +25,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.cancel_workout_message
+import com.emanuel5014.trainable.sharedui.resources.cancel_workout_title
+import com.emanuel5014.trainable.sharedui.resources.delete
+import com.emanuel5014.trainable.sharedui.resources.finish_confirm
+import com.emanuel5014.trainable.sharedui.resources.finish_workout_message
+import com.emanuel5014.trainable.sharedui.resources.finish_workout_message_incomplete
+import com.emanuel5014.trainable.sharedui.resources.finish_workout_title
+import com.emanuel5014.trainable.sharedui.resources.new_one_rep_max_message
+import com.emanuel5014.trainable.sharedui.resources.new_one_rep_max_title
+import com.emanuel5014.trainable.sharedui.resources.not_now
+import com.emanuel5014.trainable.sharedui.resources.program_edit_subtitle
+import com.emanuel5014.trainable.sharedui.resources.rename_workout
+import com.emanuel5014.trainable.sharedui.resources.routine_name
+import com.emanuel5014.trainable.sharedui.resources.save
+import com.emanuel5014.trainable.sharedui.resources.save_new_one_rep_max
+import com.emanuel5014.trainable.sharedui.resources.start
+import com.emanuel5014.trainable.sharedui.resources.warmup_timer
+import com.emanuel5014.trainable.sharedui.resources.warmup_timer_description
 import com.emanuel5014.trainable.data.ExerciseTranslations
-import com.emanuel5014.trainable.ui.components.ExerciseMediaViewer
-import com.emanuel5014.trainable.ui.screens.exercise.ExerciseDetailDialog
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.ExercisePrescriptionSheet
 import com.emanuel5014.trainable.ui.components.LoadPercentSheet
@@ -56,7 +74,7 @@ import com.emanuel5014.trainable.data.local.entity.ExerciseEntity
 /** The dialogs that can open before the workout has loaded (technique as done, media viewer, detail, rename, new 1RM, restore). */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun WorkoutEarlyDialogs(
+fun WorkoutEarlyDialogs(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
     viewModel: WorkoutModel,
@@ -85,7 +103,7 @@ internal fun WorkoutEarlyDialogs(
         // The file disappears when the user removes it from the viewer: close it then
         LaunchedEffect(mediaFile) { if (mediaFile == null) ui.mediaViewer = null }
         if (mediaFile != null) {
-            ExerciseMediaViewer(
+            LocalExercisePlatformUi.current.MediaViewer(
                 fileName = mediaFile,
                 exerciseName = exerciseName,
                 onDismiss = { ui.mediaViewer = null },
@@ -95,18 +113,18 @@ internal fun WorkoutEarlyDialogs(
         }
     }
 
-    detailExerciseId?.let { ExerciseDetailDialog(exerciseId = it, onDismiss = onDetailDismiss) }
+    detailExerciseId?.let { LocalExercisePlatformUi.current.ExerciseDetail(exerciseId = it, onDismiss = onDetailDismiss) }
 
     if (ui.showRenameDialog) {
         AlertDialog(
             modifier = Modifier.imePadding(),
             onDismissRequest = { ui.showRenameDialog = false },
-            title = { Text(stringResource(R.string.rename_workout)) },
+            title = { Text(stringResource(Res.string.rename_workout)) },
             text = {
                 com.emanuel5014.trainable.ui.components.GymInputField(
                     value = ui.newSessionName,
                     onValueChange = { ui.newSessionName = it },
-                    label = stringResource(R.string.routine_name),
+                    label = stringResource(Res.string.routine_name),
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -115,12 +133,12 @@ internal fun WorkoutEarlyDialogs(
                     viewModel.updateSessionName(ui.newSessionName)
                     ui.showRenameDialog = false
                 }) {
-                    Text(stringResource(R.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { ui.showRenameDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercase())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -134,11 +152,11 @@ internal fun WorkoutEarlyDialogs(
         AlertDialog(
             onDismissRequest = { viewModel.resolveOneRepMaxSuggestion(accept = false) },
             icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Primary) },
-            title = { Text(stringResource(R.string.new_one_rep_max_title), fontWeight = FontWeight.ExtraBold) },
+            title = { Text(stringResource(Res.string.new_one_rep_max_title), fontWeight = FontWeight.ExtraBold) },
             text = {
                 Text(
                     stringResource(
-                        R.string.new_one_rep_max_message,
+                        Res.string.new_one_rep_max_message,
                         fmt(suggestion.weightKg), suggestion.reps, suggestion.exerciseName,
                         fmt(suggestion.currentKg), fmt(suggestion.suggestedKg)
                     )
@@ -151,12 +169,12 @@ internal fun WorkoutEarlyDialogs(
                     contentColor = OnPrimary,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(R.string.save_new_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.save_new_one_rep_max).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.resolveOneRepMaxSuggestion(accept = false) }) {
-                    Text(stringResource(R.string.not_now).uppercase(), color = OnSurfaceVariant)
+                    Text(stringResource(Res.string.not_now).uppercase(), color = OnSurfaceVariant)
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -179,7 +197,7 @@ internal fun WorkoutEarlyDialogs(
 /** The dialogs and sheets of the loaded workout: warm-up timer, plate calculator, program editing, swap and add exercise, cancel, finish. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun WorkoutDialogs(
+fun WorkoutDialogs(
     state: WorkoutState,
     ui: WorkoutScreenUiState,
     viewModel: WorkoutModel,
@@ -196,12 +214,12 @@ internal fun WorkoutDialogs(
         AlertDialog(
             onDismissRequest = { ui.showWarmupTimerDialog = false },
             title = {
-                Text(stringResource(R.string.warmup_timer), fontWeight = FontWeight.Black)
+                Text(stringResource(Res.string.warmup_timer), fontWeight = FontWeight.Black)
             },
             text = {
                 Column {
                     Text(
-                        text = stringResource(R.string.warmup_timer_description),
+                        text = stringResource(Res.string.warmup_timer_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OnSurfaceVariant
                     )
@@ -221,12 +239,12 @@ internal fun WorkoutDialogs(
                     viewModel.startWarmupTimer(ui.warmupTimerDuration)
                     ui.showWarmupTimerDialog = false
                 }) {
-                    Text(stringResource(R.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.start).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { ui.showWarmupTimerDialog = false }) {
-                    Text(stringResource(R.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercase())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -265,7 +283,7 @@ internal fun WorkoutDialogs(
                 exerciseId = exercise.exercise.id,
                 exerciseName = editedName,
                 initialBlocks = exercise.blocks,
-                subtitle = stringResource(R.string.program_edit_subtitle),
+                subtitle = stringResource(Res.string.program_edit_subtitle),
                 onDismiss = { ui.programEditFor = null },
                 onSave = { blocks ->
                     val canUpdateRoutine = exercise.planDetails != null && exercise.swappedExerciseId == null
@@ -429,8 +447,8 @@ internal fun WorkoutDialogs(
     if (ui.showCancelDialog) {
         AlertDialog(
             onDismissRequest = { ui.showCancelDialog = false },
-            title = { Text(stringResource(R.string.cancel_workout_title)) },
-            text = { Text(stringResource(R.string.cancel_workout_message)) },
+            title = { Text(stringResource(Res.string.cancel_workout_title)) },
+            text = { Text(stringResource(Res.string.cancel_workout_message)) },
             confirmButton = {
                 GymButton(
                     onClick = {
@@ -441,7 +459,7 @@ internal fun WorkoutDialogs(
                     contentColor = Error,
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.delete).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -451,7 +469,7 @@ internal fun WorkoutDialogs(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(R.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercase())
                 }
             },
             containerColor = SurfaceContainerHigh,
@@ -462,10 +480,10 @@ internal fun WorkoutDialogs(
 
     if (ui.showFinishDialog && state.journalEnabled && state.journalPromptAtFinish) {
         FinishWorkoutSheet(
-            title = stringResource(R.string.finish_workout_title),
+            title = stringResource(Res.string.finish_workout_title),
             message = stringResource(
-                if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
-                else R.string.finish_workout_message_incomplete
+                if (state.completedExercises == state.totalExercises) Res.string.finish_workout_message
+                else Res.string.finish_workout_message_incomplete
             ),
             journal = state.journalDraft,
             onJournalChange = viewModel::updateJournalDraft,
@@ -479,12 +497,12 @@ internal fun WorkoutDialogs(
     } else if (ui.showFinishDialog) {
         AlertDialog(
             onDismissRequest = { ui.showFinishDialog = false },
-            title = { Text(stringResource(R.string.finish_workout_title)) },
+            title = { Text(stringResource(Res.string.finish_workout_title)) },
             text = {
                 Text(
                     stringResource(
-                        if (state.completedExercises == state.totalExercises) R.string.finish_workout_message
-                        else R.string.finish_workout_message_incomplete
+                        if (state.completedExercises == state.totalExercises) Res.string.finish_workout_message
+                        else Res.string.finish_workout_message_incomplete
                     )
                 )
             },
@@ -496,7 +514,7 @@ internal fun WorkoutDialogs(
                     },
                     modifier = Modifier.padding(horizontal = 8.dp).height(48.dp)
                 ) {
-                    Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             },
             dismissButton = {
@@ -506,7 +524,7 @@ internal fun WorkoutDialogs(
                     contentColor = OnSurfaceVariant,
                     modifier = Modifier.height(48.dp)
                 ) {
-                    Text(stringResource(R.string.cancel).uppercase())
+                    Text(stringResource(Res.string.cancel).uppercase())
                 }
             },
             containerColor = SurfaceContainerHigh,

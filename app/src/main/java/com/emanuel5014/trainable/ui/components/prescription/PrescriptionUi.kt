@@ -93,5 +93,7 @@ class AndroidPrescriptionText(private val context: android.content.Context) : Pr
     override fun technique(technique: Technique): String = techniqueLabel(context, technique)
     override fun setPrescriptionBadges(set: SetLogEntity): List<String> = setLogPrescriptionBadges(context, set)
     override fun setPerformanceBadges(set: SetLogEntity): List<String> = setLogPerformanceBadges(context, set)
+    override fun performanceBadges(parts: List<Int>, pauses: List<Int>, assisted: Int, partial: Int, performed: List<Technique>?): List<String> =
+        setPerformanceBadges(context, parts, pauses, assisted, partial, performed)
     override fun rpeBadge(value: Float, scale: RpeScale): String = rpeBadgeText(context, value, scale)
 }

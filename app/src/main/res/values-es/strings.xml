@@ -14,13 +14,11 @@
     <string name="close">Cerrar</string>
     <string name="confirm">Confirmar</string>
     <string name="back">Atrás</string>
-    <string name="done">Hecho</string>
     <string name="finish">Finalizar</string>
     <string name="continue_text">Continuar</string>
     <string name="reset">Reiniciar</string>
     <string name="retry">Reintentar</string>
     <string name="dismiss">Descartar</string>
-    <string name="collapse">Contraer</string>
     <string name="yes">SÍ</string>
     <string name="no">NO</string>
     <string name="selected">Seleccionado</string>
@@ -37,7 +35,6 @@
     <string name="share_built_for_strength">CONSTRUIDO PARA LA FUERZA</string>
     <string name="share_footer_message">REGISTRA TU PROGRESO CON TRAINABLE</string>
     <string name="later">Más tarde</string>
-    <string name="start">INICIAR</string>
 
     <!-- General -->
     <string name="daily">Diario</string>
@@ -83,21 +80,17 @@
     <string name="no_archived">Sin rutinas archivadas</string>
     <string name="swipe_for_archived">Desliza hacia abajo para archivadas</string>
     <string name="swipe_for_active">Desliza hacia abajo para activas</string>
-    <string name="routine_name">Nombre de la Rutina</string>
     <string name="schedule_days">DIAS PROGRAMADOS</string>
     <string name="start_date">FECHA DE INICIO:</string>
     <string name="end_date">FECHA DE VENCIMIENTO:</string>
     <string name="expires">Vence:</string>
     <string name="expiration_date">Fecha de Vencimiento</string>
-    <string name="swap_exercise">CAMBIAR EJERCICIO</string>
     <string name="swipe_actions">Acciones Swipe</string>
     <string name="swipe_actions_desc">Activa deslizar para editar/archivar/eliminar elementos y navegar entre ejercicios</string>
     <string name="edit_category">Editar Categoría</string>
 
     <!-- Exercises -->
     <string name="exercises_completed">ejercicios completados</string>
-    <string name="add_exercise">AÑADIR EJERCICIO</string>
-    <string name="add_exercise_to_workout">AÑADIR EJERCICIO</string>
     <string name="sets">Series</string>
     <string name="reps">Reps</string>
     <string name="weight_kg">Peso</string>
@@ -106,9 +99,6 @@
     <string name="tap_to_change_exercise">Toca para cambiar ejercicio</string>
     <string name="category">Categoría</string>
     <string name="superset">SUPERSERIE</string>
-    <string name="add_set">AÑADIR SERIE</string>
-    <string name="remove_set">ELIMINAR SERIE</string>
-    <string name="adjust_set_number">AJUSTAR SERIE %d</string>
 
     <!-- Categories -->
     <string name="category_chest">Pecho</string>
@@ -122,18 +112,14 @@
     <string name="workout_execution">Ejecución del Entrenamiento</string>
     <string name="workout_execution_title">Ejecución del Entrenamiento</string>
     <string name="session_in_progress">SESIÓN EN CURSO</string>
-    <string name="active_set">SERIE ACTIVA</string>
     <string name="exercise_completed">EJERCICIO COMPLETADO</string>
     <string name="exercise_completed_title">EJERCICIO COMPLETADO</string>
     <string name="rest_end">DESCANSO TERMINADO</string>
     <string name="previous_exercise">Anterior</string>
     <string name="next_exercise">Siguiente</string>
-    <string name="next_exercise_btn">Siguiente</string>
-    <string name="next_exercise_wrk">Siguiente Ejercicio</string>
     <string name="skip_rest">Saltar</string>
     <string name="add_time">+30s</string>
     <string name="rest_timer">Temporizador</string>
-    <string name="rest_timer_remaining">%s restantes</string>
     <string name="warmup_timer">Temporizador de Calentamiento</string>
     <string name="warmup_timer_finished">¡Calentamiento terminado!</string>
     <string name="warmup_timer_description">Configure un temporizador para calentamiento, estiramientos u otros</string>
@@ -148,16 +134,7 @@
     <string name="add_duration">Añadir duración</string>
 
     <!-- Workout Session -->
-    <string name="cancel_workout_title">¿Cancelar Entrenamiento?</string>
-    <string name="cancel_workout_message">Esto eliminará permanentemente esta sesión de entrenamiento. Esta acción no se puede deshacer.</string>
-    <string name="finish_workout">Finalizar</string>
-    <string name="finish_workout_title">¿Finalizar Entrenamiento?</string>
-    <string name="finish_workout_message">¿Seguro que quieres finalizar este entrenamiento? Todos los ejercicios han sido completados.</string>
-    <string name="finish_workout_message_incomplete">¿Seguro que quieres finalizar este entrenamiento? Los ejercicios y series sin completar no se guardarán.</string>
-    <string name="finish_confirm">Finalizar</string>
     <string name="quick_workout">ENTRENAMIENTO RÁPIDO</string>
-    <string name="rename_workout">Renombrar Entrenamiento</string>
-    <string name="no_exercises_in_session">No hay ejercicios registrados en esta sesión.</string>
     <string name="add_workout">Añadir Entrenamiento</string>
     <string name="total_workouts">Total Entrenamientos</string>
 
@@ -410,8 +387,6 @@
     <string name="tap_to_set">Toca para establecer</string>
 
     <!-- Cardio -->
-    <string name="cardio_enter_distance">Ingresar distancia</string>
-    <string name="cardio_distance_label">Distancia recorrida (km)</string>
     <string name="cardio_dist_value">%1$s km</string>
     <string name="cardio_min_format">%1$d min</string>
     <string name="cardio_free_form">Libre</string>
@@ -528,8 +503,6 @@
     <string name="custom">Personalizado</string>
     <string name="custom_weight">Peso Personalizado</string>
     <string name="custom_reps">Reps Personalizadas</string>
-    <string name="remove_set_confirm">¿Seguro que quieres eliminar esta serie?</string>
-    <string name="toggle_superset_with_next">Alternar superserie con el siguiente ejercicio</string>
 
     <!-- AI Scan -->
     <string name="ai_section_title">IA</string>
@@ -632,13 +605,10 @@
     <string name="time_weight_ready">LISTO PARA EMPEZAR</string>
     <string name="time_weight_running">TEMPORIZADOR EN MARCHA</string>
     <string name="time_weight_paused">TEMPORIZADOR EN PAUSA</string>
-    <string name="time_weight_finish_set">TERMINAR SERIE</string>
-    <string name="time_weight_reset_timer">Reiniciar temporizador</string>
     <!-- v2.3.0 powerlifting START -->
     <string name="exercise_type_advanced">Avanzado</string>
     <string name="exercise_type_time_and_reps">Tiempo y Repeticiones</string>
     <string name="time_reps_value">%1$ds · %2$d rep.</string>
-    <string name="reps_done_label">Reps hechas</string>
     <string name="cardio_sets_total">%1$d series</string>
     <string name="mini_set_add">Añadir mini-serie</string>
     <string name="mini_set_notification">Mini-serie</string>
@@ -660,9 +630,7 @@
         <item quantity="other">+%d parciales</item>
     </plurals>
     <string name="notification_next_set_text">Siguiente: %1$s - Serie %2$d: %3$s</string>
-    <string name="one_rep_max_value">1RM %1$s</string>
     <string name="edit_one_rep_max">Editar 1RM</string>
-    <string name="one_rep_max_missing">Define un 1RM para calcular las cargas</string>
     <string name="block_n">BLOQUE %1$d</string>
     <string name="bodyweight_short">PC</string>
     <string name="total_reps_label">%1$d reps totales</string>
@@ -680,7 +648,6 @@
     <string name="notation_recognised">Reconocido: %1$s</string>
     <string name="notation_nothing">Aún no se reconoce nada</string>
     <string name="notation_replace_blocks">Reemplazar bloques</string>
-    <string name="week_short">S%1$d</string>
     <string name="week_n">Semana %1$d</string>
     <string name="week_of">Semana %1$d de %2$d</string>
     <string name="not_in_week">No en S%1$d</string>
@@ -689,35 +656,11 @@
     <string name="remove_week">Quitar la última semana</string>
     <string name="program_completed">Programa completado. ¡Buen trabajo!</string>
     <string name="restart_program">Reiniciar</string>
-    <string name="block_header">BLOQUE %1$d · %2$s</string>
     <string name="extra_badge">EXTRA</string>
-    <string name="add_extra_set">Serie extra</string>
     <string name="rpe_short">RPE %1$s</string>
-    <string name="total_reps_progress">%1$d/%2$d reps</string>
-    <string name="amrap_enter_reps">Introduce las reps hechas</string>
-    <string name="new_one_rep_max_title">¿Nuevo 1RM?</string>
-    <string name="new_one_rep_max_message">%1$s × %2$d en %3$s supera tu 1RM de %4$s. ¿Guardar %5$s como nuevo 1RM?</string>
-    <string name="save_new_one_rep_max">Guardar 1RM</string>
-    <string name="not_now">Ahora no</string>
     <string name="notification_next_set_detail">Siguiente: %1$s - Serie %2$d: %3$s × %4$s</string>
     <string name="emom_hint">EMOM · siguiente serie al inicio del minuto</string>
-    <string name="emom_round_progress">RONDA %1$d/%2$d</string>
-    <string name="emom_status_ready">LISTO</string>
-    <string name="emom_status_get_ready">PREPÁRATE</string>
-    <string name="emom_status_go">¡YA!</string>
-    <string name="emom_status_work">TRABAJO</string>
-    <string name="emom_status_rest">DESCANSO</string>
-    <string name="emom_status_paused">EN PAUSA</string>
-    <string name="emom_label_now">AHORA · SERIE %1$d</string>
-    <string name="emom_label_next">SIGUIENTE · SERIE %1$d</string>
-    <string name="emom_label_first">PRIMERA · SERIE %1$d</string>
     <string name="emom_then">Luego %1$s</string>
-    <string name="emom_done">HECHO</string>
-    <string name="emom_stop">PARAR EMOM</string>
-    <string name="emom_log_manually">Registrar las series a mano</string>
-    <string name="emom_use_timer">TEMPORIZADOR EMOM</string>
-    <string name="emom_hint_work">Toca HECHO al terminar; si no, la ronda se registra al inicio del minuto.</string>
-    <string name="emom_hint_idle">Cuenta atrás de %1$d segundos y después una ronda nueva cada minuto.</string>
     <string name="emom_notification_channel">Temporizador EMOM</string>
     <string name="emom_notification_title_get_ready">EMOM · Prepárate</string>
     <string name="emom_notification_title_work">Ronda %1$d/%2$d · ¡Ya!</string>
@@ -831,20 +774,11 @@
     <string name="onboarding_nextcloud_title">Tu nube,\ntus copias.</string>
     <string name="onboarding_nextcloud_desc">Opcional: conecta tu propio Nextcloud para guardar una copia de tus datos fuera de este teléfono o restaurarla en uno nuevo.</string>
     <string name="nextcloud_connect">Conectar</string>
-    <string name="warmup_label">Calentamiento</string>
-    <string name="cardio_mark_completed">Marcar como completado</string>
-    <string name="cardio_complete_logs_time">Registra el tiempo previsto: %1$s</string>
-    <string name="cardio_complete_duration">Duración (min)</string>
-    <string name="optional_suffix">(opcional)</string>
 
     <!-- Starting weight, rep ranges and double progression -->
-    <string name="reps_goal">Objetivo: %1$s</string>
 
     <!-- Add workout sheet: routines grouped by active / archived -->
     <!-- Changing the program during a workout -->
-    <string name="edit_program">Editar programación</string>
-    <string name="program_edit_subtitle">Cambia lo que pide este entrenamiento. Las series ya hechas se quedan como están.</string>
-    <string name="load_sheet_title">Porcentaje de la carga</string>
     <string name="load_preview_line">Bloque %1$d: %2$s → %3$s</string>
     <string name="program_edit_before">Antes</string>
     <string name="program_edit_original">Programa original</string>
@@ -859,7 +793,6 @@
     <string name="import_history_template_note_easy">ritmo fácil</string>
 
     <!-- Workout journal -->
-    <string name="journal_how_did_it_go">¿Cómo fue?</string>
     <plurals name="journal_tag_uses">
         <item quantity="one">Usada en %1$d entrenamiento</item>
         <item quantity="other">Usada en %1$d entrenamientos</item>
@@ -880,7 +813,6 @@
     <string name="exercise_detail_open">Detalles del ejercicio</string>
     <!-- Merge and hide exercises -->
     <!-- Exercises page -->
-    <string name="exercise_tools_group">Herramientas del ejercicio</string>
     <!-- Favorite exercises -->
     <!-- Muscles and equipment of an exercise -->
     <string name="muscle_upper_chest">Pecho superior</string>

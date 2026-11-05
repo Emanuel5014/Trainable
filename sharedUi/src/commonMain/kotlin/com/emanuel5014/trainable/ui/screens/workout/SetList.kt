@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.graphicsLayer
@@ -10,10 +11,9 @@ import com.emanuel5014.trainable.ui.components.SegmentedShapes
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListState
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
-import androidx.compose.ui.platform.LocalContext
+import com.emanuel5014.trainable.ui.components.LocalPrescriptionText
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.platform.LocalDensity
-import com.emanuel5014.trainable.ui.components.ExerciseMediaCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,16 +61,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.add_exercise
+import com.emanuel5014.trainable.sharedui.resources.add_extra_set
+import com.emanuel5014.trainable.sharedui.resources.add_set
+import com.emanuel5014.trainable.sharedui.resources.block_header
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.delete
+import com.emanuel5014.trainable.sharedui.resources.extra_badge
+import com.emanuel5014.trainable.sharedui.resources.load_sheet_title
+import com.emanuel5014.trainable.sharedui.resources.max_label
+import com.emanuel5014.trainable.sharedui.resources.next_exercise_wrk
+import com.emanuel5014.trainable.sharedui.resources.remove_set
+import com.emanuel5014.trainable.sharedui.resources.remove_set_confirm
+import com.emanuel5014.trainable.sharedui.resources.reps_done_label
+import com.emanuel5014.trainable.sharedui.resources.time_weight_finish_set
+import com.emanuel5014.trainable.sharedui.resources.time_weight_reset_timer
+import com.emanuel5014.trainable.sharedui.resources.total_reps_progress
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.ui.components.GymButton
 import androidx.compose.ui.semantics.contentDescription
 import com.emanuel5014.trainable.ui.components.SetLogRow
-import com.emanuel5014.trainable.ui.components.setPerformanceBadges
 import com.emanuel5014.trainable.ui.theme.Error
 import com.emanuel5014.trainable.ui.theme.OnPrimary
 import com.emanuel5014.trainable.ui.theme.OnSurface
@@ -81,13 +96,11 @@ import com.emanuel5014.trainable.ui.theme.SurfaceContainerHighest
 import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionFormatter
 import com.emanuel5014.trainable.domain.prescription.RepMode
-import com.emanuel5014.trainable.ui.components.rpeBadgeText
-import com.emanuel5014.trainable.ui.components.techniqueLabel
 
 /** The sets of a strength or timed exercise, grouped by block, with the large media card and the room for the hub below. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun ColumnScope.SetList(
+fun ColumnScope.SetList(
     targetExState: WorkoutExerciseState,
     targetIndex: Int,
     targetActiveSetIndex: Int,
@@ -106,7 +119,7 @@ internal fun ColumnScope.SetList(
     prescriptionLabels: PrescriptionLabels
 ) {
     val localDensity = LocalDensity.current
-    val context = LocalContext.current
+    val prescriptionText = LocalPrescriptionText.current
     // The sets of a block are one segmented list: where each stands in its block decides its corners
     val positions = remember(targetExState.sets, targetExState.isAdvanced) {
         SegmentedShapes.positions(
@@ -152,20 +165,20 @@ internal fun ColumnScope.SetList(
                 if (showDeleteConfirm) {
                     AlertDialog(
                         onDismissRequest = { showDeleteConfirm = false },
-                        title = { Text(stringResource(R.string.remove_set)) },
-                        text = { Text(stringResource(R.string.remove_set_confirm)) },
+                        title = { Text(stringResource(Res.string.remove_set)) },
+                        text = { Text(stringResource(Res.string.remove_set_confirm)) },
                         confirmButton = {
                             TextButton(onClick = {
                                 ui.editingSetIndex = null
                                 viewModel.removeSetFromExercise(targetIndex, index)
                                 showDeleteConfirm = false
                             }) {
-                                Text(stringResource(R.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
+                                Text(stringResource(Res.string.delete).uppercase(), color = Error, fontWeight = FontWeight.ExtraBold)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDeleteConfirm = false }) {
-                                Text(stringResource(R.string.cancel).uppercase())
+                                Text(stringResource(Res.string.cancel).uppercase())
                             }
                         },
                         containerColor = SurfaceContainerHigh,
@@ -207,11 +220,11 @@ internal fun ColumnScope.SetList(
                                 Text(
                                     text = when {
                                         block != null -> stringResource(
-                                            R.string.block_header, p.blockIndex + 1,
+                                            Res.string.block_header, p.blockIndex + 1,
                                             (listOf(PrescriptionFormatter.headline(block, prescriptionLabels)) +
-                                                block.techniques.map { techniqueLabel(context, it) }).joinToString(" · ")
+                                                block.techniques.map { prescriptionText.technique(it) }).joinToString(" · ")
                                         ).uppercase()
-                                        set.isExtra -> stringResource(R.string.extra_badge)
+                                        set.isExtra -> stringResource(Res.string.extra_badge)
                                         else -> ""
                                     },
                                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
@@ -222,7 +235,7 @@ internal fun ColumnScope.SetList(
                                 if (loadEditable) {
                                     Icon(
                                         Icons.Rounded.Tune,
-                                        contentDescription = stringResource(R.string.load_sheet_title),
+                                        contentDescription = stringResource(Res.string.load_sheet_title),
                                         tint = Primary,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -242,7 +255,7 @@ internal fun ColumnScope.SetList(
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = stringResource(R.string.total_reps_progress, done, total),
+                                        text = stringResource(Res.string.total_reps_progress, done, total),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = Primary,
                                         fontWeight = FontWeight.ExtraBold
@@ -259,18 +272,18 @@ internal fun ColumnScope.SetList(
                 val setPrescription = set.prescription
                 SetLogRow(
                     corners = corners,
-                    repsLabel = if (set.isAmrap) stringResource(R.string.max_label) else null,
+                    repsLabel = if (set.isAmrap) stringResource(Res.string.max_label) else null,
                     intensityBadge = setPrescription?.let { PrescriptionFormatter.intensity(it.intensityType, it.intensityValue, prescriptionLabels) }
                         ?.takeIf { setPrescription.intensityType == IntensityType.PERCENT || setPrescription.intensityType == IntensityType.RPE },
                     badges = buildList {
                         // The goal of a rep range stays visible until the set is done
                         if (!set.isCompleted) set.repsRange?.let { add(it.text) }
-                        if (set.isAmrap && set.isCompleted) add(stringResource(R.string.max_label))
-                        setPrescription?.techniques?.forEach { add(techniqueLabel(context, it)) }
-                        set.rpe?.let { add(rpeBadgeText(context, it, state.rpeScale)) }
-                        if (set.isExtra) add(stringResource(R.string.extra_badge))
+                        if (set.isAmrap && set.isCompleted) add(stringResource(Res.string.max_label))
+                        setPrescription?.techniques?.forEach { add(prescriptionText.technique(it)) }
+                        set.rpe?.let { add(prescriptionText.rpeBadge(it, state.rpeScale)) }
+                        if (set.isExtra) add(stringResource(Res.string.extra_badge))
                         // How the set really went: parts after short pauses, help, partials, technique as done
-                        addAll(setPerformanceBadges(context, set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
+                        addAll(prescriptionText.performanceBadges(set.repParts, set.pauses, set.assistedReps, set.partialReps, set.performedTechniques))
                     },
                     setNumber = set.setNumber,
                     weight = set.weight,
@@ -395,8 +408,8 @@ internal fun ColumnScope.SetList(
                                         }
                                     }
 
-                                    val curFormatted = String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60)
-                                    val tarFormatted = String.format("%02d:%02d", targetSeconds / 60, targetSeconds % 60)
+                                    val curFormatted = workoutTime(timerSeconds / 60, timerSeconds % 60, paddedMinutes = true)
+                                    val tarFormatted = workoutTime(targetSeconds / 60, targetSeconds % 60, paddedMinutes = true)
                                     Row(
                                         verticalAlignment = Alignment.Bottom,
                                         horizontalArrangement = Arrangement.Center
@@ -426,7 +439,7 @@ internal fun ColumnScope.SetList(
                                             max = TimeAndReps.MAX_REPS,
                                             hapticEnabled = state.hapticEnabled,
                                             big = true,
-                                            label = stringResource(R.string.reps_done_label)
+                                            label = stringResource(Res.string.reps_done_label)
                                         )
                                     }
 
@@ -449,7 +462,7 @@ internal fun ColumnScope.SetList(
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Rounded.Replay,
-                                                    contentDescription = stringResource(R.string.time_weight_reset_timer),
+                                                    contentDescription = stringResource(Res.string.time_weight_reset_timer),
                                                     modifier = Modifier.size(20.dp)
                                                 )
                                             }
@@ -469,7 +482,7 @@ internal fun ColumnScope.SetList(
                                                 Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                                 Spacer(modifier = Modifier.width(6.dp))
                                                 Text(
-                                                    stringResource(R.string.time_weight_finish_set),
+                                                    stringResource(Res.string.time_weight_finish_set),
                                                     style = MaterialTheme.typography.labelLarge,
                                                     fontWeight = FontWeight.ExtraBold
                                                 )
@@ -494,7 +507,7 @@ internal fun ColumnScope.SetList(
                 ) {
                     Icon(Icons.Rounded.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.add_extra_set).uppercase(), fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(Res.string.add_extra_set).uppercase(), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -514,7 +527,7 @@ internal fun ColumnScope.SetList(
                     ) {
                         Icon(Icons.Rounded.Add, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.add_set), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.add_set), fontWeight = FontWeight.ExtraBold)
                     }
                     if (!isExerciseCompleted) {
                         val isLastExercise = targetIndex == state.exercises.size - 1
@@ -535,9 +548,9 @@ internal fun ColumnScope.SetList(
                             Text(
                                 text = stringResource(
                                     if (state.isQuickWorkout) {
-                                        if (isLastExercise) R.string.add_exercise else R.string.next_exercise_wrk
+                                        if (isLastExercise) Res.string.add_exercise else Res.string.next_exercise_wrk
                                     } else {
-                                        R.string.add_exercise
+                                        Res.string.add_exercise
                                     }
                                 ).uppercase(),
                                 fontWeight = FontWeight.ExtraBold
@@ -552,7 +565,7 @@ internal fun ColumnScope.SetList(
                 val targetHeight = if (largeMediaVisible) with(localDensity) { freeMediaPx.toDp() } else 0.dp
                 val cardHeight by animateDpAsState(targetHeight, label = "exerciseMediaCardHeight")
                 if (cardHeight > 0.dp) {
-                    ExerciseMediaCard(
+                    LocalExercisePlatformUi.current.MediaCard(
                         fileName = largeMediaFile,
                         onOpen = {
                             ui.mediaViewer = targetExState.exercise.id to

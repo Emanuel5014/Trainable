@@ -16,11 +16,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.cancel
+import com.emanuel5014.trainable.sharedui.resources.finish_confirm
+import com.emanuel5014.trainable.sharedui.resources.journal_how_did_it_go
 import com.emanuel5014.trainable.domain.journal.SessionJournal
 import com.emanuel5014.trainable.ui.components.GymButton
 import com.emanuel5014.trainable.ui.components.SheetFormBody
@@ -45,11 +47,11 @@ fun FinishWorkoutSheet(
     onJournalChange: (SessionJournal) -> Unit,
     hapticEnabled: Boolean,
     onFinish: () -> Unit,
-    onCancel: () -> Unit,
-    viewModel: JournalViewModel = hiltViewModel()
+    onCancel: () -> Unit
 ) {
-    val tags by viewModel.tags.collectAsState()
-    val ratingEnabled by viewModel.ratingEnabled.collectAsState()
+    val data = LocalJournalData.current()
+    val tags = data.tags
+    val ratingEnabled = data.ratingEnabled
 
     ModalBottomSheet(
         onDismissRequest = onCancel,
@@ -73,7 +75,7 @@ fun FinishWorkoutSheet(
                     )
                 }
                 Text(
-                    text = stringResource(R.string.journal_how_did_it_go),
+                    text = stringResource(Res.string.journal_how_did_it_go),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = OnSurface
@@ -83,17 +85,17 @@ fun FinishWorkoutSheet(
                     onJournalChange = onJournalChange,
                     tags = tags,
                     ratingEnabled = ratingEnabled,
-                    onCreateTag = viewModel::createTag,
+                    onCreateTag = data::createTag,
                     hapticEnabled = hapticEnabled
                 )
             }
             SheetFormFooter(horizontalPadding = 24.dp) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     GymButton(onClick = onFinish, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
+                        Text(stringResource(Res.string.finish_confirm).uppercase(), fontWeight = FontWeight.ExtraBold)
                     }
                     TextButton(onClick = onCancel) {
-                        Text(stringResource(R.string.cancel).uppercase(), color = Primary, fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.cancel).uppercase(), color = Primary, fontWeight = FontWeight.Bold)
                     }
                 }
             }

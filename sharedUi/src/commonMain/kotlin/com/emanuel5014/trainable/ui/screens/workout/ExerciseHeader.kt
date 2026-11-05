@@ -1,5 +1,6 @@
 package com.emanuel5014.trainable.ui.screens.workout
 
+import com.emanuel5014.trainable.ui.components.LocalExercisePlatformUi
 import androidx.compose.animation.animateContentSize
 import com.emanuel5014.trainable.ui.components.motion.WorkoutMotion
 import androidx.compose.ui.layout.Layout
@@ -43,9 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -55,12 +55,22 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import com.emanuel5014.trainable.R
+import com.emanuel5014.trainable.sharedui.resources.Res
+import com.emanuel5014.trainable.sharedui.resources.edit_program
+import com.emanuel5014.trainable.sharedui.resources.emom_use_timer
+import com.emanuel5014.trainable.sharedui.resources.exercise_detail_open
+import com.emanuel5014.trainable.sharedui.resources.exercise_tools_group
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_missing
+import com.emanuel5014.trainable.sharedui.resources.one_rep_max_value
+import com.emanuel5014.trainable.sharedui.resources.superset
+import com.emanuel5014.trainable.sharedui.resources.swap_exercise
+import com.emanuel5014.trainable.sharedui.resources.time_reps_value
+import com.emanuel5014.trainable.sharedui.resources.toggle_superset_with_next
+import com.emanuel5014.trainable.sharedui.resources.week_short
 import com.emanuel5014.trainable.data.ExerciseTranslations
 import com.emanuel5014.trainable.domain.prescription.IntensityType
 import com.emanuel5014.trainable.domain.prescription.PrescriptionExpander
 import com.emanuel5014.trainable.domain.prescription.PrescriptionLabels
-import com.emanuel5014.trainable.ui.components.ExerciseMediaSlot
 import com.emanuel5014.trainable.ui.components.PrescriptionPill
 import com.emanuel5014.trainable.ui.components.ProgramEditPill
 import com.emanuel5014.trainable.ui.components.ProgressionSuggestionCard
@@ -70,8 +80,8 @@ import com.emanuel5014.trainable.ui.theme.OnSecondaryContainer
 import com.emanuel5014.trainable.ui.theme.OnSurface
 import com.emanuel5014.trainable.ui.theme.Primary
 import com.emanuel5014.trainable.ui.theme.SecondaryContainer
-import com.emanuel5014.trainable.ui.theme.headerGlassOn
-import com.emanuel5014.trainable.ui.theme.headerGroupGlass
+import com.emanuel5014.trainable.ui.glass.headerGlassOn
+import com.emanuel5014.trainable.ui.glass.headerGroupGlass
 import com.emanuel5014.trainable.ui.theme.Surface
 import com.emanuel5014.trainable.ui.theme.Tertiary
 import kotlin.math.abs
@@ -88,7 +98,7 @@ private const val COMPACT_ID = "compact"
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun ExerciseHeader(
+fun ExerciseHeader(
     targetExState: WorkoutExerciseState,
     targetIndex: Int,
     state: WorkoutState,
@@ -157,7 +167,7 @@ private fun ExpandedHeader(
     onOpenDetail: (Int) -> Unit
 ) {
     val toolsOnOwnRow = HeaderLayout.toolsOnOwnRow(
-        widthDp = LocalConfiguration.current.screenWidthDp.toFloat(),
+        widthDp = workoutWindowWidthDp().toFloat(),
         fontScale = LocalDensity.current.fontScale
     )
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -199,10 +209,11 @@ private fun ExpandedHeader(
                         fontWeight = FontWeight.Black,
                         modifier = Modifier.weight(1f)
                     )
-                    ExerciseMediaSlot(
+                    LocalExercisePlatformUi.current.MediaSlot(
                         fileName = exerciseMedia[targetExState.exercise.id],
                         onOpen = { ui.mediaViewer = targetExState.exercise.id to exerciseDisplayName },
                         onAdd = { pickMedia(targetExState.exercise.id) },
+                        size = workoutMediaThumbSize(),
                         playing = !largeMediaVisible
                     )
                 }
@@ -262,7 +273,7 @@ private fun CompactHeader(
         if (targetExState.isAdvanced) {
             state.programWeek?.let { week ->
                 PrescriptionPill(
-                    text = stringResource(R.string.week_short, week),
+                    text = stringResource(Res.string.week_short, week),
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     emphasized = true
@@ -295,7 +306,7 @@ private fun HeaderPills(
     val setsCount = weekTargets?.first ?: targetExState.sets.size
     val repsCount = if (targetExState.isTimeAndReps) {
         val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
-        stringResource(R.string.time_reps_value, sec, targetExState.repsGoal ?: 0)
+        stringResource(Res.string.time_reps_value, sec, targetExState.repsGoal ?: 0)
     } else if (targetExState.isTimeAndWeight) {
         val sec = targetExState.timeTargetSeconds ?: targetExState.sets.firstOrNull()?.timeSeconds ?: 45
         "${sec}s"
@@ -318,7 +329,7 @@ private fun HeaderPills(
         if (targetExState.isAdvanced) {
             state.programWeek?.let { week ->
                 PrescriptionPill(
-                    text = stringResource(R.string.week_short, week),
+                    text = stringResource(Res.string.week_short, week),
                     containerColor = Primary,
                     contentColor = OnPrimary,
                     emphasized = true
@@ -327,8 +338,8 @@ private fun HeaderPills(
             val usesPercent = targetExState.blocks.any { it.intensityType == IntensityType.PERCENT }
             if (usesPercent) {
                 PrescriptionPill(
-                    text = targetExState.oneRepMaxKg?.let { stringResource(R.string.one_rep_max_value, prescriptionLabels.weight(it)) }
-                        ?: stringResource(R.string.one_rep_max_missing),
+                    text = targetExState.oneRepMaxKg?.let { stringResource(Res.string.one_rep_max_value, prescriptionLabels.weight(it)) }
+                        ?: stringResource(Res.string.one_rep_max_missing),
                     containerColor = if (targetExState.oneRepMaxKg != null) Primary.copy(alpha = 0.12f) else Error.copy(alpha = 0.12f),
                     contentColor = if (targetExState.oneRepMaxKg != null) Primary else Error
                 )
@@ -354,13 +365,13 @@ private fun HeaderPills(
         }
         if (targetExState.emomStartIndex != null && targetExState.exercise.id in ui.emomManualExercises) {
             BadgePill(
-                text = stringResource(R.string.emom_use_timer),
+                text = stringResource(Res.string.emom_use_timer),
                 color = Tertiary,
                 onClick = { ui.emomManualExercises = ui.emomManualExercises - targetExState.exercise.id }
             )
         }
         if (targetExState.supersetId != null) {
-            BadgePill(text = stringResource(R.string.superset), color = Primary, onClick = null)
+            BadgePill(text = stringResource(Res.string.superset), color = Primary, onClick = null)
         }
     }
 }
@@ -400,7 +411,7 @@ private fun BadgePill(text: String, color: androidx.compose.ui.graphics.Color, o
  * superset, edit the program, details, swap. 44 dp wide each and 48 dp tall.
  */
 @Composable
-internal fun ExerciseTools(
+fun ExerciseTools(
     targetExState: WorkoutExerciseState,
     targetIndex: Int,
     state: WorkoutState,
@@ -408,7 +419,7 @@ internal fun ExerciseTools(
     viewModel: WorkoutModel,
     onOpenDetail: (Int) -> Unit
 ) {
-    val groupLabel = stringResource(R.string.exercise_tools_group)
+    val groupLabel = stringResource(Res.string.exercise_tools_group)
     val glass = headerGlassOn()
     // The neutral icon colour: on the tonal group it is the container's own, on glass it is the plain one
     val neutral = if (glass) OnSurface else OnSecondaryContainer
@@ -426,7 +437,7 @@ internal fun ExerciseTools(
             val isLinked = targetExState.supersetId != null && targetExState.supersetId == nextEx.supersetId
             ToolButton(
                 icon = if (isLinked) Icons.Rounded.LinkOff else Icons.Rounded.Link,
-                description = stringResource(R.string.toggle_superset_with_next),
+                description = stringResource(Res.string.toggle_superset_with_next),
                 tint = if (isLinked) Primary else neutral,
                 onClick = { viewModel.toggleSupersetWithNext(targetIndex) }
             )
@@ -434,7 +445,7 @@ internal fun ExerciseTools(
         if (targetExState.isAdvanced && !targetExState.isCardio && !targetExState.isTimed) {
             ToolButton(
                 icon = Icons.Rounded.DesignServices,
-                description = stringResource(R.string.edit_program),
+                description = stringResource(Res.string.edit_program),
                 tint = if (targetExState.lastProgramEdit != null) Primary else neutral,
                 onClick = { ui.programEditFor = targetIndex }
             )
@@ -442,14 +453,14 @@ internal fun ExerciseTools(
         if (!targetExState.isCardio) {
             ToolButton(
                 icon = Icons.Rounded.Info,
-                description = stringResource(R.string.exercise_detail_open),
+                description = stringResource(Res.string.exercise_detail_open),
                 tint = neutral,
                 onClick = { onOpenDetail(targetExState.exercise.id) }
             )
         }
         ToolButton(
             icon = Icons.Rounded.SwapHoriz,
-            description = stringResource(R.string.swap_exercise),
+            description = stringResource(Res.string.swap_exercise),
             tint = neutral,
             onClick = { ui.showSwapExerciseSheet = true }
         )
